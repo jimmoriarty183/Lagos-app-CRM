@@ -117,9 +117,37 @@ const canManage = role === "MANAGER" || isOwnerManager; // ✅ full access
     <div style={{ maxWidth: 980, margin: "0 auto", padding: 24 }}>
       <div style={{ marginBottom: 16 }}>
         <div style={{ fontSize: 18, fontWeight: 700 }}>Business: {business.slug}</div>
-        <div style={{ opacity: 0.75, marginTop: 4 }}>
-          Plan: {business.plan} &nbsp;&nbsp; Owner: {business.owner_phone}
-        </div>
+<div style={{ opacity: 0.75, marginTop: 4 }}>
+  Plan: {business.plan}
+</div>
+
+<div style={{ opacity: 0.75, marginTop: 6 }}>
+  Role: <b>{isOwnerManager ? "OWNER/MANAGER" : role}</b>
+</div>
+
+{/* Менеджер: только свой номер */}
+{role === "MANAGER" && !isOwnerManager && (
+  <div style={{ opacity: 0.9, marginTop: 6 }}>
+    Manager phone: <b>{business.manager_phone || phone}</b>
+  </div>
+)}
+
+{/* Овнер: свой номер + номер менеджера */}
+{role === "OWNER" && !isOwnerManager && (
+  <div style={{ opacity: 0.9, marginTop: 6 }}>
+    Owner phone: <b>{business.owner_phone}</b>
+    <span style={{ opacity: 0.7 }}> &nbsp;|&nbsp; </span>
+    Manager phone: <b>{business.manager_phone || "—"}</b>
+  </div>
+)}
+
+{/* VIP: owner==manager */}
+{isOwnerManager && (
+  <div style={{ opacity: 0.9, marginTop: 6 }}>
+    Owner/Manager phone: <b>{business.owner_phone}</b>
+  </div>
+)}
+
       </div>
 
       {/* MANAGER: форма создания заказа */}
