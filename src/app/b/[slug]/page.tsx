@@ -70,10 +70,14 @@ export default async function BusinessPage({ params, searchParams }: PageProps) 
   const isOwner = !!phone && phone === ownerNorm;
   const isManager = !!phone && !!managerNorm && phone === managerNorm;
 
-  const role: "OWNER" | "MANAGER" | "GUEST" = isOwner ? "OWNER" : isManager ? "MANAGER" : "GUEST";
+const role: "OWNER" | "MANAGER" | "GUEST" =
+  isOwner ? "OWNER" : isManager ? "MANAGER" : "GUEST";
 
-  const canView = role === "OWNER" || role === "MANAGER";
-  const canManage = role === "MANAGER"; // как ты и говорил
+const isOwnerManager = isOwner && isManager; // тот самый случай owner_phone == manager_phone и user = этот номер
+
+const canView = role === "OWNER" || role === "MANAGER";
+const canManage = role === "MANAGER" || isOwnerManager; // ✅ full access
+
 
   if (!canView) {
     return (
