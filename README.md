@@ -1,36 +1,110 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Ordero
 
-## Getting Started
+Ordero is a lightweight web-based order management system for small businesses.
 
-First, run the development server:
+It allows owners and managers to create, edit and manage customer orders, track payment status and control due dates through a clean and minimal interface.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+---
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Features
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- Create customer orders
+- Edit order details
+- Track order status (NEW / DONE)
+- Track payment status (paid / unpaid)
+- Optional order description
+- Separate edit page for orders
+- Role-based access (Owner / Manager)
+- Mobile-first, responsive UI
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## Tech Stack
 
-To learn more about Next.js, take a look at the following resources:
+- **Framework:** Next.js (App Router)
+- **Backend & Database:** Supabase (PostgreSQL)
+- **Architecture:** Server Actions (server-first)
+- **Styling:** Minimal inline styles
+- **State management:** Server-driven (no client state libraries)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Roles & Access
 
-## Deploy on Vercel
+- **OWNER**
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+  - View orders
+  - View analytics (future scope)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **MANAGER**
+
+  - Create orders
+  - Edit orders
+  - Update order status and payment status
+
+- **OWNER / MANAGER**
+
+  - Full access (if the same phone number)
+
+- **GUEST**
+  - No access
+
+Access is determined by a phone number passed via URL query parameters.
+
+---
+
+## Routes
+
+- `/b/[slug]?u=<phone>`  
+  Business page with order list
+
+- `/b/[slug]/o/[id]?u=<phone>`  
+  Edit order page
+
+---
+
+## Data Model
+
+**Order**
+
+- client_name
+- client_phone (optional)
+- description (optional)
+- amount
+- due_date (optional)
+- status (NEW / DONE)
+- paid (true / false)
+- created_at
+
+---
+
+## UX Decisions
+
+- Order description is hidden by default to keep the list clean
+- Description can be expanded by user action
+- Editing orders is implemented on a separate page
+- After saving, users are redirected back to the order list
+
+---
+
+## Current Status
+
+**MVP v0.2 — Stable**
+
+The project is under active development and ready for further feature expansion.
+
+---
+
+## Planned Features
+
+- Filters and search
+- Extended analytics
+- Authorization and authentication
+- Subscription plans
+- UI improvements
+
+---
+
+## License
+
+MIT
