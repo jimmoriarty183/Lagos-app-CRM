@@ -9,16 +9,19 @@ export async function createOrder(input: {
   clientPhone?: string;
   amount: number;
   dueDate?: string; // YYYY-MM-DD
+  description?: string;
 }) {
-  const { error } = await supabase.from("orders").insert({
-    business_id: input.businessId,
-    client_name: input.clientName,
-    client_phone: input.clientPhone || null,
-    amount: input.amount,
-    due_date: input.dueDate || null,
-    status: "NEW",
-    paid: false,
-  });
+    
+const { error } = await supabase.from("orders").insert({
+  business_id: input.businessId,
+  client_name: input.clientName,
+  client_phone: input.clientPhone || null,
+  amount: input.amount,
+  due_date: input.dueDate || null,
+  description: input.description || null, // ← ВАЖНО
+  status: "NEW",
+  paid: false,
+});
 
   if (error) throw new Error(error.message);
 
@@ -47,3 +50,30 @@ export async function setOrderPaid(input: { orderId: string; paid: boolean }) {
 
   revalidatePath("/b/[slug]", "page");
 }
+
+export async function updateOrder(input: {
+  orderId: string;
+  businessSlug: string; // ✅ нужно для revalidatePath
+  clientName: string;
+  clientPhone: string | null;
+  description: string | null;
+  amount: number;
+  dueDate: string | null;
+}) {
+  const { error } = await supabase
+    .from("orders")
+    .update({
+      client_name: input.clientName,
+      client_phone: input.clientPhone,
+      description: input.description,
+      amount: input.amount,
+      due_date: input.dueDate,
+    })
+    .eq("id", input.orderId);
+
+  if (error) throw new Error(error.message);
+
+  // ✅ гарантируем, что страница списка /b/[slug] будет свежей
+  revalidatePath(`/b/${input.businessSlug}`);
+}
+
