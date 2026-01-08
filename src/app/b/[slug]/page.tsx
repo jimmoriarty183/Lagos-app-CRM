@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { normalizePhone } from "@/lib/phone";
 import { createOrder, setOrderPaid, setOrderStatus } from "./actions";
+import { headers } from "next/headers";
+import FiltersBar, { type Filters } from "./FiltersBar";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -89,42 +91,82 @@ export default async function BusinessPage({
   const canManage = role === "MANAGER" || isOwnerManager; // ✅ full access (включая OWNER/MANAGER)
   const canSeeAnalytics = role === "OWNER" || isOwnerManager; // ✅ аналитика только OWNER или OWNER/MANAGER
 
+  // ---- filters (from URL) ----
+  // ⚠️ НЕ объявляем type Filters тут, используем тот что импортирован из ./FiltersBar
+
+  function getSp(key: string): string {
+    const v = (sp as any)?.[key];
+    if (Array.isArray(v)) return String(v[0] ?? "");
+    return String(v ?? "");
+  }
+
+  const filters: Filters = {
+    q: getSp("q"),
+    status: (getSp("status") || "ALL") as Filters["status"],
+    paid: (getSp("paid") || "ALL") as Filters["paid"],
+    range: (getSp("range") || "ALL") as Filters["range"],
+  };
+
+  function getDateFromRange(range: Filters["range"]) {
+    if (range === "ALL") return null;
+
+    const d = new Date();
+    if (range === "today") {
+      d.setHours(0, 0, 0, 0);
+      return d.toISOString();
+    }
+    if (range === "week") {
+      d.setDate(d.getDate() - 7);
+      return d.toISOString();
+    }
+    if (range === "month") {
+      d.setMonth(d.getMonth() - 1);
+      return d.toISOString();
+    }
+    return null;
+  }
+
+  // 🚫 GUEST ничего не видит вообще
   if (!canView) {
     return (
-      <div style={{ maxWidth: 980, margin: "0 auto", padding: 24 }}>
-        <div style={{ marginBottom: 12 }}>
-          <div style={{ fontSize: 18, fontWeight: 700 }}>
-            Business: {business.slug}
-          </div>
-          <div style={{ opacity: 0.75, marginTop: 4 }}>Role: {role}</div>
-        </div>
-
-        <div
-          style={{
-            border: "1px solid #e5e5e5",
-            borderRadius: 12,
-            padding: 16,
-            background: "white",
-          }}
-        >
-          <b>Access denied.</b>
-          <div style={{ marginTop: 8, opacity: 0.8 }}>
-            Открой ссылку через <code>/m/&lt;phone&gt;</code> или добавь{" "}
-            <code>?u=380...</code>
-          </div>
+      <div className="mx-auto max-w-xl p-6">
+        <div className="rounded-2xl border p-6 text-center text-gray-500">
+          Access restricted
         </div>
       </div>
     );
   }
 
   // заказы
-  const { data: orders } = await supabase
+  let query = supabase
     .from("orders")
     .select(
-      "id, client_name, client_phone, description, amount, due_date, status, paid, created_at"
+      "id, client_name, client_phone, amount, description, due_date, status, paid, created_at, search_text"
     )
     .eq("business_id", business.id)
     .order("created_at", { ascending: false });
+
+  if (filters.status !== "ALL") query = query.eq("status", filters.status);
+  if (filters.paid === "1") query = query.eq("paid", true);
+  if (filters.paid === "0") query = query.eq("paid", false);
+
+  const dateFrom = getDateFromRange(filters.range);
+  if (dateFrom) query = query.gte("created_at", dateFrom);
+
+  const q = filters.q.trim().toLowerCase();
+  if (q) query = query.ilike("search_text", `%${q}%`);
+
+  const { data: orders, error: ordersError } = await query;
+
+  if (ordersError) {
+    return (
+      <div className="mx-auto max-w-xl p-6">
+        <div className="rounded-2xl border p-6 text-center text-red-600">
+          Orders query error: {ordersError.message}
+        </div>
+      </div>
+    );
+  }
 
   const list = (orders || []) as OrderRow[];
 
@@ -372,6 +414,105 @@ export default async function BusinessPage({
         </div>
       ) : null}
 
+      {/* 🔽 FILTERS BAR */}
+      <form
+        method="get"
+        style={{
+          border: "1px solid #e5e5e5",
+          borderRadius: 12,
+          padding: 16,
+          background: "white",
+          marginBottom: 16,
+          display: "flex",
+          gap: 12,
+          flexWrap: "wrap",
+        }}
+      >
+        {/* НЕ ЗАБУДЬ ПРО u */}
+        <input type="hidden" name="u" value={phoneRaw} />
+
+        <div style={{ flex: 1, minWidth: 180 }}>
+          <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 4 }}>
+            Search
+          </div>
+          <input
+            name="q"
+            defaultValue={filters.q}
+            placeholder="Name, phone, amount…"
+            style={{
+              height: 40,
+              width: "100%",
+              borderRadius: 10,
+              border: "1px solid #ddd",
+              padding: "0 12px",
+            }}
+          />
+        </div>
+
+        <div>
+          <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 4 }}>
+            Status
+          </div>
+          <select
+            name="status"
+            defaultValue={filters.status}
+            style={{ height: 40, borderRadius: 10, border: "1px solid #ddd" }}
+          >
+            <option value="ALL">All</option>
+            <option value="NEW">NEW</option>
+            <option value="DONE">DONE</option>
+          </select>
+        </div>
+
+        <div>
+          <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 4 }}>
+            Paid
+          </div>
+          <select
+            name="paid"
+            defaultValue={filters.paid}
+            style={{ height: 40, borderRadius: 10, border: "1px solid #ddd" }}
+          >
+            <option value="ALL">All</option>
+            <option value="1">Paid</option>
+            <option value="0">Unpaid</option>
+          </select>
+        </div>
+
+        <div>
+          <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 4 }}>
+            Period
+          </div>
+          <select
+            name="range"
+            defaultValue={filters.range}
+            style={{ height: 40, borderRadius: 10, border: "1px solid #ddd" }}
+          >
+            <option value="ALL">All time</option>
+            <option value="today">Today</option>
+            <option value="week">Week</option>
+            <option value="month">Month</option>
+          </select>
+        </div>
+
+        <button
+          type="submit"
+          style={{
+            height: 40,
+            borderRadius: 10,
+            border: "none",
+            background: "#111",
+            color: "white",
+            fontWeight: 700,
+            padding: "0 16px",
+            cursor: "pointer",
+            alignSelf: "flex-end",
+          }}
+        >
+          Apply
+        </button>
+      </form>
+
       {/* Таблица заказов (видят и OWNER и MANAGER), но Actions только MANAGER/OWNER-MANAGER */}
       <div
         style={{
@@ -420,7 +561,7 @@ export default async function BusinessPage({
                               fontWeight: 600,
                               color: "#111",
                               listStyle: "none",
-                              outline: "none",
+                              WebkitAppearance: "none",
                               textDecoration: "underline",
                               display: "inline-flex",
                               alignItems: "center",
