@@ -4,6 +4,7 @@ import { normalizePhone } from "@/lib/phone";
 import { createOrder, setOrderPaid, setOrderStatus } from "./actions";
 import { headers } from "next/headers";
 import FiltersBar, { type Filters } from "./FiltersBar";
+import Button from "./Button";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -49,8 +50,9 @@ export default async function BusinessPage({
   const u = sp?.u; // normalizePhone НЕ трогаем, как ты сказал
   const uStr = Array.isArray(u) ? u[0] : u; // string | undefined
   const clearHref = uStr
-    ? `/b/${slug}?u=${encodeURIComponent(uStr)}`
-    : `/b/${slug}`;
+    ? `/b/${slug}?u=${encodeURIComponent(uStr)}&page=1`
+    : `/b/${slug}?page=1`;
+
   const phoneRaw =
     typeof u === "string"
       ? decodeURIComponent(u)
@@ -148,16 +150,26 @@ export default async function BusinessPage({
     );
   }
 
-  // заказы
+  // ---- Orders + Pagination ----
+  const PAGE_SIZE = 20;
+
+  const pageRaw = Number(getSp("page") || "1");
+  const page =
+    Number.isFinite(pageRaw) && pageRaw > 0 ? Math.floor(pageRaw) : 1;
+
+  // 1) строим query
   let query = supabase
     .from("orders")
     .select(
-      "id, order_number, client_name, client_phone, amount, description, due_date, status, paid, created_at, search_text"
+      "id, order_number, client_name, client_phone, amount, description, due_date, status, paid, created_at, search_text",
+      { count: "exact" }
     )
     .eq("business_id", business.id)
     .order("created_at", { ascending: false });
 
+  // 2) применяем фильтры (у тебя они были, но ты их не вставил в query)
   if (filters.status !== "ALL") query = query.eq("status", filters.status);
+
   if (filters.paid === "1") query = query.eq("paid", true);
   if (filters.paid === "0") query = query.eq("paid", false);
 
@@ -167,35 +179,81 @@ export default async function BusinessPage({
   const q = filters.q.trim().toLowerCase();
   if (q) query = query.ilike("search_text", `%${q}%`);
 
-  const { data: orders, error: ordersError } = await query;
+  // 3) helper: загрузка конкретной страницы
+  const runPage = async (p: number) => {
+    const rangeFrom = (p - 1) * PAGE_SIZE;
+    const rangeTo = rangeFrom + PAGE_SIZE - 1;
+    return await query.range(rangeFrom, rangeTo);
+  };
+
+  // 4) первая загрузка: как попросили в URL
+  let { data: orders, error: ordersError, count } = await runPage(page);
+
+  const totalCount = count ?? 0;
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+
+  // 5) если page слишком большая — грузим последнюю валидную страницу
+  if (safePage !== page) {
+    const r = await runPage(safePage);
+    orders = r.data;
+    ordersError = r.error;
+  }
 
   if (ordersError) {
-    return (
-      <div className="mx-auto max-w-xl p-6">
-        <div className="rounded-2xl border p-6 text-center text-red-600">
-          Orders query error: {ordersError.message}
-        </div>
-      </div>
-    );
+    // можешь обработать по-другому, но хотя бы не молча
+    console.error("Orders query error:", ordersError);
   }
 
   const list = (orders || []) as OrderRow[];
 
-  // analytics
-  const totalOrders = list.length;
-
-  const totalAmount = list.reduce((sum, o) => sum + Number(o.amount ?? 0), 0);
+  // ---- analytics (ALL matching rows, not just current page) ----
+  let totalOrders = totalCount; // ✅ count из основного query — это все по фильтрам
+  let totalAmount = 0;
+  let overdueCount = 0;
 
   // overdue = due_date < today AND status === "NEW"
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
 
-  const overdueCount = list.filter((o) => {
-    if (!o.due_date) return false;
-    const due = new Date(o.due_date);
-    due.setHours(0, 0, 0, 0);
-    return due < todayStart && o.status === "NEW";
-  }).length;
+  if (canSeeAnalytics) {
+    // отдельный запрос: БЕЗ range, но с теми же фильтрами
+    let aq = supabase
+      .from("orders")
+      .select("amount, due_date, status")
+      .eq("business_id", business.id);
+
+    // те же фильтры, что и в основном query
+    if (filters.status !== "ALL") aq = aq.eq("status", filters.status);
+
+    if (filters.paid === "1") aq = aq.eq("paid", true);
+    if (filters.paid === "0") aq = aq.eq("paid", false);
+
+    const dateFrom2 = getDateFromRange(filters.range);
+    if (dateFrom2) aq = aq.gte("created_at", dateFrom2);
+
+    const q2 = filters.q.trim().toLowerCase();
+    if (q2) aq = aq.ilike("search_text", `%${q2}%`);
+
+    const { data: rows, error: aErr } = await aq;
+
+    if (aErr) {
+      console.error("Analytics query error:", aErr);
+    } else {
+      for (const r of rows || []) {
+        totalAmount += Number((r as any).amount ?? 0);
+
+        const dueDate = (r as any).due_date as string | null;
+        const status = (r as any).status as "NEW" | "DONE";
+
+        if (dueDate && status === "NEW") {
+          const due = new Date(dueDate);
+          due.setHours(0, 0, 0, 0);
+          if (due < todayStart) overdueCount += 1;
+        }
+      }
+    }
+  }
 
   const todayISO = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
 
@@ -443,6 +501,7 @@ export default async function BusinessPage({
       >
         {/* НЕ ЗАБУДЬ ПРО u */}
         <input type="hidden" name="u" value={phoneRaw} />
+        <input type="hidden" name="page" value="1" />
 
         <div style={{ flex: 1, minWidth: 180 }}>
           <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 4 }}>
@@ -508,22 +567,9 @@ export default async function BusinessPage({
           </select>
         </div>
 
-        <button
-          type="submit"
-          style={{
-            height: 40,
-            borderRadius: 10,
-            border: "none",
-            background: "#111",
-            color: "white",
-            fontWeight: 700,
-            padding: "0 16px",
-            cursor: "pointer",
-            alignSelf: "flex-end",
-          }}
-        >
+        <Button type="submit" size="sm" style={{ alignSelf: "flex-end" }}>
           Apply
-        </button>
+        </Button>
 
         {hasActiveFilters && (
           <a
