@@ -5,9 +5,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 export type Filters = {
   q: string;
-  status: "ALL" | "NEW" | "DONE";
+  status: "ALL" | "NEW" | "IN_PROGRESS" | "DONE" | "CANCELED" | "DUPLICATE";
   paid: "ALL" | "1" | "0";
-  range: "ALL" | "today" | "week" | "month";
+  range: "ALL" | "today" | "week" | "month" | "year";
 };
 
 type Props = {

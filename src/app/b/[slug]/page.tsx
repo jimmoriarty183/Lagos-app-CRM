@@ -5,6 +5,7 @@ import { createOrder, setOrderPaid, setOrderStatus } from "./actions";
 import { headers } from "next/headers";
 import FiltersBar, { type Filters } from "./FiltersBar";
 import Button from "./Button";
+import Accordion from "./Accordion";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -27,7 +28,7 @@ type OrderRow = {
   amount: number;
   description: string | null;
   due_date: string | null;
-  status: "NEW" | "DONE";
+  status: "NEW" | "IN_PROGRESS" | "DONE" | "CANCELED" | "DUPLICATE";
   paid: boolean;
   order_number: number | null;
   created_at: string;
@@ -123,19 +124,30 @@ export default async function BusinessPage({
   function getDateFromRange(range: Filters["range"]) {
     if (range === "ALL") return null;
 
-    const d = new Date();
+    const now = new Date();
+
     if (range === "today") {
+      const d = new Date(now);
       d.setHours(0, 0, 0, 0);
       return d.toISOString();
     }
+
     if (range === "week") {
+      const d = new Date(now);
       d.setDate(d.getDate() - 7);
       return d.toISOString();
     }
+
     if (range === "month") {
-      d.setMonth(d.getMonth() - 1);
+      const d = new Date(now.getFullYear(), now.getMonth(), 1);
       return d.toISOString();
     }
+
+    if (range === "year") {
+      const d = new Date(now.getFullYear(), 0, 1);
+      return d.toISOString();
+    }
+
     return null;
   }
 
@@ -212,12 +224,20 @@ export default async function BusinessPage({
   let totalAmount = 0;
   let overdueCount = 0;
 
+  let doneCount = 0;
+  let inProgressCount = 0;
+  let canceledCount = 0;
+  let duplicateCount = 0;
+
+  let doneAmount = 0;
+  let activeAmount = 0; // NEW + IN_PROGRESS
+
   // overdue = due_date < today AND status === "NEW"
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
 
   if (canSeeAnalytics) {
-    // отдельный запрос: БЕЗ range, но с теми же фильтрами
+    // отдельный запрос: по тем же фильтрам (и с тем же range), но НЕ ограниченный пагинацией
     let aq = supabase
       .from("orders")
       .select("amount, due_date, status")
@@ -241,11 +261,32 @@ export default async function BusinessPage({
       console.error("Analytics query error:", aErr);
     } else {
       for (const r of rows || []) {
-        totalAmount += Number((r as any).amount ?? 0);
-
+        const amountNum = Number((r as any).amount ?? 0);
         const dueDate = (r as any).due_date as string | null;
-        const status = (r as any).status as "NEW" | "DONE";
+        const status = (r as any).status as OrderRow["status"];
 
+        // total amount (по всем строкам под фильтрами)
+        totalAmount += amountNum;
+
+        // counts / sums by status
+        if (status === "DONE") {
+          doneCount += 1;
+          doneAmount += amountNum;
+        }
+
+        if (status === "IN_PROGRESS") {
+          inProgressCount += 1;
+        }
+
+        if (status === "CANCELED") canceledCount += 1;
+        if (status === "DUPLICATE") duplicateCount += 1;
+
+        // active amount (NEW + IN_PROGRESS)
+        if (status === "NEW" || status === "IN_PROGRESS") {
+          activeAmount += amountNum;
+        }
+
+        // overdue
         if (dueDate && status === "NEW") {
           const due = new Date(dueDate);
           due.setHours(0, 0, 0, 0);
@@ -256,6 +297,46 @@ export default async function BusinessPage({
   }
 
   const todayISO = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
+
+  const statusBadgeStyle = (status: string): React.CSSProperties => {
+    switch (status) {
+      case "DONE":
+        return {
+          background: "rgba(34,197,94,0.15)",
+          color: "#15803d",
+          border: "1px solid rgba(34,197,94,0.3)",
+        };
+
+      case "IN_PROGRESS":
+        return {
+          background: "rgba(59,130,246,0.15)",
+          color: "#1d4ed8",
+          border: "1px solid rgba(59,130,246,0.3)",
+        };
+
+      case "CANCELED":
+        return {
+          background: "rgba(245,158,11,0.18)",
+          color: "#b45309",
+          border: "1px solid rgba(245,158,11,0.35)",
+        };
+
+      case "DUPLICATE":
+        return {
+          background: "rgba(148,163,184,0.18)",
+          color: "#334155",
+          border: "1px solid rgba(148,163,184,0.35)",
+        };
+
+      case "NEW":
+      default:
+        return {
+          background: "rgba(0,0,0,0.05)",
+          color: "#111",
+          border: "1px solid rgba(0,0,0,0.1)",
+        };
+    }
+  };
 
   return (
     <div style={{ maxWidth: 980, margin: "0 auto", padding: 24 }}>
@@ -304,6 +385,7 @@ export default async function BusinessPage({
             marginBottom: 16,
           }}
         >
+          {/* Total orders */}
           <div
             style={{
               border: "1px solid #e5e7eb",
@@ -317,6 +399,7 @@ export default async function BusinessPage({
             <div style={{ fontSize: 22, fontWeight: 700 }}>{totalOrders}</div>
           </div>
 
+          {/* Total amount */}
           <div
             style={{
               border: "1px solid #e5e7eb",
@@ -334,6 +417,7 @@ export default async function BusinessPage({
             </div>
           </div>
 
+          {/* Overdue */}
           <div
             style={{
               border: "1px solid #e5e7eb",
@@ -346,142 +430,218 @@ export default async function BusinessPage({
             <div style={{ opacity: 0.7, fontSize: 12 }}>Overdue (NEW)</div>
             <div style={{ fontSize: 22, fontWeight: 700 }}>{overdueCount}</div>
           </div>
+
+          {/* Done */}
+          <div
+            style={{
+              border: "1px solid #e5e7eb",
+              borderRadius: 12,
+              padding: 12,
+              minWidth: 160,
+              background: "white",
+            }}
+          >
+            <div style={{ opacity: 0.7, fontSize: 12 }}>Done</div>
+            <div style={{ fontSize: 22, fontWeight: 700 }}>{doneCount}</div>
+            <div style={{ opacity: 0.65, fontSize: 12, marginTop: 2 }}>
+              Amount:{" "}
+              {doneAmount.toLocaleString(undefined, {
+                maximumFractionDigits: 0,
+              })}
+            </div>
+          </div>
+
+          {/* In progress */}
+          <div
+            style={{
+              border: "1px solid #e5e7eb",
+              borderRadius: 12,
+              padding: 12,
+              minWidth: 160,
+              background: "white",
+            }}
+          >
+            <div style={{ opacity: 0.7, fontSize: 12 }}>In progress</div>
+            <div style={{ fontSize: 22, fontWeight: 700 }}>
+              {inProgressCount}
+            </div>
+          </div>
+
+          {/* Removed */}
+          <div
+            style={{
+              border: "1px solid #e5e7eb",
+              borderRadius: 12,
+              padding: 12,
+              minWidth: 160,
+              background: "white",
+            }}
+          >
+            <div style={{ opacity: 0.7, fontSize: 12 }}>Removed</div>
+            <div style={{ fontSize: 22, fontWeight: 700 }}>
+              {canceledCount + duplicateCount}
+            </div>
+            <div style={{ opacity: 0.65, fontSize: 12, marginTop: 2 }}>
+              Canceled: {canceledCount} · Duplicate: {duplicateCount}
+            </div>
+          </div>
+
+          {/* Active amount */}
+          <div
+            style={{
+              border: "1px solid #e5e7eb",
+              borderRadius: 12,
+              padding: 12,
+              minWidth: 160,
+              background: "white",
+            }}
+          >
+            <div style={{ opacity: 0.7, fontSize: 12 }}>Active amount</div>
+            <div style={{ fontSize: 22, fontWeight: 700 }}>
+              {activeAmount.toLocaleString(undefined, {
+                maximumFractionDigits: 0,
+              })}
+            </div>
+            <div style={{ opacity: 0.65, fontSize: 12, marginTop: 2 }}>
+              NEW + IN PROGRESS
+            </div>
+          </div>
         </div>
       )}
 
       {/* MANAGER: форма создания заказа */}
       {canManage ? (
-        <div
-          style={{
-            border: "1px solid #e5e5e5",
-            borderRadius: 12,
-            padding: 16,
-            background: "white",
-            marginBottom: 16,
-          }}
-        >
-          <div style={{ fontWeight: 700, marginBottom: 12 }}>Add order</div>
+        <div style={{ marginBottom: 16 }}>
+          <Accordion title="Add order" defaultOpen={false}>
+            <form
+              action={async (fd) => {
+                "use server";
+                const clientName = String(fd.get("client_name") || "").trim();
 
-          <form
-            action={async (fd) => {
-              "use server";
-              const clientName = String(fd.get("client_name") || "").trim();
-              const clientPhone = String(fd.get("client_phone") || "").trim();
-              const amountRaw = String(fd.get("amount") || "").trim();
-              const dueDate = String(fd.get("due_date") || "").trim(); // YYYY-MM-DD из input[type=date]
-              const description = String(fd.get("description") || "").trim();
+                const clientPhoneRaw = String(
+                  fd.get("client_phone") || ""
+                ).trim();
+                const clientPhone = clientPhoneRaw.replace(/\s+/g, " "); // лёгкая нормализация
 
-              const amount = Number(amountRaw);
-              if (!clientName) throw new Error("Client name is required");
-              if (!Number.isFinite(amount) || amount <= 0)
-                throw new Error("Amount must be > 0");
+                const amountRaw = String(fd.get("amount") || "").trim();
+                const dueDate = String(fd.get("due_date") || "").trim(); // YYYY-MM-DD
+                const description = String(fd.get("description") || "").trim();
 
-              await createOrder({
-                businessId: business.id,
-                clientName,
-                clientPhone: clientPhone || undefined,
-                amount,
-                dueDate: dueDate || undefined,
-                description: description || undefined,
-              });
-            }}
-          >
-            <div style={{ display: "grid", gap: 10 }}>
-              <label style={{ display: "grid", gap: 6 }}>
-                <span style={{ fontSize: 12, fontWeight: 600 }}>
-                  Client name *
-                </span>
-                <input
-                  name="client_name"
-                  placeholder="John"
-                  style={{
-                    height: 40,
-                    borderRadius: 10,
-                    border: "1px solid #ddd",
-                    padding: "0 12px",
-                  }}
-                />
-              </label>
+                const amount = Number(amountRaw);
+                if (!clientName) throw new Error("Client name is required");
+                if (!Number.isFinite(amount) || amount <= 0)
+                  throw new Error("Amount must be > 0");
 
-              <label style={{ display: "grid", gap: 6 }}>
-                <span style={{ fontSize: 12, fontWeight: 600 }}>
-                  Client phone
-                </span>
-                <input
-                  name="client_phone"
-                  placeholder="+380..."
-                  style={{
-                    height: 40,
-                    borderRadius: 10,
-                    border: "1px solid #ddd",
-                    padding: "0 12px",
-                  }}
-                />
-              </label>
+                await createOrder({
+                  businessId: business.id,
+                  clientName,
+                  clientPhone: clientPhone || undefined,
+                  amount,
+                  dueDate: dueDate || undefined,
+                  description: description || undefined,
+                });
+              }}
+            >
+              <div style={{ display: "grid", gap: 10 }}>
+                <label style={{ display: "grid", gap: 6 }}>
+                  <span style={{ fontSize: 12, fontWeight: 600 }}>
+                    Client name *
+                  </span>
+                  <input
+                    name="client_name"
+                    placeholder="John"
+                    autoComplete="name"
+                    style={{
+                      height: 40,
+                      borderRadius: 10,
+                      border: "1px solid #ddd",
+                      padding: "0 12px",
+                    }}
+                  />
+                </label>
 
-              <label style={{ display: "grid", gap: 6 }}>
-                <span style={{ fontSize: 12, fontWeight: 600 }}>
-                  Description
-                </span>
-                <textarea
-                  name="description"
-                  placeholder="Например: доставка, адрес, коментар..."
-                  rows={3}
-                  style={{
-                    borderRadius: 10,
-                    border: "1px solid #ddd",
-                    padding: "10px 12px",
-                    resize: "vertical",
-                  }}
-                />
-              </label>
+                <label style={{ display: "grid", gap: 6 }}>
+                  <span style={{ fontSize: 12, fontWeight: 600 }}>
+                    Client phone
+                  </span>
+                  <input
+                    name="client_phone"
+                    placeholder="+234 801 234 5678"
+                    inputMode="tel"
+                    autoComplete="tel"
+                    style={{
+                      height: 40,
+                      borderRadius: 10,
+                      border: "1px solid #ddd",
+                      padding: "0 12px",
+                    }}
+                  />
+                </label>
 
-              <label style={{ display: "grid", gap: 6 }}>
-                <span style={{ fontSize: 12, fontWeight: 600 }}>Amount *</span>
-                <input
-                  name="amount"
-                  placeholder="15000"
-                  inputMode="numeric"
-                  style={{
-                    height: 40,
-                    borderRadius: 10,
-                    border: "1px solid #ddd",
-                    padding: "0 12px",
-                  }}
-                />
-              </label>
+                <label style={{ display: "grid", gap: 6 }}>
+                  <span style={{ fontSize: 12, fontWeight: 600 }}>
+                    Description
+                  </span>
+                  <textarea
+                    name="description"
+                    placeholder="e.g. delivery, address, comment..."
+                    rows={3}
+                    style={{
+                      borderRadius: 10,
+                      border: "1px solid #ddd",
+                      padding: "10px 12px",
+                      resize: "vertical",
+                    }}
+                  />
+                </label>
 
-              <label style={{ display: "grid", gap: 6 }}>
-                <span style={{ fontSize: 12, fontWeight: 600 }}>Due date</span>
-                <input
-                  name="due_date"
-                  type="date"
-                  style={{
-                    height: 40,
-                    borderRadius: 10,
-                    border: "1px solid #ddd",
-                    padding: "0 12px",
-                  }}
-                />
-              </label>
+                <label style={{ display: "grid", gap: 6 }}>
+                  <span style={{ fontSize: 12, fontWeight: 600 }}>
+                    Amount *
+                  </span>
+                  <input
+                    name="amount"
+                    placeholder="15000"
+                    inputMode="numeric"
+                    style={{
+                      height: 40,
+                      borderRadius: 10,
+                      border: "1px solid #ddd",
+                      padding: "0 12px",
+                    }}
+                  />
+                </label>
 
-              <button
-                type="submit"
-                style={{
-                  height: 44,
-                  borderRadius: 10,
-                  border: "none",
-                  background: "#111",
-                  color: "white",
-                  fontWeight: 700,
-                  cursor: "pointer",
-                  marginTop: 6,
-                }}
-              >
-                Create
-              </button>
-            </div>
-          </form>
+                <label style={{ display: "grid", gap: 6 }}>
+                  <span style={{ fontSize: 12, fontWeight: 600 }}>
+                    Due date
+                  </span>
+                  <input
+                    name="due_date"
+                    type="date"
+                    style={{
+                      height: 40,
+                      borderRadius: 10,
+                      border: "1px solid #ddd",
+                      padding: "0 12px",
+                    }}
+                  />
+                  <span style={{ fontSize: 12, opacity: 0.6 }}>
+                    Format: YYYY-MM-DD
+                  </span>
+                </label>
+
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="md"
+                  style={{ marginTop: 6, width: "100%" }}
+                >
+                  Create
+                </Button>
+              </div>
+            </form>
+          </Accordion>
         </div>
       ) : null}
 
@@ -532,7 +692,10 @@ export default async function BusinessPage({
           >
             <option value="ALL">All</option>
             <option value="NEW">NEW</option>
+            <option value="IN_PROGRESS">IN PROGRESS</option>
             <option value="DONE">DONE</option>
+            <option value="CANCELED">CANCELED</option>
+            <option value="DUPLICATE">DUPLICATE</option>
           </select>
         </div>
 
@@ -562,8 +725,9 @@ export default async function BusinessPage({
           >
             <option value="ALL">All time</option>
             <option value="today">Today</option>
-            <option value="week">Week</option>
-            <option value="month">Month</option>
+            <option value="week">Last 7 days</option>
+            <option value="month">This month</option>
+            <option value="year">This year</option>
           </select>
         </div>
 
@@ -762,8 +926,19 @@ export default async function BusinessPage({
                         )}
                       </td>
 
-                      <td style={{ padding: "10px 6px", fontWeight: 700 }}>
-                        {o.status}
+                      <td>
+                        <span
+                          style={{
+                            ...statusBadgeStyle(o.status),
+                            padding: "4px 10px",
+                            borderRadius: 999,
+                            fontSize: 12,
+                            fontWeight: 700,
+                            display: "inline-block",
+                          }}
+                        >
+                          {o.status}
+                        </span>
                       </td>
 
                       <td style={{ padding: "10px 6px", opacity: 0.75 }}>
@@ -800,56 +975,119 @@ export default async function BusinessPage({
                               Edit
                             </a>
 
-                            {/* статус */}
-                            {o.status === "NEW" ? (
-                              <form
-                                action={async () => {
-                                  "use server";
-                                  await setOrderStatus({
-                                    orderId: o.id,
-                                    status: "DONE",
-                                  });
+                            <td style={{ padding: "10px 6px" }}>
+                              <div
+                                style={{
+                                  display: "flex",
+                                  gap: 8,
+                                  flexWrap: "wrap",
                                 }}
                               >
-                                <button
-                                  type="submit"
-                                  style={{
-                                    height: 30,
-                                    padding: "0 12px",
-                                    borderRadius: 10,
-                                    border: "1px solid #ddd",
-                                    background: "white",
-                                    cursor: "pointer",
+                                {/* NEW → DONE */}
+                                {o.status === "NEW" && (
+                                  <form
+                                    action={async () => {
+                                      "use server";
+                                      await setOrderStatus({
+                                        orderId: o.id,
+                                        status: "DONE",
+                                      });
+                                    }}
+                                  >
+                                    <button
+                                      type="submit"
+                                      style={{
+                                        height: 30,
+                                        padding: "0 12px",
+                                        borderRadius: 10,
+                                        border: "1px solid #ddd",
+                                        background: "white",
+                                        cursor: "pointer",
+                                      }}
+                                    >
+                                      Done
+                                    </button>
+                                  </form>
+                                )}
+
+                                {/* DONE → NEW */}
+                                {o.status === "DONE" && (
+                                  <form
+                                    action={async () => {
+                                      "use server";
+                                      await setOrderStatus({
+                                        orderId: o.id,
+                                        status: "NEW",
+                                      });
+                                    }}
+                                  >
+                                    <button
+                                      type="submit"
+                                      style={{
+                                        height: 30,
+                                        padding: "0 12px",
+                                        borderRadius: 10,
+                                        border: "1px solid #ddd",
+                                        background: "white",
+                                        cursor: "pointer",
+                                      }}
+                                    >
+                                      Back
+                                    </button>
+                                  </form>
+                                )}
+
+                                {/* CANCEL */}
+                                <form
+                                  action={async () => {
+                                    "use server";
+                                    await setOrderStatus({
+                                      orderId: o.id,
+                                      status: "CANCELED",
+                                    });
                                   }}
                                 >
-                                  Done
-                                </button>
-                              </form>
-                            ) : (
-                              <form
-                                action={async () => {
-                                  "use server";
-                                  await setOrderStatus({
-                                    orderId: o.id,
-                                    status: "NEW",
-                                  });
-                                }}
-                              >
-                                <button
-                                  type="submit"
-                                  style={{
-                                    height: 30,
-                                    padding: "0 12px",
-                                    borderRadius: 10,
-                                    border: "1px solid #ddd",
-                                    background: "white",
-                                    cursor: "pointer",
+                                  <button
+                                    type="submit"
+                                    style={{
+                                      height: 30,
+                                      padding: "0 12px",
+                                      borderRadius: 10,
+                                      border: "1px solid #ddd",
+                                      background: "white",
+                                      cursor: "pointer",
+                                    }}
+                                  >
+                                    Cancel
+                                  </button>
+                                </form>
+
+                                {/* DUPLICATE */}
+                                <form
+                                  action={async () => {
+                                    "use server";
+                                    await setOrderStatus({
+                                      orderId: o.id,
+                                      status: "DUPLICATE",
+                                    });
                                   }}
                                 >
-                                  Back
-                                </button>
-                              </form>
-                            )}
+                                  <button
+                                    type="submit"
+                                    style={{
+                                      height: 30,
+                                      padding: "0 12px",
+                                      borderRadius: 10,
+                                      border: "1px solid #ddd",
+                                      background: "white",
+                                      cursor: "pointer",
+                                    }}
+                                  >
+                                    Duplicate
+                                  </button>
+                                </form>
+                              </div>
+                            </td>
 
                             {/* paid */}
                             {o.paid ? (
