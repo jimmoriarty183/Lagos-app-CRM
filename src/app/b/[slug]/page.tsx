@@ -1,11 +1,10 @@
 import { notFound } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { normalizePhone } from "@/lib/phone";
-import { createOrder, setOrderPaid, setOrderStatus } from "./actions";
-import { headers } from "next/headers";
-import FiltersBar, { type Filters } from "./FiltersBar";
+import { createOrder } from "./actions";
 import Button from "./Button";
 import Accordion from "./Accordion";
+import { StatusCell } from "./InlineCells";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -21,6 +20,14 @@ type BusinessRow = {
   expires_at: string;
 };
 
+type Status =
+  | "NEW"
+  | "IN_PROGRESS"
+  | "WAITING_PAYMENT"
+  | "DONE"
+  | "CANCELED"
+  | "DUPLICATE";
+
 type OrderRow = {
   id: string;
   client_name: string;
@@ -28,15 +35,50 @@ type OrderRow = {
   amount: number;
   description: string | null;
   due_date: string | null;
-  status: "NEW" | "IN_PROGRESS" | "DONE" | "CANCELED" | "DUPLICATE";
-  paid: boolean;
+  status: Status;
   order_number: number | null;
   created_at: string;
 };
 
+type Range = "ALL" | "today" | "week" | "month" | "year";
+type Filters = {
+  q: string;
+  status: "ALL" | Status;
+  range: Range;
+};
+
 function fmtAmount(n: number) {
-  // без валюты, просто разделители
   return new Intl.NumberFormat("uk-UA").format(n);
+}
+
+function getDateFromRange(range: Range) {
+  if (range === "ALL") return null;
+
+  const now = new Date();
+
+  if (range === "today") {
+    const d = new Date(now);
+    d.setHours(0, 0, 0, 0);
+    return d.toISOString();
+  }
+
+  if (range === "week") {
+    const d = new Date(now);
+    d.setDate(d.getDate() - 7);
+    return d.toISOString();
+  }
+
+  if (range === "month") {
+    const d = new Date(now.getFullYear(), now.getMonth(), 1);
+    return d.toISOString();
+  }
+
+  if (range === "year") {
+    const d = new Date(now.getFullYear(), 0, 1);
+    return d.toISOString();
+  }
+
+  return null;
 }
 
 export default async function BusinessPage({
@@ -47,12 +89,15 @@ export default async function BusinessPage({
 
   if (!slug) notFound();
 
+  function getSp(key: string): string {
+    const v = (sp as any)?.[key];
+    if (Array.isArray(v)) return String(v[0] ?? "");
+    return String(v ?? "");
+  }
+
   // u — текущий “идентификатор” пользователя (телефон)
-  const u = sp?.u; // normalizePhone НЕ трогаем, как ты сказал
-  const uStr = Array.isArray(u) ? u[0] : u; // string | undefined
-  const clearHref = uStr
-    ? `/b/${slug}?u=${encodeURIComponent(uStr)}&page=1`
-    : `/b/${slug}?page=1`;
+  const u = sp?.u;
+  const uStr = Array.isArray(u) ? u[0] : u;
 
   const phoneRaw =
     typeof u === "string"
@@ -62,6 +107,10 @@ export default async function BusinessPage({
       : "";
 
   const phone = phoneRaw ? normalizePhone(phoneRaw) : "";
+
+  const clearHref = uStr
+    ? `/b/${slug}?u=${encodeURIComponent(uStr)}&page=1`
+    : `/b/${slug}?page=1`;
 
   // бизнес
   const { data: business, error: bErr } = await supabase
@@ -92,64 +141,11 @@ export default async function BusinessPage({
     ? "MANAGER"
     : "GUEST";
 
-  // тот самый случай owner_phone == manager_phone и user = этот номер
   const isOwnerManager = isOwner && isManager;
 
   const canView = role === "OWNER" || role === "MANAGER";
-  const canManage = role === "MANAGER" || isOwnerManager; // ✅ full access (включая OWNER/MANAGER)
-  const canSeeAnalytics = role === "OWNER" || isOwnerManager; // ✅ аналитика только OWNER или OWNER/MANAGER
-
-  // ---- filters (from URL) ----
-  // ⚠️ НЕ объявляем type Filters тут, используем тот что импортирован из ./FiltersBar
-
-  function getSp(key: string): string {
-    const v = (sp as any)?.[key];
-    if (Array.isArray(v)) return String(v[0] ?? "");
-    return String(v ?? "");
-  }
-
-  const filters: Filters = {
-    q: getSp("q"),
-    status: (getSp("status") || "ALL") as Filters["status"],
-    paid: (getSp("paid") || "ALL") as Filters["paid"],
-    range: (getSp("range") || "ALL") as Filters["range"],
-  };
-
-  const hasActiveFilters =
-    !!filters.q?.trim() ||
-    filters.status !== "ALL" ||
-    filters.paid !== "ALL" ||
-    filters.range !== "ALL";
-
-  function getDateFromRange(range: Filters["range"]) {
-    if (range === "ALL") return null;
-
-    const now = new Date();
-
-    if (range === "today") {
-      const d = new Date(now);
-      d.setHours(0, 0, 0, 0);
-      return d.toISOString();
-    }
-
-    if (range === "week") {
-      const d = new Date(now);
-      d.setDate(d.getDate() - 7);
-      return d.toISOString();
-    }
-
-    if (range === "month") {
-      const d = new Date(now.getFullYear(), now.getMonth(), 1);
-      return d.toISOString();
-    }
-
-    if (range === "year") {
-      const d = new Date(now.getFullYear(), 0, 1);
-      return d.toISOString();
-    }
-
-    return null;
-  }
+  const canManage = role === "MANAGER" || isOwnerManager;
+  const canSeeAnalytics = role === "OWNER" || isOwnerManager;
 
   // 🚫 GUEST ничего не видит вообще
   if (!canView) {
@@ -162,6 +158,16 @@ export default async function BusinessPage({
     );
   }
 
+  // ---- filters (from URL) ----
+  const filters: Filters = {
+    q: getSp("q"),
+    status: (getSp("status") || "ALL") as Filters["status"],
+    range: (getSp("range") || "ALL") as Filters["range"],
+  };
+
+  const hasActiveFilters =
+    !!filters.q?.trim() || filters.status !== "ALL" || filters.range !== "ALL";
+
   // ---- Orders + Pagination ----
   const PAGE_SIZE = 20;
 
@@ -173,17 +179,14 @@ export default async function BusinessPage({
   let query = supabase
     .from("orders")
     .select(
-      "id, order_number, client_name, client_phone, amount, description, due_date, status, paid, created_at, search_text",
+      "id, order_number, client_name, client_phone, amount, description, due_date, status, created_at, search_text",
       { count: "exact" }
     )
     .eq("business_id", business.id)
     .order("created_at", { ascending: false });
 
-  // 2) применяем фильтры (у тебя они были, но ты их не вставил в query)
+  // 2) применяем фильтры
   if (filters.status !== "ALL") query = query.eq("status", filters.status);
-
-  if (filters.paid === "1") query = query.eq("paid", true);
-  if (filters.paid === "0") query = query.eq("paid", false);
 
   const dateFrom = getDateFromRange(filters.range);
   if (dateFrom) query = query.gte("created_at", dateFrom);
@@ -212,42 +215,37 @@ export default async function BusinessPage({
     ordersError = r.error;
   }
 
-  if (ordersError) {
-    // можешь обработать по-другому, но хотя бы не молча
-    console.error("Orders query error:", ordersError);
-  }
+  if (ordersError) console.error("Orders query error:", ordersError);
 
   const list = (orders || []) as OrderRow[];
 
   // ---- analytics (ALL matching rows, not just current page) ----
-  let totalOrders = totalCount; // ✅ count из основного query — это все по фильтрам
+  let totalOrders = totalCount;
   let totalAmount = 0;
-  let overdueCount = 0;
 
-  let doneCount = 0;
+  let newCount = 0;
   let inProgressCount = 0;
+  let waitingPaymentCount = 0;
+  let doneCount = 0;
   let canceledCount = 0;
   let duplicateCount = 0;
 
   let doneAmount = 0;
   let activeAmount = 0; // NEW + IN_PROGRESS
+  let waitingPaymentAmount = 0;
 
-  // overdue = due_date < today AND status === "NEW"
+  let overdueCount = 0;
+
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
 
   if (canSeeAnalytics) {
-    // отдельный запрос: по тем же фильтрам (и с тем же range), но НЕ ограниченный пагинацией
     let aq = supabase
       .from("orders")
-      .select("amount, due_date, status")
+      .select("amount, due_date, status, created_at, search_text")
       .eq("business_id", business.id);
 
-    // те же фильтры, что и в основном query
     if (filters.status !== "ALL") aq = aq.eq("status", filters.status);
-
-    if (filters.paid === "1") aq = aq.eq("paid", true);
-    if (filters.paid === "0") aq = aq.eq("paid", false);
 
     const dateFrom2 = getDateFromRange(filters.range);
     if (dateFrom2) aq = aq.gte("created_at", dateFrom2);
@@ -263,31 +261,31 @@ export default async function BusinessPage({
       for (const r of rows || []) {
         const amountNum = Number((r as any).amount ?? 0);
         const dueDate = (r as any).due_date as string | null;
-        const status = (r as any).status as OrderRow["status"];
+        const status = (r as any).status as Status;
 
-        // total amount (по всем строкам под фильтрами)
         totalAmount += amountNum;
 
-        // counts / sums by status
+        if (status === "NEW") newCount += 1;
+        if (status === "IN_PROGRESS") inProgressCount += 1;
+
+        if (status === "WAITING_PAYMENT") {
+          waitingPaymentCount += 1;
+          waitingPaymentAmount += amountNum;
+        }
+
         if (status === "DONE") {
           doneCount += 1;
           doneAmount += amountNum;
         }
 
-        if (status === "IN_PROGRESS") {
-          inProgressCount += 1;
-        }
-
         if (status === "CANCELED") canceledCount += 1;
         if (status === "DUPLICATE") duplicateCount += 1;
 
-        // active amount (NEW + IN_PROGRESS)
-        if (status === "NEW" || status === "IN_PROGRESS") {
+        if (status === "NEW" || status === "IN_PROGRESS")
           activeAmount += amountNum;
-        }
 
-        // overdue
-        if (dueDate && status === "NEW") {
+        // overdue: due_date < today AND (NEW or IN_PROGRESS)
+        if (dueDate && (status === "NEW" || status === "IN_PROGRESS")) {
           const due = new Date(dueDate);
           due.setHours(0, 0, 0, 0);
           if (due < todayStart) overdueCount += 1;
@@ -296,47 +294,7 @@ export default async function BusinessPage({
     }
   }
 
-  const todayISO = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
-
-  const statusBadgeStyle = (status: string): React.CSSProperties => {
-    switch (status) {
-      case "DONE":
-        return {
-          background: "rgba(34,197,94,0.15)",
-          color: "#15803d",
-          border: "1px solid rgba(34,197,94,0.3)",
-        };
-
-      case "IN_PROGRESS":
-        return {
-          background: "rgba(59,130,246,0.15)",
-          color: "#1d4ed8",
-          border: "1px solid rgba(59,130,246,0.3)",
-        };
-
-      case "CANCELED":
-        return {
-          background: "rgba(245,158,11,0.18)",
-          color: "#b45309",
-          border: "1px solid rgba(245,158,11,0.35)",
-        };
-
-      case "DUPLICATE":
-        return {
-          background: "rgba(148,163,184,0.18)",
-          color: "#334155",
-          border: "1px solid rgba(148,163,184,0.35)",
-        };
-
-      case "NEW":
-      default:
-        return {
-          background: "rgba(0,0,0,0.05)",
-          color: "#111",
-          border: "1px solid rgba(0,0,0,0.1)",
-        };
-    }
-  };
+  const todayISO = new Date().toISOString().slice(0, 10);
 
   return (
     <div style={{ maxWidth: 980, margin: "0 auto", padding: 24 }}>
@@ -344,21 +302,17 @@ export default async function BusinessPage({
         <div style={{ fontSize: 18, fontWeight: 700 }}>
           Business: {business.slug}
         </div>
-
         <div style={{ opacity: 0.75, marginTop: 4 }}>Plan: {business.plan}</div>
-
         <div style={{ opacity: 0.75, marginTop: 6 }}>
           Role: <b>{isOwnerManager ? "OWNER/MANAGER" : role}</b>
         </div>
 
-        {/* Менеджер: только свой номер */}
         {role === "MANAGER" && !isOwnerManager && (
           <div style={{ opacity: 0.9, marginTop: 6 }}>
             Manager phone: <b>{business.manager_phone || phone}</b>
           </div>
         )}
 
-        {/* Овнер: свой номер + номер менеджера */}
         {role === "OWNER" && !isOwnerManager && (
           <div style={{ opacity: 0.9, marginTop: 6 }}>
             Owner phone: <b>{business.owner_phone}</b>
@@ -367,7 +321,6 @@ export default async function BusinessPage({
           </div>
         )}
 
-        {/* VIP: owner==manager */}
         {isOwnerManager && (
           <div style={{ opacity: 0.9, marginTop: 6 }}>
             Owner/Manager phone: <b>{business.owner_phone}</b>
@@ -385,127 +338,38 @@ export default async function BusinessPage({
             marginBottom: 16,
           }}
         >
-          {/* Total orders */}
-          <div
-            style={{
-              border: "1px solid #e5e7eb",
-              borderRadius: 12,
-              padding: 12,
-              minWidth: 160,
-              background: "white",
-            }}
-          >
-            <div style={{ opacity: 0.7, fontSize: 12 }}>Total orders</div>
-            <div style={{ fontSize: 22, fontWeight: 700 }}>{totalOrders}</div>
-          </div>
+          <KpiCard title="Total orders" value={String(totalOrders)} />
+          <KpiCard
+            title="Total amount"
+            value={fmtAmount(Math.round(totalAmount))}
+          />
+          <KpiCard
+            title="Overdue (NEW+IN_PROGRESS)"
+            value={String(overdueCount)}
+          />
 
-          {/* Total amount */}
-          <div
-            style={{
-              border: "1px solid #e5e7eb",
-              borderRadius: 12,
-              padding: 12,
-              minWidth: 160,
-              background: "white",
-            }}
-          >
-            <div style={{ opacity: 0.7, fontSize: 12 }}>Total amount</div>
-            <div style={{ fontSize: 22, fontWeight: 700 }}>
-              {totalAmount.toLocaleString(undefined, {
-                maximumFractionDigits: 0,
-              })}
-            </div>
-          </div>
-
-          {/* Overdue */}
-          <div
-            style={{
-              border: "1px solid #e5e7eb",
-              borderRadius: 12,
-              padding: 12,
-              minWidth: 160,
-              background: "white",
-            }}
-          >
-            <div style={{ opacity: 0.7, fontSize: 12 }}>Overdue (NEW)</div>
-            <div style={{ fontSize: 22, fontWeight: 700 }}>{overdueCount}</div>
-          </div>
-
-          {/* Done */}
-          <div
-            style={{
-              border: "1px solid #e5e7eb",
-              borderRadius: 12,
-              padding: 12,
-              minWidth: 160,
-              background: "white",
-            }}
-          >
-            <div style={{ opacity: 0.7, fontSize: 12 }}>Done</div>
-            <div style={{ fontSize: 22, fontWeight: 700 }}>{doneCount}</div>
-            <div style={{ opacity: 0.65, fontSize: 12, marginTop: 2 }}>
-              Amount:{" "}
-              {doneAmount.toLocaleString(undefined, {
-                maximumFractionDigits: 0,
-              })}
-            </div>
-          </div>
-
-          {/* In progress */}
-          <div
-            style={{
-              border: "1px solid #e5e7eb",
-              borderRadius: 12,
-              padding: 12,
-              minWidth: 160,
-              background: "white",
-            }}
-          >
-            <div style={{ opacity: 0.7, fontSize: 12 }}>In progress</div>
-            <div style={{ fontSize: 22, fontWeight: 700 }}>
-              {inProgressCount}
-            </div>
-          </div>
-
-          {/* Removed */}
-          <div
-            style={{
-              border: "1px solid #e5e7eb",
-              borderRadius: 12,
-              padding: 12,
-              minWidth: 160,
-              background: "white",
-            }}
-          >
-            <div style={{ opacity: 0.7, fontSize: 12 }}>Removed</div>
-            <div style={{ fontSize: 22, fontWeight: 700 }}>
-              {canceledCount + duplicateCount}
-            </div>
-            <div style={{ opacity: 0.65, fontSize: 12, marginTop: 2 }}>
-              Canceled: {canceledCount} · Duplicate: {duplicateCount}
-            </div>
-          </div>
-
-          {/* Active amount */}
-          <div
-            style={{
-              border: "1px solid #e5e7eb",
-              borderRadius: 12,
-              padding: 12,
-              minWidth: 160,
-              background: "white",
-            }}
-          >
-            <div style={{ opacity: 0.7, fontSize: 12 }}>Active amount</div>
-            <div style={{ fontSize: 22, fontWeight: 700 }}>
-              {activeAmount.toLocaleString(undefined, {
-                maximumFractionDigits: 0,
-              })}
-            </div>
-            <div style={{ opacity: 0.65, fontSize: 12, marginTop: 2 }}>
-              NEW + IN PROGRESS
-            </div>
-          </div>
+          <KpiCard
+            title="Waiting payment"
+            value={String(waitingPaymentCount)}
+            sub={`Amount: ${fmtAmount(Math.round(waitingPaymentAmount))}`}
+          />
+          <KpiCard
+            title="Done"
+            value={String(doneCount)}
+            sub={`Amount: ${fmtAmount(Math.round(doneAmount))}`}
+          />
+          <KpiCard title="In progress" value={String(inProgressCount)} />
+          <KpiCard title="New" value={String(newCount)} />
+          <KpiCard
+            title="Removed"
+            value={String(canceledCount + duplicateCount)}
+            sub={`Canceled: ${canceledCount} · Duplicate: ${duplicateCount}`}
+          />
+          <KpiCard
+            title="Active amount"
+            value={fmtAmount(Math.round(activeAmount))}
+            sub="NEW + IN PROGRESS"
+          />
         </div>
       )}
 
@@ -521,10 +385,10 @@ export default async function BusinessPage({
                 const clientPhoneRaw = String(
                   fd.get("client_phone") || ""
                 ).trim();
-                const clientPhone = clientPhoneRaw.replace(/\s+/g, " "); // лёгкая нормализация
+                const clientPhone = clientPhoneRaw.replace(/\s+/g, " ");
 
                 const amountRaw = String(fd.get("amount") || "").trim();
-                const dueDate = String(fd.get("due_date") || "").trim(); // YYYY-MM-DD
+                const dueDate = String(fd.get("due_date") || "").trim();
                 const description = String(fd.get("description") || "").trim();
 
                 const amount = Number(amountRaw);
@@ -645,7 +509,7 @@ export default async function BusinessPage({
         </div>
       ) : null}
 
-      {/* 🔽 FILTERS BAR */}
+      {/* FILTERS */}
       <form
         method="get"
         style={{
@@ -659,7 +523,6 @@ export default async function BusinessPage({
           flexWrap: "wrap",
         }}
       >
-        {/* НЕ ЗАБУДЬ ПРО u */}
         <input type="hidden" name="u" value={phoneRaw} />
         <input type="hidden" name="page" value="1" />
 
@@ -693,24 +556,10 @@ export default async function BusinessPage({
             <option value="ALL">All</option>
             <option value="NEW">NEW</option>
             <option value="IN_PROGRESS">IN PROGRESS</option>
+            <option value="WAITING_PAYMENT">WAITING PAYMENT</option>
             <option value="DONE">DONE</option>
             <option value="CANCELED">CANCELED</option>
             <option value="DUPLICATE">DUPLICATE</option>
-          </select>
-        </div>
-
-        <div>
-          <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 4 }}>
-            Paid
-          </div>
-          <select
-            name="paid"
-            defaultValue={filters.paid}
-            style={{ height: 40, borderRadius: 10, border: "1px solid #ddd" }}
-          >
-            <option value="ALL">All</option>
-            <option value="1">Paid</option>
-            <option value="0">Unpaid</option>
           </select>
         </div>
 
@@ -759,7 +608,7 @@ export default async function BusinessPage({
         )}
       </form>
 
-      {/* Таблица заказов (видят и OWNER и MANAGER), но Actions только MANAGER/OWNER-MANAGER */}
+      {/* Orders */}
       <div
         style={{
           border: "1px solid #e5e5e5",
@@ -781,7 +630,7 @@ export default async function BusinessPage({
             <div style={{ opacity: 0.75, marginBottom: 14 }}>
               {hasActiveFilters
                 ? "Try changing filters or clearing search."
-                : "Create your first order to start tracking payments and deadlines."}
+                : "Create your first order to start tracking deadlines and payments."}
             </div>
 
             {hasActiveFilters ? (
@@ -815,7 +664,6 @@ export default async function BusinessPage({
                   <th style={{ padding: "10px 6px" }}>Amount</th>
                   <th style={{ padding: "10px 6px" }}>Due</th>
                   <th style={{ padding: "10px 6px" }}>Status</th>
-                  <th style={{ padding: "10px 6px" }}>Paid</th>
                   <th style={{ padding: "10px 6px" }}>Actions</th>
                 </tr>
               </thead>
@@ -826,7 +674,9 @@ export default async function BusinessPage({
                     ? String(o.due_date).slice(0, 10)
                     : null;
                   const isOverdue =
-                    !!dueISO && dueISO < todayISO && o.status === "NEW";
+                    !!dueISO &&
+                    dueISO < todayISO &&
+                    (o.status === "NEW" || o.status === "IN_PROGRESS");
 
                   return (
                     <tr
@@ -836,8 +686,8 @@ export default async function BusinessPage({
                         background: isOverdue ? "#fff5f5" : "transparent",
                       }}
                     >
+                      {/* CLIENT */}
                       <td style={{ padding: "10px 6px" }}>
-                        {/* Order number + created */}
                         <div
                           style={{
                             fontSize: 12,
@@ -855,7 +705,6 @@ export default async function BusinessPage({
                           })}
                         </div>
 
-                        {/* Client */}
                         <div style={{ fontWeight: 600 }}>{o.client_name}</div>
 
                         <div style={{ fontSize: 12, opacity: 0.7 }}>
@@ -902,10 +751,12 @@ export default async function BusinessPage({
                         ) : null}
                       </td>
 
+                      {/* AMOUNT */}
                       <td style={{ padding: "10px 6px", fontWeight: 700 }}>
                         {fmtAmount(Number(o.amount))}
                       </td>
 
+                      {/* DUE */}
                       <td style={{ padding: "10px 6px" }}>
                         <div
                           style={{ color: isOverdue ? "#b91c1c" : undefined }}
@@ -926,220 +777,38 @@ export default async function BusinessPage({
                         )}
                       </td>
 
-                      <td>
-                        <span
-                          style={{
-                            ...statusBadgeStyle(o.status),
-                            padding: "4px 10px",
-                            borderRadius: 999,
-                            fontSize: 12,
-                            fontWeight: 700,
-                            display: "inline-block",
-                          }}
-                        >
-                          {o.status}
-                        </span>
+                      {/* STATUS */}
+                      <td style={{ padding: "10px 6px" }}>
+                        <StatusCell
+                          orderId={o.id}
+                          value={o.status}
+                          canManage={canManage}
+                        />
                       </td>
 
-                      <td style={{ padding: "10px 6px", opacity: 0.75 }}>
-                        {o.paid ? "Paid" : "Not paid"}
-                      </td>
-
+                      {/* ACTIONS */}
                       <td style={{ padding: "10px 6px" }}>
                         {canManage ? (
-                          <div
+                          <a
+                            href={`/b/${business.slug}/o/${
+                              o.id
+                            }?u=${encodeURIComponent(phoneRaw)}`}
                             style={{
-                              display: "flex",
-                              gap: 8,
-                              flexWrap: "wrap",
+                              height: 30,
+                              padding: "0 12px",
+                              borderRadius: 10,
+                              border: "1px solid #ddd",
+                              background: "white",
+                              cursor: "pointer",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              textDecoration: "none",
+                              color: "#111",
+                              fontSize: 13,
                             }}
                           >
-                            <a
-                              href={`/b/${business.slug}/o/${
-                                o.id
-                              }?u=${encodeURIComponent(phoneRaw)}`}
-                              style={{
-                                height: 30,
-                                padding: "0 12px",
-                                borderRadius: 10,
-                                border: "1px solid #ddd",
-                                background: "white",
-                                cursor: "pointer",
-                                display: "inline-flex",
-                                alignItems: "center",
-                                textDecoration: "none",
-                                color: "#111",
-                                fontSize: 13,
-                              }}
-                            >
-                              Edit
-                            </a>
-
-                            <td style={{ padding: "10px 6px" }}>
-                              <div
-                                style={{
-                                  display: "flex",
-                                  gap: 8,
-                                  flexWrap: "wrap",
-                                }}
-                              >
-                                {/* NEW → DONE */}
-                                {o.status === "NEW" && (
-                                  <form
-                                    action={async () => {
-                                      "use server";
-                                      await setOrderStatus({
-                                        orderId: o.id,
-                                        status: "DONE",
-                                      });
-                                    }}
-                                  >
-                                    <button
-                                      type="submit"
-                                      style={{
-                                        height: 30,
-                                        padding: "0 12px",
-                                        borderRadius: 10,
-                                        border: "1px solid #ddd",
-                                        background: "white",
-                                        cursor: "pointer",
-                                      }}
-                                    >
-                                      Done
-                                    </button>
-                                  </form>
-                                )}
-
-                                {/* DONE → NEW */}
-                                {o.status === "DONE" && (
-                                  <form
-                                    action={async () => {
-                                      "use server";
-                                      await setOrderStatus({
-                                        orderId: o.id,
-                                        status: "NEW",
-                                      });
-                                    }}
-                                  >
-                                    <button
-                                      type="submit"
-                                      style={{
-                                        height: 30,
-                                        padding: "0 12px",
-                                        borderRadius: 10,
-                                        border: "1px solid #ddd",
-                                        background: "white",
-                                        cursor: "pointer",
-                                      }}
-                                    >
-                                      Back
-                                    </button>
-                                  </form>
-                                )}
-
-                                {/* CANCEL */}
-                                <form
-                                  action={async () => {
-                                    "use server";
-                                    await setOrderStatus({
-                                      orderId: o.id,
-                                      status: "CANCELED",
-                                    });
-                                  }}
-                                >
-                                  <button
-                                    type="submit"
-                                    style={{
-                                      height: 30,
-                                      padding: "0 12px",
-                                      borderRadius: 10,
-                                      border: "1px solid #ddd",
-                                      background: "white",
-                                      cursor: "pointer",
-                                    }}
-                                  >
-                                    Cancel
-                                  </button>
-                                </form>
-
-                                {/* DUPLICATE */}
-                                <form
-                                  action={async () => {
-                                    "use server";
-                                    await setOrderStatus({
-                                      orderId: o.id,
-                                      status: "DUPLICATE",
-                                    });
-                                  }}
-                                >
-                                  <button
-                                    type="submit"
-                                    style={{
-                                      height: 30,
-                                      padding: "0 12px",
-                                      borderRadius: 10,
-                                      border: "1px solid #ddd",
-                                      background: "white",
-                                      cursor: "pointer",
-                                    }}
-                                  >
-                                    Duplicate
-                                  </button>
-                                </form>
-                              </div>
-                            </td>
-
-                            {/* paid */}
-                            {o.paid ? (
-                              <form
-                                action={async () => {
-                                  "use server";
-                                  await setOrderPaid({
-                                    orderId: o.id,
-                                    paid: false,
-                                  });
-                                }}
-                              >
-                                <button
-                                  type="submit"
-                                  style={{
-                                    height: 30,
-                                    padding: "0 12px",
-                                    borderRadius: 10,
-                                    border: "1px solid #ddd",
-                                    background: "white",
-                                    cursor: "pointer",
-                                  }}
-                                >
-                                  Unpaid
-                                </button>
-                              </form>
-                            ) : (
-                              <form
-                                action={async () => {
-                                  "use server";
-                                  await setOrderPaid({
-                                    orderId: o.id,
-                                    paid: true,
-                                  });
-                                }}
-                              >
-                                <button
-                                  type="submit"
-                                  style={{
-                                    height: 30,
-                                    padding: "0 12px",
-                                    borderRadius: 10,
-                                    border: "1px solid #ddd",
-                                    background: "white",
-                                    cursor: "pointer",
-                                  }}
-                                >
-                                  Paid
-                                </button>
-                              </form>
-                            )}
-                          </div>
+                            Edit
+                          </a>
                         ) : (
                           <span style={{ opacity: 0.5 }}>—</span>
                         )}
@@ -1152,6 +821,34 @@ export default async function BusinessPage({
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function KpiCard({
+  title,
+  value,
+  sub,
+}: {
+  title: string;
+  value: string;
+  sub?: string;
+}) {
+  return (
+    <div
+      style={{
+        border: "1px solid #e5e7eb",
+        borderRadius: 12,
+        padding: 12,
+        minWidth: 160,
+        background: "white",
+      }}
+    >
+      <div style={{ opacity: 0.7, fontSize: 12 }}>{title}</div>
+      <div style={{ fontSize: 22, fontWeight: 700 }}>{value}</div>
+      {sub ? (
+        <div style={{ opacity: 0.65, fontSize: 12, marginTop: 2 }}>{sub}</div>
+      ) : null}
     </div>
   );
 }
