@@ -28,6 +28,7 @@ type OrderRow = {
   due_date: string | null;
   status: "NEW" | "DONE";
   paid: boolean;
+  order_number: number | null;
   created_at: string;
 };
 
@@ -107,6 +108,12 @@ export default async function BusinessPage({
     range: (getSp("range") || "ALL") as Filters["range"],
   };
 
+  const hasActiveFilters =
+    !!filters.q?.trim() ||
+    filters.status !== "ALL" ||
+    filters.paid !== "ALL" ||
+    filters.range !== "ALL";
+
   function getDateFromRange(range: Filters["range"]) {
     if (range === "ALL") return null;
 
@@ -141,7 +148,7 @@ export default async function BusinessPage({
   let query = supabase
     .from("orders")
     .select(
-      "id, client_name, client_phone, amount, description, due_date, status, paid, created_at, search_text"
+      "id, order_number, client_name, client_phone, amount, description, due_date, status, paid, created_at, search_text"
     )
     .eq("business_id", business.id)
     .order("created_at", { ascending: false });
@@ -185,6 +192,8 @@ export default async function BusinessPage({
     due.setHours(0, 0, 0, 0);
     return due < todayStart && o.status === "NEW";
   }).length;
+
+  const todayISO = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
 
   return (
     <div style={{ maxWidth: 980, margin: "0 auto", padding: 24 }}>
@@ -525,7 +534,39 @@ export default async function BusinessPage({
         <div style={{ fontWeight: 700, marginBottom: 12 }}>Orders</div>
 
         {list.length === 0 ? (
-          <div style={{ opacity: 0.7 }}>No orders yet</div>
+          <div style={{ textAlign: "center", padding: 32 }}>
+            <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>
+              {hasActiveFilters
+                ? "No orders match your filters"
+                : "No orders yet"}
+            </div>
+
+            <div style={{ opacity: 0.75, marginBottom: 14 }}>
+              {hasActiveFilters
+                ? "Try changing filters or clearing search."
+                : "Create your first order to start tracking payments and deadlines."}
+            </div>
+
+            {hasActiveFilters ? (
+              <a
+                href={`/b/${business.slug}`}
+                style={{
+                  display: "inline-block",
+                  padding: "10px 14px",
+                  borderRadius: 12,
+                  border: "1px solid #ddd",
+                  fontWeight: 600,
+                  marginTop: 4,
+                }}
+              >
+                Clear filters
+              </a>
+            ) : (
+              <div style={{ fontSize: 12, opacity: 0.6 }}>
+                Tip: add client name, amount, and due date.
+              </div>
+            )}
+          </div>
         ) : (
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
@@ -543,203 +584,258 @@ export default async function BusinessPage({
               </thead>
 
               <tbody>
-                {list.map((o) => (
-                  <tr key={o.id} style={{ borderBottom: "1px solid #f2f2f2" }}>
-                    <td style={{ padding: "10px 6px" }}>
-                      <div style={{ fontWeight: 600 }}>{o.client_name}</div>
+                {list.map((o) => {
+                  const dueISO = o.due_date
+                    ? String(o.due_date).slice(0, 10)
+                    : null;
+                  const isOverdue =
+                    !!dueISO && dueISO < todayISO && o.status === "NEW";
 
-                      <div style={{ fontSize: 12, opacity: 0.7 }}>
-                        {o.client_phone || ""}
-                      </div>
+                  return (
+                    <tr
+                      key={o.id}
+                      style={{
+                        borderBottom: "1px solid #f2f2f2",
+                        background: isOverdue ? "#fff5f5" : "transparent",
+                      }}
+                    >
+                      <td style={{ padding: "10px 6px" }}>
+                        {/* Order number + created */}
+                        <div
+                          style={{
+                            fontSize: 12,
+                            opacity: 0.6,
+                            marginBottom: 4,
+                          }}
+                        >
+                          <strong>Order #{o.order_number ?? "-"}</strong> ·
+                          Created:{" "}
+                          {new Date(o.created_at).toLocaleString("en-NG", {
+                            day: "2-digit",
+                            month: "short",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </div>
 
-                      {o.description ? (
-                        <details style={{ marginTop: 6 }}>
-                          <summary
-                            style={{
-                              cursor: "pointer",
-                              fontSize: 14,
-                              fontWeight: 600,
-                              color: "#111",
-                              listStyle: "none",
-                              WebkitAppearance: "none",
-                              textDecoration: "underline",
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: 6,
-                              opacity: 0.9,
-                            }}
-                          >
-                            <span aria-hidden style={{ fontSize: 14 }}>
-                              📝
-                            </span>
-                            <span>Показать описание</span>
-                          </summary>
+                        {/* Client */}
+                        <div style={{ fontWeight: 600 }}>{o.client_name}</div>
 
+                        <div style={{ fontSize: 12, opacity: 0.7 }}>
+                          {o.client_phone || ""}
+                        </div>
+
+                        {o.description ? (
+                          <details style={{ marginTop: 6 }}>
+                            <summary
+                              style={{
+                                cursor: "pointer",
+                                fontSize: 14,
+                                fontWeight: 600,
+                                color: "#111",
+                                listStyle: "none",
+                                WebkitAppearance: "none",
+                                textDecoration: "underline",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 6,
+                                opacity: 0.9,
+                              }}
+                            >
+                              <span aria-hidden style={{ fontSize: 14 }}>
+                                📝
+                              </span>
+                              <span>Show description</span>
+                            </summary>
+
+                            <div
+                              style={{
+                                marginTop: 8,
+                                paddingLeft: 12,
+                                fontSize: 15,
+                                lineHeight: 1.5,
+                                opacity: 0.95,
+                                whiteSpace: "pre-wrap",
+                                wordBreak: "break-word",
+                              }}
+                            >
+                              {o.description}
+                            </div>
+                          </details>
+                        ) : null}
+                      </td>
+
+                      <td style={{ padding: "10px 6px", fontWeight: 700 }}>
+                        {fmtAmount(Number(o.amount))}
+                      </td>
+
+                      <td style={{ padding: "10px 6px" }}>
+                        <div
+                          style={{ color: isOverdue ? "#b91c1c" : undefined }}
+                        >
+                          {o.due_date || ""}
+                        </div>
+
+                        {isOverdue && (
                           <div
                             style={{
-                              marginTop: 8,
-                              paddingLeft: 12,
-                              fontSize: 15, // ← крупный текст
-                              lineHeight: 1.5,
-                              opacity: 0.95,
-                              whiteSpace: "pre-wrap",
-                              wordBreak: "break-word",
+                              fontSize: 11,
+                              color: "#b91c1c",
+                              opacity: 0.8,
                             }}
                           >
-                            {o.description}
+                            Overdue
                           </div>
-                        </details>
-                      ) : null}
-                    </td>
+                        )}
+                      </td>
 
-                    <td style={{ padding: "10px 6px", fontWeight: 700 }}>
-                      {fmtAmount(Number(o.amount))}
-                    </td>
+                      <td style={{ padding: "10px 6px", fontWeight: 700 }}>
+                        {o.status}
+                      </td>
 
-                    <td style={{ padding: "10px 6px" }}>{o.due_date || ""}</td>
+                      <td style={{ padding: "10px 6px", opacity: 0.75 }}>
+                        {o.paid ? "Paid" : "Not paid"}
+                      </td>
 
-                    <td style={{ padding: "10px 6px", fontWeight: 700 }}>
-                      {o.status}
-                    </td>
-
-                    <td style={{ padding: "10px 6px", opacity: 0.75 }}>
-                      {o.paid ? "paid" : "unpaid"}
-                    </td>
-
-                    <td style={{ padding: "10px 6px" }}>
-                      {canManage ? (
-                        <div
-                          style={{ display: "flex", gap: 8, flexWrap: "wrap" }}
-                        >
-                          <a
-                            href={`/b/${business.slug}/o/${
-                              o.id
-                            }?u=${encodeURIComponent(phoneRaw)}`}
+                      <td style={{ padding: "10px 6px" }}>
+                        {canManage ? (
+                          <div
                             style={{
-                              height: 30,
-                              padding: "0 12px",
-                              borderRadius: 10,
-                              border: "1px solid #ddd",
-                              background: "white",
-                              cursor: "pointer",
-                              display: "inline-flex",
-                              alignItems: "center",
-                              textDecoration: "none",
-                              color: "#111",
-                              fontSize: 13,
+                              display: "flex",
+                              gap: 8,
+                              flexWrap: "wrap",
                             }}
                           >
-                            Edit
-                          </a>
+                            <a
+                              href={`/b/${business.slug}/o/${
+                                o.id
+                              }?u=${encodeURIComponent(phoneRaw)}`}
+                              style={{
+                                height: 30,
+                                padding: "0 12px",
+                                borderRadius: 10,
+                                border: "1px solid #ddd",
+                                background: "white",
+                                cursor: "pointer",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                textDecoration: "none",
+                                color: "#111",
+                                fontSize: 13,
+                              }}
+                            >
+                              Edit
+                            </a>
 
-                          {/* статус */}
-                          {o.status === "NEW" ? (
-                            <form
-                              action={async () => {
-                                "use server";
-                                await setOrderStatus({
-                                  orderId: o.id,
-                                  status: "DONE",
-                                });
-                              }}
-                            >
-                              <button
-                                type="submit"
-                                style={{
-                                  height: 30,
-                                  padding: "0 12px",
-                                  borderRadius: 10,
-                                  border: "1px solid #ddd",
-                                  background: "white",
-                                  cursor: "pointer",
+                            {/* статус */}
+                            {o.status === "NEW" ? (
+                              <form
+                                action={async () => {
+                                  "use server";
+                                  await setOrderStatus({
+                                    orderId: o.id,
+                                    status: "DONE",
+                                  });
                                 }}
                               >
-                                Done
-                              </button>
-                            </form>
-                          ) : (
-                            <form
-                              action={async () => {
-                                "use server";
-                                await setOrderStatus({
-                                  orderId: o.id,
-                                  status: "NEW",
-                                });
-                              }}
-                            >
-                              <button
-                                type="submit"
-                                style={{
-                                  height: 30,
-                                  padding: "0 12px",
-                                  borderRadius: 10,
-                                  border: "1px solid #ddd",
-                                  background: "white",
-                                  cursor: "pointer",
+                                <button
+                                  type="submit"
+                                  style={{
+                                    height: 30,
+                                    padding: "0 12px",
+                                    borderRadius: 10,
+                                    border: "1px solid #ddd",
+                                    background: "white",
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  Done
+                                </button>
+                              </form>
+                            ) : (
+                              <form
+                                action={async () => {
+                                  "use server";
+                                  await setOrderStatus({
+                                    orderId: o.id,
+                                    status: "NEW",
+                                  });
                                 }}
                               >
-                                Back
-                              </button>
-                            </form>
-                          )}
+                                <button
+                                  type="submit"
+                                  style={{
+                                    height: 30,
+                                    padding: "0 12px",
+                                    borderRadius: 10,
+                                    border: "1px solid #ddd",
+                                    background: "white",
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  Back
+                                </button>
+                              </form>
+                            )}
 
-                          {/* paid */}
-                          {o.paid ? (
-                            <form
-                              action={async () => {
-                                "use server";
-                                await setOrderPaid({
-                                  orderId: o.id,
-                                  paid: false,
-                                });
-                              }}
-                            >
-                              <button
-                                type="submit"
-                                style={{
-                                  height: 30,
-                                  padding: "0 12px",
-                                  borderRadius: 10,
-                                  border: "1px solid #ddd",
-                                  background: "white",
-                                  cursor: "pointer",
+                            {/* paid */}
+                            {o.paid ? (
+                              <form
+                                action={async () => {
+                                  "use server";
+                                  await setOrderPaid({
+                                    orderId: o.id,
+                                    paid: false,
+                                  });
                                 }}
                               >
-                                Unpaid
-                              </button>
-                            </form>
-                          ) : (
-                            <form
-                              action={async () => {
-                                "use server";
-                                await setOrderPaid({
-                                  orderId: o.id,
-                                  paid: true,
-                                });
-                              }}
-                            >
-                              <button
-                                type="submit"
-                                style={{
-                                  height: 30,
-                                  padding: "0 12px",
-                                  borderRadius: 10,
-                                  border: "1px solid #ddd",
-                                  background: "white",
-                                  cursor: "pointer",
+                                <button
+                                  type="submit"
+                                  style={{
+                                    height: 30,
+                                    padding: "0 12px",
+                                    borderRadius: 10,
+                                    border: "1px solid #ddd",
+                                    background: "white",
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  Unpaid
+                                </button>
+                              </form>
+                            ) : (
+                              <form
+                                action={async () => {
+                                  "use server";
+                                  await setOrderPaid({
+                                    orderId: o.id,
+                                    paid: true,
+                                  });
                                 }}
                               >
-                                Paid
-                              </button>
-                            </form>
-                          )}
-                        </div>
-                      ) : (
-                        <span style={{ opacity: 0.5 }}>—</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                                <button
+                                  type="submit"
+                                  style={{
+                                    height: 30,
+                                    padding: "0 12px",
+                                    borderRadius: 10,
+                                    border: "1px solid #ddd",
+                                    background: "white",
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  Paid
+                                </button>
+                              </form>
+                            )}
+                          </div>
+                        ) : (
+                          <span style={{ opacity: 0.5 }}>—</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
