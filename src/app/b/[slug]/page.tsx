@@ -144,7 +144,14 @@ export default async function BusinessPage({
   const isOwnerManager = isOwner && isManager;
 
   const canView = role === "OWNER" || role === "MANAGER";
-  const canManage = role === "MANAGER" || isOwnerManager;
+
+  // теперь OWNER тоже управляет
+  const canManage = role === "OWNER" || role === "MANAGER";
+  const canEdit = canManage; // ✅ добавь это
+  // Edit тоже всем, кто canView
+  const canSeeActions = canView;
+
+  // аналитику оставим как было: только OWNER или OWNER/MANAGER (можешь расширить позже)
   const canSeeAnalytics = role === "OWNER" || isOwnerManager;
 
   // 🚫 GUEST ничего не видит вообще
@@ -788,7 +795,7 @@ export default async function BusinessPage({
 
                       {/* ACTIONS */}
                       <td style={{ padding: "10px 6px" }}>
-                        {canManage ? (
+                        {canEdit ? (
                           <a
                             href={`/b/${business.slug}/o/${
                               o.id

@@ -53,7 +53,8 @@ export async function createOrder(input: {
  */
 export async function setOrderStatus(input: {
   orderId: string;
-  status: "NEW" | "IN_PROGRESS" | "DONE" | "CANCELED" | "DUPLICATE";
+  status: "NEW" | "IN_PROGRESS" | "WAITING_PAYMENT" | "DONE" | "CANCELED" | "DUPLICATE";
+
 }) {
   const patch: any = {
     status: input.status,

@@ -7,12 +7,20 @@ import React, {
   useState,
   useTransition,
 } from "react";
-import { setOrderPaid, setOrderStatus } from "./actions";
+import { setOrderStatus } from "./actions";
 
-type Status = "NEW" | "IN_PROGRESS" | "DONE" | "CANCELED" | "DUPLICATE";
+type Status =
+  | "NEW"
+  | "IN_PROGRESS"
+  | "WAITING_PAYMENT"
+  | "DONE"
+  | "CANCELED"
+  | "DUPLICATE";
 
 function statusLabel(s: Status) {
-  return s === "IN_PROGRESS" ? "IN PROGRESS" : s;
+  if (s === "IN_PROGRESS") return "IN PROGRESS";
+  if (s === "WAITING_PAYMENT") return "WAITING PAYMENT";
+  return s;
 }
 
 function badgeStyleStatus(status: Status): React.CSSProperties {
@@ -29,11 +37,17 @@ function badgeStyleStatus(status: Status): React.CSSProperties {
         border: "1px solid rgba(59,130,246,0.25)",
         color: "#1d4ed8",
       };
-    case "CANCELED":
+    case "WAITING_PAYMENT":
       return {
         background: "rgba(245,158,11,0.14)",
         border: "1px solid rgba(245,158,11,0.28)",
         color: "#b45309",
+      };
+    case "CANCELED":
+      return {
+        background: "rgba(239,68,68,0.10)",
+        border: "1px solid rgba(239,68,68,0.22)",
+        color: "#b91c1c",
       };
     case "DUPLICATE":
       return {
@@ -49,14 +63,6 @@ function badgeStyleStatus(status: Status): React.CSSProperties {
         color: "#111827",
       };
   }
-}
-
-function badgeStylePaid(): React.CSSProperties {
-  return {
-    background: "rgba(0,0,0,0.04)",
-    border: "1px solid rgba(0,0,0,0.10)",
-    color: "#111827",
-  };
 }
 
 function Badge({
@@ -122,7 +128,7 @@ function Menu({
         position: "absolute",
         top: 36,
         left: 0,
-        minWidth: width ?? 160,
+        minWidth: width ?? 180,
         background: "white",
         border: "1px solid #e5e7eb",
         borderRadius: 12,
@@ -244,7 +250,15 @@ export function StatusCell({
   useOutsideAndEscClose(open, () => setOpen(false), rootRef, menuRef);
 
   const options = useMemo(
-    () => ["NEW", "IN_PROGRESS", "DONE", "CANCELED", "DUPLICATE"] as Status[],
+    () =>
+      [
+        "NEW",
+        "IN_PROGRESS",
+        "WAITING_PAYMENT",
+        "DONE",
+        "CANCELED",
+        "DUPLICATE",
+      ] as Status[],
     []
   );
 
@@ -282,7 +296,7 @@ export function StatusCell({
         {statusLabel(local)}
       </Badge>
 
-      <Menu open={open} menuRef={menuRef} width={190}>
+      <Menu open={open} menuRef={menuRef} width={210}>
         {options.map((s) => (
           <MenuItem
             key={s}
@@ -320,118 +334,6 @@ export function StatusCell({
             {statusLabel(s)}
           </MenuItem>
         ))}
-      </Menu>
-    </div>
-  );
-}
-
-export function PaidCell({
-  orderId,
-  value,
-  canManage,
-}: {
-  orderId: string;
-  value: boolean;
-  canManage: boolean;
-}) {
-  const [open, setOpen] = useState(false);
-  const [isPending, startTransition] = useTransition();
-
-  // optimistic
-  const [local, setLocal] = useState<boolean>(value);
-  useEffect(() => setLocal(value), [value]);
-
-  const rootRef = useRef<HTMLDivElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  useOutsideAndEscClose(open, () => setOpen(false), rootRef, menuRef);
-
-  if (!canManage) {
-    return (
-      <span
-        style={{
-          ...badgeStylePaid(),
-          height: 30,
-          padding: "0 10px",
-          borderRadius: 999,
-          fontSize: 12,
-          fontWeight: 800,
-          display: "inline-flex",
-          alignItems: "center",
-          whiteSpace: "nowrap",
-        }}
-      >
-        {local ? "PAID" : "NOT PAID"}
-      </span>
-    );
-  }
-
-  return (
-    <div
-      ref={rootRef}
-      style={{ position: "relative", display: "inline-block" }}
-    >
-      <Badge
-        style={badgeStylePaid()}
-        disabled={isPending}
-        title="Change paid"
-        onClick={() => setOpen((v) => !v)}
-      >
-        {local ? "PAID" : "NOT PAID"}
-      </Badge>
-
-      <Menu open={open} menuRef={menuRef} width={160}>
-        <MenuItem
-          active={local === true}
-          disabled={isPending}
-          onClick={() => {
-            if (local === true) {
-              setOpen(false);
-              return;
-            }
-
-            const prev = local;
-            setLocal(true);
-            setOpen(false);
-
-            startTransition(async () => {
-              try {
-                await setOrderPaid({ orderId, paid: true });
-              } catch {
-                setLocal(prev);
-                alert("Failed to update paid. Try again.");
-              }
-            });
-          }}
-        >
-          PAID
-        </MenuItem>
-
-        <MenuItem
-          active={local === false}
-          disabled={isPending}
-          onClick={() => {
-            if (local === false) {
-              setOpen(false);
-              return;
-            }
-
-            const prev = local;
-            setLocal(false);
-            setOpen(false);
-
-            startTransition(async () => {
-              try {
-                await setOrderPaid({ orderId, paid: false });
-              } catch {
-                setLocal(prev);
-                alert("Failed to update paid. Try again.");
-              }
-            });
-          }}
-        >
-          NOT PAID
-        </MenuItem>
       </Menu>
     </div>
   );

@@ -75,13 +75,14 @@ export default async function EditOrderPage({
   const isOwnerManager = isOwner && isManager;
 
   // can edit only manager OR owner-manager
-  const canEdit = role === "MANAGER" || isOwnerManager;
+  // can edit: OWNER or MANAGER (and owner-manager obviously too)
+  const canEdit = role === "OWNER" || role === "MANAGER";
   if (!canEdit) {
     return (
       <div style={{ maxWidth: 980, margin: "0 auto", padding: 24 }}>
         <h2 style={{ margin: 0 }}>Access denied</h2>
         <div style={{ opacity: 0.75, marginTop: 6 }}>
-          Only MANAGER can edit orders.
+          Only OWNER or MANAGER can edit orders.
         </div>
         <div style={{ marginTop: 16 }}>
           <a
