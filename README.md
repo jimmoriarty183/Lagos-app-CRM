@@ -108,3 +108,33 @@ The project is under active development and ready for further feature expansion.
 ## License
 
 MIT
+
+## 🆕 Latest updates 11.01.2026
+
+### Inline status & payment management
+
+- Status and Paid fields are now editable **directly from the table**
+- One-click interaction: click on a badge → select value → saved automatically
+- No intermediate “edit / save / cancel” screens
+
+### Improved UX
+
+- Custom dropdown (popover) instead of native `<select>`
+- No extra clicks or intermediate states
+- Clean badge-based UI
+- Confirmation dialog for destructive actions (`CANCELED`)
+
+### Optimistic UI
+
+- Status and payment values update **instantly**
+- Server update happens in the background
+- Automatic rollback on error to keep data consistent
+
+### Technical improvements
+
+- Fully client-side interactive cells (`StatusCell`, `PaidCell`)
+- Server Actions used for all mutations
+- TypeScript issues fixed (strict typing, refs, modules)
+- Code is production-ready and safe to extend
+
+---
