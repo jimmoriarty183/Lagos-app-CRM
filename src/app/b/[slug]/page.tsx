@@ -47,6 +47,10 @@ export default async function BusinessPage({
 
   // u — текущий “идентификатор” пользователя (телефон)
   const u = sp?.u; // normalizePhone НЕ трогаем, как ты сказал
+  const uStr = Array.isArray(u) ? u[0] : u; // string | undefined
+  const clearHref = uStr
+    ? `/b/${slug}?u=${encodeURIComponent(uStr)}`
+    : `/b/${slug}`;
   const phoneRaw =
     typeof u === "string"
       ? decodeURIComponent(u)
@@ -520,6 +524,29 @@ export default async function BusinessPage({
         >
           Apply
         </button>
+
+        {hasActiveFilters && (
+          <a
+            href={clearHref}
+            style={{
+              height: 40,
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "0 16px",
+              borderRadius: 10,
+              border: "1px solid #ddd",
+              fontWeight: 600,
+              background: "white",
+              textDecoration: "none",
+              color: "inherit",
+              cursor: "pointer",
+              alignSelf: "flex-end",
+            }}
+          >
+            Clear
+          </a>
+        )}
       </form>
 
       {/* Таблица заказов (видят и OWNER и MANAGER), но Actions только MANAGER/OWNER-MANAGER */}
@@ -549,7 +576,7 @@ export default async function BusinessPage({
 
             {hasActiveFilters ? (
               <a
-                href={`/b/${business.slug}`}
+                href={clearHref}
                 style={{
                   display: "inline-block",
                   padding: "10px 14px",
