@@ -1,5 +1,5 @@
-import Accordion from "../../Accordion";
 import Button from "../../Button";
+import MobileAccordion from "./MobileAccordion";
 
 type Status =
   | "NEW"
@@ -26,7 +26,35 @@ export default function MobileFiltersAccordion({
   hasActiveFilters,
 }: Props) {
   return (
-    <Accordion title="Filters" defaultOpen={false}>
+    <MobileAccordion
+      title="Filters"
+      defaultOpen={false}
+      rightSlot={
+        hasActiveFilters ? (
+          <a
+            href={clearHref}
+            style={{
+              height: 30,
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "0 10px",
+              borderRadius: 999,
+              border: "1px solid #e5e7eb",
+              fontWeight: 900,
+              background: "white",
+              textDecoration: "none",
+              color: "inherit",
+              cursor: "pointer",
+              fontSize: 12,
+              whiteSpace: "nowrap",
+            }}
+          >
+            Clear
+          </a>
+        ) : null
+      }
+    >
       <form method="get" style={{ display: "grid", gap: 10 }}>
         <input type="hidden" name="u" value={phoneRaw} />
         <input type="hidden" name="page" value="1" />
@@ -85,38 +113,10 @@ export default function MobileFiltersAccordion({
           <option value="year">This year</option>
         </select>
 
-        <div
-          style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}
-        >
-          <Button type="submit" size="sm" style={{ width: "100%" }}>
-            Apply
-          </Button>
-
-          {hasActiveFilters ? (
-            <a
-              href={clearHref}
-              style={{
-                height: 40,
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: "0 16px",
-                borderRadius: 12,
-                border: "1px solid #e5e7eb",
-                fontWeight: 900,
-                background: "white",
-                textDecoration: "none",
-                color: "inherit",
-                cursor: "pointer",
-              }}
-            >
-              Clear
-            </a>
-          ) : (
-            <div style={{ height: 40 }} />
-          )}
-        </div>
+        <Button type="submit" size="sm" style={{ width: "100%" }}>
+          Apply
+        </Button>
       </form>
-    </Accordion>
+    </MobileAccordion>
   );
 }

@@ -2,23 +2,18 @@ import { notFound } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { normalizePhone } from "@/lib/phone";
 
-import Accordion from "./Accordion";
-import Button from "./Button";
-
 import DesktopSidebar from "./_components/Desktop/DesktopSidebar";
 import DesktopBusinessCard from "./_components/Desktop/DesktopBusinessCard";
 import DesktopCreateOrder from "./_components/Desktop/DesktopCreateOrder";
 import DesktopFilters from "./_components/Desktop/DesktopFilters";
 import DesktopOrdersTable from "./_components/Desktop/DesktopOrdersTable";
+import DesktopAnalyticsCard from "./_components/Desktop/DesktopAnalyticsCard";
 
-import MobileSummaryBar from "./_components/Mobile/MobileSummaryBar";
 import MobileBusinessAccordion from "./_components/Mobile/MobileBusinessAccordion";
 import MobileAnalyticsAccordion from "./_components/Mobile/MobileAnalyticsAccordion";
 import MobileCreateOrderAccordion from "./_components/Mobile/MobileCreateOrderAccordion";
 import MobileFiltersAccordion from "./_components/Mobile/MobileFiltersAccordion";
 import MobileOrdersList from "./_components/Mobile/MobileOrdersList";
-
-import DesktopAnalyticsCard from "./_components/Desktop/DesktopAnalyticsCard";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -151,7 +146,6 @@ export default async function BusinessPage({
     : isManager
     ? "MANAGER"
     : "GUEST";
-
   const isOwnerManager = isOwner && isManager;
 
   const canView = role === "OWNER" || role === "MANAGER";
@@ -233,7 +227,7 @@ export default async function BusinessPage({
   const list = (orders || []) as OrderRow[];
 
   // ---- analytics ----
-  let totalOrders = totalCount;
+  const totalOrders = totalCount;
   let totalAmount = 0;
 
   let newCount = 0;
@@ -442,14 +436,18 @@ export default async function BusinessPage({
           </aside>
 
           <section style={contentCol}>
-            <MobileSummaryBar
-              totalCount={totalCount}
-              hasActiveFilters={hasActiveFilters}
-              clearHref={clearHref}
-              pill={pill}
+            {/* Desktop: business card */}
+            <DesktopBusinessCard
+              business={business}
+              role={role}
+              phone={phone}
+              isOwnerManager={isOwnerManager}
               card={card}
+              cardHeader={cardHeader}
+              cardTitle={cardTitle}
             />
 
+            {/* Desktop: analytics */}
             <DesktopAnalyticsCard
               canSeeAnalytics={canSeeAnalytics}
               card={card}
@@ -470,6 +468,7 @@ export default async function BusinessPage({
               fmtAmount={fmtAmount}
             />
 
+            {/* Mobile: business + analytics accordions */}
             <section className="mobileOnly" style={card}>
               <div style={{ display: "grid", gap: 8 }}>
                 <MobileBusinessAccordion
@@ -497,6 +496,7 @@ export default async function BusinessPage({
               </div>
             </section>
 
+            {/* Create order */}
             {canManage ? (
               <>
                 <DesktopCreateOrder
@@ -512,6 +512,7 @@ export default async function BusinessPage({
               </>
             ) : null}
 
+            {/* Filters */}
             <DesktopFilters
               phoneRaw={phoneRaw}
               filters={filters}
@@ -535,7 +536,11 @@ export default async function BusinessPage({
             <section style={card}>
               <div style={cardHeader}>
                 <div style={cardTitle}>Orders</div>
-                <div style={{ fontSize: 12, opacity: 0.65 }}>
+                {/* чтобы на мобайле не было "total" блока сверху */}
+                <div
+                  className="desktopOnly"
+                  style={{ fontSize: 12, opacity: 0.65 }}
+                >
                   {totalCount} total
                 </div>
               </div>

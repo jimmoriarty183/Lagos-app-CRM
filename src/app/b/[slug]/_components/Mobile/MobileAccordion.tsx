@@ -6,10 +6,10 @@ type Props = {
   title: string;
   defaultOpen?: boolean;
   children: ReactNode;
-  rightSlot?: ReactNode; // 👈 добавили
+  rightSlot?: ReactNode; // действия справа (например Clear)
 };
 
-export default function Accordion({
+export default function MobileAccordion({
   title,
   defaultOpen = false,
   children,
@@ -50,13 +50,9 @@ export default function Accordion({
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          {/* 👇 справа любые действия, не закрывают аккордеон */}
           {rightSlot ? (
             <span
-              onClick={(e) => {
-                // чтобы клик по rightSlot не переключал open/close
-                e.stopPropagation();
-              }}
+              onClick={(e) => e.stopPropagation()} // чтобы клик по Clear не открывал/закрывал
               style={{ display: "inline-flex", alignItems: "center" }}
             >
               {rightSlot}
