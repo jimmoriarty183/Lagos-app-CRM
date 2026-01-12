@@ -376,8 +376,8 @@ export default async function BusinessPage({
             .desktopOnly { display: block; }
             .mobileOnly { display: none; }
             @media (max-width: 768px) {
-              .desktopOnly { display: none !important; }
-              .mobileOnly { display: block !important; }
+              .desktopOnly { display: none; }
+              .mobileOnly { display: block; }
               .shellPad { padding: 12px 12px 18px !important; }
               .topPad { padding: 0 12px !important; }
               .shellGrid { grid-template-columns: 1fr !important; }
@@ -585,23 +585,27 @@ export default async function BusinessPage({
                 </div>
               ) : (
                 <>
-                  <DesktopOrdersTable
-                    list={list}
-                    todayISO={todayISO}
-                    businessSlug={business.slug}
-                    phoneRaw={phoneRaw}
-                    canManage={canManage}
-                    canEdit={canEdit}
-                  />
+                  <div className="desktopOnly">
+                    <DesktopOrdersTable
+                      list={list}
+                      todayISO={todayISO}
+                      businessSlug={business.slug}
+                      phoneRaw={phoneRaw}
+                      canManage={canManage}
+                      canEdit={canEdit}
+                    />
+                  </div>
 
-                  <MobileOrdersList
-                    list={list}
-                    todayISO={todayISO}
-                    businessSlug={business.slug}
-                    phoneRaw={phoneRaw}
-                    canManage={canManage}
-                    canEdit={canEdit}
-                  />
+                  <div className="mobileOnly">
+                    <MobileOrdersList
+                      list={list}
+                      todayISO={todayISO}
+                      businessSlug={business.slug}
+                      phoneRaw={phoneRaw}
+                      canManage={canManage}
+                      canEdit={canEdit}
+                    />
+                  </div>
                 </>
               )}
             </section>

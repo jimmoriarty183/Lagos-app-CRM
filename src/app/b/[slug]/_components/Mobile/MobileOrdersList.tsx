@@ -240,7 +240,7 @@ export default function MobileOrdersList({
   canEdit,
 }: Props) {
   return (
-    <div className="mobileOnly" style={{ display: "grid", gap: 10 }}>
+    <div className="mobileOnly" style={{ display: "grid", gap: 12 }}>
       {list.map((o) => (
         <MobileOrderCard
           key={o.id}
