@@ -7,11 +7,40 @@ type Props = {
 };
 
 export default function MobileCreateOrderAccordion({ businessId }: Props) {
+  const fieldBase: React.CSSProperties = {
+    width: "100%",
+    maxWidth: "100%",
+    minWidth: 0,
+    boxSizing: "border-box",
+    height: 44,
+    borderRadius: 14,
+    border: "1px solid #e5e7eb",
+    padding: "0 12px",
+    outline: "none",
+    background: "white",
+    display: "block",
+  };
+
+  const textareaBase: React.CSSProperties = {
+    width: "100%",
+    maxWidth: "100%",
+    minWidth: 0,
+    boxSizing: "border-box",
+    borderRadius: 14,
+    border: "1px solid #e5e7eb",
+    padding: "10px 12px",
+    resize: "vertical",
+    outline: "none",
+    background: "white",
+    display: "block",
+  };
+
   return (
     <Accordion title="Create order" defaultOpen={false}>
       <form
         action={async (fd) => {
           "use server";
+
           const clientName = String(fd.get("client_name") || "").trim();
 
           const clientPhoneRaw = String(fd.get("client_phone") || "").trim();
@@ -22,6 +51,7 @@ export default function MobileCreateOrderAccordion({ businessId }: Props) {
           const description = String(fd.get("description") || "").trim();
 
           const amount = Number(amountRaw);
+
           if (!clientName) throw new Error("Client name is required");
           if (!Number.isFinite(amount) || amount <= 0)
             throw new Error("Amount must be > 0");
@@ -35,19 +65,28 @@ export default function MobileCreateOrderAccordion({ businessId }: Props) {
             description: description || undefined,
           });
         }}
+        style={{
+          width: "100%",
+          maxWidth: "100%",
+          boxSizing: "border-box",
+          overflowX: "hidden", // ✅ страховка от горизонтального вылета
+        }}
       >
-        <div style={{ display: "grid", gap: 10 }}>
+        <div
+          style={{
+            display: "grid",
+            gap: 10,
+            width: "100%",
+            maxWidth: "100%",
+            boxSizing: "border-box",
+            overflowX: "hidden", // ✅ ещё одна страховка (iOS иногда упрямый)
+          }}
+        >
           <input
             name="client_name"
             placeholder="Client name *"
             autoComplete="name"
-            style={{
-              height: 44,
-              borderRadius: 14,
-              border: "1px solid #e5e7eb",
-              padding: "0 12px",
-              outline: "none",
-            }}
+            style={fieldBase}
           />
 
           <input
@@ -55,62 +94,64 @@ export default function MobileCreateOrderAccordion({ businessId }: Props) {
             placeholder="Client phone"
             inputMode="tel"
             autoComplete="tel"
-            style={{
-              height: 44,
-              borderRadius: 14,
-              border: "1px solid #e5e7eb",
-              padding: "0 12px",
-              outline: "none",
-            }}
+            style={fieldBase}
           />
 
           <textarea
             name="description"
             placeholder="Description"
             rows={3}
-            style={{
-              borderRadius: 14,
-              border: "1px solid #e5e7eb",
-              padding: "10px 12px",
-              resize: "vertical",
-              outline: "none",
-            }}
+            style={textareaBase}
           />
 
           <div
-            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}
+            style={{
+              display: "grid",
+              gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)",
+              gap: 10,
+              width: "100%",
+              maxWidth: "100%",
+              boxSizing: "border-box",
+              overflow: "hidden", // ✅ КЛЮЧЕВО: клипает вылет date-поля на iOS
+            }}
           >
-            <input
-              name="amount"
-              placeholder="Amount *"
-              inputMode="numeric"
-              style={{
-                height: 44,
-                borderRadius: 14,
-                border: "1px solid #e5e7eb",
-                padding: "0 12px",
-                outline: "none",
-              }}
-            />
+            <div style={{ minWidth: 0 }}>
+              <input
+                name="amount"
+                placeholder="Amount *"
+                inputMode="decimal"
+                autoComplete="off"
+                style={fieldBase}
+              />
+            </div>
 
-            <input
-              name="due_date"
-              type="date"
-              style={{
-                height: 44,
-                borderRadius: 14,
-                border: "1px solid #e5e7eb",
-                padding: "0 12px",
-                outline: "none",
-              }}
-            />
+            <div style={{ minWidth: 0, overflow: "hidden" }}>
+              <input
+                name="due_date"
+                type="date"
+                style={{
+                  ...fieldBase,
+                  paddingRight: 10,
+                  WebkitAppearance: "none", // ✅ iOS Safari фикс
+                  appearance: "none",
+                  background: "white",
+                  minWidth: 0,
+                  maxWidth: "100%",
+                }}
+              />
+            </div>
           </div>
 
           <Button
             type="submit"
             variant="primary"
             size="md"
-            style={{ width: "100%" }}
+            style={{
+              width: "100%",
+              maxWidth: "100%",
+              boxSizing: "border-box",
+              minWidth: 0,
+            }}
           >
             Create
           </Button>

@@ -1,4 +1,5 @@
 import { StatusCell } from "../../InlineCells";
+import { statusTone } from "../../statusTone";
 
 type Status =
   | "NEW"
@@ -28,20 +29,6 @@ function clamp(s: string, max = 34) {
   const t = (s || "").trim();
   if (t.length <= max) return t;
   return t.slice(0, max - 1) + "…";
-}
-
-function statusTone(status: Status) {
-  if (status === "NEW")
-    return { bg: "#eff6ff", border: "#bfdbfe", text: "#1d4ed8" };
-  if (status === "IN_PROGRESS")
-    return { bg: "#fffbeb", border: "#fed7aa", text: "#b45309" };
-  if (status === "WAITING_PAYMENT")
-    return { bg: "#fffbeb", border: "#fed7aa", text: "#b45309" };
-  if (status === "DONE")
-    return { bg: "#ecfdf5", border: "#bbf7d0", text: "#047857" };
-  if (status === "CANCELED")
-    return { bg: "#fef2f2", border: "#fecaca", text: "#b91c1c" };
-  return { bg: "#f8fafc", border: "#e5e7eb", text: "#0f172a" };
 }
 
 function MobileOrderCard({
@@ -106,8 +93,6 @@ function MobileOrderCard({
           style={{
             borderRadius: 999,
             border: `1px solid ${st.border}`,
-            background: st.bg,
-            color: st.text,
             fontWeight: 900,
             fontSize: 12,
             padding: "8px 12px",

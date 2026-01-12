@@ -369,7 +369,14 @@ export default async function BusinessPage({
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f6f7fb" }}>
+    <div
+      style={{
+        minHeight: "100vh",
+        background: "#f6f7fb",
+        overflowX: "hidden",
+      }}
+    >
+      {" "}
       <style
         dangerouslySetInnerHTML={{
           __html: `
@@ -385,7 +392,6 @@ export default async function BusinessPage({
           `,
         }}
       />
-
       <header
         style={{
           height: 64,
@@ -424,7 +430,6 @@ export default async function BusinessPage({
           </div>
         </div>
       </header>
-
       <main className="shellPad" style={appShell}>
         <div className="shellGrid" style={shellGrid}>
           <aside className="desktopOnly" style={sidebarStyle}>
