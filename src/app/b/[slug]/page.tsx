@@ -14,6 +14,7 @@ import MobileAnalyticsAccordion from "./_components/Mobile/MobileAnalyticsAccord
 import MobileCreateOrderAccordion from "./_components/Mobile/MobileCreateOrderAccordion";
 import MobileFiltersAccordion from "./_components/Mobile/MobileFiltersAccordion";
 import MobileOrdersList from "./_components/Mobile/MobileOrdersList";
+import TopBar from "./_components/topbar/TopBar";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -392,44 +393,12 @@ export default async function BusinessPage({
           `,
         }}
       />
-      <header
-        style={{
-          height: 64,
-          borderBottom: "1px solid #e5e7eb",
-          background: "white",
-          boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
-        }}
-      >
-        <div
-          className="topPad"
-          style={{
-            maxWidth: 1400,
-            margin: "0 auto",
-            height: "100%",
-            padding: "0 24px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 12,
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ fontWeight: 900, fontSize: 18, letterSpacing: 0.2 }}>
-              Ordero
-            </div>
-            <div style={{ fontSize: 12, opacity: 0.6, fontWeight: 700 }}>
-              / {business.slug}
-            </div>
-          </div>
-
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <div style={{ ...pill, background: "#f1f5f9" }}>
-              {business.plan}
-            </div>
-            <div style={pill}>{role}</div>
-          </div>
-        </div>
-      </header>
+      <TopBar
+        businessSlug={business.slug}
+        plan={business.plan}
+        role={role}
+        pill={pill}
+      />
       <main className="shellPad" style={appShell}>
         <div className="shellGrid" style={shellGrid}>
           <aside className="desktopOnly" style={sidebarStyle}>
