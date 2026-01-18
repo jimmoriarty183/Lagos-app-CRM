@@ -109,4 +109,3 @@ export default async function ManagerHome({ params }: PageProps) {
       </div>
     </main>
   );
-}

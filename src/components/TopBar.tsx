@@ -3,108 +3,128 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+export type RightVariant =
+  | "none"
+  | "login"
+  | "back"
+  | "backHome"
+  | "backHomeLogin";
+
 type Props = {
   subtitle?: string;
-  rightVariant?: "login" | "pricing" | "none";
+  rightVariant?: RightVariant;
+  /** чтобы TopBar всегда совпадал с контентом */
+  maxWidth?: number;
 };
 
-export default function TopBar({ subtitle, rightVariant = "none" }: Props) {
+export default function TopBar({
+  subtitle,
+  rightVariant = "none",
+  maxWidth = 1040,
+}: Props) {
   const router = useRouter();
 
-  const goBackSmart = () => {
-    // если есть история — вернёмся назад, иначе на главную
-    if (typeof window !== "undefined" && window.history.length > 1) {
-      router.back();
-    } else {
-      router.push("/");
-    }
-  };
+  const Btn = ({
+    children,
+    onClick,
+    primary,
+  }: {
+    children: React.ReactNode;
+    onClick: () => void;
+    primary?: boolean;
+  }) => (
+    <button
+      onClick={onClick}
+      style={{
+        height: 38,
+        padding: "0 12px",
+        borderRadius: 12,
+        border: primary ? "1px solid #111827" : "1px solid #e5e7eb",
+        background: primary ? "#111827" : "rgba(255,255,255,0.7)",
+        color: primary ? "white" : "#111827",
+        fontWeight: primary ? 900 : 800,
+        cursor: "pointer",
+        whiteSpace: "nowrap",
+      }}
+    >
+      {children}
+    </button>
+  );
 
   return (
-    <header style={{ padding: "10px 18px 0" }}>
-      <div style={{ maxWidth: 1040, margin: "0 auto" }}>
-        <div
+    <header style={{ padding: "10px 6px" }}>
+      {/* ВАЖНО: контейнер внутри TopBar */}
+      <div
+        style={{
+          maxWidth,
+          margin: "0 auto",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 12,
+        }}
+      >
+        <Link
+          href="/"
           style={{
             display: "flex",
             alignItems: "center",
-            justifyContent: "space-between",
-            gap: 12,
-            padding: "10px 6px",
+            gap: 10,
+            textDecoration: "none",
+            color: "inherit",
+            minWidth: 0,
           }}
         >
-          {/* Logo (clickable -> home) */}
-          <Link
-            href="/"
+          <div
             style={{
-              all: "unset",
-              cursor: "pointer",
+              width: 40,
+              height: 40,
+              borderRadius: 14,
+              background: "#111827",
+              color: "white",
               display: "flex",
               alignItems: "center",
-              gap: 10,
+              justifyContent: "center",
+              fontWeight: 900,
+              userSelect: "none",
+              flex: "0 0 auto",
             }}
           >
-            <div
-              style={{
-                width: 40,
-                height: 40,
-                borderRadius: 14,
-                background: "#111827",
-                color: "white",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontWeight: 900,
-                letterSpacing: 0.5,
-                userSelect: "none",
-              }}
-            >
-              O
-            </div>
+            O
+          </div>
 
-            <div style={{ textAlign: "left" }}>
-              <div style={{ fontWeight: 900, lineHeight: 1 }}>Ordero</div>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontWeight: 900, lineHeight: 1 }}>Ordero</div>
+            {subtitle ? (
               <div style={{ opacity: 0.65, fontSize: 12, marginTop: 2 }}>
-                {subtitle ?? "Orders. Simple. Fast."}
+                {subtitle}
               </div>
-            </div>
-          </Link>
+            ) : null}
+          </div>
+        </Link>
 
-          {/* Right actions */}
-          {rightVariant !== "none" && (
-            <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-              <button
-                onClick={goBackSmart}
-                style={{
-                  height: 38,
-                  padding: "0 12px",
-                  borderRadius: 12,
-                  border: "1px solid #e5e7eb",
-                  background: "rgba(255,255,255,0.7)",
-                  fontWeight: 800,
-                  cursor: "pointer",
-                }}
-              >
-                Back
-              </button>
+        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+          {rightVariant === "login" && (
+            <Btn onClick={() => router.push("/login")} primary>
+              Log in
+            </Btn>
+          )}
 
-              {rightVariant === "pricing" && (
-                <button
-                  onClick={() => router.push("/login")}
-                  style={{
-                    height: 38,
-                    padding: "0 12px",
-                    borderRadius: 12,
-                    border: "1px solid #111827",
-                    background: "#111827",
-                    color: "white",
-                    fontWeight: 900,
-                    cursor: "pointer",
-                  }}
-                >
-                  Log in
-                </button>
-              )}
-            </div>
+          {rightVariant === "back" && (
+            <Btn onClick={() => router.back()}>Back</Btn>
+          )}
+
+          {rightVariant === "backHome" && (
+            <Btn onClick={() => router.push("/")}>Back</Btn>
+          )}
+
+          {rightVariant === "backHomeLogin" && (
+            <>
+              <Btn onClick={() => router.push("/")}>Back</Btn>
+              <Btn onClick={() => router.push("/login")} primary>
+                Log in
+              </Btn>
+            </>
           )}
         </div>
       </div>

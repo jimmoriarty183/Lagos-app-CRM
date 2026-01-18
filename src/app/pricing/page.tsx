@@ -64,7 +64,7 @@ export default function PricingPage() {
       }}
     >
       <div style={{ maxWidth: 1040, margin: "0 auto" }}>
-        <TopBar subtitle="Pricing" />
+        <TopBar subtitle="Pricing" rightVariant="backHomeLogin" />
 
         {/* Title */}
         <section style={{ marginTop: 18 }}>
