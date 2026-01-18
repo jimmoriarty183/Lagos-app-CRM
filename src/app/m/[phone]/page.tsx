@@ -23,7 +23,9 @@ export default async function ManagerHome({ params }: PageProps) {
 
   const { data: businesses, error } = await supabase
     .from("businesses")
-    .select("id, slug, owner_phone, manager_phone, plan, expires_at, created_at")
+    .select(
+      "id, slug, owner_phone, manager_phone, plan, expires_at, created_at"
+    )
     .or(`owner_phone.eq.${phone},manager_phone.eq.${phone}`)
     .order("created_at", { ascending: false });
 
@@ -64,7 +66,8 @@ export default async function ManagerHome({ params }: PageProps) {
                   <span className="font-mono">/m/380991112233</span>
                 </li>
                 <li>
-                  Business page expects query param <span className="font-mono">u</span>:
+                  Business page expects query param{" "}
+                  <span className="font-mono">u</span>:
                   <span className="font-mono"> /b/test?u=380991112233</span>
                 </li>
               </ul>
@@ -81,7 +84,9 @@ export default async function ManagerHome({ params }: PageProps) {
                   <div className="text-lg font-semibold">{b.slug}</div>
                   <div className="mt-1 text-sm text-zinc-600">
                     Plan: {b.plan} • Expires:{" "}
-                    {b.expires_at ? new Date(b.expires_at).toLocaleDateString() : "—"}
+                    {b.expires_at
+                      ? new Date(b.expires_at).toLocaleDateString()
+                      : "—"}
                   </div>
                   <div className="mt-2 text-xs text-zinc-500">
                     owner: <span className="font-mono">{b.owner_phone}</span>
@@ -109,3 +114,4 @@ export default async function ManagerHome({ params }: PageProps) {
       </div>
     </main>
   );
+}
