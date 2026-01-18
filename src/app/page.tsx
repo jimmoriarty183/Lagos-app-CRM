@@ -21,7 +21,19 @@ export default function HomePage() {
           padding: "10px 8px",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        {/* Logo (clickable -> home) */}
+        <Link
+          href="/"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            textDecoration: "none",
+            color: "inherit",
+            cursor: "pointer",
+          }}
+          aria-label="Go to home"
+        >
           <div
             style={{
               width: 38,
@@ -36,36 +48,19 @@ export default function HomePage() {
           >
             o
           </div>
+
           <div>
-            <div style={{ fontWeight: 900, fontSize: 16 }}>Ordero</div>
+            <div style={{ fontWeight: 800 }}>Ordero</div>
             <div style={{ fontSize: 12, opacity: 0.65 }}>
               Orders. Simple. Fast.
             </div>
           </div>
-        </div>
+        </Link>
 
+        {/* Actions */}
         <div style={{ display: "flex", gap: 10 }}>
           <Link
-            href="/"
-            style={{
-              height: 36,
-              padding: "0 14px",
-              borderRadius: 12,
-              border: "1px solid #e5e7eb",
-              background: "white",
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              textDecoration: "none",
-              color: "#0f172a",
-              fontWeight: 800,
-            }}
-          >
-            Home
-          </Link>
-
-          <Link
-            href="/welcome"
+            href="/login"
             style={{
               height: 36,
               padding: "0 14px",

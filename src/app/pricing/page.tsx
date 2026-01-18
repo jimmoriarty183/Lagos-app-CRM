@@ -2,6 +2,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import TopBar from "@/components/TopBar";
 
 export default function PricingPage() {
   const router = useRouter();
@@ -18,7 +19,7 @@ export default function PricingPage() {
         "Mobile-friendly",
       ],
       cta: "Start free",
-      action: () => router.push("/welcome"),
+      action: () => router.push("/login"),
       highlight: false,
     },
     {
@@ -63,86 +64,7 @@ export default function PricingPage() {
       }}
     >
       <div style={{ maxWidth: 1040, margin: "0 auto" }}>
-        {/* Top bar */}
-        <header
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 12,
-            padding: "10px 6px",
-          }}
-        >
-          <button
-            onClick={() => router.push("/welcome")}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              border: "none",
-              background: "transparent",
-              cursor: "pointer",
-              padding: 0,
-            }}
-          >
-            <div
-              style={{
-                width: 40,
-                height: 40,
-                borderRadius: 14,
-                background: "#111827",
-                color: "white",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontWeight: 900,
-                letterSpacing: 0.5,
-                userSelect: "none",
-              }}
-            >
-              O
-            </div>
-            <div style={{ textAlign: "left" }}>
-              <div style={{ fontWeight: 900, lineHeight: 1 }}>Ordero</div>
-              <div style={{ opacity: 0.65, fontSize: 12, marginTop: 2 }}>
-                Pricing
-              </div>
-            </div>
-          </button>
-
-          <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-            <button
-              onClick={() => router.push("/welcome")}
-              style={{
-                height: 38,
-                padding: "0 12px",
-                borderRadius: 12,
-                border: "1px solid #e5e7eb",
-                background: "rgba(255,255,255,0.7)",
-                fontWeight: 800,
-                cursor: "pointer",
-              }}
-            >
-              Back
-            </button>
-
-            <button
-              onClick={() => router.push("/login")}
-              style={{
-                height: 38,
-                padding: "0 12px",
-                borderRadius: 12,
-                border: "1px solid #111827",
-                background: "#111827",
-                color: "white",
-                fontWeight: 900,
-                cursor: "pointer",
-              }}
-            >
-              Log in
-            </button>
-          </div>
-        </header>
+        <TopBar subtitle="Pricing" />
 
         {/* Title */}
         <section style={{ marginTop: 18 }}>
@@ -210,6 +132,7 @@ export default function PricingPage() {
 
         {/* Cards */}
         <section
+          className="pricingGrid"
           style={{
             marginTop: 18,
             display: "grid",
@@ -372,8 +295,9 @@ export default function PricingPage() {
                 flexWrap: "wrap",
               }}
             >
+              {/* This one should go HOME explicitly */}
               <button
-                onClick={() => router.push("/welcome")}
+                onClick={() => router.push("/")}
                 style={{
                   height: 44,
                   padding: "0 14px",
@@ -410,7 +334,7 @@ export default function PricingPage() {
 
         <style jsx>{`
           @media (max-width: 920px) {
-            section:nth-of-type(2) {
+            .pricingGrid {
               grid-template-columns: 1fr !important;
             }
           }
