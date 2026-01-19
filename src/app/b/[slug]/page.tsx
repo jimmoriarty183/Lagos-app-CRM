@@ -5,7 +5,6 @@ import { normalizePhone } from "@/lib/phone";
 
 import DesktopSidebar from "./_components/Desktop/DesktopSidebar";
 import DesktopBusinessCard from "./_components/Desktop/DesktopBusinessCard";
-import DesktopCreateOrder from "./_components/Desktop/DesktopCreateOrder";
 import DesktopFilters from "./_components/Desktop/DesktopFilters";
 import DesktopOrdersTable from "./_components/Desktop/DesktopOrdersTable";
 import DesktopAnalyticsCard from "./_components/Desktop/DesktopAnalyticsCard";
@@ -15,6 +14,7 @@ import MobileAnalyticsAccordion from "./_components/Mobile/MobileAnalyticsAccord
 import MobileCreateOrderAccordion from "./_components/Mobile/MobileCreateOrderAccordion";
 import MobileFiltersAccordion from "./_components/Mobile/MobileFiltersAccordion";
 import MobileOrdersList from "./_components/Mobile/MobileOrdersList";
+import DesktopCreateOrder from "./_components/Desktop/DesktopCreateOrder";
 
 import TopBar from "./_components/topbar/TopBar";
 
@@ -490,20 +490,10 @@ export default async function Page({
             {/* Create order */}
             {canManage ? (
               <>
-                {/* DESKTOP: Add order card like Figma */}
-                <Card className="hidden lg:block p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-xl bg-gray-900 text-white flex items-center justify-center text-xl leading-none">
-                      +
-                    </div>
-                    <div className="text-base font-semibold text-gray-900">
-                      Add order
-                    </div>
-                  </div>
-                  <div className="mt-4">
-                    <DesktopCreateOrder businessId={business.id} />
-                  </div>
-                </Card>
+                {/* DESKTOP: Add order accordion (server, <details>) */}
+                <div className="hidden lg:block">
+                  <DesktopCreateOrder businessId={business.id} />
+                </div>
 
                 {/* MOBILE */}
                 <Card className="lg:hidden p-4">
