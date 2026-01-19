@@ -11,115 +11,73 @@ export default function DesktopCreateOrder({ businessId }: Props) {
   const labelCls = "text-xs font-semibold text-gray-700";
 
   return (
-    <details className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
-      {/* Header (кликабельный) */}
-      <summary className="list-none cursor-pointer select-none">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-gray-900 text-white flex items-center justify-center text-xl leading-none">
-              +
-            </div>
-            <div>
-              <div className="text-base font-semibold text-gray-900">
-                Add order
-              </div>
-              <div className="text-xs text-gray-500">Click to open / close</div>
-            </div>
-          </div>
+    <form
+      action={async (fd) => {
+        "use server";
 
-          <div className="text-sm font-semibold text-gray-900">Toggle</div>
-        </div>
-      </summary>
+        const clientName = String(fd.get("client_name") || "").trim();
+        const clientPhoneRaw = String(fd.get("client_phone") || "").trim();
+        const clientPhone = clientPhoneRaw.replace(/\s+/g, " ").trim();
+        const amountRaw = String(fd.get("amount") || "").trim();
+        const dueDate = String(fd.get("due_date") || "").trim();
+        const description = String(fd.get("description") || "").trim();
 
-      {/* Body */}
-      <div className="mt-4">
-        <form
-          action={async (fd) => {
-            "use server";
+        const amount = Number(amountRaw);
 
-            const clientName = String(fd.get("client_name") || "").trim();
-            const clientPhoneRaw = String(fd.get("client_phone") || "").trim();
-            const clientPhone = clientPhoneRaw.replace(/\s+/g, " ").trim();
-            const amountRaw = String(fd.get("amount") || "").trim();
-            const dueDate = String(fd.get("due_date") || "").trim();
-            const description = String(fd.get("description") || "").trim();
+        if (!clientName) throw new Error("Client name is required");
+        if (!Number.isFinite(amount) || amount <= 0)
+          throw new Error("Amount must be > 0");
 
-            const amount = Number(amountRaw);
+        await createOrder({
+          businessId,
+          clientName,
+          clientPhone: clientPhone || undefined,
+          amount,
+          dueDate: dueDate || undefined,
+          description: description || undefined,
+        });
+      }}
+      className="grid gap-4"
+    >
+      <label className="grid gap-2">
+        <span className={labelCls}>Client name *</span>
+        <input name="client_name" className={inputCls} required />
+      </label>
 
-            if (!clientName) throw new Error("Client name is required");
-            if (!Number.isFinite(amount) || amount <= 0)
-              throw new Error("Amount must be > 0");
+      <label className="grid gap-2">
+        <span className={labelCls}>Client phone</span>
+        <input name="client_phone" className={inputCls} />
+      </label>
 
-            await createOrder({
-              businessId,
-              clientName,
-              clientPhone: clientPhone || undefined,
-              amount,
-              dueDate: dueDate || undefined,
-              description: description || undefined,
-            });
-          }}
-          className="grid gap-4"
-        >
-          <label className="grid gap-2">
-            <span className={labelCls}>Client name *</span>
-            <input name="client_name" placeholder="John" className={inputCls} />
-          </label>
+      <label className="grid gap-2">
+        <span className={labelCls}>Description</span>
+        <textarea
+          name="description"
+          rows={3}
+          className={`${inputCls} h-auto py-3 resize-y`}
+        />
+      </label>
 
-          <label className="grid gap-2">
-            <span className={labelCls}>Client phone</span>
-            <input
-              name="client_phone"
-              placeholder="+234 801 234 5678"
-              inputMode="tel"
-              className={inputCls}
-            />
-          </label>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <label className="grid gap-2">
+          <span className={labelCls}>Amount *</span>
+          <input name="amount" type="number" required className={inputCls} />
+        </label>
 
-          <label className="grid gap-2">
-            <span className={labelCls}>Description</span>
-            <textarea
-              name="description"
-              placeholder="e.g. delivery, address, comment..."
-              rows={3}
-              className={`${inputCls} h-auto py-3 resize-y`}
-            />
-          </label>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Amount */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Amount *
-              </label>
-              <input
-                name="amount"
-                type="number"
-                required
-                placeholder="15000"
-                className={inputCls}
-              />
-            </div>
-
-            {/* Due date */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Due date
-              </label>
-              <input name="due_date" type="date" className={inputCls} />
-            </div>
-          </div>
-
-          <Button
-            type="submit"
-            variant="primary"
-            size="md"
-            style={{ width: "100%" }}
-          >
-            Create
-          </Button>
-        </form>
+        <label className="grid gap-2">
+          <span className={labelCls}>Due date</span>
+          <input name="due_date" type="date" className={inputCls} />
+        </label>
       </div>
-    </details>
+
+      <Button
+        type="submit"
+        variant="primary"
+        size="md"
+        style={{ width: "100%" }}
+      >
+        Create
+      </Button>
+    </form>
   );
 }

@@ -1,5 +1,4 @@
 import Button from "../../Button";
-import { Filter, Search } from "lucide-react";
 
 type Status =
   | "NEW"
@@ -18,7 +17,7 @@ type Props = {
   clearHref: string;
   hasActiveFilters: boolean;
 
-  // старые пропсы оставил для совместимости
+  // ✅ оставляем для совместимости, но НЕ требуем
   card?: React.CSSProperties;
   cardHeader?: React.CSSProperties;
   cardTitle?: React.CSSProperties;
@@ -29,49 +28,65 @@ export default function DesktopFilters({
   filters,
   clearHref,
   hasActiveFilters,
+  card,
+  cardHeader,
+  cardTitle,
 }: Props) {
-  const fieldCls =
-    "px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900";
-  const labelCls = "text-xs font-semibold text-gray-700";
+  const inputCls =
+    "h-10 w-full rounded-xl border border-gray-200 px-3 outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900 bg-white";
+  const labelCls = "text-xs font-semibold text-gray-600";
 
   return (
-    <section className="desktopOnly bg-white rounded-xl border border-gray-200 shadow-sm p-4 sm:p-6">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <Filter className="h-4 w-4 text-gray-400" />
-          <div className="text-base sm:text-lg font-semibold text-gray-900">
+    <section
+      className="desktopOnly bg-white rounded-xl border border-gray-200 shadow-sm p-4 sm:p-6"
+      style={card}
+    >
+      <div
+        className="flex items-start justify-between gap-3"
+        style={cardHeader}
+      >
+        <div>
+          <div
+            className="text-base sm:text-lg font-semibold text-gray-900"
+            style={cardTitle}
+          >
             Filters
           </div>
+          <div className="mt-1 text-xs text-gray-500">
+            Search, status, period
+          </div>
         </div>
-        <div className="text-xs text-gray-500">Search, status, period</div>
+
+        {hasActiveFilters ? (
+          <a
+            href={clearHref}
+            className="h-9 inline-flex items-center justify-center px-3 rounded-lg border border-gray-200 bg-white text-sm font-semibold text-gray-900 hover:bg-gray-50 transition-colors"
+          >
+            Clear
+          </a>
+        ) : null}
       </div>
 
-      <form
-        method="get"
-        className="mt-4 flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-end"
-      >
+      <form method="get" className="mt-4 flex flex-wrap gap-3 items-end">
         <input type="hidden" name="u" value={phoneRaw} />
         <input type="hidden" name="page" value="1" />
 
-        <div className="flex-1 min-w-[220px]">
-          <div className={labelCls + " mb-2"}>Search</div>
-          <div className="relative">
-            <Search className="h-4 w-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              name="q"
-              defaultValue={filters.q}
-              placeholder="Name, phone, amount…"
-              className={`pl-10 ${fieldCls} w-full`}
-            />
-          </div>
-        </div>
+        <label className="grid gap-1 flex-1 min-w-[220px]">
+          <span className={labelCls}>Search</span>
+          <input
+            name="q"
+            defaultValue={filters.q}
+            placeholder="Name, phone, amount…"
+            className={inputCls}
+          />
+        </label>
 
-        <div className="min-w-[180px]">
-          <div className={labelCls + " mb-2"}>Status</div>
+        <label className="grid gap-1 min-w-[180px]">
+          <span className={labelCls}>Status</span>
           <select
             name="status"
             defaultValue={filters.status}
-            className={`${fieldCls} w-full`}
+            className={inputCls}
           >
             <option value="ALL">All</option>
             <option value="NEW">NEW</option>
@@ -81,14 +96,14 @@ export default function DesktopFilters({
             <option value="CANCELED">CANCELED</option>
             <option value="DUPLICATE">DUPLICATE</option>
           </select>
-        </div>
+        </label>
 
-        <div className="min-w-[160px]">
-          <div className={labelCls + " mb-2"}>Period</div>
+        <label className="grid gap-1 min-w-[160px]">
+          <span className={labelCls}>Period</span>
           <select
             name="range"
             defaultValue={filters.range}
-            className={`${fieldCls} w-full`}
+            className={inputCls}
           >
             <option value="ALL">All time</option>
             <option value="today">Today</option>
@@ -96,22 +111,11 @@ export default function DesktopFilters({
             <option value="month">This month</option>
             <option value="year">This year</option>
           </select>
-        </div>
+        </label>
 
-        <div className="flex gap-3">
-          <Button type="submit" size="sm">
-            Apply
-          </Button>
-
-          {hasActiveFilters && (
-            <a
-              href={clearHref}
-              className="h-10 inline-flex items-center justify-center px-4 rounded-lg border border-gray-200 bg-white text-sm font-semibold text-gray-900 hover:bg-gray-50 transition-colors"
-            >
-              Clear
-            </a>
-          )}
-        </div>
+        <Button type="submit" size="sm">
+          Apply
+        </Button>
       </form>
     </section>
   );

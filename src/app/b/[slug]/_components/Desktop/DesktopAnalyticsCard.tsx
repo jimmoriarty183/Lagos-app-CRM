@@ -3,12 +3,6 @@ import { BarChart3 } from "lucide-react";
 type Props = {
   canSeeAnalytics: boolean;
 
-  // старые пропсы оставил для совместимости
-  card?: React.CSSProperties;
-  cardHeader?: React.CSSProperties;
-  cardTitle?: React.CSSProperties;
-
-  // data
   totalOrders: number;
   totalAmount: number;
   overdueCount: number;
@@ -45,17 +39,11 @@ function MetricCard({
       ? "bg-green-50/60"
       : "bg-white";
 
-  const border =
-    tone === "blue"
-      ? "border-blue-100"
-      : tone === "amber"
-      ? "border-amber-100"
-      : tone === "green"
-      ? "border-green-100"
-      : "border-gray-200";
-
+  // ✅ по принципам: border всегда gray-200 (не цветные бордеры)
   return (
-    <div className={`rounded-xl border ${border} p-4 ${toneBg}`}>
+    <div
+      className={`bg-white rounded-xl border border-gray-200 shadow-sm p-4 ${toneBg}`}
+    >
       <div className="text-xs sm:text-sm text-gray-500 font-semibold">
         {title}
       </div>
@@ -90,21 +78,18 @@ export default function DesktopAnalyticsCard(props: Props) {
   if (!canSeeAnalytics) return null;
 
   return (
-    <section
-      id="analytics"
-      className="desktopOnly bg-white rounded-xl border border-gray-200 shadow-sm p-4 sm:p-6"
-    >
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-2">
+    <section id="analytics" className="space-y-3 sm:space-y-4">
+      {/* маленький, ненавязчивый хедер как в B2B SaaS */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2 text-sm font-semibold text-gray-900">
           <BarChart3 className="h-4 w-4 text-gray-400" />
-          <div className="text-base sm:text-lg font-semibold text-gray-900">
-            Analytics
-          </div>
+          Analytics
         </div>
         <div className="text-xs text-gray-500">Based on current filters</div>
       </div>
 
-      <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+      {/* ✅ как ты писал: grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
         <MetricCard
           title="Total orders"
           value={String(totalOrders)}
@@ -135,13 +120,11 @@ export default function DesktopAnalyticsCard(props: Props) {
 
         <MetricCard title="In progress" value={String(inProgressCount)} />
         <MetricCard title="New" value={String(newCount)} />
-
         <MetricCard
           title="Removed"
           value={String(canceledCount + duplicateCount)}
           sub={`Canceled: ${canceledCount} · Duplicate: ${duplicateCount}`}
         />
-
         <MetricCard
           title="Active amount"
           value={fmtAmount(Math.round(activeAmount))}

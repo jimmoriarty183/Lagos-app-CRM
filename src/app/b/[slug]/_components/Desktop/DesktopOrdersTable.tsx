@@ -42,23 +42,23 @@ export default function DesktopOrdersTable({
   canEdit,
 }: Props) {
   return (
-    <div className="desktopOnly bg-white rounded-xl border border-gray-200 shadow-sm p-0 overflow-x-auto">
+    <div className="desktopOnly bg-white rounded-xl border border-gray-200 shadow-sm overflow-x-auto">
       <table className="w-full border-collapse">
         <thead>
-          <tr className="text-left border-b border-gray-200">
-            <th className="px-4 py-3 text-xs font-semibold text-gray-500">
+          <tr className="text-left border-b border-gray-100">
+            <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
               Client
             </th>
-            <th className="px-4 py-3 text-xs font-semibold text-gray-500">
+            <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
               Amount
             </th>
-            <th className="px-4 py-3 text-xs font-semibold text-gray-500">
+            <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
               Due
             </th>
-            <th className="px-4 py-3 text-xs font-semibold text-gray-500">
+            <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
               Status
             </th>
-            <th className="px-4 py-3 text-xs font-semibold text-gray-500">
+            <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-right">
               Actions
             </th>
           </tr>
@@ -76,11 +76,9 @@ export default function DesktopOrdersTable({
             return (
               <tr
                 key={o.id}
-                className={`border-b border-gray-100 transition-colors hover:bg-gray-50 ${
-                  isOverdue ? "bg-red-50/40" : ""
-                }`}
+                className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
               >
-                <td className="px-4 py-4 align-top">
+                <td className="px-6 py-4 align-top">
                   <div className="text-xs text-gray-500 mb-1">
                     <strong className="text-gray-700">
                       Order #{o.order_number ?? "-"}
@@ -97,14 +95,16 @@ export default function DesktopOrdersTable({
                   <div className="font-semibold text-gray-900">
                     {o.client_name}
                   </div>
-                  <div className="text-xs text-gray-500">
-                    {o.client_phone || ""}
-                  </div>
+                  {o.client_phone ? (
+                    <div className="text-xs text-gray-500">
+                      {o.client_phone}
+                    </div>
+                  ) : null}
 
                   {o.description ? (
                     <details className="mt-2">
-                      <summary className="cursor-pointer text-sm font-semibold text-gray-900 underline underline-offset-2 opacity-90">
-                        📝 Show description
+                      <summary className="cursor-pointer text-sm font-semibold text-blue-600 hover:underline underline-offset-2">
+                        Show description
                       </summary>
                       <div className="mt-2 text-sm text-gray-700 whitespace-pre-wrap break-words">
                         {o.description}
@@ -113,24 +113,25 @@ export default function DesktopOrdersTable({
                   ) : null}
                 </td>
 
-                <td className="px-4 py-4 align-top font-extrabold text-gray-900 tabular-nums">
+                <td className="px-6 py-4 align-top font-extrabold text-gray-900 tabular-nums">
                   {fmtAmount(Number(o.amount))}
                 </td>
 
-                <td className="px-4 py-4 align-top">
+                <td className="px-6 py-4 align-top">
                   <div
                     className={`${
-                      isOverdue ? "text-red-700 font-semibold" : "text-gray-700"
+                      isOverdue ? "text-red-600 font-semibold" : "text-gray-700"
                     }`}
                   >
                     {o.due_date || ""}
                   </div>
-                  {isOverdue && (
-                    <div className="text-xs text-red-700/80">Overdue</div>
-                  )}
+                  {isOverdue ? (
+                    <div className="text-xs text-red-600/80">Overdue</div>
+                  ) : null}
                 </td>
 
-                <td className="px-4 py-4 align-top">
+                <td className="px-6 py-4 align-top">
+                  {/* ✅ Вся твоя логика клика статуса сохранена */}
                   <StatusCell
                     orderId={o.id}
                     value={o.status}
@@ -138,7 +139,7 @@ export default function DesktopOrdersTable({
                   />
                 </td>
 
-                <td className="px-4 py-4 align-top">
+                <td className="px-6 py-4 align-top text-right">
                   {canEdit ? (
                     <a
                       href={`/b/${businessSlug}/o/${
@@ -155,6 +156,17 @@ export default function DesktopOrdersTable({
               </tr>
             );
           })}
+
+          {list.length === 0 ? (
+            <tr>
+              <td
+                colSpan={5}
+                className="px-6 py-12 text-center text-sm text-gray-500"
+              >
+                No orders found
+              </td>
+            </tr>
+          ) : null}
         </tbody>
       </table>
     </div>

@@ -5,6 +5,7 @@ import { normalizePhone } from "@/lib/phone";
 
 import DesktopSidebar from "./_components/Desktop/DesktopSidebar";
 import DesktopBusinessCard from "./_components/Desktop/DesktopBusinessCard";
+import DesktopCreateOrderAccordion from "./_components/Desktop/DesktopCreateOrderAccordion";
 import DesktopFilters from "./_components/Desktop/DesktopFilters";
 import DesktopOrdersTable from "./_components/Desktop/DesktopOrdersTable";
 import DesktopAnalyticsCard from "./_components/Desktop/DesktopAnalyticsCard";
@@ -14,8 +15,6 @@ import MobileAnalyticsAccordion from "./_components/Mobile/MobileAnalyticsAccord
 import MobileCreateOrderAccordion from "./_components/Mobile/MobileCreateOrderAccordion";
 import MobileFiltersAccordion from "./_components/Mobile/MobileFiltersAccordion";
 import MobileOrdersList from "./_components/Mobile/MobileOrdersList";
-import DesktopCreateOrder from "./_components/Desktop/DesktopCreateOrder";
-
 import TopBar from "./_components/topbar/TopBar";
 
 /** ----------------- server supabase ----------------- */
@@ -138,27 +137,6 @@ async function findBusinessSlugByPhone(supabase: any, phone: string) {
   return data?.slug ?? null;
 }
 
-/** ----------------- ui helpers ----------------- */
-
-function Card({
-  children,
-  className = "",
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <section
-      className={[
-        "bg-white rounded-xl border border-gray-200 shadow-sm",
-        className,
-      ].join(" ")}
-    >
-      {children}
-    </section>
-  );
-}
-
 /** ----------------- page ----------------- */
 
 export default async function Page({
@@ -242,6 +220,12 @@ export default async function Page({
     : isManager
     ? "MANAGER"
     : "GUEST";
+
+  const isOwnerManager =
+    role === "OWNER" &&
+    (!business.manager_phone ||
+      normalizePhone(business.manager_phone) ===
+        normalizePhone(business.owner_phone));
 
   const canView = role === "OWNER" || role === "MANAGER";
   const canManage = role === "OWNER" || role === "MANAGER";
@@ -414,40 +398,54 @@ export default async function Page({
       />
 
       <main className="mx-auto max-w-7xl px-4 sm:px-6 py-6">
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[16rem_1fr] items-start">
-          {/* LEFT (desktop only) */}
+        <div className="grid grid-cols-1 lg:grid-cols-[16rem_1fr] gap-6 items-start">
+          {/* Sidebar (desktop) */}
           <aside className="hidden lg:block sticky top-20 self-start">
-            <div className="flex flex-col gap-4">
+            <div className="space-y-4">
               <DesktopSidebar
                 clearHref={clearHref}
                 totalCount={totalCount}
                 canSeeAnalytics={canSeeAnalytics}
               />
 
-              {/* Business moved to sidebar (1:1 like figma) */}
               <DesktopBusinessCard
                 business={business}
                 role={role}
                 phone={phoneNorm}
-                isOwnerManager={false}
+                isOwnerManager={isOwnerManager}
               />
             </div>
           </aside>
 
-          {/* RIGHT */}
+          {/* Content */}
           <section className="space-y-6">
-            {/* MOBILE: Business + Analytics (no duplicates) */}
-            <div className="lg:hidden space-y-4">
-              <Card className="p-4">
+            {/* Analytics (desktop) */}
+            <DesktopAnalyticsCard
+              canSeeAnalytics={canSeeAnalytics}
+              totalOrders={totalOrders}
+              totalAmount={totalAmount}
+              overdueCount={overdueCount}
+              waitingPaymentCount={waitingPaymentCount}
+              waitingPaymentAmount={waitingPaymentAmount}
+              doneCount={doneCount}
+              doneAmount={doneAmount}
+              inProgressCount={inProgressCount}
+              newCount={newCount}
+              canceledCount={canceledCount}
+              duplicateCount={duplicateCount}
+              activeAmount={activeAmount}
+              fmtAmount={fmtAmount}
+            />
+
+            {/* Business + Analytics (mobile) */}
+            <section className="lg:hidden bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+              <div className="grid gap-3">
                 <MobileBusinessAccordion
                   business={business}
                   role={role}
                   phone={phoneNorm}
-                  isOwnerManager={role === "OWNER" || role === "MANAGER"} // или canManage
+                  isOwnerManager={false}
                 />
-              </Card>
-
-              <Card className="p-4">
                 <MobileAnalyticsAccordion
                   canSeeAnalytics={canSeeAnalytics}
                   totalOrders={totalOrders}
@@ -464,65 +462,43 @@ export default async function Page({
                   activeAmount={activeAmount}
                   fmtAmount={fmtAmount}
                 />
-              </Card>
-            </div>
-
-            {/* DESKTOP: Analytics tiles */}
-            <div className="hidden lg:block">
-              <DesktopAnalyticsCard
-                canSeeAnalytics={canSeeAnalytics}
-                totalOrders={totalOrders}
-                totalAmount={totalAmount}
-                overdueCount={overdueCount}
-                waitingPaymentCount={waitingPaymentCount}
-                waitingPaymentAmount={waitingPaymentAmount}
-                doneCount={doneCount}
-                doneAmount={doneAmount}
-                inProgressCount={inProgressCount}
-                newCount={newCount}
-                canceledCount={canceledCount}
-                duplicateCount={duplicateCount}
-                activeAmount={activeAmount}
-                fmtAmount={fmtAmount}
-              />
-            </div>
+              </div>
+            </section>
 
             {/* Create order */}
             {canManage ? (
               <>
-                {/* DESKTOP: Add order accordion (server, <details>) */}
+                {/* desktop: только аккордеон, чтобы не раздувало страницу */}
                 <div className="hidden lg:block">
-                  <DesktopCreateOrder businessId={business.id} />
+                  <DesktopCreateOrderAccordion businessId={business.id} />
                 </div>
 
-                {/* MOBILE */}
-                <Card className="lg:hidden p-4">
+                {/* mobile: как было */}
+                <section className="lg:hidden bg-white rounded-xl border border-gray-200 shadow-sm p-4">
                   <MobileCreateOrderAccordion businessId={business.id} />
-                </Card>
+                </section>
               </>
             ) : null}
 
             {/* Filters */}
-            <div className="hidden lg:block">
-              <DesktopFilters
-                phoneRaw={phoneRaw}
-                filters={filters}
-                clearHref={clearHref}
-                hasActiveFilters={hasActiveFilters}
-              />
-            </div>
+            <DesktopFilters
+              phoneRaw={phoneRaw}
+              filters={filters}
+              clearHref={clearHref}
+              hasActiveFilters={hasActiveFilters}
+            />
 
-            <Card className="lg:hidden p-4">
+            <section className="lg:hidden bg-white rounded-xl border border-gray-200 shadow-sm p-4">
               <MobileFiltersAccordion
                 phoneRaw={phoneRaw}
                 filters={filters}
                 clearHref={clearHref}
                 hasActiveFilters={hasActiveFilters}
               />
-            </Card>
+            </section>
 
             {/* Orders */}
-            <Card className="p-4 sm:p-6">
+            <section className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 sm:p-6">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className="text-base sm:text-lg font-semibold text-gray-900">
@@ -598,7 +574,7 @@ export default async function Page({
                   </>
                 )}
               </div>
-            </Card>
+            </section>
           </section>
         </div>
       </main>
