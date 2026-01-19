@@ -15,6 +15,7 @@ import MobileAnalyticsAccordion from "./_components/Mobile/MobileAnalyticsAccord
 import MobileCreateOrderAccordion from "./_components/Mobile/MobileCreateOrderAccordion";
 import MobileFiltersAccordion from "./_components/Mobile/MobileFiltersAccordion";
 import MobileOrdersList from "./_components/Mobile/MobileOrdersList";
+
 import TopBar from "./_components/topbar/TopBar";
 
 /** ----------------- server supabase ----------------- */
@@ -135,6 +136,27 @@ async function findBusinessSlugByPhone(supabase: any, phone: string) {
   }
 
   return data?.slug ?? null;
+}
+
+/** ----------------- ui helpers ----------------- */
+
+function Card({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <section
+      className={[
+        "bg-white rounded-xl border border-gray-200 shadow-sm",
+        className,
+      ].join(" ")}
+    >
+      {children}
+    </section>
+  );
 }
 
 /** ----------------- page ----------------- */
@@ -392,53 +414,40 @@ export default async function Page({
       />
 
       <main className="mx-auto max-w-7xl px-4 sm:px-6 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-[16rem_1fr] gap-6 items-start">
-          {/* Sidebar (desktop) */}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[16rem_1fr] items-start">
+          {/* LEFT (desktop only) */}
           <aside className="hidden lg:block sticky top-20 self-start">
-            <DesktopSidebar
-              clearHref={clearHref}
-              totalCount={totalCount}
-              canSeeAnalytics={canSeeAnalytics}
-            />
+            <div className="flex flex-col gap-4">
+              <DesktopSidebar
+                clearHref={clearHref}
+                totalCount={totalCount}
+                canSeeAnalytics={canSeeAnalytics}
+              />
+
+              {/* Business moved to sidebar (1:1 like figma) */}
+              <DesktopBusinessCard
+                business={business}
+                role={role}
+                phone={phoneNorm}
+                isOwnerManager={false}
+              />
+            </div>
           </aside>
 
-          {/* Content */}
+          {/* RIGHT */}
           <section className="space-y-6">
-            {/* Business (desktop) */}
-            <DesktopBusinessCard
-              business={business}
-              role={role}
-              phone={phoneNorm}
-              isOwnerManager={false}
-            />
-
-            {/* Analytics (desktop) */}
-            <DesktopAnalyticsCard
-              canSeeAnalytics={canSeeAnalytics}
-              totalOrders={totalOrders}
-              totalAmount={totalAmount}
-              overdueCount={overdueCount}
-              waitingPaymentCount={waitingPaymentCount}
-              waitingPaymentAmount={waitingPaymentAmount}
-              doneCount={doneCount}
-              doneAmount={doneAmount}
-              inProgressCount={inProgressCount}
-              newCount={newCount}
-              canceledCount={canceledCount}
-              duplicateCount={duplicateCount}
-              activeAmount={activeAmount}
-              fmtAmount={fmtAmount}
-            />
-
-            {/* Business + Analytics (mobile) */}
-            <section className="lg:hidden bg-white rounded-xl border border-gray-200 shadow-sm p-4">
-              <div className="grid gap-3">
+            {/* MOBILE: Business + Analytics (no duplicates) */}
+            <div className="lg:hidden space-y-4">
+              <Card className="p-4">
                 <MobileBusinessAccordion
                   business={business}
                   role={role}
                   phone={phoneNorm}
-                  isOwnerManager={false}
+                  isOwnerManager={role === "OWNER" || role === "MANAGER"} // или canManage
                 />
+              </Card>
+
+              <Card className="p-4">
                 <MobileAnalyticsAccordion
                   canSeeAnalytics={canSeeAnalytics}
                   totalOrders={totalOrders}
@@ -455,39 +464,75 @@ export default async function Page({
                   activeAmount={activeAmount}
                   fmtAmount={fmtAmount}
                 />
-              </div>
-            </section>
+              </Card>
+            </div>
+
+            {/* DESKTOP: Analytics tiles */}
+            <div className="hidden lg:block">
+              <DesktopAnalyticsCard
+                canSeeAnalytics={canSeeAnalytics}
+                totalOrders={totalOrders}
+                totalAmount={totalAmount}
+                overdueCount={overdueCount}
+                waitingPaymentCount={waitingPaymentCount}
+                waitingPaymentAmount={waitingPaymentAmount}
+                doneCount={doneCount}
+                doneAmount={doneAmount}
+                inProgressCount={inProgressCount}
+                newCount={newCount}
+                canceledCount={canceledCount}
+                duplicateCount={duplicateCount}
+                activeAmount={activeAmount}
+                fmtAmount={fmtAmount}
+              />
+            </div>
 
             {/* Create order */}
             {canManage ? (
               <>
-                <DesktopCreateOrder businessId={business.id} />
+                {/* DESKTOP: Add order card like Figma */}
+                <Card className="hidden lg:block p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-gray-900 text-white flex items-center justify-center text-xl leading-none">
+                      +
+                    </div>
+                    <div className="text-base font-semibold text-gray-900">
+                      Add order
+                    </div>
+                  </div>
+                  <div className="mt-4">
+                    <DesktopCreateOrder businessId={business.id} />
+                  </div>
+                </Card>
 
-                <section className="lg:hidden bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+                {/* MOBILE */}
+                <Card className="lg:hidden p-4">
                   <MobileCreateOrderAccordion businessId={business.id} />
-                </section>
+                </Card>
               </>
             ) : null}
 
             {/* Filters */}
-            <DesktopFilters
-              phoneRaw={phoneRaw}
-              filters={filters}
-              clearHref={clearHref}
-              hasActiveFilters={hasActiveFilters}
-            />
+            <div className="hidden lg:block">
+              <DesktopFilters
+                phoneRaw={phoneRaw}
+                filters={filters}
+                clearHref={clearHref}
+                hasActiveFilters={hasActiveFilters}
+              />
+            </div>
 
-            <section className="lg:hidden bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+            <Card className="lg:hidden p-4">
               <MobileFiltersAccordion
                 phoneRaw={phoneRaw}
                 filters={filters}
                 clearHref={clearHref}
                 hasActiveFilters={hasActiveFilters}
               />
-            </section>
+            </Card>
 
             {/* Orders */}
-            <section className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 sm:p-6">
+            <Card className="p-4 sm:p-6">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className="text-base sm:text-lg font-semibold text-gray-900">
@@ -563,7 +608,7 @@ export default async function Page({
                   </>
                 )}
               </div>
-            </section>
+            </Card>
           </section>
         </div>
       </main>
