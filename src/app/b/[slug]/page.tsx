@@ -152,9 +152,9 @@ export default async function Page({
   const { supabase, missing } = getServerSupabase();
   if (!supabase) {
     return (
-      <main style={{ padding: 24 }}>
+      <main className="p-6">
         <b>Missing env:</b>
-        <pre style={{ whiteSpace: "pre-wrap" }}>
+        <pre className="mt-2 whitespace-pre-wrap">
           {JSON.stringify({ missing }, null, 2)}
         </pre>
       </main>
@@ -171,7 +171,7 @@ export default async function Page({
     }
 
     return (
-      <main style={{ padding: 24 }}>
+      <main className="p-6">
         <b>Business not found:</b> {phone}
       </main>
     );
@@ -200,7 +200,7 @@ export default async function Page({
 
   if (bErr || !businessRow) {
     return (
-      <main style={{ padding: 24 }}>
+      <main className="p-6">
         <b>Business not found:</b> {slug}
       </main>
     );
@@ -228,17 +228,8 @@ export default async function Page({
 
   if (!canView) {
     return (
-      <div style={{ maxWidth: 640, margin: "0 auto", padding: 24 }}>
-        <div
-          style={{
-            borderRadius: 16,
-            border: "1px solid #e5e7eb",
-            padding: 24,
-            textAlign: "center",
-            color: "#64748b",
-            background: "white",
-          }}
-        >
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/20 to-gray-50 flex items-center justify-center px-4">
+        <div className="w-full max-w-md bg-white rounded-xl border border-gray-200 shadow-sm p-6 text-center text-gray-600">
           Access restricted
         </div>
       </div>
@@ -377,29 +368,7 @@ export default async function Page({
 
   const todayISO = new Date().toISOString().slice(0, 10);
 
-  // styles
-  const card: React.CSSProperties = {
-    background: "white",
-    border: "1px solid #e5e7eb",
-    borderRadius: 16,
-    padding: 16,
-    boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
-  };
-
-  const cardHeader: React.CSSProperties = {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12,
-    marginBottom: 10,
-  };
-
-  const cardTitle: React.CSSProperties = {
-    fontSize: 14,
-    fontWeight: 800,
-    letterSpacing: 0.2,
-  };
-
+  // TopBar pill (оставил как было, чтобы не ломать текущий компонент)
   const pill: React.CSSProperties = {
     display: "inline-flex",
     alignItems: "center",
@@ -413,60 +382,8 @@ export default async function Page({
     color: "#0f172a",
   };
 
-  const appShell: React.CSSProperties = {
-    maxWidth: 1400,
-    margin: "0 auto",
-    padding: "16px 24px 24px",
-  };
-
-  const shellGrid: React.CSSProperties = {
-    display: "grid",
-    gridTemplateColumns: "260px 1fr",
-    gap: 16,
-    alignItems: "start",
-  };
-
-  const sidebarStyle: React.CSSProperties = {
-    position: "sticky",
-    top: 80,
-    height: "calc(100vh - 96px)",
-    border: "1px solid #e5e7eb",
-    borderRadius: 16,
-    background: "white",
-    padding: 12,
-    boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
-    overflow: "auto",
-  };
-
-  const contentCol: React.CSSProperties = {
-    display: "grid",
-    gap: 16,
-  };
-
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "#f6f7fb",
-        overflowX: "hidden",
-      }}
-    >
-      <style
-        dangerouslySetInnerHTML={{
-          __html: `
-            .desktopOnly { display: block; }
-            .mobileOnly { display: none; }
-            @media (max-width: 768px) {
-              .desktopOnly { display: none; }
-              .mobileOnly { display: block; }
-              .shellPad { padding: 12px 12px 18px !important; }
-              .topPad { padding: 0 12px !important; }
-              .shellGrid { grid-template-columns: 1fr !important; }
-            }
-          `,
-        }}
-      />
-
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/20 to-gray-50 overflow-x-hidden">
       <TopBar
         businessSlug={business.slug}
         plan={business.plan}
@@ -474,9 +391,10 @@ export default async function Page({
         pill={pill}
       />
 
-      <main className="shellPad" style={appShell}>
-        <div className="shellGrid" style={shellGrid}>
-          <aside className="desktopOnly" style={sidebarStyle}>
+      <main className="mx-auto max-w-7xl px-4 sm:px-6 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-[16rem_1fr] gap-6 items-start">
+          {/* Sidebar (desktop) */}
+          <aside className="hidden lg:block sticky top-20 self-start">
             <DesktopSidebar
               clearHref={clearHref}
               totalCount={totalCount}
@@ -484,22 +402,19 @@ export default async function Page({
             />
           </aside>
 
-          <section style={contentCol}>
+          {/* Content */}
+          <section className="space-y-6">
+            {/* Business (desktop) */}
             <DesktopBusinessCard
               business={business}
               role={role}
               phone={phoneNorm}
               isOwnerManager={false}
-              card={card}
-              cardHeader={cardHeader}
-              cardTitle={cardTitle}
             />
 
+            {/* Analytics (desktop) */}
             <DesktopAnalyticsCard
               canSeeAnalytics={canSeeAnalytics}
-              card={card}
-              cardHeader={cardHeader}
-              cardTitle={cardTitle}
               totalOrders={totalOrders}
               totalAmount={totalAmount}
               overdueCount={overdueCount}
@@ -515,8 +430,9 @@ export default async function Page({
               fmtAmount={fmtAmount}
             />
 
-            <section className="mobileOnly" style={card}>
-              <div style={{ display: "grid", gap: 8 }}>
+            {/* Business + Analytics (mobile) */}
+            <section className="lg:hidden bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+              <div className="grid gap-3">
                 <MobileBusinessAccordion
                   business={business}
                   role={role}
@@ -542,32 +458,26 @@ export default async function Page({
               </div>
             </section>
 
+            {/* Create order */}
             {canManage ? (
               <>
-                <DesktopCreateOrder
-                  businessId={business.id}
-                  card={card}
-                  cardHeader={cardHeader}
-                  cardTitle={cardTitle}
-                />
+                <DesktopCreateOrder businessId={business.id} />
 
-                <section className="mobileOnly" style={card}>
+                <section className="lg:hidden bg-white rounded-xl border border-gray-200 shadow-sm p-4">
                   <MobileCreateOrderAccordion businessId={business.id} />
                 </section>
               </>
             ) : null}
 
+            {/* Filters */}
             <DesktopFilters
               phoneRaw={phoneRaw}
               filters={filters}
               clearHref={clearHref}
               hasActiveFilters={hasActiveFilters}
-              card={card}
-              cardHeader={cardHeader}
-              cardTitle={cardTitle}
             />
 
-            <section className="mobileOnly" style={card}>
+            <section className="lg:hidden bg-white rounded-xl border border-gray-200 shadow-sm p-4">
               <MobileFiltersAccordion
                 phoneRaw={phoneRaw}
                 filters={filters}
@@ -576,80 +486,83 @@ export default async function Page({
               />
             </section>
 
-            <section style={card}>
-              <div style={cardHeader}>
-                <div style={cardTitle}>Orders</div>
-                <div
-                  className="desktopOnly"
-                  style={{ fontSize: 12, opacity: 0.65 }}
-                >
-                  {totalCount} total
+            {/* Orders */}
+            <section className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 sm:p-6">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-base sm:text-lg font-semibold text-gray-900">
+                    Orders
+                  </div>
+                  <div className="mt-1 text-xs text-gray-500">
+                    {totalCount} total
+                    {hasActiveFilters ? " • filtered" : ""}
+                  </div>
                 </div>
+
+                {hasActiveFilters ? (
+                  <a
+                    href={clearHref}
+                    className="h-9 inline-flex items-center justify-center px-3 rounded-lg border border-gray-200 bg-white text-sm font-semibold text-gray-900 hover:bg-gray-50 transition-colors"
+                  >
+                    Clear
+                  </a>
+                ) : null}
               </div>
 
-              {list.length === 0 ? (
-                <div style={{ textAlign: "center", padding: 32 }}>
-                  <div
-                    style={{ fontSize: 18, fontWeight: 800, marginBottom: 6 }}
-                  >
-                    {hasActiveFilters
-                      ? "No orders match your filters"
-                      : "No orders yet"}
-                  </div>
-
-                  <div style={{ opacity: 0.75, marginBottom: 14 }}>
-                    {hasActiveFilters
-                      ? "Try changing filters or clearing search."
-                      : "Create your first order to start tracking deadlines."}
-                  </div>
-
-                  {hasActiveFilters ? (
-                    <a
-                      href={clearHref}
-                      style={{
-                        display: "inline-block",
-                        padding: "10px 14px",
-                        borderRadius: 12,
-                        border: "1px solid #e5e7eb",
-                        fontWeight: 700,
-                        marginTop: 4,
-                        textDecoration: "none",
-                        color: "inherit",
-                      }}
-                    >
-                      Clear filters
-                    </a>
-                  ) : (
-                    <div style={{ fontSize: 12, opacity: 0.6 }}>
-                      Tip: add client name, amount, and due date.
+              <div className="mt-4">
+                {list.length === 0 ? (
+                  <div className="text-center py-10">
+                    <div className="text-lg font-extrabold text-gray-900">
+                      {hasActiveFilters
+                        ? "No orders match your filters"
+                        : "No orders yet"}
                     </div>
-                  )}
-                </div>
-              ) : (
-                <>
-                  <div className="desktopOnly">
-                    <DesktopOrdersTable
-                      list={list}
-                      todayISO={todayISO}
-                      businessSlug={business.slug}
-                      phoneRaw={phoneRaw}
-                      canManage={canManage}
-                      canEdit={canEdit}
-                    />
-                  </div>
 
-                  <div className="mobileOnly">
-                    <MobileOrdersList
-                      list={list}
-                      todayISO={todayISO}
-                      businessSlug={business.slug}
-                      phoneRaw={phoneRaw}
-                      canManage={canManage}
-                      canEdit={canEdit}
-                    />
+                    <div className="mt-2 text-sm text-gray-500">
+                      {hasActiveFilters
+                        ? "Try changing filters or clearing search."
+                        : "Create your first order to start tracking deadlines."}
+                    </div>
+
+                    {hasActiveFilters ? (
+                      <a
+                        href={clearHref}
+                        className="mt-5 inline-flex items-center justify-center px-4 py-2 rounded-lg border border-gray-200 bg-white text-sm font-semibold text-gray-900 hover:bg-gray-50 transition-colors"
+                      >
+                        Clear filters
+                      </a>
+                    ) : (
+                      <div className="mt-4 text-xs text-gray-500">
+                        Tip: add client name, amount, and due date.
+                      </div>
+                    )}
                   </div>
-                </>
-              )}
+                ) : (
+                  <>
+                    <div className="hidden lg:block">
+                      <DesktopOrdersTable
+                        list={list}
+                        todayISO={todayISO}
+                        businessSlug={business.slug}
+                        phoneRaw={phoneRaw}
+                        canManage={canManage}
+                        canEdit={canEdit}
+                      />
+                    </div>
+
+                    <div className="lg:hidden">
+                      <MobileOrdersList
+                        list={list}
+                        todayISO={todayISO}
+                        businessSlug={business.slug}
+                        phoneRaw={phoneRaw}
+                        canManage={canManage}
+                        canEdit={canEdit}
+                      />
+                    </div>
+                  </>
+                )}
+              </div>
             </section>
           </section>
         </div>

@@ -1,7 +1,11 @@
+import { SlidersHorizontal } from "lucide-react";
+
 type Props = {
   totalCount: number;
   hasActiveFilters: boolean;
   clearHref: string;
+
+  // оставил, чтобы не ломать текущий вызов (можно потом удалить)
   pill: React.CSSProperties;
   card: React.CSSProperties;
 };
@@ -10,17 +14,13 @@ export default function MobileSummaryBar({
   totalCount,
   hasActiveFilters,
   clearHref,
-  pill,
-  card,
 }: Props) {
   return (
-    <section className="mobileOnly" style={card}>
-      <div
-        style={{ display: "flex", justifyContent: "space-between", gap: 12 }}
-      >
+    <section className="mobileOnly bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+      <div className="flex items-start justify-between gap-3">
         <div>
-          <div style={{ fontWeight: 950 }}>Orders</div>
-          <div style={{ fontSize: 12, opacity: 0.7, marginTop: 2 }}>
+          <div className="text-sm font-extrabold text-gray-900">Orders</div>
+          <div className="text-xs text-gray-500 mt-1">
             {totalCount} total {hasActiveFilters ? "• filtered" : ""}
           </div>
         </div>
@@ -28,26 +28,15 @@ export default function MobileSummaryBar({
         {hasActiveFilters ? (
           <a
             href={clearHref}
-            style={{
-              height: 36,
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              padding: "0 12px",
-              borderRadius: 12,
-              border: "1px solid #e5e7eb",
-              fontWeight: 900,
-              background: "white",
-              textDecoration: "none",
-              color: "inherit",
-              cursor: "pointer",
-              whiteSpace: "nowrap",
-            }}
+            className="h-9 inline-flex items-center justify-center px-3 rounded-lg border border-gray-200 bg-white text-sm font-extrabold text-gray-900 hover:bg-gray-50 transition-colors whitespace-nowrap"
           >
             Clear
           </a>
         ) : (
-          <span style={{ ...pill, height: 36, opacity: 0.75 }}>No filters</span>
+          <span className="h-9 inline-flex items-center gap-2 px-3 rounded-lg border border-gray-200 bg-gray-50 text-xs font-semibold text-gray-600">
+            <SlidersHorizontal className="h-4 w-4 text-gray-400" />
+            No filters
+          </span>
         )}
       </div>
     </section>

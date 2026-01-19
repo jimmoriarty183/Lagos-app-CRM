@@ -1,6 +1,7 @@
 "use client";
 
 import { ReactNode, useId, useState } from "react";
+import { ChevronDown } from "lucide-react";
 
 type Props = {
   title: string;
@@ -19,54 +20,51 @@ export default function MobileAccordion({
   const id = useId();
 
   return (
-    <div>
+    <div className="w-full">
       <button
         type="button"
         aria-controls={id}
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        style={{
-          width: "100%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 10,
-          padding: "10px 12px",
-          borderRadius: 14,
-          border: "1px solid #e5e7eb",
-          background: "white",
-          cursor: "pointer",
-        }}
+        className={[
+          "w-full flex items-center justify-between gap-3",
+          "px-4 py-3 rounded-xl border border-gray-200 bg-white shadow-sm",
+          "hover:bg-gray-50 transition-colors",
+        ].join(" ")}
       >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            minWidth: 0,
-          }}
-        >
-          <span style={{ fontWeight: 900 }}>{title}</span>
+        <div className="min-w-0 flex items-center gap-2">
+          <span className="text-sm font-extrabold text-gray-900 truncate">
+            {title}
+          </span>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div className="flex items-center gap-2">
           {rightSlot ? (
             <span
               onClick={(e) => e.stopPropagation()} // чтобы клик по Clear не открывал/закрывал
-              style={{ display: "inline-flex", alignItems: "center" }}
+              className="inline-flex items-center"
             >
               {rightSlot}
             </span>
           ) : null}
 
-          <span style={{ opacity: 0.6, fontWeight: 900 }}>
-            {open ? "—" : "+"}
+          <span
+            className={[
+              "inline-flex items-center justify-center",
+              "h-8 w-8 rounded-lg border border-gray-200 bg-white",
+              "text-gray-600",
+              "transition-transform",
+              open ? "rotate-180" : "rotate-0",
+            ].join(" ")}
+            aria-hidden="true"
+          >
+            <ChevronDown className="h-4 w-4" />
           </span>
         </div>
       </button>
 
       {open ? (
-        <div id={id} style={{ padding: "12px 2px 0" }}>
+        <div id={id} className="pt-3">
           {children}
         </div>
       ) : null}

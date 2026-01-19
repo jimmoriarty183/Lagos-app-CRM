@@ -1,29 +1,33 @@
 import Accordion from "../../Accordion";
+import { BarChart3 } from "lucide-react";
 
 function KpiCard({
   title,
   value,
   sub,
+  tone = "neutral",
 }: {
   title: string;
   value: string;
   sub?: string;
+  tone?: "neutral" | "blue" | "amber" | "green";
 }) {
+  const toneBg =
+    tone === "blue"
+      ? "bg-blue-50/60 border-blue-100"
+      : tone === "amber"
+      ? "bg-amber-50/60 border-amber-100"
+      : tone === "green"
+      ? "bg-green-50/60 border-green-100"
+      : "bg-white border-gray-200";
+
   return (
-    <div
-      style={{
-        border: "1px solid #e5e7eb",
-        borderRadius: 14,
-        padding: 12,
-        minWidth: 160,
-        background: "white",
-      }}
-    >
-      <div style={{ opacity: 0.7, fontSize: 12, fontWeight: 700 }}>{title}</div>
-      <div style={{ fontSize: 22, fontWeight: 900 }}>{value}</div>
-      {sub ? (
-        <div style={{ opacity: 0.65, fontSize: 12, marginTop: 2 }}>{sub}</div>
-      ) : null}
+    <div className={`rounded-xl border ${toneBg} p-4`}>
+      <div className="text-xs font-semibold text-gray-500">{title}</div>
+      <div className="mt-1 text-xl font-extrabold text-gray-900 tabular-nums">
+        {value}
+      </div>
+      {sub ? <div className="mt-2 text-xs text-gray-500">{sub}</div> : null}
     </div>
   );
 }
@@ -64,27 +68,45 @@ export default function MobileAnalyticsAccordion({
   if (!canSeeAnalytics) return null;
 
   return (
-    <Accordion title="Analytics" defaultOpen={false}>
-      <div style={{ display: "grid", gap: 10 }}>
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <KpiCard title="Total orders" value={String(totalOrders)} />
+    <Accordion
+      title={
+        (
+          <span className="inline-flex items-center gap-2">
+            <BarChart3 className="h-4 w-4 text-gray-400" />
+            Analytics
+          </span>
+        ) as any
+      }
+      defaultOpen={false}
+    >
+      <div className="grid gap-3">
+        <div className="grid grid-cols-1 gap-3">
+          <KpiCard
+            title="Total orders"
+            value={String(totalOrders)}
+            tone="blue"
+          />
           <KpiCard
             title="Total amount"
             value={fmtAmount(Math.round(totalAmount))}
+            tone="blue"
           />
           <KpiCard
             title="Overdue (NEW+IN_PROGRESS)"
             value={String(overdueCount)}
+            tone="amber"
           />
           <KpiCard
             title="Waiting payment"
             value={String(waitingPaymentCount)}
             sub={`Amount: ${fmtAmount(Math.round(waitingPaymentAmount))}`}
+            tone="amber"
           />
           <KpiCard
             title="Done"
             value={String(doneCount)}
             sub={`Amount: ${fmtAmount(Math.round(doneAmount))}`}
+            tone="green"
           />
           <KpiCard title="In progress" value={String(inProgressCount)} />
           <KpiCard title="New" value={String(newCount)} />
@@ -97,11 +119,11 @@ export default function MobileAnalyticsAccordion({
             title="Active amount"
             value={fmtAmount(Math.round(activeAmount))}
             sub="NEW + IN PROGRESS"
+            tone="blue"
           />
         </div>
-        <div style={{ fontSize: 12, opacity: 0.65 }}>
-          Based on current filters
-        </div>
+
+        <div className="text-xs text-gray-500">Based on current filters</div>
       </div>
     </Accordion>
   );

@@ -1,45 +1,68 @@
 import LogoutButton from "../LogoutButton";
+import { BadgeCheck, Shield } from "lucide-react";
 
 type Props = {
   businessSlug: string;
   plan: string;
   role: string;
+
+  // оставляю для совместимости, но больше не используется
   pill: React.CSSProperties;
 };
 
-export default function TopBar({ businessSlug, plan, role, pill }: Props) {
+function Pill({
+  children,
+  tone = "neutral",
+}: {
+  children: React.ReactNode;
+  tone?: "neutral" | "blue";
+}) {
+  const cls =
+    tone === "blue"
+      ? "bg-blue-50 text-blue-700 border-blue-100"
+      : "bg-gray-100 text-gray-700 border-gray-200";
+
   return (
-    <header
-      style={{
-        height: 64,
-        borderBottom: "1px solid #e5e7eb",
-        background: "white",
-        boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
-      }}
+    <span
+      className={[
+        "inline-flex items-center gap-2 rounded-full border px-3 py-1.5",
+        "text-xs sm:text-sm font-extrabold",
+        cls,
+      ].join(" ")}
     >
-      <div
-        className="topPad"
-        style={{
-          maxWidth: 1400,
-          margin: "0 auto",
-          height: "100%",
-          padding: "0 24px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 12,
-        }}
-      >
+      {children}
+    </span>
+  );
+}
+
+export default function TopBar({ businessSlug, plan, role }: Props) {
+  return (
+    <header className="sticky top-0 z-40 backdrop-blur-sm bg-white/95 border-b border-gray-200">
+      <div className="topPad mx-auto max-w-7xl h-14 px-4 sm:px-6 flex items-center justify-between gap-3">
         {/* LEFT */}
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ fontWeight: 900, fontSize: 18 }}>Ordero</div>
-          <div style={{ fontSize: 12, opacity: 0.6 }}>/ {businessSlug}</div>
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="font-extrabold text-base sm:text-lg text-gray-900">
+            Ordero
+          </div>
+          <div className="text-xs sm:text-sm text-gray-500 truncate">
+            / {businessSlug}
+          </div>
         </div>
 
         {/* RIGHT */}
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <div style={{ ...pill, background: "#f1f5f9" }}>{plan}</div>
-          <div style={pill}>{role}</div>
+        <div className="flex items-center gap-2 sm:gap-3">
+          <Pill tone="blue">
+            <BadgeCheck className="h-4 w-4 opacity-80" />
+            {plan}
+          </Pill>
+
+          <Pill>
+            <Shield className="h-4 w-4 opacity-80" />
+            {role}
+          </Pill>
+
+          {/* LogoutButton у тебя уже есть — пусть остается.
+              Если в нем старая стилизация — скинь LogoutButton.tsx, тоже обновлю. */}
           <LogoutButton />
         </div>
       </div>

@@ -1,4 +1,5 @@
 import Accordion from "../../Accordion";
+import { Phone } from "lucide-react";
 
 type Props = {
   business: { owner_phone: string; manager_phone: string | null };
@@ -6,6 +7,28 @@ type Props = {
   phone: string;
   isOwnerManager: boolean;
 };
+
+function Pill({
+  children,
+  tone = "neutral",
+}: {
+  children: React.ReactNode;
+  tone?: "neutral" | "blue";
+}) {
+  const cls =
+    tone === "blue"
+      ? "bg-blue-50 text-blue-700 border-blue-100"
+      : "bg-gray-100 text-gray-700 border-gray-200";
+
+  return (
+    <span
+      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs ${cls}`}
+    >
+      <Phone className="h-4 w-4 opacity-70" />
+      {children}
+    </span>
+  );
+}
 
 export default function MobileBusinessAccordion({
   business,
@@ -15,25 +38,31 @@ export default function MobileBusinessAccordion({
 }: Props) {
   return (
     <Accordion title="Business" defaultOpen={false}>
-      <div style={{ display: "grid", gap: 8 }}>
+      <div className="grid gap-2">
         {role === "MANAGER" && !isOwnerManager ? (
-          <div style={{ opacity: 0.9 }}>
-            Manager phone: <b>{business.manager_phone || phone}</b>
-          </div>
+          <Pill tone="blue">
+            Manager:{" "}
+            <b className="text-gray-900">{business.manager_phone || phone}</b>
+          </Pill>
         ) : null}
 
         {role === "OWNER" && !isOwnerManager ? (
-          <div style={{ opacity: 0.9, lineHeight: 1.5 }}>
-            Owner phone: <b>{business.owner_phone}</b>
-            <br />
-            Manager phone: <b>{business.manager_phone || "—"}</b>
+          <div className="flex flex-wrap gap-2">
+            <Pill>
+              Owner: <b className="text-gray-900">{business.owner_phone}</b>
+            </Pill>
+            <Pill tone="blue">
+              Manager:{" "}
+              <b className="text-gray-900">{business.manager_phone || "—"}</b>
+            </Pill>
           </div>
         ) : null}
 
         {isOwnerManager ? (
-          <div style={{ opacity: 0.9 }}>
-            Owner/Manager phone: <b>{business.owner_phone}</b>
-          </div>
+          <Pill>
+            Owner/Manager:{" "}
+            <b className="text-gray-900">{business.owner_phone}</b>
+          </Pill>
         ) : null}
       </div>
     </Accordion>

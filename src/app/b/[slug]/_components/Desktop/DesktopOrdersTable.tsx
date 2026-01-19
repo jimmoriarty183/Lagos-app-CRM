@@ -42,15 +42,25 @@ export default function DesktopOrdersTable({
   canEdit,
 }: Props) {
   return (
-    <div className="desktopOnly" style={{ overflowX: "auto" }}>
-      <table style={{ width: "100%", borderCollapse: "collapse" }}>
+    <div className="desktopOnly bg-white rounded-xl border border-gray-200 shadow-sm p-0 overflow-x-auto">
+      <table className="w-full border-collapse">
         <thead>
-          <tr style={{ textAlign: "left", borderBottom: "1px solid #eef2f7" }}>
-            <th style={{ padding: "10px 6px" }}>Client</th>
-            <th style={{ padding: "10px 6px" }}>Amount</th>
-            <th style={{ padding: "10px 6px" }}>Due</th>
-            <th style={{ padding: "10px 6px" }}>Status</th>
-            <th style={{ padding: "10px 6px" }}>Actions</th>
+          <tr className="text-left border-b border-gray-200">
+            <th className="px-4 py-3 text-xs font-semibold text-gray-500">
+              Client
+            </th>
+            <th className="px-4 py-3 text-xs font-semibold text-gray-500">
+              Amount
+            </th>
+            <th className="px-4 py-3 text-xs font-semibold text-gray-500">
+              Due
+            </th>
+            <th className="px-4 py-3 text-xs font-semibold text-gray-500">
+              Status
+            </th>
+            <th className="px-4 py-3 text-xs font-semibold text-gray-500">
+              Actions
+            </th>
           </tr>
         </thead>
 
@@ -66,14 +76,16 @@ export default function DesktopOrdersTable({
             return (
               <tr
                 key={o.id}
-                style={{
-                  borderBottom: "1px solid #f1f5f9",
-                  background: isOverdue ? "#fff5f5" : "transparent",
-                }}
+                className={`border-b border-gray-100 transition-colors hover:bg-gray-50 ${
+                  isOverdue ? "bg-red-50/40" : ""
+                }`}
               >
-                <td style={{ padding: "12px 6px" }}>
-                  <div style={{ fontSize: 12, opacity: 0.6, marginBottom: 4 }}>
-                    <strong>Order #{o.order_number ?? "-"}</strong> · Created:{" "}
+                <td className="px-4 py-4 align-top">
+                  <div className="text-xs text-gray-500 mb-1">
+                    <strong className="text-gray-700">
+                      Order #{o.order_number ?? "-"}
+                    </strong>{" "}
+                    <span className="text-gray-300">·</span> Created:{" "}
                     {new Date(o.created_at).toLocaleString("en-NG", {
                       day: "2-digit",
                       month: "short",
@@ -82,75 +94,43 @@ export default function DesktopOrdersTable({
                     })}
                   </div>
 
-                  <div style={{ fontWeight: 700 }}>{o.client_name}</div>
-                  <div style={{ fontSize: 12, opacity: 0.7 }}>
+                  <div className="font-semibold text-gray-900">
+                    {o.client_name}
+                  </div>
+                  <div className="text-xs text-gray-500">
                     {o.client_phone || ""}
                   </div>
 
                   {o.description ? (
-                    <details style={{ marginTop: 6 }}>
-                      <summary
-                        style={{
-                          cursor: "pointer",
-                          fontSize: 14,
-                          fontWeight: 700,
-                          color: "#111",
-                          listStyle: "none",
-                          WebkitAppearance: "none",
-                          textDecoration: "underline",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: 6,
-                          opacity: 0.9,
-                        }}
-                      >
-                        <span aria-hidden style={{ fontSize: 14 }}>
-                          📝
-                        </span>
-                        <span>Show description</span>
+                    <details className="mt-2">
+                      <summary className="cursor-pointer text-sm font-semibold text-gray-900 underline underline-offset-2 opacity-90">
+                        📝 Show description
                       </summary>
-
-                      <div
-                        style={{
-                          marginTop: 8,
-                          paddingLeft: 12,
-                          fontSize: 15,
-                          lineHeight: 1.5,
-                          opacity: 0.95,
-                          whiteSpace: "pre-wrap",
-                          wordBreak: "break-word",
-                        }}
-                      >
+                      <div className="mt-2 text-sm text-gray-700 whitespace-pre-wrap break-words">
                         {o.description}
                       </div>
                     </details>
                   ) : null}
                 </td>
 
-                <td style={{ padding: "12px 6px", fontWeight: 800 }}>
+                <td className="px-4 py-4 align-top font-extrabold text-gray-900 tabular-nums">
                   {fmtAmount(Number(o.amount))}
                 </td>
 
-                <td style={{ padding: "12px 6px" }}>
+                <td className="px-4 py-4 align-top">
                   <div
-                    style={{
-                      color: isOverdue ? "#b91c1c" : undefined,
-                      fontWeight: isOverdue ? 700 : 500,
-                    }}
+                    className={`${
+                      isOverdue ? "text-red-700 font-semibold" : "text-gray-700"
+                    }`}
                   >
                     {o.due_date || ""}
                   </div>
-
                   {isOverdue && (
-                    <div
-                      style={{ fontSize: 11, color: "#b91c1c", opacity: 0.8 }}
-                    >
-                      Overdue
-                    </div>
+                    <div className="text-xs text-red-700/80">Overdue</div>
                   )}
                 </td>
 
-                <td style={{ padding: "12px 6px" }}>
+                <td className="px-4 py-4 align-top">
                   <StatusCell
                     orderId={o.id}
                     value={o.status}
@@ -158,31 +138,18 @@ export default function DesktopOrdersTable({
                   />
                 </td>
 
-                <td style={{ padding: "12px 6px" }}>
+                <td className="px-4 py-4 align-top">
                   {canEdit ? (
                     <a
                       href={`/b/${businessSlug}/o/${
                         o.id
                       }?u=${encodeURIComponent(phoneRaw)}`}
-                      style={{
-                        height: 32,
-                        padding: "0 12px",
-                        borderRadius: 12,
-                        border: "1px solid #e5e7eb",
-                        background: "white",
-                        cursor: "pointer",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        textDecoration: "none",
-                        color: "#111",
-                        fontSize: 13,
-                        fontWeight: 700,
-                      }}
+                      className="h-9 inline-flex items-center justify-center px-4 rounded-lg border border-gray-200 bg-white text-sm font-semibold text-gray-900 hover:bg-gray-50 transition-colors"
                     >
                       Edit
                     </a>
                   ) : (
-                    <span style={{ opacity: 0.5 }}>—</span>
+                    <span className="text-gray-400">—</span>
                   )}
                 </td>
               </tr>

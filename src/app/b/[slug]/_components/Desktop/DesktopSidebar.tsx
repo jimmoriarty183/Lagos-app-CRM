@@ -1,3 +1,5 @@
+import { LayoutDashboard, ShoppingBag, Settings } from "lucide-react";
+
 type Props = {
   clearHref: string;
   totalCount: number;
@@ -9,49 +11,55 @@ export default function DesktopSidebar({
   totalCount,
   canSeeAnalytics,
 }: Props) {
-  const navItem = (active?: boolean): React.CSSProperties => ({
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 10,
-    padding: "10px 10px",
-    borderRadius: 12,
-    textDecoration: "none",
-    color: "#0f172a",
-    border: active ? "1px solid #dbeafe" : "1px solid transparent",
-    background: active ? "#eff6ff" : "transparent",
-    fontWeight: active ? 800 : 700,
-    cursor: "pointer",
-  });
+  const itemBase =
+    "w-full flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm font-semibold transition-colors";
+  const itemHover = "hover:bg-gray-50";
+  const itemActive = "bg-blue-50 text-gray-900 border border-blue-100";
+  const itemIdle = "text-gray-700";
 
-  const navMeta: React.CSSProperties = {
-    fontSize: 12,
-    opacity: 0.6,
-    fontWeight: 700,
-  };
+  const meta = "text-xs text-gray-500 tabular-nums";
 
   return (
-    <aside style={{ display: "grid", gap: 4 }}>
-      <a style={navItem(true)} href={clearHref}>
-        <span>Orders</span>
-        <span style={navMeta}>{totalCount}</span>
-      </a>
+    <aside className="desktopOnly">
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-3 sm:p-4">
+        <nav className="space-y-2">
+          <a className={`${itemBase} ${itemActive}`} href={clearHref}>
+            <span className="flex items-center gap-2">
+              <ShoppingBag className="h-4 w-4" />
+              Orders
+            </span>
+            <span className={meta}>{totalCount}</span>
+          </a>
 
-      {canSeeAnalytics ? (
-        <a style={navItem(false)} href="#analytics">
-          <span>Analytics</span>
-          <span style={navMeta}>Owner</span>
-        </a>
-      ) : (
-        <div style={{ ...navItem(false), opacity: 0.5 }}>
-          <span>Analytics</span>
-          <span style={navMeta}>Owner</span>
-        </div>
-      )}
+          {canSeeAnalytics ? (
+            <a
+              className={`${itemBase} ${itemIdle} ${itemHover}`}
+              href="#analytics"
+            >
+              <span className="flex items-center gap-2">
+                <LayoutDashboard className="h-4 w-4" />
+                Analytics
+              </span>
+              <span className={meta}>Owner</span>
+            </a>
+          ) : (
+            <div className={`${itemBase} ${itemIdle} opacity-50`}>
+              <span className="flex items-center gap-2">
+                <LayoutDashboard className="h-4 w-4" />
+                Analytics
+              </span>
+              <span className={meta}>Owner</span>
+            </div>
+          )}
 
-      <div style={{ ...navItem(false), opacity: 0.7 }}>
-        <span>Settings</span>
-        <span style={navMeta}>soon</span>
+          <div className={`${itemBase} ${itemIdle} opacity-70`}>
+            <span className="flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              Settings
+            </span>
+            <span className={meta}>soon</span>
+          </div>
+        </nav>
       </div>
     </aside>
   );

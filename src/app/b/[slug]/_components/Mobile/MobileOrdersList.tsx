@@ -1,5 +1,4 @@
 import { StatusCell } from "../../InlineCells";
-import { statusTone } from "../../statusTone";
 
 type Status =
   | "NEW"
@@ -31,6 +30,21 @@ function clamp(s: string, max = 34) {
   return t.slice(0, max - 1) + "…";
 }
 
+function statusBadgeCls(status: Status) {
+  // mobile badge wrapper (внутри StatusCell останется интерактив)
+  switch (status) {
+    case "NEW":
+      return "bg-blue-50 border-blue-100 text-blue-700";
+    case "IN_PROGRESS":
+    case "WAITING_PAYMENT":
+      return "bg-amber-50 border-amber-100 text-amber-800";
+    case "DONE":
+      return "bg-green-50 border-green-100 text-green-800";
+    default:
+      return "bg-gray-100 border-gray-200 text-gray-700";
+  }
+}
+
 function MobileOrderCard({
   o,
   businessSlug,
@@ -52,34 +66,22 @@ function MobileOrderCard({
     dueISO < todayISO &&
     (o.status === "NEW" || o.status === "IN_PROGRESS");
 
-  const st = statusTone(o.status);
-
   return (
     <div
-      style={{
-        background: "white",
-        border: `1px solid ${isOverdue ? "#fecaca" : "#e5e7eb"}`,
-        borderRadius: 16,
-        padding: 14,
-        boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
-      }}
+      className={[
+        "bg-white rounded-xl border shadow-sm p-4",
+        isOverdue ? "border-red-200" : "border-gray-200",
+      ].join(" ")}
     >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          gap: 10,
-          alignItems: "flex-start",
-        }}
-      >
-        <div style={{ minWidth: 0 }}>
-          <div style={{ fontWeight: 900, fontSize: 15 }}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="text-sm font-extrabold text-gray-900 truncate">
             {clamp(o.client_name || "—", 40)}
           </div>
 
-          <div style={{ marginTop: 4, fontSize: 12, opacity: 0.7 }}>
-            <b>Order #{o.order_number ?? "-"}</b>{" "}
-            <span style={{ opacity: 0.55 }}>·</span>{" "}
+          <div className="mt-1 text-xs text-gray-500">
+            <b className="text-gray-700">Order #{o.order_number ?? "-"}</b>{" "}
+            <span className="text-gray-300">·</span>{" "}
             {new Date(o.created_at).toLocaleString("en-NG", {
               day: "2-digit",
               month: "short",
@@ -90,50 +92,36 @@ function MobileOrderCard({
         </div>
 
         <div
-          style={{
-            borderRadius: 999,
-            border: `1px solid ${st.border}`,
-            fontWeight: 900,
-            fontSize: 12,
-            padding: "8px 12px",
-            minHeight: 36,
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            whiteSpace: "nowrap",
-          }}
+          className={[
+            "inline-flex items-center justify-center",
+            "rounded-full border px-3 py-2 text-xs font-extrabold whitespace-nowrap min-h-9",
+            statusBadgeCls(o.status),
+          ].join(" ")}
         >
           <StatusCell orderId={o.id} value={o.status} canManage={canManage} />
         </div>
       </div>
 
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          gap: 10,
-          marginTop: 12,
-        }}
-      >
+      <div className="mt-4 flex items-start justify-between gap-3">
         <div>
-          <div style={{ fontSize: 12, opacity: 0.65 }}>Amount</div>
-          <div style={{ fontSize: 18, fontWeight: 950 }}>
+          <div className="text-xs text-gray-500">Amount</div>
+          <div className="mt-1 text-lg font-extrabold text-gray-900 tabular-nums">
             {fmtAmount(Number(o.amount))}
           </div>
         </div>
 
-        <div style={{ textAlign: "right" }}>
-          <div style={{ fontSize: 12, opacity: 0.65 }}>Due</div>
+        <div className="text-right">
+          <div className="text-xs text-gray-500">Due</div>
           <div
-            style={{
-              fontWeight: isOverdue ? 900 : 800,
-              color: isOverdue ? "#b91c1c" : "#0f172a",
-            }}
+            className={[
+              "mt-1 text-sm font-bold",
+              isOverdue ? "text-red-700" : "text-gray-900",
+            ].join(" ")}
           >
             {o.due_date || "—"}
           </div>
           {isOverdue ? (
-            <div style={{ fontSize: 11, color: "#b91c1c", opacity: 0.85 }}>
+            <div className="mt-1 text-[11px] text-red-700/80 font-semibold">
               Overdue
             </div>
           ) : null}
@@ -141,66 +129,34 @@ function MobileOrderCard({
       </div>
 
       {o.client_phone ? (
-        <div style={{ marginTop: 10, fontSize: 13, opacity: 0.85 }}>
-          📞 {o.client_phone}
+        <div className="mt-3 text-sm text-gray-700">
+          <span className="opacity-70">📞</span> {o.client_phone}
         </div>
       ) : null}
 
       {o.description ? (
-        <details style={{ marginTop: 10 }}>
-          <summary
-            style={{
-              cursor: "pointer",
-              fontSize: 13,
-              fontWeight: 800,
-              textDecoration: "underline",
-              opacity: 0.9,
-              listStyle: "none",
-              WebkitAppearance: "none",
-            }}
-          >
+        <details className="mt-3">
+          <summary className="cursor-pointer text-sm font-bold text-gray-900 underline underline-offset-2 opacity-90">
             📝 Show description
           </summary>
-          <div
-            style={{
-              marginTop: 8,
-              fontSize: 14,
-              lineHeight: 1.5,
-              whiteSpace: "pre-wrap",
-            }}
-          >
+          <div className="mt-2 text-sm text-gray-700 whitespace-pre-wrap break-words leading-relaxed">
             {o.description}
           </div>
         </details>
       ) : null}
 
-      <div
-        style={{ marginTop: 12, display: "flex", justifyContent: "flex-end" }}
-      >
+      <div className="mt-4 flex justify-end">
         {canEdit ? (
           <a
             href={`/b/${businessSlug}/o/${o.id}?u=${encodeURIComponent(
               phoneRaw
             )}`}
-            style={{
-              height: 40,
-              padding: "0 14px",
-              borderRadius: 12,
-              border: "1px solid #e5e7eb",
-              background: "white",
-              cursor: "pointer",
-              display: "inline-flex",
-              alignItems: "center",
-              textDecoration: "none",
-              color: "#111",
-              fontSize: 13,
-              fontWeight: 900,
-            }}
+            className="h-10 inline-flex items-center justify-center px-4 rounded-lg border border-gray-200 bg-white text-sm font-extrabold text-gray-900 hover:bg-gray-50 transition-colors"
           >
             Edit
           </a>
         ) : (
-          <span style={{ opacity: 0.5 }}>—</span>
+          <span className="text-gray-400">—</span>
         )}
       </div>
     </div>
@@ -225,7 +181,7 @@ export default function MobileOrdersList({
   canEdit,
 }: Props) {
   return (
-    <div className="mobileOnly" style={{ display: "grid", gap: 12 }}>
+    <div className="mobileOnly grid gap-3">
       {list.map((o) => (
         <MobileOrderCard
           key={o.id}

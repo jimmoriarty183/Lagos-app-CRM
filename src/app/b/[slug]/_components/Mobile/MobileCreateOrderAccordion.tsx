@@ -1,42 +1,29 @@
 import Accordion from "../../Accordion";
 import Button from "../../Button";
 import { createOrder } from "../../actions";
+import { Plus } from "lucide-react";
 
 type Props = {
   businessId: string;
 };
 
 export default function MobileCreateOrderAccordion({ businessId }: Props) {
-  const fieldBase: React.CSSProperties = {
-    width: "100%",
-    maxWidth: "100%",
-    minWidth: 0,
-    boxSizing: "border-box",
-    height: 44,
-    borderRadius: 14,
-    border: "1px solid #e5e7eb",
-    padding: "0 12px",
-    outline: "none",
-    background: "white",
-    display: "block",
-  };
-
-  const textareaBase: React.CSSProperties = {
-    width: "100%",
-    maxWidth: "100%",
-    minWidth: 0,
-    boxSizing: "border-box",
-    borderRadius: 14,
-    border: "1px solid #e5e7eb",
-    padding: "10px 12px",
-    resize: "vertical",
-    outline: "none",
-    background: "white",
-    display: "block",
-  };
+  const inputCls =
+    "w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg outline-none " +
+    "focus:ring-2 focus:ring-gray-900 focus:border-gray-900";
 
   return (
-    <Accordion title="Create order" defaultOpen={false}>
+    <Accordion
+      title={
+        (
+          <span className="inline-flex items-center gap-2">
+            <Plus className="h-4 w-4 text-gray-400" />
+            Create order
+          </span>
+        ) as any
+      }
+      defaultOpen={false}
+    >
       <form
         action={async (fd) => {
           "use server";
@@ -65,97 +52,89 @@ export default function MobileCreateOrderAccordion({ businessId }: Props) {
             description: description || undefined,
           });
         }}
+        className="grid gap-3"
         style={{
-          width: "100%",
-          maxWidth: "100%",
-          boxSizing: "border-box",
-          overflowX: "hidden", // ✅ страховка от горизонтального вылета
+          overflowX: "hidden",
         }}
       >
-        <div
-          style={{
-            display: "grid",
-            gap: 10,
-            width: "100%",
-            maxWidth: "100%",
-            boxSizing: "border-box",
-            overflowX: "hidden", // ✅ ещё одна страховка (iOS иногда упрямый)
-          }}
-        >
+        <label className="grid gap-1">
+          <span className="text-xs font-semibold text-gray-700">
+            Client name *
+          </span>
           <input
             name="client_name"
-            placeholder="Client name *"
+            placeholder="John"
             autoComplete="name"
-            style={fieldBase}
+            className={inputCls}
           />
+        </label>
 
+        <label className="grid gap-1">
+          <span className="text-xs font-semibold text-gray-700">
+            Client phone
+          </span>
           <input
             name="client_phone"
-            placeholder="Client phone"
+            placeholder="+234 801 234 5678"
             inputMode="tel"
             autoComplete="tel"
-            style={fieldBase}
+            className={inputCls}
           />
+        </label>
 
+        <label className="grid gap-1">
+          <span className="text-xs font-semibold text-gray-700">
+            Description
+          </span>
           <textarea
             name="description"
-            placeholder="Description"
+            placeholder="Delivery, address, comment…"
             rows={3}
-            style={textareaBase}
+            className={`${inputCls} resize-y`}
           />
+        </label>
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)",
-              gap: 10,
-              width: "100%",
-              maxWidth: "100%",
-              boxSizing: "border-box",
-              overflow: "hidden", // ✅ КЛЮЧЕВО: клипает вылет date-поля на iOS
-            }}
-          >
-            <div style={{ minWidth: 0 }}>
-              <input
-                name="amount"
-                placeholder="Amount *"
-                inputMode="decimal"
-                autoComplete="off"
-                style={fieldBase}
-              />
-            </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <label className="grid gap-1 min-w-0">
+            <span className="text-xs font-semibold text-gray-700">
+              Amount *
+            </span>
+            <input
+              name="amount"
+              placeholder="15000"
+              inputMode="decimal"
+              autoComplete="off"
+              className={inputCls}
+            />
+          </label>
 
-            <div style={{ minWidth: 0, overflow: "hidden" }}>
-              <input
-                name="due_date"
-                type="date"
-                style={{
-                  ...fieldBase,
-                  paddingRight: 10,
-                  WebkitAppearance: "none", // ✅ iOS Safari фикс
-                  appearance: "none",
-                  background: "white",
-                  minWidth: 0,
-                  maxWidth: "100%",
-                }}
-              />
-            </div>
-          </div>
-
-          <Button
-            type="submit"
-            variant="primary"
-            size="md"
-            style={{
-              width: "100%",
-              maxWidth: "100%",
-              boxSizing: "border-box",
-              minWidth: 0,
-            }}
-          >
-            Create
-          </Button>
+          <label className="grid gap-1 min-w-0">
+            <span className="text-xs font-semibold text-gray-700">
+              Due date
+            </span>
+            <input
+              name="due_date"
+              type="date"
+              className={inputCls}
+              style={{
+                WebkitAppearance: "none",
+                appearance: "none",
+              }}
+            />
+            <span className="text-[11px] text-gray-500">
+              Format: YYYY-MM-DD
+            </span>
+          </label>
         </div>
+
+        <Button
+          type="submit"
+          variant="primary"
+          size="md"
+          style={{ width: "100%" }}
+        >
+          Create
+        </Button>
       </form>
     </Accordion>
   );

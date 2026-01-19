@@ -1,5 +1,6 @@
 import Button from "../../Button";
 import MobileAccordion from "./MobileAccordion";
+import { Filter, Search } from "lucide-react";
 
 type Status =
   | "NEW"
@@ -25,6 +26,10 @@ export default function MobileFiltersAccordion({
   clearHref,
   hasActiveFilters,
 }: Props) {
+  const fieldCls =
+    "w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg outline-none " +
+    "focus:ring-2 focus:ring-gray-900 focus:border-gray-900";
+
   return (
     <MobileAccordion
       title="Filters"
@@ -33,85 +38,64 @@ export default function MobileFiltersAccordion({
         hasActiveFilters ? (
           <a
             href={clearHref}
-            style={{
-              height: 30,
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              padding: "0 10px",
-              borderRadius: 999,
-              border: "1px solid #e5e7eb",
-              fontWeight: 900,
-              background: "white",
-              textDecoration: "none",
-              color: "inherit",
-              cursor: "pointer",
-              fontSize: 12,
-              whiteSpace: "nowrap",
-            }}
+            className="h-8 inline-flex items-center justify-center px-3 rounded-full border border-gray-200 bg-white text-xs font-extrabold text-gray-900 hover:bg-gray-50 transition-colors"
           >
             Clear
           </a>
         ) : null
       }
     >
-      <form method="get" style={{ display: "grid", gap: 10 }}>
+      <form method="get" className="grid gap-3">
         <input type="hidden" name="u" value={phoneRaw} />
         <input type="hidden" name="page" value="1" />
 
-        <input
-          name="q"
-          defaultValue={filters.q}
-          placeholder="Search: name, phone, amount…"
-          style={{
-            height: 44,
-            width: "100%",
-            borderRadius: 14,
-            border: "1px solid #e5e7eb",
-            padding: "0 12px",
-            outline: "none",
-          }}
-        />
+        <label className="grid gap-1">
+          <span className="text-xs font-semibold text-gray-700 inline-flex items-center gap-2">
+            <Search className="h-4 w-4 text-gray-400" />
+            Search
+          </span>
+          <input
+            name="q"
+            defaultValue={filters.q}
+            placeholder="Name, phone, amount…"
+            className={fieldCls}
+          />
+        </label>
 
-        <select
-          name="status"
-          defaultValue={filters.status}
-          style={{
-            height: 44,
-            width: "100%",
-            borderRadius: 14,
-            border: "1px solid #e5e7eb",
-            padding: "0 12px",
-            background: "white",
-          }}
-        >
-          <option value="ALL">Status: All</option>
-          <option value="NEW">NEW</option>
-          <option value="IN_PROGRESS">IN PROGRESS</option>
-          <option value="WAITING_PAYMENT">WAITING PAYMENT</option>
-          <option value="DONE">DONE</option>
-          <option value="CANCELED">CANCELED</option>
-          <option value="DUPLICATE">DUPLICATE</option>
-        </select>
+        <label className="grid gap-1">
+          <span className="text-xs font-semibold text-gray-700 inline-flex items-center gap-2">
+            <Filter className="h-4 w-4 text-gray-400" />
+            Status
+          </span>
+          <select
+            name="status"
+            defaultValue={filters.status}
+            className={fieldCls}
+          >
+            <option value="ALL">All</option>
+            <option value="NEW">NEW</option>
+            <option value="IN_PROGRESS">IN PROGRESS</option>
+            <option value="WAITING_PAYMENT">WAITING PAYMENT</option>
+            <option value="DONE">DONE</option>
+            <option value="CANCELED">CANCELED</option>
+            <option value="DUPLICATE">DUPLICATE</option>
+          </select>
+        </label>
 
-        <select
-          name="range"
-          defaultValue={filters.range}
-          style={{
-            height: 44,
-            width: "100%",
-            borderRadius: 14,
-            border: "1px solid #e5e7eb",
-            padding: "0 12px",
-            background: "white",
-          }}
-        >
-          <option value="ALL">Period: All time</option>
-          <option value="today">Today</option>
-          <option value="week">Last 7 days</option>
-          <option value="month">This month</option>
-          <option value="year">This year</option>
-        </select>
+        <label className="grid gap-1">
+          <span className="text-xs font-semibold text-gray-700">Period</span>
+          <select
+            name="range"
+            defaultValue={filters.range}
+            className={fieldCls}
+          >
+            <option value="ALL">All time</option>
+            <option value="today">Today</option>
+            <option value="week">Last 7 days</option>
+            <option value="month">This month</option>
+            <option value="year">This year</option>
+          </select>
+        </label>
 
         <Button type="submit" size="sm" style={{ width: "100%" }}>
           Apply
