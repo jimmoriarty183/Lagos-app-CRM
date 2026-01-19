@@ -4,7 +4,13 @@
 :root {
   color-scheme: light;
 
-  --background: #f5f6f8;
+  /* ✅ LANDING BACKGROUND (как на лендинге) */
+  --background:
+    radial-gradient(1200px 700px at 12% 0%, rgba(59, 130, 246, 0.14) 0%, rgba(59, 130, 246, 0) 60%),
+    radial-gradient(1200px 700px at 88% 10%, rgba(16, 185, 129, 0.14) 0%, rgba(16, 185, 129, 0) 60%),
+    radial-gradient(900px 600px at 50% 100%, rgba(99, 102, 241, 0.10) 0%, rgba(99, 102, 241, 0) 55%),
+    linear-gradient(to bottom, #f8fafc 0%, #f6f9ff 100%);
+
   --foreground: #111827;
 
   --card: #ffffff;
@@ -18,8 +24,15 @@
 html,
 body {
   height: 100%;
-  background: var(--background) !important;
-  color: var(--foreground) !important;
+
+  /* ✅ ВАЖНО: убрали !important, иначе фон не меняется */
+  background: var(--background);
+  color: var(--foreground);
+}
+
+/* Чтобы градиент красиво держался при скролле */
+body {
+  background-attachment: fixed;
 }
 
 * {
@@ -48,4 +61,17 @@ button {
 .tap {
   min-height: 44px;
   min-width: 44px;
+}
+
+/* FORCE landing background on app wrapper too */
+.app-bg {
+  min-height: 100vh;
+  background: var(--background) !important;
+  background-attachment: fixed;
+}
+
+/* Если кто-то красит фон на уровне страницы — сброс */
+body > main,
+body > div {
+  background: transparent !important;
 }
