@@ -1,50 +1,45 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
-
-function isAuthed(req: NextRequest) {
-  // MVP auth cookie (ставится после /api/auth/login)
-  const phone = req.cookies.get("ord_phone")?.value;
-  return Boolean(phone && phone.trim().length > 0);
-}
+import { NextResponse, type NextRequest } from "next/server";
 
 export function middleware(req: NextRequest) {
-  const { pathname, search } = req.nextUrl;
+  const url = req.nextUrl;
+  const pathname = url.pathname;
 
-  // 1) Всегда пропускаем next internals / api / public files
-  const isAlwaysPublic =
+  // Пропускаем статику/next
+  if (
     pathname.startsWith("/_next") ||
-    pathname.startsWith("/api") ||
     pathname.startsWith("/favicon") ||
-    pathname.startsWith("/robots.txt") ||
-    pathname.startsWith("/sitemap.xml") ||
-    pathname.startsWith("/assets") ||
-    pathname.startsWith("/images") ||
-    pathname.startsWith("/public");
+    pathname.startsWith("/api")
+  ) {
+    return NextResponse.next();
+  }
 
-  if (isAlwaysPublic) return NextResponse.next();
+  // ✅ /b/* должно открываться если есть ?u=
+  if (pathname.startsWith("/b/")) {
+    const u = url.searchParams.get("u");
+    if (u && /^\d{10,15}$/.test(u)) {
+      return NextResponse.next();
+    }
 
-  // 2) Публичные страницы сайта
-  const isPublicPage =
-    pathname === "/" ||
-    pathname.startsWith("/welcome") ||
-    pathname.startsWith("/pricing");
+    // если нет u — редиректим на login (а не welcome)
+    const next = pathname + (url.search ? url.search : "");
+    const to = new URL("/login", req.url);
+    to.searchParams.set("next", next);
+    return NextResponse.redirect(to);
+  }
 
-  if (isPublicPage) return NextResponse.next();
+  // Если кто-то всё ещё попадает на /welcome — отправим на /login
+  if (pathname === "/welcome") {
+    const to = new URL("/login", req.url);
+    const next = url.searchParams.get("next");
+    const u = url.searchParams.get("u");
+    if (u) to.searchParams.set("u", u);
+    if (next) to.searchParams.set("next", next);
+    return NextResponse.redirect(to);
+  }
 
-  // 3) Защищаем только /b/*
-  const isProtected = pathname.startsWith("/b/");
-  if (!isProtected) return NextResponse.next();
-
-  // 4) Если авторизован — пускаем
-  if (isAuthed(req)) return NextResponse.next();
-
-  // 5) Иначе — редирект на /welcome?next=...
-  const url = req.nextUrl.clone();
-  url.pathname = "/welcome";
-  url.searchParams.set("next", pathname + (search || ""));
-  return NextResponse.redirect(url);
+  return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };

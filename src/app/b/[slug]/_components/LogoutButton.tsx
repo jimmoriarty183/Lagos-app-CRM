@@ -16,7 +16,7 @@ export default function LogoutButton() {
       // игнор, всё равно редиректим
     } finally {
       // чтобы middleware точно не пустил обратно — перезагружаем
-      router.replace("/welcome");
+      router.replace("/login");
       router.refresh();
       setLoading(false);
     }
