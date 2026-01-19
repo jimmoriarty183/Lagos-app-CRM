@@ -1,5 +1,6 @@
-import { notFound } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import React from "react";
+import { notFound, redirect } from "next/navigation";
+import { createClient } from "@supabase/supabase-js";
 import { normalizePhone } from "@/lib/phone";
 
 import DesktopSidebar from "./_components/Desktop/DesktopSidebar";
@@ -16,9 +17,57 @@ import MobileFiltersAccordion from "./_components/Mobile/MobileFiltersAccordion"
 import MobileOrdersList from "./_components/Mobile/MobileOrdersList";
 import TopBar from "./_components/topbar/TopBar";
 
-type PageProps = {
-  params: Promise<{ slug: string }>;
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
+/** ----------------- server supabase ----------------- */
+
+function getServerSupabase() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!url || !key) {
+    const missing = [
+      !url ? "NEXT_PUBLIC_SUPABASE_URL" : null,
+      !key ? "NEXT_PUBLIC_SUPABASE_ANON_KEY" : null,
+    ].filter(Boolean) as string[];
+
+    return { supabase: null as any, missing };
+  }
+
+  return { supabase: createClient(url, key), missing: [] as string[] };
+}
+
+/** ----------------- helpers ----------------- */
+
+function isPhone(value: string) {
+  return /^\d{10,15}$/.test(value);
+}
+
+function getSP(
+  sp: Record<string, string | string[] | undefined>,
+  key: string
+): string {
+  const v = sp[key];
+  if (Array.isArray(v)) return String(v[0] ?? "");
+  return String(v ?? "");
+}
+
+function fmtAmount(n: number) {
+  return new Intl.NumberFormat("uk-UA").format(n);
+}
+
+type Status =
+  | "NEW"
+  | "IN_PROGRESS"
+  | "WAITING_PAYMENT"
+  | "DONE"
+  | "CANCELED"
+  | "DUPLICATE";
+
+type Range = "ALL" | "today" | "week" | "month" | "year";
+
+type Filters = {
+  q: string;
+  status: "ALL" | Status;
+  range: Range;
 };
 
 type BusinessRow = {
@@ -29,14 +78,6 @@ type BusinessRow = {
   plan: string;
   expires_at: string;
 };
-
-type Status =
-  | "NEW"
-  | "IN_PROGRESS"
-  | "WAITING_PAYMENT"
-  | "DONE"
-  | "CANCELED"
-  | "DUPLICATE";
 
 type OrderRow = {
   id: string;
@@ -49,17 +90,6 @@ type OrderRow = {
   order_number: number | null;
   created_at: string;
 };
-
-type Range = "ALL" | "today" | "week" | "month" | "year";
-type Filters = {
-  q: string;
-  status: "ALL" | Status;
-  range: Range;
-};
-
-function fmtAmount(n: number) {
-  return new Intl.NumberFormat("uk-UA").format(n);
-}
 
 function getDateFromRange(range: Range) {
   if (range === "ALL") return null;
@@ -91,68 +121,110 @@ function getDateFromRange(range: Range) {
   return null;
 }
 
-export default async function BusinessPage({
-  params,
-  searchParams,
-}: PageProps) {
-  const [{ slug }, sp] = await Promise.all([params, searchParams]);
-  if (!slug) notFound();
+async function findBusinessSlugByPhone(supabase: any, phone: string) {
+  // phone НЕ нормализуем, потому что в БД лежит "380..."
+  const { data, error } = await supabase
+    .from("businesses")
+    .select("slug")
+    .or(`owner_phone.eq.${phone},manager_phone.eq.${phone}`)
+    .maybeSingle();
 
-  function getSp(key: string): string {
-    const v = (sp as any)?.[key];
-    if (Array.isArray(v)) return String(v[0] ?? "");
-    return String(v ?? "");
+  if (error) {
+    console.error("findBusinessSlugByPhone error:", error);
+    return null;
   }
 
-  const u = sp?.u;
-  const uStr = Array.isArray(u) ? u[0] : u;
+  return data?.slug ?? null;
+}
 
-  const phoneRaw =
-    typeof u === "string"
-      ? decodeURIComponent(u)
-      : Array.isArray(u)
-      ? decodeURIComponent(u[0] || "")
-      : "";
+/** ----------------- page ----------------- */
 
-  const phone = phoneRaw ? normalizePhone(phoneRaw) : "";
+export default async function Page({
+  params,
+  searchParams,
+}: {
+  // Next 16: params/searchParams приходят как Promise
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const [{ slug: slugOrPhone }, sp] = await Promise.all([params, searchParams]);
+
+  const { supabase, missing } = getServerSupabase();
+  if (!supabase) {
+    return (
+      <main style={{ padding: 24 }}>
+        <b>Missing env:</b>
+        <pre style={{ whiteSpace: "pre-wrap" }}>
+          {JSON.stringify({ missing }, null, 2)}
+        </pre>
+      </main>
+    );
+  }
+
+  // ✅ Backward compatibility: /b/<phone>
+  if (isPhone(slugOrPhone)) {
+    const phone = slugOrPhone;
+
+    const slug = await findBusinessSlugByPhone(supabase, phone);
+    if (slug) {
+      redirect(`/b/${slug}?u=${phone}`);
+    }
+
+    return (
+      <main style={{ padding: 24 }}>
+        <b>Business not found:</b> {phone}
+      </main>
+    );
+  }
+
+  const slug = slugOrPhone;
+  if (!slug) notFound();
+
+  // read ?u=phone
+  const uStr = getSP(sp, "u");
+  const phoneRaw = uStr ? decodeURIComponent(uStr) : "";
+  const phoneNorm = phoneRaw ? normalizePhone(phoneRaw) : "";
 
   const clearHref = uStr
     ? `/b/${slug}?u=${encodeURIComponent(uStr)}&page=1`
     : `/b/${slug}?page=1`;
 
+  // load business
   const { data: business, error: bErr } = await supabase
     .from("businesses")
     .select("id, slug, owner_phone, manager_phone, plan, expires_at")
     .eq("slug", slug)
-    .single<BusinessRow>();
+    .single();
 
-  if (bErr || !business) {
+  const businessRow = business as BusinessRow | null;
+
+  if (bErr || !businessRow) {
     return (
-      <div style={{ padding: 24 }}>
+      <main style={{ padding: 24 }}>
         <b>Business not found:</b> {slug}
-      </div>
+      </main>
     );
   }
 
+  // role
   const ownerNorm = normalizePhone(business.owner_phone);
   const managerNorm = business.manager_phone
     ? normalizePhone(business.manager_phone)
     : "";
 
-  const isOwner = !!phone && phone === ownerNorm;
-  const isManager = !!phone && !!managerNorm && phone === managerNorm;
+  const isOwner = !!phoneNorm && phoneNorm === ownerNorm;
+  const isManager = !!phoneNorm && !!managerNorm && phoneNorm === managerNorm;
 
   const role: "OWNER" | "MANAGER" | "GUEST" = isOwner
     ? "OWNER"
     : isManager
     ? "MANAGER"
     : "GUEST";
-  const isOwnerManager = isOwner && isManager;
 
   const canView = role === "OWNER" || role === "MANAGER";
   const canManage = role === "OWNER" || role === "MANAGER";
   const canEdit = canManage;
-  const canSeeAnalytics = role === "OWNER" || isOwnerManager;
+  const canSeeAnalytics = role === "OWNER";
 
   if (!canView) {
     return (
@@ -173,21 +245,23 @@ export default async function BusinessPage({
     );
   }
 
+  // filters
   const filters: Filters = {
-    q: getSp("q"),
-    status: (getSp("status") || "ALL") as Filters["status"],
-    range: (getSp("range") || "ALL") as Filters["range"],
+    q: getSP(sp, "q"),
+    status: (getSP(sp, "status") || "ALL") as Filters["status"],
+    range: (getSP(sp, "range") || "ALL") as Filters["range"],
   };
 
   const hasActiveFilters =
     !!filters.q?.trim() || filters.status !== "ALL" || filters.range !== "ALL";
 
+  // pagination
   const PAGE_SIZE = 20;
-
-  const pageRaw = Number(getSp("page") || "1");
+  const pageRaw = Number(getSP(sp, "page") || "1");
   const page =
     Number.isFinite(pageRaw) && pageRaw > 0 ? Math.floor(pageRaw) : 1;
 
+  // orders query
   let query = supabase
     .from("orders")
     .select(
@@ -227,7 +301,7 @@ export default async function BusinessPage({
 
   const list = (orders || []) as OrderRow[];
 
-  // ---- analytics ----
+  // analytics
   const totalOrders = totalCount;
   let totalAmount = 0;
 
@@ -303,7 +377,7 @@ export default async function BusinessPage({
 
   const todayISO = new Date().toISOString().slice(0, 10);
 
-  // ---- styles ----
+  // styles
   const card: React.CSSProperties = {
     background: "white",
     border: "1px solid #e5e7eb",
@@ -377,7 +451,6 @@ export default async function BusinessPage({
         overflowX: "hidden",
       }}
     >
-      {" "}
       <style
         dangerouslySetInnerHTML={{
           __html: `
@@ -393,12 +466,14 @@ export default async function BusinessPage({
           `,
         }}
       />
+
       <TopBar
         businessSlug={business.slug}
         plan={business.plan}
         role={role}
         pill={pill}
       />
+
       <main className="shellPad" style={appShell}>
         <div className="shellGrid" style={shellGrid}>
           <aside className="desktopOnly" style={sidebarStyle}>
@@ -410,18 +485,16 @@ export default async function BusinessPage({
           </aside>
 
           <section style={contentCol}>
-            {/* Desktop: business card */}
             <DesktopBusinessCard
               business={business}
               role={role}
-              phone={phone}
-              isOwnerManager={isOwnerManager}
+              phone={phoneNorm}
+              isOwnerManager={false}
               card={card}
               cardHeader={cardHeader}
               cardTitle={cardTitle}
             />
 
-            {/* Desktop: analytics */}
             <DesktopAnalyticsCard
               canSeeAnalytics={canSeeAnalytics}
               card={card}
@@ -442,14 +515,13 @@ export default async function BusinessPage({
               fmtAmount={fmtAmount}
             />
 
-            {/* Mobile: business + analytics accordions */}
             <section className="mobileOnly" style={card}>
               <div style={{ display: "grid", gap: 8 }}>
                 <MobileBusinessAccordion
                   business={business}
                   role={role}
-                  phone={phone}
-                  isOwnerManager={isOwnerManager}
+                  phone={phoneNorm}
+                  isOwnerManager={false}
                 />
                 <MobileAnalyticsAccordion
                   canSeeAnalytics={canSeeAnalytics}
@@ -470,7 +542,6 @@ export default async function BusinessPage({
               </div>
             </section>
 
-            {/* Create order */}
             {canManage ? (
               <>
                 <DesktopCreateOrder
@@ -486,7 +557,6 @@ export default async function BusinessPage({
               </>
             ) : null}
 
-            {/* Filters */}
             <DesktopFilters
               phoneRaw={phoneRaw}
               filters={filters}
@@ -506,11 +576,9 @@ export default async function BusinessPage({
               />
             </section>
 
-            {/* Orders */}
             <section style={card}>
               <div style={cardHeader}>
                 <div style={cardTitle}>Orders</div>
-                {/* чтобы на мобайле не было "total" блока сверху */}
                 <div
                   className="desktopOnly"
                   style={{ fontSize: 12, opacity: 0.65 }}
