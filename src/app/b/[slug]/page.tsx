@@ -428,33 +428,37 @@ export default async function Page({
 
           {/* Content */}
           <section className="space-y-6">
-            {/* Analytics (desktop) */}
-            <DesktopAnalyticsCard
-              canSeeAnalytics={canSeeAnalytics}
-              totalOrders={totalOrders}
-              totalAmount={totalAmount}
-              overdueCount={overdueCount}
-              waitingPaymentCount={waitingPaymentCount}
-              waitingPaymentAmount={waitingPaymentAmount}
-              doneCount={doneCount}
-              doneAmount={doneAmount}
-              inProgressCount={inProgressCount}
-              newCount={newCount}
-              canceledCount={canceledCount}
-              duplicateCount={duplicateCount}
-              activeAmount={activeAmount}
-              fmtAmount={fmtAmount}
-            />
+            {/* ✅ Analytics (desktop only) */}
+            <div className="hidden lg:block">
+              <DesktopAnalyticsCard
+                canSeeAnalytics={canSeeAnalytics}
+                totalOrders={totalOrders}
+                totalAmount={totalAmount}
+                overdueCount={overdueCount}
+                waitingPaymentCount={waitingPaymentCount}
+                waitingPaymentAmount={waitingPaymentAmount}
+                doneCount={doneCount}
+                doneAmount={doneAmount}
+                inProgressCount={inProgressCount}
+                newCount={newCount}
+                canceledCount={canceledCount}
+                duplicateCount={duplicateCount}
+                activeAmount={activeAmount}
+                fmtAmount={fmtAmount}
+              />
+            </div>
 
             {/* Business + Analytics (mobile) */}
-            <section className="lg:hidden bg-white rounded-xl border border-gray-200 shadow-sm p-4">
-              <div className="grid gap-3">
-                <MobileBusinessAccordion
-                  business={businessRow}
-                  role={role}
-                  phone={phoneNorm}
-                  isOwnerManager={isOwnerManager}
-                />
+            <div className="lg:hidden grid gap-3">
+              <MobileBusinessAccordion
+                business={businessRow}
+                role={role}
+                phone={phoneNorm}
+                isOwnerManager={isOwnerManager}
+              />
+
+              {/* ✅ Analytics mobile ONLY for OWNER */}
+              {canSeeAnalytics ? (
                 <MobileAnalyticsAccordion
                   canSeeAnalytics={canSeeAnalytics}
                   totalOrders={totalOrders}
@@ -471,8 +475,8 @@ export default async function Page({
                   activeAmount={activeAmount}
                   fmtAmount={fmtAmount}
                 />
-              </div>
-            </section>
+              ) : null}
+            </div>
 
             {/* Create order */}
             {canManage ? (
@@ -483,28 +487,31 @@ export default async function Page({
                 </div>
 
                 {/* mobile */}
-                <section className="lg:hidden bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+                <div className="lg:hidden">
                   <MobileCreateOrderAccordion businessId={businessRow.id} />
-                </section>
+                </div>
               </>
             ) : null}
 
-            {/* Filters */}
-            <DesktopFilters
-              phoneRaw={phoneRaw}
-              filters={filters}
-              clearHref={clearHref}
-              hasActiveFilters={hasActiveFilters}
-            />
+            {/* ✅ Filters (desktop only) */}
+            <div className="hidden lg:block">
+              <DesktopFilters
+                phoneRaw={phoneRaw}
+                filters={filters}
+                clearHref={clearHref}
+                hasActiveFilters={hasActiveFilters}
+              />
+            </div>
 
-            <section className="lg:hidden bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+            {/* ✅ Filters (mobile only) */}
+            <div className="lg:hidden">
               <MobileFiltersAccordion
                 phoneRaw={phoneRaw}
                 filters={filters}
                 clearHref={clearHref}
                 hasActiveFilters={hasActiveFilters}
               />
-            </section>
+            </div>
 
             {/* Orders */}
             <section className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 sm:p-6">

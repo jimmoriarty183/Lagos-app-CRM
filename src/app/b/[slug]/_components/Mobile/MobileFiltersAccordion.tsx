@@ -1,6 +1,5 @@
-import Button from "../../Button";
 import MobileAccordion from "./MobileAccordion";
-import { Filter, Search } from "lucide-react";
+import Button from "../../Button";
 
 type Status =
   | "NEW"
@@ -11,7 +10,12 @@ type Status =
   | "DUPLICATE";
 
 type Range = "ALL" | "today" | "week" | "month" | "year";
-type Filters = { q: string; status: "ALL" | Status; range: Range };
+
+export type Filters = {
+  q: string;
+  status: "ALL" | Status;
+  range: Range;
+};
 
 type Props = {
   phoneRaw: string;
@@ -26,9 +30,11 @@ export default function MobileFiltersAccordion({
   clearHref,
   hasActiveFilters,
 }: Props) {
-  const fieldCls =
-    "w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg outline-none " +
-    "focus:ring-2 focus:ring-gray-900 focus:border-gray-900";
+  const inputCls =
+    "h-11 w-full rounded-xl border border-gray-200 px-3 outline-none " +
+    "focus:ring-2 focus:ring-gray-900 focus:border-gray-900 bg-white";
+
+  const labelCls = "text-xs font-semibold text-gray-600";
 
   return (
     <MobileAccordion
@@ -38,7 +44,7 @@ export default function MobileFiltersAccordion({
         hasActiveFilters ? (
           <a
             href={clearHref}
-            className="h-8 inline-flex items-center justify-center px-3 rounded-full border border-gray-200 bg-white text-xs font-extrabold text-gray-900 hover:bg-gray-50 transition-colors"
+            className="h-9 inline-flex items-center justify-center px-3 rounded-lg border border-gray-200 bg-white text-sm font-semibold text-gray-900 hover:bg-gray-50 transition-colors"
           >
             Clear
           </a>
@@ -50,27 +56,21 @@ export default function MobileFiltersAccordion({
         <input type="hidden" name="page" value="1" />
 
         <label className="grid gap-1">
-          <span className="text-xs font-semibold text-gray-700 inline-flex items-center gap-2">
-            <Search className="h-4 w-4 text-gray-400" />
-            Search
-          </span>
+          <span className={labelCls}>Search</span>
           <input
             name="q"
             defaultValue={filters.q}
             placeholder="Name, phone, amount…"
-            className={fieldCls}
+            className={inputCls}
           />
         </label>
 
         <label className="grid gap-1">
-          <span className="text-xs font-semibold text-gray-700 inline-flex items-center gap-2">
-            <Filter className="h-4 w-4 text-gray-400" />
-            Status
-          </span>
+          <span className={labelCls}>Status</span>
           <select
             name="status"
             defaultValue={filters.status}
-            className={fieldCls}
+            className={inputCls}
           >
             <option value="ALL">All</option>
             <option value="NEW">NEW</option>
@@ -83,11 +83,11 @@ export default function MobileFiltersAccordion({
         </label>
 
         <label className="grid gap-1">
-          <span className="text-xs font-semibold text-gray-700">Period</span>
+          <span className={labelCls}>Period</span>
           <select
             name="range"
             defaultValue={filters.range}
-            className={fieldCls}
+            className={inputCls}
           >
             <option value="ALL">All time</option>
             <option value="today">Today</option>
@@ -97,7 +97,7 @@ export default function MobileFiltersAccordion({
           </select>
         </label>
 
-        <Button type="submit" size="sm" style={{ width: "100%" }}>
+        <Button type="submit" size="sm">
           Apply
         </Button>
       </form>

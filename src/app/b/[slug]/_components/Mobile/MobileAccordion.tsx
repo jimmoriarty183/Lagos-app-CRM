@@ -4,7 +4,7 @@ import { ReactNode, useId, useState } from "react";
 import { ChevronDown } from "lucide-react";
 
 type Props = {
-  title: string;
+  title: ReactNode;
   defaultOpen?: boolean;
   children: ReactNode;
   rightSlot?: ReactNode; // действия справа (например Clear)

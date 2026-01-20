@@ -1,5 +1,5 @@
-import Accordion from "../../Accordion";
 import { BarChart3 } from "lucide-react";
+import MobileAccordion from "./MobileAccordion";
 
 function KpiCard({
   title,
@@ -68,14 +68,12 @@ export default function MobileAnalyticsAccordion({
   if (!canSeeAnalytics) return null;
 
   return (
-    <Accordion
+    <MobileAccordion
       title={
-        (
-          <span className="inline-flex items-center gap-2">
-            <BarChart3 className="h-4 w-4 text-gray-400" />
-            Analytics
-          </span>
-        ) as any
+        <span className="inline-flex items-center gap-2">
+          <BarChart3 className="h-4 w-4 text-gray-400" />
+          Analytics
+        </span>
       }
       defaultOpen={false}
     >
@@ -125,6 +123,6 @@ export default function MobileAnalyticsAccordion({
 
         <div className="text-xs text-gray-500">Based on current filters</div>
       </div>
-    </Accordion>
+    </MobileAccordion>
   );
 }

@@ -1,5 +1,5 @@
-import Accordion from "../../Accordion";
 import { Phone } from "lucide-react";
+import MobileAccordion from "./MobileAccordion";
 
 type Props = {
   business: { owner_phone: string; manager_phone: string | null };
@@ -37,7 +37,7 @@ export default function MobileBusinessAccordion({
   isOwnerManager,
 }: Props) {
   return (
-    <Accordion title="Business" defaultOpen={false}>
+    <MobileAccordion title="Business" defaultOpen={false}>
       <div className="grid gap-2">
         {role === "MANAGER" && !isOwnerManager ? (
           <Pill tone="blue">
@@ -65,6 +65,6 @@ export default function MobileBusinessAccordion({
           </Pill>
         ) : null}
       </div>
-    </Accordion>
+    </MobileAccordion>
   );
 }
