@@ -207,9 +207,9 @@ export default async function Page({
   }
 
   // role
-  const ownerNorm = normalizePhone(business.owner_phone);
-  const managerNorm = business.manager_phone
-    ? normalizePhone(business.manager_phone)
+  const ownerNorm = normalizePhone(businessRow.owner_phone);
+  const managerNorm = businessRow.manager_phone
+    ? normalizePhone(businessRow.manager_phone)
     : "";
 
   const isOwner = !!phoneNorm && phoneNorm === ownerNorm;
@@ -221,11 +221,12 @@ export default async function Page({
     ? "MANAGER"
     : "GUEST";
 
+  // показываем "Owner/Manager" только когда OWNER и менеджера нет или он совпадает с owner
   const isOwnerManager =
     role === "OWNER" &&
-    (!business.manager_phone ||
-      normalizePhone(business.manager_phone) ===
-        normalizePhone(business.owner_phone));
+    (!businessRow.manager_phone ||
+      normalizePhone(businessRow.manager_phone) ===
+        normalizePhone(businessRow.owner_phone));
 
   const canView = role === "OWNER" || role === "MANAGER";
   const canManage = role === "OWNER" || role === "MANAGER";
@@ -234,7 +235,7 @@ export default async function Page({
 
   if (!canView) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/20 to-gray-50 flex items-center justify-center px-4">
+      <div className="min-h-screen bg-[#f5f7fb] flex items-center justify-center px-4">
         <div className="w-full max-w-md bg-white rounded-xl border border-gray-200 shadow-sm p-6 text-center text-gray-600">
           Access restricted
         </div>
@@ -265,7 +266,7 @@ export default async function Page({
       "id, order_number, client_name, client_phone, amount, description, due_date, status, created_at, search_text",
       { count: "exact" }
     )
-    .eq("business_id", business.id)
+    .eq("business_id", businessRow.id)
     .order("created_at", { ascending: false });
 
   if (filters.status !== "ALL") query = query.eq("status", filters.status);
@@ -322,7 +323,7 @@ export default async function Page({
     let aq = supabase
       .from("orders")
       .select("amount, due_date, status, created_at, search_text")
-      .eq("business_id", business.id);
+      .eq("business_id", businessRow.id);
 
     if (filters.status !== "ALL") aq = aq.eq("status", filters.status);
 
@@ -389,15 +390,23 @@ export default async function Page({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/20 to-gray-50 overflow-x-hidden">
+    <div className="relative min-h-screen bg-transparent">
+      {/* Soft background (like homepage) */}
+      <div className="pointer-events-none absolute inset-0 -z-10">
+        <div className="absolute -top-56 -left-56 h-[520px] w-[520px] rounded-full bg-blue-100/25 blur-[160px]" />
+        <div className="absolute -top-40 right-[-120px] h-[520px] w-[520px] rounded-full bg-emerald-100/20 blur-[180px]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-white via-white to-white" />
+      </div>
+
+      {/* Top bar */}
       <TopBar
-        businessSlug={business.slug}
-        plan={business.plan}
+        businessSlug={businessRow.slug}
+        plan={businessRow.plan}
         role={role}
         pill={pill}
       />
 
-      <main className="mx-auto max-w-7xl px-4 sm:px-6 py-6">
+      <main className="mx-auto max-w-7xl px-4 sm:px-6 py-6 relative rounded-2xl">
         <div className="grid grid-cols-1 lg:grid-cols-[16rem_1fr] gap-6 items-start">
           {/* Sidebar (desktop) */}
           <aside className="hidden lg:block sticky top-20 self-start">
@@ -409,7 +418,7 @@ export default async function Page({
               />
 
               <DesktopBusinessCard
-                business={business}
+                business={businessRow}
                 role={role}
                 phone={phoneNorm}
                 isOwnerManager={isOwnerManager}
@@ -441,10 +450,10 @@ export default async function Page({
             <section className="lg:hidden bg-white rounded-xl border border-gray-200 shadow-sm p-4">
               <div className="grid gap-3">
                 <MobileBusinessAccordion
-                  business={business}
+                  business={businessRow}
                   role={role}
                   phone={phoneNorm}
-                  isOwnerManager={false}
+                  isOwnerManager={isOwnerManager}
                 />
                 <MobileAnalyticsAccordion
                   canSeeAnalytics={canSeeAnalytics}
@@ -468,14 +477,14 @@ export default async function Page({
             {/* Create order */}
             {canManage ? (
               <>
-                {/* desktop: только аккордеон, чтобы не раздувало страницу */}
+                {/* desktop */}
                 <div className="hidden lg:block">
-                  <DesktopCreateOrderAccordion businessId={business.id} />
+                  <DesktopCreateOrderAccordion businessId={businessRow.id} />
                 </div>
 
-                {/* mobile: как было */}
+                {/* mobile */}
                 <section className="lg:hidden bg-white rounded-xl border border-gray-200 shadow-sm p-4">
-                  <MobileCreateOrderAccordion businessId={business.id} />
+                  <MobileCreateOrderAccordion businessId={businessRow.id} />
                 </section>
               </>
             ) : null}
@@ -554,7 +563,7 @@ export default async function Page({
                       <DesktopOrdersTable
                         list={list}
                         todayISO={todayISO}
-                        businessSlug={business.slug}
+                        businessSlug={businessRow.slug}
                         phoneRaw={phoneRaw}
                         canManage={canManage}
                         canEdit={canEdit}
@@ -565,7 +574,7 @@ export default async function Page({
                       <MobileOrdersList
                         list={list}
                         todayISO={todayISO}
-                        businessSlug={business.slug}
+                        businessSlug={businessRow.slug}
                         phoneRaw={phoneRaw}
                         canManage={canManage}
                         canEdit={canEdit}
