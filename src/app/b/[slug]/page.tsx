@@ -389,6 +389,25 @@ export default async function Page({
     color: "#0f172a",
   };
 
+  // ✅ NEW: список бизнесов пользователя для switcher (ВНЕ JSX!)
+  const { data: allBiz, error: allBizErr } = await supabase
+    .from("businesses")
+    .select("id, slug, owner_phone, manager_phone, plan")
+    .or(`owner_phone.eq.${phoneNorm},manager_phone.eq.${phoneNorm}`)
+    .order("slug", { ascending: true });
+
+  if (allBizErr) {
+    console.error("Businesses list error:", allBizErr);
+  }
+
+  const businesses =
+    (allBiz ?? []).map((b: any) => ({
+      id: b.id,
+      slug: b.slug,
+      name: b.slug, // name нет — показываем slug
+      role: normalizePhone(b.owner_phone) === phoneNorm ? "OWNER" : "MANAGER",
+    })) ?? [];
+
   return (
     <div className="relative min-h-screen bg-transparent">
       {/* Soft background (like homepage) */}
@@ -404,6 +423,7 @@ export default async function Page({
         plan={businessRow.plan}
         role={role}
         pill={pill}
+        businesses={businesses} // ✅ NEW
       />
 
       <main className="mx-auto max-w-7xl px-4 sm:px-6 py-6 relative rounded-2xl">

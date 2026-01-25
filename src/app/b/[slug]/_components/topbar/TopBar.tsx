@@ -1,50 +1,52 @@
+"use client";
+
 import React from "react";
-import LogoutButton from "../LogoutButton";
-import { BadgeCheck, Shield } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { BadgeCheck, LogOut } from "lucide-react";
 import { Logo } from "@/components/Logo";
+
+import BusinessSwitcher, { BusinessOption } from "./BusinessSwitcher";
 
 type Props = {
   businessSlug: string;
   plan: string;
-  role: string;
-
-  // чтобы не ломать текущий вызов из page.tsx
+  role: "OWNER" | "MANAGER" | "GUEST";
   pill?: React.CSSProperties;
+  businesses?: BusinessOption[];
 };
 
-const chipBase =
-  "inline-flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-semibold leading-none whitespace-nowrap";
+export default function TopBar({ businessSlug, plan, businesses }: Props) {
+  const router = useRouter();
 
-function Chip({
-  children,
-  variant = "default",
-}: {
-  children: React.ReactNode;
-  variant?: "default" | "primary";
-}) {
-  const variants = {
-    default: "bg-gray-100 text-gray-700 border-gray-200",
-    primary: "bg-blue-50 text-blue-700 border-blue-200",
+  const handleSelect = (slug: string) => {
+    document.cookie = `active_business_slug=${encodeURIComponent(
+      slug
+    )}; path=/; max-age=${60 * 60 * 24 * 365}`;
+
+    const url = new URL(window.location.href);
+    const u = url.searchParams.get("u");
+    router.push(u ? `/b/${slug}?u=${encodeURIComponent(u)}` : `/b/${slug}`);
   };
 
-  return (
-    <span className={`${chipBase} ${variants[variant]} transition-colors`}>
-      {children}
-    </span>
-  );
-}
+  const handleLogout = () => {
+    document.cookie = "u=; path=/; max-age=0";
+    router.push("/login");
+  };
 
-export default function TopBar({ businessSlug, plan, role }: Props) {
+  const showSwitcher = !!businesses && businesses.length > 1;
+
   return (
-    <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/80 backdrop-blur-sm">
+    <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/70 backdrop-blur">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center justify-between gap-3">
           {/* LEFT */}
           <div className="flex items-center gap-3 min-w-0">
             <Logo size={36} />
             <div className="min-w-0">
-              <div className="font-semibold text-gray-900">Ordero</div>
-              <div className="text-xs text-gray-500 truncate">
+              <div className="text-sm font-semibold text-gray-900 leading-tight">
+                Ordero
+              </div>
+              <div className="text-[11px] text-gray-500 leading-tight hidden sm:block">
                 / {businessSlug}
               </div>
             </div>
@@ -52,19 +54,32 @@ export default function TopBar({ businessSlug, plan, role }: Props) {
 
           {/* RIGHT */}
           <div className="flex items-center gap-2 sm:gap-3">
-            <Chip variant="primary">
+            {/* Switcher */}
+            {showSwitcher ? (
+              <BusinessSwitcher
+                businesses={businesses!}
+                currentSlug={businessSlug}
+                onSelect={handleSelect}
+                disabledAdd
+                widthClassName="w-[200px] sm:w-[220px]" // desktop шире и солиднее
+                variant="toolbar"
+              />
+            ) : null}
+
+            {/* beta (desktop) */}
+            <span className="inline-flex h-9 items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 text-sm font-semibold text-blue-700">
               <BadgeCheck size={16} className="opacity-80" />
-              <span className="hidden sm:inline">{plan}</span>
-              <span className="sm:hidden">{plan.slice(0, 4)}</span>
-            </Chip>
+              <span>{plan}</span>
+            </span>
 
-            <Chip>
-              <Shield size={16} className="opacity-80" />
-              <span className="hidden sm:inline">{role}</span>
-              <span className="sm:hidden">{role.slice(0, 3)}</span>
-            </Chip>
-
-            <LogoutButton />
+            {/* logout icon (mobile+desktop sizes) */}
+            <button
+              onClick={handleLogout}
+              title="Logout"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 transition"
+            >
+              <LogOut className="h-5 w-5 sm:h-6 sm:w-6" />
+            </button>
           </div>
         </div>
       </div>
