@@ -57,6 +57,10 @@ function MobileOrderCard({
   return (
     <div
       style={{
+        // ✅ важно для mobile dropdown'ов внутри карточки (iOS Safari)
+        position: "relative",
+        overflow: "visible",
+
         background: "white",
         border: `1px solid ${isOverdue ? "#fecaca" : "#e5e7eb"}`,
         borderRadius: 16,
@@ -91,6 +95,11 @@ function MobileOrderCard({
 
         <div
           style={{
+            // ✅ ещё важнее: dropdown статуса обычно absolute внутри этого блока
+            position: "relative",
+            overflow: "visible",
+            zIndex: 20,
+
             borderRadius: 999,
             border: `1px solid ${st.border}`,
             fontWeight: 900,
@@ -101,6 +110,7 @@ function MobileOrderCard({
             alignItems: "center",
             justifyContent: "center",
             whiteSpace: "nowrap",
+            background: "transparent",
           }}
         >
           <StatusCell orderId={o.id} value={o.status} canManage={canManage} />
@@ -208,7 +218,7 @@ function MobileOrderCard({
 }
 
 type Props = {
-  list?: OrderRow[]; // <-- стало optional
+  list?: OrderRow[];
   todayISO: string;
   businessSlug: string;
   phoneRaw: string;
@@ -217,7 +227,7 @@ type Props = {
 };
 
 export default function MobileOrdersList({
-  list = [], // <-- дефолт
+  list = [],
   todayISO,
   businessSlug,
   phoneRaw,
@@ -237,6 +247,7 @@ export default function MobileOrdersList({
           canEdit={canEdit}
         />
       ))}
+
       {list.length === 0 ? (
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 text-center text-sm text-gray-500">
           No orders found
