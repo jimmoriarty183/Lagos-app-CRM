@@ -4,6 +4,7 @@ import React, { useMemo, useRef, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { StatusCell } from "../../InlineCells";
 import { OrderChecklist } from "../../OrderChecklist";
+import { OrderComments } from "../../OrderComments";
 
 type Status =
   | "NEW"
@@ -101,7 +102,7 @@ type Props = {
   list: OrderRow[];
   todayISO: string;
   businessSlug: string;
-  businessId: string; // ✅ added
+  businessId: string;
   phoneRaw: string;
   canManage: boolean;
   canEdit: boolean;
@@ -111,7 +112,7 @@ export default function DesktopOrdersTable({
   list,
   todayISO,
   businessSlug,
-  businessId, // ✅ added
+  businessId,
   phoneRaw,
   canManage,
   canEdit,
@@ -174,7 +175,6 @@ export default function DesktopOrdersTable({
 
             return (
               <React.Fragment key={o.id}>
-                {/* ✅ строка кликабельна везде: имитируем клик по глазику */}
                 <tr
                   className="border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer"
                   onClick={() => eyeRefs.current[o.id]?.click()}
@@ -210,11 +210,11 @@ export default function DesktopOrdersTable({
 
                   <td className="px-6 py-4 align-top">
                     <div
-                      className={`${
+                      className={
                         isOverdue
                           ? "text-red-600 font-semibold"
                           : "text-gray-700"
-                      }`}
+                      }
                     >
                       {o.due_date || "—"}
                     </div>
@@ -223,7 +223,6 @@ export default function DesktopOrdersTable({
                     ) : null}
                   </td>
 
-                  {/* ✅ STATUS: стопаем клик ТОЛЬКО на статусе */}
                   <td className="px-6 py-4 align-top">
                     <div
                       className="inline-flex"
@@ -237,7 +236,6 @@ export default function DesktopOrdersTable({
                     </div>
                   </td>
 
-                  {/* ✅ ACTIONS */}
                   <td
                     className="px-6 py-4 align-top text-right"
                     onClick={(e) => e.stopPropagation()}
@@ -280,7 +278,6 @@ export default function DesktopOrdersTable({
                   </td>
                 </tr>
 
-                {/* ✅ предпросмотр */}
                 {opened ? (
                   <tr className="border-b border-gray-100">
                     <td colSpan={5} className="px-6 pb-5">
@@ -289,7 +286,7 @@ export default function DesktopOrdersTable({
                         onClick={(e) => e.stopPropagation()}
                       >
                         <div className="flex items-start justify-between gap-4">
-                          <div className="min-w-0">
+                          <div className="min-w-0 flex-1">
                             <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                               Description
                             </div>
@@ -304,6 +301,16 @@ export default function DesktopOrdersTable({
                             <OrderChecklist
                               order={{ id: o.id, business_id: businessId }}
                               supabase={supabase}
+                            />
+
+                            {/* ✅ COMMENTS (below checklist) */}
+                            <OrderComments
+                              order={{ id: o.id, business_id: businessId }}
+                              supabase={supabase}
+                              author={{
+                                phone: phoneRaw,
+                                role: canManage ? "MANAGER" : "GUEST",
+                              }}
                             />
                           </div>
 

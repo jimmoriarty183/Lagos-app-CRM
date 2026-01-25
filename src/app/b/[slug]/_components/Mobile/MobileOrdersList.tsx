@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { StatusCell } from "../../InlineCells";
 import { OrderChecklist } from "../../OrderChecklist";
+import { OrderComments } from "../../OrderComments";
 
 type Status =
   | "NEW"
@@ -97,7 +98,7 @@ export default function MobileOrdersList({
   list = [],
   todayISO,
   businessSlug,
-  businessId, // ✅ added
+  businessId,
   phoneRaw,
   canManage,
   canEdit,
@@ -105,7 +106,7 @@ export default function MobileOrdersList({
   list?: OrderRow[];
   todayISO: string;
   businessSlug: string;
-  businessId: string; // ✅ added
+  businessId: string;
   phoneRaw: string;
   canManage: boolean;
   canEdit: boolean;
@@ -136,7 +137,6 @@ export default function MobileOrdersList({
             className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm cursor-pointer"
             style={{ position: "relative", overflow: "visible" }}
           >
-            {/* header */}
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <div className="text-xs text-gray-500 mb-1">
@@ -163,7 +163,6 @@ export default function MobileOrdersList({
                 ) : null}
               </div>
 
-              {/* right controls (НЕ открывают preview) */}
               <div
                 className="flex items-center gap-2"
                 style={{
@@ -173,7 +172,6 @@ export default function MobileOrdersList({
                 }}
                 onClick={(e) => e.stopPropagation()}
               >
-                {/* status */}
                 <div
                   className="inline-flex"
                   style={{
@@ -189,7 +187,6 @@ export default function MobileOrdersList({
                   />
                 </div>
 
-                {/* Eye toggle */}
                 <button
                   type="button"
                   onClick={(e) => {
@@ -209,7 +206,6 @@ export default function MobileOrdersList({
               </div>
             </div>
 
-            {/* amount/due */}
             <div className="mt-3 flex items-start justify-between gap-3">
               <div>
                 <div className="text-xs text-gray-500">Amount</div>
@@ -231,7 +227,6 @@ export default function MobileOrdersList({
               </div>
             </div>
 
-            {/* preview */}
             {isOpen ? (
               <div
                 className="mt-3 rounded-2xl border border-gray-200 bg-gray-50 p-3"
@@ -250,6 +245,16 @@ export default function MobileOrdersList({
                   supabase={supabase}
                 />
 
+                {/* ✅ COMMENTS */}
+                <OrderComments
+                  order={{ id: o.id, business_id: businessId }}
+                  supabase={supabase}
+                  author={{
+                    phone: phoneRaw,
+                    role: canManage ? "MANAGER" : "GUEST",
+                  }}
+                />
+
                 <div className="mt-3 flex justify-end">
                   <button
                     type="button"
@@ -265,7 +270,6 @@ export default function MobileOrdersList({
               </div>
             ) : null}
 
-            {/* actions row (НЕ открывает preview) */}
             <div
               className="mt-3 flex justify-end"
               onClick={(e) => e.stopPropagation()}
