@@ -616,4 +616,22 @@ export default async function Page({
       </main>
     </div>
   );
+
+  const preview = useOrderPreview();
+
+  return (
+    <>
+      {isDesktop ? (
+        <DesktopOrdersTable orders={orders} onPreview={preview.openPreview} />
+      ) : (
+        <MobileOrdersList orders={orders} onPreview={preview.openPreview} />
+      )}
+
+      <OrderPreview
+        open={preview.open}
+        orderId={preview.orderId}
+        onClose={preview.closePreview}
+      />
+    </>
+  );
 }

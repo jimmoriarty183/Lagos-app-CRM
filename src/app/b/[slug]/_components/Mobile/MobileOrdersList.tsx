@@ -1,5 +1,7 @@
+"use client";
+
+import { useState } from "react";
 import { StatusCell } from "../../InlineCells";
-import { statusTone } from "../../statusTone";
 
 type Status =
   | "NEW"
@@ -25,206 +27,69 @@ function fmtAmount(n: number) {
   return new Intl.NumberFormat("uk-UA").format(n);
 }
 
-function clamp(s: string, max = 34) {
-  const t = (s || "").trim();
-  if (t.length <= max) return t;
-  return t.slice(0, max - 1) + "…";
-}
-
-function MobileOrderCard({
-  o,
-  businessSlug,
-  phoneRaw,
-  canManage,
-  canEdit,
-  todayISO,
-}: {
-  o: OrderRow;
-  businessSlug: string;
-  phoneRaw: string;
-  canManage: boolean;
-  canEdit: boolean;
-  todayISO: string;
-}) {
-  const dueISO = o.due_date ? String(o.due_date).slice(0, 10) : null;
-  const isOverdue =
-    !!dueISO &&
-    dueISO < todayISO &&
-    (o.status === "NEW" || o.status === "IN_PROGRESS");
-
-  const st = statusTone(o.status);
-
+function EyeIcon({ className }: { className?: string }) {
   return (
-    <div
-      style={{
-        // ✅ важно для mobile dropdown'ов внутри карточки (iOS Safari)
-        position: "relative",
-        overflow: "visible",
-
-        background: "white",
-        border: `1px solid ${isOverdue ? "#fecaca" : "#e5e7eb"}`,
-        borderRadius: 16,
-        padding: 14,
-        boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
-      }}
+    <svg
+      viewBox="0 0 24 24"
+      className={className}
+      fill="none"
+      aria-hidden="true"
     >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          gap: 10,
-          alignItems: "flex-start",
-        }}
-      >
-        <div style={{ minWidth: 0 }}>
-          <div style={{ fontWeight: 900, fontSize: 15 }}>
-            {clamp(o.client_name || "—", 40)}
-          </div>
-
-          <div style={{ marginTop: 4, fontSize: 12, opacity: 0.7 }}>
-            <b>Order #{o.order_number ?? "-"}</b>{" "}
-            <span style={{ opacity: 0.55 }}>·</span>{" "}
-            {new Date(o.created_at).toLocaleString("en-NG", {
-              day: "2-digit",
-              month: "short",
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
-          </div>
-        </div>
-
-        <div
-          style={{
-            // ✅ ещё важнее: dropdown статуса обычно absolute внутри этого блока
-            position: "relative",
-            overflow: "visible",
-            zIndex: 20,
-
-            borderRadius: 999,
-            border: `1px solid ${st.border}`,
-            fontWeight: 900,
-            fontSize: 12,
-            padding: "8px 12px",
-            minHeight: 36,
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            whiteSpace: "nowrap",
-            background: "transparent",
-          }}
-        >
-          <StatusCell orderId={o.id} value={o.status} canManage={canManage} />
-        </div>
-      </div>
-
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          gap: 10,
-          marginTop: 12,
-        }}
-      >
-        <div>
-          <div style={{ fontSize: 12, opacity: 0.65 }}>Amount</div>
-          <div style={{ fontSize: 18, fontWeight: 950 }}>
-            {fmtAmount(Number(o.amount))}
-          </div>
-        </div>
-
-        <div style={{ textAlign: "right" }}>
-          <div style={{ fontSize: 12, opacity: 0.65 }}>Due</div>
-          <div
-            style={{
-              fontWeight: isOverdue ? 900 : 800,
-              color: isOverdue ? "#b91c1c" : "#0f172a",
-            }}
-          >
-            {o.due_date || "—"}
-          </div>
-          {isOverdue ? (
-            <div style={{ fontSize: 11, color: "#b91c1c", opacity: 0.85 }}>
-              Overdue
-            </div>
-          ) : null}
-        </div>
-      </div>
-
-      {o.client_phone ? (
-        <div style={{ marginTop: 10, fontSize: 13, opacity: 0.85 }}>
-          📞 {o.client_phone}
-        </div>
-      ) : null}
-
-      {o.description ? (
-        <details style={{ marginTop: 10 }}>
-          <summary
-            style={{
-              cursor: "pointer",
-              fontSize: 13,
-              fontWeight: 800,
-              textDecoration: "underline",
-              opacity: 0.9,
-              listStyle: "none",
-              WebkitAppearance: "none",
-            }}
-          >
-            📝 Show description
-          </summary>
-          <div
-            style={{
-              marginTop: 8,
-              fontSize: 14,
-              lineHeight: 1.5,
-              whiteSpace: "pre-wrap",
-            }}
-          >
-            {o.description}
-          </div>
-        </details>
-      ) : null}
-
-      <div
-        style={{ marginTop: 12, display: "flex", justifyContent: "flex-end" }}
-      >
-        {canEdit ? (
-          <a
-            href={`/b/${businessSlug}/o/${o.id}?u=${encodeURIComponent(
-              phoneRaw
-            )}`}
-            style={{
-              height: 40,
-              padding: "0 14px",
-              borderRadius: 12,
-              border: "1px solid #e5e7eb",
-              background: "white",
-              cursor: "pointer",
-              display: "inline-flex",
-              alignItems: "center",
-              textDecoration: "none",
-              color: "#111",
-              fontSize: 13,
-              fontWeight: 900,
-            }}
-          >
-            Edit
-          </a>
-        ) : (
-          <span style={{ opacity: 0.5 }}>—</span>
-        )}
-      </div>
-    </div>
+      <path
+        d="M2.5 12s3.5-7 9.5-7 9.5 7 9.5 7-3.5 7-9.5 7-9.5-7-9.5-7Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }
 
-type Props = {
-  list?: OrderRow[];
-  todayISO: string;
-  businessSlug: string;
-  phoneRaw: string;
-  canManage: boolean;
-  canEdit: boolean;
-};
+function EyeOffIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className={className}
+      fill="none"
+      aria-hidden="true"
+    >
+      <path
+        d="M3 3l18 18"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      <path
+        d="M10.6 10.6A3 3 0 0 0 13.4 13.4"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      <path
+        d="M6.2 6.2C4 8 2.5 10.5 2.5 12c0 0 3.5 7 9.5 7 1.9 0 3.6-.5 5-1.2"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M9.5 5.3A10.4 10.4 0 0 1 12 5c6 0 9.5 7 9.5 7 0 0-1.1 2.2-3.2 4.1"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
 
 export default function MobileOrdersList({
   list = [],
@@ -233,20 +98,174 @@ export default function MobileOrdersList({
   phoneRaw,
   canManage,
   canEdit,
-}: Props) {
+}: {
+  list?: OrderRow[];
+  todayISO: string;
+  businessSlug: string;
+  phoneRaw: string;
+  canManage: boolean;
+  canEdit: boolean;
+}) {
+  const [openId, setOpenId] = useState<string | null>(null);
+  const toggle = (id: string) => setOpenId((cur) => (cur === id ? null : id));
+
   return (
     <div className="mobileOnly grid gap-3">
-      {list.map((o) => (
-        <MobileOrderCard
-          key={o.id}
-          o={o}
-          todayISO={todayISO}
-          businessSlug={businessSlug}
-          phoneRaw={phoneRaw}
-          canManage={canManage}
-          canEdit={canEdit}
-        />
-      ))}
+      {list.map((o) => {
+        const isOpen = openId === o.id;
+
+        const editHref = `/b/${businessSlug}/o/${o.id}?u=${encodeURIComponent(
+          phoneRaw
+        )}`;
+
+        return (
+          <div
+            key={o.id}
+            onClick={() => toggle(o.id)}
+            className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm cursor-pointer"
+            style={{ position: "relative", overflow: "visible" }}
+          >
+            {/* header */}
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <div className="text-xs text-gray-500 mb-1">
+                  <span className="font-semibold text-gray-700">
+                    Order #{o.order_number ?? "-"}
+                  </span>{" "}
+                  <span className="text-gray-300">·</span>{" "}
+                  {new Date(o.created_at).toLocaleString("en-NG", {
+                    day: "2-digit",
+                    month: "short",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </div>
+
+                <div className="text-sm font-extrabold text-gray-900 truncate">
+                  {o.client_name || "—"}
+                </div>
+
+                {o.client_phone ? (
+                  <div className="mt-1 text-sm text-gray-600">
+                    📞 {o.client_phone}
+                  </div>
+                ) : null}
+              </div>
+
+              {/* right controls (НЕ открывают preview) */}
+              <div
+                className="flex items-center gap-2"
+                style={{
+                  position: "relative",
+                  zIndex: 20,
+                  overflow: "visible",
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* status */}
+                <div
+                  className="inline-flex"
+                  style={{
+                    position: "relative",
+                    zIndex: 20,
+                    overflow: "visible",
+                  }}
+                >
+                  <StatusCell
+                    orderId={o.id}
+                    value={o.status}
+                    canManage={canManage}
+                  />
+                </div>
+
+                {/* Eye toggle (как на десктопе) */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggle(o.id);
+                  }}
+                  className="h-9 w-10 inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white hover:bg-gray-50 transition"
+                  title={isOpen ? "Hide preview" : "Preview"}
+                  aria-label={isOpen ? "Hide preview" : "Preview"}
+                >
+                  {isOpen ? (
+                    <EyeOffIcon className="h-5 w-5 text-gray-700" />
+                  ) : (
+                    <EyeIcon className="h-5 w-5 text-gray-700" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* amount/due */}
+            <div className="mt-3 flex items-start justify-between gap-3">
+              <div>
+                <div className="text-xs text-gray-500">Amount</div>
+                <div className="text-lg font-extrabold text-gray-900 tabular-nums">
+                  {fmtAmount(Number(o.amount))}
+                </div>
+              </div>
+
+              <div className="text-right">
+                <div className="text-xs text-gray-500">Due</div>
+                <div className="font-extrabold text-gray-900">
+                  {o.due_date || "—"}
+                </div>
+                {o.due_date &&
+                String(o.due_date).slice(0, 10) < todayISO &&
+                (o.status === "NEW" || o.status === "IN_PROGRESS") ? (
+                  <div className="text-xs text-red-600/80">Overdue</div>
+                ) : null}
+              </div>
+            </div>
+
+            {/* preview */}
+            {isOpen ? (
+              <div
+                className="mt-3 rounded-2xl border border-gray-200 bg-gray-50 p-3"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="text-xs font-extrabold text-gray-500">
+                  Description
+                </div>
+                <div className="mt-2 text-sm text-gray-900 whitespace-pre-wrap break-words">
+                  {o.description?.trim() ? o.description : "No description"}
+                </div>
+
+                <div className="mt-3 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setOpenId(null);
+                    }}
+                    className="h-8 px-3 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-xs font-extrabold"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            ) : null}
+
+            {/* actions row (НЕ открывает preview) */}
+            <div
+              className="mt-3 flex justify-end"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {canEdit ? (
+                <a
+                  href={editHref}
+                  onClick={(e) => e.stopPropagation()}
+                  className="h-10 px-4 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 inline-flex items-center text-sm font-extrabold text-gray-900"
+                >
+                  Edit
+                </a>
+              ) : null}
+            </div>
+          </div>
+        );
+      })}
 
       {list.length === 0 ? (
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 text-center text-sm text-gray-500">
