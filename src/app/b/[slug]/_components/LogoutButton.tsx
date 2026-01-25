@@ -1,44 +1,35 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { LogOut } from "lucide-react";
 
-export default function LogoutButton() {
-  const router = useRouter();
-  const [loading, setLoading] = useState(false);
+type Props = {
+  onClick?: () => void;
+  className?: string;
+};
 
-  const onLogout = async () => {
-    if (loading) return;
-    setLoading(true);
-    try {
-      await fetch("/api/auth/logout", { method: "POST" });
-    } catch {
-      // игнор, всё равно редиректим
-    } finally {
-      // чтобы middleware точно не пустил обратно — перезагружаем
-      router.replace("/login");
-      router.refresh();
-      setLoading(false);
-    }
-  };
-
+export default function LogoutButton({ onClick, className }: Props) {
   return (
     <button
-      onClick={onLogout}
-      disabled={loading}
-      style={{
-        height: 38,
-        padding: "0 12px",
-        borderRadius: 12,
-        border: "1px solid #e5e7eb",
-        background: "white",
-        fontWeight: 900,
-        cursor: loading ? "default" : "pointer",
-        opacity: loading ? 0.7 : 1,
-      }}
-      title="Log out"
+      type="button"
+      onClick={onClick}
+      className={`
+        inline-flex items-center gap-1.5
+        px-3 py-1.5 sm:py-2
+        rounded-lg
+        border
+        text-xs sm:text-sm
+        font-semibold
+        leading-none
+        bg-red-50
+        text-red-700
+        border-red-200
+        hover:bg-red-100
+        transition-colors
+        ${className ?? ""}
+      `}
     >
-      {loading ? "Logging out..." : "Logout"}
+      <LogOut size={16} className="opacity-80" />
+      <span>Logout</span>
     </button>
   );
 }
