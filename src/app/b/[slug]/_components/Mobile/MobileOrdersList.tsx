@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { createClient } from "@supabase/supabase-js";
 import { StatusCell } from "../../InlineCells";
+import { OrderChecklist } from "../../OrderChecklist";
 
 type Status =
   | "NEW"
@@ -95,6 +97,7 @@ export default function MobileOrdersList({
   list = [],
   todayISO,
   businessSlug,
+  businessId, // ✅ added
   phoneRaw,
   canManage,
   canEdit,
@@ -102,12 +105,20 @@ export default function MobileOrdersList({
   list?: OrderRow[];
   todayISO: string;
   businessSlug: string;
+  businessId: string; // ✅ added
   phoneRaw: string;
   canManage: boolean;
   canEdit: boolean;
 }) {
   const [openId, setOpenId] = useState<string | null>(null);
   const toggle = (id: string) => setOpenId((cur) => (cur === id ? null : id));
+
+  const supabase = useMemo(() => {
+    return createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+  }, []);
 
   return (
     <div className="mobileOnly grid gap-3">
@@ -178,7 +189,7 @@ export default function MobileOrdersList({
                   />
                 </div>
 
-                {/* Eye toggle (как на десктопе) */}
+                {/* Eye toggle */}
                 <button
                   type="button"
                   onClick={(e) => {
@@ -232,6 +243,12 @@ export default function MobileOrdersList({
                 <div className="mt-2 text-sm text-gray-900 whitespace-pre-wrap break-words">
                   {o.description?.trim() ? o.description : "No description"}
                 </div>
+
+                {/* ✅ CHECKLIST */}
+                <OrderChecklist
+                  order={{ id: o.id, business_id: businessId }}
+                  supabase={supabase}
+                />
 
                 <div className="mt-3 flex justify-end">
                   <button

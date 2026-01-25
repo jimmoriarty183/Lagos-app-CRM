@@ -15,10 +15,10 @@ import MobileAnalyticsAccordion from "./_components/Mobile/MobileAnalyticsAccord
 import MobileCreateOrderAccordion from "./_components/Mobile/MobileCreateOrderAccordion";
 import MobileFiltersAccordion from "./_components/Mobile/MobileFiltersAccordion";
 import MobileOrdersList from "./_components/Mobile/MobileOrdersList";
+
 import TopBar from "./_components/topbar/TopBar";
 
 /** ----------------- server supabase ----------------- */
-
 function getServerSupabase() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -36,7 +36,6 @@ function getServerSupabase() {
 }
 
 /** ----------------- helpers ----------------- */
-
 function isPhone(value: string) {
   return /^\d{10,15}$/.test(value);
 }
@@ -123,7 +122,7 @@ function getDateFromRange(range: Range) {
 
 async function findBusinessSlugByPhone(supabase: any, phone: string) {
   // phone НЕ нормализуем, потому что в БД лежит "380..."
-  const { data, error } = await supabase
+  const { data: business, error } = await supabase
     .from("businesses")
     .select("slug")
     .or(`owner_phone.eq.${phone},manager_phone.eq.${phone}`)
@@ -134,22 +133,21 @@ async function findBusinessSlugByPhone(supabase: any, phone: string) {
     return null;
   }
 
-  return data?.slug ?? null;
+  return business?.slug ?? null;
 }
 
 /** ----------------- page ----------------- */
-
 export default async function Page({
   params,
   searchParams,
 }: {
-  // Next 16: params/searchParams приходят как Promise
   params: Promise<{ slug: string }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const [{ slug: slugOrPhone }, sp] = await Promise.all([params, searchParams]);
 
   const { supabase, missing } = getServerSupabase();
+
   if (!supabase) {
     return (
       <main className="p-6">
@@ -160,6 +158,11 @@ export default async function Page({
       </main>
     );
   }
+
+  // ✅ phone из ?u=
+  const uStr = getSP(sp, "u");
+  const phoneRaw = uStr ? decodeURIComponent(uStr) : "";
+  const phoneNorm = phoneRaw ? normalizePhone(phoneRaw) : "";
 
   // ✅ Backward compatibility: /b/<phone>
   if (isPhone(slugOrPhone)) {
@@ -180,23 +183,18 @@ export default async function Page({
   const slug = slugOrPhone;
   if (!slug) notFound();
 
-  // read ?u=phone
-  const uStr = getSP(sp, "u");
-  const phoneRaw = uStr ? decodeURIComponent(uStr) : "";
-  const phoneNorm = phoneRaw ? normalizePhone(phoneRaw) : "";
-
   const clearHref = uStr
     ? `/b/${slug}?u=${encodeURIComponent(uStr)}&page=1`
     : `/b/${slug}?page=1`;
 
-  // load business
-  const { data: business, error: bErr } = await supabase
+  // ✅ load business by slug
+  const { data: biz, error: bErr } = await supabase
     .from("businesses")
     .select("id, slug, owner_phone, manager_phone, plan, expires_at")
     .eq("slug", slug)
     .single();
 
-  const businessRow = business as BusinessRow | null;
+  const businessRow = biz as BusinessRow | null;
 
   if (bErr || !businessRow) {
     return (
@@ -206,7 +204,7 @@ export default async function Page({
     );
   }
 
-  // role
+  // ✅ role
   const ownerNorm = normalizePhone(businessRow.owner_phone);
   const managerNorm = businessRow.manager_phone
     ? normalizePhone(businessRow.manager_phone)
@@ -221,7 +219,6 @@ export default async function Page({
     ? "MANAGER"
     : "GUEST";
 
-  // показываем "Owner/Manager" только когда OWNER и менеджера нет или он совпадает с owner
   const isOwnerManager =
     role === "OWNER" &&
     (!businessRow.manager_phone ||
@@ -243,7 +240,7 @@ export default async function Page({
     );
   }
 
-  // filters
+  // ✅ filters
   const filters: Filters = {
     q: getSP(sp, "q"),
     status: (getSP(sp, "status") || "ALL") as Filters["status"],
@@ -253,13 +250,13 @@ export default async function Page({
   const hasActiveFilters =
     !!filters.q?.trim() || filters.status !== "ALL" || filters.range !== "ALL";
 
-  // pagination
+  // ✅ pagination
   const PAGE_SIZE = 20;
   const pageRaw = Number(getSP(sp, "page") || "1");
   const page =
     Number.isFinite(pageRaw) && pageRaw > 0 ? Math.floor(pageRaw) : 1;
 
-  // orders query
+  // ✅ orders query
   let query = supabase
     .from("orders")
     .select(
@@ -299,7 +296,7 @@ export default async function Page({
 
   const list = (orders || []) as OrderRow[];
 
-  // analytics
+  // ✅ analytics (как у тебя было)
   const totalOrders = totalCount;
   let totalAmount = 0;
 
@@ -375,7 +372,7 @@ export default async function Page({
 
   const todayISO = new Date().toISOString().slice(0, 10);
 
-  // TopBar pill (оставил как было, чтобы не ломать текущий компонент)
+  // TopBar pill
   const pill: React.CSSProperties = {
     display: "inline-flex",
     alignItems: "center",
@@ -389,41 +386,38 @@ export default async function Page({
     color: "#0f172a",
   };
 
-  // ✅ NEW: список бизнесов пользователя для switcher (ВНЕ JSX!)
+  // ✅ business switcher list
   const { data: allBiz, error: allBizErr } = await supabase
     .from("businesses")
     .select("id, slug, owner_phone, manager_phone, plan")
     .or(`owner_phone.eq.${phoneNorm},manager_phone.eq.${phoneNorm}`)
     .order("slug", { ascending: true });
 
-  if (allBizErr) {
-    console.error("Businesses list error:", allBizErr);
-  }
+  if (allBizErr) console.error("Businesses list error:", allBizErr);
 
   const businesses =
     (allBiz ?? []).map((b: any) => ({
       id: b.id,
       slug: b.slug,
-      name: b.slug, // name нет — показываем slug
+      name: b.slug,
       role: normalizePhone(b.owner_phone) === phoneNorm ? "OWNER" : "MANAGER",
     })) ?? [];
 
   return (
     <div className="relative min-h-screen bg-transparent">
-      {/* Soft background (like homepage) */}
+      {/* Soft background */}
       <div className="pointer-events-none absolute inset-0 -z-10">
         <div className="absolute -top-56 -left-56 h-[520px] w-[520px] rounded-full bg-blue-100/25 blur-[160px]" />
         <div className="absolute -top-40 right-[-120px] h-[520px] w-[520px] rounded-full bg-emerald-100/20 blur-[180px]" />
         <div className="absolute inset-0 bg-gradient-to-b from-white via-white to-white" />
       </div>
 
-      {/* Top bar */}
       <TopBar
         businessSlug={businessRow.slug}
         plan={businessRow.plan}
         role={role}
         pill={pill}
-        businesses={businesses} // ✅ NEW
+        businesses={businesses}
       />
 
       <main className="mx-auto max-w-7xl px-4 sm:px-6 py-6 relative rounded-2xl">
@@ -448,7 +442,7 @@ export default async function Page({
 
           {/* Content */}
           <section className="space-y-6">
-            {/* ✅ Analytics (desktop only) */}
+            {/* Analytics (desktop) */}
             <div className="hidden lg:block">
               <DesktopAnalyticsCard
                 canSeeAnalytics={canSeeAnalytics}
@@ -477,7 +471,6 @@ export default async function Page({
                 isOwnerManager={isOwnerManager}
               />
 
-              {/* ✅ Analytics mobile ONLY for OWNER */}
               {canSeeAnalytics ? (
                 <MobileAnalyticsAccordion
                   canSeeAnalytics={canSeeAnalytics}
@@ -501,19 +494,17 @@ export default async function Page({
             {/* Create order */}
             {canManage ? (
               <>
-                {/* desktop */}
                 <div className="hidden lg:block">
                   <DesktopCreateOrderAccordion businessId={businessRow.id} />
                 </div>
 
-                {/* mobile */}
                 <div className="lg:hidden">
                   <MobileCreateOrderAccordion businessId={businessRow.id} />
                 </div>
               </>
             ) : null}
 
-            {/* ✅ Filters (desktop only) */}
+            {/* Filters desktop */}
             <div className="hidden lg:block">
               <DesktopFilters
                 phoneRaw={phoneRaw}
@@ -523,7 +514,7 @@ export default async function Page({
               />
             </div>
 
-            {/* ✅ Filters (mobile only) */}
+            {/* Filters mobile */}
             <div className="lg:hidden">
               <MobileFiltersAccordion
                 phoneRaw={phoneRaw}
@@ -586,22 +577,26 @@ export default async function Page({
                   </div>
                 ) : (
                   <>
+                    {/* ✅ Desktop */}
                     <div className="hidden lg:block">
                       <DesktopOrdersTable
                         list={list}
                         todayISO={todayISO}
                         businessSlug={businessRow.slug}
+                        businessId={businessRow.id}
                         phoneRaw={phoneRaw}
                         canManage={canManage}
                         canEdit={canEdit}
                       />
                     </div>
 
+                    {/* ✅ Mobile */}
                     <div className="lg:hidden">
                       <MobileOrdersList
                         list={list}
                         todayISO={todayISO}
                         businessSlug={businessRow.slug}
+                        businessId={businessRow.id}
                         phoneRaw={phoneRaw}
                         canManage={canManage}
                         canEdit={canEdit}
@@ -615,23 +610,5 @@ export default async function Page({
         </div>
       </main>
     </div>
-  );
-
-  const preview = useOrderPreview();
-
-  return (
-    <>
-      {isDesktop ? (
-        <DesktopOrdersTable orders={orders} onPreview={preview.openPreview} />
-      ) : (
-        <MobileOrdersList orders={orders} onPreview={preview.openPreview} />
-      )}
-
-      <OrderPreview
-        open={preview.open}
-        orderId={preview.orderId}
-        onClose={preview.closePreview}
-      />
-    </>
   );
 }

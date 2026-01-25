@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useMemo, useRef, useState } from "react";
+import { createClient } from "@supabase/supabase-js";
 import { StatusCell } from "../../InlineCells";
+import { OrderChecklist } from "../../OrderChecklist";
 
 type Status =
   | "NEW"
@@ -99,6 +101,7 @@ type Props = {
   list: OrderRow[];
   todayISO: string;
   businessSlug: string;
+  businessId: string; // ✅ added
   phoneRaw: string;
   canManage: boolean;
   canEdit: boolean;
@@ -108,13 +111,20 @@ export default function DesktopOrdersTable({
   list,
   todayISO,
   businessSlug,
+  businessId, // ✅ added
   phoneRaw,
   canManage,
   canEdit,
 }: Props) {
   const [open, setOpen] = useState<Record<string, boolean>>({});
-
   const eyeRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+
+  const supabase = useMemo(() => {
+    return createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+  }, []);
 
   const isOpen = (id: string) => !!open[id];
 
@@ -213,7 +223,7 @@ export default function DesktopOrdersTable({
                     ) : null}
                   </td>
 
-                  {/* ✅ STATUS: стопаем клик ТОЛЬКО на статусе, пустая область кликабельна */}
+                  {/* ✅ STATUS: стопаем клик ТОЛЬКО на статусе */}
                   <td className="px-6 py-4 align-top">
                     <div
                       className="inline-flex"
@@ -227,7 +237,7 @@ export default function DesktopOrdersTable({
                     </div>
                   </td>
 
-                  {/* ✅ ACTIONS: глазик + edit (не триггерят строку) */}
+                  {/* ✅ ACTIONS */}
                   <td
                     className="px-6 py-4 align-top text-right"
                     onClick={(e) => e.stopPropagation()}
@@ -235,7 +245,6 @@ export default function DesktopOrdersTable({
                     <div className="inline-flex items-center gap-2">
                       <button
                         ref={(el) => {
-                          // ✅ ВАЖНО: callback ref возвращает void
                           eyeRefs.current[o.id] = el;
                         }}
                         onClick={(e) => {
@@ -290,6 +299,12 @@ export default function DesktopOrdersTable({
                                 ? o.description
                                 : "No description"}
                             </div>
+
+                            {/* ✅ CHECKLIST */}
+                            <OrderChecklist
+                              order={{ id: o.id, business_id: businessId }}
+                              supabase={supabase}
+                            />
                           </div>
 
                           <button
