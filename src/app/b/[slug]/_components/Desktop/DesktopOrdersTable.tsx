@@ -26,6 +26,8 @@ type OrderRow = {
   created_at: string;
 };
 
+type UserRole = "OWNER" | "MANAGER" | "GUEST";
+
 function fmtAmount(n: number) {
   return new Intl.NumberFormat("uk-UA").format(n);
 }
@@ -106,6 +108,7 @@ type Props = {
   phoneRaw: string;
   canManage: boolean;
   canEdit: boolean;
+  userRole: UserRole; // ✅ ВАЖНО: реальная роль в этом business
 };
 
 export default function DesktopOrdersTable({
@@ -116,6 +119,7 @@ export default function DesktopOrdersTable({
   phoneRaw,
   canManage,
   canEdit,
+  userRole,
 }: Props) {
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const eyeRefs = useRef<Record<string, HTMLButtonElement | null>>({});
@@ -303,13 +307,13 @@ export default function DesktopOrdersTable({
                               supabase={supabase}
                             />
 
-                            {/* ✅ COMMENTS (below checklist) */}
+                            {/* ✅ COMMENTS */}
                             <OrderComments
                               order={{ id: o.id, business_id: businessId }}
                               supabase={supabase}
                               author={{
                                 phone: phoneRaw,
-                                role: canManage ? "MANAGER" : "GUEST",
+                                role: userRole, // ✅ FIX: реальная роль (OWNER/MANAGER/GUEST)
                               }}
                             />
                           </div>

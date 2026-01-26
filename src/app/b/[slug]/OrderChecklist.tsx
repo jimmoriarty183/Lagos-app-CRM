@@ -188,11 +188,19 @@ export function OrderChecklist({
           type="button"
           onClick={add}
           disabled={loading || !title.trim()}
-          className="
-            h-10 flex items-center gap-2 rounded-lg
-            bg-gray-900 px-3 text-sm font-semibold text-white
-            disabled:bg-gray-300 disabled:text-gray-600
-          "
+          aria-disabled={loading || !title.trim()}
+          className={`
+    h-10 shrink-0 min-w-[92px]
+    !px-4 !text-sm !font-semibold
+    !rounded-lg transition
+    ${
+      !title.trim()
+        ? "!bg-gray-900 !text-white cursor-not-allowed"
+        : loading
+        ? "!bg-gray-300 !text-gray-600 cursor-not-allowed"
+        : "!bg-gray-200 !text-gray-900 hover:!bg-gray-300"
+    }
+  `}
         >
           + Add
         </button>

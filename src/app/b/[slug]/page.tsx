@@ -587,6 +587,7 @@ export default async function Page({
                         phoneRaw={phoneRaw}
                         canManage={canManage}
                         canEdit={canEdit}
+                        userRole={role}
                       />
                     </div>
 
@@ -600,6 +601,7 @@ export default async function Page({
                         phoneRaw={phoneRaw}
                         canManage={canManage}
                         canEdit={canEdit}
+                        userRole={role}
                       />
                     </div>
                   </>

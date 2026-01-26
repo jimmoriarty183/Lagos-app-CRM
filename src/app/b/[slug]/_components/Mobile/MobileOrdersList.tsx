@@ -26,6 +26,8 @@ type OrderRow = {
   created_at: string;
 };
 
+type UserRole = "OWNER" | "MANAGER" | "GUEST";
+
 function fmtAmount(n: number) {
   return new Intl.NumberFormat("uk-UA").format(n);
 }
@@ -102,6 +104,7 @@ export default function MobileOrdersList({
   phoneRaw,
   canManage,
   canEdit,
+  userRole,
 }: {
   list?: OrderRow[];
   todayISO: string;
@@ -110,6 +113,7 @@ export default function MobileOrdersList({
   phoneRaw: string;
   canManage: boolean;
   canEdit: boolean;
+  userRole: UserRole; // ✅ ВАЖНО: реальная роль в этом business
 }) {
   const [openId, setOpenId] = useState<string | null>(null);
   const toggle = (id: string) => setOpenId((cur) => (cur === id ? null : id));
@@ -251,7 +255,7 @@ export default function MobileOrdersList({
                   supabase={supabase}
                   author={{
                     phone: phoneRaw,
-                    role: canManage ? "MANAGER" : "GUEST",
+                    role: userRole, // ✅ FIX: реальная роль (OWNER/MANAGER/GUEST)
                   }}
                 />
 
