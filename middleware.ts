@@ -1,43 +1,30 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { createServerClient } from "@supabase/ssr";
 
-export function middleware(req: NextRequest) {
-  const url = req.nextUrl;
-  const pathname = url.pathname;
+export async function middleware(req: NextRequest) {
+  const res = NextResponse.next();
 
-  // Пропускаем статику/next
-  if (
-    pathname.startsWith("/_next") ||
-    pathname.startsWith("/favicon") ||
-    pathname.startsWith("/api")
-  ) {
-    return NextResponse.next();
-  }
-
-  // ✅ /b/* должно открываться если есть ?u=
-  if (pathname.startsWith("/b/")) {
-    const u = url.searchParams.get("u");
-    if (u && /^\d{10,15}$/.test(u)) {
-      return NextResponse.next();
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return req.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          for (const { name, value, options } of cookiesToSet) {
+            res.cookies.set(name, value, options);
+          }
+        },
+      },
     }
+  );
 
-    // если нет u — редиректим на login (а не welcome)
-    const next = pathname + (url.search ? url.search : "");
-    const to = new URL("/login", req.url);
-    to.searchParams.set("next", next);
-    return NextResponse.redirect(to);
-  }
+  // важно: просто дергаем, чтобы Supabase мог обновить cookies через middleware
+  await supabase.auth.getUser();
 
-  // Если кто-то всё ещё попадает на /welcome — отправим на /login
-  if (pathname === "/welcome") {
-    const to = new URL("/login", req.url);
-    const next = url.searchParams.get("next");
-    const u = url.searchParams.get("u");
-    if (u) to.searchParams.set("u", u);
-    if (next) to.searchParams.set("next", next);
-    return NextResponse.redirect(to);
-  }
-
-  return NextResponse.next();
+  return res;
 }
 
 export const config = {
