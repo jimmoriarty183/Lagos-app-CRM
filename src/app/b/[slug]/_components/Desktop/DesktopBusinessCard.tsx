@@ -1,7 +1,13 @@
 import { Phone } from "lucide-react";
+import InviteManager from "../InviteManager";
 
 type Props = {
-  business: { slug: string; owner_phone: string; manager_phone: string | null };
+  business: {
+    id: string;
+    slug: string;
+    owner_phone: string;
+    manager_phone: string | null;
+  };
   role: "OWNER" | "MANAGER" | "GUEST";
   phone: string;
   isOwnerManager: boolean;
@@ -80,6 +86,11 @@ export default function DesktopBusinessCard({
           </Pill>
         )}
       </div>
+
+      {/* ✅ Ввод email + Invite — только для OWNER */}
+      {role === "OWNER" && !isOwnerManager && (
+        <InviteManager businessId={business.id} />
+      )}
     </section>
   );
 }
