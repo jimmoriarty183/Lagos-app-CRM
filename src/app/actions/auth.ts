@@ -1,5 +1,6 @@
 "use server";
 
+import { headers } from "next/headers";
 import { supabaseServer } from "@/lib/supabase/server";
 
 type State = { ok: boolean; error: string; next: string };
@@ -19,7 +20,6 @@ function slugify(input: string) {
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "");
 
-  // если получилось пусто — дадим дефолт
   return base || `biz-${Date.now()}`;
 }
 
@@ -30,7 +30,7 @@ function slugify(input: string) {
  */
 export async function loginAction(
   _prev: State = initial,
-  formData: FormData
+  formData: FormData,
 ): Promise<State> {
   try {
     const email = String(formData.get("email") || "").trim();
@@ -69,7 +69,8 @@ export async function loginAction(
     }
 
     const businessId = mems[0]?.business_id;
-    if (!businessId) return { ok: true, error: "", next: "/login?no_business=1" };
+    if (!businessId)
+      return { ok: true, error: "", next: "/login?no_business=1" };
 
     const { data: biz, error: bizErr } = await supabase
       .from("businesses")
@@ -78,7 +79,8 @@ export async function loginAction(
       .single();
 
     if (bizErr) return { ok: false, error: bizErr.message, next: "" };
-    if (!biz?.slug) return { ok: true, error: "", next: "/login?no_business=1" };
+    if (!biz?.slug)
+      return { ok: true, error: "", next: "/login?no_business=1" };
 
     return { ok: true, error: "", next: `/b/${biz.slug}` };
   } catch (e) {
@@ -91,7 +93,7 @@ export async function loginAction(
  */
 export async function registerOwnerAction(
   _prev: State = initial,
-  formData: FormData
+  formData: FormData,
 ): Promise<State> {
   try {
     const email = String(formData.get("email") || "").trim();
@@ -128,6 +130,77 @@ export async function registerOwnerAction(
     if (rpcErr) return { ok: false, error: rpcErr.message, next: "" };
 
     return { ok: true, error: "", next: `/b/${slug}` };
+  } catch (e) {
+    return { ok: false, error: msg(e), next: "" };
+  }
+}
+
+/** ✅ FORGOT PASSWORD:
+ * Отправляем email со ссылкой на /reset-password
+ * ВАЖНО: в Supabase должны быть разрешены Redirect URLs:
+ *  - http://localhost:3000/reset-password
+ *  - https://your-domain/reset-password
+ */
+export async function forgotPasswordAction(
+  _prev: State = initial,
+  formData: FormData,
+): Promise<State> {
+  try {
+    const email = String(formData.get("email") || "").trim().toLowerCase();
+    if (!email) return { ok: false, error: "Введите email", next: "" };
+
+    const supabase = await supabaseServer();
+
+    const h = await headers();
+    const origin = h.get("origin") || "";
+
+    if (!origin) {
+      return { ok: false, error: "Не удалось определить origin", next: "" };
+    }
+
+    const redirectTo = `${origin}/reset-password`;
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo,
+    });
+
+    if (error) return { ok: false, error: error.message, next: "" };
+
+    // не раскрываем, существует ли email (privacy)
+    return { ok: true, error: "", next: "" };
+  } catch (e) {
+    return { ok: false, error: msg(e), next: "" };
+  }
+}
+
+/** ✅ UPDATE PASSWORD (после перехода по ссылке из письма)
+ * После смены пароля — делаем signOut(), чтобы старая сессия не создавала иллюзию,
+ * что “старый пароль” всё ещё подходит.
+ */
+export async function updatePasswordAction(
+  _prev: State = initial,
+  formData: FormData,
+): Promise<State> {
+  try {
+    const password = String(formData.get("password") || "");
+    const confirm = String(formData.get("password_confirm") || "");
+
+    if (!password || password.length < 6) {
+      return { ok: false, error: "Пароль минимум 6 символов", next: "" };
+    }
+    if (password !== confirm) {
+      return { ok: false, error: "Пароли не совпадают", next: "" };
+    }
+
+    const supabase = await supabaseServer();
+
+    const { error } = await supabase.auth.updateUser({ password });
+    if (error) return { ok: false, error: error.message, next: "" };
+
+    // ✅ важно: сбросить текущую сессию
+    await supabase.auth.signOut();
+
+    return { ok: true, error: "", next: "/login?pw=updated" };
   } catch (e) {
     return { ok: false, error: msg(e), next: "" };
   }
