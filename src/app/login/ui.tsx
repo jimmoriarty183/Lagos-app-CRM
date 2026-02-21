@@ -1,130 +1,303 @@
 "use client";
 
 import React from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useActionState } from "react";
+
 import { loginAction, registerOwnerAction } from "@/app/actions/auth";
 
-const initial = { ok: false, error: "", next: "" };
+type State = { ok: boolean; error: string; next: string };
+const initialState: State = { ok: false, error: "", next: "" };
 
-export default function LoginUI() {
-  const router = useRouter();
-  const sp = useSearchParams();
-
-  const noBusiness = sp.get("no_business") === "1";
-
-  const [loginState, loginFormAction, loginPending] = React.useActionState(
-    loginAction as any,
-    initial as any
+function ErrorBox({ text }: { text?: string }) {
+  if (!text) return null;
+  return (
+    <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+      {text}
+    </div>
   );
+}
 
-  const [regState, regFormAction, regPending] = React.useActionState(
-    registerOwnerAction as any,
-    initial as any
-  );
+function Hint({ children }: { children: React.ReactNode }) {
+  return <div className="text-xs text-gray-500">{children}</div>;
+}
 
-  React.useEffect(() => {
-    if (loginState?.ok && loginState?.next) router.push(loginState.next);
-  }, [loginState?.ok, loginState?.next, router]);
+function cleanPhone(raw: string) {
+  // оставляем + и цифры
+  return raw.replace(/[^\d+]/g, "");
+}
 
-  React.useEffect(() => {
-    if (regState?.ok && regState?.next) router.push(regState.next);
-  }, [regState?.ok, regState?.next, router]);
+function slugifyPreview(input: string) {
+  const base = String(input || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9-]/g, "")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+  return base || "my-business";
+}
+
+function Input({
+  label,
+  name,
+  type = "text",
+  placeholder,
+  required,
+  autoComplete,
+  value,
+  onChange,
+}: {
+  label: string;
+  name: string;
+  type?: string;
+  placeholder?: string;
+  required?: boolean;
+  autoComplete?: string;
+  value?: string;
+  onChange?: (v: string) => void;
+}) {
+  const isTel = type === "tel";
 
   return (
-    <div className="max-w-xl mx-auto space-y-6">
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-        <div className="text-xl font-semibold text-gray-900">Login</div>
-        <div className="text-sm text-gray-500 mt-1">Email + password</div>
+    <label className="block">
+      <div className="text-sm font-medium text-gray-700">{label}</div>
+      <input
+        name={name}
+        type={type}
+        required={required}
+        autoComplete={autoComplete}
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => onChange?.(e.target.value)}
+        inputMode={isTel ? "numeric" : undefined}
+        className="mt-1 w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-200"
+      />
+    </label>
+  );
+}
 
-        {noBusiness && (
-          <div className="mt-4 rounded-xl bg-amber-50 text-amber-800 px-4 py-3 text-sm border border-amber-200">
-            You are logged in, but no business is linked to your account.
-            Register a business below.
-          </div>
-        )}
+export default function LoginUI() {
+  const [mode, setMode] = React.useState<"login" | "register">("login");
 
-        {!!loginState?.error && (
-          <div className="mt-4 rounded-xl bg-red-50 text-red-700 px-4 py-3 text-sm">
-            {loginState.error}
-          </div>
-        )}
+  const [loginState, loginSubmit, loginPending] = useActionState(
+    loginAction as any,
+    initialState,
+  );
+  const [regState, regSubmit, regPending] = useActionState(
+    registerOwnerAction as any,
+    initialState,
+  );
 
-        <form className="mt-4 space-y-3" action={loginFormAction}>
-          <input
-            name="email"
-            type="email"
-            placeholder="Email"
-            className="w-full h-11 rounded-xl border border-gray-200 px-3 outline-none"
-            required
-          />
-          <input
-            name="password"
-            type="password"
-            placeholder="Password"
-            className="w-full h-11 rounded-xl border border-gray-200 px-3 outline-none"
-            required
-          />
+  // local controlled fields for REGISTER (for validation + preview)
+  const [businessName, setBusinessName] = React.useState("");
+  const [ownerPhone, setOwnerPhone] = React.useState("");
+  const [emailReg, setEmailReg] = React.useState("");
+  const [passReg, setPassReg] = React.useState("");
+
+  // local controlled fields for LOGIN (optional, just for nicer UX)
+  const [emailLogin, setEmailLogin] = React.useState("");
+  const [passLogin, setPassLogin] = React.useState("");
+
+  // local error for client-side validation
+  const [localError, setLocalError] = React.useState<string>("");
+
+  React.useEffect(() => {
+    const next = loginState?.ok ? loginState.next : "";
+    if (next) window.location.href = next;
+  }, [loginState]);
+
+  React.useEffect(() => {
+    const next = regState?.ok ? regState.next : "";
+    if (next) window.location.href = next;
+  }, [regState]);
+
+  const activeState = mode === "login" ? loginState : regState;
+  const pending = mode === "login" ? loginPending : regPending;
+
+  const previewSlug = slugifyPreview(businessName);
+
+  function validateRegister(): string {
+    const bn = businessName.trim();
+    const em = emailReg.trim();
+    const ph = cleanPhone(ownerPhone.trim());
+
+    if (!bn) return "Введите название бизнеса";
+    if (bn.includes("@")) return "Название бизнеса не должно быть email";
+    if (!em) return "Введите email";
+    if (!passReg) return "Введите пароль";
+
+    if (ph && !/^\+?[0-9]{8,15}$/.test(ph)) {
+      return "Некорректный номер телефона (8–15 цифр, можно с +)";
+    }
+
+    return "";
+  }
+
+  function onRegisterSubmit(e: React.FormEvent<HTMLFormElement>) {
+    setLocalError("");
+    const err = validateRegister();
+    if (err) {
+      e.preventDefault();
+      setLocalError(err);
+      return;
+    }
+
+    // нормализуем телефон перед отправкой
+    setOwnerPhone(cleanPhone(ownerPhone));
+  }
+
+  return (
+    <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+      {/* Header */}
+      <div className="p-6 border-b border-gray-100">
+        <div className="text-xs font-semibold tracking-wider text-gray-500">
+          ORDERO
+        </div>
+        <div className="mt-1 text-2xl font-bold text-gray-900">
+          {mode === "login" ? "Вход" : "Регистрация"}
+        </div>
+        <div className="mt-1 text-sm text-gray-600">
+          {mode === "login"
+            ? "Войди в аккаунт и открой свой бизнес."
+            : "Создай аккаунт и первый бизнес (Owner)."}
+        </div>
+
+        {/* Tabs */}
+        <div className="mt-4 grid grid-cols-2 rounded-xl bg-gray-100 p-1">
           <button
-            disabled={loginPending}
-            className="w-full h-11 rounded-xl bg-gray-900 text-white font-semibold disabled:opacity-60"
+            type="button"
+            onClick={() => {
+              setMode("login");
+              setLocalError("");
+            }}
+            className={[
+              "rounded-lg px-3 py-2 text-sm font-semibold transition",
+              mode === "login"
+                ? "bg-white shadow-sm text-gray-900"
+                : "text-gray-600 hover:text-gray-900",
+            ].join(" ")}
           >
-            {loginPending ? "Logging in..." : "Login"}
+            Вход
           </button>
-        </form>
+          <button
+            type="button"
+            onClick={() => {
+              setMode("register");
+              setLocalError("");
+            }}
+            className={[
+              "rounded-lg px-3 py-2 text-sm font-semibold transition",
+              mode === "register"
+                ? "bg-white shadow-sm text-gray-900"
+                : "text-gray-600 hover:text-gray-900",
+            ].join(" ")}
+          >
+            Регистрация
+          </button>
+        </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-        <div className="text-xl font-semibold text-gray-900">
-          Register (Owner)
-        </div>
-        <div className="text-sm text-gray-500 mt-1">
-          Создаст business и сделает тебя owner
-        </div>
+      {/* Body */}
+      <div className="p-6 space-y-4">
+        {/* local client-side error first */}
+        <ErrorBox text={localError} />
+        {/* server action error */}
+        <ErrorBox text={activeState?.error} />
 
-        {!!regState?.error && (
-          <div className="mt-4 rounded-xl bg-red-50 text-red-700 px-4 py-3 text-sm">
-            {regState.error}
-          </div>
-        )}
+        {mode === "login" ? (
+          <form action={loginSubmit} className="space-y-3">
+            <Input
+              label="Email"
+              name="email"
+              type="email"
+              required
+              autoComplete="email"
+              placeholder="you@email.com"
+              value={emailLogin}
+              onChange={setEmailLogin}
+            />
+            <Input
+              label="Пароль"
+              name="password"
+              type="password"
+              required
+              autoComplete="current-password"
+              placeholder="••••••••"
+              value={passLogin}
+              onChange={setPassLogin}
+            />
 
-        <form className="mt-4 space-y-3" action={regFormAction}>
-          <input
-            name="slug"
-            placeholder="Business slug (например: test)"
-            className="w-full h-11 rounded-xl border border-gray-200 px-3 outline-none"
-            required
-          />
-          <input
-            name="owner_phone"
-            placeholder="Owner phone (optional)"
-            className="w-full h-11 rounded-xl border border-gray-200 px-3 outline-none"
-          />
-          <input
-            name="email"
-            type="email"
-            placeholder="Email"
-            className="w-full h-11 rounded-xl border border-gray-200 px-3 outline-none"
-            required
-          />
-          <input
-            name="password"
-            type="password"
-            placeholder="Password (min 6 chars)"
-            className="w-full h-11 rounded-xl border border-gray-200 px-3 outline-none"
-            required
-          />
-          <button
-            disabled={regPending}
-            className="w-full h-11 rounded-xl bg-blue-600 text-white font-semibold disabled:opacity-60"
+            <button
+              type="submit"
+              disabled={pending}
+              className="w-full rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold !text-white hover:bg-blue-700 disabled:opacity-60 disabled:!text-white"
+            >
+              {pending ? "Входим..." : "Войти"}
+            </button>
+          </form>
+        ) : (
+          <form
+            action={regSubmit}
+            onSubmit={onRegisterSubmit}
+            className="space-y-3"
           >
-            {regPending ? "Registering..." : "Register"}
-          </button>
+            <Input
+              label="Название бизнеса"
+              name="business_name"
+              required
+              placeholder="My Shop"
+              value={businessName}
+              onChange={setBusinessName}
+            />
+            <Hint>
+              Ссылка будет выглядеть так:{" "}
+              <span className="font-semibold text-gray-700">
+                /b/{previewSlug}
+              </span>
+            </Hint>
 
-          <div className="text-xs text-gray-500 pt-2">
-            Подсказка: для теста можно использовать Gmail alias:{" "}
-            <b>shaco063+1@gmail.com</b>, <b>shaco063+2@gmail.com</b> и т.д.
-          </div>
-        </form>
+            <Input
+              label="Owner phone (optional)"
+              name="owner_phone"
+              type="tel"
+              autoComplete="tel"
+              placeholder="+380..."
+              value={ownerPhone}
+              onChange={(v) => setOwnerPhone(cleanPhone(v))}
+            />
+            <Hint>Только цифры, можно с +. Пример: +380991234567</Hint>
+
+            <Input
+              label="Email"
+              name="email"
+              type="email"
+              required
+              autoComplete="email"
+              placeholder="you@email.com"
+              value={emailReg}
+              onChange={setEmailReg}
+            />
+
+            <Input
+              label="Пароль"
+              name="password"
+              type="password"
+              required
+              autoComplete="new-password"
+              placeholder="••••••••"
+              value={passReg}
+              onChange={setPassReg}
+            />
+
+            <button
+              type="submit"
+              disabled={pending}
+              className="w-full rounded-xl bg-gray-900 px-4 py-2.5 text-sm font-semibold !text-white hover:bg-black disabled:opacity-60 disabled:!text-white"
+            >
+              {pending ? "Создаём..." : "Создать аккаунт"}
+            </button>
+          </form>
+        )}
       </div>
     </div>
   );
