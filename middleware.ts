@@ -2,6 +2,19 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
 export async function middleware(req: NextRequest) {
+  const { pathname, searchParams } = req.nextUrl;
+
+  // 🚫 НЕ обрабатываем login вообще
+  if (pathname.startsWith("/login")) {
+    return NextResponse.next();
+  }
+
+  // 🚫 MVP bypass — если есть ?u=, не трогаем auth
+  const u = searchParams.get("u");
+  if (u && pathname.startsWith("/b/")) {
+    return NextResponse.next();
+  }
+
   const res = NextResponse.next();
 
   const supabase = createServerClient(
@@ -21,7 +34,7 @@ export async function middleware(req: NextRequest) {
     }
   );
 
-  // важно: просто дергаем, чтобы Supabase мог обновить cookies через middleware
+  // только для реальной auth-логики
   await supabase.auth.getUser();
 
   return res;

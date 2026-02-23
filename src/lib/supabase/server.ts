@@ -8,8 +8,11 @@ function getEnv() {
   return { url, anonKey };
 }
 
-// ✅ Server Components: только чтение cookies
-export async function supabaseServerReadOnly() {
+/**
+ * ✅ Для Server Components (page.tsx / layout.tsx)
+ * Только чтение cookies (без setAll).
+ */
+export async function supabaseServerComponent() {
   const cookieStore = await cookies();
   const { url, anonKey } = getEnv();
 
@@ -18,13 +21,18 @@ export async function supabaseServerReadOnly() {
       getAll() {
         return cookieStore.getAll();
       },
-      setAll() {},
+      setAll() {
+        // ❌ нельзя менять cookies в RSC
+      },
     },
   });
 }
 
-// ✅ Server Actions / Route Handlers: можно set cookies
-export async function supabaseServer() {
+/**
+ * ✅ Для Route Handlers / Server Actions
+ * Здесь можно set cookies.
+ */
+export async function supabaseServerAction() {
   const cookieStore = await cookies();
   const { url, anonKey } = getEnv();
 
@@ -40,4 +48,18 @@ export async function supabaseServer() {
       },
     },
   });
+}
+
+/* ------------------------------------------------------------------ */
+/* ✅ ALIASES для твоего текущего кода (чтобы не чинить 20 импортов)     */
+/* ------------------------------------------------------------------ */
+
+// Старое имя для Server Components (read-only)
+export async function supabaseServerReadOnly() {
+  return supabaseServerComponent();
+}
+
+// Старое имя для Route Handlers / Actions (write cookies)
+export async function supabaseServer() {
+  return supabaseServerAction();
 }

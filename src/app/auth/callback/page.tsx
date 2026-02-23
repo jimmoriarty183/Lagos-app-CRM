@@ -1,58 +1,46 @@
-"use client";
+import { NextResponse, type NextRequest } from "next/server";
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
 
-import { useEffect } from "react";
-import { createBrowserClient } from "@supabase/ssr";
+export async function GET(req: NextRequest) {
+  const cookieStore = await cookies();
 
-export default function AuthCallbackPage() {
-  useEffect(() => {
-    const run = async () => {
-      const supabase = createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      );
-
-      const url = new URL(window.location.href);
-      const inviteId = url.searchParams.get("invite_id") || "";
-
-      // HASH flow: #access_token=...&refresh_token=...
-      const hash = window.location.hash;
-      if (hash && hash.includes("access_token=")) {
-        const params = new URLSearchParams(hash.replace("#", ""));
-        const access_token = params.get("access_token");
-        const refresh_token = params.get("refresh_token");
-
-        if (access_token && refresh_token) {
-          const { error } = await supabase.auth.setSession({
-            access_token,
-            refresh_token,
-          });
-
-          if (!error) {
-            window.location.replace(
-              `/invite?invite_id=${encodeURIComponent(inviteId)}`,
-            );
-            return;
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll();
+        },
+        setAll(cookiesToSet) {
+          for (const { name, value, options } of cookiesToSet) {
+            cookieStore.set(name, value, options);
           }
-        }
-      }
+        },
+      },
+    },
+  );
 
-      // PKCE fallback (если когда-то включишь)
-      const code = url.searchParams.get("code");
-      if (code) {
-        const { error } = await supabase.auth.exchangeCodeForSession(code);
-        if (!error) {
-          window.location.replace(
-            `/invite?invite_id=${encodeURIComponent(inviteId)}`,
-          );
-          return;
-        }
-      }
+  const url = new URL(req.url);
 
-      window.location.replace("/login?callback_failed=1");
-    };
+  // invite flow
+  const inviteId = url.searchParams.get("invite_id") || "";
 
-    run();
-  }, []);
+  // PKCE / OAuth code
+  const code = url.searchParams.get("code");
+  if (code) {
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    if (!error) {
+      return NextResponse.redirect(
+        new URL(
+          inviteId ? `/invite?invite_id=${encodeURIComponent(inviteId)}` : "/",
+          url.origin,
+        ),
+      );
+    }
+  }
 
-  return null;
+  // если вдруг пришёл без code — отправляем на логин
+  return NextResponse.redirect(new URL("/login?callback_failed=1", url.origin));
 }
