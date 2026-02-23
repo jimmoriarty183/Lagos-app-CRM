@@ -1,5 +1,15 @@
-import { Phone } from "lucide-react";
-import InviteManager from "../InviteManager";
+import React from "react";
+import { ShieldCheck } from "lucide-react";
+import BusinessPeoplePanel from "../BusinessPeoplePanel";
+
+type PendingInvite = {
+  id: string;
+  business_id: string;
+  email: string;
+  role: string; // "MANAGER"
+  status: string; // "PENDING"
+  created_at?: string | null;
+};
 
 type Props = {
   business: {
@@ -12,30 +22,28 @@ type Props = {
   phone: string;
   isOwnerManager: boolean;
 
-  // старые пропсы оставил для совместимости (можно убрать позже)
+  pendingInvites?: PendingInvite[];
+
+  // старые пропсы (совместимость)
   card?: React.CSSProperties;
   cardHeader?: React.CSSProperties;
   cardTitle?: React.CSSProperties;
 };
 
-function Pill({
-  children,
-  tone = "neutral",
-}: {
-  children: React.ReactNode;
-  tone?: "neutral" | "blue";
-}) {
+function RolePill({ role }: { role: Props["role"] }) {
   const cls =
-    tone === "blue"
+    role === "OWNER"
       ? "bg-blue-50 text-blue-700 border-blue-100"
-      : "bg-gray-100 text-gray-700 border-gray-200";
+      : role === "MANAGER"
+        ? "bg-emerald-50 text-emerald-700 border-emerald-100"
+        : "bg-gray-50 text-gray-700 border-gray-200";
 
   return (
     <span
-      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs sm:text-sm ${cls}`}
+      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold ${cls}`}
     >
-      <Phone className="h-4 w-4 opacity-70" />
-      {children}
+      <ShieldCheck className="h-4 w-4 opacity-80" />
+      {role}
     </span>
   );
 }
@@ -45,52 +53,33 @@ export default function DesktopBusinessCard({
   role,
   phone,
   isOwnerManager,
+  pendingInvites = [], // ✅ IMPORTANT
 }: Props) {
   return (
-    <section className="desktopOnly bg-white rounded-xl border border-gray-200 shadow-sm p-4 sm:p-6">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <div className="text-sm text-gray-500">Business</div>
-          <div className="mt-1 text-base sm:text-lg font-semibold text-gray-900">
+    <section className="desktopOnly rounded-2xl border border-gray-200 bg-white shadow-sm">
+      <div className="flex items-start justify-between gap-4 border-b border-gray-100 px-5 py-4">
+        <div className="min-w-0">
+          <div className="text-xs font-semibold tracking-wide text-gray-500">
+            BUSINESS
+          </div>
+          <div className="min-w-0 truncate text-lg font-semibold text-gray-900 leading-snug break-words">
             {business.slug}
           </div>
         </div>
 
-        <div className="text-xs text-gray-500">{role}</div>
+        <RolePill role={role} />
       </div>
 
-      <div className="mt-4 flex flex-wrap gap-2">
-        {role === "MANAGER" && !isOwnerManager && (
-          <Pill tone="blue">
-            Manager:{" "}
-            <b className="text-gray-900">{business.manager_phone || phone}</b>
-          </Pill>
-        )}
-
-        {role === "OWNER" && !isOwnerManager && (
-          <>
-            <Pill>
-              Owner: <b className="text-gray-900">{business.owner_phone}</b>
-            </Pill>
-            <Pill tone="blue">
-              Manager:{" "}
-              <b className="text-gray-900">{business.manager_phone || "—"}</b>
-            </Pill>
-          </>
-        )}
-
-        {isOwnerManager && (
-          <Pill>
-            Owner/Manager:{" "}
-            <b className="text-gray-900">{business.owner_phone}</b>
-          </Pill>
-        )}
+      <div className="px-5 py-4">
+        <BusinessPeoplePanel
+          businessId={business.id}
+          ownerPhone={business.owner_phone}
+          legacyManagerPhone={business.manager_phone}
+          role={role}
+          isOwnerManager={isOwnerManager}
+          pendingInvites={pendingInvites} // ✅ IMPORTANT
+        />
       </div>
-
-      {/* ✅ Ввод email + Invite — только для OWNER */}
-      {role === "OWNER" && !isOwnerManager && (
-        <InviteManager businessId={business.id} />
-      )}
     </section>
   );
 }

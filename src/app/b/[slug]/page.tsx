@@ -15,6 +15,17 @@ import MobileFiltersAccordion from "./_components/Mobile/MobileFiltersAccordion"
 
 import { supabaseServerReadOnly } from "@/lib/supabase/server";
 
+type BusinessInvite = {
+  id: string;
+  business_id: string;
+  email: string;
+  role: "MANAGER" | "OWNER";
+  status: "PENDING" | "ACCEPTED" | "CANCELED";
+  created_at: string;
+  accepted_at: string | null;
+  accepted_by: string | null;
+};
+
 type Status =
   | "NEW"
   | "IN_PROGRESS"
@@ -95,6 +106,17 @@ export default async function Page({ params, searchParams }: PageProps) {
   const canEdit = canManage;
   const canSeeAnalytics = userRole === "OWNER";
 
+  // ✅ Pending manager invites (for Business card dropdown)
+  const { data: pendingInvites, error: invErr } = await supabase
+    .from("business_invites")
+    .select(
+      "id,business_id,email,role,status,created_at,accepted_at,accepted_by",
+    )
+    .eq("business_id", currentBusiness.id)
+    .eq("status", "PENDING")
+    .order("created_at", { ascending: false });
+
+  if (invErr) throw invErr;
   // phoneRaw для старых форм (filters/create) — берём из query ?u=
   const phoneRaw = String(sp.u ?? "");
 
@@ -156,7 +178,7 @@ export default async function Page({ params, searchParams }: PageProps) {
   const totalAmount = sumAmount(list);
 
   const overdueCount = list.filter(
-    (o) => o.status === "NEW" || o.status === "IN_PROGRESS"
+    (o) => o.status === "NEW" || o.status === "IN_PROGRESS",
   ).length;
 
   const waitingPaymentRows = list.filter((o) => o.status === "WAITING_PAYMENT");
@@ -173,7 +195,7 @@ export default async function Page({ params, searchParams }: PageProps) {
   const duplicateCount = list.filter((o) => o.status === "DUPLICATE").length;
 
   const activeAmount = sumAmount(
-    list.filter((o) => o.status === "NEW" || o.status === "IN_PROGRESS")
+    list.filter((o) => o.status === "NEW" || o.status === "IN_PROGRESS"),
   );
 
   const fmtAmount = (n: number) => new Intl.NumberFormat("uk-UA").format(n);
@@ -205,20 +227,20 @@ export default async function Page({ params, searchParams }: PageProps) {
               canSeeAnalytics={canSeeAnalytics}
             />
 
-            <div className="mt-6">
-              <DesktopBusinessCard
-                business={{
-                  slug: String(currentBusiness.slug),
-                  owner_phone: String(currentBusiness.owner_phone),
-                  manager_phone: currentBusiness.manager_phone
-                    ? String(currentBusiness.manager_phone)
-                    : null,
-                }}
-                role={userRole}
-                phone={phoneRaw}
-                isOwnerManager={!!isOwnerManager}
-              />
-            </div>
+            <DesktopBusinessCard
+              business={{
+                id: String(currentBusiness.id), // ✅ ДОБАВИЛИ
+                slug: String(currentBusiness.slug),
+                owner_phone: String(currentBusiness.owner_phone),
+                manager_phone: currentBusiness.manager_phone
+                  ? String(currentBusiness.manager_phone)
+                  : null,
+              }}
+              role={userRole}
+              phone={phoneRaw}
+              isOwnerManager={!!isOwnerManager}
+              pendingInvites={(pendingInvites ?? []) as any} // ✅ ДОБАВЬ
+            />
           </div>
 
           <div className="col-span-9 space-y-6">

@@ -1,70 +1,79 @@
 "use client";
 
 import { useState } from "react";
+import PendingInvites from "./PendingInvites";
 
 export default function InviteManager({ businessId }: { businessId: string }) {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
-  const [err, setErr] = useState<string | null>(null);
+  const [msg, setMsg] = useState<string>("");
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  const onSend = async () => {
-    setErr(null);
-    setMsg(null);
-
-    const value = email.trim().toLowerCase();
-    if (!value || !value.includes("@")) {
-      setErr("Enter manager email");
-      return;
-    }
+  const onInvite = async () => {
+    setMsg("");
+    if (!email.trim()) return;
 
     setLoading(true);
     try {
-      const res = await fetch("/api/invite", {
+      const res = await fetch("/api/manager/invite", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ businessId, email: value }),
+        body: JSON.stringify({ businessId, email }),
       });
 
       const json = await res.json();
-      if (!res.ok) {
-        setErr(json?.error || "Failed to send invite");
+
+      if (!res.ok || json?.error) {
+        setMsg(json?.error || "Failed to invite");
         return;
       }
 
-      setMsg("Invite sent ✅");
+      setMsg("Invite sent. Status: INVITE PENDING");
       setEmail("");
+
+      // ✅ обновить список pending сразу
+      setRefreshKey((k) => k + 1);
     } catch (e: any) {
-      setErr(e?.message || "Network error");
+      setMsg(e?.message || "Failed to invite");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50/50 p-3">
-      <div className="text-xs font-semibold text-gray-700">
-        Invite manager (email)
+    <div className="rounded-2xl border border-gray-200 bg-white/70 p-4">
+      <div className="text-sm font-semibold text-gray-900">
+        Invite manager by email
       </div>
 
-      <div className="mt-2 flex gap-2">
+      <div className="mt-3 flex items-center gap-2">
         <input
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="manager@email.com"
-          className="flex-1 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:border-gray-300"
+          placeholder="manager@company.com"
+          className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black/10"
         />
+
         <button
-          onClick={onSend}
+          onClick={onInvite}
           disabled={loading}
           className="rounded-xl bg-black px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
         >
-          {loading ? "Sending…" : "Invite"}
+          {loading ? "Inviting…" : "Invite"}
         </button>
       </div>
 
-      {err && <div className="mt-2 text-xs text-red-600">{err}</div>}
-      {msg && <div className="mt-2 text-xs text-green-700">{msg}</div>}
+      {msg ? (
+        <div className="mt-2 text-xs text-gray-600">{msg}</div>
+      ) : (
+        <div className="mt-2 text-xs text-gray-500">
+          The email will remain visible as <b>INVITE PENDING</b> until the
+          manager registers and gets access to this business.
+        </div>
+      )}
+
+      {/* ✅ список ожидания + revoke */}
+      <PendingInvites businessId={businessId} refreshKey={refreshKey} />
     </div>
   );
 }

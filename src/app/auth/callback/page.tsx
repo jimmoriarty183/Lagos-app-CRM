@@ -1,33 +1,58 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { createBrowserClient } from "@supabase/ssr";
 
 export default function AuthCallbackPage() {
-  const router = useRouter();
-
   useEffect(() => {
-    const supabase = createClient();
+    const run = async () => {
+      const supabase = createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      );
 
-    (async () => {
-      // Supabase сам подхватит access_token из URL hash и сохранит сессию
-      const { data } = await supabase.auth.getSession();
+      const url = new URL(window.location.href);
+      const inviteId = url.searchParams.get("invite_id") || "";
 
-      // если сессия есть — ведём на форму приглашения
-      if (data.session) {
-        router.replace("/invite");
-        return;
+      // HASH flow: #access_token=...&refresh_token=...
+      const hash = window.location.hash;
+      if (hash && hash.includes("access_token=")) {
+        const params = new URLSearchParams(hash.replace("#", ""));
+        const access_token = params.get("access_token");
+        const refresh_token = params.get("refresh_token");
+
+        if (access_token && refresh_token) {
+          const { error } = await supabase.auth.setSession({
+            access_token,
+            refresh_token,
+          });
+
+          if (!error) {
+            window.location.replace(
+              `/invite?invite_id=${encodeURIComponent(inviteId)}`,
+            );
+            return;
+          }
+        }
       }
 
-      // если нет — на логин (или на invite тоже можно)
-      router.replace("/login");
-    })();
-  }, [router]);
+      // PKCE fallback (если когда-то включишь)
+      const code = url.searchParams.get("code");
+      if (code) {
+        const { error } = await supabase.auth.exchangeCodeForSession(code);
+        if (!error) {
+          window.location.replace(
+            `/invite?invite_id=${encodeURIComponent(inviteId)}`,
+          );
+          return;
+        }
+      }
 
-  return (
-    <div className="min-h-screen flex items-center justify-center text-sm text-gray-600">
-      Signing you in…
-    </div>
-  );
+      window.location.replace("/login?callback_failed=1");
+    };
+
+    run();
+  }, []);
+
+  return null;
 }
