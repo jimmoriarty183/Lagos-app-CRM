@@ -10,6 +10,14 @@ type BusinessInfo = {
   name?: string | null;
 };
 
+function parseHashTokens(hash: string) {
+  const h = (hash || "").replace(/^#/, "");
+  const p = new URLSearchParams(h);
+  const access_token = p.get("access_token") || "";
+  const refresh_token = p.get("refresh_token") || "";
+  return { access_token, refresh_token };
+}
+
 export default function InvitePage() {
   const router = useRouter();
   const sp = useSearchParams();
@@ -30,6 +38,32 @@ export default function InvitePage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string>("");
 
+  async function ensureSessionFromHash() {
+    // ✅ если в URL есть #access_token — ставим сессию
+    if (typeof window === "undefined") return;
+
+    const { access_token, refresh_token } = parseHashTokens(
+      window.location.hash,
+    );
+    if (access_token && refresh_token) {
+      const { error: setErr } = await supabase.auth.setSession({
+        access_token,
+        refresh_token,
+      });
+
+      // ✅ чистим URL (убираем hash), чтобы не светить токены
+      window.history.replaceState(
+        {},
+        document.title,
+        window.location.pathname + window.location.search,
+      );
+
+      if (setErr) {
+        throw new Error(setErr.message);
+      }
+    }
+  }
+
   const load = async () => {
     setLoading(true);
     setError("");
@@ -42,39 +76,39 @@ export default function InvitePage() {
       return;
     }
 
-    const { data } = await supabase.auth.getSession();
-    const session = data?.session;
-
-    if (!session) {
-      setLoading(false);
-      setEmail("");
-      setBusiness(null);
-      setError(
-        "No active session. Please open the invite email and confirm again.",
-      );
-      return;
-    }
-
-    setEmail(session.user.email ?? "");
-
     try {
+      await ensureSessionFromHash();
+
+      const { data } = await supabase.auth.getSession();
+      const session = data?.session;
+
+      if (!session) {
+        setEmail("");
+        setBusiness(null);
+        setError("No active session. Please open the invite email again.");
+        setLoading(false);
+        return;
+      }
+
+      setEmail(session.user.email ?? "");
+
       const r = await fetch(
         `/api/invite/pending?invite_id=${encodeURIComponent(inviteId)}`,
         {
           cache: "no-store",
         },
       );
-      const j = await r.json();
+      const j = await r.json().catch(() => ({}));
 
-      if (r.ok) {
-        setBusiness(j.business ?? null);
-      } else {
+      if (!r.ok) {
         setBusiness(null);
         setError(j?.error || "Failed to load invite");
+      } else {
+        setBusiness(j.business ?? null);
       }
-    } catch {
+    } catch (e: any) {
       setBusiness(null);
-      setError("Failed to load invite");
+      setError(e?.message || "Failed to initialize session");
     } finally {
       setLoading(false);
     }
@@ -97,7 +131,8 @@ export default function InvitePage() {
     fullName.trim().length > 1 &&
     phone.trim().length > 6 &&
     password.length >= 8 &&
-    password === password2;
+    password === password2 &&
+    !loading;
 
   const onSubmit = async () => {
     setError("");
@@ -106,30 +141,26 @@ export default function InvitePage() {
     try {
       setSubmitting(true);
 
-      // 1) set password (create account fully)
+      // 1) set password
       const { error: passErr } = await supabase.auth.updateUser({ password });
       if (passErr) {
         setError(passErr.message);
         return;
       }
 
-      // 2) accept invite
-      const r = await fetch(
-        `/api/invite/accept?invite_id=${encodeURIComponent(inviteId)}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            inviteId,
-            fullName: fullName.trim(),
-            phone: phone.trim(),
-          }),
-        },
-      );
+      // 2) accept invite (server)
+      const r = await fetch("/api/invite/accept", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          inviteId,
+          fullName: fullName.trim(),
+          phone: phone.trim(),
+        }),
+      });
 
-      const j = await r.json();
-
-      if (!r.ok) {
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || !j?.ok) {
         setError(j?.error || "Failed to accept invite");
         return;
       }
@@ -147,8 +178,8 @@ export default function InvitePage() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/20 to-gray-50">
       <div className="mx-auto max-w-2xl px-4 py-10">
-        <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-6 sm:p-8">
-          <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
+          <h1 className="text-xl font-semibold text-gray-900 sm:text-2xl">
             Complete your manager profile
           </h1>
 
@@ -239,14 +270,14 @@ export default function InvitePage() {
               <button
                 onClick={onSubmit}
                 disabled={submitting || !canSubmit}
-                className={`
-                  mt-2 w-full rounded-xl py-3 text-sm font-semibold transition-all
-                  ${
-                    submitting || !canSubmit
-                      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                      : "bg-blue-600 text-white hover:bg-blue-700 shadow-sm"
-                  }
-                `}
+                className={[
+                  "mt-2 w-full rounded-xl py-3 text-sm font-semibold transition-all",
+                  submitting
+                    ? "bg-gray-200 text-gray-500 cursor-wait"
+                    : !canSubmit
+                      ? "bg-gray-100 text-gray-500 cursor-not-allowed"
+                      : "bg-black text-white hover:bg-gray-900 active:scale-[0.99] shadow-sm",
+                ].join(" ")}
               >
                 {submitting ? "Saving…" : "Continue"}
               </button>

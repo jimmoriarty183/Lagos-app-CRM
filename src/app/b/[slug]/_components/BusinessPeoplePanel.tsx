@@ -3,16 +3,8 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Mail, User, Trash2, ChevronDown, XCircle } from "lucide-react";
-
-type PendingInvite = {
-  id: string;
-  business_id: string;
-  email: string;
-  role: string; // "MANAGER"
-  status: string; // "PENDING"
-  created_at?: string | null;
-};
+import { User, Trash2 } from "lucide-react";
+import InviteManager from "./InviteManager";
 
 type Role = "OWNER" | "MANAGER" | "GUEST";
 
@@ -40,9 +32,10 @@ type Props = {
   role: Role;
   isOwnerManager: boolean;
 
-  pendingInvites?: PendingInvite[];
+  // оставляем для совместимости (props приходит с page.tsx)
+  pendingInvites?: any[];
 
-  // ✅ NEW: отображение
+  // отображение
   mode?: "summary" | "manage";
 };
 
@@ -112,46 +105,20 @@ export default function BusinessPeoplePanel({
   legacyManagerPhone,
   role,
   isOwnerManager,
-  pendingInvites = [],
   mode = "manage",
 }: Props) {
   const router = useRouter();
   const sp = useSearchParams();
 
-  // ✅ сохраняем query (включая ?u=...)
+  // сохраняем query (включая ?u=... если у тебя есть)
   const qs = sp?.toString();
   const suffix = qs ? `?${qs}` : "";
 
   const [loading, setLoading] = React.useState(true);
   const [data, setData] = React.useState<StatusResponse | null>(null);
 
-  const [email, setEmail] = React.useState("");
-  const [sending, setSending] = React.useState(false);
-
-  const [showPendingList, setShowPendingList] = React.useState(false);
-  const [revokingId, setRevokingId] = React.useState<string | null>(null);
-
   const canManage = role === "OWNER";
-
-  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim().toLowerCase());
   const safeBusinessId = (businessId ?? "").trim();
-
-  const pendingForBusiness = React.useMemo(() => {
-    const list = (pendingInvites ?? [])
-      .filter(
-        (i) =>
-          String(i.business_id) === String(safeBusinessId) &&
-          String(i.status).toUpperCase() === "PENDING" &&
-          String(i.role).toUpperCase() === "MANAGER",
-      )
-      .sort((a, b) => {
-        const da = a.created_at ? Date.parse(a.created_at) : 0;
-        const db = b.created_at ? Date.parse(b.created_at) : 0;
-        return db - da;
-      });
-
-    return list;
-  }, [pendingInvites, safeBusinessId]);
 
   async function load() {
     if (!safeBusinessId) {
@@ -169,7 +136,6 @@ export default function BusinessPeoplePanel({
 
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json?.error || "Failed to load");
-
       setData(json);
     } catch {
       setData(null);
@@ -186,68 +152,6 @@ export default function BusinessPeoplePanel({
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [safeBusinessId]);
-
-  async function invite() {
-    if (!safeBusinessId) {
-      alert("Business is not loaded yet. Please retry.");
-      return;
-    }
-
-    const v = email.trim().toLowerCase();
-    if (!v) return;
-
-    setSending(true);
-    try {
-      const res = await fetch("/api/manager/invite", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          business_id: safeBusinessId,
-          businessId: safeBusinessId,
-          email: v,
-        }),
-      });
-
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(json?.error || "Invite failed");
-
-      setEmail("");
-      setShowPendingList(false);
-      await load();
-      router.refresh();
-    } catch (e: any) {
-      alert(e?.message || "Invite failed");
-    } finally {
-      setSending(false);
-    }
-  }
-
-  async function revokeInvite(inviteId: string) {
-    if (!inviteId) return;
-
-    const ok = confirm("Revoke this invite?");
-    if (!ok) return;
-
-    setRevokingId(inviteId);
-    try {
-      const res = await fetch("/api/invite/revoke", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ invite_id: inviteId }),
-      });
-
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(json?.error || "Revoke failed");
-
-      setShowPendingList(false);
-      await load();
-      router.refresh();
-    } catch (e: any) {
-      alert(e?.message || "Revoke failed");
-    } finally {
-      setRevokingId(null);
-    }
-  }
 
   async function removeManager(managerUserId: string) {
     if (!safeBusinessId) {
@@ -292,32 +196,12 @@ export default function BusinessPeoplePanel({
 
   const owner = ownerPhone || data?.owner_phone || "—";
   const legacy = legacyManagerPhone || data?.legacy_manager_phone || null;
-
   const manager = data?.manager ?? ({ state: "NONE" } as const);
 
   const ownerPillText = isOwnerManager ? "OWNER & MANAGER" : "OWNER";
   const managerPillText = role === "MANAGER" ? "MANAGER (YOU)" : "MANAGER";
 
-  const pendingFromPropsPrimary = pendingForBusiness[0] ?? null;
-  const hasPendingFromProps = !!pendingFromPropsPrimary;
-
-  const shouldShowPendingRow =
-    !loading &&
-    !isOwnerManager &&
-    manager.state !== "ACTIVE" &&
-    (manager.state === "PENDING" || hasPendingFromProps);
-
-  const pendingEmailToShow =
-    manager.state === "PENDING"
-      ? manager.email
-      : pendingFromPropsPrimary?.email || "";
-
-  const pendingCount =
-    manager.state === "PENDING"
-      ? Math.max(pendingForBusiness.length, 1)
-      : pendingForBusiness.length;
-
-  // ✅ SUMMARY MODE: только owner + ACTIVE manager + link (с сохранением query)
+  // ✅ SUMMARY MODE
   if (mode === "summary") {
     const href = businessSlug
       ? `/b/${encodeURIComponent(String(businessSlug))}/settings/team${suffix}`
@@ -359,7 +243,7 @@ export default function BusinessPeoplePanel({
     );
   }
 
-  // ✅ MANAGE MODE: полный функционал
+  // ✅ MANAGE MODE
   return (
     <div className="space-y-4">
       <Row
@@ -403,84 +287,6 @@ export default function BusinessPeoplePanel({
                 )
               }
             />
-          ) : shouldShowPendingRow ? (
-            <>
-              <Row
-                icon={<Mail className="h-4 w-4" />}
-                label="INVITE"
-                value={
-                  <span className="inline-flex flex-wrap items-center gap-2">
-                    <span className="font-mono break-all">
-                      {pendingEmailToShow}
-                    </span>
-                    {pendingCount > 1 ? (
-                      <span className="text-[11px] font-semibold text-gray-500">
-                        +{pendingCount - 1} more
-                      </span>
-                    ) : null}
-                  </span>
-                }
-                right={
-                  <div className="flex items-center gap-2">
-                    <Pill tone="amber">Pending</Pill>
-
-                    {pendingForBusiness.length > 1 ? (
-                      <button
-                        onClick={() => setShowPendingList((v) => !v)}
-                        className="inline-flex items-center gap-1 rounded-xl border border-gray-200 bg-white px-2.5 py-2 text-xs font-semibold text-gray-800 hover:bg-gray-50"
-                        title="Show all pending invites"
-                      >
-                        <ChevronDown
-                          className={`h-4 w-4 transition ${
-                            showPendingList ? "rotate-180" : ""
-                          }`}
-                        />
-                      </button>
-                    ) : null}
-                  </div>
-                }
-              />
-
-              {showPendingList ? (
-                <div className="rounded-2xl border border-gray-100 bg-white p-3">
-                  <div className="mb-2 text-[11px] font-semibold tracking-wide text-gray-500">
-                    PENDING INVITES
-                  </div>
-
-                  <div className="space-y-2">
-                    {pendingForBusiness.map((inv) => (
-                      <div
-                        key={inv.id}
-                        className="flex items-center justify-between gap-3 rounded-2xl border border-gray-100 bg-gray-50/70 px-3 py-2"
-                      >
-                        <div className="min-w-0">
-                          <div className="truncate font-mono text-xs font-semibold text-gray-900">
-                            {inv.email}
-                          </div>
-                          {inv.created_at ? (
-                            <div className="text-[11px] text-gray-500">
-                              {new Date(inv.created_at).toLocaleString()}
-                            </div>
-                          ) : null}
-                        </div>
-
-                        {canManage ? (
-                          <button
-                            onClick={() => revokeInvite(inv.id)}
-                            disabled={revokingId === inv.id}
-                            className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-50 disabled:opacity-60"
-                            title="Revoke invite"
-                          >
-                            <XCircle className="h-4 w-4" />
-                            {revokingId === inv.id ? "Revoking…" : "Revoke"}
-                          </button>
-                        ) : null}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-            </>
           ) : legacy ? (
             <Row
               icon={<User className="h-4 w-4" />}
@@ -499,40 +305,7 @@ export default function BusinessPeoplePanel({
         </>
       ) : null}
 
-      {canManage ? (
-        <div className="rounded-2xl border border-gray-100 bg-white p-4">
-          <div className="mb-2 text-sm font-semibold text-gray-900">
-            Invite manager
-          </div>
-
-          <div className="flex items-center gap-2">
-            <div className="relative flex-1">
-              <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-              <input
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                autoCapitalize="none"
-                autoCorrect="off"
-                spellCheck={false}
-                placeholder="manager@company.com"
-                className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-10 pr-3 text-sm font-medium outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-              />
-            </div>
-
-            <button
-              onClick={invite}
-              disabled={sending || !emailOk}
-              className="inline-flex items-center justify-center rounded-xl bg-black px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:opacity-90 disabled:opacity-50"
-            >
-              {sending ? "Sending…" : "Invite"}
-            </button>
-          </div>
-
-          <div className="mt-2 text-[11px] text-gray-500">
-            Invites stay <b>Pending</b> until the manager registers.
-          </div>
-        </div>
-      ) : null}
+      {canManage ? <InviteManager businessId={safeBusinessId} /> : null}
     </div>
   );
 }
