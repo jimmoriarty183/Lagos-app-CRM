@@ -24,7 +24,7 @@ export async function GET(req: Request) {
       .select("id,email,status,created_at") // <-- без expires_at
       .eq("business_id", businessId)
       .eq("role", "MANAGER")
-      .in("status", ["PENDING", "pending"])
+      .eq("status", "PENDING")
       .order("created_at", { ascending: false });
 
     if (error) {
