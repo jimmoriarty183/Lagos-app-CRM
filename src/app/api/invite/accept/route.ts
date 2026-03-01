@@ -16,6 +16,32 @@ function buildFullName(firstName: string, lastName: string, fullName: string) {
   return joined;
 }
 
+
+
+async function upsertProfileCompat(
+  admin: ReturnType<typeof supabaseAdmin>,
+  payload: Record<string, string | null>,
+) {
+  const row: Record<string, string | null> = { ...payload };
+
+  for (let i = 0; i < 8; i += 1) {
+    const { error } = await admin.from("profiles").upsert(row, { onConflict: "id" });
+    if (!error) return null;
+
+    const m = /Could not find the '([^']+)' column of 'profiles'/i.exec(
+      error.message || "",
+    );
+
+    if (!m) return error;
+
+    const missingCol = clean(m[1]);
+    if (!missingCol || missingCol === "id" || !(missingCol in row)) return error;
+
+    delete row[missingCol];
+  }
+
+  return { message: "profiles upsert failed after compatibility retries" };
+}
 export async function POST(req: Request) {
   const supabase = await supabaseServer();
   const admin = supabaseAdmin();
@@ -99,20 +125,30 @@ export async function POST(req: Request) {
     );
   }
 
-  // 4) upsert profile (service role)
-  // Пишем full_name, и если колонки first_name/last_name есть — тоже пишем.
-  // Если их нет — Postgres просто вернёт ошибку. Чтобы не ломать прод,
-  // пишем безопасно: сначала full_name, потом пробуем first/last.
-  const { error: profErr } = await admin
-    .from("profiles")
-    .upsert({ id: user.id, full_name: fullName }, { onConflict: "id" });
+  // 4) upsert profile (service role, schema-compatible)
+  const profErr = await upsertProfileCompat(admin, {
+    id: user.id,
+    email: userEmail || null,
+    first_name: firstName || null,
+    last_name: lastName || null,
+    full_name: fullName,
+  });
 
   if (profErr) {
     return NextResponse.json({ ok: false, error: profErr.message }, { status: 500 });
   }
 
-  // OPTIONAL: если у тебя реально есть first_name/last_name — раскомментируй:
-  // await admin.from("profiles").update({ first_name: firstName || null, last_name: lastName || null }).eq("id", user.id);
+  // 4.1) keep auth metadata in sync, so fallback loaders can show real name
+  const mergedMeta = {
+    ...(user.user_metadata || {}),
+    first_name: firstName || undefined,
+    last_name: lastName || undefined,
+    full_name: fullName,
+  };
+
+  await admin.auth.admin.updateUserById(user.id, {
+    user_metadata: mergedMeta,
+  });
 
   // 5) membership
   const { error: memErr } = await admin
