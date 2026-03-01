@@ -15,27 +15,38 @@ type ManagerState =
       state: "ACTIVE";
       user_id: string;
       full_name: string | null;
-      phone: string | null;
+      email?: string | null;
+      phone: string | null; // legacy, будет null
     };
 
+type OwnerProfile = {
+  id: string;
+  full_name: string | null;
+  email: string | null;
+};
+
 type StatusResponse = {
+  // legacy
   owner_phone: string | null;
-  manager: ManagerState;
   legacy_manager_phone?: string | null;
+
+  // ✅ new (from your new status)
+  owner?: OwnerProfile | null;
+  manager: ManagerState;
 };
 
 type Props = {
   businessId?: string | null;
   businessSlug?: string | null;
+
+  // legacy/fallback (оставляем, чтобы не ломать page.tsx)
   ownerPhone: string | null;
   legacyManagerPhone: string | null;
+
   role: Role;
   isOwnerManager: boolean;
 
-  // оставляем для совместимости (props приходит с page.tsx)
   pendingInvites?: any[];
-
-  // отображение
   mode?: "summary" | "manage";
 };
 
@@ -89,13 +100,33 @@ function Row({
             </div>
           ) : null}
 
-          <div className="text-sm font-semibold text-gray-900">{value}</div>
+          <div className="min-w-0 truncate text-sm font-semibold text-gray-900">
+            {value}
+          </div>
         </div>
       </div>
 
       {right ? <div className="shrink-0">{right}</div> : null}
     </div>
   );
+}
+
+function labelForOwner(
+  owner?: OwnerProfile | null,
+  fallbackPhone?: string | null,
+) {
+  return owner?.full_name || owner?.email || fallbackPhone || "—";
+}
+
+function labelForManager(m: ManagerState) {
+  if (m.state !== "ACTIVE") return "Manager";
+  return m.full_name || (m as any).email || "Manager";
+}
+
+function metaForManager(m: ManagerState) {
+  if (m.state !== "ACTIVE") return null;
+  const email = (m as any).email as string | null | undefined;
+  return email || null;
 }
 
 export default function BusinessPeoplePanel({
@@ -105,12 +136,12 @@ export default function BusinessPeoplePanel({
   legacyManagerPhone,
   role,
   isOwnerManager,
+  pendingInvites,
   mode = "manage",
 }: Props) {
   const router = useRouter();
   const sp = useSearchParams();
 
-  // сохраняем query (включая ?u=... если у тебя есть)
   const qs = sp?.toString();
   const suffix = qs ? `?${qs}` : "";
 
@@ -194,9 +225,13 @@ export default function BusinessPeoplePanel({
     );
   }
 
-  const owner = ownerPhone || data?.owner_phone || "—";
-  const legacy = legacyManagerPhone || data?.legacy_manager_phone || null;
   const manager = data?.manager ?? ({ state: "NONE" } as const);
+  const legacy = legacyManagerPhone || data?.legacy_manager_phone || null;
+
+  const ownerLabel = labelForOwner(
+    data?.owner ?? null,
+    ownerPhone || data?.owner_phone || null,
+  );
 
   const ownerPillText = isOwnerManager ? "OWNER & MANAGER" : "OWNER";
   const managerPillText = role === "MANAGER" ? "MANAGER (YOU)" : "MANAGER";
@@ -212,7 +247,7 @@ export default function BusinessPeoplePanel({
         <Row
           icon={<User className="h-4 w-4" />}
           label="OWNER"
-          value={<span className="font-mono whitespace-nowrap">{owner}</span>}
+          value={<span className="truncate">{ownerLabel}</span>}
           right={<Pill tone="blue">{ownerPillText}</Pill>}
         />
 
@@ -223,10 +258,16 @@ export default function BusinessPeoplePanel({
             value={
               <span className="inline-flex flex-wrap items-center gap-2">
                 <span className="font-semibold">
-                  {manager.full_name || "Manager"}
+                  {labelForManager(manager)}
                 </span>
-                <span className="text-gray-300">•</span>
-                <span className="font-mono">{manager.phone || "—"}</span>
+                {metaForManager(manager) ? (
+                  <>
+                    <span className="text-gray-300">•</span>
+                    <span className="font-mono text-xs">
+                      {metaForManager(manager)}
+                    </span>
+                  </>
+                ) : null}
               </span>
             }
             right={<Pill tone="gray">{managerPillText}</Pill>}
@@ -249,7 +290,7 @@ export default function BusinessPeoplePanel({
       <Row
         icon={<User className="h-4 w-4" />}
         label="OWNER"
-        value={<span className="font-mono whitespace-nowrap">{owner}</span>}
+        value={<span className="truncate">{ownerLabel}</span>}
         right={<Pill tone="blue">{ownerPillText}</Pill>}
       />
 
@@ -266,16 +307,22 @@ export default function BusinessPeoplePanel({
               value={
                 <span className="inline-flex flex-wrap items-center gap-2">
                   <span className="font-semibold">
-                    {manager.full_name || "Manager"}
+                    {labelForManager(manager)}
                   </span>
-                  <span className="text-gray-300">•</span>
-                  <span className="font-mono">{manager.phone || "—"}</span>
+                  {metaForManager(manager) ? (
+                    <>
+                      <span className="text-gray-300">•</span>
+                      <span className="font-mono text-xs">
+                        {metaForManager(manager)}
+                      </span>
+                    </>
+                  ) : null}
                 </span>
               }
               right={
                 canManage ? (
                   <button
-                    onClick={() => removeManager(manager.user_id)}
+                    onClick={() => removeManager((manager as any).user_id)}
                     className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-50"
                     title="Remove manager"
                   >
@@ -293,6 +340,21 @@ export default function BusinessPeoplePanel({
               label="MANAGER"
               value={<span className="font-mono">{legacy}</span>}
               right={<Pill tone="gray">MANAGER</Pill>}
+            />
+          ) : manager.state === "PENDING" ? (
+            <Row
+              icon={<User className="h-4 w-4" />}
+              label="MANAGER"
+              value={
+                <span className="inline-flex flex-wrap items-center gap-2">
+                  <span className="font-semibold">Pending invite</span>
+                  <span className="text-gray-300">•</span>
+                  <span className="font-mono text-xs">
+                    {(manager as any).email}
+                  </span>
+                </span>
+              }
+              right={<Pill tone="amber">PENDING</Pill>}
             />
           ) : (
             <Row

@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useActionState } from "react";
-
+import { useSearchParams } from "next/navigation";
 import {
   loginAction,
   registerOwnerAction,
@@ -30,14 +30,21 @@ function SuccessBox({ text }: { text?: string }) {
   );
 }
 
+function OverlayLoader({ text }: { text: string }) {
+  return (
+    <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/70 backdrop-blur-sm rounded-2xl">
+      <div className="flex flex-col items-center gap-3">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600" />
+        <div className="text-sm font-semibold text-gray-800">{text}</div>
+      </div>
+    </div>
+  );
+}
+
 function Hint({ children }: { children: React.ReactNode }) {
   return (
     <div className="text-[11px] leading-snug text-gray-500">{children}</div>
   );
-}
-
-function cleanPhone(raw: string) {
-  return raw.replace(/[^\d+]/g, "");
 }
 
 function slugifyPreview(input: string) {
@@ -70,8 +77,6 @@ function Input({
   value?: string;
   onChange?: (v: string) => void;
 }) {
-  const isTel = type === "tel";
-
   return (
     <label className="block">
       <div className="text-xs font-medium text-gray-700">{label}</div>
@@ -83,12 +88,7 @@ function Input({
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange?.(e.target.value)}
-        inputMode={isTel ? "numeric" : undefined}
-        className={[
-          "mt-1 w-full rounded-xl border border-gray-300 bg-white",
-          "px-3 py-2 text-sm outline-none",
-          "focus:ring-2 focus:ring-blue-200",
-        ].join(" ")}
+        className="mt-1 w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-200"
       />
     </label>
   );
@@ -116,7 +116,6 @@ function PasswordInput({
   return (
     <label className="block">
       <div className="text-xs font-medium text-gray-700">{label}</div>
-
       <div className="mt-1 relative">
         <input
           name={name}
@@ -126,23 +125,12 @@ function PasswordInput({
           placeholder={placeholder}
           value={value}
           onChange={(e) => onChange?.(e.target.value)}
-          className={[
-            "w-full rounded-xl border border-gray-300 bg-white",
-            "px-3 py-2 pr-11 text-sm outline-none",
-            "focus:ring-2 focus:ring-blue-200",
-          ].join(" ")}
+          className="w-full rounded-xl border border-gray-300 bg-white px-3 py-2 pr-11 text-sm outline-none focus:ring-2 focus:ring-blue-200"
         />
-
         <button
           type="button"
           onClick={() => setShow((s) => !s)}
-          aria-label={show ? "Скрыть пароль" : "Показать пароль"}
-          className={[
-            "absolute right-2 top-1/2 -translate-y-1/2",
-            "rounded-lg px-2 py-1 text-[11px] font-semibold",
-            "text-gray-600 hover:text-gray-900",
-            "hover:bg-gray-100",
-          ].join(" ")}
+          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg px-2 py-1 text-[11px] font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-100"
         >
           {show ? "Hide" : "Show"}
         </button>
@@ -169,17 +157,25 @@ export default function LoginUI() {
     initialState,
   );
 
+  const sp = useSearchParams();
+  const inviteId = sp.get("invite_id") || "";
+
   const [businessName, setBusinessName] = React.useState("");
-  const [ownerPhone, setOwnerPhone] = React.useState("");
+  const [firstName, setFirstName] = React.useState("");
+  const [lastName, setLastName] = React.useState("");
   const [emailReg, setEmailReg] = React.useState("");
   const [passReg, setPassReg] = React.useState("");
+  const [passConfirm, setPassConfirm] = React.useState("");
+  const [agree, setAgree] = React.useState(false);
 
   const [emailLogin, setEmailLogin] = React.useState("");
   const [passLogin, setPassLogin] = React.useState("");
 
   const [emailReset, setEmailReset] = React.useState("");
 
-  const [localError, setLocalError] = React.useState<string>("");
+  const [localError, setLocalError] = React.useState("");
+
+  const didRedirect = React.useRef(false);
 
   React.useEffect(() => {
     const next = loginState?.ok ? loginState.next : "";
@@ -188,35 +184,56 @@ export default function LoginUI() {
 
   React.useEffect(() => {
     const next = regState?.ok ? regState.next : "";
-    if (next) window.location.href = next;
-  }, [regState]);
+    if (!next || didRedirect.current) return;
+
+    (async () => {
+      try {
+        // Invite accept is handled on /invite page in your flow,
+        // but if you want to do it here too, keep this:
+        // (we keep it safe; if fails - fallback to next)
+        if (inviteId) {
+          const fullName = `${firstName} ${lastName}`.trim();
+          const res = await fetch("/api/invite/accept", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ inviteId, fullName }),
+          });
+          const json = await res.json().catch(() => ({}));
+          if (json?.ok && json?.next) {
+            didRedirect.current = true;
+            window.location.href = json.next;
+            return;
+          }
+        }
+      } catch {
+        // ignore
+      }
+
+      didRedirect.current = true;
+      window.location.href = next;
+    })();
+  }, [regState, inviteId, firstName, lastName]);
 
   const activeState =
     mode === "login" ? loginState : mode === "register" ? regState : resetState;
-
-  const pending =
-    mode === "login"
-      ? loginPending
-      : mode === "register"
-        ? regPending
-        : resetPending;
 
   const previewSlug = slugifyPreview(businessName);
 
   function validateRegister(): string {
     const bn = businessName.trim();
+    const fn = firstName.trim();
+    const ln = lastName.trim();
     const em = emailReg.trim();
-    const ph = cleanPhone(ownerPhone.trim());
 
-    if (!bn) return "Введите название бизнеса";
-    if (bn.includes("@")) return "Название бизнеса не должно быть email";
-    if (!em) return "Введите email";
-    if (!passReg) return "Введите пароль";
-
-    if (ph && !/^\+?[0-9]{8,15}$/.test(ph)) {
-      return "Некорректный номер телефона (8–15 цифр, можно с +)";
-    }
-
+    // если invite — бизнес может не требоваться (зависит от твоей логики, но так правильно)
+    if (!inviteId && !bn) return "Enter your business name";
+    if (!fn) return "Enter your first name";
+    if (!ln) return "Enter your last name";
+    if (!em) return "Enter your email";
+    if (!passReg) return "Create a password";
+    if (!passConfirm) return "Confirm your password";
+    if (passReg !== passConfirm) return "Passwords do not match";
+    if (!agree) return "Please accept the Terms & Privacy Policy";
     return "";
   }
 
@@ -226,22 +243,27 @@ export default function LoginUI() {
     if (err) {
       e.preventDefault();
       setLocalError(err);
-      return;
     }
-    setOwnerPhone(cleanPhone(ownerPhone));
   }
 
   function onResetSubmit(e: React.FormEvent<HTMLFormElement>) {
     setLocalError("");
-    const em = emailReset.trim();
-    if (!em) {
+    if (!emailReset.trim()) {
       e.preventDefault();
-      setLocalError("Введите email");
+      setLocalError("Enter your email");
     }
   }
 
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+    <div className="relative rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+      {regPending && (
+        <OverlayLoader
+          text={inviteId ? "Joining business…" : "Creating your account…"}
+        />
+      )}
+      {loginPending && <OverlayLoader text="Signing in…" />}
+      {resetPending && <OverlayLoader text="Sending reset link…" />}
+
       {/* Header */}
       <div className="p-4 border-b border-gray-100">
         <div className="text-[11px] font-semibold tracking-wider text-gray-500">
@@ -250,21 +272,22 @@ export default function LoginUI() {
 
         <div className="mt-1 text-xl font-bold text-gray-900">
           {mode === "login"
-            ? "Вход"
+            ? "Sign in"
             : mode === "register"
-              ? "Регистрация"
-              : "Восстановление"}
+              ? "Create an account"
+              : "Reset password"}
         </div>
 
         <div className="mt-0.5 text-xs text-gray-600">
           {mode === "login"
-            ? "Войди в аккаунт и открой бизнес."
+            ? "Sign in to access your workspace."
             : mode === "register"
-              ? "Создай аккаунт и первый бизнес (Owner)."
-              : "Мы отправим ссылку для смены пароля на email."}
+              ? inviteId
+                ? "Create an account to join the business."
+                : "Create an account and your first business (Owner)."
+              : "We will email you a password reset link."}
         </div>
 
-        {/* Tabs (скрываем на reset, там будет кнопка назад) */}
         {mode !== "reset" ? (
           <div className="mt-3 grid grid-cols-2 rounded-xl bg-gray-100 p-1">
             <button
@@ -280,7 +303,7 @@ export default function LoginUI() {
                   : "text-gray-600 hover:text-gray-900",
               ].join(" ")}
             >
-              Вход
+              Sign in
             </button>
             <button
               type="button"
@@ -295,7 +318,7 @@ export default function LoginUI() {
                   : "text-gray-600 hover:text-gray-900",
               ].join(" ")}
             >
-              Регистрация
+              Create account
             </button>
           </div>
         ) : (
@@ -308,7 +331,7 @@ export default function LoginUI() {
               }}
               className="text-xs font-semibold text-gray-700 hover:text-gray-900"
             >
-              ← Назад ко входу
+              ← Back to sign in
             </button>
           </div>
         )}
@@ -319,9 +342,8 @@ export default function LoginUI() {
         <ErrorBox text={localError} />
         <ErrorBox text={activeState?.error} />
 
-        {/* успех для reset */}
         {mode === "reset" && resetState?.ok ? (
-          <SuccessBox text="Если этот email зарегистрирован, мы отправили ссылку для восстановления. Проверьте почту и папку Спам." />
+          <SuccessBox text="If this email exists in our system, we sent a reset link. Please check your inbox and Spam folder." />
         ) : null}
 
         {mode === "login" ? (
@@ -332,13 +354,13 @@ export default function LoginUI() {
               type="email"
               required
               autoComplete="email"
-              placeholder="you@email.com"
+              placeholder="tunde@example.com"
               value={emailLogin}
               onChange={setEmailLogin}
             />
 
             <PasswordInput
-              label="Пароль"
+              label="Password"
               name="password"
               required
               autoComplete="current-password"
@@ -353,21 +375,28 @@ export default function LoginUI() {
                 onClick={() => {
                   setMode("reset");
                   setLocalError("");
-                  setEmailReset(emailLogin); // удобно подставить если уже введён
+                  setEmailReset(emailLogin);
                 }}
                 className="text-[11px] font-semibold text-gray-600 hover:text-gray-900"
               >
-                Забыли пароль?
+                Forgot password?
               </button>
             </div>
 
             <button
               type="submit"
-              disabled={pending}
+              disabled={loginPending}
               className="w-full rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold !text-white hover:bg-blue-700 disabled:opacity-60 disabled:!text-white"
             >
-              {pending ? "Входим..." : "Войти"}
+              Sign in
             </button>
+
+            <Hint>
+              Nigeria phone format example:{" "}
+              <span className="font-semibold text-gray-700">
+                +234 803 123 4567
+              </span>
+            </Hint>
           </form>
         ) : mode === "register" ? (
           <form
@@ -375,31 +404,47 @@ export default function LoginUI() {
             onSubmit={onRegisterSubmit}
             className="space-y-2.5"
           >
-            <Input
-              label="Название бизнеса"
-              name="business_name"
-              required
-              placeholder="My Shop"
-              value={businessName}
-              onChange={setBusinessName}
-            />
-            <Hint>
-              Ссылка:{" "}
-              <span className="font-semibold text-gray-700">
-                /b/{previewSlug}
-              </span>
-            </Hint>
+            {/* hidden fields for server-side */}
+            <input type="hidden" name="invite_id" value={inviteId} />
+            <input type="hidden" name="agree" value={agree ? "on" : ""} />
 
-            <Input
-              label="Owner phone (optional)"
-              name="owner_phone"
-              type="tel"
-              autoComplete="tel"
-              placeholder="+380..."
-              value={ownerPhone}
-              onChange={(v) => setOwnerPhone(cleanPhone(v))}
-            />
-            <Hint>Цифры/+, пример: +380991234567</Hint>
+            {!inviteId && (
+              <>
+                <Input
+                  label="Business name"
+                  name="business_name"
+                  required
+                  placeholder="Sunrise Cleaning"
+                  value={businessName}
+                  onChange={setBusinessName}
+                />
+                <Hint>
+                  Link:{" "}
+                  <span className="font-semibold text-gray-700">
+                    /b/{previewSlug}
+                  </span>
+                </Hint>
+              </>
+            )}
+
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <Input
+                label="First name"
+                name="first_name"
+                required
+                placeholder="Daniel"
+                value={firstName}
+                onChange={setFirstName}
+              />
+              <Input
+                label="Last name"
+                name="last_name"
+                required
+                placeholder="Okafor"
+                value={lastName}
+                onChange={setLastName}
+              />
+            </div>
 
             <Input
               label="Email"
@@ -407,31 +452,66 @@ export default function LoginUI() {
               type="email"
               required
               autoComplete="email"
-              placeholder="you@email.com"
+              placeholder="daniel.okafor@email.com"
               value={emailReg}
               onChange={setEmailReg}
             />
 
             <PasswordInput
-              label="Пароль"
+              label="Password"
               name="password"
               required
               autoComplete="new-password"
-              placeholder="your password"
+              placeholder="Create a password"
               value={passReg}
               onChange={setPassReg}
             />
 
+            <PasswordInput
+              label="Confirm password"
+              name="password_confirm"
+              required
+              autoComplete="new-password"
+              placeholder="Repeat your password"
+              value={passConfirm}
+              onChange={setPassConfirm}
+            />
+
+            <label className="flex items-start gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2">
+              <input
+                type="checkbox"
+                checked={agree}
+                onChange={(e) => setAgree(e.target.checked)}
+                className="mt-1"
+              />
+              <div className="text-[12px] text-gray-700 leading-snug">
+                I agree to the{" "}
+                <a
+                  href="/terms"
+                  className="font-semibold text-blue-700 hover:underline"
+                >
+                  Terms of Service
+                </a>{" "}
+                and{" "}
+                <a
+                  href="/privacy"
+                  className="font-semibold text-blue-700 hover:underline"
+                >
+                  Privacy Policy
+                </a>
+                .
+              </div>
+            </label>
+
             <button
               type="submit"
-              disabled={pending}
+              disabled={regPending || !agree}
               className="w-full rounded-xl bg-gray-900 px-4 py-2 text-sm font-semibold !text-white hover:bg-black disabled:opacity-60 disabled:!text-white"
             >
-              {pending ? "Создаём..." : "Создать аккаунт"}
+              {inviteId ? "Create account & join" : "Create account"}
             </button>
           </form>
         ) : (
-          // reset mode
           <form
             action={resetSubmit}
             onSubmit={onResetSubmit}
@@ -443,22 +523,22 @@ export default function LoginUI() {
               type="email"
               required
               autoComplete="email"
-              placeholder="you@email.com"
+              placeholder="tunde@example.com"
               value={emailReset}
               onChange={setEmailReset}
             />
 
             <Hint>
-              Мы отправим письмо со ссылкой для смены пароля. Если письма нет —
-              проверь “Спам”.
+              We’ll email you a link to reset your password. If you don’t see
+              it, check Spam.
             </Hint>
 
             <button
               type="submit"
-              disabled={pending}
+              disabled={resetPending}
               className="w-full rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold !text-white hover:bg-blue-700 disabled:opacity-60 disabled:!text-white"
             >
-              {pending ? "Отправляем..." : "Отправить ссылку"}
+              Send reset link
             </button>
           </form>
         )}

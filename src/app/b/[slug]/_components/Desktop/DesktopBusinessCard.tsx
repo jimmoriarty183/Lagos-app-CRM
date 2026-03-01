@@ -1,6 +1,6 @@
 import React from "react";
 import { ShieldCheck } from "lucide-react";
-import BusinessPeoplePanel from "../BusinessPeoplePanel";
+import BusinessPeoplePanel from "../BusinessPeoplePanel"; // ✅ ВАЖНО: импорт
 
 type PendingInvite = {
   id: string;
@@ -15,17 +15,14 @@ type Props = {
   business: {
     id: string;
     slug: string;
-    owner_phone: string;
-    manager_phone: string | null;
+    // ✅ phone поля можешь оставить или убрать — не критично
+    owner_phone?: string | null;
+    manager_phone?: string | null;
   };
   role: "OWNER" | "MANAGER" | "GUEST";
   phone: string;
   isOwnerManager: boolean;
   pendingInvites?: PendingInvite[];
-
-  card?: React.CSSProperties;
-  cardHeader?: React.CSSProperties;
-  cardTitle?: React.CSSProperties;
 };
 
 function RolePill({ role }: { role: Props["role"] }) {
@@ -75,12 +72,12 @@ export default function DesktopBusinessCard({
         <BusinessPeoplePanel
           businessId={business.id}
           businessSlug={business.slug}
-          ownerPhone={business.owner_phone}
-          legacyManagerPhone={business.manager_phone}
+          ownerPhone={business.owner_phone ?? null}
+          legacyManagerPhone={business.manager_phone ?? null}
           role={role}
           isOwnerManager={isOwnerManager}
           pendingInvites={pendingInvites}
-          mode="summary" // ✅ only owner + active manager
+          mode="summary"
         />
       </div>
     </section>

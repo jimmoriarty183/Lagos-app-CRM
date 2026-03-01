@@ -88,45 +88,93 @@ export async function loginAction(
   }
 }
 
-/** ✅ REGISTER OWNER:
- * UI отправляет business_name, а slug генерим сами
- */
 export async function registerOwnerAction(
   _prev: State = initial,
   formData: FormData,
 ): Promise<State> {
   try {
-    const email = String(formData.get("email") || "").trim();
+    const email = String(formData.get("email") || "").trim().toLowerCase();
     const password = String(formData.get("password") || "");
+    const passwordConfirm = String(formData.get("password_confirm") || "");
     const businessName = String(formData.get("business_name") || "").trim();
-    const ownerPhone = String(formData.get("owner_phone") || "").trim();
 
-    if (!businessName) {
-      return { ok: false, error: "Введите название бизнеса", next: "" };
+    const firstName = String(formData.get("first_name") || "").trim();
+    const lastName = String(formData.get("last_name") || "").trim();
+
+    const agree = String(formData.get("agree") || ""); // expected: "on"
+    const inviteId = String(formData.get("invite_id") || "").trim();
+
+    // ✅ validations
+    if (!email) return { ok: false, error: "Email is required", next: "" };
+    if (!password || password.length < 6)
+      return { ok: false, error: "Password must be at least 6 characters", next: "" };
+    if (password !== passwordConfirm)
+      return { ok: false, error: "Passwords do not match", next: "" };
+    if (!firstName) return { ok: false, error: "First name is required", next: "" };
+    if (!lastName) return { ok: false, error: "Last name is required", next: "" };
+    if (agree !== "on")
+      return { ok: false, error: "Please accept Terms & Privacy Policy", next: "" };
+
+    if (!inviteId && !businessName) {
+      return { ok: false, error: "Business name is required", next: "" };
     }
 
+    const fullName = `${firstName} ${lastName}`.trim();
     const slug = slugify(businessName);
 
     const supabase = await supabaseServer();
 
-    // 1) создать auth юзера
-    const { error: signUpErr } = await supabase.auth.signUp({ email, password });
+    // 1) sign up
+    const { error: signUpErr } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { first_name: firstName, last_name: lastName, full_name: fullName },
+      },
+    });
     if (signUpErr) return { ok: false, error: signUpErr.message, next: "" };
 
-    // 2) залогиниться сразу (cookies)
+    // 2) sign in (sets cookies)
     const { error: signInErr } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
     if (signInErr) return { ok: false, error: signInErr.message, next: "" };
 
-    // 3) создать business + membership owner через RPC
+    // 3) ✅ ensure profiles row exists (NO trigger needed)
+    const { data: u, error: uErr } = await supabase.auth.getUser();
+    if (uErr) return { ok: false, error: uErr.message, next: "" };
+
+    const user = u?.user;
+    if (!user) return { ok: false, error: "No user after sign in", next: "" };
+
+    const { error: profErr } = await supabase.from("profiles").upsert(
+      {
+        id: user.id,
+        email,
+        first_name: firstName,
+        last_name: lastName,
+        full_name: fullName,
+      },
+      { onConflict: "id" },
+    );
+    if (profErr) return { ok: false, error: profErr.message, next: "" };
+
+    // 4) invite flow
+    if (inviteId) {
+      return {
+        ok: true,
+        error: "",
+        next: `/invite?invite_id=${encodeURIComponent(inviteId)}`,
+      };
+    }
+
+    // 5) create business + owner membership
     const { error: rpcErr } = await supabase.rpc("create_business_with_owner", {
       p_slug: slug,
-      p_owner_phone: ownerPhone || null,
+      p_owner_phone: null,
       p_manager_phone: null,
     });
-
     if (rpcErr) return { ok: false, error: rpcErr.message, next: "" };
 
     return { ok: true, error: "", next: `/b/${slug}` };
