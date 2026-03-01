@@ -23,6 +23,35 @@ function slugify(input: string) {
   return base || `biz-${Date.now()}`;
 }
 
+
+async function upsertProfileCompat(
+  supabase: Awaited<ReturnType<typeof supabaseServer>>,
+  payload: Record<string, string | null>,
+) {
+  const row: Record<string, string | null> = { ...payload };
+
+  for (let i = 0; i < 8; i += 1) {
+    const { error } = await supabase.from("profiles").upsert(row, {
+      onConflict: "id",
+    });
+
+    if (!error) return null;
+
+    const m = /Could not find the '([^']+)' column of 'profiles'/i.exec(
+      error.message || "",
+    );
+
+    if (!m) return error;
+
+    const missingCol = String(m[1] || "").trim();
+    if (!missingCol || missingCol === "id" || !(missingCol in row)) return error;
+
+    delete row[missingCol];
+  }
+
+  return { message: "profiles upsert failed after compatibility retries" };
+}
+
 /** ✅ LOGIN (multi-business):
  *  - 0 businesses -> /login?no_business=1
  *  - 1 business  -> /b/[slug]
@@ -148,16 +177,13 @@ export async function registerOwnerAction(
     const user = u?.user;
     if (!user) return { ok: false, error: "No user after sign in", next: "" };
 
-    const { error: profErr } = await supabase.from("profiles").upsert(
-      {
-        id: user.id,
-        email,
-        first_name: firstName,
-        last_name: lastName,
-        full_name: fullName,
-      },
-      { onConflict: "id" },
-    );
+    const profErr = await upsertProfileCompat(supabase, {
+      id: user.id,
+      email,
+      first_name: firstName,
+      last_name: lastName,
+      full_name: fullName,
+    });
     if (profErr) return { ok: false, error: profErr.message, next: "" };
 
     // 4) invite flow
