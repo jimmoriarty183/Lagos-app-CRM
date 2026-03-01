@@ -4,6 +4,13 @@ import BusinessPeoplePanel from "@/app/b/[slug]/_components/BusinessPeoplePanel"
 
 type Role = "OWNER" | "MANAGER" | "GUEST";
 
+function upperRole(r: any): Role {
+  const s = String(r ?? "").toUpperCase();
+  if (s === "OWNER") return "OWNER";
+  if (s === "MANAGER") return "MANAGER";
+  return "GUEST";
+}
+
 export default async function TeamPage({
   params,
   searchParams,
@@ -51,23 +58,27 @@ export default async function TeamPage({
     redirect(`/login?next=${encodeURIComponent(nextPath)}`);
   }
 
-  const role: Role =
-    mem?.role === "owner"
-      ? "OWNER"
-      : mem?.role === "manager"
-        ? "MANAGER"
-        : "GUEST";
+  const role: Role = upperRole(mem?.role);
 
   // если гость — тоже на логин (или можешь показать read-only, но сейчас так)
   if (role === "GUEST") {
     redirect(`/login?next=${encodeURIComponent(nextPath)}`);
   }
 
-  // owner=manager legacy (если у тебя где-то так хранится)
-  const isOwnerManager =
-    !!business.owner_phone &&
-    !!business.manager_phone &&
-    String(business.owner_phone) === String(business.manager_phone);
+  // Owner-manager определяем по memberships, а не по legacy manager_phone
+  const { data: ownerManagerMems } = await supabase
+    .from("memberships")
+    .select("role,user_id")
+    .eq("business_id", business.id)
+    .in("role", ["OWNER", "MANAGER"]);
+
+  const ownerId =
+    ownerManagerMems?.find((m: any) => String(m.role).toUpperCase() === "OWNER")
+      ?.user_id ?? null;
+  const managerId =
+    ownerManagerMems?.find((m: any) => String(m.role).toUpperCase() === "MANAGER")
+      ?.user_id ?? null;
+  const isOwnerManager = !!ownerId && !!managerId && String(ownerId) === String(managerId);
 
   // 3) pending invites — ВАЖНО: у тебя таблица называется business_invites (судя по скрину)
   const { data: pendingInvites } = await supabase
