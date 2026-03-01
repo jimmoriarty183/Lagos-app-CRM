@@ -202,12 +202,21 @@ export default async function Page({ params, searchParams }: PageProps) {
 
   const todayISO = new Date().toISOString().slice(0, 10);
 
-  // Owner/Manager phone UI logic
+  // Owner=Manager вычисляем по memberships, а не по legacy manager_phone
+  const ownerMembership = (memberships ?? []).find(
+    (m: any) =>
+      m.business_id === currentBusiness.id &&
+      String(m.role).toUpperCase() === "OWNER",
+  );
+  const managerMembership = (memberships ?? []).find(
+    (m: any) =>
+      m.business_id === currentBusiness.id &&
+      String(m.role).toUpperCase() === "MANAGER",
+  );
   const isOwnerManager =
-    currentBusiness.owner_phone &&
-    currentBusiness.manager_phone &&
-    String(currentBusiness.owner_phone) ===
-      String(currentBusiness.manager_phone);
+    !!ownerMembership?.user_id &&
+    !!managerMembership?.user_id &&
+    String(ownerMembership.user_id) === String(managerMembership.user_id);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/20 to-gray-50">
