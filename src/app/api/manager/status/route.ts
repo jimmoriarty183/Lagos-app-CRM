@@ -142,40 +142,6 @@ export async function GET(req: Request) {
     });
   }
 
-  // Fallback: invite is accepted but membership row may lag/mismatch between tables.
-  const { data: accepted } = await admin
-    .from("business_invites")
-    .select("accepted_by")
-    .eq("business_id", business_id)
-    .ilike("role", "MANAGER")
-    .eq("status", "ACCEPTED")
-    .not("accepted_by", "is", null)
-    .order("accepted_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (accepted?.accepted_by) {
-    const { data: ap } = await admin
-      .from("profiles")
-      .select("id, full_name, email")
-      .eq("id", accepted.accepted_by)
-      .maybeSingle();
-
-    return NextResponse.json({
-      owner_phone: biz?.owner_phone ?? null,
-      legacy_manager_phone: biz?.manager_phone ?? null,
-
-      owner: ownerProfile,
-      manager: {
-        state: "ACTIVE",
-        user_id: accepted.accepted_by,
-        full_name: ap?.full_name ?? null,
-        phone: null,
-        email: ap?.email ?? null,
-      },
-    });
-  }
-
   return NextResponse.json({
     owner_phone: biz?.owner_phone ?? null,
     legacy_manager_phone: biz?.manager_phone ?? null,
