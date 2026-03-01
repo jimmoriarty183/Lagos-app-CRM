@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseServerReadOnly, supabaseServer } from "@/lib/supabase/server";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 
 function clean(v: any) {
   return String(v ?? "").trim();
@@ -14,11 +15,10 @@ export async function GET(req: Request) {
       return NextResponse.json({ ok: false, error: "invite_id required" }, { status: 400 });
     }
 
-    // ✅ invite читаем read-only
-    const supabaseRO = await supabaseServerReadOnly();
+    const admin = supabaseAdmin();
 
-    // ✅ НЕ single()
-    const { data: inv, error: invErr } = await supabaseRO
+    // ✅ invite читаем через service-role (RLS не мешает)
+    const { data: inv, error: invErr } = await admin
       .from("business_invites")
       .select("id,business_id,email,status,role,expires_at")
       .eq("id", invite_id)
@@ -61,8 +61,8 @@ export async function GET(req: Request) {
       );
     }
 
-    // ✅ бизнес — один запрос, без fallback и без single()
-    const { data: biz, error: bizErr } = await supabaseRO
+    // ✅ business читаем через service-role
+    const { data: biz, error: bizErr } = await admin
       .from("businesses")
       .select("id,slug,name")
       .eq("id", inv.business_id)
@@ -76,7 +76,6 @@ export async function GET(req: Request) {
       return NextResponse.json({ ok: false, error: "Business not found" }, { status: 404 });
     }
 
-    
     return NextResponse.json({
       ok: true,
       invite: {
