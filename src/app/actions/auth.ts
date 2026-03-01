@@ -76,7 +76,7 @@ export async function loginAction(
       .from("businesses")
       .select("slug")
       .eq("id", businessId)
-      .single();
+      .limit(1).maybeSingle();
 
     if (bizErr) return { ok: false, error: bizErr.message, next: "" };
     if (!biz?.slug)

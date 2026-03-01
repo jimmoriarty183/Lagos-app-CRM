@@ -36,7 +36,7 @@ export async function GET(req: Request) {
     .from("businesses")
     .select("owner_phone, manager_phone")
     .eq("id", business_id)
-    .single();
+    .limit(1).maybeSingle();
 
   if (bizErr) return NextResponse.json({ error: bizErr.message }, { status: 500 });
 

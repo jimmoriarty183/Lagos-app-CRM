@@ -6,79 +6,92 @@ function clean(v: any) {
 }
 
 export async function GET(req: Request) {
-  const url = new URL(req.url);
-  const invite_id = clean(url.searchParams.get("invite_id"));
+  try {
+    const url = new URL(req.url);
+    const invite_id = clean(url.searchParams.get("invite_id"));
 
-  if (!invite_id) {
-    return NextResponse.json({ error: "invite_id required" }, { status: 400 });
-  }
+    if (!invite_id) {
+      return NextResponse.json({ ok: false, error: "invite_id required" }, { status: 400 });
+    }
 
-  // ✅ invite можно читать read-only
-  const supabaseRO = await supabaseServerReadOnly();
+    // ✅ invite читаем read-only
+    const supabaseRO = await supabaseServerReadOnly();
 
-  const { data: inv, error: invErr } = await supabaseRO
-    .from("business_invites")
-    .select("id,business_id,email,status,role")
-    .eq("id", invite_id)
-    .single();
+    // ✅ НЕ single()
+    const { data: inv, error: invErr } = await supabaseRO
+      .from("business_invites")
+      .select("id,business_id,email,status,role,expires_at")
+      .eq("id", invite_id)
+      .limit(1)
+      .maybeSingle();
 
-  if (invErr || !inv) {
-    return NextResponse.json({ error: invErr?.message || "Invite not found" }, { status: 404 });
-  }
+    if (invErr) {
+      return NextResponse.json({ ok: false, error: invErr.message }, { status: 400 });
+    }
+    if (!inv) {
+      return NextResponse.json(
+        { ok: false, error: "Invite not found (revoked/expired/invalid link)" },
+        { status: 404 },
+      );
+    }
 
-  if (String(inv.status).toUpperCase() !== "PENDING") {
-    return NextResponse.json({ error: "Invite is not pending" }, { status: 409 });
-  }
+    if (String(inv.status).toUpperCase() !== "PENDING") {
+      return NextResponse.json({ ok: false, error: "Invite is not pending" }, { status: 409 });
+    }
 
-  if (String(inv.role).toUpperCase() !== "MANAGER") {
-    return NextResponse.json({ error: "Invite role is not MANAGER" }, { status: 400 });
-  }
+    if (String(inv.role).toUpperCase() !== "MANAGER") {
+      return NextResponse.json({ ok: false, error: "Invite role is not MANAGER" }, { status: 400 });
+    }
 
-  // ✅ безопасность: показываем бизнес ТОЛЬКО если залогинен и email совпадает
-  const supabase = await supabaseServer();
-  const { data: auth } = await supabase.auth.getUser();
-  const userEmail = (auth?.user?.email || "").toLowerCase();
-  const inviteEmail = String(inv.email || "").toLowerCase();
+    // ✅ безопасность: показываем бизнес ТОЛЬКО если залогинен и email совпадает
+    const supabase = await supabaseServer();
+    const { data: auth, error: authErr } = await supabase.auth.getUser();
 
-  if (!userEmail || userEmail !== inviteEmail) {
+    if (authErr) {
+      return NextResponse.json({ ok: false, error: authErr.message }, { status: 401 });
+    }
+
+    const userEmail = (auth?.user?.email || "").toLowerCase();
+    const inviteEmail = String(inv.email || "").toLowerCase();
+
+    if (!userEmail || userEmail !== inviteEmail) {
+      return NextResponse.json(
+        { ok: false, error: "Please open the invite from the same email account." },
+        { status: 401 },
+      );
+    }
+
+    // ✅ бизнес — один запрос, без fallback и без single()
+    const { data: biz, error: bizErr } = await supabaseRO
+      .from("businesses")
+      .select("id,slug,name")
+      .eq("id", inv.business_id)
+      .limit(1)
+      .maybeSingle();
+
+    if (bizErr) {
+      return NextResponse.json({ ok: false, error: bizErr.message }, { status: 400 });
+    }
+    if (!biz) {
+      return NextResponse.json({ ok: false, error: "Business not found" }, { status: 404 });
+    }
+
+    
+    return NextResponse.json({
+      ok: true,
+      invite: {
+        id: inv.id,
+        business_id: inv.business_id,
+        email: inv.email,
+        status: inv.status,
+        role: inv.role,
+      },
+      business: biz,
+    });
+  } catch (e: any) {
     return NextResponse.json(
-      { error: "Please open the invite from the same email account." },
-      { status: 401 },
+      { ok: false, error: e?.message || "Unexpected error" },
+      { status: 500 },
     );
   }
-
-  // ✅ бизнес (без падений если нет name)
-  let biz: any = null;
-  const withName = await supabaseRO
-    .from("businesses")
-    .select("id,slug,name")
-    .eq("id", inv.business_id)
-    .single();
-
-  if (!withName.error && withName.data) {
-    biz = withName.data;
-  } else {
-    const withoutName = await supabaseRO
-      .from("businesses")
-      .select("id,slug")
-      .eq("id", inv.business_id)
-      .single();
-
-    if (withoutName.error || !withoutName.data) {
-      return NextResponse.json({ error: "Business not found" }, { status: 404 });
-    }
-    biz = withoutName.data;
-  }
-
-  return NextResponse.json({
-    ok: true,
-    invite: {
-      id: inv.id,
-      business_id: inv.business_id,
-      email: inv.email,
-      status: inv.status,
-      role: inv.role,
-    },
-    business: biz,
-  });
 }

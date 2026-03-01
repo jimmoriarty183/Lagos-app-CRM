@@ -54,7 +54,7 @@ export async function POST(req: Request) {
       })
       .eq("id", invite_id)
       .select("id,status,revoked_at")
-      .single();
+      .limit(1).maybeSingle();
 
     if (updErr) return NextResponse.json({ ok: false, error: updErr.message }, { status: 500 });
 
