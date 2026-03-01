@@ -102,6 +102,10 @@ function PasswordInput({
   placeholder,
   value,
   onChange,
+
+  // ✅ controlled show/hide (optional)
+  show,
+  onToggleShow,
 }: {
   label: string;
   name: string;
@@ -110,8 +114,14 @@ function PasswordInput({
   placeholder?: string;
   value?: string;
   onChange?: (v: string) => void;
+
+  show?: boolean;
+  onToggleShow?: () => void;
 }) {
-  const [show, setShow] = React.useState(false);
+  const [localShow, setLocalShow] = React.useState(false);
+
+  const isControlled = typeof show === "boolean";
+  const isShown = isControlled ? (show as boolean) : localShow;
 
   return (
     <label className="block">
@@ -119,7 +129,7 @@ function PasswordInput({
       <div className="mt-1 relative">
         <input
           name={name}
-          type={show ? "text" : "password"}
+          type={isShown ? "text" : "password"}
           required={required}
           autoComplete={autoComplete}
           placeholder={placeholder}
@@ -129,10 +139,13 @@ function PasswordInput({
         />
         <button
           type="button"
-          onClick={() => setShow((s) => !s)}
+          onClick={() => {
+            if (isControlled) onToggleShow?.();
+            else setLocalShow((s) => !s);
+          }}
           className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg px-2 py-1 text-[11px] font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-100"
         >
-          {show ? "Hide" : "Show"}
+          {isShown ? "Hide" : "Show"}
         </button>
       </div>
     </label>
@@ -168,6 +181,9 @@ export default function LoginUI() {
   const [passConfirm, setPassConfirm] = React.useState("");
   const [agree, setAgree] = React.useState(false);
 
+  // ✅ one toggle for BOTH registration password fields
+  const [showRegPasswords, setShowRegPasswords] = React.useState(false);
+
   const [emailLogin, setEmailLogin] = React.useState("");
   const [passLogin, setPassLogin] = React.useState("");
 
@@ -188,9 +204,6 @@ export default function LoginUI() {
 
     (async () => {
       try {
-        // Invite accept is handled on /invite page in your flow,
-        // but if you want to do it here too, keep this:
-        // (we keep it safe; if fails - fallback to next)
         if (inviteId) {
           const fullName = `${firstName} ${lastName}`.trim();
           const res = await fetch("/api/invite/accept", {
@@ -225,7 +238,6 @@ export default function LoginUI() {
     const ln = lastName.trim();
     const em = emailReg.trim();
 
-    // если invite — бизнес может не требоваться (зависит от твоей логики, но так правильно)
     if (!inviteId && !bn) return "Enter your business name";
     if (!fn) return "Enter your first name";
     if (!ln) return "Enter your last name";
@@ -457,6 +469,7 @@ export default function LoginUI() {
               onChange={setEmailReg}
             />
 
+            {/* ✅ shared show/hide across both password fields */}
             <PasswordInput
               label="Password"
               name="password"
@@ -465,6 +478,8 @@ export default function LoginUI() {
               placeholder="Create a password"
               value={passReg}
               onChange={setPassReg}
+              show={showRegPasswords}
+              onToggleShow={() => setShowRegPasswords((s) => !s)}
             />
 
             <PasswordInput
@@ -475,6 +490,8 @@ export default function LoginUI() {
               placeholder="Repeat your password"
               value={passConfirm}
               onChange={setPassConfirm}
+              show={showRegPasswords}
+              onToggleShow={() => setShowRegPasswords((s) => !s)}
             />
 
             <label className="flex items-start gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2">
