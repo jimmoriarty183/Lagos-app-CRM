@@ -28,6 +28,14 @@ type PersonProfile = {
   email: string | null;
 };
 
+type ProfileRow = {
+  id: string;
+  full_name: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  email: string | null;
+};
+
 async function loadOwnerManagerMemberships(admin: SupabaseClient, businessId: string) {
   const { data: primary, error: primaryErr } = await admin
     .from("memberships")
@@ -53,11 +61,18 @@ async function loadOwnerManagerMemberships(admin: SupabaseClient, businessId: st
 async function loadPerson(admin: SupabaseClient, userId: string): Promise<PersonProfile | null> {
   const { data: profile } = await admin
     .from("profiles")
-    .select("id, full_name, email")
+    .select("id, full_name, first_name, last_name, email")
     .eq("id", userId)
-    .maybeSingle();
+    .maybeSingle<ProfileRow>();
 
-  let fullName = clean(profile?.full_name) || null;
+  const profileFirstName = clean(profile?.first_name);
+  const profileLastName = clean(profile?.last_name);
+  const profileJoined = [profileFirstName, profileLastName]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+
+  let fullName = clean(profile?.full_name) || profileJoined || null;
   let email = clean(profile?.email).toLowerCase() || null;
 
   if (!fullName || !email) {
