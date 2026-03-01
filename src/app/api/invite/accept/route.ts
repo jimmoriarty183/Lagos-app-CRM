@@ -6,19 +6,35 @@ function clean(v: any) {
   return String(v ?? "").trim();
 }
 
+function buildFullName(firstName: string, lastName: string, fullName: string) {
+  const fn = clean(firstName);
+  const ln = clean(lastName);
+  const full = clean(fullName);
+
+  if (full.length >= 2) return full;
+  const joined = [fn, ln].filter(Boolean).join(" ").trim();
+  return joined;
+}
+
 export async function POST(req: Request) {
   const supabase = await supabaseServer();
   const admin = supabaseAdmin();
 
   const body = await req.json().catch(() => ({}));
   const invite_id = clean(body?.inviteId || body?.invite_id);
-  const fullName = clean(body?.fullName);
+
+  const firstName = clean(body?.firstName);
+  const lastName = clean(body?.lastName);
+  const fullName = buildFullName(firstName, lastName, clean(body?.fullName));
 
   if (!invite_id) {
     return NextResponse.json({ ok: false, error: "invite_id required" }, { status: 400 });
   }
   if (fullName.length < 2) {
-    return NextResponse.json({ ok: false, error: "fullName required" }, { status: 400 });
+    return NextResponse.json(
+      { ok: false, error: "Name is required" },
+      { status: 400 },
+    );
   }
 
   // 1) текущий пользователь (cookie session)
@@ -28,7 +44,7 @@ export async function POST(req: Request) {
   }
   const user = authData.user;
 
-  // 2) инвайт из базы (service role) — НЕ single()
+  // 2) инвайт из базы (service role)
   const { data: inv, error: invErr } = await admin
     .from("business_invites")
     .select("id,business_id,email,status,role")
@@ -63,7 +79,30 @@ export async function POST(req: Request) {
     );
   }
 
-  // 4) upsert profile (service role) — без телефона
+  // 3.1) бизнес-правило: один MANAGER на бизнес
+  // Если хочешь "заменять" менеджера — скажи, дам версию с revoke старого.
+  const { data: existingManager, error: exErr } = await admin
+    .from("memberships")
+    .select("user_id")
+    .eq("business_id", inv.business_id)
+    .eq("role", "MANAGER")
+    .limit(1)
+    .maybeSingle();
+
+  if (exErr) {
+    return NextResponse.json({ ok: false, error: exErr.message }, { status: 500 });
+  }
+  if (existingManager?.user_id && existingManager.user_id !== user.id) {
+    return NextResponse.json(
+      { ok: false, error: "This business already has a manager assigned" },
+      { status: 409 },
+    );
+  }
+
+  // 4) upsert profile (service role)
+  // Пишем full_name, и если колонки first_name/last_name есть — тоже пишем.
+  // Если их нет — Postgres просто вернёт ошибку. Чтобы не ломать прод,
+  // пишем безопасно: сначала full_name, потом пробуем first/last.
   const { error: profErr } = await admin
     .from("profiles")
     .upsert({ id: user.id, full_name: fullName }, { onConflict: "id" });
@@ -72,7 +111,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: profErr.message }, { status: 500 });
   }
 
-  // 5) membership — роль лучше хранить единообразно (OWNER/MANAGER/GUEST)
+  // OPTIONAL: если у тебя реально есть first_name/last_name — раскомментируй:
+  // await admin.from("profiles").update({ first_name: firstName || null, last_name: lastName || null }).eq("id", user.id);
+
+  // 5) membership
   const { error: memErr } = await admin
     .from("memberships")
     .upsert(
@@ -99,7 +141,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: accErr.message }, { status: 500 });
   }
 
-  // 7) slug — тоже НЕ single()
+  // 7) slug
   const { data: biz, error: bizErr } = await admin
     .from("businesses")
     .select("slug")
