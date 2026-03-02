@@ -1,9 +1,9 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { BadgeCheck, LogOut } from "lucide-react";
-import { Logo } from "@/components/Logo";
+import { LogOut, Sparkles } from "lucide-react";
 
 import BusinessSwitcher, { BusinessOption } from "./BusinessSwitcher";
 
@@ -15,7 +15,7 @@ type Props = {
   businesses?: BusinessOption[];
 };
 
-export default function TopBar({ businessSlug, plan, businesses }: Props) {
+export default function TopBar({ businessSlug, plan, role, businesses }: Props) {
   const router = useRouter();
 
   const handleSelect = (slug: string) => {
@@ -29,6 +29,7 @@ export default function TopBar({ businessSlug, plan, businesses }: Props) {
   };
 
   const handleLogout = () => {
+    if (!window.confirm("Log out?")) return;
     document.cookie = "u=; path=/; max-age=0";
     router.push("/login");
   };
@@ -36,49 +37,56 @@ export default function TopBar({ businessSlug, plan, businesses }: Props) {
   const showSwitcher = !!businesses && businesses.length >= 1;
 
   return (
-    <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/70 backdrop-blur">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
-        <div className="flex items-center justify-between gap-3">
-          {/* LEFT */}
-          <div className="flex items-center gap-3 min-w-0">
-            <Logo size={36} />
-            <div className="min-w-0">
-              <div className="text-sm font-semibold text-gray-900 leading-tight">
-                Ordero
-              </div>
-              <div className="text-[11px] text-gray-500 leading-tight hidden sm:block">
-                / {businessSlug}
-              </div>
-            </div>
-          </div>
+    <header className="sticky top-0 z-50 border-b border-slate-200/70 bg-white/70 backdrop-blur-md">
+      <div className="pt-[env(safe-area-inset-top)]">
+        <div className="mx-auto flex h-14 max-w-7xl items-center gap-3 px-3 sm:px-6">
+          <Link
+            href={`/b/${businessSlug}`}
+            aria-label="Go to dashboard"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-900 shadow-sm"
+          >
+            <span className="text-sm font-black">O</span>
+          </Link>
 
-          {/* RIGHT */}
-          <div className="flex items-center gap-2 sm:gap-3">
-            {/* Switcher */}
+          <div className="min-w-0 flex-1">
             {showSwitcher ? (
               <BusinessSwitcher
                 businesses={businesses!}
                 currentSlug={businessSlug}
                 onSelect={handleSelect}
                 disabledAdd
-                widthClassName="w-[200px] sm:w-[220px]" // desktop шире и солиднее
+                widthClassName="w-full"
                 variant="toolbar"
               />
-            ) : null}
+            ) : (
+              <div className="flex h-11 min-w-0 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 shadow-sm">
+                <span className="truncate text-sm font-semibold text-slate-900">
+                  {businessSlug}
+                </span>
+                <span className="rounded-full bg-slate-900 px-2 py-0.5 text-[11px] font-semibold text-white">
+                  {role === "OWNER"
+                    ? "Owner"
+                    : role === "MANAGER"
+                    ? "Manager"
+                    : "Guest"}
+                </span>
+              </div>
+            )}
+          </div>
 
-            {/* beta (desktop) */}
-            <span className="inline-flex h-9 items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 text-sm font-semibold text-blue-700">
-              <BadgeCheck size={16} className="opacity-80" />
-              <span>{plan}</span>
+          <div className="flex shrink-0 items-center gap-2">
+            <span className="hidden items-center rounded-full border border-violet-200 bg-violet-50 px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-violet-700 sm:inline-flex">
+              <Sparkles className="mr-1 h-3 w-3" />
+              {plan || "beta"}
             </span>
 
-            {/* logout icon (mobile+desktop sizes) */}
             <button
               onClick={handleLogout}
               title="Logout"
-              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 transition"
+              aria-label="Log out"
+              className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm"
             >
-              <LogOut className="h-5 w-5 sm:h-6 sm:w-6" />
+              <LogOut className="h-4 w-4" />
             </button>
           </div>
         </div>
