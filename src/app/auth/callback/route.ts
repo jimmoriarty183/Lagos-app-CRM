@@ -23,11 +23,8 @@ export async function GET(req: NextRequest) {
   );
 
   const url = new URL(req.url);
-
-  // invite flow
   const inviteId = url.searchParams.get("invite_id") || "";
 
-  // PKCE / OAuth code
   const code = url.searchParams.get("code");
   if (code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
@@ -41,6 +38,23 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // если вдруг пришёл без code — отправляем на логин
+  if (inviteId) {
+    console.info("[auth/callback] redirecting invite without code to invite page", {
+      path: url.pathname,
+      hasInviteId: true,
+      hasCode: Boolean(code),
+    });
+
+    return NextResponse.redirect(
+      new URL(`/invite?invite_id=${encodeURIComponent(inviteId)}`, url.origin),
+    );
+  }
+
+  console.info("[auth/callback] redirecting to login", {
+    path: url.pathname,
+    hasInviteId: false,
+    hasCode: Boolean(code),
+  });
+
   return NextResponse.redirect(new URL("/login?callback_failed=1", url.origin));
 }
