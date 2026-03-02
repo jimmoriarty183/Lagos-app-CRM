@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { LogOut, Sparkles } from "lucide-react";
 
 import BusinessSwitcher, { BusinessOption } from "./BusinessSwitcher";
@@ -17,6 +17,11 @@ type Props = {
 
 export default function TopBar({ businessSlug, plan, role, businesses }: Props) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const u = searchParams.get("u");
+  const dashboardHref = u
+    ? `/b/${businessSlug}?u=${encodeURIComponent(u)}`
+    : `/b/${businessSlug}`;
 
   const handleSelect = (slug: string) => {
     document.cookie = `active_business_slug=${encodeURIComponent(
@@ -41,7 +46,7 @@ export default function TopBar({ businessSlug, plan, role, businesses }: Props) 
       <div className="pt-[env(safe-area-inset-top)]">
         <div className="mx-auto flex h-14 max-w-7xl items-center gap-3 px-3 sm:px-6">
           <Link
-            href={`/b/${businessSlug}`}
+            href={dashboardHref}
             aria-label="Go to dashboard"
             className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-900 shadow-sm"
           >
