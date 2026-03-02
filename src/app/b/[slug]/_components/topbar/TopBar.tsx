@@ -38,7 +38,7 @@ export default function TopBar({ businessSlug, plan, businesses }: Props) {
   return (
     <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/70 backdrop-blur">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           {/* LEFT */}
           <div className="flex items-center gap-3 min-w-0">
             <Logo size={36} />
@@ -53,7 +53,7 @@ export default function TopBar({ businessSlug, plan, businesses }: Props) {
           </div>
 
           {/* RIGHT */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex w-full items-center justify-end gap-2 sm:w-auto sm:gap-3">
             {/* Switcher */}
             {showSwitcher ? (
               <BusinessSwitcher
@@ -61,13 +61,13 @@ export default function TopBar({ businessSlug, plan, businesses }: Props) {
                 currentSlug={businessSlug}
                 onSelect={handleSelect}
                 disabledAdd
-                widthClassName="w-[200px] sm:w-[220px]" // desktop шире и солиднее
+                widthClassName="min-w-0 flex-1 max-w-[230px] sm:w-[220px] sm:max-w-none" // mobile не наезжает на соседние элементы
                 variant="toolbar"
               />
             ) : null}
 
             {/* beta (desktop) */}
-            <span className="inline-flex h-9 items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 text-sm font-semibold text-blue-700">
+            <span className="inline-flex h-9 shrink-0 items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-2.5 text-xs font-semibold text-blue-700 sm:px-3 sm:text-sm">
               <BadgeCheck size={16} className="opacity-80" />
               <span>{plan}</span>
             </span>
