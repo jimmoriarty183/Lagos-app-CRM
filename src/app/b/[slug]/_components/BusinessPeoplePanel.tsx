@@ -242,44 +242,55 @@ export default function BusinessPeoplePanel({
       ? `/b/${encodeURIComponent(String(businessSlug))}/settings/team${suffix}`
       : `./settings/team${suffix}`;
 
+    const managerDisplayName =
+      manager.state === "ACTIVE"
+        ? labelForManager(manager)
+        : manager.state === "PENDING"
+          ? (manager as any).email || "Manager"
+          : legacy || "Manager";
+
     return (
       <div className="space-y-3">
-        <Row
-          icon={<User className="h-4 w-4" />}
-          label="OWNER"
-          value={<span className="truncate">{ownerLabel}</span>}
-          right={<Pill tone="blue">{ownerPillText}</Pill>}
-        />
+        <div className="flex items-center justify-between gap-3 rounded-2xl border border-gray-100 bg-white px-4 py-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="shrink-0 rounded-xl bg-gray-50 p-2 text-gray-700">
+              <User className="h-4 w-4" />
+            </div>
+            <div className="min-w-0 truncate text-sm font-semibold text-gray-900">
+              {ownerLabel}
+            </div>
+          </div>
 
-        {!isOwnerManager && !loading && manager.state === "ACTIVE" ? (
-          <Row
-            icon={<User className="h-4 w-4" />}
-            label="MANAGER"
-            value={
-              <span className="inline-flex flex-wrap items-center gap-2">
-                <span className="font-semibold">
-                  {labelForManager(manager)}
-                </span>
-                {metaForManager(manager) ? (
-                  <>
-                    <span className="text-gray-300">•</span>
-                    <span className="font-mono text-xs">
-                      {metaForManager(manager)}
-                    </span>
-                  </>
-                ) : null}
-              </span>
-            }
-            right={<Pill tone="gray">{managerPillText}</Pill>}
-          />
-        ) : null}
+          <div className="shrink-0 inline-flex items-center gap-2">
+            <Pill tone="blue">OWNER</Pill>
+            {role === "OWNER" ? <Pill tone="gray">YOU</Pill> : null}
+          </div>
+        </div>
 
-        <Link
-          href={href}
-          className="block rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-900 hover:bg-gray-50"
-        >
-          Manage access →
-        </Link>
+        <div className="flex items-center justify-between gap-3 rounded-2xl border border-gray-100 bg-white px-4 py-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="shrink-0 rounded-xl bg-gray-50 p-2 text-gray-700">
+              <User className="h-4 w-4" />
+            </div>
+            <div className="min-w-0 truncate text-sm font-semibold text-gray-900">
+              {isOwnerManager ? ownerLabel : managerDisplayName}
+            </div>
+          </div>
+
+          <div className="shrink-0 inline-flex items-center gap-2">
+            <Pill tone="gray">MANAGER</Pill>
+            {role === "MANAGER" ? <Pill tone="gray">YOU</Pill> : null}
+          </div>
+        </div>
+
+        <div className="pt-1">
+          <Link
+            href={href}
+            className="block rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-900 hover:bg-gray-50"
+          >
+            Manage access
+          </Link>
+        </div>
       </div>
     );
   }
