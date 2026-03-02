@@ -106,6 +106,18 @@ export default async function Page({ params, searchParams }: PageProps) {
   const canEdit = canManage;
   const canSeeAnalytics = userRole === "OWNER";
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("full_name")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  const currentUserFullName =
+    String(profile?.full_name ?? "").trim() ||
+    user.user_metadata?.full_name ||
+    user.email ||
+    "You";
+
   // ✅ Pending manager invites (for Business card dropdown)
   const { data: pendingInvites, error: invErr } = await supabase
     .from("business_invites")
@@ -146,6 +158,7 @@ export default async function Page({ params, searchParams }: PageProps) {
         id: String(b.id),
         slug: String(b.slug),
         name: String(b.slug),
+        userName: currentUserFullName,
         role: upperRole(roleForBiz),
       };
     })

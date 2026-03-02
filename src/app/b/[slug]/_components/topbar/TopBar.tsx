@@ -25,7 +25,7 @@ export default function TopBar({ businessSlug, plan, role, businesses }: Props) 
 
   const handleSelect = (slug: string) => {
     document.cookie = `active_business_slug=${encodeURIComponent(
-      slug
+      slug,
     )}; path=/; max-age=${60 * 60 * 24 * 365}`;
 
     const url = new URL(window.location.href);
@@ -44,16 +44,16 @@ export default function TopBar({ businessSlug, plan, role, businesses }: Props) 
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200/70 bg-white/70 backdrop-blur-md">
       <div className="pt-[env(safe-area-inset-top)]">
-        <div className="mx-auto flex h-14 max-w-7xl items-center gap-3 px-3 sm:px-6">
+        <div className="mx-auto flex h-14 max-h-14 max-w-7xl items-center gap-3 px-3 sm:px-6 lg:gap-4 lg:py-2">
           <Link
             href={dashboardHref}
             aria-label="Go to dashboard"
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-900 shadow-sm"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-900 shadow-sm"
           >
             <span className="text-sm font-black">O</span>
           </Link>
 
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0 flex-1 lg:max-w-[540px]">
             {showSwitcher ? (
               <BusinessSwitcher
                 businesses={businesses!}
@@ -62,9 +62,10 @@ export default function TopBar({ businessSlug, plan, role, businesses }: Props) 
                 disabledAdd
                 widthClassName="w-full"
                 variant="toolbar"
+                hintText="Tap to switch"
               />
             ) : (
-              <div className="flex h-11 min-w-0 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 shadow-sm">
+              <div className="flex h-10 min-w-0 items-center gap-2 rounded-xl border border-slate-200 bg-white/70 px-3 py-1.5 shadow-sm">
                 <span className="truncate text-sm font-semibold text-slate-900">
                   {businessSlug}
                 </span>
@@ -72,14 +73,14 @@ export default function TopBar({ businessSlug, plan, role, businesses }: Props) 
                   {role === "OWNER"
                     ? "Owner"
                     : role === "MANAGER"
-                    ? "Manager"
-                    : "Guest"}
+                      ? "Manager"
+                      : "Guest"}
                 </span>
               </div>
             )}
           </div>
 
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="ml-4 flex shrink-0 items-center gap-2 lg:gap-3">
             <span className="hidden items-center rounded-full border border-violet-200 bg-violet-50 px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-violet-700 sm:inline-flex">
               <Sparkles className="mr-1 h-3 w-3" />
               {plan || "beta"}
@@ -89,7 +90,7 @@ export default function TopBar({ businessSlug, plan, role, businesses }: Props) 
               onClick={handleLogout}
               title="Logout"
               aria-label="Log out"
-              className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm"
+              className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm"
             >
               <LogOut className="h-4 w-4" />
             </button>

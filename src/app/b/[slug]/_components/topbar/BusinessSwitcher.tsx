@@ -8,6 +8,7 @@ export type BusinessOption = {
   id: string;
   slug: string;
   name: string;
+  userName?: string;
   role: Role;
 };
 
@@ -76,7 +77,7 @@ export default function BusinessSwitcher({
 
   const triggerClass =
     variant === "toolbar"
-      ? "w-full inline-flex h-11 items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white px-3 shadow-sm transition hover:bg-slate-50"
+      ? "w-full inline-flex h-11 lg:h-auto items-center justify-between gap-2 lg:gap-3 rounded-xl border border-slate-200 bg-white/70 px-3 py-2 lg:py-1.5 shadow-sm transition hover:bg-slate-50"
       : "w-full inline-flex h-12 items-center justify-between gap-3 rounded-2xl border border-gray-200 bg-white/80 px-4 shadow-sm backdrop-blur hover:bg-white transition";
 
   return (
@@ -92,7 +93,7 @@ export default function BusinessSwitcher({
         <div className="min-w-0 flex flex-1 items-center gap-2">
           <div className="min-w-0 flex-1 text-left leading-tight">
             <div className="flex min-w-0 items-center gap-2">
-              <div className="truncate text-sm font-semibold text-slate-900">
+              <div className="truncate text-sm font-semibold text-slate-900 lg:max-w-[170px]">
                 {current.name}
               </div>
 
@@ -104,7 +105,9 @@ export default function BusinessSwitcher({
                 {roleLabel(current.role)}
               </span>
             </div>
-            <p className="truncate text-[11px] text-slate-500">{hintText}</p>
+            <p className="truncate text-[11px] text-slate-500 lg:max-w-[250px]">
+              {current.userName || hintText}
+            </p>
           </div>
         </div>
 
