@@ -42,15 +42,46 @@ export async function POST(req: Request) {
       auth: { persistSession: false, autoRefreshToken: false },
     });
 
-    // 🔎 Ищем invite по business + email (любой статус)
+    // 🔎 Ищем invite по business + email (любой статус), берем последний
     const { data: existing, error: selErr } = await supabase
       .from("business_invites")
       .select("id,status")
       .eq("business_id", business_id)
       .eq("email", email)
+      .order("created_at", { ascending: false })
+      .limit(1)
       .maybeSingle();
 
     if (selErr) return json(500, { error: selErr.message });
+
+    const existingPendingInviteId =
+      existing?.id && String(existing.status).toUpperCase() === "PENDING"
+        ? String(existing.id)
+        : null;
+
+    const { count: activeManagersCount, error: activeCountErr } = await supabase
+      .from("memberships")
+      .select("user_id", { count: "exact", head: true })
+      .eq("business_id", business_id)
+      .eq("role", "MANAGER");
+
+    if (activeCountErr) return json(500, { error: activeCountErr.message });
+
+    const { count: pendingInvitesCount, error: pendingCountErr } = await supabase
+      .from("business_invites")
+      .select("id", { count: "exact", head: true })
+      .eq("business_id", business_id)
+      .eq("role", "MANAGER")
+      .eq("status", "PENDING");
+
+    if (pendingCountErr) return json(500, { error: pendingCountErr.message });
+
+    const totalManagers =
+      Number(activeManagersCount || 0) + Number(pendingInvitesCount || 0);
+
+    if (!existingPendingInviteId && totalManagers >= 10) {
+      return json(400, { error: "Manager limit reached (10)" });
+    }
 
     let invite_id: string;
 

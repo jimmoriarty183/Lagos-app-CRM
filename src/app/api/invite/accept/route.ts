@@ -79,23 +79,34 @@ export async function POST(req: Request) {
     );
   }
 
-  // 3.1) бизнес-правило: один MANAGER на бизнес
-  // Если хочешь "заменять" менеджера — скажи, дам версию с revoke старого.
-  const { data: existingManager, error: exErr } = await admin
+  // 3.1) limit: up to 10 active MANAGER memberships per business
+  const { count: activeManagersCount, error: activeCountErr } = await admin
+    .from("memberships")
+    .select("user_id", { count: "exact", head: true })
+    .eq("business_id", inv.business_id)
+    .eq("role", "MANAGER");
+
+  if (activeCountErr) {
+    return NextResponse.json({ ok: false, error: activeCountErr.message }, { status: 500 });
+  }
+
+  const alreadyManager = await admin
     .from("memberships")
     .select("user_id")
     .eq("business_id", inv.business_id)
     .eq("role", "MANAGER")
+    .eq("user_id", user.id)
     .limit(1)
     .maybeSingle();
 
-  if (exErr) {
-    return NextResponse.json({ ok: false, error: exErr.message }, { status: 500 });
+  if (alreadyManager.error) {
+    return NextResponse.json({ ok: false, error: alreadyManager.error.message }, { status: 500 });
   }
-  if (existingManager?.user_id && existingManager.user_id !== user.id) {
+
+  if (!alreadyManager.data?.user_id && Number(activeManagersCount || 0) >= 10) {
     return NextResponse.json(
-      { ok: false, error: "This business already has a manager assigned" },
-      { status: 409 },
+      { ok: false, error: "Manager limit reached (10)" },
+      { status: 400 },
     );
   }
 

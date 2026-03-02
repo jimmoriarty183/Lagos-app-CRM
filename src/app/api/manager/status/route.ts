@@ -16,12 +16,24 @@ function upperRole(v: unknown) {
 type MembershipRow = {
   role: string | null;
   user_id: string | null;
+  created_at?: string | null;
 };
 
-async function loadOwnerManagerMemberships(admin: SupabaseClient, businessId: string) {
+type Person = {
+  user_id: string;
+  full_name: string | null;
+  email: string | null;
+  phone: string | null;
+  created_at?: string | null;
+};
+
+async function loadOwnerManagerMemberships(
+  admin: SupabaseClient,
+  businessId: string,
+) {
   const { data: primary, error: primaryErr } = await admin
     .from("memberships")
-    .select("role, user_id")
+    .select("role, user_id, created_at")
     .eq("business_id", businessId);
 
   if (!primaryErr && Array.isArray(primary)) {
@@ -30,7 +42,7 @@ async function loadOwnerManagerMemberships(admin: SupabaseClient, businessId: st
 
   const { data: fallback, error: fallbackErr } = await admin
     .from("business_memberships")
-    .select("role, user_id")
+    .select("role, user_id, created_at")
     .eq("business_id", businessId);
 
   if (!fallbackErr && Array.isArray(fallback)) {
@@ -38,6 +50,48 @@ async function loadOwnerManagerMemberships(admin: SupabaseClient, businessId: st
   }
 
   throw primaryErr || fallbackErr || new Error("Failed to load memberships");
+}
+
+async function loadPeopleByIds(admin: SupabaseClient, userIds: string[]) {
+  if (userIds.length === 0) return new Map<string, { full_name: string | null; email: string | null }>();
+
+  const { data, error } = await admin
+    .from("profiles")
+    .select("id, full_name, email")
+    .in("id", userIds);
+
+  if (error || !Array.isArray(data)) {
+    return new Map<string, { full_name: string | null; email: string | null }>();
+  }
+
+  return new Map(
+    data
+      .filter((x: { id?: string | null }) => Boolean(x?.id))
+      .map((x: { id: string; full_name: string | null; email: string | null }) => [
+        String(x.id),
+        { full_name: x.full_name ?? null, email: x.email ?? null },
+      ]),
+  );
+}
+
+function toPeople(rows: MembershipRow[], profileMap: Map<string, { full_name: string | null; email: string | null }>) {
+  const list: Person[] = [];
+
+  for (const row of rows) {
+    const userId = String(row.user_id ?? "").trim();
+    if (!userId) continue;
+
+    const profile = profileMap.get(userId);
+    list.push({
+      user_id: userId,
+      full_name: profile?.full_name ?? null,
+      email: profile?.email ?? null,
+      phone: null,
+      created_at: row.created_at ?? null,
+    });
+  }
+
+  return list;
 }
 
 export async function GET(req: Request) {
@@ -55,13 +109,29 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "business_id must be a UUID" }, { status: 400 });
   }
 
-  // ✅ require session (so random people can’t probe business ids)
   const { data: authData } = await supabase.auth.getUser();
-  if (!authData?.user) {
+  const authUser = authData?.user;
+  if (!authUser?.id) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  // legacy phones (can be null now)
+  const { data: myMembership, error: myMembershipErr } = await admin
+    .from("memberships")
+    .select("role")
+    .eq("business_id", business_id)
+    .eq("user_id", authUser.id)
+    .limit(1)
+    .maybeSingle();
+
+  if (myMembershipErr) {
+    return NextResponse.json({ error: myMembershipErr.message }, { status: 500 });
+  }
+
+  const myRole = upperRole(myMembership?.role);
+  if (myRole !== "OWNER" && myRole !== "MANAGER") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   const { data: biz, error: bizErr } = await admin
     .from("businesses")
     .select("owner_phone, manager_phone")
@@ -71,7 +141,6 @@ export async function GET(req: Request) {
 
   if (bizErr) return NextResponse.json({ error: bizErr.message }, { status: 500 });
 
-  // ✅ OWNER + MANAGER from memberships (source of truth), with fallback table support
   let mems: MembershipRow[] = [];
   try {
     mems = await loadOwnerManagerMemberships(admin, business_id);
@@ -80,107 +149,40 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: message }, { status: 500 });
   }
 
-  const ownerUserId =
-    mems.find((m) => upperRole(m.role) === "OWNER")?.user_id || null;
-  const managerUserId =
-    mems.find((m) => upperRole(m.role) === "MANAGER")?.user_id || null;
+  const ownersRows = mems.filter((m) => upperRole(m.role) === "OWNER");
+  const managersRows = mems.filter((m) => upperRole(m.role) === "MANAGER");
 
-  // owner profile
-  let ownerProfile: { id: string; full_name: string | null; email: string | null } | null = null;
-  if (ownerUserId) {
-    const { data: op } = await admin
-      .from("profiles")
-      .select("id, full_name, email")
-      .eq("id", ownerUserId)
-      .maybeSingle();
-    if (op?.id) ownerProfile = op as { id: string; full_name: string | null; email: string | null };
-  }
+  const ids = Array.from(
+    new Set(
+      mems
+        .map((m) => String(m.user_id ?? "").trim())
+        .filter(Boolean),
+    ),
+  );
 
-  // manager ACTIVE
-  if (managerUserId) {
-    const { data: mp } = await admin
-      .from("profiles")
-      .select("id, full_name, email")
-      .eq("id", managerUserId)
-      .maybeSingle();
+  const profileMap = await loadPeopleByIds(admin, ids);
 
-    return NextResponse.json({
-      // legacy
-      owner_phone: biz?.owner_phone ?? null,
-      legacy_manager_phone: biz?.manager_phone ?? null,
+  const owners = toPeople(ownersRows, profileMap);
+  const managers = toPeople(managersRows, profileMap).sort((a, b) => {
+    const da = a.created_at ? new Date(a.created_at).getTime() : 0;
+    const db = b.created_at ? new Date(b.created_at).getTime() : 0;
+    if (da !== db) return da - db;
+    return (a.full_name || a.email || "").localeCompare(b.full_name || b.email || "");
+  });
 
-      // ✅ new
-      owner: ownerProfile,
-      manager: {
-        state: "ACTIVE",
-        user_id: managerUserId,
-        full_name: mp?.full_name ?? null,
-        phone: null,
-        email: mp?.email ?? null,
-      },
-    });
-  }
-
-  // manager PENDING invite
-  const { data: inv } = await admin
+  const { data: pendingInvites } = await admin
     .from("business_invites")
-    .select("email, created_at")
+    .select("id, email, created_at, status, role")
     .eq("business_id", business_id)
     .ilike("role", "MANAGER")
     .eq("status", "PENDING")
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (inv?.email) {
-    return NextResponse.json({
-      owner_phone: biz?.owner_phone ?? null,
-      legacy_manager_phone: biz?.manager_phone ?? null,
-
-      owner: ownerProfile,
-      manager: { state: "PENDING", email: inv.email, created_at: inv.created_at },
-    });
-  }
-
-  // Fallback: invite is accepted but membership row may lag/mismatch between tables.
-  const { data: accepted } = await admin
-    .from("business_invites")
-    .select("accepted_by")
-    .eq("business_id", business_id)
-    .ilike("role", "MANAGER")
-    .eq("status", "ACCEPTED")
-    .not("accepted_by", "is", null)
-    .order("accepted_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (accepted?.accepted_by) {
-    const { data: ap } = await admin
-      .from("profiles")
-      .select("id, full_name, email")
-      .eq("id", accepted.accepted_by)
-      .maybeSingle();
-
-    return NextResponse.json({
-      owner_phone: biz?.owner_phone ?? null,
-      legacy_manager_phone: biz?.manager_phone ?? null,
-
-      owner: ownerProfile,
-      manager: {
-        state: "ACTIVE",
-        user_id: accepted.accepted_by,
-        full_name: ap?.full_name ?? null,
-        phone: null,
-        email: ap?.email ?? null,
-      },
-    });
-  }
+    .order("created_at", { ascending: false });
 
   return NextResponse.json({
     owner_phone: biz?.owner_phone ?? null,
     legacy_manager_phone: biz?.manager_phone ?? null,
-
-    owner: ownerProfile,
-    manager: { state: "NONE" },
+    owners,
+    managers,
+    pending_manager_invites: pendingInvites ?? [],
   });
 }
