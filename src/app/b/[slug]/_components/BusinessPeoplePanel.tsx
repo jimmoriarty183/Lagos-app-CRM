@@ -45,6 +45,7 @@ type Props = {
 
   role: Role;
   isOwnerManager: boolean;
+  currentUserId?: string | null;
 
   pendingInvites?: any[];
   mode?: "summary" | "manage";
@@ -88,12 +89,12 @@ function Row({
 }) {
   return (
     <div className="flex items-center justify-between gap-3 rounded-2xl border border-gray-100 bg-white px-4 py-3">
-      <div className="flex min-w-0 items-center gap-3">
+      <div className="flex min-w-0 flex-1 items-center gap-3">
         <div className="shrink-0 rounded-xl bg-gray-50 p-2 text-gray-700">
           {icon}
         </div>
 
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           {label ? (
             <div className="text-[11px] font-semibold tracking-wide text-gray-500">
               {label}
@@ -136,6 +137,7 @@ export default function BusinessPeoplePanel({
   legacyManagerPhone,
   role,
   isOwnerManager,
+  currentUserId,
   pendingInvites,
   mode = "manage",
 }: Props) {
@@ -234,7 +236,16 @@ export default function BusinessPeoplePanel({
   );
 
   const ownerPillText = isOwnerManager ? "OWNER & MANAGER" : "OWNER";
-  const managerPillText = role === "MANAGER" ? "MANAGER (YOU)" : "MANAGER";
+  const managerPillText = "MANAGER";
+  const ownerIsYou =
+    Boolean(currentUserId) &&
+    Boolean(data?.owner?.id) &&
+    String(data?.owner?.id) === String(currentUserId);
+  const managerIsYou =
+    Boolean(currentUserId) &&
+    manager.state === "ACTIVE" &&
+    String((manager as { user_id?: string }).user_id ?? "") ===
+      String(currentUserId);
 
   // ✅ SUMMARY MODE
   if (mode === "summary") {
@@ -247,17 +258,25 @@ export default function BusinessPeoplePanel({
         <Row
           icon={<User className="h-4 w-4" />}
           label="OWNER"
-          value={<span className="truncate">{ownerLabel}</span>}
-          right={<Pill tone="blue">{ownerPillText}</Pill>}
+          value={<span title={ownerLabel}>{ownerLabel}</span>}
+          right={
+            <div className="flex items-center gap-2 shrink-0">
+              <Pill tone="blue">{ownerPillText}</Pill>
+              {ownerIsYou ? <Pill tone="gray">YOU</Pill> : null}
+            </div>
+          }
         />
 
         {!isOwnerManager && !loading && manager.state === "ACTIVE" ? (
           <Row
             icon={<User className="h-4 w-4" />}
             label="MANAGER"
-            value={
-              <span className="inline-flex flex-wrap items-center gap-2">
-                <span className="font-semibold">
+              value={
+              <span
+                className="inline-flex min-w-0 items-center gap-2"
+                title={labelForManager(manager)}
+              >
+                <span className="min-w-0 truncate font-semibold">
                   {labelForManager(manager)}
                 </span>
                 {metaForManager(manager) ? (
@@ -270,7 +289,12 @@ export default function BusinessPeoplePanel({
                 ) : null}
               </span>
             }
-            right={<Pill tone="gray">{managerPillText}</Pill>}
+            right={
+              <div className="flex items-center gap-2 shrink-0">
+                <Pill tone="gray">{managerPillText}</Pill>
+                {managerIsYou ? <Pill tone="gray">YOU</Pill> : null}
+              </div>
+            }
           />
         ) : null}
 
@@ -290,8 +314,13 @@ export default function BusinessPeoplePanel({
       <Row
         icon={<User className="h-4 w-4" />}
         label="OWNER"
-        value={<span className="truncate">{ownerLabel}</span>}
-        right={<Pill tone="blue">{ownerPillText}</Pill>}
+        value={<span title={ownerLabel}>{ownerLabel}</span>}
+        right={
+          <div className="flex items-center gap-2 shrink-0">
+            <Pill tone="blue">{ownerPillText}</Pill>
+            {ownerIsYou ? <Pill tone="gray">YOU</Pill> : null}
+          </div>
+        }
       />
 
       {!isOwnerManager ? (
@@ -305,8 +334,11 @@ export default function BusinessPeoplePanel({
               icon={<User className="h-4 w-4" />}
               label="MANAGER"
               value={
-                <span className="inline-flex flex-wrap items-center gap-2">
-                  <span className="font-semibold">
+                <span
+                  className="inline-flex min-w-0 items-center gap-2"
+                  title={labelForManager(manager)}
+                >
+                  <span className="min-w-0 truncate font-semibold">
                     {labelForManager(manager)}
                   </span>
                   {metaForManager(manager) ? (
@@ -330,7 +362,10 @@ export default function BusinessPeoplePanel({
                     Remove
                   </button>
                 ) : (
-                  <Pill tone="gray">{managerPillText}</Pill>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Pill tone="gray">{managerPillText}</Pill>
+                    {managerIsYou ? <Pill tone="gray">YOU</Pill> : null}
+                  </div>
                 )
               }
             />

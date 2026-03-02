@@ -23,6 +23,7 @@ type Props = {
   phone: string;
   isOwnerManager: boolean;
   pendingInvites?: PendingInvite[];
+  currentUserId: string;
 };
 
 function RolePill({ role }: { role: Props["role"] }) {
@@ -49,6 +50,7 @@ export default function DesktopBusinessCard({
   phone,
   isOwnerManager,
   pendingInvites = [],
+  currentUserId,
 }: Props) {
   return (
     <section className="desktopOnly rounded-2xl border border-gray-100 bg-white/90 shadow-sm backdrop-blur">
@@ -77,6 +79,7 @@ export default function DesktopBusinessCard({
           role={role}
           isOwnerManager={isOwnerManager}
           pendingInvites={pendingInvites}
+          currentUserId={currentUserId}
           mode="summary"
         />
       </div>
