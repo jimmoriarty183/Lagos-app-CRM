@@ -8,24 +8,24 @@ function json(status: number, payload: any) {
 }
 
 function getBaseUrl(req: Request) {
-  // 1) в приоритете origin текущего запроса (preview/production)
+  // 1) всегда предпочитаем стабильный продовый домен (обычно в allow-list Supabase)
+  const site = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (site) return site.replace(/\/$/, "");
+
+  // 2) затем app url
+  const app = process.env.NEXT_PUBLIC_APP_URL?.trim();
+  if (app) return app.replace(/\/$/, "");
+
+  // 3) fallback через origin
   const origin = req.headers.get("origin")?.trim();
   if (origin) return origin.replace(/\/$/, "");
 
-  // 2) fallback через x-forwarded-* (часто есть за прокси)
+  // 4) fallback через x-forwarded-*
   const xfHost = req.headers.get("x-forwarded-host")?.trim();
   if (xfHost) {
     const xfProto = req.headers.get("x-forwarded-proto")?.trim() || "https";
     return `${xfProto}://${xfHost}`.replace(/\/$/, "");
   }
-
-  // 3) явный app url
-  const app = process.env.NEXT_PUBLIC_APP_URL?.trim();
-  if (app) return app.replace(/\/$/, "");
-
-  // 4) продовый стабильный домен
-  const site = process.env.NEXT_PUBLIC_SITE_URL?.trim();
-  if (site) return site.replace(/\/$/, "");
 
   return "http://localhost:3000";
 }
@@ -130,7 +130,7 @@ export async function POST(req: Request) {
 
     // ✅ ВАЖНО: redirectTo всегда строим от правильного base url
     const baseUrl = getBaseUrl(req);
-    const redirectTo = `${baseUrl}/invite?invite_id=${encodeURIComponent(invite_id)}`;
+    const redirectTo = `${baseUrl}/auth/callback?invite_id=${encodeURIComponent(invite_id)}`;
 
     const { error: authErr } = await supabase.auth.admin.inviteUserByEmail(email, { redirectTo });
 
