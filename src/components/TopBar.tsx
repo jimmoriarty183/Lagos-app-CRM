@@ -2,102 +2,130 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronDown, LogOut, Sparkles } from "lucide-react";
 
-export type BusinessRole = "Owner" | "Manager";
+export type RightVariant =
+  | "none"
+  | "login"
+  | "back"
+  | "backHome"
+  | "backHomeLogin";
 
-type TopBarProps = {
-  businessName?: string;
-  businessHref?: string;
-  role?: BusinessRole;
-  switcherHint?: string;
-  onOpenBusinessSwitcher?: () => void;
-  onLogout?: () => void;
+type Props = {
+  subtitle?: string;
+  rightVariant?: RightVariant;
+  /** чтобы TopBar всегда совпадал с контентом */
+  maxWidth?: number;
 };
 
 export default function TopBar({
-  businessName = "demo-business",
-  businessHref = "/",
-  role = "Owner",
-  switcherHint = "Tap to switch",
-  onOpenBusinessSwitcher,
-  onLogout,
-}: TopBarProps) {
+  subtitle,
+  rightVariant = "none",
+  maxWidth = 1040,
+}: Props) {
   const router = useRouter();
 
-  const roleClasses =
-    role === "Owner"
-      ? "bg-slate-900 text-white"
-      : "bg-blue-100 text-blue-700 border border-blue-200";
-
-  const handleLogout = () => {
-    if (!window.confirm("Log out?")) return;
-
-    if (onLogout) {
-      onLogout();
-      return;
-    }
-
-    router.push("/login");
-  };
-
-  const handleOpenBusinessSwitcher = () => {
-    if (onOpenBusinessSwitcher) {
-      onOpenBusinessSwitcher();
-      return;
-    }
-
-    router.push("/b/demo");
-  };
+  const Btn = ({
+    children,
+    onClick,
+    primary,
+  }: {
+    children: React.ReactNode;
+    onClick: () => void;
+    primary?: boolean;
+  }) => (
+    <button
+      onClick={onClick}
+      style={{
+        height: 38,
+        padding: "0 12px",
+        borderRadius: 12,
+        border: primary ? "1px solid #111827" : "1px solid #e5e7eb",
+        background: primary ? "#111827" : "rgba(255,255,255,0.7)",
+        color: primary ? "white" : "#111827",
+        fontWeight: primary ? 900 : 800,
+        cursor: "pointer",
+        whiteSpace: "nowrap",
+      }}
+    >
+      {children}
+    </button>
+  );
 
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-200/70 bg-white/70 backdrop-blur-md">
-      <div className="pt-[env(safe-area-inset-top)]">
-        <div className="mx-auto flex h-14 max-w-7xl items-center gap-3 px-3 sm:px-6">
-          <Link
-            href={businessHref}
-            aria-label="Go to dashboard"
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-900 shadow-sm"
+    <header style={{ padding: "10px 6px" }}>
+      {/* ВАЖНО: контейнер внутри TopBar */}
+      <div
+        style={{
+          maxWidth,
+          margin: "0 auto",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 12,
+        }}
+      >
+        <Link
+          href="/"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            textDecoration: "none",
+            color: "inherit",
+            minWidth: 0,
+          }}
+        >
+          <div
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: 14,
+              background: "#111827",
+              color: "white",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontWeight: 900,
+              userSelect: "none",
+              flex: "0 0 auto",
+            }}
           >
-            <span className="text-sm font-black">O</span>
-          </Link>
-
-          <button
-            type="button"
-            onClick={handleOpenBusinessSwitcher}
-            className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 shadow-sm"
-          >
-            <div className="min-w-0 flex-1 text-left leading-tight">
-              <div className="flex min-w-0 items-center gap-2">
-                <span className="truncate text-sm font-semibold text-slate-900">
-                  {businessName}
-                </span>
-                <span
-                  className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${roleClasses}`}
-                >
-                  {role}
-                </span>
-              </div>
-              <p className="truncate text-[11px] text-slate-500">{switcherHint}</p>
-            </div>
-            <ChevronDown className="h-4 w-4 shrink-0 text-slate-500" />
-          </button>
-
-          <div className="flex shrink-0 items-center gap-2">
-            <span className="hidden rounded-full border border-violet-200 bg-violet-50 px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-violet-700 sm:inline-flex">
-              <Sparkles className="mr-1 h-3 w-3" />
-              beta
-            </span>
-
-            <button
-              type="button"
-              onClick={handleLogout}
-              aria-label="Log out"
-              className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm"
-            >
-              <LogOut className="h-4 w-4" />
-            </button>
+            O
           </div>
+
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontWeight: 900, lineHeight: 1 }}>Ordero</div>
+            {subtitle ? (
+              <div style={{ opacity: 0.65, fontSize: 12, marginTop: 2 }}>
+                {subtitle}
+              </div>
+            ) : null}
+          </div>
+        </Link>
+
+        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+          {rightVariant === "login" && (
+            <Btn onClick={() => router.push("/login")} primary>
+              Log in
+            </Btn>
+          )}
+
+          {rightVariant === "back" && (
+            <Btn onClick={() => router.back()}>Back</Btn>
+          )}
+
+          {rightVariant === "backHome" && (
+            <Btn onClick={() => router.push("/")}>Back</Btn>
+          )}
+
+          {rightVariant === "backHomeLogin" && (
+            <>
+              <Btn onClick={() => router.push("/")}>Back</Btn>
+              <Btn onClick={() => router.push("/login")} primary>
+                Log in
+              </Btn>
+            </>
+          )}
         </div>
       </div>
     </header>

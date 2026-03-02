@@ -1,16 +1,32 @@
+import { Logo } from "./Logo";
 import Link from "next/link";
-import TopBar from "./TopBar";
 import { ArrowRight, Clock, Smartphone, ListChecks } from "lucide-react";
 
 export function LandingPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-white via-gray-50/30 to-white">
       {/* Header */}
-      <TopBar
-        businessName="ordero-demo-store-with-a-very-long-name"
-        role="Owner"
-        switcherHint="Tap to switch"
-      />
+      <header className="border-b border-gray-100 bg-white/80 backdrop-blur-sm sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Logo size={36} />
+              <div>
+                <div className="font-semibold text-gray-900">Ordero</div>
+                <div className="text-xs text-gray-500">
+                  Orders. Simple. Fast.
+                </div>
+              </div>
+            </div>
+            <Link
+              href="/login"
+              className="px-5 py-2.5 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+            >
+              Log in
+            </Link>
+          </div>
+        </div>
+      </header>
 
       {/* Hero Section */}
       <main className="max-w-7xl mx-auto px-6 py-16 lg:py-24">
