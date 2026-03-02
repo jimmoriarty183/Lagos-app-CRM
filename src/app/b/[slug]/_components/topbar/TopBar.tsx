@@ -74,8 +74,8 @@ export default function TopBar({ businessSlug, plan, role, businesses }: Props) 
             )}
           </div>
 
-          <div className="flex shrink-0 items-center gap-2 justify-self-end">
-            <span className="hidden items-center rounded-full border border-violet-200 bg-violet-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-violet-700 md:inline-flex">
+          <div className="flex shrink-0 items-center gap-2">
+            <span className="hidden items-center rounded-full border border-violet-200 bg-violet-50 px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-violet-700 md:inline-flex">
               <Sparkles className="mr-1 h-3 w-3" />
               {plan || "beta"}
             </span>
