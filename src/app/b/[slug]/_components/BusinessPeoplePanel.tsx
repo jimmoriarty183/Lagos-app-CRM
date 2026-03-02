@@ -45,6 +45,7 @@ type Props = {
 
   role: Role;
   isOwnerManager: boolean;
+  currentUserId?: string | null;
 
   pendingInvites?: any[];
   mode?: "summary" | "manage";
@@ -77,32 +78,22 @@ function Pill({
 
 function Row({
   icon,
-  label,
   value,
   right,
 }: {
   icon: React.ReactNode;
-  label?: string;
   value: React.ReactNode;
   right?: React.ReactNode;
 }) {
   return (
     <div className="flex items-center justify-between gap-3 rounded-2xl border border-gray-100 bg-white px-4 py-3">
-      <div className="flex min-w-0 items-center gap-3">
+      <div className="flex min-w-0 flex-1 items-center gap-3">
         <div className="shrink-0 rounded-xl bg-gray-50 p-2 text-gray-700">
           {icon}
         </div>
 
-        <div className="min-w-0">
-          {label ? (
-            <div className="text-[11px] font-semibold tracking-wide text-gray-500">
-              {label}
-            </div>
-          ) : null}
-
-          <div className="min-w-0 truncate text-sm font-semibold text-gray-900">
-            {value}
-          </div>
+        <div className="min-w-0 flex-1 text-sm font-semibold text-gray-900">
+          {value}
         </div>
       </div>
 
@@ -129,6 +120,27 @@ function metaForManager(m: ManagerState) {
   return email || null;
 }
 
+function PersonValue({
+  primary,
+  secondary,
+}: {
+  primary: string;
+  secondary?: string | null;
+}) {
+  return (
+    <div className="min-w-0">
+      <div className="truncate" title={primary}>
+        {primary}
+      </div>
+      {secondary ? (
+        <div className="mt-0.5 truncate text-xs font-medium text-gray-500" title={secondary}>
+          {secondary}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export default function BusinessPeoplePanel({
   businessId,
   businessSlug,
@@ -136,6 +148,7 @@ export default function BusinessPeoplePanel({
   legacyManagerPhone,
   role,
   isOwnerManager,
+  currentUserId,
   pendingInvites,
   mode = "manage",
 }: Props) {
@@ -234,7 +247,16 @@ export default function BusinessPeoplePanel({
   );
 
   const ownerPillText = isOwnerManager ? "OWNER & MANAGER" : "OWNER";
-  const managerPillText = role === "MANAGER" ? "MANAGER (YOU)" : "MANAGER";
+  const managerPillText = "MANAGER";
+  const ownerIsYou =
+    Boolean(currentUserId) &&
+    Boolean(data?.owner?.id) &&
+    String(data?.owner?.id) === String(currentUserId);
+  const managerIsYou =
+    Boolean(currentUserId) &&
+    manager.state === "ACTIVE" &&
+    String((manager as { user_id?: string }).user_id ?? "") ===
+      String(currentUserId);
 
   // ✅ SUMMARY MODE
   if (mode === "summary") {
@@ -246,31 +268,30 @@ export default function BusinessPeoplePanel({
       <div className="space-y-3">
         <Row
           icon={<User className="h-4 w-4" />}
-          label="OWNER"
-          value={<span className="truncate">{ownerLabel}</span>}
-          right={<Pill tone="blue">{ownerPillText}</Pill>}
+          value={<PersonValue primary={ownerLabel} />}
+          right={
+            <div className="flex items-center gap-2 shrink-0">
+              <Pill tone="blue">{ownerPillText}</Pill>
+              {ownerIsYou ? <Pill tone="gray">YOU</Pill> : null}
+            </div>
+          }
         />
 
         {!isOwnerManager && !loading && manager.state === "ACTIVE" ? (
           <Row
             icon={<User className="h-4 w-4" />}
-            label="MANAGER"
             value={
-              <span className="inline-flex flex-wrap items-center gap-2">
-                <span className="font-semibold">
-                  {labelForManager(manager)}
-                </span>
-                {metaForManager(manager) ? (
-                  <>
-                    <span className="text-gray-300">•</span>
-                    <span className="font-mono text-xs">
-                      {metaForManager(manager)}
-                    </span>
-                  </>
-                ) : null}
-              </span>
+              <PersonValue
+                primary={labelForManager(manager)}
+                secondary={metaForManager(manager)}
+              />
             }
-            right={<Pill tone="gray">{managerPillText}</Pill>}
+            right={
+              <div className="flex items-center gap-2 shrink-0">
+                <Pill tone="gray">{managerPillText}</Pill>
+                {managerIsYou ? <Pill tone="gray">YOU</Pill> : null}
+              </div>
+            }
           />
         ) : null}
 
@@ -289,9 +310,13 @@ export default function BusinessPeoplePanel({
     <div className="space-y-4">
       <Row
         icon={<User className="h-4 w-4" />}
-        label="OWNER"
-        value={<span className="truncate">{ownerLabel}</span>}
-        right={<Pill tone="blue">{ownerPillText}</Pill>}
+        value={<PersonValue primary={ownerLabel} />}
+        right={
+          <div className="flex items-center gap-2 shrink-0">
+            <Pill tone="blue">{ownerPillText}</Pill>
+            {ownerIsYou ? <Pill tone="gray">YOU</Pill> : null}
+          </div>
+        }
       />
 
       {!isOwnerManager ? (
@@ -303,21 +328,11 @@ export default function BusinessPeoplePanel({
           ) : manager.state === "ACTIVE" ? (
             <Row
               icon={<User className="h-4 w-4" />}
-              label="MANAGER"
               value={
-                <span className="inline-flex flex-wrap items-center gap-2">
-                  <span className="font-semibold">
-                    {labelForManager(manager)}
-                  </span>
-                  {metaForManager(manager) ? (
-                    <>
-                      <span className="text-gray-300">•</span>
-                      <span className="font-mono text-xs">
-                        {metaForManager(manager)}
-                      </span>
-                    </>
-                  ) : null}
-                </span>
+                <PersonValue
+                  primary={labelForManager(manager)}
+                  secondary={metaForManager(manager)}
+                />
               }
               right={
                 canManage ? (
@@ -330,37 +345,34 @@ export default function BusinessPeoplePanel({
                     Remove
                   </button>
                 ) : (
-                  <Pill tone="gray">{managerPillText}</Pill>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Pill tone="gray">{managerPillText}</Pill>
+                    {managerIsYou ? <Pill tone="gray">YOU</Pill> : null}
+                  </div>
                 )
               }
             />
           ) : legacy ? (
             <Row
               icon={<User className="h-4 w-4" />}
-              label="MANAGER"
-              value={<span className="font-mono">{legacy}</span>}
+              value={<PersonValue primary={legacy} />}
               right={<Pill tone="gray">MANAGER</Pill>}
             />
           ) : manager.state === "PENDING" ? (
             <Row
               icon={<User className="h-4 w-4" />}
-              label="MANAGER"
               value={
-                <span className="inline-flex flex-wrap items-center gap-2">
-                  <span className="font-semibold">Pending invite</span>
-                  <span className="text-gray-300">•</span>
-                  <span className="font-mono text-xs">
-                    {(manager as any).email}
-                  </span>
-                </span>
+                <PersonValue
+                  primary="Pending invite"
+                  secondary={(manager as any).email}
+                />
               }
               right={<Pill tone="amber">PENDING</Pill>}
             />
           ) : (
             <Row
               icon={<User className="h-4 w-4" />}
-              label="MANAGER"
-              value={<span className="text-gray-800">Not assigned</span>}
+              value={<PersonValue primary="Not assigned" />}
               right={<Pill tone="gray">MANAGER</Pill>}
             />
           )}

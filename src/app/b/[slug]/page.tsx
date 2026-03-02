@@ -229,7 +229,7 @@ export default async function Page({ params, searchParams }: PageProps) {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
         <div className="hidden lg:grid grid-cols-12 gap-6">
-          <div className="col-span-3">
+          <div className="col-span-3 space-y-3">
             <DesktopSidebar
               clearHref={clearHref}
               totalCount={totalOrders}
@@ -246,9 +246,9 @@ export default async function Page({ params, searchParams }: PageProps) {
                   : null,
               }}
               role={userRole}
-              phone={phoneRaw}
               isOwnerManager={!!isOwnerManager}
               pendingInvites={(pendingInvites ?? []) as any} // ✅ ДОБАВЬ
+              currentUserId={user.id}
             />
           </div>
 
