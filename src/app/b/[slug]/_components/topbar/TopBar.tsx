@@ -39,7 +39,7 @@ export default function TopBar({ businessSlug, plan, role, businesses }: Props) 
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200/70 bg-white/70 backdrop-blur-md">
       <div className="pt-[env(safe-area-inset-top)]">
-        <div className="mx-auto grid h-14 max-w-7xl grid-cols-[44px_minmax(0,1fr)_auto] items-center gap-3 px-3 sm:px-6 lg:gap-5">
+        <div className="mx-auto flex h-14 max-w-7xl items-center gap-3 px-3 sm:px-6">
           <Link
             href={`/b/${businessSlug}`}
             aria-label="Go to dashboard"
@@ -48,7 +48,7 @@ export default function TopBar({ businessSlug, plan, role, businesses }: Props) 
             <span className="text-sm font-black">O</span>
           </Link>
 
-          <div className="min-w-0 lg:mx-auto lg:w-full lg:max-w-[560px] xl:max-w-[640px]">
+          <div className="min-w-0 flex-1">
             {showSwitcher ? (
               <BusinessSwitcher
                 businesses={businesses!}
