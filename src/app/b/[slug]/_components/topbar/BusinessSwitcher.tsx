@@ -104,7 +104,7 @@ export default function BusinessSwitcher({
                 {roleLabel(current.role)}
               </span>
             </div>
-            <p className="truncate text-[11px] text-slate-500">{hintText}</p>
+            <p className="truncate text-[11px] text-slate-500 lg:hidden">{hintText}</p>
           </div>
         </div>
 
