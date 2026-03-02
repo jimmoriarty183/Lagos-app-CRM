@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { LogOut, Sparkles } from "lucide-react";
 
 import BusinessSwitcher, { BusinessOption } from "./BusinessSwitcher";
@@ -47,6 +48,7 @@ export default function TopBar({ businessSlug, plan, role, businesses }: Props) 
         <div className="mx-auto flex h-14 max-w-7xl items-center gap-3 px-3 sm:px-6">
           <Link
             href={dashboardHref}
+            href={`/b/${businessSlug}`}
             aria-label="Go to dashboard"
             className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-900 shadow-sm"
           >
