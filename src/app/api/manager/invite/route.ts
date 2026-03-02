@@ -8,17 +8,24 @@ function json(status: number, payload: any) {
 }
 
 function getBaseUrl(req: Request) {
-  // 1) продовый стабильный домен
-  const site = process.env.NEXT_PUBLIC_SITE_URL?.trim();
-  if (site) return site.replace(/\/$/, "");
-
-  // 2) если нет - пробуем origin
+  // 1) в приоритете origin текущего запроса (preview/production)
   const origin = req.headers.get("origin")?.trim();
   if (origin) return origin.replace(/\/$/, "");
 
-  // 3) fallback: локалка
+  // 2) fallback через x-forwarded-* (часто есть за прокси)
+  const xfHost = req.headers.get("x-forwarded-host")?.trim();
+  if (xfHost) {
+    const xfProto = req.headers.get("x-forwarded-proto")?.trim() || "https";
+    return `${xfProto}://${xfHost}`.replace(/\/$/, "");
+  }
+
+  // 3) явный app url
   const app = process.env.NEXT_PUBLIC_APP_URL?.trim();
   if (app) return app.replace(/\/$/, "");
+
+  // 4) продовый стабильный домен
+  const site = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (site) return site.replace(/\/$/, "");
 
   return "http://localhost:3000";
 }

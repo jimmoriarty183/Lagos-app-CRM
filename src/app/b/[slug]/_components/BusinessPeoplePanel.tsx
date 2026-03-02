@@ -80,12 +80,12 @@ function PersonValue({
 }) {
   return (
     <div className="min-w-0 flex-1">
-      <div className="text-sm font-semibold leading-5 text-gray-900 break-words" title={primary}>
+      <div className="text-sm font-semibold leading-5 text-gray-900 break-all" title={primary}>
         {primary}
       </div>
       {secondary ? (
         <div
-          className="mt-0.5 text-xs font-medium leading-5 text-gray-500 break-words"
+          className="mt-0.5 text-xs font-medium leading-5 text-gray-500 break-all"
           title={secondary}
         >
           {secondary}
@@ -115,8 +115,8 @@ function PersonRow({
       : null;
 
   return (
-    <div className="flex items-center justify-between gap-3 rounded-2xl border border-gray-100 bg-white px-4 py-3">
-      <div className="flex min-w-0 flex-1 items-center gap-3">
+    <div className="flex items-start justify-between gap-3 rounded-2xl border border-gray-100 bg-white px-4 py-3">
+      <div className="flex min-w-0 flex-1 items-start gap-3">
         <div className="shrink-0 rounded-xl bg-gray-50 p-2 text-gray-700">
           <User className="h-4 w-4" />
         </div>
