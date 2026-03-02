@@ -34,6 +34,7 @@ export default function InviteClient() {
   const [loading, setLoading] = useState(true);
   const [settingSession, setSettingSession] = useState(true);
   const [email, setEmail] = useState<string>("");
+  const [hasActiveSession, setHasActiveSession] = useState(false);
   const [business, setBusiness] = useState<BusinessInfo | null>(null);
 
   const [firstName, setFirstName] = useState("");
@@ -53,7 +54,7 @@ export default function InviteClient() {
 
   const ensureSessionFromHash = useCallback(async () => {
     if (typeof window === "undefined") {
-      return { hasTokens: false };
+      return { hasTokens: false, session: null };
     }
 
     const { access_token, refresh_token } = parseHashTokens(window.location.hash);
@@ -65,10 +66,10 @@ export default function InviteClient() {
     });
 
     if (!hasTokens) {
-      return { hasTokens: false };
+      return { hasTokens: false, session: null };
     }
 
-    const { error: setErr } = await supabase.auth.setSession({
+    const { data: setData, error: setErr } = await supabase.auth.setSession({
       access_token,
       refresh_token,
     });
@@ -85,7 +86,7 @@ export default function InviteClient() {
     }
 
     console.info("[invite] setSession result", { ok: true });
-    return { hasTokens: true };
+    return { hasTokens: true, session: setData.session ?? null };
   }, [inviteId, supabase]);
 
   useEffect(() => {
@@ -102,14 +103,14 @@ export default function InviteClient() {
       }
 
       try {
-        const { hasTokens } = await ensureSessionFromHash();
+        const { hasTokens, session: hashSession } = await ensureSessionFromHash();
 
         setSettingSession(false);
 
-        const { data } = await supabase.auth.getSession();
-        const session = data?.session;
+        const session = hashSession ?? (await supabase.auth.getSession()).data?.session ?? null;
 
         if (!session) {
+          setHasActiveSession(false);
           setEmail("");
           setBusiness(null);
           setError(
@@ -120,6 +121,7 @@ export default function InviteClient() {
           return;
         }
 
+        setHasActiveSession(true);
         setEmail(session.user.email ?? "");
 
         const r = await fetch(
@@ -136,6 +138,7 @@ export default function InviteClient() {
 
         setBusiness(j.business ?? null);
       } catch (e: unknown) {
+        setHasActiveSession(false);
         setBusiness(null);
         setSettingSession(false);
         setError(e instanceof Error ? e.message : "Failed to initialize session");
@@ -153,6 +156,7 @@ export default function InviteClient() {
     password.length >= 8 &&
     password === password2 &&
     agree &&
+    hasActiveSession &&
     !loading &&
     !submitting;
 
@@ -252,14 +256,17 @@ export default function InviteClient() {
             </div>
           ) : (
             <div className="mt-6 space-y-4">
-              {!email && (
+              {!hasActiveSession ? (
                 <button
                   onClick={() => router.push(`/login?next=${encodeURIComponent(`/invite?invite_id=${inviteId}`)}`)}
                   className="w-full rounded-xl border border-gray-300 bg-white py-3 text-sm font-semibold text-gray-800 hover:bg-gray-50"
                 >
                   Log in
                 </button>
-              )}
+              ) : null}
+
+              {hasActiveSession ? (
+                <>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label className="text-sm font-medium text-gray-700">First name</label>
@@ -352,6 +359,8 @@ export default function InviteClient() {
                   </>
                 ) : null}
               </p>
+                </>
+              ) : null}
             </div>
           )}
         </div>
