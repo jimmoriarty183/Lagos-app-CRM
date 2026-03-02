@@ -18,6 +18,7 @@ type Props = {
   disabledAdd?: boolean;
   widthClassName?: string;
   variant?: "toolbar" | "card";
+  hintText?: string;
 };
 
 function roleLabel(role: Role) {
@@ -39,6 +40,7 @@ export default function BusinessSwitcher({
   disabledAdd = true,
   widthClassName = "w-[220px] sm:w-[260px]",
   variant = "toolbar",
+  hintText = "Tap to switch",
 }: Props) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
@@ -74,7 +76,7 @@ export default function BusinessSwitcher({
 
   const triggerClass =
     variant === "toolbar"
-      ? "w-full inline-flex h-9 items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3 hover:bg-gray-50 transition"
+      ? "w-full inline-flex h-11 items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white px-3 shadow-sm transition hover:bg-slate-50"
       : "w-full inline-flex h-12 items-center justify-between gap-3 rounded-2xl border border-gray-200 bg-white/80 px-4 shadow-sm backdrop-blur hover:bg-white transition";
 
   return (
@@ -87,24 +89,27 @@ export default function BusinessSwitcher({
         aria-haspopup="menu"
         aria-expanded={open}
       >
-        <div className="min-w-0 flex items-center gap-2">
-          <div className="min-w-0">
-            <div className="truncate text-sm font-semibold text-gray-900">
-              {current.name}
-            </div>
-          </div>
+        <div className="min-w-0 flex flex-1 items-center gap-2">
+          <div className="min-w-0 flex-1 text-left leading-tight">
+            <div className="flex min-w-0 items-center gap-2">
+              <div className="truncate text-sm font-semibold text-slate-900">
+                {current.name}
+              </div>
 
-          <span
-            className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${roleBadgeClass(
-              current.role
-            )}`}
-          >
-            {roleLabel(current.role)}
-          </span>
+              <span
+                className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${roleBadgeClass(
+                  current.role
+                )}`}
+              >
+                {roleLabel(current.role)}
+              </span>
+            </div>
+            <p className="truncate text-[11px] text-slate-500">{hintText}</p>
+          </div>
         </div>
 
         <svg
-          className={`h-4 w-4 text-gray-500 transition ${
+          className={`h-4 w-4 shrink-0 text-slate-500 transition ${
             open ? "rotate-180" : ""
           }`}
           viewBox="0 0 20 20"
