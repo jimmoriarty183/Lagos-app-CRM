@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Check, ChevronDown } from "lucide-react";
 
 type Role = "OWNER" | "MANAGER" | "GUEST";
 
@@ -17,7 +18,7 @@ type Props = {
   onSelect: (slug: string) => void;
   disabledAdd?: boolean;
   widthClassName?: string;
-  variant?: "toolbar" | "card";
+  variant?: "toolbar" | "toolbar-compact" | "card";
   hintText?: string;
 };
 
@@ -74,14 +75,16 @@ export default function BusinessSwitcher({
 
   if (!current) return null;
 
-  const triggerClass =
-    variant === "toolbar"
-      ? "w-full inline-flex h-11 items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white px-3 shadow-sm transition hover:bg-slate-50"
-      : "w-full inline-flex h-12 items-center justify-between gap-3 rounded-2xl border border-gray-200 bg-white/80 px-4 shadow-sm backdrop-blur hover:bg-white transition";
+  const compact = variant === "toolbar-compact";
+
+  const triggerClass = compact
+    ? "w-full inline-flex h-10 items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white px-3 shadow-sm transition hover:bg-slate-50"
+    : variant === "toolbar"
+    ? "w-full inline-flex h-11 items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white px-3 shadow-sm transition hover:bg-slate-50"
+    : "w-full inline-flex h-12 items-center justify-between gap-3 rounded-2xl border border-gray-200 bg-white/80 px-4 shadow-sm backdrop-blur hover:bg-white transition";
 
   return (
     <div className={`relative ${widthClassName} z-50`} ref={ref}>
-      {/* Trigger */}
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -96,51 +99,49 @@ export default function BusinessSwitcher({
                 {current.name}
               </div>
 
-              <span
-                className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${roleBadgeClass(
-                  current.role
-                )}`}
-              >
-                {roleLabel(current.role)}
-              </span>
+              {!compact && (
+                <span
+                  className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${roleBadgeClass(
+                    current.role
+                  )}`}
+                >
+                  {roleLabel(current.role)}
+                </span>
+              )}
             </div>
-            <p className="truncate text-[11px] text-slate-500">{hintText}</p>
+
+            {!compact && (
+              <p className="truncate text-[11px] text-slate-500">{hintText}</p>
+            )}
           </div>
         </div>
 
-        <svg
+        <ChevronDown
           className={`h-4 w-4 shrink-0 text-slate-500 transition ${
             open ? "rotate-180" : ""
           }`}
-          viewBox="0 0 20 20"
-          fill="currentColor"
           aria-hidden="true"
-        >
-          <path
-            fillRule="evenodd"
-            d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.25a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z"
-            clipRule="evenodd"
-          />
-        </svg>
+        />
       </button>
 
-      {/* Menu */}
       {open && (
         <div
           role="menu"
-          className="absolute left-0 right-0 sm:left-auto sm:right-0 z-50 mt-2 w-[calc(100vw-2rem)] sm:w-[360px] max-w-[360px] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-lg"
+          className="absolute right-0 z-50 mt-2 w-[300px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg"
         >
-          <div className="p-3 border-b border-gray-100">
-            <input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Search business…"
-              className="h-10 w-full rounded-xl border border-gray-200 px-3 text-sm outline-none focus:border-gray-300"
-            />
-          </div>
+          {!compact && (
+            <div className="border-b border-gray-100 p-3">
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Search business…"
+                className="h-10 w-full rounded-xl border border-gray-200 px-3 text-sm outline-none focus:border-gray-300"
+              />
+            </div>
+          )}
 
           <div className="max-h-[320px] overflow-auto p-2">
-            {filtered.map((b) => {
+            {(compact ? businesses : filtered).map((b) => {
               const isCurrent = b.slug === currentSlug;
               return (
                 <button
@@ -164,9 +165,7 @@ export default function BusinessSwitcher({
 
                     <div className="flex items-center gap-2">
                       {isCurrent && (
-                        <span className="rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-700">
-                          current
-                        </span>
+                        <Check className="h-4 w-4 shrink-0 text-blue-700" />
                       )}
                       <span
                         className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${roleBadgeClass(
@@ -192,7 +191,7 @@ export default function BusinessSwitcher({
                   : "text-gray-900 hover:bg-gray-50"
               }`}
             >
-              + Add business <span className="ml-2 text-[11px]">(soon)</span>
+              + Create business <span className="ml-2 text-[11px]">(soon)</span>
             </button>
           </div>
         </div>

@@ -138,3 +138,21 @@ MIT
 - Code is production-ready and safe to extend
 
 ---
+
+## Vercel deploy stability notes
+
+If Vercel build logs show successful `next build`, but deployment fails on `Deploying outputs...`, use this repository config as baseline:
+
+- Build with webpack (`next build --webpack`) via `vercel.json`.
+- Keep middleware runtime on default Edge runtime and avoid Node-only modules in middleware.
+
+### Reproduce / verify from clean cache
+
+1. In Vercel project settings, open **Deployments** and trigger **Redeploy** with **Use existing Build Cache** disabled.
+2. Or redeploy from CLI with cache disabled:
+
+```bash
+vercel --prod --force
+```
+
+Expected result: successful deploy without internal error on output deployment stage.
