@@ -55,7 +55,7 @@ function Pill({
   tone,
   children,
 }: {
-  tone: "gray" | "blue" | "amber" | "red";
+  tone: "gray" | "blue" | "amber" | "red" | "neutral";
   children: React.ReactNode;
 }) {
   const cls =
@@ -65,6 +65,8 @@ function Pill({
         ? "border-amber-100 bg-amber-50 text-amber-700"
         : tone === "red"
           ? "border-red-200 bg-red-50 text-red-700"
+          : tone === "neutral"
+            ? "border-gray-300 bg-white text-gray-600"
           : "border-gray-200 bg-gray-50 text-gray-700";
 
   return (
@@ -246,17 +248,21 @@ export default function BusinessPeoplePanel({
     ownerPhone || data?.owner_phone || null,
   );
 
-  const ownerPillText = isOwnerManager ? "OWNER & MANAGER" : "OWNER";
+  const ownerPillText = "OWNER";
   const managerPillText = "MANAGER";
-  const ownerIsYou =
+  const ownerIsYouById =
     Boolean(currentUserId) &&
     Boolean(data?.owner?.id) &&
     String(data?.owner?.id) === String(currentUserId);
+  const ownerIsYouByRole = role === "OWNER" || isOwnerManager;
+  const ownerIsYou = ownerIsYouById || ownerIsYouByRole;
   const managerIsYou =
     Boolean(currentUserId) &&
     manager.state === "ACTIVE" &&
     String((manager as { user_id?: string }).user_id ?? "") ===
       String(currentUserId);
+  const managerIsYouByRole = role === "MANAGER";
+  const showManagerYou = managerIsYou || managerIsYouByRole;
 
   // ✅ SUMMARY MODE
   if (mode === "summary") {
@@ -272,7 +278,7 @@ export default function BusinessPeoplePanel({
           right={
             <div className="flex items-center gap-2 shrink-0">
               <Pill tone="blue">{ownerPillText}</Pill>
-              {ownerIsYou ? <Pill tone="gray">YOU</Pill> : null}
+              {ownerIsYou ? <Pill tone="neutral">YOU</Pill> : null}
             </div>
           }
         />
@@ -289,7 +295,7 @@ export default function BusinessPeoplePanel({
             right={
               <div className="flex items-center gap-2 shrink-0">
                 <Pill tone="gray">{managerPillText}</Pill>
-                {managerIsYou ? <Pill tone="gray">YOU</Pill> : null}
+                {showManagerYou ? <Pill tone="neutral">YOU</Pill> : null}
               </div>
             }
           />
@@ -314,7 +320,7 @@ export default function BusinessPeoplePanel({
         right={
           <div className="flex items-center gap-2 shrink-0">
             <Pill tone="blue">{ownerPillText}</Pill>
-            {ownerIsYou ? <Pill tone="gray">YOU</Pill> : null}
+            {ownerIsYou ? <Pill tone="neutral">YOU</Pill> : null}
           </div>
         }
       />
@@ -347,7 +353,7 @@ export default function BusinessPeoplePanel({
                 ) : (
                   <div className="flex items-center gap-2 shrink-0">
                     <Pill tone="gray">{managerPillText}</Pill>
-                    {managerIsYou ? <Pill tone="gray">YOU</Pill> : null}
+                    {showManagerYou ? <Pill tone="neutral">YOU</Pill> : null}
                   </div>
                 )
               }
