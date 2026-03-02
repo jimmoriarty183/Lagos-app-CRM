@@ -29,7 +29,7 @@ function roleLabel(role: Role) {
 
 function roleBadgeClass(role: Role) {
   if (role === "OWNER") return "bg-gray-900 text-white";
-  if (role === "MANAGER") return "bg-blue-600 text-white";
+  if (role === "MANAGER") return "border border-blue-200 bg-blue-100 text-blue-700";
   return "bg-gray-200 text-gray-800";
 }
 

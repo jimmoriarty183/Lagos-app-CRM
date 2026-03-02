@@ -39,7 +39,7 @@ export default function TopBar({ businessSlug, plan, role, businesses }: Props) 
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200/70 bg-white/70 backdrop-blur-md">
       <div className="pt-[env(safe-area-inset-top)]">
-        <div className="mx-auto flex h-14 max-w-7xl items-center gap-3 px-3 sm:px-6">
+        <div className="mx-auto flex h-14 max-w-7xl items-center gap-3 px-3 sm:px-6 lg:gap-4">
           <Link
             href={`/b/${businessSlug}`}
             aria-label="Go to dashboard"
@@ -48,7 +48,8 @@ export default function TopBar({ businessSlug, plan, role, businesses }: Props) 
             <span className="text-sm font-black">O</span>
           </Link>
 
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0 flex-1 lg:flex lg:justify-center">
+            <div className="min-w-0 w-full lg:max-w-[620px]">
             {showSwitcher ? (
               <BusinessSwitcher
                 businesses={businesses!}
@@ -72,10 +73,11 @@ export default function TopBar({ businessSlug, plan, role, businesses }: Props) 
                 </span>
               </div>
             )}
+            </div>
           </div>
 
           <div className="flex shrink-0 items-center gap-2">
-            <span className="hidden items-center rounded-full border border-violet-200 bg-violet-50 px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-violet-700 sm:inline-flex">
+            <span className="hidden items-center rounded-full border border-violet-200 bg-violet-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-violet-700 md:inline-flex">
               <Sparkles className="mr-1 h-3 w-3" />
               {plan || "beta"}
             </span>
