@@ -107,7 +107,7 @@ function Row({
             </div>
           ) : null}
 
-          <div className="min-w-0 truncate text-sm font-semibold text-gray-900">{value}</div>
+          <div className="min-w-0 text-sm font-semibold text-gray-900">{value}</div>
         </div>
       </div>
 
