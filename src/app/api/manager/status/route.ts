@@ -130,16 +130,24 @@ export async function GET(req: Request) {
 
   const { data: acceptedRows } = await admin
     .from("business_invites")
-    .select("accepted_by")
+    .select("accepted_by,email")
     .eq("business_id", business_id)
     .ilike("role", "MANAGER")
     .eq("status", "ACCEPTED")
     .not("accepted_by", "is", null);
 
+  const acceptedEmailByUserId = new Map<string, string>();
   const acceptedManagerIds = Array.from(
     new Set(
       (acceptedRows ?? [])
-        .map((row: { accepted_by?: string | null }) => String(row.accepted_by ?? "").trim())
+        .map((row: { accepted_by?: string | null; email?: string | null }) => {
+          const userId = String(row.accepted_by ?? "").trim();
+          const inviteEmail = String(row.email ?? "").trim();
+          if (userId && inviteEmail && !acceptedEmailByUserId.has(userId)) {
+            acceptedEmailByUserId.set(userId, inviteEmail);
+          }
+          return userId;
+        })
         .filter(Boolean),
     ),
   );
@@ -169,7 +177,7 @@ export async function GET(req: Request) {
       return {
         user_id: userId,
         full_name: profile?.full_name ?? null,
-        email: profile?.email ?? null,
+        email: profile?.email ?? acceptedEmailByUserId.get(userId) ?? null,
         phone: null as string | null,
       };
     })
