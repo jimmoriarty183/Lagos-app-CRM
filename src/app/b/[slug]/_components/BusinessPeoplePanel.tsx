@@ -8,6 +8,25 @@ import InviteManager from "./InviteManager";
 
 type Role = "OWNER" | "MANAGER" | "GUEST";
 
+type OwnerProfile = {
+  id: string;
+  full_name: string | null;
+  email: string | null;
+};
+
+type ActiveManager = {
+  user_id: string;
+  full_name: string | null;
+  email?: string | null;
+  phone: string | null;
+};
+
+type PendingManager = {
+  invite_id: string;
+  email: string;
+  created_at?: string | null;
+};
+
 type ManagerState =
   | { state: "NONE" }
   | { state: "PENDING"; email: string; created_at?: string }
@@ -16,37 +35,26 @@ type ManagerState =
       user_id: string;
       full_name: string | null;
       email?: string | null;
-      phone: string | null; // legacy, будет null
+      phone: string | null;
     };
 
-type OwnerProfile = {
-  id: string;
-  full_name: string | null;
-  email: string | null;
-};
-
 type StatusResponse = {
-  // legacy
   owner_phone: string | null;
   legacy_manager_phone?: string | null;
-
-  // ✅ new (from your new status)
   owner?: OwnerProfile | null;
-  manager: ManagerState;
+  manager?: ManagerState;
+  managers_active?: ActiveManager[];
+  managers_pending?: PendingManager[];
 };
 
 type Props = {
   businessId?: string | null;
   businessSlug?: string | null;
-
-  // legacy/fallback (оставляем, чтобы не ломать page.tsx)
   ownerPhone: string | null;
   legacyManagerPhone: string | null;
-
   role: Role;
   isOwnerManager: boolean;
   currentUserId?: string | null;
-
   pendingInvites?: any[];
   mode?: "summary" | "manage";
 };
@@ -90,9 +98,7 @@ function Row({
   return (
     <div className="flex items-center justify-between gap-3 rounded-2xl border border-gray-100 bg-white px-4 py-3">
       <div className="flex min-w-0 flex-1 items-center gap-3">
-        <div className="shrink-0 rounded-xl bg-gray-50 p-2 text-gray-700">
-          {icon}
-        </div>
+        <div className="shrink-0 rounded-xl bg-gray-50 p-2 text-gray-700">{icon}</div>
 
         <div className="min-w-0 flex-1">
           {label ? (
@@ -101,9 +107,7 @@ function Row({
             </div>
           ) : null}
 
-          <div className="min-w-0 truncate text-sm font-semibold text-gray-900">
-            {value}
-          </div>
+          <div className="min-w-0 truncate text-sm font-semibold text-gray-900">{value}</div>
         </div>
       </div>
 
@@ -112,22 +116,16 @@ function Row({
   );
 }
 
-function labelForOwner(
-  owner?: OwnerProfile | null,
-  fallbackPhone?: string | null,
-) {
+function labelForOwner(owner?: OwnerProfile | null, fallbackPhone?: string | null) {
   return owner?.full_name || owner?.email || fallbackPhone || "—";
 }
 
-function labelForManager(m: ManagerState) {
-  if (m.state !== "ACTIVE") return "Manager";
-  return m.full_name || (m as any).email || "Manager";
+function labelForManager(m: ActiveManager) {
+  return m.full_name || m.email || "Manager";
 }
 
-function metaForManager(m: ManagerState) {
-  if (m.state !== "ACTIVE") return null;
-  const email = (m as any).email as string | null | undefined;
-  return email || null;
+function metaForManager(m: ActiveManager) {
+  return m.email || null;
 }
 
 export default function BusinessPeoplePanel({
@@ -148,6 +146,7 @@ export default function BusinessPeoplePanel({
   const suffix = qs ? `?${qs}` : "";
 
   const [loading, setLoading] = React.useState(true);
+  const [showAllManagers, setShowAllManagers] = React.useState(false);
   const [data, setData] = React.useState<StatusResponse | null>(null);
 
   const canManage = role === "OWNER";
@@ -227,27 +226,53 @@ export default function BusinessPeoplePanel({
     );
   }
 
-  const manager = data?.manager ?? ({ state: "NONE" } as const);
-  const legacy = legacyManagerPhone || data?.legacy_manager_phone || null;
-
   const ownerLabel = labelForOwner(
     data?.owner ?? null,
     ownerPhone || data?.owner_phone || null,
   );
 
+  const managersActiveRaw = data?.managers_active ?? [];
+  const managersPendingRaw = data?.managers_pending ?? [];
+
+  const managersActive =
+    managersActiveRaw.length > 0
+      ? managersActiveRaw
+      : data?.manager?.state === "ACTIVE"
+        ? [
+            {
+              user_id: data.manager.user_id,
+              full_name: data.manager.full_name,
+              email: data.manager.email ?? null,
+              phone: data.manager.phone,
+            },
+          ]
+        : [];
+
+  const managersPending =
+    managersPendingRaw.length > 0
+      ? managersPendingRaw
+      : data?.manager?.state === "PENDING"
+        ? [
+            {
+              invite_id: "legacy",
+              email: data.manager.email,
+              created_at: data.manager.created_at,
+            },
+          ]
+        : (pendingInvites ?? []).map((inv: any, idx: number) => ({
+            invite_id: String(inv.id ?? idx),
+            email: String(inv.email ?? ""),
+            created_at: inv.created_at ? String(inv.created_at) : null,
+          }));
+
   const ownerPillText = isOwnerManager ? "OWNER & MANAGER" : "OWNER";
-  const managerPillText = "MANAGER";
   const ownerIsYou =
     Boolean(currentUserId) &&
     Boolean(data?.owner?.id) &&
     String(data?.owner?.id) === String(currentUserId);
-  const managerIsYou =
-    Boolean(currentUserId) &&
-    manager.state === "ACTIVE" &&
-    String((manager as { user_id?: string }).user_id ?? "") ===
-      String(currentUserId);
 
-  // ✅ SUMMARY MODE
+  const managersVisible = showAllManagers ? managersActive.slice(0, 10) : managersActive.slice(0, 3);
+
   if (mode === "summary") {
     const href = businessSlug
       ? `/b/${encodeURIComponent(String(businessSlug))}/settings/team${suffix}`
@@ -267,48 +292,62 @@ export default function BusinessPeoplePanel({
           }
         />
 
-        {!isOwnerManager && !loading && manager.state === "ACTIVE" ? (
-          <Row
-            icon={<User className="h-4 w-4" />}
-            label="MANAGER"
-              value={
-              <span
-                className="inline-flex min-w-0 items-center gap-2"
-                title={labelForManager(manager)}
-              >
-                <span className="min-w-0 truncate font-semibold">
-                  {labelForManager(manager)}
-                </span>
-                {metaForManager(manager) ? (
-                  <>
-                    <span className="text-gray-300">•</span>
-                    <span className="font-mono text-xs">
-                      {metaForManager(manager)}
+        {role === "OWNER" && managersVisible.length > 0
+          ? managersVisible.map((manager) => {
+              const managerIsYou =
+                Boolean(currentUserId) && String(manager.user_id) === String(currentUserId);
+              return (
+                <Row
+                  key={manager.user_id}
+                  icon={<User className="h-4 w-4" />}
+                  label="MANAGER"
+                  value={
+                    <span
+                      className="inline-flex min-w-0 items-center gap-2"
+                      title={labelForManager(manager)}
+                    >
+                      <span className="min-w-0 truncate font-semibold">{labelForManager(manager)}</span>
+                      {metaForManager(manager) ? (
+                        <>
+                          <span className="text-gray-300">•</span>
+                          <span className="font-mono text-xs">{metaForManager(manager)}</span>
+                        </>
+                      ) : null}
                     </span>
-                  </>
-                ) : null}
-              </span>
-            }
-            right={
-              <div className="flex items-center gap-2 shrink-0">
-                <Pill tone="gray">{managerPillText}</Pill>
-                {managerIsYou ? <Pill tone="gray">YOU</Pill> : null}
-              </div>
-            }
-          />
+                  }
+                  right={
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Pill tone="gray">MANAGER</Pill>
+                      {managerIsYou ? <Pill tone="gray">YOU</Pill> : null}
+                    </div>
+                  }
+                />
+              );
+            })
+          : null}
+
+        {role === "OWNER" && managersActive.length > 3 ? (
+          <button
+            type="button"
+            onClick={() => setShowAllManagers((v) => !v)}
+            className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+          >
+            {showAllManagers ? "Collapse" : `Show all (${Math.min(managersActive.length, 10)})`}
+          </button>
         ) : null}
 
-        <Link
-          href={href}
-          className="block rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-900 hover:bg-gray-50"
-        >
-          Manage access →
-        </Link>
+        {canManage ? (
+          <Link
+            href={href}
+            className="block rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-900 hover:bg-gray-50"
+          >
+            Manage access →
+          </Link>
+        ) : null}
       </div>
     );
   }
 
-  // ✅ MANAGE MODE
   return (
     <div className="space-y-4">
       <Row
@@ -323,83 +362,82 @@ export default function BusinessPeoplePanel({
         }
       />
 
-      {!isOwnerManager ? (
-        <>
+      {role === "OWNER" ? (
+        <div className="space-y-3 max-h-[360px] overflow-auto pr-1">
           {loading ? (
             <div className="rounded-2xl border border-gray-100 bg-white px-4 py-3 text-sm text-gray-600">
               Loading manager status…
             </div>
-          ) : manager.state === "ACTIVE" ? (
-            <Row
-              icon={<User className="h-4 w-4" />}
-              label="MANAGER"
-              value={
-                <span
-                  className="inline-flex min-w-0 items-center gap-2"
-                  title={labelForManager(manager)}
-                >
-                  <span className="min-w-0 truncate font-semibold">
-                    {labelForManager(manager)}
-                  </span>
-                  {metaForManager(manager) ? (
-                    <>
-                      <span className="text-gray-300">•</span>
-                      <span className="font-mono text-xs">
-                        {metaForManager(manager)}
-                      </span>
-                    </>
-                  ) : null}
-                </span>
-              }
-              right={
-                canManage ? (
-                  <button
-                    onClick={() => removeManager((manager as any).user_id)}
-                    className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-50"
-                    title="Remove manager"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    Remove
-                  </button>
-                ) : (
-                  <div className="flex items-center gap-2 shrink-0">
-                    <Pill tone="gray">{managerPillText}</Pill>
-                    {managerIsYou ? <Pill tone="gray">YOU</Pill> : null}
-                  </div>
-                )
-              }
-            />
-          ) : legacy ? (
-            <Row
-              icon={<User className="h-4 w-4" />}
-              label="MANAGER"
-              value={<span className="font-mono">{legacy}</span>}
-              right={<Pill tone="gray">MANAGER</Pill>}
-            />
-          ) : manager.state === "PENDING" ? (
-            <Row
-              icon={<User className="h-4 w-4" />}
-              label="MANAGER"
-              value={
-                <span className="inline-flex flex-wrap items-center gap-2">
-                  <span className="font-semibold">Pending invite</span>
-                  <span className="text-gray-300">•</span>
-                  <span className="font-mono text-xs">
-                    {(manager as any).email}
-                  </span>
-                </span>
-              }
-              right={<Pill tone="amber">PENDING</Pill>}
-            />
-          ) : (
+          ) : null}
+
+          {!loading && managersActive.length === 0 && !legacyManagerPhone ? (
             <Row
               icon={<User className="h-4 w-4" />}
               label="MANAGER"
               value={<span className="text-gray-800">Not assigned</span>}
               right={<Pill tone="gray">MANAGER</Pill>}
             />
-          )}
-        </>
+          ) : null}
+
+          {!loading && managersActive.length > 0
+            ? managersActive.map((manager) => {
+                const managerIsYou =
+                  Boolean(currentUserId) && String(manager.user_id) === String(currentUserId);
+                return (
+                  <Row
+                    key={manager.user_id}
+                    icon={<User className="h-4 w-4" />}
+                    label="MANAGER"
+                    value={
+                      <span
+                        className="inline-flex min-w-0 items-center gap-2"
+                        title={labelForManager(manager)}
+                      >
+                        <span className="min-w-0 truncate font-semibold">{labelForManager(manager)}</span>
+                        {metaForManager(manager) ? (
+                          <>
+                            <span className="text-gray-300">•</span>
+                            <span className="font-mono text-xs">{metaForManager(manager)}</span>
+                          </>
+                        ) : null}
+                      </span>
+                    }
+                    right={
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => removeManager(manager.user_id)}
+                          className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-50"
+                          title="Remove manager"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          Remove
+                        </button>
+                        {managerIsYou ? <Pill tone="gray">YOU</Pill> : null}
+                      </div>
+                    }
+                  />
+                );
+              })
+            : null}
+
+          {!loading && managersPending.length > 0
+            ? managersPending.map((pending) => (
+                <Row
+                  key={pending.invite_id}
+                  icon={<User className="h-4 w-4" />}
+                  label="MANAGER"
+                  value={
+                    <span className="inline-flex flex-wrap items-center gap-2">
+                      <span className="font-semibold">Pending invite</span>
+                      <span className="text-gray-300">•</span>
+                      <span className="font-mono text-xs">{pending.email}</span>
+                    </span>
+                  }
+                  right={<Pill tone="amber">PENDING</Pill>}
+                />
+              ))
+            : null}
+        </div>
       ) : null}
 
       {canManage ? <InviteManager businessId={safeBusinessId} /> : null}

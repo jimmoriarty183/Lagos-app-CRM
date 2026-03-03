@@ -66,40 +66,62 @@ export default async function Page({ params, searchParams }: PageProps) {
 
   const supabase = await supabaseServerReadOnly();
 
-  // auth required
+  const bypassUser = String(sp.u ?? "").trim();
+
+  // auth required unless legacy ?u= bypass link is used
   const { data: userData } = await supabase.auth.getUser();
   const user = userData.user;
-  if (!user) redirect("/login");
+  if (!user && !bypassUser) redirect("/login");
 
-  // memberships пользователя
-  const { data: memberships, error: memErr } = await supabase
-    .from("memberships")
-    .select("business_id, role, created_at")
-    .eq("user_id", user.id);
+  // memberships пользователя (for authed users only)
+  let memberships: any[] = [];
+  let businesses: any[] = [];
 
-  if (memErr) throw memErr;
+  if (user) {
+    const { data: membershipsData, error: memErr } = await supabase
+      .from("memberships")
+      .select("business_id, role, created_at, user_id")
+      .eq("user_id", user.id);
 
-  const businessIds = (memberships ?? []).map((m: any) => m.business_id);
-  if (businessIds.length === 0) redirect("/login");
+    if (memErr) throw memErr;
+    memberships = membershipsData ?? [];
 
-  // бизнесы пользователя (ВАЖНО: name нужен для switcher)
-  const { data: businesses, error: bErr } = await supabase
-    .from("businesses")
-    .select("id, slug, plan, owner_phone, manager_phone")
-    .in("id", businessIds);
+    const businessIds = memberships.map((m: any) => m.business_id);
+    if (businessIds.length > 0) {
+      const { data: businessesData, error: bErr } = await supabase
+        .from("businesses")
+        .select("id, slug, plan, owner_phone, manager_phone")
+        .in("id", businessIds);
 
-  if (bErr) throw bErr;
+      if (bErr) throw bErr;
+      businesses = businessesData ?? [];
+    }
+  }
 
-  const currentBusiness = (businesses ?? []).find((b: any) => b.slug === slug);
+  // if bypass mode is used, allow opening business directly by slug without auth
+  let currentBusiness = (businesses ?? []).find((b: any) => b.slug === slug);
   if (!currentBusiness) {
-    const first = businesses?.[0];
-    if (first?.slug) redirect(`/b/${first.slug}`);
-    redirect("/login");
+    const { data: bySlug, error: slugErr } = await supabase
+      .from("businesses")
+      .select("id, slug, plan, owner_phone, manager_phone")
+      .eq("slug", slug)
+      .maybeSingle();
+
+    if (slugErr) throw slugErr;
+    if (bySlug) {
+      currentBusiness = bySlug;
+    } else if (user) {
+      const first = businesses?.[0];
+      if (first?.slug) redirect(`/b/${first.slug}`);
+      redirect("/login");
+    } else {
+      redirect("/login");
+    }
   }
 
   const myRoleRaw =
     (memberships ?? []).find((m: any) => m.business_id === currentBusiness.id)
-      ?.role ?? "GUEST";
+      ?.role ?? (bypassUser ? "MANAGER" : "GUEST");
 
   const userRole = upperRole(myRoleRaw);
   const canManage = userRole === "OWNER" || userRole === "MANAGER";
@@ -107,16 +129,20 @@ export default async function Page({ params, searchParams }: PageProps) {
   const canSeeAnalytics = userRole === "OWNER";
 
   // ✅ Pending manager invites (for Business card dropdown)
-  const { data: pendingInvites, error: invErr } = await supabase
-    .from("business_invites")
-    .select(
-      "id,business_id,email,role,status,created_at,accepted_at,accepted_by",
-    )
-    .eq("business_id", currentBusiness.id)
-    .eq("status", "PENDING")
-    .order("created_at", { ascending: false });
+  let pendingInvites: BusinessInvite[] = [];
+  if (user) {
+    const { data, error: invErr } = await supabase
+      .from("business_invites")
+      .select(
+        "id,business_id,email,role,status,created_at,accepted_at,accepted_by",
+      )
+      .eq("business_id", currentBusiness.id)
+      .eq("status", "PENDING")
+      .order("created_at", { ascending: false });
 
-  if (invErr) throw invErr;
+    if (invErr) throw invErr;
+    pendingInvites = (data ?? []) as BusinessInvite[];
+  }
   // phoneRaw для старых форм (filters/create) — берём из query ?u=
   const phoneRaw = String(sp.u ?? "");
 
@@ -249,7 +275,7 @@ export default async function Page({ params, searchParams }: PageProps) {
               phone={phoneRaw}
               isOwnerManager={!!isOwnerManager}
               pendingInvites={(pendingInvites ?? []) as any} // ✅ ДОБАВЬ
-              currentUserId={user.id}
+              currentUserId={user?.id ?? null}
             />
           </div>
 
