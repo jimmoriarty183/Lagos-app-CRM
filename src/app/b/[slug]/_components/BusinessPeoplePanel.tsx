@@ -146,7 +146,6 @@ export default function BusinessPeoplePanel({
   const suffix = qs ? `?${qs}` : "";
 
   const [loading, setLoading] = React.useState(true);
-  const [showAllManagers, setShowAllManagers] = React.useState(false);
   const [data, setData] = React.useState<StatusResponse | null>(null);
 
   const canManage = role === "OWNER";
@@ -283,9 +282,6 @@ export default function BusinessPeoplePanel({
     Boolean(data?.owner?.id) &&
     String(data?.owner?.id) === String(currentUserId);
 
-  const managersVisible = showAllManagers
-    ? managersActive.slice(0, 10)
-    : managersActive.slice(0, 3);
 
   if (mode === "summary") {
     const href = businessSlug
@@ -297,7 +293,17 @@ export default function BusinessPeoplePanel({
         <Row
           icon={<User className="h-4 w-4" />}
           label="OWNER"
-          value={<span title={ownerLabel}>{ownerLabel}</span>}
+          value={
+            <span className="inline-flex min-w-0 items-center gap-2" title={ownerLabel}>
+              <span className="min-w-0 truncate font-semibold">{ownerLabel}</span>
+              {data?.owner?.email ? (
+                <>
+                  <span className="text-gray-300">•</span>
+                  <span className="font-mono text-xs">{data.owner.email}</span>
+                </>
+              ) : null}
+            </span>
+          }
           right={
             <div className="flex items-center gap-2 shrink-0">
               <Pill tone="blue">{ownerPillText}</Pill>
@@ -306,59 +312,10 @@ export default function BusinessPeoplePanel({
           }
         />
 
-        {role === "OWNER" && managersVisible.length > 0
-          ? managersVisible.map((manager, index) => {
-              const managerIsYou =
-                Boolean(currentUserId) &&
-                String(manager.user_id) === String(currentUserId);
-              return (
-                <Row
-                  key={manager.user_id}
-                  icon={<User className="h-4 w-4" />}
-                  label={`Manager ${index + 1}`}
-                  value={
-                    <span
-                      className="inline-flex min-w-0 items-center gap-2"
-                      title={displayManagerName(manager)}
-                    >
-                      <span className="min-w-0 truncate font-semibold">
-                        {displayManagerName(manager)}
-                      </span>
-                      {managerMeta(manager) ? (
-                        <>
-                          <span className="text-gray-300">•</span>
-                          <span className="font-mono text-xs">{managerMeta(manager)}</span>
-                        </>
-                      ) : null}
-                    </span>
-                  }
-                  right={
-                    <div className="flex items-center gap-2 shrink-0">
-                      <Pill tone="gray">Manager</Pill>
-                      {managerIsYou ? <Pill tone="gray">YOU</Pill> : null}
-                    </div>
-                  }
-                />
-              );
-            })
-          : null}
-
-        {role === "OWNER" && managersActive.length > 3 ? (
-          <button
-            type="button"
-            onClick={() => setShowAllManagers((v) => !v)}
-            className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
-          >
-            {showAllManagers
-              ? "Collapse"
-              : `Show all (${Math.min(managersActive.length, 10)})`}
-          </button>
-        ) : null}
-
         {canManage ? (
           <Link
             href={href}
-            className="block rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-900 hover:bg-gray-50"
+            className="block rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-900 hover:bg-gray-50 text-right"
           >
             Manage access →
           </Link>
@@ -372,7 +329,17 @@ export default function BusinessPeoplePanel({
       <Row
         icon={<User className="h-4 w-4" />}
         label="OWNER"
-        value={<span title={ownerLabel}>{ownerLabel}</span>}
+        value={
+          <span className="inline-flex min-w-0 items-center gap-2" title={ownerLabel}>
+            <span className="min-w-0 truncate font-semibold">{ownerLabel}</span>
+            {data?.owner?.email ? (
+              <>
+                <span className="text-gray-300">•</span>
+                <span className="font-mono text-xs">{data.owner.email}</span>
+              </>
+            ) : null}
+          </span>
+        }
         right={
           <div className="flex items-center gap-2 shrink-0">
             <Pill tone="blue">{ownerPillText}</Pill>

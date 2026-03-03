@@ -118,19 +118,19 @@ export default function MobileFiltersAccordion({
             className={inputCls}
           >
             <option value="ALL">All team</option>
-            <option value="OWNER">Owners</option>
-            <option value="MANAGER">Managers</option>
             {actors.map((member) => (
               <option key={member.id} value={`user:${member.id}`}>
-                {member.label} ({member.kind})
+                {member.label}
               </option>
             ))}
           </select>
         </label>
 
-        <Button type="submit" size="sm">
-          Apply
-        </Button>
+        <div className="flex justify-end">
+          <Button type="submit" size="sm">
+            Apply
+          </Button>
+        </div>
       </form>
     </section>
   );

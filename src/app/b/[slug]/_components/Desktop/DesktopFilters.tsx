@@ -77,11 +77,11 @@ export default function DesktopFilters({
         ) : null}
       </div>
 
-      <form method="get" className="mt-4 flex flex-wrap gap-3 items-end">
+      <form method="get" className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5 items-end">
         <input type="hidden" name="u" value={phoneRaw} />
         <input type="hidden" name="page" value="1" />
 
-        <label className="grid gap-1 flex-1 min-w-[220px]">
+        <label className="grid gap-1 xl:col-span-2">
           <span className={labelCls}>Search</span>
           <input
             name="q"
@@ -91,7 +91,7 @@ export default function DesktopFilters({
           />
         </label>
 
-        <label className="grid gap-1 min-w-[180px]">
+        <label className="grid gap-1">
           <span className={labelCls}>Status</span>
           <select
             name="status"
@@ -108,7 +108,7 @@ export default function DesktopFilters({
           </select>
         </label>
 
-        <label className="grid gap-1 min-w-[160px]">
+        <label className="grid gap-1">
           <span className={labelCls}>Period</span>
           <select
             name="range"
@@ -123,7 +123,7 @@ export default function DesktopFilters({
           </select>
         </label>
 
-        <label className="grid gap-1 min-w-[220px]">
+        <label className="grid gap-1">
           <span className={labelCls}>Created by</span>
           <select
             name="actor"
@@ -131,19 +131,19 @@ export default function DesktopFilters({
             className={inputCls}
           >
             <option value="ALL">All team</option>
-            <option value="OWNER">Owners</option>
-            <option value="MANAGER">Managers</option>
             {actors.map((member) => (
               <option key={member.id} value={`user:${member.id}`}>
-                {member.label} ({member.kind})
+                {member.label}
               </option>
             ))}
           </select>
         </label>
 
-        <Button type="submit" size="sm">
-          Apply
-        </Button>
+        <div className="flex justify-end xl:justify-start">
+          <Button type="submit" size="sm">
+            Apply
+          </Button>
+        </div>
       </form>
     </section>
   );
