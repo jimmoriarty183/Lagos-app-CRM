@@ -8,19 +8,43 @@ function json(status: number, payload: any) {
 }
 
 function getBaseUrl(req: Request) {
-  // 1) продовый стабильный домен
   const site = process.env.NEXT_PUBLIC_SITE_URL?.trim();
   if (site) return site.replace(/\/$/, "");
 
-  // 2) если нет - пробуем origin
   const origin = req.headers.get("origin")?.trim();
   if (origin) return origin.replace(/\/$/, "");
 
-  // 3) fallback: локалка
   const app = process.env.NEXT_PUBLIC_APP_URL?.trim();
   if (app) return app.replace(/\/$/, "");
 
   return "http://localhost:3000";
+}
+
+function isAlreadyRegisteredError(message: string) {
+  const m = message.toLowerCase();
+  return m.includes("already been registered") || m.includes("already registered");
+}
+
+async function sendExistingUserAccessEmail(input: {
+  to: string;
+  actionLink: string;
+  businessSlug: string;
+}) {
+  const resendKey = process.env.RESEND_API_KEY;
+  const fromEmail = process.env.INVITE_FROM_EMAIL || process.env.RESEND_FROM_EMAIL;
+  if (!resendKey || !fromEmail) return false;
+
+  const { Resend } = await import("resend");
+  const resend = new Resend(resendKey);
+
+  await resend.emails.send({
+    from: fromEmail,
+    to: input.to,
+    subject: `You've been granted manager access to ${input.businessSlug}`,
+    html: `<p>You already have an account.</p><p>Click to confirm access to <strong>${input.businessSlug}</strong>:</p><p><a href="${input.actionLink}">Open business access</a></p>`,
+  });
+
+  return true;
 }
 
 export async function POST(req: Request) {
@@ -42,7 +66,6 @@ export async function POST(req: Request) {
       auth: { persistSession: false, autoRefreshToken: false },
     });
 
-    // 🔎 Ищем invite по business + email (любой статус)
     const { data: existing, error: selErr } = await supabase
       .from("business_invites")
       .select("id,status")
@@ -82,7 +105,8 @@ export async function POST(req: Request) {
           status: "PENDING",
         })
         .select("id")
-        .limit(1).maybeSingle();
+        .limit(1)
+        .maybeSingle();
 
       if (createErr || !created?.id) {
         return json(500, { error: createErr?.message || "Insert failed" });
@@ -90,11 +114,50 @@ export async function POST(req: Request) {
       invite_id = created.id;
     }
 
-    // ✅ ВАЖНО: redirectTo всегда строим от правильного base url
+    const { data: business } = await supabase
+      .from("businesses")
+      .select("slug")
+      .eq("id", business_id)
+      .maybeSingle();
+
+    const businessSlug = String(business?.slug || "business");
+
     const baseUrl = getBaseUrl(req);
     const redirectTo = `${baseUrl}/invite?invite_id=${encodeURIComponent(invite_id)}`;
 
     const { error: authErr } = await supabase.auth.admin.inviteUserByEmail(email, { redirectTo });
+
+    if (authErr && isAlreadyRegisteredError(authErr.message)) {
+      const { data: linkData, error: linkErr } = await supabase.auth.admin.generateLink({
+        type: "magiclink",
+        email,
+        options: { redirectTo },
+      });
+
+      if (linkErr || !linkData?.properties?.action_link) {
+        return json(400, {
+          error: `Supabase existing-user link failed: ${linkErr?.message || "No action link"}`,
+          invite_id,
+          redirectTo,
+        });
+      }
+
+      const sent = await sendExistingUserAccessEmail({
+        to: email,
+        actionLink: linkData.properties.action_link,
+        businessSlug,
+      });
+
+      return json(200, {
+        ok: true,
+        invite_id,
+        email,
+        status: "PENDING",
+        email_sent: sent,
+        redirectTo,
+        existing_user: true,
+      });
+    }
 
     if (authErr) {
       return json(400, {
@@ -111,6 +174,7 @@ export async function POST(req: Request) {
       status: "PENDING",
       email_sent: true,
       redirectTo,
+      existing_user: false,
     });
   } catch (e: any) {
     return json(500, { error: e?.message || "Unexpected error" });
