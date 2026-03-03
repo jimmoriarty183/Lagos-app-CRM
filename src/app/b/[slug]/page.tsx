@@ -260,7 +260,6 @@ export default async function Page({ params, searchParams }: PageProps) {
       .eq("business_id", currentBusiness.id)
       .order("created_at", { ascending: false });
 
-    if (filters.q) query = query.ilike("search_text", `%${filters.q}%`);
     if (filters.status !== "ALL") query = query.eq("status", filters.status);
 
     if (withActorFilter && filters.actor !== "ALL") {
@@ -285,7 +284,31 @@ export default async function Page({ params, searchParams }: PageProps) {
   const { data: orders, error: oErr } = ordersResult;
   if (oErr && !bypassMode) throw oErr;
 
-  const list: any[] = orders ?? [];
+  const listRaw: any[] = orders ?? [];
+
+  const actorNameById = new Map<string, string>();
+  for (const actor of teamActors) {
+    if (actor?.id) actorNameById.set(String(actor.id), String(actor.label ?? ""));
+  }
+
+  const qNeedle = String(filters.q ?? "").trim().toLowerCase();
+  const list: any[] = qNeedle
+    ? listRaw.filter((o) => {
+        const actorName = actorNameById.get(String(o.created_by ?? "")) ?? "";
+        const blob = [
+          String(o.search_text ?? ""),
+          String(o.client_name ?? ""),
+          String(o.client_phone ?? ""),
+          String(o.amount ?? ""),
+          String(o.description ?? ""),
+          actorName,
+        ]
+          .join(" ")
+          .toLowerCase();
+
+        return blob.includes(qNeedle);
+      })
+    : listRaw;
 
   // Analytics
   const totalOrders = list.length;

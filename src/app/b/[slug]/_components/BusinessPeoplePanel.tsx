@@ -294,13 +294,10 @@ export default function BusinessPeoplePanel({
           icon={<User className="h-4 w-4" />}
           label="OWNER"
           value={
-            <span className="inline-flex min-w-0 items-center gap-2" title={ownerLabel}>
-              <span className="min-w-0 truncate font-semibold">{ownerLabel}</span>
+            <span className="min-w-0">
+              <span className="block truncate font-semibold" title={ownerLabel}>{ownerLabel}</span>
               {data?.owner?.email ? (
-                <>
-                  <span className="text-gray-300">•</span>
-                  <span className="font-mono text-xs">{data.owner.email}</span>
-                </>
+                <span className="block font-mono text-xs text-gray-500">{data.owner.email}</span>
               ) : null}
             </span>
           }
@@ -315,7 +312,7 @@ export default function BusinessPeoplePanel({
         {canManage ? (
           <Link
             href={href}
-            className="block rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-900 hover:bg-gray-50 text-right"
+            className="block rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-900 hover:bg-gray-50 "
           >
             Manage access →
           </Link>
@@ -330,13 +327,10 @@ export default function BusinessPeoplePanel({
         icon={<User className="h-4 w-4" />}
         label="OWNER"
         value={
-          <span className="inline-flex min-w-0 items-center gap-2" title={ownerLabel}>
-            <span className="min-w-0 truncate font-semibold">{ownerLabel}</span>
+          <span className="min-w-0">
+            <span className="block truncate font-semibold" title={ownerLabel}>{ownerLabel}</span>
             {data?.owner?.email ? (
-              <>
-                <span className="text-gray-300">•</span>
-                <span className="font-mono text-xs">{data.owner.email}</span>
-              </>
+              <span className="block font-mono text-xs text-gray-500">{data.owner.email}</span>
             ) : null}
           </span>
         }
@@ -376,18 +370,12 @@ export default function BusinessPeoplePanel({
                     icon={<User className="h-4 w-4" />}
                     label={`Manager ${index + 1}`}
                     value={
-                      <span
-                        className="inline-flex min-w-0 items-center gap-2"
-                        title={displayManagerName(manager)}
-                      >
-                        <span className="min-w-0 truncate font-semibold">
+                      <span className="min-w-0">
+                        <span className="block truncate font-semibold" title={displayManagerName(manager)}>
                           {displayManagerName(manager)}
                         </span>
                         {managerMeta(manager) ? (
-                          <>
-                            <span className="text-gray-300">•</span>
-                            <span className="font-mono text-xs">{managerMeta(manager)}</span>
-                          </>
+                          <span className="block font-mono text-xs text-gray-500">{managerMeta(manager)}</span>
                         ) : null}
                       </span>
                     }
