@@ -1,7 +1,6 @@
 import { BarChart3 } from "lucide-react";
 
 type Props = {
-  canSeeAnalytics: boolean;
 
   totalOrders: number;
   totalAmount: number;
@@ -59,7 +58,6 @@ function MetricCard({
 
 export default function DesktopAnalyticsCard(props: Props) {
   const {
-    canSeeAnalytics,
     totalOrders,
     totalAmount,
     overdueCount,
@@ -75,7 +73,6 @@ export default function DesktopAnalyticsCard(props: Props) {
     fmtAmount,
   } = props;
 
-  if (!canSeeAnalytics) return null;
 
   return (
     <section id="analytics" className="space-y-3 sm:space-y-4">

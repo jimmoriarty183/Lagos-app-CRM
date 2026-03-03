@@ -152,7 +152,7 @@ export default async function Page({ params, searchParams }: PageProps) {
   const userRole = upperRole(myRoleRaw);
   const canManage = userRole === "OWNER" || userRole === "MANAGER";
   const canEdit = canManage;
-  const canSeeAnalytics = userRole === "OWNER";
+  const canSeeAnalyticsNav = userRole === "OWNER";
 
   // ✅ Pending manager invites (for Business card dropdown)
   let pendingInvites: BusinessInvite[] = [];
@@ -351,7 +351,7 @@ export default async function Page({ params, searchParams }: PageProps) {
             <DesktopSidebar
               clearHref={clearHref}
               totalCount={totalOrders}
-              canSeeAnalytics={canSeeAnalytics}
+              canSeeAnalytics={canSeeAnalyticsNav}
             />
 
             <DesktopBusinessCard
@@ -373,7 +373,6 @@ export default async function Page({ params, searchParams }: PageProps) {
 
           <div className="col-span-9 space-y-6">
             <DesktopAnalyticsCard
-              canSeeAnalytics={canSeeAnalytics}
               totalOrders={totalOrders}
               totalAmount={totalAmount}
               overdueCount={overdueCount}

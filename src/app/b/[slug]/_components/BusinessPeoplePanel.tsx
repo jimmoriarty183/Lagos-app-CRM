@@ -55,7 +55,7 @@ type Props = {
   role: Role;
   isOwnerManager: boolean;
   currentUserId?: string | null;
-  pendingInvites?: any[];
+  pendingInvites?: Array<{ id?: string; email?: string; created_at?: string | null }>;
   mode?: "summary" | "manage";
 };
 
@@ -120,11 +120,11 @@ function labelForOwner(owner?: OwnerProfile | null, fallbackPhone?: string | nul
   return owner?.full_name || owner?.email || fallbackPhone || "—";
 }
 
-function labelForManager(m: ActiveManager) {
+function displayManagerName(m: ActiveManager) {
   return m.full_name || m.email || "Manager";
 }
 
-function metaForManager(m: ActiveManager) {
+function managerMeta(m: ActiveManager) {
   return m.email || null;
 }
 
@@ -234,19 +234,31 @@ export default function BusinessPeoplePanel({
   const managersActiveRaw = data?.managers_active ?? [];
   const managersPendingRaw = data?.managers_pending ?? [];
 
-  const managersActive =
-    managersActiveRaw.length > 0
-      ? managersActiveRaw
-      : data?.manager?.state === "ACTIVE"
-        ? [
-            {
-              user_id: data.manager.user_id,
-              full_name: data.manager.full_name,
-              email: data.manager.email ?? null,
-              phone: data.manager.phone,
-            },
-          ]
-        : [];
+  const managersFromLegacy: ActiveManager[] =
+    data?.manager?.state === "ACTIVE"
+      ? [
+          {
+            user_id: data.manager.user_id,
+            full_name: data.manager.full_name,
+            email: data.manager.email ?? null,
+            phone: data.manager.phone,
+          },
+        ]
+      : [];
+
+  const managerCandidates = managersActiveRaw.length > 0 ? managersActiveRaw : managersFromLegacy;
+  const ownerId = data?.owner?.id ? String(data.owner.id) : "";
+  const ownerName = String(data?.owner?.full_name ?? "").trim().toLowerCase();
+
+  // IMPORTANT: UI inclusion is based on full_name/email quality, not role checks.
+  const managersActive = managerCandidates.filter((m) => {
+    const fullName = String(m.full_name ?? "").trim();
+    const email = String(m.email ?? "").trim();
+    if (!fullName && !email) return false;
+    if (ownerId && String(m.user_id) === ownerId) return false;
+    if (ownerName && fullName && fullName.toLowerCase() === ownerName) return false;
+    return true;
+  });
 
   const managersPending =
     managersPendingRaw.length > 0
@@ -259,7 +271,7 @@ export default function BusinessPeoplePanel({
               created_at: data.manager.created_at,
             },
           ]
-        : (pendingInvites ?? []).map((inv: any, idx: number) => ({
+        : (pendingInvites ?? []).map((inv, idx) => ({
             invite_id: String(inv.id ?? idx),
             email: String(inv.email ?? ""),
             created_at: inv.created_at ? String(inv.created_at) : null,
@@ -271,7 +283,9 @@ export default function BusinessPeoplePanel({
     Boolean(data?.owner?.id) &&
     String(data?.owner?.id) === String(currentUserId);
 
-  const managersVisible = showAllManagers ? managersActive.slice(0, 10) : managersActive.slice(0, 3);
+  const managersVisible = showAllManagers
+    ? managersActive.slice(0, 10)
+    : managersActive.slice(0, 3);
 
   if (mode === "summary") {
     const href = businessSlug
@@ -293,31 +307,34 @@ export default function BusinessPeoplePanel({
         />
 
         {role === "OWNER" && managersVisible.length > 0
-          ? managersVisible.map((manager) => {
+          ? managersVisible.map((manager, index) => {
               const managerIsYou =
-                Boolean(currentUserId) && String(manager.user_id) === String(currentUserId);
+                Boolean(currentUserId) &&
+                String(manager.user_id) === String(currentUserId);
               return (
                 <Row
                   key={manager.user_id}
                   icon={<User className="h-4 w-4" />}
-                  label="MANAGER"
+                  label={`Manager ${index + 1}`}
                   value={
                     <span
                       className="inline-flex min-w-0 items-center gap-2"
-                      title={labelForManager(manager)}
+                      title={displayManagerName(manager)}
                     >
-                      <span className="min-w-0 truncate font-semibold">{labelForManager(manager)}</span>
-                      {metaForManager(manager) ? (
+                      <span className="min-w-0 truncate font-semibold">
+                        {displayManagerName(manager)}
+                      </span>
+                      {managerMeta(manager) ? (
                         <>
                           <span className="text-gray-300">•</span>
-                          <span className="font-mono text-xs">{metaForManager(manager)}</span>
+                          <span className="font-mono text-xs">{managerMeta(manager)}</span>
                         </>
                       ) : null}
                     </span>
                   }
                   right={
                     <div className="flex items-center gap-2 shrink-0">
-                      <Pill tone="gray">MANAGER</Pill>
+                      <Pill tone="gray">Manager</Pill>
                       {managerIsYou ? <Pill tone="gray">YOU</Pill> : null}
                     </div>
                   }
@@ -332,7 +349,9 @@ export default function BusinessPeoplePanel({
             onClick={() => setShowAllManagers((v) => !v)}
             className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
           >
-            {showAllManagers ? "Collapse" : `Show all (${Math.min(managersActive.length, 10)})`}
+            {showAllManagers
+              ? "Collapse"
+              : `Show all (${Math.min(managersActive.length, 10)})`}
           </button>
         ) : null}
 
@@ -373,31 +392,34 @@ export default function BusinessPeoplePanel({
           {!loading && managersActive.length === 0 && !legacyManagerPhone ? (
             <Row
               icon={<User className="h-4 w-4" />}
-              label="MANAGER"
+              label="Manager"
               value={<span className="text-gray-800">Not assigned</span>}
-              right={<Pill tone="gray">MANAGER</Pill>}
+              right={<Pill tone="gray">Manager</Pill>}
             />
           ) : null}
 
           {!loading && managersActive.length > 0
-            ? managersActive.map((manager) => {
+            ? managersActive.map((manager, index) => {
                 const managerIsYou =
-                  Boolean(currentUserId) && String(manager.user_id) === String(currentUserId);
+                  Boolean(currentUserId) &&
+                  String(manager.user_id) === String(currentUserId);
                 return (
                   <Row
                     key={manager.user_id}
                     icon={<User className="h-4 w-4" />}
-                    label="MANAGER"
+                    label={`Manager ${index + 1}`}
                     value={
                       <span
                         className="inline-flex min-w-0 items-center gap-2"
-                        title={labelForManager(manager)}
+                        title={displayManagerName(manager)}
                       >
-                        <span className="min-w-0 truncate font-semibold">{labelForManager(manager)}</span>
-                        {metaForManager(manager) ? (
+                        <span className="min-w-0 truncate font-semibold">
+                          {displayManagerName(manager)}
+                        </span>
+                        {managerMeta(manager) ? (
                           <>
                             <span className="text-gray-300">•</span>
-                            <span className="font-mono text-xs">{metaForManager(manager)}</span>
+                            <span className="font-mono text-xs">{managerMeta(manager)}</span>
                           </>
                         ) : null}
                       </span>
@@ -412,6 +434,7 @@ export default function BusinessPeoplePanel({
                           <Trash2 className="h-4 w-4" />
                           Remove
                         </button>
+                        <Pill tone="gray">Manager</Pill>
                         {managerIsYou ? <Pill tone="gray">YOU</Pill> : null}
                       </div>
                     }
@@ -421,11 +444,11 @@ export default function BusinessPeoplePanel({
             : null}
 
           {!loading && managersPending.length > 0
-            ? managersPending.map((pending) => (
+            ? managersPending.map((pending, index) => (
                 <Row
                   key={pending.invite_id}
                   icon={<User className="h-4 w-4" />}
-                  label="MANAGER"
+                  label={`Manager ${index + 1}`}
                   value={
                     <span className="inline-flex flex-wrap items-center gap-2">
                       <span className="font-semibold">Pending invite</span>
