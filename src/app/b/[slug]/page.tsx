@@ -14,6 +14,7 @@ import MobileCreateOrderAccordion from "./_components/Mobile/MobileCreateOrderAc
 import MobileFiltersAccordion from "./_components/Mobile/MobileFiltersAccordion";
 
 import { supabaseServerReadOnly } from "@/lib/supabase/server";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 
 type BusinessInvite = {
   id: string;
@@ -73,6 +74,13 @@ export default async function Page({ params, searchParams }: PageProps) {
   const user = userData.user;
   if (!user && !bypassUser) redirect("/login");
 
+  const bypassMode = !user && Boolean(bypassUser);
+  const canUseAdmin =
+    Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) &&
+    Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY);
+  const admin = bypassMode && canUseAdmin ? supabaseAdmin() : null;
+  const dataClient = admin ?? supabase;
+
   // memberships пользователя (for authed users only)
   let memberships: any[] = [];
   let businesses: any[] = [];
@@ -101,13 +109,18 @@ export default async function Page({ params, searchParams }: PageProps) {
   // if bypass mode is used, allow opening business directly by slug without auth
   let currentBusiness = (businesses ?? []).find((b: any) => b.slug === slug);
   if (!currentBusiness) {
-    const { data: bySlug, error: slugErr } = await supabase
+    const { data: bySlug, error: slugErr } = await dataClient
       .from("businesses")
       .select("id, slug, plan, owner_phone, manager_phone")
       .eq("slug", slug)
       .maybeSingle();
 
-    if (slugErr) throw slugErr;
+    if (slugErr) {
+      if (bypassMode) {
+        redirect("/login");
+      }
+      throw slugErr;
+    }
     if (bySlug) {
       currentBusiness = bySlug;
     } else if (user) {
@@ -178,7 +191,7 @@ export default async function Page({ params, searchParams }: PageProps) {
     .sort((a: any, b: any) => a.name.localeCompare(b.name));
 
   // Orders query
-  let ordersQuery = supabase
+  let ordersQuery = dataClient
     .from("orders")
     .select("*")
     .eq("business_id", currentBusiness.id)
@@ -191,7 +204,7 @@ export default async function Page({ params, searchParams }: PageProps) {
 
   // range-логика у тебя может быть отдельно — пока оставляем ALL
   const { data: orders, error: oErr } = await ordersQuery;
-  if (oErr) throw oErr;
+  if (oErr && !bypassMode) throw oErr;
 
   const list: any[] = orders ?? [];
 
