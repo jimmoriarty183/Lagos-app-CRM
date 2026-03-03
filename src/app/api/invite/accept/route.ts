@@ -16,6 +16,25 @@ function buildFullName(firstName: string, lastName: string, fullName: string) {
   return joined;
 }
 
+async function sendManagerAcceptedEmail(input: {
+  to: string;
+  businessSlug: string;
+}) {
+  const resendKey = process.env.RESEND_API_KEY;
+  const fromEmail = process.env.INVITE_FROM_EMAIL || process.env.RESEND_FROM_EMAIL;
+  if (!resendKey || !fromEmail) return;
+
+  const { Resend } = await import("resend");
+  const resend = new Resend(resendKey);
+
+  await resend.emails.send({
+    from: fromEmail,
+    to: input.to,
+    subject: `Access confirmed for ${input.businessSlug}`,
+    html: `<p>Your manager access for <strong>${input.businessSlug}</strong> is active.</p><p>You can now sign in and manage orders.</p>`,
+  });
+}
+
 export async function POST(req: Request) {
   const supabase = await supabaseServer();
   const admin = supabaseAdmin();
@@ -79,26 +98,6 @@ export async function POST(req: Request) {
     );
   }
 
-  // 3.1) бизнес-правило: один MANAGER на бизнес
-  // Если хочешь "заменять" менеджера — скажи, дам версию с revoke старого.
-  const { data: existingManager, error: exErr } = await admin
-    .from("memberships")
-    .select("user_id")
-    .eq("business_id", inv.business_id)
-    .eq("role", "MANAGER")
-    .limit(1)
-    .maybeSingle();
-
-  if (exErr) {
-    return NextResponse.json({ ok: false, error: exErr.message }, { status: 500 });
-  }
-  if (existingManager?.user_id && existingManager.user_id !== user.id) {
-    return NextResponse.json(
-      { ok: false, error: "This business already has a manager assigned" },
-      { status: 409 },
-    );
-  }
-
   // 4) upsert profile (service role)
   // Пишем full_name, и если колонки first_name/last_name есть — тоже пишем.
   // Если их нет — Postgres просто вернёт ошибку. Чтобы не ломать прод,
@@ -154,6 +153,12 @@ export async function POST(req: Request) {
   }
   if (!biz?.slug) {
     return NextResponse.json({ ok: false, error: "Business not found" }, { status: 500 });
+  }
+
+  try {
+    await sendManagerAcceptedEmail({ to: userEmail, businessSlug: biz.slug });
+  } catch {
+    // non-blocking email notification
   }
 
   return NextResponse.json({ ok: true, businessSlug: biz.slug });

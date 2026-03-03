@@ -3,6 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { supabaseServer } from "@/lib/supabase/server";
 
+function isMissingColumnError(error: unknown, column: string) {
+  const message = String((error as { message?: string } | null)?.message ?? "").toLowerCase();
+  return message.includes(column.toLowerCase());
+}
+
 /**
  * CREATE ORDER
  */
@@ -29,7 +34,10 @@ export async function createOrder(input: {
   const orderNumber = (count ?? 0) + 1;
 
   // 3) Создаём заказ
-  const { error } = await supabase.from("orders").insert({
+  const { data: authData } = await supabase.auth.getUser();
+  const createdBy = authData?.user?.id ?? null;
+
+  let { error } = await supabase.from("orders").insert({
     business_id: input.businessId,
     order_number: orderNumber,
     client_name: input.clientName,
@@ -39,7 +47,22 @@ export async function createOrder(input: {
     description: input.description || null,
     status: "NEW",
     paid: false,
+    created_by: createdBy,
   });
+
+  if (error && isMissingColumnError(error, "created_by")) {
+    ({ error } = await supabase.from("orders").insert({
+      business_id: input.businessId,
+      order_number: orderNumber,
+      client_name: input.clientName,
+      client_phone: input.clientPhone || null,
+      amount: input.amount,
+      due_date: input.dueDate || null,
+      description: input.description || null,
+      status: "NEW",
+      paid: false,
+    }));
+  }
 
   if (error) throw new Error(error.message);
 

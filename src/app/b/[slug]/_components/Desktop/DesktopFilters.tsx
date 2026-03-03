@@ -9,6 +9,12 @@ type Status =
   | "DUPLICATE";
 
 type Range = "ALL" | "today" | "week" | "month" | "year";
+type TeamActor = {
+  id: string;
+  label: string;
+  kind: "OWNER" | "MANAGER";
+};
+
 type Filters = { q: string; status: "ALL" | Status; range: Range };
 
 type Props = {
@@ -16,6 +22,8 @@ type Props = {
   filters: Filters;
   clearHref: string;
   hasActiveFilters: boolean;
+  actor: string;
+  actors?: TeamActor[];
 
   // ✅ оставляем для совместимости, но НЕ требуем
   card?: React.CSSProperties;
@@ -28,6 +36,8 @@ export default function DesktopFilters({
   filters,
   clearHref,
   hasActiveFilters,
+  actor,
+  actors = [],
   card,
   cardHeader,
   cardTitle,
@@ -110,6 +120,24 @@ export default function DesktopFilters({
             <option value="week">Last 7 days</option>
             <option value="month">This month</option>
             <option value="year">This year</option>
+          </select>
+        </label>
+
+        <label className="grid gap-1 min-w-[220px]">
+          <span className={labelCls}>Created by</span>
+          <select
+            name="actor"
+            defaultValue={actor}
+            className={inputCls}
+          >
+            <option value="ALL">All team</option>
+            <option value="OWNER">Owners</option>
+            <option value="MANAGER">Managers</option>
+            {actors.map((member) => (
+              <option key={member.id} value={`user:${member.id}`}>
+                {member.label} ({member.kind})
+              </option>
+            ))}
           </select>
         </label>
 

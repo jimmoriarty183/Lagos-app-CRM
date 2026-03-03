@@ -41,6 +41,7 @@ type Filters = {
   q: string;
   status: "ALL" | Status;
   range: Range;
+  actor: string;
 };
 
 type PageProps = {
@@ -51,8 +52,20 @@ type PageProps = {
     status?: string;
     range?: string;
     page?: string;
+    actor?: string;
   };
 };
+
+type TeamActor = {
+  id: string;
+  label: string;
+  kind: "OWNER" | "MANAGER";
+};
+
+function isMissingColumnError(error: unknown, column: string) {
+  const message = String((error as { message?: string } | null)?.message ?? "").toLowerCase();
+  return message.includes(column.toLowerCase());
+}
 
 function upperRole(r: any): "OWNER" | "MANAGER" | "GUEST" {
   const s = String(r || "").toUpperCase();
@@ -164,15 +177,64 @@ export default async function Page({ params, searchParams }: PageProps) {
     q: String(sp.q ?? "").trim(),
     status: (String(sp.status ?? "ALL").toUpperCase() as any) ?? "ALL",
     range: (String(sp.range ?? "ALL") as any) ?? "ALL",
+    actor: String(sp.actor ?? "ALL"),
   };
 
   const hasActiveFilters =
-    !!filters.q || filters.status !== "ALL" || filters.range !== "ALL";
+    !!filters.q ||
+    filters.status !== "ALL" ||
+    filters.range !== "ALL" ||
+    filters.actor !== "ALL";
 
   const clearHref =
     phoneRaw && phoneRaw.length > 0
       ? `/b/${slug}?u=${encodeURIComponent(phoneRaw)}`
       : `/b/${slug}`;
+
+  // Team actors for owner/manager filters
+  let teamActors: TeamActor[] = [];
+  let ownerIds: string[] = [];
+  let managerIds: string[] = [];
+
+  try {
+    const { data: actorMemberships } = await dataClient
+      .from("memberships")
+      .select("user_id, role")
+      .eq("business_id", currentBusiness.id)
+      .in("role", ["OWNER", "MANAGER"]);
+
+    const membershipRows = (actorMemberships ?? []).filter((m: any) => m?.user_id);
+    const actorUserIds = Array.from(new Set(membershipRows.map((m: any) => String(m.user_id))));
+
+    const profilesMap = new Map<string, { full_name: string | null; email: string | null }>();
+    if (actorUserIds.length > 0) {
+      const { data: actorProfiles } = await dataClient
+        .from("profiles")
+        .select("id, full_name, email")
+        .in("id", actorUserIds);
+
+      for (const p of actorProfiles ?? []) {
+        if (p?.id) profilesMap.set(String(p.id), { full_name: p.full_name ?? null, email: p.email ?? null });
+      }
+    }
+
+    ownerIds = membershipRows
+      .filter((m: any) => upperRole(m.role) === "OWNER")
+      .map((m: any) => String(m.user_id));
+    managerIds = membershipRows
+      .filter((m: any) => upperRole(m.role) === "MANAGER")
+      .map((m: any) => String(m.user_id));
+
+    teamActors = membershipRows.map((m: any) => {
+      const id = String(m.user_id);
+      const role = upperRole(m.role) === "OWNER" ? "OWNER" : "MANAGER";
+      const profile = profilesMap.get(id);
+      const label = profile?.full_name || profile?.email || id;
+      return { id, label, kind: role };
+    });
+  } catch {
+    teamActors = [];
+  }
 
   // ✅ Business switcher options: id/slug/name/role
   const businessOptions = (businesses ?? [])
@@ -191,19 +253,36 @@ export default async function Page({ params, searchParams }: PageProps) {
     .sort((a: any, b: any) => a.name.localeCompare(b.name));
 
   // Orders query
-  let ordersQuery = dataClient
-    .from("orders")
-    .select("*")
-    .eq("business_id", currentBusiness.id)
-    .order("created_at", { ascending: false });
+  const buildOrdersQuery = (withActorFilter: boolean) => {
+    let query = dataClient
+      .from("orders")
+      .select("*")
+      .eq("business_id", currentBusiness.id)
+      .order("created_at", { ascending: false });
 
-  if (filters.q)
-    ordersQuery = ordersQuery.ilike("search_text", `%${filters.q}%`);
-  if (filters.status !== "ALL")
-    ordersQuery = ordersQuery.eq("status", filters.status);
+    if (filters.q) query = query.ilike("search_text", `%${filters.q}%`);
+    if (filters.status !== "ALL") query = query.eq("status", filters.status);
+
+    if (withActorFilter && filters.actor !== "ALL") {
+      if (filters.actor === "OWNER") {
+        if (ownerIds.length > 0) query = query.in("created_by", ownerIds);
+      } else if (filters.actor === "MANAGER") {
+        if (managerIds.length > 0) query = query.in("created_by", managerIds);
+      } else if (filters.actor.startsWith("user:")) {
+        query = query.eq("created_by", filters.actor.slice(5));
+      }
+    }
+
+    return query;
+  };
 
   // range-логика у тебя может быть отдельно — пока оставляем ALL
-  const { data: orders, error: oErr } = await ordersQuery;
+  let ordersResult = await buildOrdersQuery(true);
+  if (ordersResult.error && isMissingColumnError(ordersResult.error, "created_by")) {
+    ordersResult = await buildOrdersQuery(false);
+  }
+
+  const { data: orders, error: oErr } = ordersResult;
   if (oErr && !bypassMode) throw oErr;
 
   const list: any[] = orders ?? [];
@@ -320,6 +399,8 @@ export default async function Page({ params, searchParams }: PageProps) {
               filters={filters}
               clearHref={clearHref}
               hasActiveFilters={hasActiveFilters}
+              actor={filters.actor}
+              actors={teamActors}
             />
 
             <DesktopOrdersTable
@@ -346,6 +427,8 @@ export default async function Page({ params, searchParams }: PageProps) {
             filters={filters}
             clearHref={clearHref}
             hasActiveFilters={hasActiveFilters}
+            actor={filters.actor}
+            actors={teamActors}
           />
 
           <MobileOrdersList

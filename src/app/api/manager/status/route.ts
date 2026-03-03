@@ -128,7 +128,29 @@ export async function GET(req: Request) {
     }));
   }
 
-  const profileIds = [ownerMembership?.user_id ?? "", ...managerMemberships.map((m) => m.user_id ?? "")];
+  const { data: acceptedRows } = await admin
+    .from("business_invites")
+    .select("accepted_by")
+    .eq("business_id", business_id)
+    .ilike("role", "MANAGER")
+    .eq("status", "ACCEPTED")
+    .not("accepted_by", "is", null);
+
+  const acceptedManagerIds = Array.from(
+    new Set(
+      (acceptedRows ?? [])
+        .map((row: { accepted_by?: string | null }) => String(row.accepted_by ?? "").trim())
+        .filter(Boolean),
+    ),
+  );
+
+  const membershipManagerIds = managerMemberships
+    .map((m) => String(m.user_id ?? "").trim())
+    .filter(Boolean);
+
+  const allManagerIds = Array.from(new Set([...membershipManagerIds, ...acceptedManagerIds]));
+
+  const profileIds = [ownerMembership?.user_id ?? "", ...allManagerIds];
 
   let profilesById = new Map<string, ProfileRow>();
   try {
@@ -141,10 +163,8 @@ export async function GET(req: Request) {
   const ownerId = ownerMembership?.user_id ? String(ownerMembership.user_id) : null;
   const ownerProfile = ownerId ? profilesById.get(ownerId) ?? null : null;
 
-  const managersActive = managerMemberships
-    .map((m) => {
-      const userId = m.user_id ? String(m.user_id) : "";
-      if (!userId) return null;
+  const managersActive = allManagerIds
+    .map((userId) => {
       const profile = profilesById.get(userId) ?? null;
       return {
         user_id: userId,

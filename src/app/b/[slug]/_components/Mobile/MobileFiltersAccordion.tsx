@@ -11,6 +11,12 @@ type Status =
 
 type Range = "ALL" | "today" | "week" | "month" | "year";
 
+export type TeamActor = {
+  id: string;
+  label: string;
+  kind: "OWNER" | "MANAGER";
+};
+
 export type Filters = {
   q: string;
   status: "ALL" | Status;
@@ -22,6 +28,8 @@ type Props = {
   filters: Filters;
   clearHref: string;
   hasActiveFilters: boolean;
+  actor: string;
+  actors?: TeamActor[];
 };
 
 export default function MobileFiltersAccordion({
@@ -29,6 +37,8 @@ export default function MobileFiltersAccordion({
   filters,
   clearHref,
   hasActiveFilters,
+  actor,
+  actors = [],
 }: Props) {
   const inputCls =
     "h-11 w-full rounded-xl border border-gray-200 px-3 outline-none " +
@@ -54,6 +64,7 @@ export default function MobileFiltersAccordion({
       <form method="get" className="grid gap-3">
         <input type="hidden" name="u" value={phoneRaw} />
         <input type="hidden" name="page" value="1" />
+        
 
         <label className="grid gap-1">
           <span className={labelCls}>Search</span>
@@ -94,6 +105,24 @@ export default function MobileFiltersAccordion({
             <option value="week">Last 7 days</option>
             <option value="month">This month</option>
             <option value="year">This year</option>
+          </select>
+        </label>
+
+        <label className="grid gap-1">
+          <span className={labelCls}>Created by</span>
+          <select
+            name="actor"
+            defaultValue={actor}
+            className={inputCls}
+          >
+            <option value="ALL">All team</option>
+            <option value="OWNER">Owners</option>
+            <option value="MANAGER">Managers</option>
+            {actors.map((member) => (
+              <option key={member.id} value={`user:${member.id}`}>
+                {member.label} ({member.kind})
+              </option>
+            ))}
           </select>
         </label>
 
