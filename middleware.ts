@@ -4,14 +4,27 @@ import { createServerClient } from "@supabase/ssr";
 export async function middleware(req: NextRequest) {
   const { pathname, searchParams } = req.nextUrl;
 
-  // 🚫 НЕ обрабатываем login вообще
+  const bypassReasons: Array<{ path: string; why: string }> = [];
+
   if (pathname.startsWith("/login")) {
-    return NextResponse.next();
+    bypassReasons.push({ path: pathname, why: "login route" });
   }
 
-  // 🚫 MVP bypass — если есть ?u=, не трогаем auth
+  if (pathname.startsWith("/invite")) {
+    bypassReasons.push({ path: pathname, why: "invite flow route" });
+  }
+
+  if (pathname.startsWith("/auth/callback")) {
+    bypassReasons.push({ path: pathname, why: "auth callback route" });
+  }
+
   const u = searchParams.get("u");
   if (u && pathname.startsWith("/b/")) {
+    bypassReasons.push({ path: pathname, why: "business public bypass with ?u=" });
+  }
+
+  if (bypassReasons.length > 0) {
+    console.info("[middleware] bypass", bypassReasons);
     return NextResponse.next();
   }
 
@@ -31,10 +44,9 @@ export async function middleware(req: NextRequest) {
           }
         },
       },
-    }
+    },
   );
 
-  // только для реальной auth-логики
   await supabase.auth.getUser();
 
   return res;
