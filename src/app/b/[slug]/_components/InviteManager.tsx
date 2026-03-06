@@ -36,8 +36,9 @@ export default function InviteManager({ businessId }: { businessId: string }) {
 
       const json = await res.json().catch(() => ({}));
 
-      if (!res.ok || json?.error) {
-        setMsg({ type: "error", text: json?.error || "Failed to invite" });
+      if (!res.ok || json?.error || json?.ok === false) {
+        const errorText = [json?.error, json?.hint].filter(Boolean).join(" — ");
+        setMsg({ type: "error", text: errorText || "Failed to invite" });
         return;
       }
 
@@ -46,14 +47,14 @@ export default function InviteManager({ businessId }: { businessId: string }) {
 
       // ✅ обновить список pending сразу
       setRefreshKey((k) => k + 1);
-    } catch (e: any) {
-      setMsg({ type: "error", text: e?.message || "Failed to invite" });
+    } catch (e: unknown) {
+      const errorText = e instanceof Error ? e.message : "Failed to invite";
+      setMsg({ type: "error", text: errorText });
     } finally {
       setLoading(false);
     }
   };
 
-  const canSend = emailOk && !loading;
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white/70 p-4">

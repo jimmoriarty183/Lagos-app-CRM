@@ -28,6 +28,7 @@ export default function InviteClient() {
   const router = useRouter();
   const sp = useSearchParams();
   const inviteId = sp.get("invite_id") || "";
+  const [resolvedInviteId, setResolvedInviteId] = useState("");
 
   const supabase = useMemo(() => createClient(), []);
 
@@ -77,14 +78,6 @@ export default function InviteClient() {
     setLoading(true);
     setError("");
 
-    if (!inviteId) {
-      setLoading(false);
-      setError(
-        "Invite link is missing invite_id. Please open the email again.",
-      );
-      return;
-    }
-
     try {
       await ensureSessionFromHash();
 
@@ -101,22 +94,27 @@ export default function InviteClient() {
 
       setEmail(session.user.email ?? "");
 
-      // подтягиваем business по invite (чтобы красиво показать куда зовут)
-      const r = await fetch(
-        `/api/invite/pending?invite_id=${encodeURIComponent(inviteId)}`,
-        { cache: "no-store" },
-      );
+      // подтягиваем invite/business. Если invite_id отсутствует в URL,
+      // сервер подберет последний pending invite для email из активной сессии.
+      const pendingUrl = inviteId
+        ? `/api/invite/pending?invite_id=${encodeURIComponent(inviteId)}`
+        : "/api/invite/pending";
+      const r = await fetch(pendingUrl, { cache: "no-store" });
       const j = await r.json().catch(() => ({}));
 
       if (!r.ok) {
         setBusiness(null);
+        setResolvedInviteId("");
         setError(j?.error || "Failed to load invite");
       } else {
         setBusiness(j.business ?? null);
+        setResolvedInviteId(String(j?.invite?.id || inviteId || ""));
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Failed to initialize session";
       setBusiness(null);
-      setError(e?.message || "Failed to initialize session");
+      setResolvedInviteId("");
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -142,7 +140,8 @@ export default function InviteClient() {
     password === password2 &&
     agree &&
     !loading &&
-    !submitting;
+    !submitting &&
+    !!resolvedInviteId;
 
   const onSubmit = async () => {
     setError("");
@@ -163,7 +162,7 @@ export default function InviteClient() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          inviteId,
+          inviteId: resolvedInviteId,
           firstName: firstName.trim(),
           lastName: lastName.trim(),
           fullName,
@@ -179,8 +178,9 @@ export default function InviteClient() {
       const businessSlug: string | undefined =
         j?.businessSlug || business?.slug;
       router.push(businessSlug ? `/b/${businessSlug}` : "/");
-    } catch (e: any) {
-      setError(e?.message || "Unexpected error");
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Unexpected error";
+      setError(message);
     } finally {
       setSubmitting(false);
     }
