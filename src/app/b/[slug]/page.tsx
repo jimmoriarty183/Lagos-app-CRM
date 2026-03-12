@@ -388,7 +388,9 @@ export default async function Page({ params, searchParams }: PageProps) {
               business={{
                 id: String(currentBusiness.id), // ✅ ДОБАВИЛИ
                 slug: String(currentBusiness.slug),
-                owner_phone: String(currentBusiness.owner_phone),
+                owner_phone: currentBusiness.owner_phone
+                  ? String(currentBusiness.owner_phone)
+                  : null,
                 manager_phone: currentBusiness.manager_phone
                   ? String(currentBusiness.manager_phone)
                   : null,
