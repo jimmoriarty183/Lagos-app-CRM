@@ -39,21 +39,30 @@ async function loadOwnerManagerMemberships(
     .eq("business_id", businessId)
     .in("role", ["OWNER", "MANAGER"]);
 
-  if (!primaryErr && Array.isArray(primary)) {
-    return primary as MembershipRow[];
-  }
-
   const { data: fallback, error: fallbackErr } = await admin
     .from("business_memberships")
     .select("role, user_id")
     .eq("business_id", businessId)
     .in("role", ["OWNER", "MANAGER"]);
 
-  if (!fallbackErr && Array.isArray(fallback)) {
-    return fallback as MembershipRow[];
+  if (primaryErr && fallbackErr) {
+    throw primaryErr || fallbackErr || new Error("Failed to load memberships");
   }
 
-  throw primaryErr || fallbackErr || new Error("Failed to load memberships");
+  const merged = [...(Array.isArray(primary) ? primary : []), ...(Array.isArray(fallback) ? fallback : [])];
+  const deduped = new Map<string, MembershipRow>();
+
+  for (const row of merged) {
+    const userId = String(row?.user_id ?? "").trim();
+    const role = upperRole(row?.role);
+    if (!userId || (role !== "OWNER" && role !== "MANAGER")) continue;
+    deduped.set(`${userId}:${role}`, {
+      user_id: userId,
+      role,
+    });
+  }
+
+  return Array.from(deduped.values());
 }
 
 async function loadProfilesMap(admin: SupabaseClient, ids: string[]) {
