@@ -35,6 +35,7 @@ export async function loginAction(
   try {
     const email = String(formData.get("email") || "").trim();
     const password = String(formData.get("password") || "");
+    const inviteId = String(formData.get("invite_id") || "").trim();
 
     const supabase = await supabaseServer();
 
@@ -50,6 +51,14 @@ export async function loginAction(
     if (userErr) return { ok: false, error: userErr.message, next: "" };
     const user = userData.user;
     if (!user) return { ok: false, error: "No user after login", next: "" };
+
+    if (inviteId) {
+      return {
+        ok: true,
+        error: "",
+        next: `/invite?invite_id=${encodeURIComponent(inviteId)}`,
+      };
+    }
 
     // 3) load memberships
     const { data: mems, error: memErr } = await supabase

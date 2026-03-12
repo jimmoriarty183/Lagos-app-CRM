@@ -41,7 +41,14 @@ export default function InviteManager({ businessId }: { businessId: string }) {
         return;
       }
 
-      setMsg({ type: "success", text: "Invite sent. Status: PENDING" });
+      if (json?.existing_user) {
+        setMsg({
+          type: "info",
+          text: "User already has an account. They can accept this invite from the in-app bell icon and then the business will appear in their switcher.",
+        });
+      } else {
+        setMsg({ type: "success", text: "Invite sent. Status: PENDING" });
+      }
       setEmail("");
 
       // ✅ обновить список pending сразу
@@ -52,8 +59,6 @@ export default function InviteManager({ businessId }: { businessId: string }) {
       setLoading(false);
     }
   };
-
-  const canSend = emailOk && !loading;
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white/70 p-4">

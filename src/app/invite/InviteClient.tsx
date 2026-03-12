@@ -10,6 +10,13 @@ type BusinessInfo = {
   name?: string | null;
 };
 
+type CurrentUserInfo = {
+  id: string;
+  email?: string | null;
+  full_name?: string | null;
+  membershipsCount?: number;
+};
+
 function parseHashTokens(hash: string) {
   const h = (hash || "").replace(/^#/, "");
   const p = new URLSearchParams(h);
@@ -34,35 +41,30 @@ export default function InviteClient() {
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState<string>("");
   const [business, setBusiness] = useState<BusinessInfo | null>(null);
+  const [currentUser, setCurrentUser] = useState<CurrentUserInfo | null>(null);
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-
   const [password, setPassword] = useState("");
   const [password2, setPassword2] = useState("");
-
   const [agree, setAgree] = useState(false);
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string>("");
 
-  const fullName = [firstName.trim(), lastName.trim()]
-    .filter(Boolean)
-    .join(" ");
+  const fullName = [firstName.trim(), lastName.trim()].filter(Boolean).join(" ");
+  const isExistingAccount = (currentUser?.membershipsCount ?? 0) > 0;
 
   async function ensureSessionFromHash() {
     if (typeof window === "undefined") return;
 
-    const { access_token, refresh_token } = parseHashTokens(
-      window.location.hash,
-    );
+    const { access_token, refresh_token } = parseHashTokens(window.location.hash);
     if (access_token && refresh_token) {
       const { error: setErr } = await supabase.auth.setSession({
         access_token,
         refresh_token,
       });
 
-      // убираем #access_token из URL
       window.history.replaceState(
         {},
         document.title,
@@ -79,9 +81,7 @@ export default function InviteClient() {
 
     if (!inviteId) {
       setLoading(false);
-      setError(
-        "Invite link is missing invite_id. Please open the email again.",
-      );
+      setError("Invite link is missing invite_id. Please open the email again.");
       return;
     }
 
@@ -94,14 +94,14 @@ export default function InviteClient() {
       if (!session) {
         setEmail("");
         setBusiness(null);
-        setError("No active session. Please open the invite email again.");
+        setCurrentUser(null);
+        setError("No active session. Please sign in and open the invite again.");
         setLoading(false);
         return;
       }
 
       setEmail(session.user.email ?? "");
 
-      // подтягиваем business по invite (чтобы красиво показать куда зовут)
       const r = await fetch(
         `/api/invite/pending?invite_id=${encodeURIComponent(inviteId)}`,
         { cache: "no-store" },
@@ -110,12 +110,15 @@ export default function InviteClient() {
 
       if (!r.ok) {
         setBusiness(null);
+        setCurrentUser(null);
         setError(j?.error || "Failed to load invite");
       } else {
         setBusiness(j.business ?? null);
+        setCurrentUser(j.currentUser ?? null);
       }
     } catch (e: any) {
       setBusiness(null);
+      setCurrentUser(null);
       setError(e?.message || "Failed to initialize session");
     } finally {
       setLoading(false);
@@ -135,7 +138,7 @@ export default function InviteClient() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [supabase, inviteId]);
 
-  const canSubmit =
+  const canSubmitSetup =
     firstName.trim().length >= 2 &&
     lastName.trim().length >= 2 &&
     password.length >= 8 &&
@@ -144,41 +147,57 @@ export default function InviteClient() {
     !loading &&
     !submitting;
 
+  const canAcceptExisting = !loading && !submitting;
+
+  const finishAccept = async (payload: Record<string, unknown>) => {
+    const r = await fetch("/api/invite/accept", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || !j?.ok) {
+      throw new Error(j?.error || "Failed to accept invite");
+    }
+
+    const businessSlug: string | undefined = j?.businessSlug || business?.slug;
+    router.push(businessSlug ? `/b/${businessSlug}` : "/");
+  };
+
+  const onAcceptExisting = async () => {
+    setError("");
+    if (!canAcceptExisting) return;
+
+    try {
+      setSubmitting(true);
+      await finishAccept({ inviteId });
+    } catch (e: any) {
+      setError(e?.message || "Unexpected error");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const onSubmit = async () => {
     setError("");
-    if (!canSubmit || submitting) return;
+    if (!canSubmitSetup || submitting) return;
 
     try {
       setSubmitting(true);
 
-      // 1) задаём пароль пользователю (user уже создан)
       const { error: passErr } = await supabase.auth.updateUser({ password });
       if (passErr) {
         setError(passErr.message);
         return;
       }
 
-      // 2) принимаем инвайт (membership + invite accepted)
-      const r = await fetch("/api/invite/accept", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          inviteId,
-          firstName: firstName.trim(),
-          lastName: lastName.trim(),
-          fullName,
-        }),
+      await finishAccept({
+        inviteId,
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        fullName,
       });
-
-      const j = await r.json().catch(() => ({}));
-      if (!r.ok || !j?.ok) {
-        setError(j?.error || "Failed to accept invite");
-        return;
-      }
-
-      const businessSlug: string | undefined =
-        j?.businessSlug || business?.slug;
-      router.push(businessSlug ? `/b/${businessSlug}` : "/");
     } catch (e: any) {
       setError(e?.message || "Unexpected error");
     } finally {
@@ -189,9 +208,8 @@ export default function InviteClient() {
   return (
     <main
       className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/20 to-gray-50"
-      style={{ colorScheme: "light" }} // чтобы iOS/Safari auto-dark не ломал контраст
+      style={{ colorScheme: "light" }}
     >
-      {/* FULLSCREEN LOADER при сабмите */}
       {submitting && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-white/70 backdrop-blur-sm">
           <div className="w-[92%] max-w-sm rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
@@ -199,10 +217,12 @@ export default function InviteClient() {
               <Spinner />
               <div>
                 <div className="text-sm font-semibold text-gray-900">
-                  Finishing setup…
+                  {isExistingAccount ? "Confirming access..." : "Finishing setup..."}
                 </div>
                 <div className="mt-0.5 text-xs text-gray-600">
-                  Creating your manager access and redirecting.
+                  {isExistingAccount
+                    ? "Adding this business to your account."
+                    : "Creating your manager access and redirecting."}
                 </div>
               </div>
             </div>
@@ -213,25 +233,21 @@ export default function InviteClient() {
       <div className="mx-auto max-w-2xl px-4 py-10">
         <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
           <h1 className="text-xl font-semibold text-gray-900 sm:text-2xl">
-            Complete your manager profile
+            {isExistingAccount ? "Confirm manager access" : "Complete your manager profile"}
           </h1>
 
           <p className="mt-2 text-sm text-gray-600">
             You&apos;re signing in as{" "}
-            <span className="font-semibold text-gray-900">{email || "…"}</span>
+            <span className="font-semibold text-gray-900">{email || "..."}</span>
           </p>
 
           {business?.slug && (
             <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
-              <div className="text-xs font-semibold text-gray-600">
-                Invitation to
-              </div>
+              <div className="text-xs font-semibold text-gray-600">Invitation to</div>
               <div className="mt-1 text-base font-semibold text-gray-900">
                 {business.name || business.slug}
               </div>
-              <div className="mt-0.5 text-xs text-gray-500">
-                /{business.slug}
-              </div>
+              <div className="mt-0.5 text-xs text-gray-500">/{business.slug}</div>
             </div>
           )}
 
@@ -244,7 +260,44 @@ export default function InviteClient() {
           {loading ? (
             <div className="mt-6 flex items-center gap-3 text-sm text-gray-600">
               <Spinner />
-              Loading invite…
+              Loading invite...
+            </div>
+          ) : isExistingAccount ? (
+            <div className="mt-6 space-y-4">
+              <div className="rounded-xl border border-blue-100 bg-blue-50 p-4">
+                <div className="text-sm font-semibold text-gray-900">
+                  Existing account detected
+                </div>
+                <div className="mt-1 text-sm text-gray-600">
+                  This invite will add manager access for{" "}
+                  <span className="font-semibold text-gray-900">
+                    {business?.name || business?.slug || "this business"}
+                  </span>{" "}
+                  to your current account.
+                </div>
+                {currentUser?.full_name ? (
+                  <div className="mt-2 text-xs text-gray-500">
+                    Signed in as {currentUser.full_name}
+                  </div>
+                ) : null}
+              </div>
+
+              <button
+                onClick={onAcceptExisting}
+                disabled={!canAcceptExisting}
+                className={[
+                  "w-full rounded-xl py-3 text-sm font-semibold transition-all shadow-sm",
+                  !canAcceptExisting
+                    ? "bg-gray-200 text-gray-700 cursor-not-allowed"
+                    : "bg-blue-600 text-white hover:bg-blue-700 active:scale-[0.99]",
+                ].join(" ")}
+              >
+                Accept invite and open business
+              </button>
+
+              <p className="text-xs text-gray-500">
+                Your account, password, and existing businesses stay unchanged.
+              </p>
             </div>
           ) : (
             <div className="mt-6 space-y-4">
@@ -277,9 +330,7 @@ export default function InviteClient() {
               </div>
 
               <div>
-                <label className="text-sm font-medium text-gray-700">
-                  Password
-                </label>
+                <label className="text-sm font-medium text-gray-700">Password</label>
                 <input
                   type="password"
                   value={password}
@@ -303,15 +354,12 @@ export default function InviteClient() {
                   className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none placeholder:text-gray-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
                 />
                 {password && password2 && password !== password2 && (
-                  <div className="mt-2 text-xs text-red-600">
-                    Passwords do not match
-                  </div>
+                  <div className="mt-2 text-xs text-red-600">Passwords do not match</div>
                 )}
               </div>
 
-              {/* AGREEMENT */}
               <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
-                <label className="flex items-start gap-3 cursor-pointer select-none">
+                <label className="flex cursor-pointer select-none items-start gap-3">
                   <input
                     type="checkbox"
                     checked={agree}
@@ -320,10 +368,7 @@ export default function InviteClient() {
                   />
                   <span className="text-sm text-gray-700">
                     I agree to the terms and conditions and privacy policy
-                    <span className="text-gray-500">
-                      {" "}
-                      (text will be updated)
-                    </span>
+                    <span className="text-gray-500"> (text will be updated)</span>
                   </span>
                 </label>
 
@@ -336,10 +381,10 @@ export default function InviteClient() {
 
               <button
                 onClick={onSubmit}
-                disabled={!canSubmit}
+                disabled={!canSubmitSetup}
                 className={[
-                  "mt-1 w-full rounded-xl py-3 text-sm font-semibold transition-all shadow-sm",
-                  !canSubmit
+                  "w-full rounded-xl py-3 text-sm font-semibold transition-all shadow-sm",
+                  !canSubmitSetup
                     ? "bg-gray-200 text-gray-700 cursor-not-allowed"
                     : "bg-blue-600 text-white hover:bg-blue-700 active:scale-[0.99]",
                 ].join(" ")}
@@ -348,15 +393,12 @@ export default function InviteClient() {
               </button>
 
               <p className="text-xs text-gray-500">
-                After saving, you&apos;ll be redirected to the business
-                dashboard.
+                After saving, you&apos;ll be redirected to the business dashboard.
                 {fullName ? (
                   <>
                     {" "}
                     Your name:{" "}
-                    <span className="font-semibold text-gray-700">
-                      {fullName}
-                    </span>
+                    <span className="font-semibold text-gray-700">{fullName}</span>
                   </>
                 ) : null}
               </p>

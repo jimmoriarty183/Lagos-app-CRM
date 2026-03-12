@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { LogOut, Sparkles } from "lucide-react";
 
 import BusinessSwitcher, { BusinessOption } from "./BusinessSwitcher";
+import InviteInbox from "./InviteInbox";
 
 type Props = {
   businessSlug: string;
@@ -83,6 +84,8 @@ export default function TopBar({ businessSlug, plan, role, businesses }: Props) 
           <div className="hidden flex-1 sm:block" />
 
           <div className="flex shrink-0 items-center gap-2">
+            <InviteInbox currentBusinessSlug={businessSlug} />
+
             {showSwitcher && (
               <div className="hidden sm:block">
                 <BusinessSwitcher

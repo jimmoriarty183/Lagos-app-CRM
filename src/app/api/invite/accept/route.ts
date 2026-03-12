@@ -49,12 +49,6 @@ export async function POST(req: Request) {
   if (!invite_id) {
     return NextResponse.json({ ok: false, error: "invite_id required" }, { status: 400 });
   }
-  if (fullName.length < 2) {
-    return NextResponse.json(
-      { ok: false, error: "Name is required" },
-      { status: 400 },
-    );
-  }
 
   // 1) текущий пользователь (cookie session)
   const { data: authData, error: authErr } = await supabase.auth.getUser();
@@ -102,12 +96,14 @@ export async function POST(req: Request) {
   // Пишем full_name, и если колонки first_name/last_name есть — тоже пишем.
   // Если их нет — Postgres просто вернёт ошибку. Чтобы не ломать прод,
   // пишем безопасно: сначала full_name, потом пробуем first/last.
-  const { error: profErr } = await admin
-    .from("profiles")
-    .upsert({ id: user.id, full_name: fullName }, { onConflict: "id" });
+  if (fullName.length >= 2) {
+    const { error: profErr } = await admin
+      .from("profiles")
+      .upsert({ id: user.id, full_name: fullName }, { onConflict: "id" });
 
-  if (profErr) {
-    return NextResponse.json({ ok: false, error: profErr.message }, { status: 500 });
+    if (profErr) {
+      return NextResponse.json({ ok: false, error: profErr.message }, { status: 500 });
+    }
   }
 
   // OPTIONAL: если у тебя реально есть first_name/last_name — раскомментируй:

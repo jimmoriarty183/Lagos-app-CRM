@@ -360,6 +360,8 @@ export default function LoginUI() {
 
         {mode === "login" ? (
           <form action={loginSubmit} className="space-y-2.5">
+            <input type="hidden" name="invite_id" value={inviteId} />
+
             <Input
               label="Email"
               name="email"

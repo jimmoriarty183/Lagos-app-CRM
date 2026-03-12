@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabaseServerReadOnly, supabaseServer } from "@/lib/supabase/server";
+import { supabaseServer } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 
 function clean(v: any) {
@@ -61,6 +61,21 @@ export async function GET(req: Request) {
       );
     }
 
+    const userId = auth.user.id;
+
+    const [{ data: profile }, { count: membershipsCount }] = await Promise.all([
+      admin
+        .from("profiles")
+        .select("full_name")
+        .eq("id", userId)
+        .limit(1)
+        .maybeSingle(),
+      admin
+        .from("memberships")
+        .select("business_id", { count: "exact", head: true })
+        .eq("user_id", userId),
+    ]);
+
     // ✅ business читаем через service-role
     const { data: biz, error: bizErr } = await admin
       .from("businesses")
@@ -86,6 +101,12 @@ export async function GET(req: Request) {
         role: inv.role,
       },
       business: biz,
+      currentUser: {
+        id: userId,
+        email: auth.user.email ?? null,
+        full_name: profile?.full_name ?? null,
+        membershipsCount: membershipsCount ?? 0,
+      },
     });
   } catch (e: any) {
     return NextResponse.json(
