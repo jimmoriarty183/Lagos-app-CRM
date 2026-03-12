@@ -15,8 +15,6 @@ type Props = {
     id: string;
     slug: string;
     name?: string | null;
-    owner_phone?: string | null;
-    manager_phone?: string | null;
   };
   role: Role;
   isOwnerManager: boolean;
@@ -36,8 +34,6 @@ export default function MobileBusinessAccordion({
         <BusinessPeoplePanel
           businessId={business.id}
           businessSlug={business.slug}
-          ownerPhone={business.owner_phone ?? null}
-          legacyManagerPhone={business.manager_phone ?? null}
           initialOwner={owner ?? null}
           role={role}
           isOwnerManager={isOwnerManager}
