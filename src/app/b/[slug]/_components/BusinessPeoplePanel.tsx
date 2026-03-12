@@ -15,6 +15,9 @@ type OwnerProfile = {
   first_name?: string | null;
   last_name?: string | null;
   email: string | null;
+  phone?: string | null;
+  profile_missing?: boolean;
+  safe_fallback?: string | null;
 };
 
 type ActiveManager = {
@@ -24,6 +27,8 @@ type ActiveManager = {
   last_name?: string | null;
   email?: string | null;
   phone: string | null;
+  profile_missing?: boolean;
+  safe_fallback?: string | null;
 };
 
 type PendingManager = {
@@ -47,8 +52,6 @@ type ManagerState =
 
 type StatusResponse = {
   viewer_role?: Role;
-  owner_phone: string | null;
-  legacy_manager_phone?: string | null;
   owner?: OwnerProfile | null;
   viewer_manager?: ActiveManager | null;
   manager?: ManagerState;
@@ -59,8 +62,6 @@ type StatusResponse = {
 type Props = {
   businessId?: string | null;
   businessSlug?: string | null;
-  ownerPhone: string | null;
-  legacyManagerPhone: string | null;
   initialOwner?: OwnerProfile | null;
   role: Role;
   isOwnerManager: boolean;
@@ -154,12 +155,13 @@ function getUserDisplay(input: {
   first_name?: string | null;
   last_name?: string | null;
   email?: string | null;
+  phone?: string | null;
   fallback?: string | null;
 }) {
   const normalized = resolveUserDisplay(input);
   const fallback = String(input.fallback ?? "").trim();
   const primary =
-    normalized.fullName || normalized.fromParts || normalized.email || fallback || "No name";
+    normalized.fullName || normalized.fromParts || normalized.email || normalized.phone || fallback || "No name";
 
   return {
     primary,
@@ -170,8 +172,6 @@ function getUserDisplay(input: {
 export default function BusinessPeoplePanel({
   businessId,
   businessSlug,
-  ownerPhone,
-  legacyManagerPhone,
   initialOwner,
   role,
   isOwnerManager,
@@ -271,7 +271,8 @@ export default function BusinessPeoplePanel({
     first_name: data?.owner?.first_name ?? initialOwner?.first_name,
     last_name: data?.owner?.last_name ?? initialOwner?.last_name,
     email: data?.owner?.email ?? initialOwner?.email,
-    fallback: ownerPhone || data?.owner_phone || null,
+    phone: data?.owner?.phone ?? initialOwner?.phone ?? null,
+    fallback: data?.owner?.safe_fallback ?? initialOwner?.safe_fallback ?? null,
   });
 
   const managersActiveRaw = data?.managers_active ?? [];
@@ -336,6 +337,8 @@ export default function BusinessPeoplePanel({
         first_name: viewerManager.first_name,
         last_name: viewerManager.last_name,
         email: viewerManager.email,
+      phone: viewerManager.phone,
+      fallback: viewerManager.safe_fallback ?? null,
       })
     : null;
 
@@ -343,7 +346,7 @@ export default function BusinessPeoplePanel({
     const href = businessSlug
       ? `/b/${encodeURIComponent(String(businessSlug))}/settings/team${suffix}`
       : `./settings/team${suffix}`;
-    const actionLabel = viewerRole === "OWNER" ? "Manage access ->" : "View team ->";
+    const actionLabel = "Manage access →";
 
     if (viewerRole === "MANAGER" && viewerManagerDisplay) {
       return (
@@ -363,13 +366,6 @@ export default function BusinessPeoplePanel({
               </div>
             }
           />
-
-          <Link
-            href={href}
-            className="block rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-900 hover:bg-gray-50"
-          >
-            {actionLabel}
-          </Link>
         </div>
       );
     }
@@ -396,6 +392,8 @@ export default function BusinessPeoplePanel({
             first_name: manager.first_name,
             last_name: manager.last_name,
             email: manager.email,
+            phone: manager.phone,
+            fallback: manager.safe_fallback ?? null,
           });
 
           return (
@@ -470,7 +468,7 @@ export default function BusinessPeoplePanel({
           </div>
         ) : null}
 
-        {!loading && managersActive.length === 0 && !legacyManagerPhone ? (
+        {!loading && managersActive.length === 0 ? (
           <Row
             icon={<User className="h-4 w-4" />}
             label="Manager"
@@ -489,6 +487,8 @@ export default function BusinessPeoplePanel({
                 first_name: manager.first_name,
                 last_name: manager.last_name,
                 email: manager.email,
+                phone: manager.phone,
+                fallback: manager.safe_fallback ?? null,
               });
 
               return (

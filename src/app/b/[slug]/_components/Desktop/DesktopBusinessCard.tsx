@@ -22,12 +22,8 @@ type Props = {
   business: {
     id: string;
     slug: string;
-    // ✅ phone поля можешь оставить или убрать — не критично
-    owner_phone?: string | null;
-    manager_phone?: string | null;
   };
   role: "OWNER" | "MANAGER" | "GUEST";
-  phone: string;
   isOwnerManager: boolean;
   pendingInvites?: PendingInvite[];
   currentUserId?: string | null;
@@ -55,7 +51,6 @@ export default function DesktopBusinessCard({
   owner,
   business,
   role,
-  phone,
   isOwnerManager,
   pendingInvites = [],
   currentUserId,
@@ -82,8 +77,6 @@ export default function DesktopBusinessCard({
         <BusinessPeoplePanel
           businessId={business.id}
           businessSlug={business.slug}
-          ownerPhone={business.owner_phone ?? null}
-          legacyManagerPhone={business.manager_phone ?? null}
           initialOwner={owner ?? null}
           role={role}
           isOwnerManager={isOwnerManager}

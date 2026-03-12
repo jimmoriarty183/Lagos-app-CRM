@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { buildNameFromParts, resolveUserDisplay } from "@/lib/user-display";
+import { buildNameFromParts, buildSafeUserFallback, resolveUserDisplay } from "@/lib/user-display";
 
 function isUuid(v: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
@@ -35,13 +35,13 @@ async function loadOwnerManagerMemberships(
     .from("memberships")
     .select("role, user_id")
     .eq("business_id", businessId)
-    .in("role", ["OWNER", "MANAGER"]);
+    .or("role.eq.OWNER,role.eq.owner,role.eq.MANAGER,role.eq.manager");
 
   const { data: fallback, error: fallbackErr } = await admin
     .from("business_memberships")
     .select("role, user_id")
     .eq("business_id", businessId)
-    .in("role", ["OWNER", "MANAGER"]);
+    .or("role.eq.OWNER,role.eq.owner,role.eq.MANAGER,role.eq.manager");
 
   if (primaryErr && fallbackErr) {
     throw primaryErr || fallbackErr || new Error("Failed to load memberships");
@@ -108,14 +108,6 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  const { data: biz, error: bizErr } = await admin
-    .from("businesses")
-    .select("owner_phone, manager_phone")
-    .eq("id", business_id)
-    .limit(1)
-    .maybeSingle();
-
-  if (bizErr) return NextResponse.json({ error: bizErr.message }, { status: 500 });
 
   let mems: MembershipRow[] = [];
   try {
@@ -148,35 +140,13 @@ export async function GET(req: Request) {
     }));
   }
 
-  const { data: acceptedRows } = await admin
-    .from("business_invites")
-    .select("accepted_by,email")
-    .eq("business_id", business_id)
-    .ilike("role", "MANAGER")
-    .eq("status", "ACCEPTED")
-    .not("accepted_by", "is", null);
-
-  const acceptedEmailByUserId = new Map<string, string>();
-  const acceptedManagerIds = Array.from(
+  const allManagerIds = Array.from(
     new Set(
-      (acceptedRows ?? [])
-        .map((row: { accepted_by?: string | null; email?: string | null }) => {
-          const userId = String(row.accepted_by ?? "").trim();
-          const inviteEmail = String(row.email ?? "").trim();
-          if (userId && inviteEmail && !acceptedEmailByUserId.has(userId)) {
-            acceptedEmailByUserId.set(userId, inviteEmail);
-          }
-          return userId;
-        })
+      managerMemberships
+        .map((m) => String(m.user_id ?? "").trim())
         .filter(Boolean),
     ),
   );
-
-  const membershipManagerIds = managerMemberships
-    .map((m) => String(m.user_id ?? "").trim())
-    .filter(Boolean);
-
-  const allManagerIds = Array.from(new Set([...membershipManagerIds, ...acceptedManagerIds]));
 
   const ownerIds = ownerMemberships
     .map((membership) => String(membership.user_id ?? "").trim())
@@ -237,9 +207,6 @@ export async function GET(req: Request) {
             String(membership.user_id ?? "").trim() === String(authData.user.id).trim(),
         )
       : null) ??
-    ownerMemberships.find((membership) =>
-      profilesById.has(String(membership.user_id ?? "").trim()),
-    ) ??
     ownerMemberships[0] ??
     null;
 
@@ -254,47 +221,48 @@ export async function GET(req: Request) {
       })
     : null;
 
-  const managersActiveAll = allManagerIds
-    .map((userId) => {
-      const profile = profilesById.get(userId) ?? null;
-      const normalized = resolveUserDisplay({
-        full_name: profile?.full_name,
-        first_name: profile?.first_name,
-        last_name: profile?.last_name,
-        email: profile?.email ?? acceptedEmailByUserId.get(userId) ?? null,
-      });
+  const managersActiveAll = allManagerIds.map((userId) => {
+    const profile = profilesById.get(userId) ?? null;
+    const normalized = resolveUserDisplay({
+      full_name: profile?.full_name,
+      first_name: profile?.first_name,
+      last_name: profile?.last_name,
+      email: profile?.email,
+    });
 
-      return {
-        user_id: userId,
-        full_name: normalized.fullName || normalized.fromParts || null,
-        first_name: profile?.first_name ?? null,
-        last_name: profile?.last_name ?? null,
-        email: normalized.email || null,
-        phone: null as string | null,
-      };
-    })
-    .filter(Boolean);
+    return {
+      user_id: userId,
+      full_name: normalized.fullName || normalized.fromParts || null,
+      first_name: profile?.first_name ?? null,
+      last_name: profile?.last_name ?? null,
+      email: normalized.email || null,
+      phone: normalized.phone || null,
+      profile_missing: !profile,
+      safe_fallback: !profile ? buildSafeUserFallback(userId) : null,
+    };
+  });
 
   const viewerManager =
     managersActiveAll.find(
       (manager) => String(manager.user_id).trim() === String(authData.user.id).trim(),
     ) ?? null;
   const managersActive = managersActiveAll;
-  const ownerPayload = ownerProfile
+  const ownerPayload = ownerId
     ? {
-        id: ownerProfile.id,
+        id: ownerId,
         full_name: ownerNormalized?.fullName || ownerNormalized?.fromParts || null,
-        first_name: ownerProfile.first_name,
-        last_name: ownerProfile.last_name,
+        first_name: ownerProfile?.first_name ?? null,
+        last_name: ownerProfile?.last_name ?? null,
         email: ownerNormalized?.email || null,
+        phone: ownerNormalized?.phone || null,
+        profile_missing: !ownerProfile,
+        safe_fallback: !ownerProfile ? buildSafeUserFallback(ownerId) : null,
       }
     : null;
   const pendingPayload = pendingInvites;
 
   return NextResponse.json({
     viewer_role: viewerRole,
-    owner_phone: biz?.owner_phone ?? null,
-    legacy_manager_phone: biz?.manager_phone ?? null,
     owner: ownerPayload,
     viewer_manager: viewerManager,
     managers_active: managersActive,

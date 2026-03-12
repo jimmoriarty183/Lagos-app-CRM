@@ -118,8 +118,6 @@ export default async function TeamPage({
             <BusinessPeoplePanel
               businessId={business.id}
               businessSlug={business.slug}
-              ownerPhone={business.owner_phone}
-              legacyManagerPhone={business.manager_phone}
               role={role}
               isOwnerManager={isOwnerManager}
               pendingInvites={((pendingInvites ?? []) as PendingInviteRow[]) ?? []}
