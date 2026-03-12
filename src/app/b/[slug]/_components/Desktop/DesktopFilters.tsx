@@ -9,6 +9,12 @@ type Status =
   | "DUPLICATE";
 
 type Range = "ALL" | "today" | "week" | "month" | "year";
+type TeamActor = {
+  id: string;
+  label: string;
+  kind: "OWNER" | "MANAGER";
+};
+
 type Filters = { q: string; status: "ALL" | Status; range: Range };
 
 type Props = {
@@ -16,8 +22,9 @@ type Props = {
   filters: Filters;
   clearHref: string;
   hasActiveFilters: boolean;
+  actor: string;
+  actors?: TeamActor[];
 
-  // ✅ оставляем для совместимости, но НЕ требуем
   card?: React.CSSProperties;
   cardHeader?: React.CSSProperties;
   cardTitle?: React.CSSProperties;
@@ -26,68 +33,35 @@ type Props = {
 export default function DesktopFilters({
   phoneRaw,
   filters,
-  clearHref,
-  hasActiveFilters,
+  actor,
+  actors = [],
   card,
-  cardHeader,
-  cardTitle,
 }: Props) {
   const inputCls =
     "h-10 w-full rounded-xl border border-gray-200 px-3 outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900 bg-white";
-  const labelCls = "text-xs font-semibold text-gray-600";
 
   return (
     <section
-      className="desktopOnly bg-white rounded-xl border border-gray-200 shadow-sm p-4 sm:p-6"
+      className="desktopOnly sticky top-20 z-20 bg-white/95 backdrop-blur rounded-xl border border-gray-200 shadow-sm p-3"
       style={card}
     >
-      <div
-        className="flex items-start justify-between gap-3"
-        style={cardHeader}
-      >
-        <div>
-          <div
-            className="text-base sm:text-lg font-semibold text-gray-900"
-            style={cardTitle}
-          >
-            Filters
-          </div>
-          <div className="mt-1 text-xs text-gray-500">
-            Search, status, period
-          </div>
-        </div>
-
-        {hasActiveFilters ? (
-          <a
-            href={clearHref}
-            className="h-9 inline-flex items-center justify-center px-3 rounded-lg border border-gray-200 bg-white text-sm font-semibold text-gray-900 hover:bg-gray-50 transition-colors"
-          >
-            Clear
-          </a>
-        ) : null}
-      </div>
-
-      <form method="get" className="mt-4 flex flex-wrap gap-3 items-end">
+      <form method="get" className="grid grid-cols-12 gap-2 items-end">
         <input type="hidden" name="u" value={phoneRaw} />
         <input type="hidden" name="page" value="1" />
 
-        <label className="grid gap-1 flex-1 min-w-[220px]">
-          <span className={labelCls}>Search</span>
+        <label className="col-span-4 xl:col-span-5">
+          <span className="sr-only">Search</span>
           <input
             name="q"
             defaultValue={filters.q}
-            placeholder="Name, phone, amount…"
+            placeholder="Name, phone, amount..."
             className={inputCls}
           />
         </label>
 
-        <label className="grid gap-1 min-w-[180px]">
-          <span className={labelCls}>Status</span>
-          <select
-            name="status"
-            defaultValue={filters.status}
-            className={inputCls}
-          >
+        <label className="col-span-3 xl:col-span-2">
+          <span className="sr-only">Status</span>
+          <select name="status" defaultValue={filters.status} className={inputCls}>
             <option value="ALL">All</option>
             <option value="NEW">NEW</option>
             <option value="IN_PROGRESS">IN PROGRESS</option>
@@ -98,13 +72,9 @@ export default function DesktopFilters({
           </select>
         </label>
 
-        <label className="grid gap-1 min-w-[160px]">
-          <span className={labelCls}>Period</span>
-          <select
-            name="range"
-            defaultValue={filters.range}
-            className={inputCls}
-          >
+        <label className="col-span-2 xl:col-span-2">
+          <span className="sr-only">Period</span>
+          <select name="range" defaultValue={filters.range} className={inputCls}>
             <option value="ALL">All time</option>
             <option value="today">Today</option>
             <option value="week">Last 7 days</option>
@@ -113,9 +83,23 @@ export default function DesktopFilters({
           </select>
         </label>
 
-        <Button type="submit" size="sm">
-          Apply
-        </Button>
+        <label className="col-span-2 xl:col-span-2">
+          <span className="sr-only">Created by</span>
+          <select name="actor" defaultValue={actor} className={inputCls}>
+            <option value="ALL">All team</option>
+            {actors.map((member) => (
+              <option key={member.id} value={`user:${member.id}`}>
+                {member.label}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <div className="col-span-1 xl:col-span-1 flex justify-end">
+          <Button type="submit" size="sm">
+            Apply
+          </Button>
+        </div>
       </form>
     </section>
   );

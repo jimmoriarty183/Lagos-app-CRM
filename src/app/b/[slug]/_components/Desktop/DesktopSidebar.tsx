@@ -42,15 +42,7 @@ export default function DesktopSidebar({
               </span>
               <span className={metaIdle}>Owner</span>
             </a>
-          ) : (
-            <div className={`${itemBase} text-gray-400 opacity-60`}>
-              <span className="flex items-center gap-2">
-                <LayoutDashboard className="h-4 w-4" />
-                Analytics
-              </span>
-              <span className={metaIdle}>Owner</span>
-            </div>
-          )}
+          ) : null}
 
           <div className={`${itemBase} text-gray-400 opacity-60`}>
             <span className="flex items-center gap-2">

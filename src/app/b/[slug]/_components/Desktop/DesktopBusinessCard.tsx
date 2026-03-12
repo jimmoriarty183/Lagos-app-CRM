@@ -23,7 +23,7 @@ type Props = {
   phone: string;
   isOwnerManager: boolean;
   pendingInvites?: PendingInvite[];
-  currentUserId: string;
+  currentUserId?: string | null;
 };
 
 function RolePill({ role }: { role: Props["role"] }) {

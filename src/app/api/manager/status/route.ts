@@ -18,11 +18,21 @@ type MembershipRow = {
   user_id: string | null;
 };
 
-async function loadOwnerManagerMemberships(admin: SupabaseClient, businessId: string) {
+type ProfileRow = {
+  id: string;
+  full_name: string | null;
+  email: string | null;
+};
+
+async function loadOwnerManagerMemberships(
+  admin: SupabaseClient,
+  businessId: string,
+) {
   const { data: primary, error: primaryErr } = await admin
     .from("memberships")
     .select("role, user_id")
-    .eq("business_id", businessId);
+    .eq("business_id", businessId)
+    .in("role", ["OWNER", "MANAGER"]);
 
   if (!primaryErr && Array.isArray(primary)) {
     return primary as MembershipRow[];
@@ -31,13 +41,34 @@ async function loadOwnerManagerMemberships(admin: SupabaseClient, businessId: st
   const { data: fallback, error: fallbackErr } = await admin
     .from("business_memberships")
     .select("role, user_id")
-    .eq("business_id", businessId);
+    .eq("business_id", businessId)
+    .in("role", ["OWNER", "MANAGER"]);
 
   if (!fallbackErr && Array.isArray(fallback)) {
     return fallback as MembershipRow[];
   }
 
   throw primaryErr || fallbackErr || new Error("Failed to load memberships");
+}
+
+async function loadProfilesMap(admin: SupabaseClient, ids: string[]) {
+  const uniqIds = Array.from(new Set(ids.filter(Boolean)));
+  if (!uniqIds.length) return new Map<string, ProfileRow>();
+
+  const { data: profiles, error } = await admin
+    .from("profiles")
+    .select("id, full_name, email")
+    .in("id", uniqIds);
+
+  if (error) throw error;
+
+  const map = new Map<string, ProfileRow>();
+  for (const p of profiles ?? []) {
+    if (p?.id) {
+      map.set(String(p.id), p as ProfileRow);
+    }
+  }
+  return map;
 }
 
 export async function GET(req: Request) {
@@ -55,13 +86,11 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "business_id must be a UUID" }, { status: 400 });
   }
 
-  // ✅ require session (so random people can’t probe business ids)
   const { data: authData } = await supabase.auth.getUser();
   if (!authData?.user) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  // legacy phones (can be null now)
   const { data: biz, error: bizErr } = await admin
     .from("businesses")
     .select("owner_phone, manager_phone")
@@ -71,7 +100,6 @@ export async function GET(req: Request) {
 
   if (bizErr) return NextResponse.json({ error: bizErr.message }, { status: 500 });
 
-  // ✅ OWNER + MANAGER from memberships (source of truth), with fallback table support
   let mems: MembershipRow[] = [];
   try {
     mems = await loadOwnerManagerMemberships(admin, business_id);
@@ -80,107 +108,112 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: message }, { status: 500 });
   }
 
-  const ownerUserId =
-    mems.find((m) => upperRole(m.role) === "OWNER")?.user_id || null;
-  const managerUserId =
-    mems.find((m) => upperRole(m.role) === "MANAGER")?.user_id || null;
+  const ownerMembership = mems.find((m) => upperRole(m.role) === "OWNER") ?? null;
+  const managerMemberships = mems.filter((m) => upperRole(m.role) === "MANAGER");
 
-  // owner profile
-  let ownerProfile: { id: string; full_name: string | null; email: string | null } | null = null;
-  if (ownerUserId) {
-    const { data: op } = await admin
-      .from("profiles")
-      .select("id, full_name, email")
-      .eq("id", ownerUserId)
-      .maybeSingle();
-    if (op?.id) ownerProfile = op as { id: string; full_name: string | null; email: string | null };
-  }
-
-  // manager ACTIVE
-  if (managerUserId) {
-    const { data: mp } = await admin
-      .from("profiles")
-      .select("id, full_name, email")
-      .eq("id", managerUserId)
-      .maybeSingle();
-
-    return NextResponse.json({
-      // legacy
-      owner_phone: biz?.owner_phone ?? null,
-      legacy_manager_phone: biz?.manager_phone ?? null,
-
-      // ✅ new
-      owner: ownerProfile,
-      manager: {
-        state: "ACTIVE",
-        user_id: managerUserId,
-        full_name: mp?.full_name ?? null,
-        phone: null,
-        email: mp?.email ?? null,
-      },
-    });
-  }
-
-  // manager PENDING invite
-  const { data: inv } = await admin
+  let pendingInvites: { id: string; email: string; created_at: string | null }[] = [];
+  const { data: pendingRows } = await admin
     .from("business_invites")
-    .select("email, created_at")
+    .select("id,email,created_at")
     .eq("business_id", business_id)
     .ilike("role", "MANAGER")
     .eq("status", "PENDING")
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    .order("created_at", { ascending: false });
 
-  if (inv?.email) {
-    return NextResponse.json({
-      owner_phone: biz?.owner_phone ?? null,
-      legacy_manager_phone: biz?.manager_phone ?? null,
-
-      owner: ownerProfile,
-      manager: { state: "PENDING", email: inv.email, created_at: inv.created_at },
-    });
+  if (Array.isArray(pendingRows)) {
+    pendingInvites = pendingRows.map((inv: { id: string; email: string; created_at: string | null }) => ({
+      id: String(inv.id),
+      email: String(inv.email),
+      created_at: inv.created_at ? String(inv.created_at) : null,
+    }));
   }
 
-  // Fallback: invite is accepted but membership row may lag/mismatch between tables.
-  const { data: accepted } = await admin
+  const { data: acceptedRows } = await admin
     .from("business_invites")
-    .select("accepted_by")
+    .select("accepted_by,email")
     .eq("business_id", business_id)
     .ilike("role", "MANAGER")
     .eq("status", "ACCEPTED")
-    .not("accepted_by", "is", null)
-    .order("accepted_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    .not("accepted_by", "is", null);
 
-  if (accepted?.accepted_by) {
-    const { data: ap } = await admin
-      .from("profiles")
-      .select("id, full_name, email")
-      .eq("id", accepted.accepted_by)
-      .maybeSingle();
+  const acceptedEmailByUserId = new Map<string, string>();
+  const acceptedManagerIds = Array.from(
+    new Set(
+      (acceptedRows ?? [])
+        .map((row: { accepted_by?: string | null; email?: string | null }) => {
+          const userId = String(row.accepted_by ?? "").trim();
+          const inviteEmail = String(row.email ?? "").trim();
+          if (userId && inviteEmail && !acceptedEmailByUserId.has(userId)) {
+            acceptedEmailByUserId.set(userId, inviteEmail);
+          }
+          return userId;
+        })
+        .filter(Boolean),
+    ),
+  );
 
-    return NextResponse.json({
-      owner_phone: biz?.owner_phone ?? null,
-      legacy_manager_phone: biz?.manager_phone ?? null,
+  const membershipManagerIds = managerMemberships
+    .map((m) => String(m.user_id ?? "").trim())
+    .filter(Boolean);
 
-      owner: ownerProfile,
-      manager: {
-        state: "ACTIVE",
-        user_id: accepted.accepted_by,
-        full_name: ap?.full_name ?? null,
-        phone: null,
-        email: ap?.email ?? null,
-      },
-    });
+  const allManagerIds = Array.from(new Set([...membershipManagerIds, ...acceptedManagerIds]));
+
+  const profileIds = [ownerMembership?.user_id ?? "", ...allManagerIds];
+
+  let profilesById = new Map<string, ProfileRow>();
+  try {
+    profilesById = await loadProfilesMap(admin, profileIds);
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : "Failed to load profiles";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
+
+  const ownerId = ownerMembership?.user_id ? String(ownerMembership.user_id) : null;
+  const ownerProfile = ownerId ? profilesById.get(ownerId) ?? null : null;
+
+  const managersActive = allManagerIds
+    .map((userId) => {
+      const profile = profilesById.get(userId) ?? null;
+      return {
+        user_id: userId,
+        full_name: profile?.full_name ?? null,
+        email: profile?.email ?? acceptedEmailByUserId.get(userId) ?? null,
+        phone: null as string | null,
+      };
+    })
+    .filter(Boolean);
 
   return NextResponse.json({
     owner_phone: biz?.owner_phone ?? null,
     legacy_manager_phone: biz?.manager_phone ?? null,
 
-    owner: ownerProfile,
-    manager: { state: "NONE" },
+    owner: ownerProfile
+      ? {
+          id: ownerProfile.id,
+          full_name: ownerProfile.full_name,
+          email: ownerProfile.email,
+        }
+      : null,
+
+    managers_active: managersActive,
+    managers_pending: pendingInvites.map((inv) => ({
+      invite_id: inv.id,
+      email: inv.email,
+      created_at: inv.created_at,
+    })),
+
+    // backward compatibility
+    manager: managersActive.length
+      ? {
+          state: "ACTIVE",
+          ...managersActive[0],
+        }
+      : pendingInvites.length
+        ? {
+            state: "PENDING",
+            email: pendingInvites[0].email,
+            created_at: pendingInvites[0].created_at,
+          }
+        : { state: "NONE" },
   });
 }
