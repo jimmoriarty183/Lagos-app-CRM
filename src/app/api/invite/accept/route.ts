@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { buildNameFromParts } from "@/lib/user-display";
 
 function clean(v: any) {
   return String(v ?? "").trim();
@@ -93,21 +94,31 @@ export async function POST(req: Request) {
   }
 
   // 4) upsert profile (service role)
-  // Пишем full_name, и если колонки first_name/last_name есть — тоже пишем.
-  // Если их нет — Postgres просто вернёт ошибку. Чтобы не ломать прод,
-  // пишем безопасно: сначала full_name, потом пробуем first/last.
-  if (fullName.length >= 2) {
-    const { error: profErr } = await admin
-      .from("profiles")
-      .upsert({ id: user.id, full_name: fullName }, { onConflict: "id" });
+  const userMeta = (user.user_metadata ?? {}) as Record<string, unknown>;
+  const metadataFirstName = clean(userMeta.first_name);
+  const metadataLastName = clean(userMeta.last_name);
+  const metadataFullName = clean(userMeta.full_name);
 
-    if (profErr) {
-      return NextResponse.json({ ok: false, error: profErr.message }, { status: 500 });
-    }
+  const safeFirstName = firstName || metadataFirstName || null;
+  const safeLastName = lastName || metadataLastName || null;
+  const normalizedFullName =
+    fullName || metadataFullName || buildNameFromParts(safeFirstName, safeLastName);
+
+  const profilePayload = {
+    id: user.id,
+    email: userEmail || null,
+    full_name: normalizedFullName || null,
+    first_name: safeFirstName,
+    last_name: safeLastName,
+  };
+
+  const { error: profErr } = await admin
+    .from("profiles")
+    .upsert(profilePayload, { onConflict: "id" });
+
+  if (profErr) {
+    return NextResponse.json({ ok: false, error: profErr.message }, { status: 500 });
   }
-
-  // OPTIONAL: если у тебя реально есть first_name/last_name — раскомментируй:
-  // await admin.from("profiles").update({ first_name: firstName || null, last_name: lastName || null }).eq("id", user.id);
 
   // 5) membership
   const { error: memErr } = await admin

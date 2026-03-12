@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { resolveUserDisplay } from "@/lib/user-display";
 
 function isUuid(v: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
@@ -21,8 +22,12 @@ type MembershipRow = {
 type ProfileRow = {
   id: string;
   full_name: string | null;
+  first_name: string | null;
+  last_name: string | null;
   email: string | null;
 };
+
+type ViewerRole = "OWNER" | "MANAGER";
 
 async function loadOwnerManagerMemberships(
   admin: SupabaseClient,
@@ -57,7 +62,7 @@ async function loadProfilesMap(admin: SupabaseClient, ids: string[]) {
 
   const { data: profiles, error } = await admin
     .from("profiles")
-    .select("id, full_name, email")
+    .select("id, full_name, first_name, last_name, email")
     .in("id", uniqIds);
 
   if (error) throw error;
@@ -110,6 +115,13 @@ export async function GET(req: Request) {
 
   const ownerMembership = mems.find((m) => upperRole(m.role) === "OWNER") ?? null;
   const managerMemberships = mems.filter((m) => upperRole(m.role) === "MANAGER");
+  const viewerMembership =
+    mems.find((m) => String(m.user_id ?? "").trim() === String(authData.user.id).trim()) ?? null;
+  const viewerRole = upperRole(viewerMembership?.role) as ViewerRole | "";
+
+  if (viewerRole !== "OWNER" && viewerRole !== "MANAGER") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   let pendingInvites: { id: string; email: string; created_at: string | null }[] = [];
   const { data: pendingRows } = await admin
@@ -170,33 +182,66 @@ export async function GET(req: Request) {
 
   const ownerId = ownerMembership?.user_id ? String(ownerMembership.user_id) : null;
   const ownerProfile = ownerId ? profilesById.get(ownerId) ?? null : null;
+  const ownerNormalized = ownerProfile
+    ? resolveUserDisplay({
+        full_name: ownerProfile.full_name,
+        first_name: ownerProfile.first_name,
+        last_name: ownerProfile.last_name,
+        email: ownerProfile.email,
+      })
+    : null;
 
-  const managersActive = allManagerIds
+  const managersActiveAll = allManagerIds
     .map((userId) => {
       const profile = profilesById.get(userId) ?? null;
+      const normalized = resolveUserDisplay({
+        full_name: profile?.full_name,
+        first_name: profile?.first_name,
+        last_name: profile?.last_name,
+        email: profile?.email ?? acceptedEmailByUserId.get(userId) ?? null,
+      });
+
       return {
         user_id: userId,
-        full_name: profile?.full_name ?? null,
-        email: profile?.email ?? acceptedEmailByUserId.get(userId) ?? null,
+        full_name: normalized.fullName || normalized.fromParts || null,
+        first_name: profile?.first_name ?? null,
+        last_name: profile?.last_name ?? null,
+        email: normalized.email || null,
         phone: null as string | null,
       };
     })
     .filter(Boolean);
 
-  return NextResponse.json({
-    owner_phone: biz?.owner_phone ?? null,
-    legacy_manager_phone: biz?.manager_phone ?? null,
-
-    owner: ownerProfile
+  const viewerManager =
+    managersActiveAll.find(
+      (manager) => String(manager.user_id).trim() === String(authData.user.id).trim(),
+    ) ?? null;
+  const managersActive =
+    viewerRole === "OWNER"
+      ? managersActiveAll
+      : viewerManager
+        ? [viewerManager]
+        : [];
+  const ownerPayload =
+    viewerRole === "OWNER" && ownerProfile
       ? {
           id: ownerProfile.id,
-          full_name: ownerProfile.full_name,
-          email: ownerProfile.email,
+          full_name: ownerNormalized?.fullName || ownerNormalized?.fromParts || null,
+          first_name: ownerProfile.first_name,
+          last_name: ownerProfile.last_name,
+          email: ownerNormalized?.email || null,
         }
-      : null,
+      : null;
+  const pendingPayload = viewerRole === "OWNER" ? pendingInvites : [];
 
+  return NextResponse.json({
+    viewer_role: viewerRole,
+    owner_phone: biz?.owner_phone ?? null,
+    legacy_manager_phone: biz?.manager_phone ?? null,
+    owner: ownerPayload,
+    viewer_manager: viewerManager,
     managers_active: managersActive,
-    managers_pending: pendingInvites.map((inv) => ({
+    managers_pending: pendingPayload.map((inv) => ({
       invite_id: inv.id,
       email: inv.email,
       created_at: inv.created_at,
@@ -208,11 +253,11 @@ export async function GET(req: Request) {
           state: "ACTIVE",
           ...managersActive[0],
         }
-      : pendingInvites.length
+      : pendingPayload.length
         ? {
             state: "PENDING",
-            email: pendingInvites[0].email,
-            created_at: pendingInvites[0].created_at,
+            email: pendingPayload[0].email,
+            created_at: pendingPayload[0].created_at,
           }
         : { state: "NONE" },
   });

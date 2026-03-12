@@ -14,6 +14,7 @@ import MobileCreateOrderAccordion from "./_components/Mobile/MobileCreateOrderAc
 import MobileFiltersAccordion from "./_components/Mobile/MobileFiltersAccordion";
 
 import { supabaseServerReadOnly } from "@/lib/supabase/server";
+import { resolveUserDisplay } from "@/lib/user-display";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 
 type BusinessInvite = {
@@ -206,15 +207,15 @@ export default async function Page({ params, searchParams }: PageProps) {
     const membershipRows = (actorMemberships ?? []).filter((m: any) => m?.user_id);
     const actorUserIds = Array.from(new Set(membershipRows.map((m: any) => String(m.user_id))));
 
-    const profilesMap = new Map<string, { full_name: string | null; email: string | null }>();
+    const profilesMap = new Map<string, { full_name: string | null; first_name: string | null; last_name: string | null; email: string | null }>();
     if (actorUserIds.length > 0) {
       const { data: actorProfiles } = await dataClient
         .from("profiles")
-        .select("id, full_name, email")
+        .select("id, full_name, first_name, last_name, email")
         .in("id", actorUserIds);
 
       for (const p of actorProfiles ?? []) {
-        if (p?.id) profilesMap.set(String(p.id), { full_name: p.full_name ?? null, email: p.email ?? null });
+        if (p?.id) profilesMap.set(String(p.id), { full_name: p.full_name ?? null, first_name: p.first_name ?? null, last_name: p.last_name ?? null, email: p.email ?? null });
       }
     }
 
@@ -229,7 +230,13 @@ export default async function Page({ params, searchParams }: PageProps) {
       const id = String(m.user_id);
       const role = upperRole(m.role) === "OWNER" ? "OWNER" : "MANAGER";
       const profile = profilesMap.get(id);
-      const label = profile?.full_name || profile?.email || id;
+      const userDisplay = resolveUserDisplay({
+        full_name: profile?.full_name,
+        first_name: profile?.first_name,
+        last_name: profile?.last_name,
+        email: profile?.email,
+      });
+      const label = userDisplay.primary || id;
       return { id, label, kind: role };
     });
   } catch {

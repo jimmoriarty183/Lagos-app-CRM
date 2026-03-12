@@ -13,12 +13,14 @@ type Props = {
   };
   role: Role;
   isOwnerManager: boolean;
+  currentUserId?: string | null;
 };
 
 export default function MobileBusinessAccordion({
   business,
   role,
   isOwnerManager,
+  currentUserId,
 }: Props) {
   return (
     <MobileAccordion title="Business" defaultOpen={false}>
@@ -30,6 +32,7 @@ export default function MobileBusinessAccordion({
           legacyManagerPhone={business.manager_phone ?? null}
           role={role}
           isOwnerManager={isOwnerManager}
+          currentUserId={currentUserId}
           mode="summary"
         />
       </div>

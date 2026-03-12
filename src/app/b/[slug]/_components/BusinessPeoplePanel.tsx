@@ -5,18 +5,23 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { User, Trash2 } from "lucide-react";
 import InviteManager from "./InviteManager";
+import { resolveUserDisplay } from "@/lib/user-display";
 
 type Role = "OWNER" | "MANAGER" | "GUEST";
 
 type OwnerProfile = {
   id: string;
   full_name: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
   email: string | null;
 };
 
 type ActiveManager = {
   user_id: string;
   full_name: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
   email?: string | null;
   phone: string | null;
 };
@@ -34,14 +39,18 @@ type ManagerState =
       state: "ACTIVE";
       user_id: string;
       full_name: string | null;
+      first_name?: string | null;
+      last_name?: string | null;
       email?: string | null;
       phone: string | null;
     };
 
 type StatusResponse = {
+  viewer_role?: Role;
   owner_phone: string | null;
   legacy_manager_phone?: string | null;
   owner?: OwnerProfile | null;
+  viewer_manager?: ActiveManager | null;
   manager?: ManagerState;
   managers_active?: ActiveManager[];
   managers_pending?: PendingManager[];
@@ -96,9 +105,11 @@ function Row({
   right?: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3 rounded-2xl border border-gray-100 bg-white px-4 py-3">
+    <div className="flex items-center justify-between gap-3 rounded-2xl bg-gray-50/80 px-4 py-3">
       <div className="flex min-w-0 flex-1 items-center gap-3">
-        <div className="shrink-0 rounded-xl bg-gray-50 p-2 text-gray-700">{icon}</div>
+        <div className="shrink-0 rounded-xl bg-white p-2 text-gray-700 shadow-sm shadow-gray-200/60">
+          {icon}
+        </div>
 
         <div className="min-w-0 flex-1">
           {label ? (
@@ -116,16 +127,43 @@ function Row({
   );
 }
 
-function labelForOwner(owner?: OwnerProfile | null, fallbackPhone?: string | null) {
-  return owner?.full_name || owner?.email || fallbackPhone || "—";
+function UserValue({
+  primary,
+  email,
+}: {
+  primary: string;
+  email?: string | null;
+}) {
+  return (
+    <span className="min-w-0">
+      <span className="block truncate font-semibold text-gray-900" title={primary}>
+        {primary}
+      </span>
+      {email ? (
+        <span className="block truncate text-xs text-gray-500" title={email}>
+          {email}
+        </span>
+      ) : null}
+    </span>
+  );
 }
 
-function displayManagerName(m: ActiveManager) {
-  return m.full_name || m.email || "Manager";
-}
+function getUserDisplay(input: {
+  full_name?: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
+  email?: string | null;
+  fallback?: string | null;
+}) {
+  const normalized = resolveUserDisplay(input);
+  const fallback = String(input.fallback ?? "").trim();
+  const primary =
+    normalized.fullName || normalized.fromParts || normalized.email || fallback || "No name";
 
-function managerMeta(m: ActiveManager) {
-  return m.email || null;
+  return {
+    primary,
+    email: normalized.email || null,
+  };
 }
 
 export default function BusinessPeoplePanel({
@@ -210,8 +248,9 @@ export default function BusinessPeoplePanel({
 
       await load();
       router.refresh();
-    } catch (e: any) {
-      alert(e?.message || "Remove failed");
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Remove failed";
+      alert(message);
     }
   }
 
@@ -219,16 +258,19 @@ export default function BusinessPeoplePanel({
     return (
       <div className="space-y-3">
         <div className="rounded-2xl border border-gray-100 bg-white px-4 py-3 text-sm text-gray-600">
-          Loading business…
+          Loading business...
         </div>
       </div>
     );
   }
 
-  const ownerLabel = labelForOwner(
-    data?.owner ?? null,
-    ownerPhone || data?.owner_phone || null,
-  );
+  const ownerDisplay = getUserDisplay({
+    full_name: data?.owner?.full_name,
+    first_name: data?.owner?.first_name,
+    last_name: data?.owner?.last_name,
+    email: data?.owner?.email,
+    fallback: ownerPhone || data?.owner_phone || null,
+  });
 
   const managersActiveRaw = data?.managers_active ?? [];
   const managersPendingRaw = data?.managers_pending ?? [];
@@ -239,23 +281,20 @@ export default function BusinessPeoplePanel({
           {
             user_id: data.manager.user_id,
             full_name: data.manager.full_name,
+            first_name: data.manager.first_name ?? null,
+            last_name: data.manager.last_name ?? null,
             email: data.manager.email ?? null,
             phone: data.manager.phone,
           },
         ]
       : [];
 
-  const managerCandidates = managersActiveRaw.length > 0 ? managersActiveRaw : managersFromLegacy;
+  const managerCandidates =
+    managersActiveRaw.length > 0 ? managersActiveRaw : managersFromLegacy;
   const ownerId = data?.owner?.id ? String(data.owner.id) : "";
-  const ownerName = String(data?.owner?.full_name ?? "").trim().toLowerCase();
 
-  // IMPORTANT: UI inclusion is based on full_name/email quality, not role checks.
-  const managersActive = managerCandidates.filter((m) => {
-    const fullName = String(m.full_name ?? "").trim();
-    const email = String(m.email ?? "").trim();
-    if (!fullName && !email) return false;
-    if (ownerId && String(m.user_id) === ownerId) return false;
-    if (ownerName && fullName && fullName.toLowerCase() === ownerName) return false;
+  const managersActive = managerCandidates.filter((manager) => {
+    if (ownerId && String(manager.user_id) === ownerId) return false;
     return true;
   });
 
@@ -270,53 +309,138 @@ export default function BusinessPeoplePanel({
               created_at: data.manager.created_at,
             },
           ]
-        : (pendingInvites ?? []).map((inv, idx) => ({
-            invite_id: String(inv.id ?? idx),
-            email: String(inv.email ?? ""),
-            created_at: inv.created_at ? String(inv.created_at) : null,
+        : (pendingInvites ?? []).map((invite, index) => ({
+            invite_id: String(invite.id ?? index),
+            email: String(invite.email ?? ""),
+            created_at: invite.created_at ? String(invite.created_at) : null,
           }));
 
+  const viewerRole = data?.viewer_role ?? role;
   const ownerPillText = isOwnerManager ? "OWNER & MANAGER" : "OWNER";
   const ownerIsYou =
     Boolean(currentUserId) &&
     Boolean(data?.owner?.id) &&
     String(data?.owner?.id) === String(currentUserId);
-
+  const viewerManager =
+    data?.viewer_manager ??
+    managersActive.find((manager) => String(manager.user_id) === String(currentUserId)) ??
+    null;
+  const viewerManagerDisplay = viewerManager
+    ? getUserDisplay({
+        full_name: viewerManager.full_name,
+        first_name: viewerManager.first_name,
+        last_name: viewerManager.last_name,
+        email: viewerManager.email,
+      })
+    : null;
 
   if (mode === "summary") {
     const href = businessSlug
       ? `/b/${encodeURIComponent(String(businessSlug))}/settings/team${suffix}`
       : `./settings/team${suffix}`;
+    const actionLabel = viewerRole === "OWNER" ? "Manage access ->" : "View team ->";
+
+    if (viewerRole === "MANAGER" && viewerManagerDisplay) {
+      return (
+        <div className="space-y-3">
+          <Row
+            icon={<User className="h-4 w-4" />}
+            value={
+              <UserValue
+                primary={viewerManagerDisplay.primary}
+                email={viewerManagerDisplay.email}
+              />
+            }
+            right={
+              <div className="flex shrink-0 items-center gap-2">
+                <Pill tone="gray">MANAGER</Pill>
+                <Pill tone="gray">YOU</Pill>
+              </div>
+            }
+          />
+
+          <Link
+            href={href}
+            className="block rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-900 hover:bg-gray-50"
+          >
+            {actionLabel}
+          </Link>
+        </div>
+      );
+    }
+
+    const summaryManagers = managersActive.slice(0, 2);
+    const hiddenManagersCount = Math.max(0, managersActive.length - summaryManagers.length);
 
     return (
       <div className="space-y-3">
         <Row
           icon={<User className="h-4 w-4" />}
-          label="OWNER"
-          value={
-            <span className="min-w-0">
-              <span className="block truncate font-semibold" title={ownerLabel}>{ownerLabel}</span>
-              {data?.owner?.email ? (
-                <span className="block font-mono text-xs text-gray-500">{data.owner.email}</span>
-              ) : null}
-            </span>
-          }
+          value={<UserValue primary={ownerDisplay.primary} email={ownerDisplay.email} />}
           right={
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex shrink-0 items-center gap-2">
               <Pill tone="blue">{ownerPillText}</Pill>
               {ownerIsYou ? <Pill tone="gray">YOU</Pill> : null}
             </div>
           }
         />
 
-        {canManage ? (
-          <Link
-            href={href}
-            className="block rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-900 hover:bg-gray-50 "
-          >
-            Manage access →
-          </Link>
+        {summaryManagers.map((manager) => {
+          const managerDisplay = getUserDisplay({
+            full_name: manager.full_name,
+            first_name: manager.first_name,
+            last_name: manager.last_name,
+            email: manager.email,
+          });
+
+          return (
+            <Row
+              key={manager.user_id}
+              icon={<User className="h-4 w-4" />}
+              value={<UserValue primary={managerDisplay.primary} email={managerDisplay.email} />}
+              right={<Pill tone="gray">MANAGER</Pill>}
+            />
+          );
+        })}
+
+        {hiddenManagersCount > 0 ? (
+          <div className="px-2 text-xs font-semibold text-gray-500">
+            +{hiddenManagersCount} more
+          </div>
         ) : null}
+
+        <Link
+          href={href}
+          className="block rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-900 hover:bg-gray-50"
+        >
+          {actionLabel}
+        </Link>
+      </div>
+    );
+  }
+
+  if (viewerRole === "MANAGER") {
+    return (
+      <div className="space-y-4">
+        <Row
+          icon={<User className="h-4 w-4" />}
+          value={
+            <UserValue
+              primary={viewerManagerDisplay?.primary ?? "No name"}
+              email={viewerManagerDisplay?.email ?? null}
+            />
+          }
+          right={
+            <div className="flex shrink-0 items-center gap-2">
+              <Pill tone="gray">MANAGER</Pill>
+              <Pill tone="gray">YOU</Pill>
+            </div>
+          }
+        />
+
+        <div className="rounded-2xl bg-gray-50/80 px-4 py-3 text-sm text-gray-600">
+          Access for this business is managed by the owner.
+        </div>
       </div>
     );
   }
@@ -325,98 +449,85 @@ export default function BusinessPeoplePanel({
     <div className="space-y-4">
       <Row
         icon={<User className="h-4 w-4" />}
-        label="OWNER"
-        value={
-          <span className="min-w-0">
-            <span className="block truncate font-semibold" title={ownerLabel}>{ownerLabel}</span>
-            {data?.owner?.email ? (
-              <span className="block font-mono text-xs text-gray-500">{data.owner.email}</span>
-            ) : null}
-          </span>
-        }
+        value={<UserValue primary={ownerDisplay.primary} email={ownerDisplay.email} />}
         right={
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex shrink-0 items-center gap-2">
             <Pill tone="blue">{ownerPillText}</Pill>
             {ownerIsYou ? <Pill tone="gray">YOU</Pill> : null}
           </div>
         }
       />
 
-      {role === "OWNER" ? (
-        <div className="space-y-3 max-h-[360px] overflow-auto pr-1">
-          {loading ? (
-            <div className="rounded-2xl border border-gray-100 bg-white px-4 py-3 text-sm text-gray-600">
-              Loading manager status…
-            </div>
-          ) : null}
+      <div className="space-y-3 max-h-[360px] overflow-auto pr-1">
+        {loading ? (
+          <div className="rounded-2xl border border-gray-100 bg-white px-4 py-3 text-sm text-gray-600">
+            Loading manager status...
+          </div>
+        ) : null}
 
-          {!loading && managersActive.length === 0 && !legacyManagerPhone ? (
-            <Row
-              icon={<User className="h-4 w-4" />}
-              label="Manager"
-              value={<span className="text-gray-800">Not assigned</span>}
-              right={<Pill tone="gray">Manager</Pill>}
-            />
-          ) : null}
+        {!loading && managersActive.length === 0 && !legacyManagerPhone ? (
+          <Row
+            icon={<User className="h-4 w-4" />}
+            label="Manager"
+            value={<span className="text-gray-800">Not assigned</span>}
+            right={<Pill tone="gray">MANAGER</Pill>}
+          />
+        ) : null}
 
-          {!loading && managersActive.length > 0
-            ? managersActive.map((manager, index) => {
-                const managerIsYou =
-                  Boolean(currentUserId) &&
-                  String(manager.user_id) === String(currentUserId);
-                return (
-                  <Row
-                    key={manager.user_id}
-                    icon={<User className="h-4 w-4" />}
-                    label={`Manager ${index + 1}`}
-                    value={
-                      <span className="min-w-0">
-                        <span className="block truncate font-semibold" title={displayManagerName(manager)}>
-                          {displayManagerName(manager)}
-                        </span>
-                        {managerMeta(manager) ? (
-                          <span className="block font-mono text-xs text-gray-500">{managerMeta(manager)}</span>
-                        ) : null}
-                      </span>
-                    }
-                    right={
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => removeManager(manager.user_id)}
-                          className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-50"
-                          title="Remove manager"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                          Remove
-                        </button>
-                        <Pill tone="gray">Manager</Pill>
-                        {managerIsYou ? <Pill tone="gray">YOU</Pill> : null}
-                      </div>
-                    }
-                  />
-                );
-              })
-            : null}
+        {!loading && managersActive.length > 0
+          ? managersActive.map((manager) => {
+              const managerIsYou =
+                Boolean(currentUserId) &&
+                String(manager.user_id) === String(currentUserId);
+              const managerDisplay = getUserDisplay({
+                full_name: manager.full_name,
+                first_name: manager.first_name,
+                last_name: manager.last_name,
+                email: manager.email,
+              });
 
-          {!loading && managersPending.length > 0
-            ? managersPending.map((pending, index) => (
+              return (
                 <Row
-                  key={pending.invite_id}
+                  key={manager.user_id}
                   icon={<User className="h-4 w-4" />}
-                  label={`Manager ${index + 1}`}
-                  value={
-                    <span className="inline-flex flex-wrap items-center gap-2">
-                      <span className="font-semibold">Pending invite</span>
-                      <span className="text-gray-300">•</span>
-                      <span className="font-mono text-xs">{pending.email}</span>
-                    </span>
+                  value={<UserValue primary={managerDisplay.primary} email={managerDisplay.email} />}
+                  right={
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => removeManager(manager.user_id)}
+                        className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-50"
+                        title="Remove manager"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        Remove
+                      </button>
+                      <Pill tone="gray">MANAGER</Pill>
+                      {managerIsYou ? <Pill tone="gray">YOU</Pill> : null}
+                    </div>
                   }
-                  right={<Pill tone="amber">PENDING</Pill>}
                 />
-              ))
-            : null}
-        </div>
-      ) : null}
+              );
+            })
+          : null}
+
+        {!loading && managersPending.length > 0
+          ? managersPending.map((pending, index) => (
+              <Row
+                key={pending.invite_id}
+                icon={<User className="h-4 w-4" />}
+                label={`Manager ${index + 1}`}
+                value={
+                  <span className="inline-flex flex-wrap items-center gap-2">
+                    <span className="font-semibold">Pending invite</span>
+                    <span className="text-gray-300">-</span>
+                    <span className="font-mono text-xs">{pending.email}</span>
+                  </span>
+                }
+                right={<Pill tone="amber">PENDING</Pill>}
+              />
+            ))
+          : null}
+      </div>
 
       {canManage ? <InviteManager businessId={safeBusinessId} /> : null}
     </div>

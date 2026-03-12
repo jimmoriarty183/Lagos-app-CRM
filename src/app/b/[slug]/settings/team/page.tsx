@@ -3,8 +3,17 @@ import { supabaseServerReadOnly } from "@/lib/supabase/server";
 import BusinessPeoplePanel from "@/app/b/[slug]/_components/BusinessPeoplePanel";
 
 type Role = "OWNER" | "MANAGER" | "GUEST";
+type MembershipRow = {
+  role: string | null;
+  user_id: string | null;
+};
+type PendingInviteRow = {
+  id?: string;
+  email?: string;
+  created_at?: string | null;
+};
 
-function upperRole(r: any): Role {
+function upperRole(r: unknown): Role {
   const s = String(r ?? "").toUpperCase();
   if (s === "OWNER") return "OWNER";
   if (s === "MANAGER") return "MANAGER";
@@ -20,7 +29,7 @@ export default async function TeamPage({
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { slug } = await params;
-  const sp = searchParams ? await searchParams : undefined;
+  await searchParams;
 
   const supabase = await supabaseServerReadOnly();
 
@@ -71,13 +80,12 @@ export default async function TeamPage({
     .select("role,user_id")
     .eq("business_id", business.id)
     .in("role", ["OWNER", "MANAGER"]);
+  const roleRows = (ownerManagerMems ?? []) as MembershipRow[];
 
   const ownerId =
-    ownerManagerMems?.find((m: any) => String(m.role).toUpperCase() === "OWNER")
-      ?.user_id ?? null;
+    roleRows.find((row) => String(row.role).toUpperCase() === "OWNER")?.user_id ?? null;
   const managerId =
-    ownerManagerMems?.find((m: any) => String(m.role).toUpperCase() === "MANAGER")
-      ?.user_id ?? null;
+    roleRows.find((row) => String(row.role).toUpperCase() === "MANAGER")?.user_id ?? null;
   const isOwnerManager = !!ownerId && !!managerId && String(ownerId) === String(managerId);
 
   // 3) pending invites — ВАЖНО: у тебя таблица называется business_invites (судя по скрину)
@@ -114,7 +122,8 @@ export default async function TeamPage({
               legacyManagerPhone={business.manager_phone}
               role={role}
               isOwnerManager={isOwnerManager}
-              pendingInvites={(pendingInvites as any) ?? []}
+              pendingInvites={((pendingInvites ?? []) as PendingInviteRow[]) ?? []}
+              currentUserId={user.id}
               mode="manage"
             />
           </div>
