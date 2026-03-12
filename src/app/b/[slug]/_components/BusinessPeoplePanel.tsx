@@ -61,6 +61,7 @@ type Props = {
   businessSlug?: string | null;
   ownerPhone: string | null;
   legacyManagerPhone: string | null;
+  initialOwner?: OwnerProfile | null;
   role: Role;
   isOwnerManager: boolean;
   currentUserId?: string | null;
@@ -171,6 +172,7 @@ export default function BusinessPeoplePanel({
   businessSlug,
   ownerPhone,
   legacyManagerPhone,
+  initialOwner,
   role,
   isOwnerManager,
   currentUserId,
@@ -265,10 +267,10 @@ export default function BusinessPeoplePanel({
   }
 
   const ownerDisplay = getUserDisplay({
-    full_name: data?.owner?.full_name,
-    first_name: data?.owner?.first_name,
-    last_name: data?.owner?.last_name,
-    email: data?.owner?.email,
+    full_name: data?.owner?.full_name ?? initialOwner?.full_name,
+    first_name: data?.owner?.first_name ?? initialOwner?.first_name,
+    last_name: data?.owner?.last_name ?? initialOwner?.last_name,
+    email: data?.owner?.email ?? initialOwner?.email,
     fallback: ownerPhone || data?.owner_phone || null,
   });
 
@@ -322,8 +324,8 @@ export default function BusinessPeoplePanel({
   const ownerPillText = isOwnerManager ? "OWNER & MANAGER" : "OWNER";
   const ownerIsYou =
     Boolean(currentUserId) &&
-    Boolean(data?.owner?.id) &&
-    String(data?.owner?.id) === String(currentUserId);
+    Boolean(data?.owner?.id ?? initialOwner?.id) &&
+    String(data?.owner?.id ?? initialOwner?.id) === String(currentUserId);
   const viewerManager =
     data?.viewer_manager ??
     managersActive.find((manager) => String(manager.user_id) === String(currentUserId)) ??

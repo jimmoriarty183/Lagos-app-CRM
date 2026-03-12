@@ -4,6 +4,13 @@ import MobileAccordion from "./MobileAccordion";
 type Role = "OWNER" | "MANAGER" | "GUEST"; // ✅ добавили
 
 type Props = {
+  owner?: {
+    id: string;
+    full_name: string | null;
+    first_name?: string | null;
+    last_name?: string | null;
+    email: string | null;
+  } | null;
   business: {
     id: string;
     slug: string;
@@ -17,6 +24,7 @@ type Props = {
 };
 
 export default function MobileBusinessAccordion({
+  owner,
   business,
   role,
   isOwnerManager,
@@ -30,6 +38,7 @@ export default function MobileBusinessAccordion({
           businessSlug={business.slug}
           ownerPhone={business.owner_phone ?? null}
           legacyManagerPhone={business.manager_phone ?? null}
+          initialOwner={owner ?? null}
           role={role}
           isOwnerManager={isOwnerManager}
           currentUserId={currentUserId}

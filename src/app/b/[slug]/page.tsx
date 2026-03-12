@@ -63,6 +63,14 @@ type TeamActor = {
   kind: "OWNER" | "MANAGER";
 };
 
+type OwnerCardProfile = {
+  id: string;
+  full_name: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  email: string | null;
+};
+
 function isMissingColumnError(error: unknown, column: string) {
   const message = String((error as { message?: string } | null)?.message ?? "").toLowerCase();
   return message.includes(column.toLowerCase());
@@ -196,6 +204,7 @@ export default async function Page({ params, searchParams }: PageProps) {
   let teamActors: TeamActor[] = [];
   let ownerIds: string[] = [];
   let managerIds: string[] = [];
+  let ownerCardProfile: OwnerCardProfile | null = null;
 
   try {
     const { data: actorMemberships } = await dataClient
@@ -239,6 +248,25 @@ export default async function Page({ params, searchParams }: PageProps) {
       const label = userDisplay.primary || id;
       return { id, label, kind: role };
     });
+
+    const preferredOwnerId =
+      ownerIds.find((id) => user?.id && id === user.id) ??
+      ownerIds.find((id) => profilesMap.has(id)) ??
+      ownerIds[0] ??
+      null;
+
+    if (preferredOwnerId) {
+      const profile = profilesMap.get(preferredOwnerId);
+      if (profile) {
+        ownerCardProfile = {
+          id: preferredOwnerId,
+          full_name: profile.full_name,
+          first_name: profile.first_name,
+          last_name: profile.last_name,
+          email: profile.email,
+        };
+      }
+    }
   } catch {
     teamActors = [];
   }
@@ -385,6 +413,7 @@ export default async function Page({ params, searchParams }: PageProps) {
             />
 
             <DesktopBusinessCard
+              owner={ownerCardProfile}
               business={{
                 id: String(currentBusiness.id), // ✅ ДОБАВИЛИ
                 slug: String(currentBusiness.slug),

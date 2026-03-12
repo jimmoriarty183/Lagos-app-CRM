@@ -12,6 +12,13 @@ type PendingInvite = {
 };
 
 type Props = {
+  owner?: {
+    id: string;
+    full_name: string | null;
+    first_name?: string | null;
+    last_name?: string | null;
+    email: string | null;
+  } | null;
   business: {
     id: string;
     slug: string;
@@ -45,6 +52,7 @@ function RolePill({ role }: { role: Props["role"] }) {
 }
 
 export default function DesktopBusinessCard({
+  owner,
   business,
   role,
   phone,
@@ -76,6 +84,7 @@ export default function DesktopBusinessCard({
           businessSlug={business.slug}
           ownerPhone={business.owner_phone ?? null}
           legacyManagerPhone={business.manager_phone ?? null}
+          initialOwner={owner ?? null}
           role={role}
           isOwnerManager={isOwnerManager}
           pendingInvites={pendingInvites}
