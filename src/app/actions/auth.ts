@@ -2,12 +2,17 @@
 
 import { headers } from "next/headers";
 import { supabaseServer } from "@/lib/supabase/server";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 
 type State = { ok: boolean; error: string; next: string };
 const initial: State = { ok: false, error: "", next: "" };
 
-function msg(e: any) {
-  return e?.message || e?.error_description || "Unknown error";
+function msg(e: unknown) {
+  if (e && typeof e === "object") {
+    const maybeError = e as { message?: string; error_description?: string };
+    return maybeError.message || maybeError.error_description || "Unknown error";
+  }
+  return "Unknown error";
 }
 
 // ✅ генерация slug из названия
@@ -132,6 +137,7 @@ export async function registerOwnerAction(
     const slug = slugify(businessName);
 
     const supabase = await supabaseServer();
+    const admin = supabaseAdmin();
 
     // 1) sign up
     const { error: signUpErr } = await supabase.auth.signUp({
@@ -157,7 +163,7 @@ export async function registerOwnerAction(
     const user = u?.user;
     if (!user) return { ok: false, error: "No user after sign in", next: "" };
 
-    const { error: profErr } = await supabase.from("profiles").upsert(
+    const { error: profErr } = await admin.from("profiles").upsert(
       {
         id: user.id,
         email,

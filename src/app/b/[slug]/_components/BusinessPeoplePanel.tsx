@@ -315,7 +315,10 @@ export default function BusinessPeoplePanel({
             created_at: invite.created_at ? String(invite.created_at) : null,
           }));
 
-  const viewerRole = data?.viewer_role ?? role;
+  const viewerRole =
+    data?.viewer_role === "OWNER" || data?.viewer_role === "MANAGER"
+      ? data.viewer_role
+      : role;
   const ownerPillText = isOwnerManager ? "OWNER & MANAGER" : "OWNER";
   const ownerIsYou =
     Boolean(currentUserId) &&

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { resolveUserDisplay } from "@/lib/user-display";
+import { buildNameFromParts, resolveUserDisplay } from "@/lib/user-display";
 
 function isUuid(v: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
@@ -26,8 +26,6 @@ type ProfileRow = {
   last_name: string | null;
   email: string | null;
 };
-
-type ViewerRole = "OWNER" | "MANAGER";
 
 async function loadOwnerManagerMemberships(
   admin: SupabaseClient,
@@ -85,6 +83,11 @@ async function loadProfilesMap(admin: SupabaseClient, ids: string[]) {
   return map;
 }
 
+function cleanText(value: unknown) {
+  const text = String(value ?? "").trim();
+  return text || "";
+}
+
 export async function GET(req: Request) {
   const supabase = await supabaseServer();
   const admin = supabaseAdmin();
@@ -122,15 +125,11 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: message }, { status: 500 });
   }
 
-  const ownerMembership = mems.find((m) => upperRole(m.role) === "OWNER") ?? null;
+  const ownerMemberships = mems.filter((m) => upperRole(m.role) === "OWNER");
   const managerMemberships = mems.filter((m) => upperRole(m.role) === "MANAGER");
   const viewerMembership =
     mems.find((m) => String(m.user_id ?? "").trim() === String(authData.user.id).trim()) ?? null;
-  const viewerRole = upperRole(viewerMembership?.role) as ViewerRole | "";
-
-  if (viewerRole !== "OWNER" && viewerRole !== "MANAGER") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const viewerRole = upperRole(viewerMembership?.role);
 
   let pendingInvites: { id: string; email: string; created_at: string | null }[] = [];
   const { data: pendingRows } = await admin
@@ -179,7 +178,10 @@ export async function GET(req: Request) {
 
   const allManagerIds = Array.from(new Set([...membershipManagerIds, ...acceptedManagerIds]));
 
-  const profileIds = [ownerMembership?.user_id ?? "", ...allManagerIds];
+  const ownerIds = ownerMemberships
+    .map((membership) => String(membership.user_id ?? "").trim())
+    .filter(Boolean);
+  const profileIds = [...ownerIds, ...allManagerIds];
 
   let profilesById = new Map<string, ProfileRow>();
   try {
@@ -188,6 +190,58 @@ export async function GET(req: Request) {
     const message = e instanceof Error ? e.message : "Failed to load profiles";
     return NextResponse.json({ error: message }, { status: 500 });
   }
+
+  const authUser = authData.user;
+  const authProfile = profilesById.get(authUser.id) ?? null;
+  const authMeta = (authUser.user_metadata ?? {}) as Record<string, unknown>;
+  const metadataFirstName = cleanText(authMeta.first_name);
+  const metadataLastName = cleanText(authMeta.last_name);
+  const metadataFullName = cleanText(authMeta.full_name);
+  const metadataEmail = cleanText(authUser.email);
+  const needsProfileBackfill =
+    !authProfile ||
+    (!cleanText(authProfile.full_name) &&
+      !cleanText(authProfile.first_name) &&
+      !cleanText(authProfile.last_name) &&
+      !cleanText(authProfile.email));
+
+  if (needsProfileBackfill && (metadataEmail || metadataFullName || metadataFirstName || metadataLastName)) {
+    const profilePayload = {
+      id: authUser.id,
+      email: metadataEmail || null,
+      first_name: metadataFirstName || null,
+      last_name: metadataLastName || null,
+      full_name:
+        metadataFullName ||
+        buildNameFromParts(metadataFirstName || null, metadataLastName || null) ||
+        null,
+    };
+
+    const { error: backfillError } = await admin
+      .from("profiles")
+      .upsert(profilePayload, { onConflict: "id" });
+
+    if (!backfillError) {
+      try {
+        profilesById = await loadProfilesMap(admin, profileIds);
+      } catch {
+        // Keep the current map if the refresh fails; the route still returns safely.
+      }
+    }
+  }
+
+  const ownerMembership =
+    (viewerRole === "OWNER"
+      ? ownerMemberships.find(
+          (membership) =>
+            String(membership.user_id ?? "").trim() === String(authData.user.id).trim(),
+        )
+      : null) ??
+    ownerMemberships.find((membership) =>
+      profilesById.has(String(membership.user_id ?? "").trim()),
+    ) ??
+    ownerMemberships[0] ??
+    null;
 
   const ownerId = ownerMembership?.user_id ? String(ownerMembership.user_id) : null;
   const ownerProfile = ownerId ? profilesById.get(ownerId) ?? null : null;
@@ -225,23 +279,17 @@ export async function GET(req: Request) {
     managersActiveAll.find(
       (manager) => String(manager.user_id).trim() === String(authData.user.id).trim(),
     ) ?? null;
-  const managersActive =
-    viewerRole === "OWNER"
-      ? managersActiveAll
-      : viewerManager
-        ? [viewerManager]
-        : [];
-  const ownerPayload =
-    viewerRole === "OWNER" && ownerProfile
-      ? {
-          id: ownerProfile.id,
-          full_name: ownerNormalized?.fullName || ownerNormalized?.fromParts || null,
-          first_name: ownerProfile.first_name,
-          last_name: ownerProfile.last_name,
-          email: ownerNormalized?.email || null,
-        }
-      : null;
-  const pendingPayload = viewerRole === "OWNER" ? pendingInvites : [];
+  const managersActive = managersActiveAll;
+  const ownerPayload = ownerProfile
+    ? {
+        id: ownerProfile.id,
+        full_name: ownerNormalized?.fullName || ownerNormalized?.fromParts || null,
+        first_name: ownerProfile.first_name,
+        last_name: ownerProfile.last_name,
+        email: ownerNormalized?.email || null,
+      }
+    : null;
+  const pendingPayload = pendingInvites;
 
   return NextResponse.json({
     viewer_role: viewerRole,
