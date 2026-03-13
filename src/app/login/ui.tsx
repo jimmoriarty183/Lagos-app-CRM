@@ -11,11 +11,12 @@ import {
 
 type State = { ok: boolean; error: string; next: string };
 const initialState: State = { ok: false, error: "", next: "" };
+type AuthAction = (prev: State, formData: FormData) => Promise<State>;
 
 function ErrorBox({ text }: { text?: string }) {
   if (!text) return null;
   return (
-    <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+    <div className="rounded-2xl border border-red-200/80 bg-red-50/90 px-3.5 py-2.5 text-xs text-red-700 shadow-sm">
       {text}
     </div>
   );
@@ -24,7 +25,7 @@ function ErrorBox({ text }: { text?: string }) {
 function SuccessBox({ text }: { text?: string }) {
   if (!text) return null;
   return (
-    <div className="rounded-xl border border-green-200 bg-green-50 px-3 py-2 text-xs text-green-800">
+    <div className="rounded-2xl border border-emerald-200/80 bg-emerald-50/90 px-3.5 py-2.5 text-xs text-emerald-800 shadow-sm">
       {text}
     </div>
   );
@@ -32,30 +33,17 @@ function SuccessBox({ text }: { text?: string }) {
 
 function OverlayLoader({ text }: { text: string }) {
   return (
-    <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/70 backdrop-blur-sm rounded-2xl">
-      <div className="flex flex-col items-center gap-3">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600" />
-        <div className="text-sm font-semibold text-gray-800">{text}</div>
+    <div className="absolute inset-0 z-50 flex items-center justify-center rounded-[20px] bg-white/70 backdrop-blur-sm">
+      <div className="flex flex-col items-center gap-3 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-lg shadow-slate-900/5">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-300 border-t-blue-700" />
+        <div className="text-sm font-semibold text-slate-800">{text}</div>
       </div>
     </div>
   );
 }
 
 function Hint({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="text-[11px] leading-snug text-gray-500">{children}</div>
-  );
-}
-
-function slugifyPreview(input: string) {
-  const base = String(input || "")
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, "-")
-    .replace(/[^a-z0-9-]/g, "")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
-  return base || "my-business";
+  return <div className="text-xs leading-snug text-slate-500">{children}</div>;
 }
 
 function Input({
@@ -79,7 +67,7 @@ function Input({
 }) {
   return (
     <label className="block">
-      <div className="text-xs font-medium text-gray-700">{label}</div>
+      <div className="mb-1.5 text-[13px] font-semibold text-slate-700">{label}</div>
       <input
         name={name}
         type={type}
@@ -88,7 +76,7 @@ function Input({
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange?.(e.target.value)}
-        className="mt-1 w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-200"
+        className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
       />
     </label>
   );
@@ -102,8 +90,6 @@ function PasswordInput({
   placeholder,
   value,
   onChange,
-
-  // ✅ controlled show/hide (optional)
   show,
   onToggleShow,
 }: {
@@ -114,7 +100,6 @@ function PasswordInput({
   placeholder?: string;
   value?: string;
   onChange?: (v: string) => void;
-
   show?: boolean;
   onToggleShow?: () => void;
 }) {
@@ -125,8 +110,8 @@ function PasswordInput({
 
   return (
     <label className="block">
-      <div className="text-xs font-medium text-gray-700">{label}</div>
-      <div className="mt-1 relative">
+      <div className="mb-1.5 text-[13px] font-semibold text-slate-700">{label}</div>
+      <div className="relative">
         <input
           name={name}
           type={isShown ? "text" : "password"}
@@ -135,7 +120,7 @@ function PasswordInput({
           placeholder={placeholder}
           value={value}
           onChange={(e) => onChange?.(e.target.value)}
-          className="w-full rounded-xl border border-gray-300 bg-white px-3 py-2 pr-11 text-sm outline-none focus:ring-2 focus:ring-blue-200"
+          className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-3.5 pr-[4.75rem] text-sm text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
         />
         <button
           type="button"
@@ -143,7 +128,7 @@ function PasswordInput({
             if (isControlled) onToggleShow?.();
             else setLocalShow((s) => !s);
           }}
-          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg px-2 py-1 text-[11px] font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+          className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold text-slate-600 transition hover:border-slate-300 hover:bg-white hover:text-slate-900"
         >
           {isShown ? "Hide" : "Show"}
         </button>
@@ -158,15 +143,15 @@ export default function LoginUI() {
   );
 
   const [loginState, loginSubmit, loginPending] = useActionState(
-    loginAction as any,
+    loginAction as AuthAction,
     initialState,
   );
   const [regState, regSubmit, regPending] = useActionState(
-    registerOwnerAction as any,
+    registerOwnerAction as AuthAction,
     initialState,
   );
   const [resetState, resetSubmit, resetPending] = useActionState(
-    forgotPasswordAction as any,
+    forgotPasswordAction as AuthAction,
     initialState,
   );
 
@@ -181,7 +166,6 @@ export default function LoginUI() {
   const [passConfirm, setPassConfirm] = React.useState("");
   const [agree, setAgree] = React.useState(false);
 
-  // ✅ one toggle for BOTH registration password fields
   const [showRegPasswords, setShowRegPasswords] = React.useState(false);
 
   const [emailLogin, setEmailLogin] = React.useState("");
@@ -230,7 +214,6 @@ export default function LoginUI() {
   const activeState =
     mode === "login" ? loginState : mode === "register" ? regState : resetState;
 
-  const previewSlug = slugifyPreview(businessName);
 
   function validateRegister(): string {
     const bn = businessName.trim();
@@ -267,7 +250,7 @@ export default function LoginUI() {
   }
 
   return (
-    <div className="relative rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+    <div className="relative overflow-hidden rounded-[20px] border border-white/70 bg-white/95 shadow-[0_28px_80px_-36px_rgba(15,23,42,0.38),0_10px_24px_-18px_rgba(15,23,42,0.26)] backdrop-blur-sm">
       {regPending && (
         <OverlayLoader
           text={inviteId ? "Joining business…" : "Creating your account…"}
@@ -276,72 +259,73 @@ export default function LoginUI() {
       {loginPending && <OverlayLoader text="Signing in…" />}
       {resetPending && <OverlayLoader text="Sending reset link…" />}
 
-      {/* Header */}
-      <div className="p-4 border-b border-gray-100">
-        <div className="text-[11px] font-semibold tracking-wider text-gray-500">
+      <div className="border-b border-slate-100/80 px-6 pb-5 pt-6 sm:px-7">
+        <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">
           ORDERO
         </div>
 
-        <div className="mt-1 text-xl font-bold text-gray-900">
+        <h1 className="mt-2 text-[1.65rem] font-semibold tracking-tight text-slate-900">
           {mode === "login"
             ? "Sign in"
             : mode === "register"
               ? "Create an account"
               : "Reset password"}
-        </div>
+        </h1>
 
-        <div className="mt-0.5 text-xs text-gray-600">
+        <p className="mt-1.5 text-sm leading-relaxed text-slate-600">
           {mode === "login"
-            ? "Sign in to access your workspace."
+            ? "Sign in to access your Ordero business workspace."
             : mode === "register"
               ? inviteId
-                ? "Create an account to join the business."
-                : "Create an account and your first business (Owner)."
-              : "We will email you a password reset link."}
-        </div>
+                ? "Create your account to join your team's workspace."
+                : "Set up your account and create your first business workspace."
+              : "We will email you a secure link to reset your password."}
+        </p>
 
         {mode !== "reset" ? (
-          <div className="mt-3 grid grid-cols-2 rounded-xl bg-gray-100 p-1">
-            <button
-              type="button"
-              onClick={() => {
-                setMode("login");
-                setLocalError("");
-              }}
-              className={[
-                "rounded-lg px-3 py-1.5 text-xs font-semibold transition",
-                mode === "login"
-                  ? "bg-white shadow-sm text-gray-900"
-                  : "text-gray-600 hover:text-gray-900",
-              ].join(" ")}
-            >
-              Sign in
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setMode("register");
-                setLocalError("");
-              }}
-              className={[
-                "rounded-lg px-3 py-1.5 text-xs font-semibold transition",
-                mode === "register"
-                  ? "bg-white shadow-sm text-gray-900"
-                  : "text-gray-600 hover:text-gray-900",
-              ].join(" ")}
-            >
-              Create account
-            </button>
+          <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-1">
+            <div className="grid grid-cols-2 gap-1">
+              <button
+                type="button"
+                onClick={() => {
+                  setMode("login");
+                  setLocalError("");
+                }}
+                className={[
+                  "rounded-[10px] px-3 py-2 text-xs font-semibold transition",
+                  mode === "login"
+                    ? "bg-white text-slate-900 shadow-sm shadow-slate-900/5"
+                    : "text-slate-600 hover:text-slate-900",
+                ].join(" ")}
+              >
+                Sign in
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setMode("register");
+                  setLocalError("");
+                }}
+                className={[
+                  "rounded-[10px] px-3 py-2 text-xs font-semibold transition",
+                  mode === "register"
+                    ? "bg-white text-slate-900 shadow-sm shadow-slate-900/5"
+                    : "text-slate-600 hover:text-slate-900",
+                ].join(" ")}
+              >
+                Create account
+              </button>
+            </div>
           </div>
         ) : (
-          <div className="mt-3">
+          <div className="mt-4">
             <button
               type="button"
               onClick={() => {
                 setMode("login");
                 setLocalError("");
               }}
-              className="text-xs font-semibold text-gray-700 hover:text-gray-900"
+              className="text-xs font-semibold text-slate-600 transition hover:text-slate-900"
             >
               ← Back to sign in
             </button>
@@ -349,8 +333,7 @@ export default function LoginUI() {
         )}
       </div>
 
-      {/* Body */}
-      <div className="p-4 space-y-3">
+      <div className="space-y-4 px-6 pb-6 pt-5 sm:px-7 sm:pb-7">
         <ErrorBox text={localError} />
         <ErrorBox text={activeState?.error} />
 
@@ -359,7 +342,7 @@ export default function LoginUI() {
         ) : null}
 
         {mode === "login" ? (
-          <form action={loginSubmit} className="space-y-2.5">
+          <form action={loginSubmit} className="space-y-4">
             <input type="hidden" name="invite_id" value={inviteId} />
 
             <Input
@@ -368,7 +351,7 @@ export default function LoginUI() {
               type="email"
               required
               autoComplete="email"
-              placeholder="tunde@example.com"
+              placeholder="name@company.com"
               value={emailLogin}
               onChange={setEmailLogin}
             />
@@ -378,12 +361,12 @@ export default function LoginUI() {
               name="password"
               required
               autoComplete="current-password"
-              placeholder="••••••••"
+              placeholder="Enter your password"
               value={passLogin}
               onChange={setPassLogin}
             />
 
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-end">
               <button
                 type="button"
                 onClick={() => {
@@ -391,7 +374,7 @@ export default function LoginUI() {
                   setLocalError("");
                   setEmailReset(emailLogin);
                 }}
-                className="text-[11px] font-semibold text-gray-600 hover:text-gray-900"
+                className="text-xs font-semibold text-slate-600 transition hover:text-blue-700"
               >
                 Forgot password?
               </button>
@@ -400,53 +383,33 @@ export default function LoginUI() {
             <button
               type="submit"
               disabled={loginPending}
-              className="w-full rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold !text-white hover:bg-blue-700 disabled:opacity-60 disabled:!text-white"
+              className="h-11 w-full rounded-xl bg-blue-700 px-4 text-sm font-semibold !text-white shadow-[0_10px_20px_-12px_rgba(29,78,216,0.9)] transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60 disabled:!text-white"
             >
               Sign in
             </button>
-
-            <Hint>
-              Nigeria phone format example:{" "}
-              <span className="font-semibold text-gray-700">
-                +234 803 123 4567
-              </span>
-            </Hint>
           </form>
         ) : mode === "register" ? (
-          <form
-            action={regSubmit}
-            onSubmit={onRegisterSubmit}
-            className="space-y-2.5"
-          >
-            {/* hidden fields for server-side */}
+          <form action={regSubmit} onSubmit={onRegisterSubmit} className="space-y-4">
             <input type="hidden" name="invite_id" value={inviteId} />
             <input type="hidden" name="agree" value={agree ? "on" : ""} />
 
             {!inviteId && (
-              <>
-                <Input
-                  label="Business name"
-                  name="business_name"
-                  required
-                  placeholder="Sunrise Cleaning"
-                  value={businessName}
-                  onChange={setBusinessName}
-                />
-                <Hint>
-                  Link:{" "}
-                  <span className="font-semibold text-gray-700">
-                    /b/{previewSlug}
-                  </span>
-                </Hint>
-              </>
+              <Input
+                label="Business name"
+                name="business_name"
+                required
+                placeholder="Acme Operations"
+                value={businessName}
+                onChange={setBusinessName}
+              />
             )}
 
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Input
                 label="First name"
                 name="first_name"
                 required
-                placeholder="Daniel"
+                placeholder="Ada"
                 value={firstName}
                 onChange={setFirstName}
               />
@@ -466,12 +429,11 @@ export default function LoginUI() {
               type="email"
               required
               autoComplete="email"
-              placeholder="daniel.okafor@email.com"
+              placeholder="you@company.com"
               value={emailReg}
               onChange={setEmailReg}
             />
 
-            {/* ✅ shared show/hide across both password fields */}
             <PasswordInput
               label="Password"
               name="password"
@@ -496,26 +458,20 @@ export default function LoginUI() {
               onToggleShow={() => setShowRegPasswords((s) => !s)}
             />
 
-            <label className="flex items-start gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2">
+            <label className="flex items-start gap-2.5 rounded-xl border border-slate-200 bg-slate-50/90 px-3.5 py-3">
               <input
                 type="checkbox"
                 checked={agree}
                 onChange={(e) => setAgree(e.target.checked)}
-                className="mt-1"
+                className="mt-0.5 h-4 w-4 rounded border-slate-300 text-blue-700 focus:ring-blue-200"
               />
-              <div className="text-[12px] text-gray-700 leading-snug">
+              <div className="text-xs leading-snug text-slate-700">
                 I agree to the{" "}
-                <a
-                  href="/terms"
-                  className="font-semibold text-blue-700 hover:underline"
-                >
+                <a href="/terms" className="font-semibold text-blue-700 hover:underline">
                   Terms of Service
                 </a>{" "}
                 and{" "}
-                <a
-                  href="/privacy"
-                  className="font-semibold text-blue-700 hover:underline"
-                >
+                <a href="/privacy" className="font-semibold text-blue-700 hover:underline">
                   Privacy Policy
                 </a>
                 .
@@ -525,37 +481,32 @@ export default function LoginUI() {
             <button
               type="submit"
               disabled={regPending || !agree}
-              className="w-full rounded-xl bg-gray-900 px-4 py-2 text-sm font-semibold !text-white hover:bg-black disabled:opacity-60 disabled:!text-white"
+              className="h-11 w-full rounded-xl bg-blue-700 px-4 text-sm font-semibold !text-white shadow-[0_10px_20px_-12px_rgba(29,78,216,0.9)] transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60 disabled:!text-white"
             >
               {inviteId ? "Create account & join" : "Create account"}
             </button>
           </form>
         ) : (
-          <form
-            action={resetSubmit}
-            onSubmit={onResetSubmit}
-            className="space-y-2.5"
-          >
+          <form action={resetSubmit} onSubmit={onResetSubmit} className="space-y-4">
             <Input
               label="Email"
               name="email"
               type="email"
               required
               autoComplete="email"
-              placeholder="tunde@example.com"
+              placeholder="name@company.com"
               value={emailReset}
               onChange={setEmailReset}
             />
 
             <Hint>
-              We’ll email you a link to reset your password. If you don’t see
-              it, check Spam.
+              We&apos;ll email a secure reset link to this address. Check spam if needed.
             </Hint>
 
             <button
               type="submit"
               disabled={resetPending}
-              className="w-full rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold !text-white hover:bg-blue-700 disabled:opacity-60 disabled:!text-white"
+              className="h-11 w-full rounded-xl bg-blue-700 px-4 text-sm font-semibold !text-white shadow-[0_10px_20px_-12px_rgba(29,78,216,0.9)] transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60 disabled:!text-white"
             >
               Send reset link
             </button>

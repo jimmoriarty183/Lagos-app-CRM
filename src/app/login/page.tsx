@@ -1,44 +1,93 @@
 import React from "react";
 import Link from "next/link";
+import { Logo } from "@/components/Logo";
 import LoginUI from "./ui";
+
+const benefits = [
+  "Track orders",
+  "Manage team access",
+  "Run your business workspace",
+];
 
 export default function Page() {
   return (
-    <div className="min-h-[100svh] bg-gradient-to-br from-gray-50 via-blue-50/20 to-gray-50">
-      {/* mini topbar */}
-      <header className="sticky top-0 z-20 border-b border-gray-200/60 bg-white/70 backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-          <div className="font-semibold text-gray-900">Ordero</div>
-          <div className="text-sm text-gray-600">
-            <Link className="hover:text-gray-900" href="/">
-              Home
-            </Link>
+    <div className="relative min-h-[100svh] overflow-hidden bg-[#f6f8fb] text-slate-900">
+      <div className="pointer-events-none absolute -left-40 top-[-9rem] h-[26rem] w-[26rem] rounded-full bg-[radial-gradient(circle,_rgba(59,130,246,0.22)_0%,_rgba(59,130,246,0)_68%)] blur-2xl" />
+      <div className="pointer-events-none absolute -right-36 top-10 h-[24rem] w-[24rem] rounded-full bg-[radial-gradient(circle,_rgba(16,185,129,0.2)_0%,_rgba(16,185,129,0)_70%)] blur-2xl" />
+      <div className="pointer-events-none absolute bottom-[-10rem] left-1/2 h-[25rem] w-[25rem] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,_rgba(99,102,241,0.18)_0%,_rgba(99,102,241,0)_68%)] blur-2xl" />
+
+      <header className="relative z-10 border-b border-white/50 bg-white/45 backdrop-blur-xl">
+        <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4 sm:px-8">
+          <div className="flex items-center gap-2.5">
+            <Logo size={28} />
+            <div>
+              <div className="text-[15px] font-semibold tracking-tight text-slate-900">Ordero</div>
+              <div className="text-[11px] text-slate-500">Orders. Simple. Fast.</div>
+            </div>
           </div>
+          <Link
+            className="text-sm font-medium text-slate-600 transition hover:text-slate-900"
+            href="/"
+          >
+            Home
+          </Link>
         </div>
       </header>
 
-      {/* page body */}
-      <main
-        className={[
-          "mx-auto max-w-md px-4",
-          // высота = viewport - высота топбара (примерно 56px),
-          // чтобы карточка реально "влезала" даже с sticky header
-          "min-h-[calc(100svh-56px)]",
-          // центрируем по вертикали, но даём отступы
-          "flex items-center justify-center py-6",
-        ].join(" ")}
-      >
-        <React.Suspense
-          fallback={
-            <div className="w-full rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-              Loading...
-            </div>
-          }
-        >
-          <div className="w-full">
-            <LoginUI />
+      <main className="relative z-10 mx-auto flex min-h-[calc(100svh-64px)] w-full max-w-6xl items-center px-4 py-8 sm:px-8 sm:py-10">
+        <div className="mx-auto grid w-full max-w-5xl items-center gap-8 lg:grid-cols-[1fr_440px] lg:gap-10">
+          <section className="hidden rounded-[24px] border border-white/60 bg-white/55 p-10 shadow-[0_20px_60px_-35px_rgba(15,23,42,0.35)] backdrop-blur-md lg:block">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+              Order management platform
+            </p>
+            <h2 className="mt-3 max-w-md text-3xl font-semibold tracking-tight text-slate-900">
+              Organize operations with a clean, reliable business workspace.
+            </h2>
+            <p className="mt-4 max-w-md text-sm leading-relaxed text-slate-600">
+              Built for growing teams that need structure, visibility, and simple collaboration across orders and internal workflows.
+            </p>
+
+            <ul className="mt-8 space-y-3">
+              {benefits.map((benefit) => (
+                <li
+                  key={benefit}
+                  className="flex items-center gap-3 rounded-xl border border-slate-200/90 bg-white/80 px-4 py-3 text-sm font-medium text-slate-700"
+                >
+                  <span className="h-2 w-2 rounded-full bg-blue-600" />
+                  {benefit}
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          <div className="space-y-4">
+            <React.Suspense
+              fallback={
+                <div className="w-full rounded-[20px] border border-slate-200 bg-white p-7 shadow-sm">
+                  Loading...
+                </div>
+              }
+            >
+              <div className="mx-auto w-full max-w-[460px]">
+                <LoginUI />
+              </div>
+            </React.Suspense>
+
+            <section className="rounded-2xl border border-white/70 bg-white/70 p-4 shadow-sm backdrop-blur-sm lg:hidden">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                Why Ordero
+              </p>
+              <ul className="mt-2 space-y-2">
+                {benefits.map((benefit) => (
+                  <li key={benefit} className="flex items-center gap-2.5 text-sm text-slate-700">
+                    <span className="h-1.5 w-1.5 rounded-full bg-blue-600" />
+                    {benefit}
+                  </li>
+                ))}
+              </ul>
+            </section>
           </div>
-        </React.Suspense>
+        </div>
       </main>
     </div>
   );
