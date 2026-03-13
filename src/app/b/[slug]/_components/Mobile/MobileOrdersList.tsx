@@ -6,6 +6,12 @@ import { StatusCell } from "../../InlineCells";
 import { OrderChecklist } from "../../OrderChecklist";
 import { OrderComments } from "../../OrderComments";
 
+declare global {
+  interface Window {
+    __ordersOverlayClosingUntil?: number;
+  }
+}
+
 type Status =
   | "NEW"
   | "IN_PROGRESS"
@@ -126,7 +132,7 @@ export default function MobileOrdersList({
   }, []);
 
   return (
-    <div className="mobileOnly grid gap-3">
+    <div className="grid gap-4 lg:hidden">
       {list.map((o) => {
         const isOpen = openId === o.id;
 
@@ -137,9 +143,22 @@ export default function MobileOrdersList({
         return (
           <div
             key={o.id}
-            onClick={() => toggle(o.id)}
-            className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm cursor-pointer"
-            style={{ position: "relative", overflow: "visible" }}
+            onClick={() => {
+              if (
+                typeof window !== "undefined" &&
+                (window.__ordersOverlayClosingUntil ?? 0) > Date.now()
+              ) {
+                return;
+              }
+              toggle(o.id);
+            }}
+            className="cursor-pointer rounded-2xl border border-gray-200 bg-white p-4 shadow-sm"
+            style={{
+              position: "relative",
+              overflow: "visible",
+              isolation: "isolate",
+              zIndex: isOpen ? 5 : 1,
+            }}
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">

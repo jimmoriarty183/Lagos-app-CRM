@@ -41,7 +41,7 @@ function MetricCard({
   // ✅ по принципам: border всегда gray-200 (не цветные бордеры)
   return (
     <div
-      className={`bg-white rounded-xl border border-gray-200 shadow-sm p-4 ${toneBg}`}
+      className={`min-w-0 rounded-xl border border-gray-200 bg-white p-4 shadow-sm ${toneBg}`}
     >
       <div className="text-xs sm:text-sm text-gray-500 font-semibold">
         {title}
@@ -75,7 +75,7 @@ export default function DesktopAnalyticsCard(props: Props) {
 
 
   return (
-    <section id="analytics" className="space-y-3 sm:space-y-4">
+    <section id="analytics" className="min-w-0 space-y-3 sm:space-y-4">
       {/* маленький, ненавязчивый хедер как в B2B SaaS */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-sm font-semibold text-gray-900">
@@ -86,7 +86,7 @@ export default function DesktopAnalyticsCard(props: Props) {
       </div>
 
       {/* ✅ как ты писал: grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+      <div className="grid min-w-0 grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-5">
         <MetricCard
           title="Total orders"
           value={String(totalOrders)}

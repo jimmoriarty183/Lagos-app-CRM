@@ -7,6 +7,7 @@ import { LogOut, Sparkles } from "lucide-react";
 
 import BusinessSwitcher, { BusinessOption } from "./BusinessSwitcher";
 import InviteInbox from "./InviteInbox";
+import MobileTopbarMenu from "./MobileTopbarMenu";
 
 type Props = {
   businessSlug: string;
@@ -14,9 +15,20 @@ type Props = {
   role: "OWNER" | "MANAGER" | "GUEST";
   pill?: React.CSSProperties;
   businesses?: BusinessOption[];
+  businessHref?: string;
+  clearHref?: string;
+  hasActiveFilters?: boolean;
 };
 
-export default function TopBar({ businessSlug, plan, role, businesses }: Props) {
+export default function TopBar({
+  businessSlug,
+  plan,
+  role,
+  businesses,
+  businessHref,
+  clearHref,
+  hasActiveFilters = false,
+}: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const u = searchParams.get("u");
@@ -54,6 +66,12 @@ export default function TopBar({ businessSlug, plan, role, businesses }: Props) 
           >
             <span className="text-sm font-black">O</span>
           </Link>
+
+          <MobileTopbarMenu
+            businessHref={businessHref ?? dashboardHref}
+            clearHref={clearHref ?? dashboardHref}
+            hasActiveFilters={hasActiveFilters}
+          />
 
           <div className="min-w-0 flex-1 sm:hidden">
             {showSwitcher ? (

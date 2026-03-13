@@ -1,6 +1,7 @@
 import MobileAccordion from "./MobileAccordion";
 import Button from "../../Button";
 import { createOrder } from "../../actions";
+import { Plus } from "lucide-react";
 
 type Props = {
   businessId: string;
@@ -18,7 +19,15 @@ export default function MobileCreateOrderAccordion({
   const labelCls = "text-xs font-semibold text-gray-600";
 
   return (
-    <MobileAccordion title="Create order" defaultOpen={false}>
+    <MobileAccordion
+      title={
+        <span className="inline-flex items-center gap-2">
+          <Plus className="h-4 w-4 text-gray-400" />
+          New order
+        </span>
+      }
+      defaultOpen={false}
+    >
       <form
         action={async (fd) => {
           "use server";

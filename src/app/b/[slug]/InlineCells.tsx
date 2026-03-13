@@ -7,6 +7,7 @@ import React, {
   useState,
   useTransition,
 } from "react";
+import { createPortal } from "react-dom";
 import { setOrderStatus } from "./actions";
 
 type Status =
@@ -17,10 +18,21 @@ type Status =
   | "CANCELED"
   | "DUPLICATE";
 
+declare global {
+  interface Window {
+    __ordersOverlayClosingUntil?: number;
+  }
+}
+
 function statusLabel(s: Status) {
   if (s === "IN_PROGRESS") return "IN PROGRESS";
   if (s === "WAITING_PAYMENT") return "WAITING PAYMENT";
   return s;
+}
+
+function markOverlayClosing() {
+  if (typeof window === "undefined") return;
+  window.__ordersOverlayClosingUntil = Date.now() + 400;
 }
 
 function badgeStyleStatus(status: Status): React.CSSProperties {
@@ -113,13 +125,70 @@ function Menu({
   menuRef,
   children,
   width,
+  mobile,
+  onClose,
 }: {
   open: boolean;
   menuRef: React.RefObject<HTMLDivElement | null>;
   children: React.ReactNode;
   width?: number;
+  mobile?: boolean;
+  onClose?: () => void;
 }) {
   if (!open) return null;
+
+  if (mobile) {
+    const overlay = (
+      <div
+        role="presentation"
+        onMouseDown={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+        }}
+        onClick={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          markOverlayClosing();
+          onClose?.();
+        }}
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 9999,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: 12,
+          background: "rgba(15,23,42,0.42)",
+          backdropFilter: "blur(2px)",
+          WebkitBackdropFilter: "blur(2px)",
+        }}
+      >
+        <div
+          ref={menuRef}
+          onMouseDown={(event) => {
+            event.stopPropagation();
+          }}
+          onClick={(event) => event.stopPropagation()}
+          style={{
+            width: "min(calc(100vw - 24px), 360px)",
+            maxHeight: "min(52vh, 360px)",
+            overflowY: "auto",
+            background: "white",
+            border: "1px solid #e5e7eb",
+            borderRadius: 16,
+            boxShadow: "0 24px 64px rgba(0,0,0,0.28)",
+            padding: 8,
+          }}
+        >
+          {children}
+        </div>
+      </div>
+    );
+
+    if (typeof document === "undefined") return null;
+    return createPortal(overlay, document.body);
+  }
 
   return (
     <div
@@ -127,14 +196,14 @@ function Menu({
       style={{
         position: "absolute",
         top: 36,
-        left: 0,
+        right: 0,
         minWidth: width ?? 180,
         background: "white",
         border: "1px solid #e5e7eb",
         borderRadius: 12,
         boxShadow: "0 10px 30px rgba(0,0,0,0.10)",
         padding: 6,
-        zIndex: 50,
+        zIndex: 80,
       }}
     >
       {children}
@@ -239,6 +308,7 @@ export function StatusCell({
 }) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [isMobile, setIsMobile] = useState(false);
 
   // optimistic
   const [local, setLocal] = useState<Status>(value);
@@ -248,6 +318,29 @@ export function StatusCell({
   const menuRef = useRef<HTMLDivElement>(null);
 
   useOutsideAndEscClose(open, () => setOpen(false), rootRef, menuRef);
+
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 1023px)");
+    const apply = () => setIsMobile(media.matches);
+    apply();
+    media.addEventListener("change", apply);
+    return () => media.removeEventListener("change", apply);
+  }, []);
+
+  useEffect(() => {
+    if (!open || !isMobile) return;
+
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousBodyOverflow;
+      document.documentElement.style.overflow = previousHtmlOverflow;
+    };
+  }, [open, isMobile]);
 
   const options = useMemo(
     () =>
@@ -285,7 +378,11 @@ export function StatusCell({
   return (
     <div
       ref={rootRef}
-      style={{ position: "relative", display: "inline-block" }}
+      style={{
+        position: "relative",
+        display: "inline-block",
+        zIndex: open ? 80 : 1,
+      }}
     >
       <Badge
         style={badgeStyleStatus(local)}
@@ -296,7 +393,13 @@ export function StatusCell({
         {statusLabel(local)}
       </Badge>
 
-      <Menu open={open} menuRef={menuRef} width={210}>
+      <Menu
+        open={open}
+        menuRef={menuRef}
+        width={210}
+        mobile={isMobile}
+        onClose={() => setOpen(false)}
+      >
         {options.map((s) => (
           <MenuItem
             key={s}
@@ -305,6 +408,7 @@ export function StatusCell({
             danger={s === "CANCELED"}
             onClick={() => {
               if (s === local) {
+                markOverlayClosing();
                 setOpen(false);
                 return;
               }
@@ -312,6 +416,7 @@ export function StatusCell({
               if (s === "CANCELED") {
                 const ok = confirm("Cancel this order?");
                 if (!ok) {
+                  markOverlayClosing();
                   setOpen(false);
                   return;
                 }
@@ -319,6 +424,7 @@ export function StatusCell({
 
               const prev = local;
               setLocal(s);
+              markOverlayClosing();
               setOpen(false);
 
               startTransition(async () => {

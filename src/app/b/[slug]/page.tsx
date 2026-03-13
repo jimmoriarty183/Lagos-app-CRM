@@ -11,7 +11,6 @@ import MobileOrdersList from "./_components/Mobile/MobileOrdersList";
 import MobileCreateOrderAccordion from "./_components/Mobile/MobileCreateOrderAccordion";
 import MobileFiltersAccordion from "./_components/Mobile/MobileFiltersAccordion";
 import MobileSummaryBar from "./_components/Mobile/MobileSummaryBar";
-import MobileAnalyticsAccordion from "./_components/Mobile/MobileAnalyticsAccordion";
 
 import { supabaseServerReadOnly } from "@/lib/supabase/server";
 import { resolveUserDisplay } from "@/lib/user-display";
@@ -360,16 +359,19 @@ export default async function Page({ params, searchParams }: PageProps) {
   const fmtAmount = (n: number) => new Intl.NumberFormat("uk-UA").format(n);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/20 to-gray-50">
+    <div className="min-h-screen overflow-x-hidden bg-gradient-to-br from-gray-50 via-blue-50/20 to-gray-50">
       <TopBar
         businessSlug={slug}
         plan={currentBusiness.plan || "beta"}
         role={userRole}
         businesses={businessOptions}
+        businessHref={businessHref}
+        clearHref={clearHref}
+        hasActiveFilters={hasActiveFilters}
       />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
-        <div className="hidden lg:grid grid-cols-[72px_minmax(0,1fr)] gap-6">
+      <main className="mx-auto max-w-7xl overflow-x-hidden px-4 py-6 sm:px-6">
+        <div className="hidden items-start lg:grid grid-cols-[56px_minmax(0,1fr)] gap-4 xl:gap-5">
           <DesktopLeftRail
             phoneRaw={phoneRaw}
             q={filters.q}
@@ -383,7 +385,7 @@ export default async function Page({ params, searchParams }: PageProps) {
             canSeeAnalytics={canSeeAnalyticsNav}
           />
 
-          <div className="space-y-6">
+          <div className="min-w-0 space-y-6">
             <DesktopAnalyticsCard
               totalOrders={totalOrders}
               totalAmount={totalAmount}
@@ -432,23 +434,6 @@ export default async function Page({ params, searchParams }: PageProps) {
             activeAmountLabel={fmtAmount(activeAmount)}
             hasActiveFilters={hasActiveFilters}
             clearHref={clearHref}
-          />
-
-          <MobileAnalyticsAccordion
-            canSeeAnalytics={canSeeAnalyticsNav}
-            totalOrders={totalOrders}
-            totalAmount={totalAmount}
-            overdueCount={overdueCount}
-            waitingPaymentCount={waitingPaymentCount}
-            waitingPaymentAmount={waitingPaymentAmount}
-            doneCount={doneCount}
-            doneAmount={doneAmount}
-            inProgressCount={inProgressCount}
-            newCount={newCount}
-            canceledCount={canceledCount}
-            duplicateCount={duplicateCount}
-            activeAmount={activeAmount}
-            fmtAmount={fmtAmount}
           />
 
           <MobileCreateOrderAccordion

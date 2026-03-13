@@ -158,7 +158,7 @@ export default function DesktopOrdersTable({
   const rows = useMemo(() => list ?? [], [list]);
 
   return (
-    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+    <div className="min-w-0 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
       <div className="border-b border-gray-100 px-6 py-4">
         <form method="get" className="flex items-center gap-3">
           <input type="hidden" name="u" defaultValue={phoneRaw} />

@@ -66,7 +66,7 @@ function RailLink({
     "group relative flex rounded-2xl border shadow-sm transition-colors",
     expanded
       ? "min-h-14 w-full items-start justify-start gap-3 px-4 py-3"
-      : "h-12 w-12 items-center justify-center",
+      : "h-10 w-10 items-center justify-center rounded-xl",
     active
       ? "border-gray-300 bg-gray-100 text-gray-900"
       : disabled
@@ -154,12 +154,12 @@ export default function DesktopLeftRail({
 
   return (
     <div className="relative hidden lg:block">
-      <div className="sticky top-24">
+      <div className="sticky top-6">
         <div className="relative">
           <div
             className={[
               "absolute left-0 top-0 rounded-2xl border border-gray-200 bg-white p-2 shadow-sm transition-all",
-              expanded ? "w-[220px]" : "w-[60px]",
+              expanded ? "w-[216px]" : "w-[56px]",
             ].join(" ")}
           >
             <div className="flex flex-col gap-2">
@@ -216,8 +216,8 @@ export default function DesktopLeftRail({
           {filtersOpen ? (
             <div
               className={[
-                "absolute top-0 z-20 w-[340px]",
-                expanded ? "left-[236px]" : "left-[84px]",
+                "absolute top-0 z-20 w-[312px]",
+                expanded ? "left-[228px]" : "left-[72px]",
               ].join(" ")}
             >
               <DesktopSidebarFilters
@@ -233,7 +233,7 @@ export default function DesktopLeftRail({
             </div>
           ) : null}
 
-          <div className="h-[60px] w-[60px]" />
+          <div className="h-[56px] w-[56px]" />
         </div>
       </div>
     </div>
