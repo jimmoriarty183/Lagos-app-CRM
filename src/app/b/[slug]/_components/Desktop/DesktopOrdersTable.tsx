@@ -5,6 +5,7 @@ import { createClient } from "@supabase/supabase-js";
 import { StatusCell } from "../../InlineCells";
 import { OrderChecklist } from "../../OrderChecklist";
 import { OrderComments } from "../../OrderComments";
+import Button from "../../Button";
 
 type Status =
   | "NEW"
@@ -27,6 +28,7 @@ type OrderRow = {
 };
 
 type UserRole = "OWNER" | "MANAGER" | "GUEST";
+type Range = "ALL" | "today" | "week" | "month" | "year";
 
 function fmtAmount(n: number) {
   return new Intl.NumberFormat("uk-UA").format(n);
@@ -106,6 +108,12 @@ type Props = {
   businessSlug: string;
   businessId: string;
   phoneRaw: string;
+  searchQuery: string;
+  statusFilter: "ALL" | "OVERDUE" | Status;
+  rangeFilter: Range;
+  actorFilter: string;
+  clearHref: string;
+  hasActiveFilters: boolean;
   canManage: boolean;
   canEdit: boolean;
   userRole: UserRole; // ✅ ВАЖНО: реальная роль в этом business
@@ -117,6 +125,12 @@ export default function DesktopOrdersTable({
   businessSlug,
   businessId,
   phoneRaw,
+  searchQuery,
+  statusFilter,
+  rangeFilter,
+  actorFilter,
+  clearHref,
+  hasActiveFilters,
   canManage,
   canEdit,
   userRole,
@@ -144,8 +158,39 @@ export default function DesktopOrdersTable({
   const rows = useMemo(() => list ?? [], [list]);
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-x-auto">
-      <table className="w-full border-collapse">
+    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+      <div className="border-b border-gray-100 px-6 py-4">
+        <form method="get" className="flex items-center gap-3">
+          <input type="hidden" name="u" defaultValue={phoneRaw} />
+          <input type="hidden" name="page" defaultValue="1" />
+          <input type="hidden" name="status" defaultValue={statusFilter} />
+          <input type="hidden" name="range" defaultValue={rangeFilter} />
+          <input type="hidden" name="actor" defaultValue={actorFilter} />
+
+          <input
+            name="q"
+            defaultValue={searchQuery}
+            placeholder="Name, phone, amount..."
+            className="h-11 w-full rounded-xl border border-gray-200 px-4 outline-none transition focus:border-gray-900 focus:ring-2 focus:ring-gray-900"
+          />
+
+          <Button type="submit" size="sm">
+            Search
+          </Button>
+
+          {hasActiveFilters ? (
+            <a
+              href={clearHref}
+              className="shrink-0 rounded-full border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 transition hover:border-gray-300 hover:text-gray-900"
+            >
+              Reset
+            </a>
+          ) : null}
+        </form>
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse">
         <thead>
           <tr className="text-left border-b border-gray-100">
             <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
@@ -348,7 +393,8 @@ export default function DesktopOrdersTable({
             </tr>
           ) : null}
         </tbody>
-      </table>
+        </table>
+      </div>
     </div>
   );
 }

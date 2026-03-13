@@ -12,8 +12,8 @@ export default function DesktopCreateOrder({
   businessSlug,
 }: Props) {
   const inputCls =
-    "w-full max-w-full min-w-0 h-11 rounded-xl border border-gray-200 px-3 outline-none " +
-    "focus:ring-2 focus:ring-gray-900 focus:border-gray-900 bg-white";
+    "h-11 w-full min-w-0 rounded-xl border border-gray-200 bg-white px-3 outline-none " +
+    "focus:border-gray-900 focus:ring-2 focus:ring-gray-900";
 
   const labelCls = "text-xs font-semibold text-gray-600";
 
@@ -32,17 +32,14 @@ export default function DesktopCreateOrder({
 
         const amount = Number(amountRaw);
 
-        if (!clientName) {
-          throw new Error("Client name is required");
-        }
-
+        if (!clientName) throw new Error("Client name is required");
         if (!Number.isFinite(amount) || amount <= 0) {
           throw new Error("Amount must be greater than 0");
         }
 
         await createOrder({
           businessId,
-          businessSlug, // 🔥 ВАЖНО: slug для redirect и RLS
+          businessSlug,
           clientName,
           clientPhone: clientPhone || undefined,
           amount,
@@ -50,63 +47,58 @@ export default function DesktopCreateOrder({
           description: description || undefined,
         });
       }}
-      className="grid gap-4"
-      style={{ overflowX: "hidden" }}
+      className="grid gap-4 xl:grid-cols-12"
     >
-      <div className="grid grid-cols-2 gap-4">
-        <label className="grid gap-1">
-          <span className={labelCls}>Client name *</span>
-          <input
-            name="client_name"
-            placeholder="John"
-            className={inputCls}
-            required
-          />
-        </label>
-
-        <label className="grid gap-1">
-          <span className={labelCls}>Client phone</span>
-          <input
-            name="client_phone"
-            placeholder="+234 801 234 5678"
-            className={inputCls}
-          />
-        </label>
-      </div>
-
-      <label className="grid gap-1">
-        <span className={labelCls}>Description</span>
-        <textarea
-          name="description"
-          rows={3}
-          placeholder="Delivery address, comment…"
-          className={`${inputCls} h-auto py-2.5 resize-y`}
+      <label className="grid gap-1 xl:col-span-3">
+        <span className={labelCls}>Client name *</span>
+        <input
+          name="client_name"
+          placeholder="John"
+          className={inputCls}
+          required
         />
       </label>
 
-      <div className="grid grid-cols-2 gap-4">
-        <label className="grid gap-1">
-          <span className={labelCls}>Amount *</span>
-          <input
-            name="amount"
-            placeholder="15000"
-            inputMode="decimal"
-            className={inputCls}
-            required
-          />
-        </label>
+      <label className="grid gap-1 xl:col-span-3">
+        <span className={labelCls}>Client phone</span>
+        <input
+          name="client_phone"
+          placeholder="+234 801 234 5678"
+          className={inputCls}
+        />
+      </label>
 
-        <label className="grid gap-1">
-          <span className={labelCls}>Due date</span>
-          <input name="due_date" type="date" className={inputCls} />
-        </label>
-      </div>
+      <label className="grid gap-1 xl:col-span-2">
+        <span className={labelCls}>Amount *</span>
+        <input
+          name="amount"
+          placeholder="15000"
+          inputMode="decimal"
+          className={inputCls}
+          required
+        />
+      </label>
 
-      <div className="flex justify-end">
-        <Button type="submit" size="sm">
+      <label className="grid gap-1 xl:col-span-2">
+        <span className={labelCls}>Due date</span>
+        <input name="due_date" type="date" className={inputCls} />
+      </label>
+
+      <div className="flex items-end xl:col-span-2">
+        <Button type="submit" size="sm" className="h-11 w-full justify-center">
           Create order
         </Button>
       </div>
+
+      <label className="grid gap-1 xl:col-span-12">
+        <span className={labelCls}>Description</span>
+        <textarea
+          name="description"
+          rows={2}
+          placeholder="Delivery address, comment..."
+          className="min-h-[84px] w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 outline-none resize-y focus:border-gray-900 focus:ring-2 focus:ring-gray-900"
+        />
+      </label>
     </form>
   );
 }

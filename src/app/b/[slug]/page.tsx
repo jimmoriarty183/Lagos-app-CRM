@@ -2,31 +2,20 @@ import React from "react";
 import { redirect } from "next/navigation";
 
 import TopBar from "./_components/topbar/TopBar";
-import DesktopSidebar from "./_components/Desktop/DesktopSidebar";
 import DesktopAnalyticsCard from "./_components/Desktop/DesktopAnalyticsCard";
-import DesktopBusinessCard from "./_components/Desktop/DesktopBusinessCard";
 import DesktopCreateOrderAccordion from "./_components/Desktop/DesktopCreateOrderAccordion";
-import DesktopFilters from "./_components/Desktop/DesktopFilters";
+import DesktopLeftRail from "./_components/Desktop/DesktopLeftRail";
 import DesktopOrdersTable from "./_components/Desktop/DesktopOrdersTable";
 
 import MobileOrdersList from "./_components/Mobile/MobileOrdersList";
 import MobileCreateOrderAccordion from "./_components/Mobile/MobileCreateOrderAccordion";
 import MobileFiltersAccordion from "./_components/Mobile/MobileFiltersAccordion";
+import MobileSummaryBar from "./_components/Mobile/MobileSummaryBar";
+import MobileAnalyticsAccordion from "./_components/Mobile/MobileAnalyticsAccordion";
 
 import { supabaseServerReadOnly } from "@/lib/supabase/server";
 import { resolveUserDisplay } from "@/lib/user-display";
 import { supabaseAdmin } from "@/lib/supabase/admin";
-
-type BusinessInvite = {
-  id: string;
-  business_id: string;
-  email: string;
-  role: "MANAGER" | "OWNER";
-  status: "PENDING" | "ACCEPTED" | "CANCELED";
-  created_at: string;
-  accepted_at: string | null;
-  accepted_by: string | null;
-};
 
 type Status =
   | "NEW"
@@ -40,7 +29,7 @@ type Range = "ALL" | "today" | "week" | "month" | "year";
 
 type Filters = {
   q: string;
-  status: "ALL" | Status;
+  status: "ALL" | "OVERDUE" | Status;
   range: Range;
   actor: string;
 };
@@ -63,14 +52,6 @@ type TeamActor = {
   kind: "OWNER" | "MANAGER";
 };
 
-type OwnerCardProfile = {
-  id: string;
-  full_name: string | null;
-  first_name: string | null;
-  last_name: string | null;
-  email: string | null;
-};
-
 function isMissingColumnError(error: unknown, column: string) {
   const message = String((error as { message?: string } | null)?.message ?? "").toLowerCase();
   return message.includes(column.toLowerCase());
@@ -91,7 +72,6 @@ export default async function Page({ params, searchParams }: PageProps) {
 
   const bypassUser = String(sp.u ?? "").trim();
 
-  // auth required unless legacy ?u= bypass link is used
   const { data: userData } = await supabase.auth.getUser();
   const user = userData.user;
   if (!user && !bypassUser) redirect("/login");
@@ -103,7 +83,6 @@ export default async function Page({ params, searchParams }: PageProps) {
   const admin = bypassMode && canUseAdmin ? supabaseAdmin() : null;
   const dataClient = admin ?? supabase;
 
-  // memberships пользователя (for authed users only)
   let memberships: any[] = [];
   let businesses: any[] = [];
 
@@ -120,7 +99,7 @@ export default async function Page({ params, searchParams }: PageProps) {
     if (businessIds.length > 0) {
       const { data: businessesData, error: bErr } = await supabase
         .from("businesses")
-        .select("id, slug, plan, owner_phone, manager_phone")
+        .select("id, slug, name, plan, owner_phone, manager_phone")
         .in("id", businessIds);
 
       if (bErr) throw bErr;
@@ -128,21 +107,19 @@ export default async function Page({ params, searchParams }: PageProps) {
     }
   }
 
-  // if bypass mode is used, allow opening business directly by slug without auth
   let currentBusiness = (businesses ?? []).find((b: any) => b.slug === slug);
   if (!currentBusiness) {
     const { data: bySlug, error: slugErr } = await dataClient
       .from("businesses")
-      .select("id, slug, plan, owner_phone, manager_phone")
+      .select("id, slug, name, plan, owner_phone, manager_phone")
       .eq("slug", slug)
       .maybeSingle();
 
     if (slugErr) {
-      if (bypassMode) {
-        redirect("/login");
-      }
+      if (bypassMode) redirect("/login");
       throw slugErr;
     }
+
     if (bySlug) {
       currentBusiness = bySlug;
     } else if (user) {
@@ -155,37 +132,33 @@ export default async function Page({ params, searchParams }: PageProps) {
   }
 
   const myRoleRaw =
-    (memberships ?? []).find((m: any) => m.business_id === currentBusiness.id)
-      ?.role ?? (bypassUser ? "MANAGER" : "GUEST");
+    (memberships ?? []).find((m: any) => m.business_id === currentBusiness.id)?.role ??
+    (bypassUser ? "MANAGER" : "GUEST");
 
   const userRole = upperRole(myRoleRaw);
   const canManage = userRole === "OWNER" || userRole === "MANAGER";
   const canEdit = canManage;
   const canSeeAnalyticsNav = userRole === "OWNER";
 
-  // ✅ Pending manager invites (for Business card dropdown)
-  let pendingInvites: BusinessInvite[] = [];
-  if (user) {
-    const { data, error: invErr } = await supabase
-      .from("business_invites")
-      .select(
-        "id,business_id,email,role,status,created_at,accepted_at,accepted_by",
-      )
-      .eq("business_id", currentBusiness.id)
-      .eq("status", "PENDING")
-      .order("created_at", { ascending: false });
-
-    if (invErr) throw invErr;
-    pendingInvites = (data ?? []) as BusinessInvite[];
-  }
-  // phoneRaw для старых форм (filters/create) — берём из query ?u=
   const phoneRaw = String(sp.u ?? "");
+  const statusRaw = String(sp.status ?? "ALL").toUpperCase();
+  const allowedStatuses = [
+    "ALL",
+    "NEW",
+    "IN_PROGRESS",
+    "WAITING_PAYMENT",
+    "DONE",
+    "CANCELED",
+    "DUPLICATE",
+    "OVERDUE",
+  ] as const;
 
-  // Filters (компоненты ждут именно q/status/range)
   const filters: Filters = {
     q: String(sp.q ?? "").trim(),
-    status: (String(sp.status ?? "ALL").toUpperCase() as any) ?? "ALL",
-    range: (String(sp.range ?? "ALL") as any) ?? "ALL",
+    status: allowedStatuses.includes(statusRaw as (typeof allowedStatuses)[number])
+      ? (statusRaw as Filters["status"])
+      : "ALL",
+    range: (String(sp.range ?? "ALL") as Range) ?? "ALL",
     actor: String(sp.actor ?? "ALL"),
   };
 
@@ -199,12 +172,14 @@ export default async function Page({ params, searchParams }: PageProps) {
     phoneRaw && phoneRaw.length > 0
       ? `/b/${slug}?u=${encodeURIComponent(phoneRaw)}`
       : `/b/${slug}`;
+  const businessHref =
+    phoneRaw && phoneRaw.length > 0
+      ? `/b/${slug}/settings/team?u=${encodeURIComponent(phoneRaw)}`
+      : `/b/${slug}/settings/team`;
 
-  // Team actors for owner/manager filters
   let teamActors: TeamActor[] = [];
   let ownerIds: string[] = [];
   let managerIds: string[] = [];
-  let ownerCardProfile: OwnerCardProfile | null = null;
 
   try {
     const { data: actorMemberships } = await dataClient
@@ -216,7 +191,16 @@ export default async function Page({ params, searchParams }: PageProps) {
     const membershipRows = (actorMemberships ?? []).filter((m: any) => m?.user_id);
     const actorUserIds = Array.from(new Set(membershipRows.map((m: any) => String(m.user_id))));
 
-    const profilesMap = new Map<string, { full_name: string | null; first_name: string | null; last_name: string | null; email: string | null }>();
+    const profilesMap = new Map<
+      string,
+      {
+        full_name: string | null;
+        first_name: string | null;
+        last_name: string | null;
+        email: string | null;
+      }
+    >();
+
     if (actorUserIds.length > 0) {
       const { data: actorProfiles } = await dataClient
         .from("profiles")
@@ -224,7 +208,14 @@ export default async function Page({ params, searchParams }: PageProps) {
         .in("id", actorUserIds);
 
       for (const p of actorProfiles ?? []) {
-        if (p?.id) profilesMap.set(String(p.id), { full_name: p.full_name ?? null, first_name: p.first_name ?? null, last_name: p.last_name ?? null, email: p.email ?? null });
+        if (p?.id) {
+          profilesMap.set(String(p.id), {
+            full_name: p.full_name ?? null,
+            first_name: p.first_name ?? null,
+            last_name: p.last_name ?? null,
+            email: p.email ?? null,
+          });
+        }
       }
     }
 
@@ -249,45 +240,24 @@ export default async function Page({ params, searchParams }: PageProps) {
       return { id, label, kind: role };
     });
 
-    const preferredOwnerId =
-      ownerIds.find((id) => user?.id && id === user.id) ??
-      ownerIds.find((id) => profilesMap.has(id)) ??
-      ownerIds[0] ??
-      null;
-
-    if (preferredOwnerId) {
-      const profile = profilesMap.get(preferredOwnerId);
-      if (profile) {
-        ownerCardProfile = {
-          id: preferredOwnerId,
-          full_name: profile.full_name,
-          first_name: profile.first_name,
-          last_name: profile.last_name,
-          email: profile.email,
-        };
-      }
-    }
   } catch {
     teamActors = [];
   }
 
-  // ✅ Business switcher options: id/slug/name/role
   const businessOptions = (businesses ?? [])
     .map((b: any) => {
       const roleForBiz =
-        (memberships ?? []).find((m: any) => m.business_id === b.id)?.role ??
-        "GUEST";
+        (memberships ?? []).find((m: any) => m.business_id === b.id)?.role ?? "GUEST";
 
       return {
         id: String(b.id),
         slug: String(b.slug),
-        name: String(b.slug),
+        name: String(b.name ?? b.slug),
         role: upperRole(roleForBiz),
       };
     })
     .sort((a: any, b: any) => a.name.localeCompare(b.name));
 
-  // Orders query
   const buildOrdersQuery = (withActorFilter: boolean) => {
     let query = dataClient
       .from("orders")
@@ -295,7 +265,9 @@ export default async function Page({ params, searchParams }: PageProps) {
       .eq("business_id", currentBusiness.id)
       .order("created_at", { ascending: false });
 
-    if (filters.status !== "ALL") query = query.eq("status", filters.status);
+    if (filters.status !== "ALL" && filters.status !== "OVERDUE") {
+      query = query.eq("status", filters.status);
+    }
 
     if (withActorFilter && filters.actor !== "ALL") {
       if (filters.actor === "OWNER") {
@@ -310,7 +282,6 @@ export default async function Page({ params, searchParams }: PageProps) {
     return query;
   };
 
-  // range-логика у тебя может быть отдельно — пока оставляем ALL
   let ordersResult = await buildOrdersQuery(true);
   if (ordersResult.error && isMissingColumnError(ordersResult.error, "created_by")) {
     ordersResult = await buildOrdersQuery(false);
@@ -320,17 +291,19 @@ export default async function Page({ params, searchParams }: PageProps) {
   if (oErr && !bypassMode) throw oErr;
 
   const listRaw: any[] = orders ?? [];
-
   const actorNameById = new Map<string, string>();
   for (const actor of teamActors) {
     if (actor?.id) actorNameById.set(String(actor.id), String(actor.label ?? ""));
   }
 
+  const todayISO = new Date().toISOString().slice(0, 10);
   const qNeedle = String(filters.q ?? "").trim().toLowerCase();
-  const list: any[] = qNeedle
+
+  const searchedList: any[] = qNeedle
     ? listRaw.filter((o) => {
         const actorName = actorNameById.get(String(o.created_by ?? "")) ?? "";
         const blob = [
+          String(o.id ?? ""),
           String(o.search_text ?? ""),
           String(o.client_name ?? ""),
           String(o.client_phone ?? ""),
@@ -345,17 +318,27 @@ export default async function Page({ params, searchParams }: PageProps) {
       })
     : listRaw;
 
-  // Analytics
+  const isOrderOverdue = (o: any) => {
+    const dueISO = o?.due_date ? String(o.due_date).slice(0, 10) : null;
+    return (
+      !!dueISO &&
+      dueISO < todayISO &&
+      (o?.status === "NEW" || o?.status === "IN_PROGRESS")
+    );
+  };
+
+  const list: any[] =
+    filters.status === "ALL"
+      ? searchedList
+      : filters.status === "OVERDUE"
+        ? searchedList.filter((o) => isOrderOverdue(o))
+        : searchedList.filter((o) => o.status === filters.status);
+
   const totalOrders = list.length;
 
-  const sumAmount = (rows: any[]) =>
-    rows.reduce((s, o) => s + Number(o.amount || 0), 0);
-
+  const sumAmount = (rows: any[]) => rows.reduce((s, o) => s + Number(o.amount || 0), 0);
   const totalAmount = sumAmount(list);
-
-  const overdueCount = list.filter(
-    (o) => o.status === "NEW" || o.status === "IN_PROGRESS",
-  ).length;
+  const overdueCount = list.filter((o) => isOrderOverdue(o)).length;
 
   const waitingPaymentRows = list.filter((o) => o.status === "WAITING_PAYMENT");
   const waitingPaymentCount = waitingPaymentRows.length;
@@ -376,24 +359,6 @@ export default async function Page({ params, searchParams }: PageProps) {
 
   const fmtAmount = (n: number) => new Intl.NumberFormat("uk-UA").format(n);
 
-  const todayISO = new Date().toISOString().slice(0, 10);
-
-  // Owner=Manager вычисляем по memberships, а не по legacy manager_phone
-  const ownerMembership = (memberships ?? []).find(
-    (m: any) =>
-      m.business_id === currentBusiness.id &&
-      String(m.role).toUpperCase() === "OWNER",
-  );
-  const managerMembership = (memberships ?? []).find(
-    (m: any) =>
-      m.business_id === currentBusiness.id &&
-      String(m.role).toUpperCase() === "MANAGER",
-  );
-  const isOwnerManager =
-    !!ownerMembership?.user_id &&
-    !!managerMembership?.user_id &&
-    String(ownerMembership.user_id) === String(managerMembership.user_id);
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/20 to-gray-50">
       <TopBar
@@ -404,28 +369,21 @@ export default async function Page({ params, searchParams }: PageProps) {
       />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
-        <div className="hidden lg:grid grid-cols-12 gap-6">
-          <div className="col-span-3 space-y-3">
-            <DesktopSidebar
-              clearHref={clearHref}
-              totalCount={totalOrders}
-              canSeeAnalytics={canSeeAnalyticsNav}
-            />
+        <div className="hidden lg:grid grid-cols-[72px_minmax(0,1fr)] gap-6">
+          <DesktopLeftRail
+            phoneRaw={phoneRaw}
+            q={filters.q}
+            status={filters.status}
+            range={filters.range}
+            actor={filters.actor}
+            actors={teamActors}
+            hasActiveFilters={hasActiveFilters}
+            clearHref={clearHref}
+            businessHref={businessHref}
+            canSeeAnalytics={canSeeAnalyticsNav}
+          />
 
-            <DesktopBusinessCard
-              owner={ownerCardProfile}
-              business={{
-                id: String(currentBusiness.id), // ✅ ДОБАВИЛИ
-                slug: String(currentBusiness.slug),
-              }}
-              role={userRole}
-              isOwnerManager={!!isOwnerManager}
-              pendingInvites={(pendingInvites ?? []) as any} // ✅ ДОБАВЬ
-              currentUserId={user?.id ?? null}
-            />
-          </div>
-
-          <div className="col-span-9 space-y-6">
+          <div className="space-y-6">
             <DesktopAnalyticsCard
               totalOrders={totalOrders}
               totalAmount={totalAmount}
@@ -447,21 +405,18 @@ export default async function Page({ params, searchParams }: PageProps) {
               businessSlug={String(currentBusiness.slug)}
             />
 
-            <DesktopFilters
-              phoneRaw={phoneRaw}
-              filters={filters}
-              clearHref={clearHref}
-              hasActiveFilters={hasActiveFilters}
-              actor={filters.actor}
-              actors={teamActors}
-            />
-
             <DesktopOrdersTable
               list={list as any}
               todayISO={todayISO}
               businessSlug={String(currentBusiness.slug)}
               businessId={String(currentBusiness.id)}
               phoneRaw={phoneRaw}
+              searchQuery={filters.q}
+              statusFilter={filters.status}
+              rangeFilter={filters.range}
+              actorFilter={filters.actor}
+              clearHref={clearHref}
+              hasActiveFilters={hasActiveFilters}
               canManage={canManage}
               canEdit={canEdit}
               userRole={userRole}
@@ -470,6 +425,32 @@ export default async function Page({ params, searchParams }: PageProps) {
         </div>
 
         <div className="lg:hidden space-y-4">
+          <MobileSummaryBar
+            totalCount={totalOrders}
+            overdueCount={overdueCount}
+            waitingPaymentCount={waitingPaymentCount}
+            activeAmountLabel={fmtAmount(activeAmount)}
+            hasActiveFilters={hasActiveFilters}
+            clearHref={clearHref}
+          />
+
+          <MobileAnalyticsAccordion
+            canSeeAnalytics={canSeeAnalyticsNav}
+            totalOrders={totalOrders}
+            totalAmount={totalAmount}
+            overdueCount={overdueCount}
+            waitingPaymentCount={waitingPaymentCount}
+            waitingPaymentAmount={waitingPaymentAmount}
+            doneCount={doneCount}
+            doneAmount={doneAmount}
+            inProgressCount={inProgressCount}
+            newCount={newCount}
+            canceledCount={canceledCount}
+            duplicateCount={duplicateCount}
+            activeAmount={activeAmount}
+            fmtAmount={fmtAmount}
+          />
+
           <MobileCreateOrderAccordion
             businessId={String(currentBusiness.id)}
             businessSlug={String(currentBusiness.slug)}
@@ -483,7 +464,6 @@ export default async function Page({ params, searchParams }: PageProps) {
             actor={filters.actor}
             actors={teamActors}
           />
-
           <MobileOrdersList
             list={list as any}
             todayISO={todayISO}

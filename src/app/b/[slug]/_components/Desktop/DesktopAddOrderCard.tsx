@@ -5,9 +5,10 @@ import DesktopCreateOrder from "./DesktopCreateOrder";
 
 type Props = {
   businessId: string;
+  businessSlug: string;
 };
 
-export default function DesktopAddOrderCard({ businessId }: Props) {
+export default function DesktopAddOrderCard({ businessId, businessSlug }: Props) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -45,7 +46,10 @@ export default function DesktopAddOrderCard({ businessId }: Props) {
       {/* Body */}
       {open ? (
         <div className="mt-4">
-          <DesktopCreateOrder businessId={businessId} />
+          <DesktopCreateOrder
+            businessId={businessId}
+            businessSlug={businessSlug}
+          />
         </div>
       ) : null}
     </section>

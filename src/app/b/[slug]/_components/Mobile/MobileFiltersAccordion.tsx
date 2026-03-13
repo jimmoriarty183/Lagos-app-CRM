@@ -18,7 +18,7 @@ export type TeamActor = {
 
 export type Filters = {
   q: string;
-  status: "ALL" | Status;
+  status: "ALL" | "OVERDUE" | Status;
   range: Range;
 };
 
@@ -65,6 +65,7 @@ export default function MobileFiltersAccordion({
             <option value="IN_PROGRESS">IN PROGRESS</option>
             <option value="WAITING_PAYMENT">WAITING PAYMENT</option>
             <option value="DONE">DONE</option>
+            <option value="OVERDUE">OVERDUE</option>
             <option value="CANCELED">CANCELED</option>
             <option value="DUPLICATE">DUPLICATE</option>
           </select>

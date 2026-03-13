@@ -2,21 +2,26 @@ import { SlidersHorizontal } from "lucide-react";
 
 type Props = {
   totalCount: number;
+  overdueCount: number;
+  waitingPaymentCount: number;
+  activeAmountLabel: string;
   hasActiveFilters: boolean;
   clearHref: string;
-
-  // оставил, чтобы не ломать текущий вызов (можно потом удалить)
-  pill: React.CSSProperties;
-  card: React.CSSProperties;
 };
 
 export default function MobileSummaryBar({
   totalCount,
+  overdueCount,
+  waitingPaymentCount,
+  activeAmountLabel,
   hasActiveFilters,
   clearHref,
 }: Props) {
+  const chipCls =
+    "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold whitespace-nowrap";
+
   return (
-    <section className="mobileOnly bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+    <section className="mobileOnly space-y-3 bg-white rounded-xl border border-gray-200 shadow-sm p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="text-sm font-extrabold text-gray-900">Orders</div>
@@ -38,6 +43,21 @@ export default function MobileSummaryBar({
             No filters
           </span>
         )}
+      </div>
+
+      <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+        <span className={`${chipCls} border-blue-200 bg-blue-50 text-blue-700`}>
+          Orders {totalCount}
+        </span>
+        <span className={`${chipCls} border-red-200 bg-red-50 text-red-700`}>
+          Overdue {overdueCount}
+        </span>
+        <span className={`${chipCls} border-amber-200 bg-amber-50 text-amber-700`}>
+          Waiting {waitingPaymentCount}
+        </span>
+        <span className={`${chipCls} border-emerald-200 bg-emerald-50 text-emerald-700`}>
+          Active ₴{activeAmountLabel}
+        </span>
       </div>
     </section>
   );
