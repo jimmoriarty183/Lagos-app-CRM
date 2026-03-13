@@ -1,7 +1,6 @@
 import { BarChart3 } from "lucide-react";
 
 type Props = {
-
   totalOrders: number;
   totalAmount: number;
   overdueCount: number;
@@ -14,7 +13,6 @@ type Props = {
   canceledCount: number;
   duplicateCount: number;
   activeAmount: number;
-
   fmtAmount: (n: number) => string;
 };
 
@@ -29,84 +27,75 @@ function MetricCard({
   sub?: string;
   tone?: "neutral" | "blue" | "amber" | "green";
 }) {
-  const toneBg =
+  const toneClasses =
     tone === "blue"
-      ? "bg-blue-50/60"
+      ? "bg-[#ecf4ff]"
       : tone === "amber"
-      ? "bg-amber-50/60"
-      : tone === "green"
-      ? "bg-green-50/60"
-      : "bg-white";
+        ? "bg-[#fff3e8]"
+        : tone === "green"
+          ? "bg-[#ecfff4]"
+          : "bg-white";
 
-  // ✅ по принципам: border всегда gray-200 (не цветные бордеры)
   return (
-    <div
-      className={`min-w-0 rounded-xl border border-gray-200 bg-white p-4 shadow-sm ${toneBg}`}
+    <article
+      className={`min-w-0 rounded-2xl border border-[#dde3ee] p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)] ${toneClasses}`}
     >
-      <div className="text-xs sm:text-sm text-gray-500 font-semibold">
+      <div className="text-[11px] font-semibold tracking-[-0.01em] text-[#7c8798]">
         {title}
       </div>
-      <div className="mt-1 text-xl sm:text-2xl font-extrabold text-gray-900 tabular-nums">
+      <div className="mt-1 text-[28px] font-bold leading-none tracking-[-0.04em] text-[#111827] tabular-nums">
         {value}
       </div>
       {sub ? (
-        <div className="mt-2 text-xs sm:text-sm text-gray-500">{sub}</div>
+        <div className="mt-2 text-[10px] font-medium uppercase tracking-[0.06em] text-[#98a2b3]">
+          {sub}
+        </div>
       ) : null}
-    </div>
+    </article>
   );
 }
 
-export default function DesktopAnalyticsCard(props: Props) {
-  const {
-    totalOrders,
-    totalAmount,
-    overdueCount,
-    waitingPaymentCount,
-    waitingPaymentAmount,
-    doneCount,
-    doneAmount,
-    inProgressCount,
-    newCount,
-    canceledCount,
-    duplicateCount,
-    activeAmount,
-    fmtAmount,
-  } = props;
-
-
+export default function DesktopAnalyticsCard({
+  totalOrders,
+  totalAmount,
+  overdueCount,
+  waitingPaymentCount,
+  waitingPaymentAmount,
+  doneCount,
+  doneAmount,
+  inProgressCount,
+  newCount,
+  canceledCount,
+  duplicateCount,
+  activeAmount,
+  fmtAmount,
+}: Props) {
   return (
-    <section id="analytics" className="min-w-0 space-y-3 sm:space-y-4">
-      {/* маленький, ненавязчивый хедер как в B2B SaaS */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-sm font-semibold text-gray-900">
-          <BarChart3 className="h-4 w-4 text-gray-400" />
+    <section id="analytics" className="min-w-0 space-y-3">
+      <div className="flex items-center justify-between px-1">
+        <div className="flex items-center gap-2 text-[13px] font-semibold text-[#111827]">
+          <BarChart3 className="h-4 w-4 text-[#98a2b3]" />
           Analytics
         </div>
-        <div className="text-xs text-gray-500">Based on current filters</div>
+        <div className="text-[11px] font-medium text-[#98a2b3]">Current filter set</div>
       </div>
 
-      {/* ✅ как ты писал: grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 */}
-      <div className="grid min-w-0 grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-5">
-        <MetricCard
-          title="Total orders"
-          value={String(totalOrders)}
-          tone="blue"
-        />
+      <div className="grid min-w-0 grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+        <MetricCard title="Total orders" value={String(totalOrders)} tone="blue" />
         <MetricCard
           title="Total amount"
           value={fmtAmount(Math.round(totalAmount))}
           tone="blue"
         />
         <MetricCard
-          title="Overdue (NEW+IN_PROGRESS)"
+          title="Overdue"
           value={String(overdueCount)}
-          tone="amber"
+          sub="NEW+IN_PROGRESS"
         />
         <MetricCard
           title="Waiting payment"
           value={String(waitingPaymentCount)}
           sub={`Amount: ${fmtAmount(Math.round(waitingPaymentAmount))}`}
-          tone="amber"
         />
         <MetricCard
           title="Done"
@@ -114,13 +103,12 @@ export default function DesktopAnalyticsCard(props: Props) {
           sub={`Amount: ${fmtAmount(Math.round(doneAmount))}`}
           tone="green"
         />
-
         <MetricCard title="In progress" value={String(inProgressCount)} />
         <MetricCard title="New" value={String(newCount)} />
         <MetricCard
           title="Removed"
           value={String(canceledCount + duplicateCount)}
-          sub={`Canceled: ${canceledCount} · Duplicate: ${duplicateCount}`}
+          sub={`Canceled: ${canceledCount} / Duplicate: ${duplicateCount}`}
         />
         <MetricCard
           title="Active amount"

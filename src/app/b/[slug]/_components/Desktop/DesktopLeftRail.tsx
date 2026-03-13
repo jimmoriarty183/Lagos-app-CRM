@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import {
   Building2,
   ChevronsLeft,
@@ -42,6 +42,29 @@ type Props = {
 };
 
 const MENU_STORAGE_KEY = "orders-desktop-menu-expanded";
+const MENU_STORAGE_EVENT = "orders-desktop-menu-expanded-change";
+
+function subscribeExpanded(onStoreChange: () => void) {
+  if (typeof window === "undefined") return () => {};
+
+  const handleChange = () => onStoreChange();
+  window.addEventListener("storage", handleChange);
+  window.addEventListener(MENU_STORAGE_EVENT, handleChange);
+
+  return () => {
+    window.removeEventListener("storage", handleChange);
+    window.removeEventListener(MENU_STORAGE_EVENT, handleChange);
+  };
+}
+
+function getExpandedSnapshot() {
+  if (typeof window === "undefined") return false;
+  return window.localStorage.getItem(MENU_STORAGE_KEY) === "true";
+}
+
+function getExpandedServerSnapshot() {
+  return false;
+}
 
 function RailLink({
   icon,
@@ -63,15 +86,15 @@ function RailLink({
   onClick?: () => void;
 }) {
   const cls = [
-    "group relative flex rounded-2xl border shadow-sm transition-colors",
+    "group relative flex border shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition-colors",
     expanded
-      ? "min-h-14 w-full items-start justify-start gap-3 px-4 py-3"
-      : "h-10 w-10 items-center justify-center rounded-xl",
+      ? "min-h-14 w-full items-start justify-start gap-3 rounded-2xl px-4 py-3"
+      : "h-12 w-12 items-center justify-center rounded-2xl",
     active
-      ? "border-gray-300 bg-gray-100 text-gray-900"
+      ? "border-[#cfd8e6] bg-[#eef3fb] text-[#111827]"
       : disabled
-        ? "border-gray-200 bg-white text-gray-300"
-        : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50",
+        ? "border-[#e3e7ef] bg-white text-[#c0c7d4]"
+        : "border-[#dde3ee] bg-white text-[#667085] hover:bg-[#f8fafc]",
   ].join(" ");
 
   const body = (
@@ -81,7 +104,7 @@ function RailLink({
         <span className="min-w-0 pt-0.5 text-left">
           <span className="block text-sm font-semibold leading-5">{label}</span>
           {description ? (
-            <span className="mt-0.5 block text-xs font-medium leading-4 text-gray-500">
+            <span className="mt-0.5 block text-xs font-medium leading-4 text-[#98a2b3]">
               {description}
             </span>
           ) : null}
@@ -89,7 +112,7 @@ function RailLink({
       ) : (
         <>
           <span className="sr-only">{label}</span>
-          <span className="pointer-events-none absolute left-[calc(100%+10px)] top-1/2 z-20 hidden -translate-y-1/2 whitespace-nowrap rounded-lg border border-gray-200 bg-white px-2 py-1 text-xs font-medium text-gray-700 shadow-sm group-hover:block">
+          <span className="pointer-events-none absolute left-[calc(100%+10px)] top-1/2 z-20 hidden -translate-y-1/2 whitespace-nowrap rounded-lg border border-[#dde3ee] bg-white px-2 py-1 text-xs font-medium text-[#475467] shadow-sm group-hover:block">
             {label}
           </span>
         </>
@@ -130,36 +153,38 @@ export default function DesktopLeftRail({
   businessHref,
   canSeeAnalytics,
 }: Props) {
-  const [expanded, setExpanded] = useState(false);
+  const expanded = useSyncExternalStore(
+    subscribeExpanded,
+    getExpandedSnapshot,
+    getExpandedServerSnapshot,
+  );
   const [filtersOpen, setFiltersOpen] = useState(false);
 
-  useEffect(() => {
-    const stored = window.localStorage.getItem(MENU_STORAGE_KEY);
-    if (stored === "true") {
-      setExpanded(true);
-    }
-  }, []);
-
-  useEffect(() => {
-    window.localStorage.setItem(MENU_STORAGE_KEY, expanded ? "true" : "false");
-  }, [expanded]);
-
   const toggleExpanded = () => {
-    setExpanded((prev) => !prev);
-  };
-
-  const toggleFilters = () => {
-    setFiltersOpen((prev) => !prev);
+    const next = !expanded;
+    window.localStorage.setItem(MENU_STORAGE_KEY, next ? "true" : "false");
+    window.dispatchEvent(new Event(MENU_STORAGE_EVENT));
   };
 
   return (
-    <div className="relative hidden lg:block">
-      <div className="sticky top-6">
+    <div
+      className={[
+        "relative hidden shrink-0 lg:block",
+        expanded ? "w-[232px]" : "w-[72px]",
+      ].join(" ")}
+    >
+      <div
+        className="fixed z-30"
+        style={{
+          top: "calc(env(safe-area-inset-top) + 88px)",
+          left: "max(24px, calc((100vw - 1220px) / 2 + 24px))",
+        }}
+      >
         <div className="relative">
           <div
             className={[
-              "absolute left-0 top-0 rounded-2xl border border-gray-200 bg-white p-2 shadow-sm transition-all",
-              expanded ? "w-[216px]" : "w-[56px]",
+              "rounded-[28px] border border-[#dde3ee] bg-[#f8fafc]/96 p-2 shadow-[0_10px_34px_rgba(15,23,42,0.06)] backdrop-blur transition-all",
+              expanded ? "w-[216px]" : "w-[68px]",
             ].join(" ")}
           >
             <div className="flex flex-col gap-2">
@@ -182,17 +207,17 @@ export default function DesktopLeftRail({
                 description="Search and narrow orders"
                 expanded={expanded}
                 active={filtersOpen}
-                onClick={toggleFilters}
+                onClick={() => setFiltersOpen((prev) => !prev)}
               />
 
               {canSeeAnalytics ? (
                 <RailLink
-                icon={<LayoutDashboard className="h-5 w-5" />}
-                label="Analytics"
-                description="Jump to KPI section"
-                expanded={expanded}
-                href="#analytics"
-              />
+                  icon={<LayoutDashboard className="h-5 w-5" />}
+                  label="Analytics"
+                  description="Jump to KPI section"
+                  expanded={expanded}
+                  href="#analytics"
+                />
               ) : null}
 
               <RailLink
@@ -217,7 +242,7 @@ export default function DesktopLeftRail({
             <div
               className={[
                 "absolute top-0 z-20 w-[312px]",
-                expanded ? "left-[228px]" : "left-[72px]",
+                expanded ? "left-[228px]" : "left-[84px]",
               ].join(" ")}
             >
               <DesktopSidebarFilters
@@ -232,8 +257,6 @@ export default function DesktopLeftRail({
               />
             </div>
           ) : null}
-
-          <div className="h-[56px] w-[56px]" />
         </div>
       </div>
     </div>

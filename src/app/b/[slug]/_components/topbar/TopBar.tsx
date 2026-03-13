@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { LogOut, Sparkles } from "lucide-react";
+import { Logo } from "@/components/Logo";
 
 import BusinessSwitcher, { BusinessOption } from "./BusinessSwitcher";
 import InviteInbox from "./InviteInbox";
@@ -56,15 +57,21 @@ export default function TopBar({
   const showSwitcher = !!businesses && businesses.length >= 1;
 
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-200/70 bg-white/70 backdrop-blur-md">
+    <header className="fixed inset-x-0 top-0 z-50 border-b border-slate-200/70 bg-white/70 backdrop-blur-md">
       <div className="pt-[env(safe-area-inset-top)]">
-        <div className="mx-auto flex h-14 max-w-7xl items-center gap-3 px-3 sm:px-6">
+        <div className="mx-auto flex h-[72px] max-w-[1220px] items-center justify-between gap-4 px-4 sm:px-6">
           <Link
             href={dashboardHref}
             aria-label="Go to dashboard"
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-900 shadow-sm"
+            className="flex shrink-0 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 shadow-sm"
           >
-            <span className="text-sm font-black">O</span>
+            <Logo size={28} />
+            <div className="leading-none">
+              <div className="text-[15px] font-semibold tracking-tight text-slate-900">
+                Ordero
+              </div>
+              <div className="pt-1 text-[11px] text-slate-500">Orders. Simple. Fast.</div>
+            </div>
           </Link>
 
           <MobileTopbarMenu
@@ -99,25 +106,23 @@ export default function TopBar({
             )}
           </div>
 
-          <div className="hidden flex-1 sm:block" />
-
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="hidden min-w-0 flex-1 items-center justify-end gap-3 sm:flex">
             <InviteInbox currentBusinessSlug={businessSlug} />
 
             {showSwitcher && (
-              <div className="hidden sm:block">
+              <div className="shrink-0">
                 <BusinessSwitcher
                   businesses={businesses!}
                   currentSlug={businessSlug}
                   onSelect={handleSelect}
                   disabledAdd
-                  widthClassName="w-[240px]"
+                  widthClassName="w-[300px]"
                   variant="toolbar-compact"
                 />
               </div>
             )}
 
-            <span className="hidden items-center rounded-full border border-violet-200 bg-violet-50 px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-violet-700 sm:inline-flex">
+            <span className="inline-flex h-9 items-center rounded-full border border-violet-200 bg-violet-50 px-3 text-[11px] font-semibold uppercase tracking-wide text-violet-700">
               <Sparkles className="mr-1 h-3 w-3" />
               {plan || "beta"}
             </span>
@@ -126,7 +131,7 @@ export default function TopBar({
               onClick={handleLogout}
               title="Logout"
               aria-label="Log out"
-              className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm"
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 shadow-sm"
             >
               <LogOut className="h-4 w-4" />
             </button>

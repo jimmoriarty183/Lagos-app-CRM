@@ -359,7 +359,7 @@ export default async function Page({ params, searchParams }: PageProps) {
   const fmtAmount = (n: number) => new Intl.NumberFormat("uk-UA").format(n);
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-gradient-to-br from-gray-50 via-blue-50/20 to-gray-50">
+    <div className="min-h-screen overflow-x-hidden bg-transparent text-slate-900">
       <TopBar
         businessSlug={slug}
         plan={currentBusiness.plan || "beta"}
@@ -370,8 +370,8 @@ export default async function Page({ params, searchParams }: PageProps) {
         hasActiveFilters={hasActiveFilters}
       />
 
-      <main className="mx-auto max-w-7xl overflow-x-hidden px-4 py-6 sm:px-6">
-        <div className="hidden items-start lg:grid grid-cols-[56px_minmax(0,1fr)] gap-4 xl:gap-5">
+      <main className="mx-auto max-w-[1220px] overflow-x-hidden px-4 pb-8 pt-20 sm:px-6">
+        <div className="hidden items-start lg:grid lg:grid-cols-[auto_minmax(0,1fr)] lg:gap-5">
           <DesktopLeftRail
             phoneRaw={phoneRaw}
             q={filters.q}
@@ -385,7 +385,7 @@ export default async function Page({ params, searchParams }: PageProps) {
             canSeeAnalytics={canSeeAnalyticsNav}
           />
 
-          <div className="min-w-0 space-y-6">
+          <div className="min-w-0 space-y-4">
             <DesktopAnalyticsCard
               totalOrders={totalOrders}
               totalAmount={totalAmount}
@@ -426,7 +426,7 @@ export default async function Page({ params, searchParams }: PageProps) {
           </div>
         </div>
 
-        <div className="lg:hidden space-y-4">
+        <div className="space-y-4 lg:hidden">
           <MobileSummaryBar
             totalCount={totalOrders}
             overdueCount={overdueCount}

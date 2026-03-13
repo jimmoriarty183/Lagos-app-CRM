@@ -34,16 +34,9 @@ function fmtAmount(n: number) {
   return new Intl.NumberFormat("uk-UA").format(n);
 }
 
-/* ================= Icons ================= */
-
 function EyeIcon({ className }: { className?: string }) {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      className={className}
-      fill="none"
-      aria-hidden="true"
-    >
+    <svg viewBox="0 0 24 24" className={className} fill="none" aria-hidden="true">
       <path
         d="M2.5 12s3.5-7 9.5-7 9.5 7 9.5 7-3.5 7-9.5 7-9.5-7-9.5-7Z"
         stroke="currentColor"
@@ -64,18 +57,8 @@ function EyeIcon({ className }: { className?: string }) {
 
 function EyeOffIcon({ className }: { className?: string }) {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      className={className}
-      fill="none"
-      aria-hidden="true"
-    >
-      <path
-        d="M3 3l18 18"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
+    <svg viewBox="0 0 24 24" className={className} fill="none" aria-hidden="true">
+      <path d="M3 3l18 18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
       <path
         d="M10.6 10.6A3 3 0 0 0 13.4 13.4"
         stroke="currentColor"
@@ -100,8 +83,6 @@ function EyeOffIcon({ className }: { className?: string }) {
   );
 }
 
-/* ================= Component ================= */
-
 type Props = {
   list: OrderRow[];
   todayISO: string;
@@ -116,7 +97,7 @@ type Props = {
   hasActiveFilters: boolean;
   canManage: boolean;
   canEdit: boolean;
-  userRole: UserRole; // ✅ ВАЖНО: реальная роль в этом business
+  userRole: UserRole;
 };
 
 export default function DesktopOrdersTable({
@@ -138,14 +119,16 @@ export default function DesktopOrdersTable({
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const eyeRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
-  const supabase = useMemo(() => {
-    return createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
-  }, []);
+  const supabase = useMemo(
+    () =>
+      createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      ),
+    [],
+  );
 
-  const isOpen = (id: string) => !!open[id];
+  const rows = useMemo(() => list ?? [], [list]);
 
   const togglePreview = (id: string) => {
     setOpen((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -155,11 +138,9 @@ export default function DesktopOrdersTable({
     setOpen((prev) => ({ ...prev, [id]: false }));
   };
 
-  const rows = useMemo(() => list ?? [], [list]);
-
   return (
-    <div className="min-w-0 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-      <div className="border-b border-gray-100 px-6 py-4">
+    <div className="min-w-0 overflow-hidden rounded-3xl border border-[#dde3ee] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+      <div className="border-b border-[#eef2f7] px-5 py-4">
         <form method="get" className="flex items-center gap-3">
           <input type="hidden" name="u" defaultValue={phoneRaw} />
           <input type="hidden" name="page" defaultValue="1" />
@@ -171,17 +152,28 @@ export default function DesktopOrdersTable({
             name="q"
             defaultValue={searchQuery}
             placeholder="Name, phone, amount..."
-            className="h-11 w-full rounded-xl border border-gray-200 px-4 outline-none transition focus:border-gray-900 focus:ring-2 focus:ring-gray-900"
+            className="h-10 w-full rounded-2xl border border-[#dde3ee] bg-[#f8fafc] px-4 text-sm outline-none transition placeholder:text-[#98a2b3] focus:border-[#111827] focus:bg-white focus:ring-2 focus:ring-[#111827]/10"
           />
 
-          <Button type="submit" size="sm">
+          <Button
+            type="submit"
+            size="sm"
+            style={{
+              height: 32,
+              minWidth: 72,
+              borderRadius: 10,
+              padding: "0 12px",
+              fontSize: 12,
+              boxShadow: "none",
+            }}
+          >
             Search
           </Button>
 
           {hasActiveFilters ? (
             <a
               href={clearHref}
-              className="shrink-0 rounded-full border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 transition hover:border-gray-300 hover:text-gray-900"
+              className="shrink-0 rounded-full border border-[#dde3ee] px-3 py-1.5 text-xs font-medium text-[#667085] transition hover:border-[#cfd8e6] hover:text-[#111827]"
             >
               Reset
             </a>
@@ -191,208 +183,188 @@ export default function DesktopOrdersTable({
 
       <div className="overflow-x-auto">
         <table className="w-full border-collapse">
-        <thead>
-          <tr className="text-left border-b border-gray-100">
-            <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              Client
-            </th>
-            <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              Amount
-            </th>
-            <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              Due
-            </th>
-            <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              Status
-            </th>
-            <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-right">
-              Actions
-            </th>
-          </tr>
-        </thead>
+          <thead>
+            <tr className="border-b border-[#eef2f7] text-left">
+              <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
+                Client
+              </th>
+              <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
+                Amount
+              </th>
+              <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
+                Due
+              </th>
+              <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
+                Status
+              </th>
+              <th className="px-5 py-3 text-right text-[10px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
+                Actions
+              </th>
+            </tr>
+          </thead>
 
-        <tbody>
-          {rows.map((o) => {
-            const dueISO = o.due_date ? String(o.due_date).slice(0, 10) : null;
+          <tbody>
+            {rows.map((o) => {
+              const dueISO = o.due_date ? String(o.due_date).slice(0, 10) : null;
+              const isOverdue =
+                !!dueISO &&
+                dueISO < todayISO &&
+                (o.status === "NEW" || o.status === "IN_PROGRESS");
+              const opened = !!open[o.id];
 
-            const isOverdue =
-              !!dueISO &&
-              dueISO < todayISO &&
-              (o.status === "NEW" || o.status === "IN_PROGRESS");
-
-            const opened = isOpen(o.id);
-
-            return (
-              <React.Fragment key={o.id}>
-                <tr
-                  className="border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer"
-                  onClick={() => eyeRefs.current[o.id]?.click()}
-                >
-                  <td className="px-6 py-4 align-top">
-                    <div className="text-xs text-gray-500 mb-1">
-                      <strong className="text-gray-700">
-                        Order #{o.order_number ?? "-"}
-                      </strong>{" "}
-                      <span className="text-gray-300">·</span> Created:{" "}
-                      {new Date(o.created_at).toLocaleString("en-NG", {
-                        day: "2-digit",
-                        month: "short",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </div>
-
-                    <div className="font-semibold text-gray-900">
-                      {o.client_name}
-                    </div>
-
-                    {o.client_phone ? (
-                      <div className="text-xs text-gray-500">
-                        {o.client_phone}
+              return (
+                <React.Fragment key={o.id}>
+                  <tr
+                    className="cursor-pointer border-b border-[#f2f4f7] transition-colors hover:bg-[#fbfcfe]"
+                    onClick={() => eyeRefs.current[o.id]?.click()}
+                  >
+                    <td className="px-5 py-4 align-top">
+                      <div className="mb-1 text-[10px] font-medium text-[#98a2b3]">
+                        <strong className="font-semibold text-[#667085]">
+                          Order #{o.order_number ?? "-"}
+                        </strong>{" "}
+                        <span className="text-[#d0d5dd]">•</span> Created:{" "}
+                        {new Date(o.created_at).toLocaleString("en-NG", {
+                          day: "2-digit",
+                          month: "short",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
                       </div>
-                    ) : null}
-                  </td>
 
-                  <td className="px-6 py-4 align-top font-extrabold text-gray-900 tabular-nums">
-                    {fmtAmount(Number(o.amount))}
-                  </td>
+                      <div className="text-sm font-semibold text-[#111827]">{o.client_name}</div>
 
-                  <td className="px-6 py-4 align-top">
-                    <div
-                      className={
-                        isOverdue
-                          ? "text-red-600 font-semibold"
-                          : "text-gray-700"
-                      }
-                    >
-                      {o.due_date || "—"}
-                    </div>
-                    {isOverdue ? (
-                      <div className="text-xs text-red-600/80">Overdue</div>
-                    ) : null}
-                  </td>
+                      {o.client_phone ? (
+                        <div className="text-xs text-[#98a2b3]">{o.client_phone}</div>
+                      ) : null}
+                    </td>
 
-                  <td className="px-6 py-4 align-top">
-                    <div
-                      className="inline-flex"
+                    <td className="px-5 py-4 align-top text-sm font-bold tabular-nums text-[#364153]">
+                      {fmtAmount(Number(o.amount))}
+                    </td>
+
+                    <td className="px-5 py-4 align-top">
+                      <div
+                        className={
+                          isOverdue
+                            ? "text-sm font-semibold text-[#ef4444]"
+                            : "text-sm text-[#667085]"
+                        }
+                      >
+                        {o.due_date || "—"}
+                      </div>
+                      {isOverdue ? (
+                        <div className="text-[10px] text-[#ef4444]/80">Overdue</div>
+                      ) : null}
+                    </td>
+
+                    <td className="px-5 py-4 align-top">
+                      <div className="inline-flex" onClick={(e) => e.stopPropagation()}>
+                        <StatusCell orderId={o.id} value={o.status} canManage={canManage} />
+                      </div>
+                    </td>
+
+                    <td
+                      className="px-5 py-4 align-top text-right"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <StatusCell
-                        orderId={o.id}
-                        value={o.status}
-                        canManage={canManage}
-                      />
-                    </div>
-                  </td>
-
-                  <td
-                    className="px-6 py-4 align-top text-right"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <div className="inline-flex items-center gap-2">
-                      <button
-                        ref={(el) => {
-                          eyeRefs.current[o.id] = el;
-                        }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          togglePreview(o.id);
-                        }}
-                        className="h-9 w-10 inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition-colors"
-                        aria-label={opened ? "Hide preview" : "Show preview"}
-                        title={opened ? "Hide preview" : "Show preview"}
-                        type="button"
-                      >
-                        {opened ? (
-                          <EyeOffIcon className="h-5 w-5 text-gray-700" />
-                        ) : (
-                          <EyeIcon className="h-5 w-5 text-gray-700" />
-                        )}
-                      </button>
-
-                      {canEdit ? (
-                        <a
-                          href={`/b/${businessSlug}/o/${
-                            o.id
-                          }?u=${encodeURIComponent(phoneRaw)}`}
-                          onClick={(e) => e.stopPropagation()}
-                          className="h-9 inline-flex items-center justify-center px-4 rounded-lg border border-gray-200 bg-white text-sm font-semibold text-gray-900 hover:bg-gray-50 transition-colors"
+                      <div className="inline-flex items-center gap-2">
+                        <button
+                          ref={(el) => {
+                            eyeRefs.current[o.id] = el;
+                          }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            togglePreview(o.id);
+                          }}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#dde3ee] bg-white transition-colors hover:bg-[#f8fafc]"
+                          aria-label={opened ? "Hide preview" : "Show preview"}
+                          title={opened ? "Hide preview" : "Show preview"}
+                          type="button"
                         >
-                          Edit
-                        </a>
-                      ) : (
-                        <span className="text-gray-400">—</span>
-                      )}
-                    </div>
-                  </td>
-                </tr>
+                          {opened ? (
+                            <EyeOffIcon className="h-4 w-4 text-[#667085]" />
+                          ) : (
+                            <EyeIcon className="h-4 w-4 text-[#667085]" />
+                          )}
+                        </button>
 
-                {opened ? (
-                  <tr className="border-b border-gray-100">
-                    <td colSpan={5} className="px-6 pb-5">
-                      <div
-                        className="mt-2 rounded-xl border border-gray-200 bg-white shadow-sm p-4"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="min-w-0 flex-1">
-                            <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                              Description
-                            </div>
-
-                            <div className="mt-2 text-sm text-gray-800 whitespace-pre-wrap break-words">
-                              {o.description && o.description.trim().length > 0
-                                ? o.description
-                                : "No description"}
-                            </div>
-
-                            {/* ✅ CHECKLIST */}
-                            <OrderChecklist
-                              order={{ id: o.id, business_id: businessId }}
-                              supabase={supabase}
-                            />
-
-                            {/* ✅ COMMENTS */}
-                            <OrderComments
-                              order={{ id: o.id, business_id: businessId }}
-                              supabase={supabase}
-                              author={{
-                                phone: phoneRaw,
-                                role: userRole, // ✅ FIX: реальная роль (OWNER/MANAGER/GUEST)
-                              }}
-                            />
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              closePreview(o.id);
-                            }}
-                            className="shrink-0 h-8 inline-flex items-center justify-center px-3 rounded-lg border border-gray-200 bg-white text-sm font-semibold text-gray-900 hover:bg-gray-50 transition-colors"
+                        {canEdit ? (
+                          <a
+                            href={`/b/${businessSlug}/o/${o.id}?u=${encodeURIComponent(phoneRaw)}`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="inline-flex h-8 items-center justify-center rounded-full border border-transparent px-3 text-xs font-semibold text-[#364153] transition-colors hover:bg-[#f5f7fb]"
                           >
-                            Close
-                          </button>
-                        </div>
+                            Edit
+                          </a>
+                        ) : (
+                          <span className="text-[#98a2b3]">—</span>
+                        )}
                       </div>
                     </td>
                   </tr>
-                ) : null}
-              </React.Fragment>
-            );
-          })}
 
-          {rows.length === 0 ? (
-            <tr>
-              <td
-                colSpan={5}
-                className="px-6 py-12 text-center text-sm text-gray-500"
-              >
-                No orders found
-              </td>
-            </tr>
-          ) : null}
-        </tbody>
+                  {opened ? (
+                    <tr className="border-b border-[#f2f4f7]">
+                      <td colSpan={5} className="px-5 pb-5">
+                        <div
+                          className="mt-2 rounded-2xl border border-[#dde3ee] bg-[#fcfdff] p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="min-w-0 flex-1">
+                              <div className="text-xs font-semibold uppercase tracking-wide text-[#98a2b3]">
+                                Description
+                              </div>
+
+                              <div className="mt-2 whitespace-pre-wrap break-words text-sm text-[#364153]">
+                                {o.description && o.description.trim().length > 0
+                                  ? o.description
+                                  : "No description"}
+                              </div>
+
+                              <OrderChecklist
+                                order={{ id: o.id, business_id: businessId }}
+                                supabase={supabase}
+                              />
+
+                              <OrderComments
+                                order={{ id: o.id, business_id: businessId }}
+                                supabase={supabase}
+                                author={{
+                                  phone: phoneRaw,
+                                  role: userRole,
+                                }}
+                              />
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                closePreview(o.id);
+                              }}
+                              className="inline-flex h-8 shrink-0 items-center justify-center rounded-full border border-[#dde3ee] bg-white px-3 text-sm font-semibold text-[#111827] transition-colors hover:bg-[#f8fafc]"
+                            >
+                              Close
+                            </button>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : null}
+                </React.Fragment>
+              );
+            })}
+
+            {rows.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="px-6 py-12 text-center text-sm text-[#98a2b3]">
+                  No orders found
+                </td>
+              </tr>
+            ) : null}
+          </tbody>
         </table>
       </div>
     </div>
