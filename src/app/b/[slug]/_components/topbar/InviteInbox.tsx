@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState, useTransition } from "react";
-import { Bell, Check, Loader2, X } from "lucide-react";
+import { Bell, BellRing, Check, Loader2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 type PendingInvite = {
@@ -140,9 +140,17 @@ export default function InviteInbox({ currentBusinessSlug }: Props) {
         }}
         aria-label="Business invites"
         title={title}
-        className="relative flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm"
+        className={`relative flex h-11 w-11 items-center justify-center rounded-xl border bg-white shadow-sm transition ${
+          open
+            ? "border-blue-300 bg-blue-50/80"
+            : "border-slate-200 text-slate-700"
+        }`}
       >
-        <Bell className="h-4 w-4" />
+        {open ? (
+          <BellRing className="h-4 w-4 text-blue-700 transition" />
+        ) : (
+          <Bell className="h-4 w-4 text-slate-700 transition" />
+        )}
         {count > 0 ? (
           <span className="absolute -right-1 -top-1 inline-flex min-w-5 items-center justify-center rounded-full bg-blue-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
             {count > 9 ? "9+" : count}
@@ -151,80 +159,89 @@ export default function InviteInbox({ currentBusinessSlug }: Props) {
       </button>
 
       {open ? (
-        <div className="absolute right-0 z-50 mt-2 w-[340px] max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg">
-          <div className="border-b border-slate-100 px-4 py-3">
-            <div className="text-sm font-semibold text-slate-900">Business invites</div>
-            <div className="mt-1 text-xs text-slate-500">
-              Accept access to another business without opening email.
+        <>
+          <button
+            type="button"
+            aria-label="Close business invites"
+            onClick={() => setOpen(false)}
+            className="fixed inset-0 z-40"
+          />
+
+          <div className="fixed left-4 right-4 top-[calc(env(safe-area-inset-top)+5rem)] z-50 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg sm:absolute sm:left-auto sm:right-0 sm:top-[calc(100%+0.5rem)] sm:mt-0 sm:w-[340px] sm:max-w-[calc(100vw-1.5rem)]">
+            <div className="border-b border-slate-100 px-4 py-3">
+              <div className="text-sm font-semibold text-slate-900">Business invites</div>
+              <div className="mt-1 text-xs text-slate-500">
+                Accept access to another business without opening email.
+              </div>
+            </div>
+
+            {error ? (
+              <div className="mx-3 mt-3 rounded-xl border border-red-100 bg-red-50 px-3 py-2 text-xs text-red-700">
+                {error}
+              </div>
+            ) : null}
+
+            <div className="max-h-[360px] overflow-auto p-3">
+              {loading ? (
+                <div className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-4 text-sm text-slate-600">
+                  Loading invites...
+                </div>
+              ) : items.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-4 text-sm text-slate-500">
+                  No pending business invites.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {items.map((invite) => {
+                    const busy = activeId === invite.id || isPending;
+                    return (
+                      <div
+                        key={invite.id}
+                        className="rounded-2xl border border-slate-100 bg-white px-3 py-3"
+                      >
+                        <div className="text-sm font-semibold text-slate-900">
+                          {invite.business.name || invite.business.slug}
+                        </div>
+                        <div className="mt-1 text-xs text-slate-500">
+                          /{invite.business.slug}
+                        </div>
+                        <div className="mt-2 text-xs text-slate-400">
+                          Invited: {formatDateTime(invite.created_at)}
+                        </div>
+
+                        <div className="mt-3 flex items-center gap-2">
+                          <button
+                            type="button"
+                            disabled={busy}
+                            onClick={() => void acceptInvite(invite.id)}
+                            className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {busy ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Check className="h-4 w-4" />
+                            )}
+                            Accept
+                          </button>
+
+                          <button
+                            type="button"
+                            disabled={busy}
+                            onClick={() => void declineInvite(invite.id)}
+                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            <X className="h-4 w-4" />
+                            Decline
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
-
-          {error ? (
-            <div className="mx-3 mt-3 rounded-xl border border-red-100 bg-red-50 px-3 py-2 text-xs text-red-700">
-              {error}
-            </div>
-          ) : null}
-
-          <div className="max-h-[360px] overflow-auto p-3">
-            {loading ? (
-              <div className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-4 text-sm text-slate-600">
-                Loading invites...
-              </div>
-            ) : items.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-4 text-sm text-slate-500">
-                No pending business invites.
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {items.map((invite) => {
-                  const busy = activeId === invite.id || isPending;
-                  return (
-                    <div
-                      key={invite.id}
-                      className="rounded-2xl border border-slate-100 bg-white px-3 py-3"
-                    >
-                      <div className="text-sm font-semibold text-slate-900">
-                        {invite.business.name || invite.business.slug}
-                      </div>
-                      <div className="mt-1 text-xs text-slate-500">
-                        /{invite.business.slug}
-                      </div>
-                      <div className="mt-2 text-xs text-slate-400">
-                        Invited: {formatDateTime(invite.created_at)}
-                      </div>
-
-                      <div className="mt-3 flex items-center gap-2">
-                        <button
-                          type="button"
-                          disabled={busy}
-                          onClick={() => void acceptInvite(invite.id)}
-                          className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                          {busy ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Check className="h-4 w-4" />
-                          )}
-                          Accept
-                        </button>
-
-                        <button
-                          type="button"
-                          disabled={busy}
-                          onClick={() => void declineInvite(invite.id)}
-                          className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                          <X className="h-4 w-4" />
-                          Decline
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </div>
+        </>
       ) : null}
     </div>
   );

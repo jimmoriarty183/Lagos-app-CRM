@@ -63,10 +63,10 @@ export default function TopBar({
           <Link
             href={dashboardHref}
             aria-label="Go to dashboard"
-            className="flex shrink-0 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 shadow-sm"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-900 shadow-sm sm:h-auto sm:w-auto sm:justify-start sm:rounded-2xl sm:p-3 sm:gap-3 sm:px-4"
           >
             <Logo size={28} />
-            <div className="leading-none">
+            <div className="hidden leading-none sm:block">
               <div className="text-[15px] font-semibold tracking-tight text-slate-900">
                 Ordero
               </div>
@@ -79,6 +79,10 @@ export default function TopBar({
             clearHref={clearHref ?? dashboardHref}
             hasActiveFilters={hasActiveFilters}
           />
+
+          <div className="sm:hidden">
+            <InviteInbox currentBusinessSlug={businessSlug} />
+          </div>
 
           <div className="min-w-0 flex-1 sm:hidden">
             {showSwitcher ? (
