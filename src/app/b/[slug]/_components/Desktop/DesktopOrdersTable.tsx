@@ -28,6 +28,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import type { DashboardRange } from "@/lib/order-dashboard-summary";
 
 type Status =
@@ -78,6 +87,9 @@ type Props = {
   clearHref: string;
   hasActiveFilters: boolean;
   resultCount: number;
+  currentPage: number;
+  perPage: number;
+  totalPages: number;
   canManage: boolean;
   canEdit: boolean;
   userRole: UserRole;
@@ -290,6 +302,17 @@ function ManagerAssignmentCell({
   );
 }
 
+const PAGE_SIZE_OPTIONS = [20, 50, 100, 500] as const;
+
+function getPaginationItems(currentPage: number, totalPages: number) {
+  if (totalPages <= 1) return [1];
+
+  const pages = new Set<number>([1, totalPages, currentPage, currentPage - 1, currentPage + 1]);
+  return Array.from(pages)
+    .filter((page) => page >= 1 && page <= totalPages)
+    .sort((a, b) => a - b);
+}
+
 export default function DesktopOrdersTable({
   list,
   todayISO,
@@ -306,6 +329,9 @@ export default function DesktopOrdersTable({
   clearHref,
   hasActiveFilters,
   resultCount,
+  currentPage,
+  perPage,
+  totalPages,
   canManage,
   canEdit,
   userRole,
@@ -356,11 +382,14 @@ export default function DesktopOrdersTable({
     statusTouched: boolean;
     managerValue: string;
     managerTouched: boolean;
+    page?: number;
+    perPage?: number;
   }) => {
     const params = new URLSearchParams();
     if (phoneRaw) params.set("u", phoneRaw);
     params.set("srange", summaryRange);
-    params.set("page", "1");
+    params.set("page", String(next.page ?? 1));
+    params.set("perPage", String(next.perPage ?? perPage));
     if (rangeFilter !== "ALL") params.set("range", rangeFilter);
     if (rangeStartDate) params.set("start", rangeStartDate);
     if (rangeEndDate) params.set("end", rangeEndDate);
@@ -390,6 +419,18 @@ export default function DesktopOrdersTable({
     const qs = params.toString();
     return qs ? `/b/${businessSlug}?${qs}` : `/b/${businessSlug}`;
   };
+
+  const pageItems = getPaginationItems(currentPage, totalPages);
+  const paginationHref = (page: number, nextPerPage = perPage) =>
+    buildHref({
+      q: searchDraft,
+      statusValues,
+      statusTouched,
+      managerValue,
+      managerTouched,
+      page,
+      perPage: nextPerPage,
+    });
 
   const submitFilters = (next: {
     q: string;
@@ -459,7 +500,7 @@ export default function DesktopOrdersTable({
           <div>
             <div className="text-[13px] font-semibold text-[#111827]">Orders</div>
             <div className="mt-1 text-[12px] font-medium text-[#98a2b3]">
-              {resultCount} {resultCount === 1 ? "result" : "results"}
+              {resultCount} {resultCount === 1 ? "result" : "results"} · Page {currentPage} of {totalPages}
             </div>
           </div>
 
@@ -635,6 +676,33 @@ export default function DesktopOrdersTable({
             </button>
           </div>
         </form>
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#eef2f7] px-5 py-3">
+        <div className="text-xs font-medium text-[#667085]">
+          Showing {rows.length === 0 ? 0 : (currentPage - 1) * perPage + 1}
+          -
+          {(currentPage - 1) * perPage + rows.length} of {resultCount}
+        </div>
+
+        <label className="flex items-center gap-2 text-xs font-medium text-[#667085]">
+          <span>Per page</span>
+          <select
+            value={String(perPage)}
+            onChange={(event) => {
+              startTransition(() => {
+                router.replace(paginationHref(1, Number(event.currentTarget.value)));
+              });
+            }}
+            className="h-9 rounded-xl border border-[#dde3ee] bg-white px-3 text-sm font-medium text-[#344054] outline-none transition focus:border-[#111827] focus:ring-2 focus:ring-[#111827]/10"
+          >
+            {PAGE_SIZE_OPTIONS.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
 
       <div className="overflow-x-auto">
@@ -922,6 +990,58 @@ export default function DesktopOrdersTable({
           </tbody>
         </table>
       </div>
+
+      {totalPages > 1 ? (
+        <div className="border-t border-[#eef2f7] px-5 py-4">
+          <Pagination className="justify-end">
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  href={paginationHref(Math.max(1, currentPage - 1))}
+                  aria-disabled={currentPage === 1}
+                  className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                />
+              </PaginationItem>
+              {pageItems.map((page, index) => {
+                const prevPage = pageItems[index - 1];
+                const needsEllipsis = prevPage && page - prevPage > 1;
+
+                return (
+                  <React.Fragment key={page}>
+                    {needsEllipsis ? (
+                      <PaginationItem>
+                        <PaginationEllipsis />
+                      </PaginationItem>
+                    ) : null}
+                    <PaginationItem>
+                      <PaginationLink href={paginationHref(page)} isActive={page === currentPage}>
+                        {page}
+                      </PaginationLink>
+                    </PaginationItem>
+                  </React.Fragment>
+                );
+              })}
+              <PaginationItem>
+                <PaginationNext
+                  href={paginationHref(Math.min(totalPages, currentPage + 1))}
+                  aria-disabled={currentPage === totalPages}
+                  className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                />
+              </PaginationItem>
+              <PaginationItem>
+                <PaginationLink
+                  href={paginationHref(totalPages)}
+                  size="default"
+                  aria-disabled={currentPage === totalPages}
+                  className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                >
+                  Last
+                </PaginationLink>
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      ) : null}
     </section>
   );
 }

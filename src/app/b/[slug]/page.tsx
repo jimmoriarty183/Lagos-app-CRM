@@ -85,6 +85,7 @@ type PageProps = {
     sstart?: string;
     send?: string;
     page?: string;
+    perPage?: string;
     actor?: string;
   };
 };
@@ -119,6 +120,18 @@ function normalizeStatusFilters(
     );
 
   return Array.from(new Set(normalized));
+}
+
+const PAGE_SIZE_OPTIONS = [20, 50, 100, 500] as const;
+
+function normalizePageSize(value: string | undefined) {
+  const parsed = Number.parseInt(String(value ?? ""), 10);
+  return PAGE_SIZE_OPTIONS.includes(parsed as (typeof PAGE_SIZE_OPTIONS)[number]) ? parsed : 20;
+}
+
+function normalizePageNumber(value: string | undefined) {
+  const parsed = Number.parseInt(String(value ?? ""), 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
 }
 
 export default async function Page({ params, searchParams }: PageProps) {
@@ -235,6 +248,7 @@ export default async function Page({ params, searchParams }: PageProps) {
     endDate: customEndDate,
     actor: String(sp.actor ?? "ALL"),
   };
+  const perPage = normalizePageSize(sp.perPage);
   const hasCustomRange = filters.range === "custom" && !!filters.startDate && !!filters.endDate;
   const rangeIsDefault = filters.range === "ALL" && !hasCustomRange;
   const isRangeFilterActive = !rangeIsDefault;
@@ -255,6 +269,7 @@ export default async function Page({ params, searchParams }: PageProps) {
   const clearHref = (() => {
     const params = new URLSearchParams();
     if (phoneRaw && phoneRaw.length > 0) params.set("u", phoneRaw);
+    params.set("perPage", String(perPage));
     if (summaryRange !== DEFAULT_SUMMARY_RANGE) params.set("srange", summaryRange);
     if (summaryRange === "custom" && summaryCustomStartDate) params.set("sstart", summaryCustomStartDate);
     if (summaryRange === "custom" && summaryCustomEndDate) params.set("send", summaryCustomEndDate);
@@ -269,6 +284,7 @@ export default async function Page({ params, searchParams }: PageProps) {
   const makeSummaryHref = (nextSummaryRange: DashboardRange) => {
     const params = new URLSearchParams();
     if (phoneRaw && phoneRaw.length > 0) params.set("u", phoneRaw);
+    params.set("perPage", String(perPage));
     if (filters.q) params.set("q", filters.q);
     for (const status of filters.statuses) params.append("status", status);
     if (filters.range !== "ALL") params.set("range", filters.range);
@@ -461,6 +477,12 @@ export default async function Page({ params, searchParams }: PageProps) {
     manager_id: order.created_by ? String(order.created_by) : null,
     manager_name: actorNameById.get(String(order.created_by ?? "")) || null,
   }));
+  const resultCount = list.length;
+  const requestedPage = normalizePageNumber(sp.page);
+  const totalPages = Math.max(1, Math.ceil(resultCount / perPage));
+  const currentPage = Math.min(requestedPage, totalPages);
+  const pageStart = (currentPage - 1) * perPage;
+  const paginatedList = list.slice(pageStart, pageStart + perPage);
   const previousList: any[] = previousPeriodRows;
 
   const currentSnapshot = getMetricSnapshot(summaryCurrentRows, todayISO);
@@ -599,7 +621,7 @@ export default async function Page({ params, searchParams }: PageProps) {
 
             <DesktopOrdersTable
               key={`desktop-orders-${filters.q}-${filters.statuses.join(",")}-${filters.actor}-${filters.range}-${filters.startDate ?? ""}-${filters.endDate ?? ""}`}
-              list={list}
+              list={paginatedList}
               todayISO={todayISO}
               businessSlug={String(currentBusiness.slug)}
               businessId={String(currentBusiness.id)}
@@ -613,7 +635,10 @@ export default async function Page({ params, searchParams }: PageProps) {
               actorFilter={filters.actor}
               clearHref={clearHref}
               hasActiveFilters={hasActiveFilters}
-              resultCount={list.length}
+              resultCount={resultCount}
+              currentPage={currentPage}
+              perPage={perPage}
+              totalPages={totalPages}
               canManage={canManage}
               canEdit={canEdit}
               userRole={userRole}
@@ -664,12 +689,15 @@ export default async function Page({ params, searchParams }: PageProps) {
           />
           <MobileOrdersList
             key={`mobile-orders-${filters.q}-${filters.statuses.join(",")}-${filters.actor}-${filters.range}-${filters.startDate ?? ""}-${filters.endDate ?? ""}`}
-            list={list}
+            list={paginatedList}
             todayISO={todayISO}
             businessSlug={String(currentBusiness.slug)}
             businessId={String(currentBusiness.id)}
             phoneRaw={phoneRaw}
-            resultsCount={list.length}
+            resultsCount={resultCount}
+            currentPage={currentPage}
+            perPage={perPage}
+            totalPages={totalPages}
             canManage={canManage}
             canEdit={canEdit}
             userRole={userRole}
