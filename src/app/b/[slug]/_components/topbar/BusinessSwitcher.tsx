@@ -98,16 +98,6 @@ export default function BusinessSwitcher({
               <div className="truncate text-sm font-semibold text-slate-900">
                 {current.name}
               </div>
-
-              {!compact && (
-                <span
-                  className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${roleBadgeClass(
-                    current.role
-                  )}`}
-                >
-                  {roleLabel(current.role)}
-                </span>
-              )}
             </div>
 
             {!compact && (

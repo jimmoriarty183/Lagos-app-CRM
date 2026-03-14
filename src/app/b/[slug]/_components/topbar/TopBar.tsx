@@ -14,6 +14,7 @@ type Props = {
   businessSlug: string;
   plan: string;
   role: "OWNER" | "MANAGER" | "GUEST";
+  currentUserName?: string;
   pill?: React.CSSProperties;
   businesses?: BusinessOption[];
   businessHref?: string;
@@ -25,6 +26,7 @@ export default function TopBar({
   businessSlug,
   plan,
   role,
+  currentUserName,
   businesses,
   businessHref,
   clearHref,
@@ -55,6 +57,9 @@ export default function TopBar({
   };
 
   const showSwitcher = !!businesses && businesses.length >= 1;
+  const userLabel = currentUserName?.trim() || "User";
+  const roleLabel =
+    role === "OWNER" ? "owner" : role === "MANAGER" ? "manager" : "guest";
 
   return (
     <header className="fixed inset-x-0 top-0 z-50 border-b border-slate-200/70 bg-white/70 backdrop-blur-md">
@@ -126,6 +131,23 @@ export default function TopBar({
                 />
               </div>
             )}
+
+            <div className="flex min-w-0 max-w-[180px] items-center gap-2">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-900 text-sm font-semibold text-white">
+                {userLabel[0]?.toUpperCase() || "U"}
+              </div>
+              <div className="flex min-w-0 flex-col leading-[1.1]">
+                <div
+                  className="truncate text-[13px] font-medium text-[#111111]"
+                  title={userLabel}
+                >
+                  {userLabel}
+                </div>
+                <div className="mt-0.5 text-[11px] font-medium lowercase text-[#8b8b8b]">
+                  {roleLabel}
+                </div>
+              </div>
+            </div>
 
             <span className="inline-flex h-9 items-center rounded-full border border-violet-200 bg-violet-50 px-3 text-[11px] font-semibold uppercase tracking-wide text-violet-700">
               <Sparkles className="mr-1 h-3 w-3" />

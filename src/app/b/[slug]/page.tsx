@@ -210,6 +210,31 @@ export default async function Page({ params, searchParams }: PageProps) {
   const canEdit = canManage;
   const canSeeAnalyticsNav = userRole === "OWNER";
   const currentUserId = user?.id ?? null;
+  let currentUserName =
+    bypassUser && !user ? bypassUser : user?.email ?? (userRole === "OWNER" ? "Owner" : "User");
+
+  if (user?.id) {
+    try {
+      const { data: currentProfile } = await dataClient
+        .from("profiles")
+        .select("full_name, first_name, last_name, email")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      const currentUserDisplay = resolveUserDisplay({
+        full_name: currentProfile?.full_name ?? String(user.user_metadata?.full_name ?? ""),
+        first_name: currentProfile?.first_name ?? String(user.user_metadata?.first_name ?? ""),
+        last_name: currentProfile?.last_name ?? String(user.user_metadata?.last_name ?? ""),
+        email: currentProfile?.email ?? user.email ?? null,
+        phone: bypassUser || null,
+      });
+
+      currentUserName = currentUserDisplay.primary;
+    } catch {
+      currentUserName =
+        user.email ?? (userRole === "OWNER" ? "Owner" : userRole === "MANAGER" ? "Manager" : "Guest");
+    }
+  }
 
   const phoneRaw = String(sp.u ?? "");
   const allowedStatuses = [
@@ -563,6 +588,7 @@ export default async function Page({ params, searchParams }: PageProps) {
         businessSlug={slug}
         plan={currentBusiness.plan || "beta"}
         role={userRole}
+        currentUserName={currentUserName}
         businesses={businessOptions}
         businessHref={businessHref}
         clearHref={clearHref}
