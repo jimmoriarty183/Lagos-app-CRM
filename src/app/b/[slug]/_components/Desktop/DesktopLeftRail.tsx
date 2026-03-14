@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 
 import DesktopSidebarFilters from "./DesktopSidebarFilters";
+import type { DashboardRange } from "@/lib/order-dashboard-summary";
 
 type Status =
   | "NEW"
@@ -20,8 +21,6 @@ type Status =
   | "DONE"
   | "CANCELED"
   | "DUPLICATE";
-
-type Range = "ALL" | "today" | "week" | "month" | "year";
 
 type TeamActor = {
   id: string;
@@ -33,7 +32,10 @@ type Props = {
   phoneRaw: string;
   q: string;
   status: "ALL" | "OVERDUE" | Status;
-  range: Range;
+  range: DashboardRange;
+  summaryRange: DashboardRange;
+  startDate: string | null;
+  endDate: string | null;
   actor: string;
   actors: TeamActor[];
   hasActiveFilters: boolean;
@@ -170,6 +172,9 @@ export default function DesktopLeftRail({
   q,
   status,
   range,
+  summaryRange,
+  startDate,
+  endDate,
   actor,
   actors,
   hasActiveFilters,
@@ -284,6 +289,9 @@ export default function DesktopLeftRail({
                 q={q}
                 status={status}
                 range={range}
+                summaryRange={summaryRange}
+                startDate={startDate}
+                endDate={endDate}
                 actor={actor}
                 actors={actors}
                 hasActiveFilters={hasActiveFilters}

@@ -7,6 +7,7 @@ import { StatusCell } from "../../InlineCells";
 import { OrderChecklist } from "../../OrderChecklist";
 import { OrderComments } from "../../OrderComments";
 import Button from "../../Button";
+import type { DashboardRange } from "@/lib/order-dashboard-summary";
 
 type Status =
   | "NEW"
@@ -29,7 +30,6 @@ type OrderRow = {
 };
 
 type UserRole = "OWNER" | "MANAGER" | "GUEST";
-type Range = "ALL" | "today" | "week" | "month" | "year";
 const TOGGLE_FILTERS_EVENT = "orders-desktop-toggle-filters";
 
 function fmtAmount(n: number) {
@@ -93,10 +93,14 @@ type Props = {
   phoneRaw: string;
   searchQuery: string;
   statusFilter: "ALL" | "OVERDUE" | Status;
-  rangeFilter: Range;
+  rangeFilter: DashboardRange;
+  summaryRange: DashboardRange;
+  rangeStartDate: string | null;
+  rangeEndDate: string | null;
   actorFilter: string;
   clearHref: string;
   hasActiveFilters: boolean;
+  resultCount: number;
   canManage: boolean;
   canEdit: boolean;
   userRole: UserRole;
@@ -111,9 +115,13 @@ export default function DesktopOrdersTable({
   searchQuery,
   statusFilter,
   rangeFilter,
+  summaryRange,
+  rangeStartDate,
+  rangeEndDate,
   actorFilter,
   clearHref,
   hasActiveFilters,
+  resultCount,
   canManage,
   canEdit,
   userRole,
@@ -147,11 +155,22 @@ export default function DesktopOrdersTable({
   return (
     <div className="min-w-0 overflow-hidden rounded-3xl border border-[#dde3ee] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
       <div className="border-b border-[#eef2f7] px-5 py-4">
+        <div className="mb-3 flex items-end justify-between gap-3">
+          <div>
+            <div className="text-[13px] font-semibold text-[#111827]">Orders</div>
+            <div className="text-[12px] font-medium text-[#98a2b3]">
+              {resultCount} {resultCount === 1 ? "result" : "results"}
+            </div>
+          </div>
+        </div>
         <form method="get" className="flex items-center gap-3">
           <input type="hidden" name="u" defaultValue={phoneRaw} />
+          <input type="hidden" name="srange" defaultValue={summaryRange} />
           <input type="hidden" name="page" defaultValue="1" />
           <input type="hidden" name="status" defaultValue={statusFilter} />
           <input type="hidden" name="range" defaultValue={rangeFilter} />
+          {rangeStartDate ? <input type="hidden" name="start" defaultValue={rangeStartDate} /> : null}
+          {rangeEndDate ? <input type="hidden" name="end" defaultValue={rangeEndDate} /> : null}
           <input type="hidden" name="actor" defaultValue={actorFilter} />
 
           <input

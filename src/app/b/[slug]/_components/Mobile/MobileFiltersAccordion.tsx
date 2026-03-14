@@ -1,8 +1,12 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { SlidersHorizontal } from "lucide-react";
 import Button from "../../Button";
+import {
+  DASHBOARD_RANGE_OPTIONS,
+  type DashboardRange,
+} from "@/lib/order-dashboard-summary";
 
 type Status =
   | "NEW"
@@ -11,8 +15,6 @@ type Status =
   | "DONE"
   | "CANCELED"
   | "DUPLICATE";
-
-type Range = "ALL" | "today" | "week" | "month" | "year";
 
 export type TeamActor = {
   id: string;
@@ -23,12 +25,15 @@ export type TeamActor = {
 export type Filters = {
   q: string;
   status: "ALL" | "OVERDUE" | Status;
-  range: Range;
+  range: DashboardRange;
+  startDate: string | null;
+  endDate: string | null;
 };
 
 type Props = {
   phoneRaw: string;
   filters: Filters;
+  summaryRange: DashboardRange;
   clearHref: string;
   hasActiveFilters: boolean;
   actor: string;
@@ -38,6 +43,7 @@ type Props = {
 export default function MobileFiltersAccordion({
   phoneRaw,
   filters,
+  summaryRange,
   clearHref,
   hasActiveFilters,
   actor,
@@ -45,6 +51,9 @@ export default function MobileFiltersAccordion({
 }: Props) {
   const rootRef = useRef<HTMLElement | null>(null);
   const searchRef = useRef<HTMLInputElement | null>(null);
+  const [rangeValue, setRangeValue] = useState<DashboardRange>(filters.range);
+  const [customStart, setCustomStart] = useState(filters.startDate ?? "");
+  const [customEnd, setCustomEnd] = useState(filters.endDate ?? "");
 
   useEffect(() => {
     const onOpen = () => {
@@ -68,6 +77,7 @@ export default function MobileFiltersAccordion({
   ].reduce((sum, item) => sum + item, 0);
 
   const hasFiltersApplied = activeCount > 0;
+  const showCustomRange = rangeValue === "custom";
 
   return (
     <section id="mobile-filters" ref={rootRef} className="lg:hidden">
@@ -81,6 +91,7 @@ export default function MobileFiltersAccordion({
         ].join(" ")}
       >
         <input type="hidden" name="u" value={phoneRaw} />
+        <input type="hidden" name="srange" value={summaryRange} />
         <input type="hidden" name="page" value="1" />
 
         <div className="mb-2.5 flex items-center justify-between gap-2">
@@ -134,7 +145,12 @@ export default function MobileFiltersAccordion({
               className={inputCls}
             />
 
-            <Button type="submit" size="sm" className="h-10 w-full justify-center px-3 text-sm">
+            <Button
+              type="submit"
+              size="sm"
+              className="h-10 w-full justify-center px-3 text-sm"
+              disabled={showCustomRange && (!customStart || !customEnd)}
+            >
               Apply
             </Button>
           </div>
@@ -157,18 +173,50 @@ export default function MobileFiltersAccordion({
 
             <select
               name="range"
-              defaultValue={filters.range}
+              value={rangeValue}
               className={inputCls}
+              onChange={(event) => {
+                const next = event.currentTarget.value as DashboardRange;
+                setRangeValue(next);
+                if (next !== "custom") {
+                  setCustomStart("");
+                  setCustomEnd("");
+                }
+              }}
             >
-              <option value="ALL">All time</option>
-              <option value="today">Today</option>
-              <option value="week">7 days</option>
-              <option value="month">Month</option>
-              <option value="year">Year</option>
+              {DASHBOARD_RANGE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
             </select>
           </div>
 
-          <div className="grid grid-cols-[minmax(0,1fr)_72px] gap-2">
+          {showCustomRange ? (
+            <div className="grid grid-cols-2 gap-2">
+              <input
+                type="date"
+                name="start"
+                value={customStart}
+                onChange={(event) => setCustomStart(event.currentTarget.value)}
+                className={inputCls}
+              />
+              <input
+                type="date"
+                name="end"
+                value={customEnd}
+                onChange={(event) => setCustomEnd(event.currentTarget.value)}
+                className={inputCls}
+              />
+            </div>
+          ) : null}
+
+          <div
+            className={[
+              "grid gap-2",
+              hasFiltersApplied ? "grid-cols-[minmax(0,1fr)_72px]" : "grid-cols-1",
+            ].join(" ")}
+          >
             <select
               name="actor"
               defaultValue={actor}
@@ -191,12 +239,16 @@ export default function MobileFiltersAccordion({
               >
                 Clear
               </a>
-            ) : (
-              <span className="inline-flex h-10 items-center justify-center rounded-xl border border-gray-200 bg-gray-50 px-3 text-[10px] font-medium text-gray-500">
-                0
-              </span>
-            )}
+            ) : null}
           </div>
+
+          {showCustomRange ? (
+            <div className="text-[11px] font-medium text-gray-500">
+              {customStart && customEnd
+                ? "Comparison will use the previous range of the same length."
+                : "Select both dates to apply a custom range."}
+            </div>
+          ) : null}
         </div>
       </form>
     </section>

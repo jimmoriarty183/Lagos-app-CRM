@@ -12,6 +12,20 @@ import MobileCreateOrderAccordion from "./_components/Mobile/MobileCreateOrderAc
 import MobileFiltersAccordion from "./_components/Mobile/MobileFiltersAccordion";
 import MobileSummaryBar from "./_components/Mobile/MobileSummaryBar";
 
+import {
+  DEFAULT_SUMMARY_RANGE,
+  filterOrdersByCreatedAt,
+  formatDateInput,
+  formatMetricComparison,
+  getDashboardPeriod,
+  getMetricSnapshot,
+  isOrderOverdue,
+  resolveDashboardRangeInput,
+  SUMMARY_RANGE_OPTIONS,
+  type DashboardRange,
+  type TrendDirection,
+  type TrendTone,
+} from "@/lib/order-dashboard-summary";
 import { supabaseServerReadOnly } from "@/lib/supabase/server";
 import { resolveUserDisplay } from "@/lib/user-display";
 import { supabaseAdmin } from "@/lib/supabase/admin";
@@ -24,13 +38,36 @@ type Status =
   | "CANCELED"
   | "DUPLICATE";
 
-type Range = "ALL" | "today" | "week" | "month" | "year";
-
 type Filters = {
   q: string;
   status: "ALL" | "OVERDUE" | Status;
-  range: Range;
+  range: DashboardRange;
+  startDate: string | null;
+  endDate: string | null;
   actor: string;
+};
+
+type SummaryPeriodOption = {
+  label: string;
+  shortLabel: string;
+  href: string;
+  active: boolean;
+};
+
+type SummaryCardData = {
+  label: string;
+  value: string;
+  trendText: string | null;
+  trendDirection: TrendDirection;
+  trendTone: TrendTone;
+  tone: "neutral" | "blue" | "green" | "red";
+};
+
+type SummaryCardSeed = {
+  label: string;
+  value: string;
+  tone: "neutral" | "blue" | "green" | "red";
+  comparison: ReturnType<typeof formatMetricComparison>;
 };
 
 type PageProps = {
@@ -40,6 +77,11 @@ type PageProps = {
     q?: string;
     status?: string;
     range?: string;
+    srange?: string;
+    start?: string;
+    end?: string;
+    sstart?: string;
+    send?: string;
     page?: string;
     actor?: string;
   };
@@ -50,11 +92,6 @@ type TeamActor = {
   label: string;
   kind: "OWNER" | "MANAGER";
 };
-
-function isMissingColumnError(error: unknown, column: string) {
-  const message = String((error as { message?: string } | null)?.message ?? "").toLowerCase();
-  return message.includes(column.toLowerCase());
-}
 
 function upperRole(r: any): "OWNER" | "MANAGER" | "GUEST" {
   const s = String(r || "").toUpperCase();
@@ -151,36 +188,96 @@ export default async function Page({ params, searchParams }: PageProps) {
     "DUPLICATE",
     "OVERDUE",
   ] as const;
+  const rangeInput = resolveDashboardRangeInput({
+    range: sp.range,
+    startDate: sp.start,
+    endDate: sp.end,
+    fallbackRange: "ALL",
+  });
+  const summaryRangeInput = resolveDashboardRangeInput({
+    range: sp.srange,
+    startDate: sp.sstart,
+    endDate: sp.send,
+    fallbackRange: DEFAULT_SUMMARY_RANGE,
+  });
+  const customStartDate = rangeInput.range === "custom" ? rangeInput.startDate : null;
+  const customEndDate = rangeInput.range === "custom" ? rangeInput.endDate : null;
+  const summaryCustomStartDate =
+    summaryRangeInput.range === "custom" ? summaryRangeInput.startDate : null;
+  const summaryCustomEndDate =
+    summaryRangeInput.range === "custom" ? summaryRangeInput.endDate : null;
 
   const filters: Filters = {
     q: String(sp.q ?? "").trim(),
     status: allowedStatuses.includes(statusRaw as (typeof allowedStatuses)[number])
       ? (statusRaw as Filters["status"])
       : "ALL",
-    range: (String(sp.range ?? "ALL") as Range) ?? "ALL",
+    range: rangeInput.range,
+    startDate: customStartDate,
+    endDate: customEndDate,
     actor: String(sp.actor ?? "ALL"),
   };
+  const hasCustomRange = filters.range === "custom" && !!filters.startDate && !!filters.endDate;
+  const rangeIsDefault = filters.range === "ALL" && !hasCustomRange;
+  const isRangeFilterActive = !rangeIsDefault;
+  const summaryRange = summaryRangeInput.range;
 
   const hasActiveFilters =
     !!filters.q ||
     filters.status !== "ALL" ||
-    filters.range !== "ALL" ||
+    isRangeFilterActive ||
     filters.actor !== "ALL";
   const activeFiltersCount = [
     filters.q ? 1 : 0,
     filters.status !== "ALL" ? 1 : 0,
-    filters.range !== "ALL" ? 1 : 0,
+    isRangeFilterActive ? 1 : 0,
     filters.actor !== "ALL" ? 1 : 0,
   ].reduce((sum, count) => sum + count, 0);
 
-  const clearHref =
-    phoneRaw && phoneRaw.length > 0
-      ? `/b/${slug}?u=${encodeURIComponent(phoneRaw)}`
-      : `/b/${slug}`;
+  const clearHref = (() => {
+    const params = new URLSearchParams();
+    if (phoneRaw && phoneRaw.length > 0) params.set("u", phoneRaw);
+    if (summaryRange !== DEFAULT_SUMMARY_RANGE) params.set("srange", summaryRange);
+    if (summaryRange === "custom" && summaryCustomStartDate) params.set("sstart", summaryCustomStartDate);
+    if (summaryRange === "custom" && summaryCustomEndDate) params.set("send", summaryCustomEndDate);
+    const qs = params.toString();
+    return qs ? `/b/${slug}?${qs}` : `/b/${slug}`;
+  })();
   const businessHref =
     phoneRaw && phoneRaw.length > 0
       ? `/b/${slug}/settings/team?u=${encodeURIComponent(phoneRaw)}`
       : `/b/${slug}/settings/team`;
+
+  const makeSummaryHref = (nextSummaryRange: DashboardRange) => {
+    const params = new URLSearchParams();
+    if (phoneRaw && phoneRaw.length > 0) params.set("u", phoneRaw);
+    if (filters.q) params.set("q", filters.q);
+    if (filters.status !== "ALL") params.set("status", filters.status);
+    if (filters.range !== "ALL") params.set("range", filters.range);
+    if (filters.startDate) params.set("start", filters.startDate);
+    if (filters.endDate) params.set("end", filters.endDate);
+    if (filters.actor !== "ALL") params.set("actor", filters.actor);
+    if (nextSummaryRange !== DEFAULT_SUMMARY_RANGE) params.set("srange", nextSummaryRange);
+    if (nextSummaryRange === "custom" && summaryCustomStartDate) params.set("sstart", summaryCustomStartDate);
+    if (nextSummaryRange === "custom" && summaryCustomEndDate) params.set("send", summaryCustomEndDate);
+    const qs = params.toString();
+    return qs ? `/b/${slug}?${qs}` : `/b/${slug}`;
+  };
+
+  const summaryPeriodOptions: SummaryPeriodOption[] = SUMMARY_RANGE_OPTIONS.map((option) => ({
+    label: option.label,
+    shortLabel: option.shortLabel,
+    href: makeSummaryHref(option.value),
+    active: summaryRange === option.value,
+  }));
+  const summaryExtendedOptions: SummaryPeriodOption[] =
+    userRole === "OWNER"
+      ? [
+          { label: "Last 90 days", shortLabel: "90D", href: makeSummaryHref("last90Days"), active: summaryRange === "last90Days" },
+          { label: "Last year", shortLabel: "1Y", href: makeSummaryHref("last1Year"), active: summaryRange === "last1Year" },
+          { label: "Custom range", shortLabel: "Custom", href: makeSummaryHref("custom"), active: summaryRange === "custom" },
+        ]
+      : [];
 
   let teamActors: TeamActor[] = [];
   let ownerIds: string[] = [];
@@ -263,36 +360,11 @@ export default async function Page({ params, searchParams }: PageProps) {
     })
     .sort((a: any, b: any) => a.name.localeCompare(b.name));
 
-  const buildOrdersQuery = (withActorFilter: boolean) => {
-    let query = dataClient
-      .from("orders")
-      .select("*")
-      .eq("business_id", currentBusiness.id)
-      .order("created_at", { ascending: false });
-
-    if (filters.status !== "ALL" && filters.status !== "OVERDUE") {
-      query = query.eq("status", filters.status);
-    }
-
-    if (withActorFilter && filters.actor !== "ALL") {
-      if (filters.actor === "OWNER") {
-        if (ownerIds.length > 0) query = query.in("created_by", ownerIds);
-      } else if (filters.actor === "MANAGER") {
-        if (managerIds.length > 0) query = query.in("created_by", managerIds);
-      } else if (filters.actor.startsWith("user:")) {
-        query = query.eq("created_by", filters.actor.slice(5));
-      }
-    }
-
-    return query;
-  };
-
-  let ordersResult = await buildOrdersQuery(true);
-  if (ordersResult.error && isMissingColumnError(ordersResult.error, "created_by")) {
-    ordersResult = await buildOrdersQuery(false);
-  }
-
-  const { data: orders, error: oErr } = ordersResult;
+  const { data: orders, error: oErr } = await dataClient
+    .from("orders")
+    .select("*")
+    .eq("business_id", currentBusiness.id)
+    .order("created_at", { ascending: false });
   if (oErr && !bypassMode) throw oErr;
 
   const listRaw: any[] = orders ?? [];
@@ -301,11 +373,23 @@ export default async function Page({ params, searchParams }: PageProps) {
     if (actor?.id) actorNameById.set(String(actor.id), String(actor.label ?? ""));
   }
 
-  const todayISO = new Date().toISOString().slice(0, 10);
+  const now = new Date();
+  const todayISO = formatDateInput(now);
   const qNeedle = String(filters.q ?? "").trim().toLowerCase();
 
+  const actorFilteredList: any[] =
+    filters.actor === "ALL"
+      ? listRaw
+      : filters.actor === "OWNER"
+        ? listRaw.filter((o) => ownerIds.includes(String(o.created_by ?? "")))
+        : filters.actor === "MANAGER"
+          ? listRaw.filter((o) => managerIds.includes(String(o.created_by ?? "")))
+          : filters.actor.startsWith("user:")
+            ? listRaw.filter((o) => String(o.created_by ?? "") === filters.actor.slice(5))
+            : listRaw;
+
   const searchedList: any[] = qNeedle
-    ? listRaw.filter((o) => {
+    ? actorFilteredList.filter((o) => {
         const actorName = actorNameById.get(String(o.created_by ?? "")) ?? "";
         const blob = [
           String(o.id ?? ""),
@@ -321,32 +405,36 @@ export default async function Page({ params, searchParams }: PageProps) {
 
         return blob.includes(qNeedle);
       })
-    : listRaw;
+    : actorFilteredList;
 
-  const isOrderOverdue = (o: any) => {
-    const dueISO = o?.due_date ? String(o.due_date).slice(0, 10) : null;
-    return (
-      !!dueISO &&
-      dueISO < todayISO &&
-      (o?.status === "NEW" || o?.status === "IN_PROGRESS")
-    );
-  };
-
-  const list: any[] =
+  const applyStatusFilter = (rows: any[]) =>
     filters.status === "ALL"
-      ? searchedList
+      ? rows
       : filters.status === "OVERDUE"
-        ? searchedList.filter((o) => isOrderOverdue(o))
-        : searchedList.filter((o) => o.status === filters.status);
+        ? rows.filter((o) => isOrderOverdue(o, todayISO))
+        : rows.filter((o) => o.status === filters.status);
 
-  const totalOrders = list.length;
+  const tablePeriod = getDashboardPeriod(filters.range, {
+    now,
+    startDate: filters.startDate,
+    endDate: filters.endDate,
+  });
+  const summaryPeriod = getDashboardPeriod(summaryRange, {
+    now,
+    startDate: summaryCustomStartDate,
+    endDate: summaryCustomEndDate,
+  });
+  const currentPeriodRows = filterOrdersByCreatedAt(searchedList, tablePeriod.current);
+  const summaryCurrentRows = filterOrdersByCreatedAt(listRaw, summaryPeriod.current);
+  const previousPeriodRows = summaryPeriod.previous
+    ? filterOrdersByCreatedAt(listRaw, summaryPeriod.previous)
+    : [];
 
-  const sumAmount = (rows: any[]) => rows.reduce((s, o) => s + Number(o.amount || 0), 0);
-  const totalAmount = sumAmount(list);
-  const activeOrders = list.filter(
-    (o) => o.status === "NEW" || o.status === "IN_PROGRESS",
-  ).length;
-  const overdueCount = list.filter((o) => isOrderOverdue(o)).length;
+  const list: any[] = applyStatusFilter(currentPeriodRows);
+  const previousList: any[] = previousPeriodRows;
+
+  const currentSnapshot = getMetricSnapshot(summaryCurrentRows, todayISO);
+  const previousSnapshot = summaryPeriod.previous ? getMetricSnapshot(previousList, todayISO) : null;
 
   const fmtRevenue = (n: number) =>
     new Intl.NumberFormat("en-US", {
@@ -354,6 +442,68 @@ export default async function Page({ params, searchParams }: PageProps) {
       currency: "USD",
       maximumFractionDigits: 0,
     }).format(n);
+  const fmtSignedRevenue = (n: number) => `${n >= 0 ? "+" : "-"}${fmtRevenue(Math.abs(Math.round(n)))}`;
+  const fmtSignedCount = (n: number) => `${n >= 0 ? "+" : "-"}${Math.abs(Math.round(n))}`;
+
+  const summaryCards: SummaryCardData[] = ([
+    {
+      label: "Total Orders",
+      value: String(currentSnapshot.totalOrders),
+      tone: "blue",
+      comparison: formatMetricComparison({
+        current: currentSnapshot.totalOrders,
+        previous: previousSnapshot?.totalOrders ?? null,
+        comparisonLabel: summaryPeriod.comparisonLabel,
+        mode: "percent",
+        improvement: "up",
+        zeroPreviousBehavior: "absolute",
+        formatAbsoluteValue: fmtSignedCount,
+      }),
+    },
+    {
+      label: "Total Revenue",
+      value: fmtRevenue(Math.round(currentSnapshot.totalRevenue)),
+      tone: "neutral",
+      comparison: formatMetricComparison({
+        current: currentSnapshot.totalRevenue,
+        previous: previousSnapshot?.totalRevenue ?? null,
+        comparisonLabel: summaryPeriod.comparisonLabel,
+        mode: "percent",
+        improvement: "up",
+        zeroPreviousBehavior: "absolute",
+        formatAbsoluteValue: fmtSignedRevenue,
+      }),
+    },
+    {
+      label: "Active Orders",
+      value: String(currentSnapshot.activeOrders),
+      tone: "green",
+      comparison: formatMetricComparison({
+        current: currentSnapshot.activeOrders,
+        previous: previousSnapshot?.activeOrders ?? null,
+        comparisonLabel: summaryPeriod.comparisonLabel,
+        mode: "absolute",
+        improvement: "up",
+      }),
+    },
+    {
+      label: "Overdue Orders",
+      value: String(currentSnapshot.overdueOrders),
+      tone: "red",
+      comparison: formatMetricComparison({
+        current: currentSnapshot.overdueOrders,
+        previous: previousSnapshot?.overdueOrders ?? null,
+        comparisonLabel: summaryPeriod.comparisonLabel,
+        mode: "absolute",
+        improvement: "down",
+      }),
+    },
+  ] as SummaryCardSeed[]).map(({ comparison, ...card }) => ({
+    ...card,
+    trendText: comparison.text,
+    trendDirection: comparison.direction,
+    trendTone: comparison.tone,
+  }));
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-transparent text-slate-900">
@@ -370,10 +520,14 @@ export default async function Page({ params, searchParams }: PageProps) {
       <main className="mx-auto max-w-[1220px] overflow-x-hidden px-4 pb-8 pt-20 sm:px-6">
         <div className="hidden items-start lg:grid lg:grid-cols-[auto_minmax(0,1fr)] lg:gap-5">
           <DesktopLeftRail
+            key={`desktop-rail-${filters.range}-${filters.startDate ?? ""}-${filters.endDate ?? ""}`}
             phoneRaw={phoneRaw}
             q={filters.q}
             status={filters.status}
             range={filters.range}
+            summaryRange={summaryRange}
+            startDate={filters.startDate}
+            endDate={filters.endDate}
             actor={filters.actor}
             actors={teamActors}
             hasActiveFilters={hasActiveFilters}
@@ -385,11 +539,26 @@ export default async function Page({ params, searchParams }: PageProps) {
 
           <div className="min-w-0 space-y-4">
             <DesktopAnalyticsCard
-              totalOrders={totalOrders}
-              totalRevenue={totalAmount}
-              activeOrders={activeOrders}
-              overdueCount={overdueCount}
-              fmtRevenue={fmtRevenue}
+              cards={summaryCards}
+              periodLabel={summaryPeriod.current.label}
+              comparisonLabel={summaryPeriod.comparisonLabel}
+              hasComparison={Boolean(summaryPeriod.previous)}
+              periodOptions={summaryPeriodOptions}
+              extendedOptions={summaryExtendedOptions}
+              customRange={{
+                active: summaryRange === "custom",
+                startDate: summaryCustomStartDate,
+                endDate: summaryCustomEndDate,
+                phoneRaw,
+                tableQuery: {
+                  q: filters.q,
+                  status: filters.status,
+                  range: filters.range,
+                  startDate: filters.startDate,
+                  endDate: filters.endDate,
+                  actor: filters.actor,
+                },
+              }}
             />
 
             <DesktopCreateOrderAccordion
@@ -406,9 +575,13 @@ export default async function Page({ params, searchParams }: PageProps) {
               searchQuery={filters.q}
               statusFilter={filters.status}
               rangeFilter={filters.range}
+              summaryRange={summaryRange}
+              rangeStartDate={filters.startDate}
+              rangeEndDate={filters.endDate}
               actorFilter={filters.actor}
               clearHref={clearHref}
               hasActiveFilters={hasActiveFilters}
+              resultCount={list.length}
               canManage={canManage}
               canEdit={canEdit}
               userRole={userRole}
@@ -418,12 +591,26 @@ export default async function Page({ params, searchParams }: PageProps) {
 
         <div className="space-y-4 lg:hidden">
           <MobileSummaryBar
-            totalOrders={totalOrders}
-            totalRevenue={totalAmount}
-            activeOrders={activeOrders}
-            overdueCount={overdueCount}
-            hasActiveFilters={hasActiveFilters}
-            clearHref={clearHref}
+            cards={summaryCards}
+            periodLabel={summaryPeriod.current.label}
+            comparisonLabel={summaryPeriod.comparisonLabel}
+            hasComparison={Boolean(summaryPeriod.previous)}
+            periodOptions={summaryPeriodOptions}
+            extendedOptions={summaryExtendedOptions}
+            customRange={{
+              active: summaryRange === "custom",
+              startDate: summaryCustomStartDate,
+              endDate: summaryCustomEndDate,
+              phoneRaw,
+              tableQuery: {
+                q: filters.q,
+                status: filters.status,
+                range: filters.range,
+                startDate: filters.startDate,
+                endDate: filters.endDate,
+                actor: filters.actor,
+              },
+            }}
           />
 
           <MobileCreateOrderAccordion
@@ -432,8 +619,10 @@ export default async function Page({ params, searchParams }: PageProps) {
           />
 
           <MobileFiltersAccordion
+            key={`mobile-filters-${filters.range}-${filters.startDate ?? ""}-${filters.endDate ?? ""}`}
             phoneRaw={phoneRaw}
             filters={filters}
+            summaryRange={summaryRange}
             clearHref={clearHref}
             hasActiveFilters={hasActiveFilters}
             actor={filters.actor}
@@ -445,6 +634,7 @@ export default async function Page({ params, searchParams }: PageProps) {
             businessSlug={String(currentBusiness.slug)}
             businessId={String(currentBusiness.id)}
             phoneRaw={phoneRaw}
+            resultsCount={list.length}
             canManage={canManage}
             canEdit={canEdit}
             userRole={userRole}

@@ -108,6 +108,7 @@ export default function MobileOrdersList({
   businessSlug,
   businessId,
   phoneRaw,
+  resultsCount,
   canManage,
   canEdit,
   userRole,
@@ -117,6 +118,7 @@ export default function MobileOrdersList({
   businessSlug: string;
   businessId: string;
   phoneRaw: string;
+  resultsCount: number;
   canManage: boolean;
   canEdit: boolean;
   userRole: UserRole; // ✅ ВАЖНО: реальная роль в этом business
@@ -133,6 +135,13 @@ export default function MobileOrdersList({
 
   return (
     <div className="grid gap-4 lg:hidden">
+      <div className="rounded-2xl border border-gray-200 bg-white px-4 py-3 shadow-sm">
+        <div className="text-sm font-semibold text-gray-900">Orders</div>
+        <div className="text-xs font-medium text-gray-500">
+          {resultsCount} {resultsCount === 1 ? "result" : "results"}
+        </div>
+      </div>
+
       {list.map((o) => {
         const isOpen = openId === o.id;
 
