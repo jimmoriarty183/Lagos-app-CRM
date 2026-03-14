@@ -2,6 +2,7 @@ export type DashboardRange =
   | "last1Day"
   | "last90Days"
   | "last1Year"
+  | "thisWeek"
   | "today"
   | "yesterday"
   | "last7Days"
@@ -53,12 +54,13 @@ export type MetricComparison = {
 };
 
 export const DEFAULT_DASHBOARD_RANGE: DashboardRange = "last7Days";
-export const DEFAULT_SUMMARY_RANGE: DashboardRange = "last30Days";
+export const DEFAULT_SUMMARY_RANGE: DashboardRange = "thisMonth";
 
 export const SUMMARY_RANGE_OPTIONS: Array<{ value: DashboardRange; label: string; shortLabel: string }> = [
-  { value: "last1Day", label: "Last 1 day", shortLabel: "1D" },
-  { value: "last7Days", label: "Last 7 days", shortLabel: "7D" },
-  { value: "last30Days", label: "Last 30 days", shortLabel: "30D" },
+  { value: "today", label: "Today", shortLabel: "Today" },
+  { value: "yesterday", label: "Yesterday", shortLabel: "Yesterday" },
+  { value: "thisWeek", label: "This week", shortLabel: "Week" },
+  { value: "thisMonth", label: "This month", shortLabel: "Month" },
 ];
 
 export const DASHBOARD_RANGE_OPTIONS: Array<{ value: DashboardRange; label: string }> = [
@@ -84,9 +86,11 @@ const RANGE_ALIASES: Record<string, DashboardRange> = {
   last1year: "last1Year",
   "last-1-year": "last1Year",
   "1y": "last1Year",
+  thisweek: "thisWeek",
+  "this-week": "thisWeek",
   today: "today",
   yesterday: "yesterday",
-  week: "last7Days",
+  week: "thisWeek",
   last7days: "last7Days",
   "last-7-days": "last7Days",
   last30days: "last30Days",
@@ -124,6 +128,14 @@ function startOfMonth(input: Date) {
   const value = cloneDate(input);
   value.setDate(1);
   value.setHours(0, 0, 0, 0);
+  return value;
+}
+
+function startOfWeek(input: Date) {
+  const value = startOfDay(input);
+  const day = value.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  value.setDate(value.getDate() + diff);
   return value;
 }
 
@@ -338,6 +350,21 @@ export function getDashboardPeriod(
     };
   }
 
+  if (range === "thisWeek") {
+    const currentStart = startOfWeek(now);
+    const previousStart = addDays(currentStart, -7);
+
+    return {
+      key: range,
+      current: { startMs: currentStart.getTime(), endMs: now.getTime(), label: "This week" },
+      previous: {
+        ...sameElapsedWindow(currentStart, now, previousStart, currentStart),
+        label: "previous week",
+      },
+      comparisonLabel: "previous week",
+    };
+  }
+
   if (range === "last7Days") {
     const currentStart = startOfDay(addDays(now, -6));
     const previousStart = addDays(currentStart, -7);
@@ -547,7 +574,7 @@ export function formatMetricComparison({
     return {
       text:
         zeroPreviousBehavior === "absolute"
-          ? `${formatAbsoluteValue ? formatAbsoluteValue(current) : `+${current}`} vs ${comparisonLabel}`
+          ? `+100%${formatAbsoluteValue ? ` (${formatAbsoluteValue(current)})` : ""} vs ${comparisonLabel}`
           : "New",
       direction,
       tone,
@@ -556,8 +583,9 @@ export function formatMetricComparison({
   }
 
   const percentage = Math.round((Math.abs(delta) / previous) * 100);
+  const absoluteSuffix = formatAbsoluteValue ? ` (${formatAbsoluteValue(delta)})` : "";
   return {
-    text: `${percentage}% vs ${comparisonLabel}`,
+    text: `${delta > 0 ? "+" : "-"}${percentage}%${absoluteSuffix} vs ${comparisonLabel}`,
     direction,
     tone,
     delta,

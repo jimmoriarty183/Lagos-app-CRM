@@ -39,6 +39,13 @@ type Props = {
     active: boolean;
     startDate: string | null;
     endDate: string | null;
+    resetHref: string;
+    quickOptions: {
+      label: string;
+      shortLabel: string;
+      href: string;
+      active: boolean;
+    }[];
     phoneRaw: string;
     tableQuery: {
       q: string;
@@ -237,7 +244,7 @@ export default function DesktopAnalyticsCard({
       </div>
 
       {customRange?.active ? (
-        <form method="get" className="flex items-end gap-2 rounded-2xl border border-[#dde3ee] bg-white px-3 py-3">
+        <form method="get" className="space-y-3 rounded-2xl border border-[#dde3ee] bg-white px-3 py-3">
           <input type="hidden" name="u" value={customRange.phoneRaw} />
           {customRange.tableQuery.q ? <input type="hidden" name="q" value={customRange.tableQuery.q} /> : null}
           {customRange.tableQuery.statuses.map((status) => (
@@ -256,32 +263,40 @@ export default function DesktopAnalyticsCard({
             <input type="hidden" name="actor" value={customRange.tableQuery.actor} />
           ) : null}
           <input type="hidden" name="srange" value="custom" />
-          <label className="flex min-w-0 flex-1 flex-col gap-1">
-            <span className="text-[11px] font-medium text-[#667085]">Start</span>
-            <input
-              type="date"
-              name="sstart"
-              defaultValue={customRange.startDate ?? ""}
-              className="h-10 rounded-xl border border-[#dde3ee] px-3 text-sm outline-none focus:border-[#111827]"
-            />
-          </label>
-          <label className="flex min-w-0 flex-1 flex-col gap-1">
-            <span className="text-[11px] font-medium text-[#667085]">End</span>
-            <input
-              type="date"
-              name="send"
-              defaultValue={customRange.endDate ?? ""}
-              className="h-10 rounded-xl border border-[#dde3ee] px-3 text-sm outline-none focus:border-[#111827]"
-            />
-          </label>
-          <button
-            type="submit"
-            className="inline-flex h-10 w-[112px] shrink-0 items-center justify-center rounded-xl border border-[#111827] bg-[#111827] px-4 text-[12px] font-semibold shadow-[0_1px_2px_rgba(16,24,40,0.12)]"
-            style={{ color: "#ffffff" }}
-            aria-label="Apply custom range"
-          >
-            <span className="whitespace-nowrap leading-none text-white">Apply</span>
-          </button>
+          <div className="flex items-end gap-3">
+            <label className="flex min-w-0 flex-1 flex-col gap-1">
+              <span className="text-[11px] font-medium text-[#667085]">Start</span>
+              <input
+                type="date"
+                name="sstart"
+                defaultValue={customRange.startDate ?? ""}
+                className="h-11 rounded-2xl border border-[#dde3ee] bg-white px-4 text-sm font-medium text-[#344054] outline-none transition focus:border-[#111827] focus:ring-2 focus:ring-[#111827]/10"
+              />
+            </label>
+            <label className="flex min-w-0 flex-1 flex-col gap-1">
+              <span className="text-[11px] font-medium text-[#667085]">End</span>
+              <input
+                type="date"
+                name="send"
+                defaultValue={customRange.endDate ?? ""}
+                className="h-11 rounded-2xl border border-[#dde3ee] bg-white px-4 text-sm font-medium text-[#344054] outline-none transition focus:border-[#111827] focus:ring-2 focus:ring-[#111827]/10"
+              />
+            </label>
+            <a
+              href={customRange.resetHref}
+              className="inline-flex h-11 min-w-[112px] shrink-0 items-center justify-center rounded-2xl border border-[#dde3ee] bg-white px-4 text-sm font-semibold text-[#344054] transition hover:bg-[#f8fafc]"
+            >
+              Reset
+            </a>
+            <button
+              type="submit"
+              className="inline-flex h-11 min-w-[152px] shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-2xl bg-[#111827] px-4 text-sm font-semibold transition hover:bg-[#0b1220]"
+              style={{ color: "#ffffff" }}
+              aria-label="Apply custom range"
+            >
+              <span className="whitespace-nowrap leading-none text-white">Apply</span>
+            </button>
+          </div>
         </form>
       ) : null}
 

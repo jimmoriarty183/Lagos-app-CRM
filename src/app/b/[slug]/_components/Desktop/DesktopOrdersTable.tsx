@@ -40,6 +40,7 @@ import {
   DASHBOARD_RANGE_OPTIONS,
   type DashboardRange,
 } from "@/lib/order-dashboard-summary";
+import { resolveUserDisplay } from "@/lib/user-display";
 
 type Status =
   | "NEW"
@@ -59,9 +60,29 @@ type TeamActor = {
   kind: "OWNER" | "MANAGER";
 };
 
+type ManagerStatusResponse = {
+  owner?: {
+    id?: string | null;
+    full_name?: string | null;
+    first_name?: string | null;
+    last_name?: string | null;
+    email?: string | null;
+  } | null;
+  managers_active?: Array<{
+    user_id: string;
+    full_name?: string | null;
+    first_name?: string | null;
+    last_name?: string | null;
+    email?: string | null;
+  }>;
+};
+
 type OrderRow = {
   id: string;
   client_name: string | null;
+  client_first_name?: string | null;
+  client_last_name?: string | null;
+  client_full_name?: string | null;
   client_phone: string | null;
   amount: number;
   description: string | null;
@@ -71,6 +92,9 @@ type OrderRow = {
   created_at: string;
   manager_id: string | null;
   manager_name: string | null;
+  created_by?: string | null;
+  created_by_name?: string | null;
+  created_by_role?: "OWNER" | "MANAGER" | null;
 };
 
 type Props = {
@@ -97,6 +121,7 @@ type Props = {
   userRole: UserRole;
   actors: TeamActor[];
   currentUserId: string | null;
+  currentUserName: string;
 };
 
 function fmtAmount(n: number) {
@@ -170,6 +195,34 @@ function getManagerTriggerLabel(value: string, currentUserId: string | null, opt
   return options.find((option) => option.value === value)?.label ?? "All managers";
 }
 
+function getInitials(label: string) {
+  const clean = label.trim();
+  if (!clean) return "U";
+  const parts = clean.split(/\s+/).filter(Boolean);
+  if (parts.length === 1) return parts[0].slice(0, 1).toUpperCase();
+  return `${parts[0][0] ?? ""}${parts[1][0] ?? ""}`.toUpperCase();
+}
+
+function getCompactManagerLabel(label: string) {
+  const clean = label.trim();
+  if (!clean) return "Unassigned";
+
+  const parts = clean.split(/\s+/).filter(Boolean);
+  if (parts.length < 2) return clean;
+
+  const firstInitial = parts[0]?.slice(0, 1).toUpperCase();
+  const lastName = parts[parts.length - 1];
+  return firstInitial ? `${firstInitial}. ${lastName}` : clean;
+}
+
+function ActorAvatar({ label }: { label: string }) {
+  return (
+    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-900 text-[11px] font-semibold text-white">
+      {getInitials(label)}
+    </div>
+  );
+}
+
 function getPeriodTriggerLabel(value: DashboardRange) {
   return DESKTOP_PERIOD_OPTIONS.find((option) => option.value === value)?.label ?? "Period";
 }
@@ -182,6 +235,15 @@ function normalizeQuickActor(actorFilter: string, actors: TeamActor[], currentUs
   if (currentUserId && actorFilter === `user:${currentUserId}`) return "ME";
   if (actors.some((actor) => `user:${actor.id}` === actorFilter)) return actorFilter;
   return "ALL";
+}
+
+function mergeActors(baseActors: TeamActor[], nextActors: TeamActor[]) {
+  const map = new Map<string, TeamActor>();
+  for (const actor of [...baseActors, ...nextActors]) {
+    if (!actor?.id) continue;
+    map.set(actor.id, actor);
+  }
+  return Array.from(map.values());
 }
 
 function ManagerAssignmentCell({
@@ -201,7 +263,7 @@ function ManagerAssignmentCell({
   canManage: boolean;
   onAssigned?: () => void;
 }) {
-  const [isPending] = useTransition();
+  const [isPending, startTransition] = useTransition();
   const [localManagerId, setLocalManagerId] = useState<string | null>(managerId);
   const [localManagerName, setLocalManagerName] = useState<string | null>(managerName);
 
@@ -218,8 +280,13 @@ function ManagerAssignmentCell({
     [actors],
   );
 
-  const label = localManagerName?.trim() || "Unassigned";
-  const isUnassigned = !localManagerId || !localManagerName?.trim();
+  const resolvedManagerName =
+    localManagerName?.trim() ||
+    options.find((actor) => actor.id === localManagerId)?.label ||
+    "";
+  const label = resolvedManagerName || "Unassigned";
+  const isUnassigned = !localManagerId;
+  const compactLabel = isUnassigned ? label : getCompactManagerLabel(label);
 
   const trigger = (
     <button
@@ -227,15 +294,21 @@ function ManagerAssignmentCell({
       disabled={!canManage || isPending}
       onClick={(event) => event.stopPropagation()}
       className={[
-        "inline-flex h-8 max-w-full items-center gap-1.5 rounded-full border px-2.5 text-xs font-medium transition",
+        "inline-flex h-8 max-w-full items-center gap-2 rounded-full border px-2.5 text-xs font-medium transition",
         canManage ? "cursor-pointer" : "cursor-default",
         isUnassigned
           ? "border-[#dbe2ea] bg-[#f8fafc] text-[#667085]"
           : "border-transparent bg-transparent px-0 text-[#344054] hover:text-[#111827]",
       ].join(" ")}
     >
-      {isUnassigned ? null : <UserRound className="h-3.5 w-3.5 text-[#98a2b3]" />}
-      <span className="truncate">{label}</span>
+      {isUnassigned ? (
+        <UserRound className="h-3.5 w-3.5 text-[#98a2b3]" />
+      ) : (
+        <ActorAvatar label={label} />
+      )}
+      <span className="truncate" title={label}>
+        {compactLabel}
+      </span>
       {canManage ? <ChevronDown className="h-3.5 w-3.5 text-[#98a2b3]" /> : null}
     </button>
   );
@@ -248,17 +321,20 @@ function ManagerAssignmentCell({
       <DropdownMenuContent
         align="start"
         sideOffset={8}
-        className="w-52 rounded-xl border-[#dde3ee] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
+        className="w-[236px] rounded-xl border-[#dde3ee] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="px-3 pb-1.5 pt-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
           Assign manager
         </div>
-        <DropdownMenuRadioGroup value={localManagerId ?? "UNASSIGNED"}>
-          <DropdownMenuRadioItem
-            value="UNASSIGNED"
-            className="rounded-lg px-3 py-2 text-sm font-medium text-[#475467]"
-            onSelect={() => {
+        <div className="max-h-80 space-y-1 overflow-y-auto pr-1">
+          <button
+            type="button"
+            className={[
+              "flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm transition",
+              !localManagerId ? "bg-[#eef4ff] text-[#2459d3]" : "text-[#475467] hover:bg-[#f8fafc]",
+            ].join(" ")}
+            onClick={() => {
               const prevId = localManagerId;
               const prevName = localManagerName;
               setLocalManagerId(null);
@@ -267,22 +343,35 @@ function ManagerAssignmentCell({
                 try {
                   await setOrderManager({ orderId, businessSlug, managerId: null });
                   onAssigned?.();
-                } catch {
+                } catch (error) {
                   setLocalManagerId(prevId);
                   setLocalManagerName(prevName);
-                  window.alert("Failed to update manager. Try again.");
+                  const message =
+                    error instanceof Error ? error.message : "Failed to update manager. Try again.";
+                  window.alert(message);
                 }
               });
             }}
           >
-            Unassigned
-          </DropdownMenuRadioItem>
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[#dbe2ea] bg-white text-[11px] font-semibold text-[#667085]">
+              U
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="truncate font-medium">Unassigned</div>
+            </div>
+          </button>
+
           {options.map((actor) => (
-            <DropdownMenuRadioItem
+            <button
               key={actor.id}
-              value={actor.id}
-              className="rounded-lg px-3 py-2 text-sm font-medium text-[#344054]"
-              onSelect={() => {
+              type="button"
+              className={[
+                "flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm transition",
+                localManagerId === actor.id
+                  ? "bg-[#eef4ff] text-[#2459d3]"
+                  : "text-[#344054] hover:bg-[#f8fafc]",
+              ].join(" ")}
+              onClick={() => {
                 if (localManagerId === actor.id) return;
                 const prevId = localManagerId;
                 const prevName = localManagerName;
@@ -292,18 +381,24 @@ function ManagerAssignmentCell({
                   try {
                     await setOrderManager({ orderId, businessSlug, managerId: actor.id });
                     onAssigned?.();
-                  } catch {
+                  } catch (error) {
                     setLocalManagerId(prevId);
                     setLocalManagerName(prevName);
-                    window.alert("Failed to update manager. Try again.");
+                    const message =
+                      error instanceof Error ? error.message : "Failed to update manager. Try again.";
+                    window.alert(message);
                   }
                 });
               }}
             >
-              {actor.label}
-            </DropdownMenuRadioItem>
+              <ActorAvatar label={actor.label} />
+              <div className="min-w-0 flex-1">
+                <div className="truncate font-medium">{actor.label}</div>
+                <div className="text-[11px] uppercase tracking-[0.08em] text-[#98a2b3]">{actor.kind}</div>
+              </div>
+            </button>
           ))}
-        </DropdownMenuRadioGroup>
+        </div>
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -355,6 +450,7 @@ export default function DesktopOrdersTable({
   userRole,
   actors,
   currentUserId,
+  currentUserName,
 }: Props) {
   const router = useRouter();
   const [openId, setOpenId] = useState<string | null>(null);
@@ -377,6 +473,7 @@ export default function DesktopOrdersTable({
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isPending] = useTransition();
   const [navigationMessage, setNavigationMessage] = useState<string | null>(null);
+  const [loadedActors, setLoadedActors] = useState<TeamActor[]>(actors);
 
   const supabase = useMemo(
     () =>
@@ -387,17 +484,30 @@ export default function DesktopOrdersTable({
     [],
   );
 
-  const rows = useMemo(() => list ?? [], [list]);
+  const effectiveActors = useMemo(() => mergeActors(actors, loadedActors), [actors, loadedActors]);
+  const actorLabelById = useMemo(
+    () => new Map(effectiveActors.map((actor) => [actor.id, actor.label])),
+    [effectiveActors],
+  );
+  const rows = useMemo(
+    () =>
+      (list ?? []).map((order) => ({
+        ...order,
+        manager_name:
+          order.manager_name || actorLabelById.get(String(order.manager_id ?? "")) || null,
+      })),
+    [actorLabelById, list],
+  );
   const managerOptions = useMemo(
     () =>
-      actors
+      effectiveActors
         .slice()
         .sort((a, b) => a.label.localeCompare(b.label))
         .map((actor) => ({
           value: `user:${actor.id}`,
           label: actor.label,
         })),
-    [actors],
+    [effectiveActors],
   );
   const selectedOrder = useMemo(
     () => rows.find((order) => order.id === openId) ?? null,
@@ -418,6 +528,65 @@ export default function DesktopOrdersTable({
     }
     window.location.assign(href);
   };
+
+  React.useEffect(() => {
+    let alive = true;
+
+    async function loadActors() {
+      try {
+        const res = await fetch(`/api/manager/status?business_id=${encodeURIComponent(businessId)}`, {
+          credentials: "same-origin",
+          cache: "no-store",
+        });
+        if (!res.ok) return;
+
+        const data = (await res.json()) as ManagerStatusResponse;
+        if (!alive) return;
+
+        const nextActors: TeamActor[] = [];
+
+        if (data.owner?.id) {
+          const ownerDisplay = resolveUserDisplay({
+            full_name: data.owner.full_name ?? null,
+            first_name: data.owner.first_name ?? null,
+            last_name: data.owner.last_name ?? null,
+            email: data.owner.email ?? null,
+          });
+
+          nextActors.push({
+            id: String(data.owner.id),
+            label: ownerDisplay.primary,
+            kind: "OWNER",
+          });
+        }
+
+        for (const manager of data.managers_active ?? []) {
+          const managerDisplay = resolveUserDisplay({
+            full_name: manager.full_name ?? null,
+            first_name: manager.first_name ?? null,
+            last_name: manager.last_name ?? null,
+            email: manager.email ?? null,
+          });
+
+          nextActors.push({
+            id: String(manager.user_id),
+            label: managerDisplay.primary,
+            kind: "MANAGER",
+          });
+        }
+
+        setLoadedActors(nextActors);
+      } catch {
+        // Keep server-provided actors when the client fetch fails.
+      }
+    }
+
+    void loadActors();
+
+    return () => {
+      alive = false;
+    };
+  }, [businessId]);
 
   const buildHref = (next: {
     q: string;
@@ -761,7 +930,10 @@ export default function DesktopOrdersTable({
                         setManagerTouched(true);
                       }}
                     >
-                      {option.label}
+                      <div className="flex items-center gap-2">
+                        <ActorAvatar label={option.label} />
+                        <span className="truncate">{option.label}</span>
+                      </div>
                     </DropdownMenuRadioItem>
                   ))}
                 </DropdownMenuRadioGroup>
@@ -890,7 +1062,7 @@ export default function DesktopOrdersTable({
 
                     <td className="px-5 py-3 align-middle">
                       <div className="text-sm font-semibold leading-5 text-[#111827]">
-                        {order.client_name?.trim() || "Unknown"}
+                        {order.client_full_name?.trim() || order.client_name?.trim() || "Unknown"}
                       </div>
                       <div className="mt-0.5 text-xs leading-4 text-[#98a2b3]">
                         {order.client_phone?.trim() || "No phone number"}
@@ -903,7 +1075,7 @@ export default function DesktopOrdersTable({
                         businessSlug={businessSlug}
                         managerId={order.manager_id}
                         managerName={order.manager_name}
-                        actors={actors}
+                        actors={effectiveActors}
                         canManage={canManage}
                         onAssigned={() => router.refresh()}
                       />
@@ -1069,6 +1241,8 @@ export default function DesktopOrdersTable({
         phoneRaw={phoneRaw}
         userRole={userRole}
         canManage={canManage}
+        actors={effectiveActors}
+        currentUserName={currentUserName}
         supabase={supabase}
         onClose={() => setOpenId(null)}
       />

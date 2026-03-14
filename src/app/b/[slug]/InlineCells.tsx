@@ -3,11 +3,14 @@
 import React, {
   useEffect,
   useMemo,
+  useOptimistic,
   useRef,
   useState,
   useTransition,
 } from "react";
 import { createPortal } from "react-dom";
+import { Check, ChevronDown } from "lucide-react";
+
 import { setOrderStatus } from "./actions";
 
 type Status =
@@ -47,39 +50,39 @@ function badgeStyleStatus(status: Status): React.CSSProperties {
   switch (status) {
     case "DONE":
       return {
-        background: "rgba(34,197,94,0.12)",
-        border: "1px solid rgba(34,197,94,0.25)",
-        color: "#15803d",
+        background: "#ecfdf3",
+        border: "1px solid #abefc6",
+        color: "#067647",
       };
     case "IN_PROGRESS":
       return {
-        background: "rgba(59,130,246,0.12)",
-        border: "1px solid rgba(59,130,246,0.25)",
-        color: "#1d4ed8",
+        background: "#eef4ff",
+        border: "1px solid #c7d7fe",
+        color: "#2459d3",
       };
     case "WAITING_PAYMENT":
       return {
-        background: "rgba(245,158,11,0.14)",
-        border: "1px solid rgba(245,158,11,0.28)",
+        background: "#fff7e8",
+        border: "1px solid #f7d8a8",
         color: "#b45309",
       };
     case "CANCELED":
       return {
-        background: "rgba(239,68,68,0.10)",
-        border: "1px solid rgba(239,68,68,0.22)",
-        color: "#b91c1c",
+        background: "#fef3f2",
+        border: "1px solid #fecdca",
+        color: "#d92d20",
       };
     case "DUPLICATE":
       return {
-        background: "rgba(148,163,184,0.14)",
-        border: "1px solid rgba(148,163,184,0.28)",
+        background: "#f2f4f7",
+        border: "1px solid #d0d5dd",
         color: "#334155",
       };
     case "NEW":
     default:
       return {
-        background: "rgba(0,0,0,0.04)",
-        border: "1px solid rgba(0,0,0,0.10)",
+        background: "#f8fafc",
+        border: "1px solid #dbe2ea",
         color: "#111827",
       };
   }
@@ -104,15 +107,15 @@ function Badge({
       title={title}
       onClick={disabled ? undefined : onClick}
       style={{
-        height: 30,
-        padding: "0 10px",
+        height: 34,
+        padding: "0 14px",
         borderRadius: 999,
-        fontSize: 12,
-        fontWeight: 800,
+        fontSize: 13,
+        fontWeight: 700,
         letterSpacing: 0.2,
         display: "inline-flex",
         alignItems: "center",
-        gap: 8,
+        gap: 6,
         cursor: disabled ? "default" : "pointer",
         userSelect: "none",
         whiteSpace: "nowrap",
@@ -121,9 +124,7 @@ function Badge({
       }}
     >
       {children}
-      {!disabled ? (
-        <span style={{ opacity: 0.5, fontWeight: 900 }}>▾</span>
-      ) : null}
+      {!disabled ? <ChevronDown size={14} style={{ opacity: 0.55 }} /> : null}
     </button>
   );
 }
@@ -198,9 +199,9 @@ function Menu({
             maxHeight: "min(52vh, 360px)",
             overflowY: "auto",
             background: "white",
-            border: "1px solid #e5e7eb",
+            border: "1px solid #dde3ee",
             borderRadius: 16,
-            boxShadow: "0 24px 64px rgba(0,0,0,0.28)",
+            boxShadow: "0 24px 64px rgba(15,23,42,0.24)",
             padding: 8,
           }}
         >
@@ -218,14 +219,14 @@ function Menu({
       ref={menuRef}
       style={{
         position: "absolute",
-        top: 36,
+        top: 40,
         right: 0,
         minWidth: width ?? 180,
         background: "white",
-        border: "1px solid #e5e7eb",
-        borderRadius: 12,
-        boxShadow: "0 10px 30px rgba(0,0,0,0.10)",
-        padding: 6,
+        border: "1px solid #dde3ee",
+        borderRadius: 16,
+        boxShadow: "0 16px 40px rgba(15,23,42,0.14)",
+        padding: 8,
         zIndex: 80,
       }}
     >
@@ -255,14 +256,14 @@ function MenuItem({
       style={{
         width: "100%",
         textAlign: "left",
-        padding: "8px 10px",
-        borderRadius: 10,
+        padding: "10px 14px",
+        borderRadius: 12,
         border: 0,
-        background: active ? "rgba(0,0,0,0.05)" : "transparent",
+        background: active ? "#f2f4f7" : "transparent",
         cursor: disabled ? "default" : "pointer",
         fontSize: 13,
-        fontWeight: 800,
-        color: danger ? "#b91c1c" : "#111827",
+        fontWeight: 700,
+        color: danger ? "#d92d20" : "#111827",
         opacity: disabled ? 0.5 : 1,
         display: "flex",
         alignItems: "center",
@@ -271,7 +272,7 @@ function MenuItem({
       }}
     >
       <span>{children}</span>
-      {active ? <span style={{ opacity: 0.6 }}>✓</span> : null}
+      {active ? <Check size={16} style={{ color: "#667085", flexShrink: 0 }} /> : null}
     </button>
   );
 }
@@ -329,9 +330,7 @@ export function StatusCell({
   const [isPending, startTransition] = useTransition();
   const [isMobile, setIsMobile] = useState(false);
 
-  // optimistic
-  const [local, setLocal] = useState<Status>(value);
-  useEffect(() => setLocal(value), [value]);
+  const [local, setLocal] = useOptimistic<Status, Status>(value);
 
   const rootRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -379,11 +378,11 @@ export function StatusCell({
       <span
         style={{
           ...badgeStyleStatus(value),
-          height: 30,
-          padding: "0 10px",
+          height: 34,
+          padding: "0 14px",
           borderRadius: 999,
-          fontSize: 12,
-          fontWeight: 800,
+          fontSize: 13,
+          fontWeight: 700,
           display: "inline-flex",
           alignItems: "center",
           whiteSpace: "nowrap",
@@ -442,11 +441,11 @@ export function StatusCell({
               }
 
               const prev = local;
-              setLocal(s);
               markOverlayClosing();
               setOpen(false);
 
               startTransition(async () => {
+                setLocal(s);
                 try {
                   await setOrderStatus({ orderId, businessSlug, status: s });
                 } catch {

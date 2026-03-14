@@ -21,7 +21,6 @@ import {
   getMetricSnapshot,
   isOrderOverdue,
   resolveDashboardRangeInput,
-  SUMMARY_RANGE_OPTIONS,
   type DashboardRange,
   type TrendDirection,
   type TrendTone,
@@ -29,6 +28,7 @@ import {
 import { supabaseServerReadOnly } from "@/lib/supabase/server";
 import { resolveUserDisplay } from "@/lib/user-display";
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { normalizeOrderClient } from "@/lib/order-client";
 
 type Status =
   | "NEW"
@@ -55,6 +55,19 @@ type SummaryPeriodOption = {
   href: string;
   active: boolean;
 };
+
+function addDays(input: Date, days: number) {
+  const value = new Date(input.getTime());
+  value.setDate(value.getDate() + days);
+  return value;
+}
+
+function startOfMonth(input: Date) {
+  const value = new Date(input.getTime());
+  value.setDate(1);
+  value.setHours(0, 0, 0, 0);
+  return value;
+}
 
 type SummaryCardData = {
   label: string;
@@ -96,10 +109,94 @@ type TeamActor = {
   kind: "OWNER" | "MANAGER";
 };
 
+type ActorProfileRow = {
+  id: string | null;
+  full_name: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  email: string | null;
+};
+
+type ActorMembershipRow = {
+  user_id: string | null;
+  role: string | null;
+  profiles: ActorProfileRow | ActorProfileRow[] | null;
+};
+
 type OrderListItem = any & {
+  client_first_name: string;
+  client_last_name: string;
+  client_full_name: string;
   manager_id: string | null;
   manager_name: string | null;
+  created_by_name: string | null;
+  created_by_role: "OWNER" | "MANAGER" | null;
 };
+
+function unwrapJoinedProfile<T>(value: T | T[] | null | undefined) {
+  if (Array.isArray(value)) return value[0] ?? null;
+  return value ?? null;
+}
+
+function cleanText(value: unknown) {
+  const text = String(value ?? "").trim();
+  return text || "";
+}
+
+function buildSafeUserFallback(userId?: string | null) {
+  const id = cleanText(userId);
+  if (!id) return "No name";
+  return `User ${id.slice(0, 8)}`;
+}
+
+function normalizeActorLabel(input: {
+  full_name?: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
+  email?: string | null;
+  fallback?: string | null;
+}) {
+  const display = resolveUserDisplay({
+    full_name: input.full_name ?? null,
+    first_name: input.first_name ?? null,
+    last_name: input.last_name ?? null,
+    email: input.email ?? null,
+  });
+
+  return display.primary || cleanText(input.fallback) || "No name";
+}
+
+function getOrderManagerValue(order: { manager_id?: unknown; created_by?: unknown }) {
+  const managerId = cleanText(order.manager_id);
+  if (managerId) return managerId;
+  const createdBy = cleanText(order.created_by);
+  return createdBy || "";
+}
+
+function getClientSearchBlob(order: {
+  client_name?: unknown;
+  first_name?: unknown;
+  last_name?: unknown;
+  full_name?: unknown;
+  client_full_name?: unknown;
+  client_first_name?: unknown;
+  client_last_name?: unknown;
+}) {
+  const normalized = normalizeOrderClient({
+    client_name: String(order.client_name ?? order.client_full_name ?? ""),
+    first_name: String(order.first_name ?? order.client_first_name ?? ""),
+    last_name: String(order.last_name ?? order.client_last_name ?? ""),
+    full_name: String(order.full_name ?? order.client_full_name ?? ""),
+  });
+
+  return [
+    normalized.fullName,
+    normalized.firstName,
+    normalized.lastName,
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
 
 function upperRole(r: any): "OWNER" | "MANAGER" | "GUEST" {
   const s = String(r || "").toUpperCase();
@@ -323,84 +420,133 @@ export default async function Page({ params, searchParams }: PageProps) {
     return qs ? `/b/${slug}?${qs}` : `/b/${slug}`;
   };
 
-  const summaryPeriodOptions: SummaryPeriodOption[] = SUMMARY_RANGE_OPTIONS.map((option) => ({
-    label: option.label,
-    shortLabel: option.shortLabel,
-    href: makeSummaryHref(option.value),
-    active: summaryRange === option.value,
-  }));
-  const summaryExtendedOptions: SummaryPeriodOption[] =
+  const makeSummaryCustomHref = (startDate: string, endDate: string) => {
+    const params = new URLSearchParams();
+    if (phoneRaw && phoneRaw.length > 0) params.set("u", phoneRaw);
+    params.set("perPage", String(perPage));
+    if (filters.q) params.set("q", filters.q);
+    for (const status of filters.statuses) params.append("status", status);
+    if (filters.range !== "ALL") params.set("range", filters.range);
+    if (filters.startDate) params.set("start", filters.startDate);
+    if (filters.endDate) params.set("end", filters.endDate);
+    if (filters.actor !== "ALL") params.set("actor", filters.actor);
+    params.set("srange", "custom");
+    params.set("sstart", startDate);
+    params.set("send", endDate);
+    const qs = params.toString();
+    return qs ? `/b/${slug}?${qs}` : `/b/${slug}`;
+  };
+
+  const summaryPeriodOptions: SummaryPeriodOption[] =
     userRole === "OWNER"
       ? [
-          { label: "Last 90 days", shortLabel: "90D", href: makeSummaryHref("last90Days"), active: summaryRange === "last90Days" },
-          { label: "Last year", shortLabel: "1Y", href: makeSummaryHref("last1Year"), active: summaryRange === "last1Year" },
+          { label: "Today", shortLabel: "Today", href: makeSummaryHref("today"), active: summaryRange === "today" },
+          { label: "Yesterday", shortLabel: "Yesterday", href: makeSummaryHref("yesterday"), active: summaryRange === "yesterday" },
+          { label: "This week", shortLabel: "Week", href: makeSummaryHref("thisWeek"), active: summaryRange === "thisWeek" },
+          { label: "This month", shortLabel: "Month", href: makeSummaryHref("thisMonth"), active: summaryRange === "thisMonth" },
+          { label: "This year", shortLabel: "Year", href: makeSummaryHref("thisYear"), active: summaryRange === "thisYear" },
           { label: "Custom range", shortLabel: "Custom", href: makeSummaryHref("custom"), active: summaryRange === "custom" },
         ]
-      : [];
+      : [
+          { label: "Today", shortLabel: "Today", href: makeSummaryHref("today"), active: summaryRange === "today" },
+          { label: "Yesterday", shortLabel: "Yesterday", href: makeSummaryHref("yesterday"), active: summaryRange === "yesterday" },
+          { label: "This week", shortLabel: "Week", href: makeSummaryHref("thisWeek"), active: summaryRange === "thisWeek" },
+          { label: "This month", shortLabel: "Month", href: makeSummaryHref("thisMonth"), active: summaryRange === "thisMonth" },
+        ];
+  const summaryExtendedOptions: SummaryPeriodOption[] = [];
 
   let teamActors: TeamActor[] = [];
   let ownerIds: string[] = [];
   let managerIds: string[] = [];
 
   try {
-    const { data: actorMemberships } = await dataClient
+    const adminClient = supabaseAdmin();
+    const { data: primaryMemberships, error: primaryMembershipsError } = await adminClient
       .from("memberships")
+      .select("user_id, role, profiles:profiles(id, full_name, first_name, last_name, email)")
+      .eq("business_id", currentBusiness.id)
+      .or("role.eq.OWNER,role.eq.owner,role.eq.MANAGER,role.eq.manager");
+
+    const { data: fallbackMemberships, error: fallbackMembershipsError } = await adminClient
+      .from("business_memberships")
       .select("user_id, role")
       .eq("business_id", currentBusiness.id)
-      .in("role", ["OWNER", "MANAGER"]);
+      .or("role.eq.OWNER,role.eq.owner,role.eq.MANAGER,role.eq.manager");
 
-    const membershipRows = (actorMemberships ?? []).filter((m: any) => m?.user_id);
-    const actorUserIds = Array.from(new Set(membershipRows.map((m: any) => String(m.user_id))));
+    if (primaryMembershipsError && fallbackMembershipsError) {
+      throw primaryMembershipsError || fallbackMembershipsError;
+    }
 
-    const profilesMap = new Map<
-      string,
-      {
-        full_name: string | null;
-        first_name: string | null;
-        last_name: string | null;
-        email: string | null;
-      }
-    >();
+    const primaryRows = ((primaryMemberships ?? []) as ActorMembershipRow[]) || [];
+    const fallbackRows = (((fallbackMemberships ?? []) as { user_id: string | null; role: string | null }[]) || []).map(
+      (row) => ({
+        user_id: row.user_id,
+        role: row.role,
+        profiles: null,
+      }),
+    );
 
-    if (actorUserIds.length > 0) {
-      const { data: actorProfiles } = await dataClient
-        .from("profiles")
-        .select("id, full_name, first_name, last_name, email")
-        .in("id", actorUserIds);
+    const actorIds = Array.from(
+      new Set(
+        [...primaryRows, ...fallbackRows]
+          .map((membership) => cleanText(membership.user_id))
+          .filter(Boolean),
+      ),
+    );
 
-      for (const p of actorProfiles ?? []) {
-        if (p?.id) {
-          profilesMap.set(String(p.id), {
-            full_name: p.full_name ?? null,
-            first_name: p.first_name ?? null,
-            last_name: p.last_name ?? null,
-            email: p.email ?? null,
-          });
-        }
+    const { data: actorProfiles } = actorIds.length
+      ? await adminClient
+          .from("profiles")
+          .select("id, full_name, first_name, last_name, email")
+          .in("id", actorIds)
+      : { data: [], error: null };
+
+    const profileMap = new Map<string, ActorProfileRow>();
+    for (const profile of (actorProfiles ?? []) as ActorProfileRow[]) {
+      if (profile?.id) {
+        profileMap.set(String(profile.id), profile);
       }
     }
 
-    ownerIds = membershipRows
-      .filter((m: any) => upperRole(m.role) === "OWNER")
-      .map((m: any) => String(m.user_id));
-    managerIds = membershipRows
-      .filter((m: any) => upperRole(m.role) === "MANAGER")
-      .map((m: any) => String(m.user_id));
+    const membershipMap = new Map<string, TeamActor>();
+    const allMemberships = [...primaryRows, ...fallbackRows];
 
-    teamActors = membershipRows.map((m: any) => {
-      const id = String(m.user_id);
-      const role = upperRole(m.role) === "OWNER" ? "OWNER" : "MANAGER";
-      const profile = profilesMap.get(id);
-      const userDisplay = resolveUserDisplay({
-        full_name: profile?.full_name,
-        first_name: profile?.first_name,
-        last_name: profile?.last_name,
-        email: profile?.email,
+    for (const membership of allMemberships) {
+      const id = cleanText(membership?.user_id);
+      const roleUpper = upperRole(membership?.role);
+      if (!id || (roleUpper !== "OWNER" && roleUpper !== "MANAGER")) continue;
+
+      const joinedProfile = unwrapJoinedProfile(membership.profiles);
+      const profile = joinedProfile ?? profileMap.get(id) ?? null;
+      let email = cleanText(profile?.email);
+
+      if (!email) {
+        try {
+          const { data: authLookup } = await adminClient.auth.admin.getUserById(id);
+          email = cleanText(authLookup?.user?.email);
+        } catch {
+          email = "";
+        }
+      }
+
+      const label = normalizeActorLabel({
+        full_name: profile?.full_name ?? null,
+        first_name: profile?.first_name ?? null,
+        last_name: profile?.last_name ?? null,
+        email: email || null,
+        fallback: !profile ? buildSafeUserFallback(id) : null,
       });
-      const label = userDisplay.primary || id;
-      return { id, label, kind: role };
-    });
 
+      membershipMap.set(`${id}:${roleUpper}`, {
+        id,
+        label,
+        kind: roleUpper === "OWNER" ? "OWNER" : "MANAGER",
+      });
+    }
+
+    teamActors = Array.from(membershipMap.values());
+    ownerIds = teamActors.filter((actor) => actor.kind === "OWNER").map((actor) => actor.id);
+    managerIds = teamActors.filter((actor) => actor.kind === "MANAGER").map((actor) => actor.id);
   } catch {
     teamActors = [];
   }
@@ -434,30 +580,83 @@ export default async function Page({ params, searchParams }: PageProps) {
 
   const now = new Date();
   const todayISO = formatDateInput(now);
+  const summaryQuickRanges: SummaryPeriodOption[] = [
+    {
+      label: "Today",
+      shortLabel: "Today",
+      href: makeSummaryCustomHref(todayISO, todayISO),
+      active: summaryRange === "custom" && summaryCustomStartDate === todayISO && summaryCustomEndDate === todayISO,
+    },
+    {
+      label: "Yesterday",
+      shortLabel: "Yesterday",
+      href: makeSummaryCustomHref(formatDateInput(addDays(now, -1)), formatDateInput(addDays(now, -1))),
+      active:
+        summaryRange === "custom" &&
+        summaryCustomStartDate === formatDateInput(addDays(now, -1)) &&
+        summaryCustomEndDate === formatDateInput(addDays(now, -1)),
+    },
+    {
+      label: "This week",
+      shortLabel: "Week",
+      href: makeSummaryCustomHref(formatDateInput(addDays(now, -((now.getDay() + 6) % 7))), todayISO),
+      active:
+        summaryRange === "custom" &&
+        summaryCustomStartDate === formatDateInput(addDays(now, -((now.getDay() + 6) % 7))) &&
+        summaryCustomEndDate === todayISO,
+    },
+    {
+      label: "This month",
+      shortLabel: "Month",
+      href: makeSummaryCustomHref(formatDateInput(startOfMonth(now)), todayISO),
+      active:
+        summaryRange === "custom" &&
+        summaryCustomStartDate === formatDateInput(startOfMonth(now)) &&
+        summaryCustomEndDate === todayISO,
+    },
+    ...(userRole === "OWNER"
+      ? [{
+          label: "This year",
+          shortLabel: "Year",
+          href: makeSummaryCustomHref(`${now.getFullYear()}-01-01`, todayISO),
+          active:
+            summaryRange === "custom" &&
+            summaryCustomStartDate === `${now.getFullYear()}-01-01` &&
+            summaryCustomEndDate === todayISO,
+        } satisfies SummaryPeriodOption]
+      : []),
+    {
+      label: "Reset",
+      shortLabel: "Reset",
+      href: makeSummaryHref("thisMonth"),
+      active: false,
+    },
+  ];
   const qNeedle = String(filters.q ?? "").trim().toLowerCase();
 
   const actorFilteredList: any[] =
     filters.actor === "ALL"
       ? listRaw
       : filters.actor === "ME"
-        ? listRaw.filter((o) => String(o.created_by ?? "") === String(currentUserId ?? ""))
+        ? listRaw.filter((o) => getOrderManagerValue(o) === String(currentUserId ?? ""))
         : filters.actor === "UNASSIGNED"
-          ? listRaw.filter((o) => !String(o.created_by ?? "").trim())
+          ? listRaw.filter((o) => !getOrderManagerValue(o))
       : filters.actor === "OWNER"
-        ? listRaw.filter((o) => ownerIds.includes(String(o.created_by ?? "")))
+        ? listRaw.filter((o) => ownerIds.includes(getOrderManagerValue(o)))
         : filters.actor === "MANAGER"
-          ? listRaw.filter((o) => managerIds.includes(String(o.created_by ?? "")))
+          ? listRaw.filter((o) => managerIds.includes(getOrderManagerValue(o)))
           : filters.actor.startsWith("user:")
-            ? listRaw.filter((o) => String(o.created_by ?? "") === filters.actor.slice(5))
+            ? listRaw.filter((o) => getOrderManagerValue(o) === filters.actor.slice(5))
             : listRaw;
 
   const searchedList: any[] = qNeedle
     ? actorFilteredList.filter((o) => {
-        const actorName = actorNameById.get(String(o.created_by ?? "")) ?? "";
+        const actorName = actorNameById.get(getOrderManagerValue(o)) ?? "";
         const blob = [
           String(o.id ?? ""),
+          String(o.order_number ?? ""),
           String(o.search_text ?? ""),
-          String(o.client_name ?? ""),
+          getClientSearchBlob(o),
           String(o.client_phone ?? ""),
           String(o.amount ?? ""),
           String(o.description ?? ""),
@@ -497,11 +696,38 @@ export default async function Page({ params, searchParams }: PageProps) {
     ? filterOrdersByCreatedAt(listRaw, summaryPeriod.previous)
     : [];
 
-  const list: OrderListItem[] = applyStatusFilter(currentPeriodRows).map((order) => ({
-    ...order,
-    manager_id: order.created_by ? String(order.created_by) : null,
-    manager_name: actorNameById.get(String(order.created_by ?? "")) || null,
-  }));
+  const actorKindById = new Map<string, "OWNER" | "MANAGER">();
+  for (const actor of teamActors) {
+    if (actor?.id) actorKindById.set(String(actor.id), actor.kind);
+  }
+
+  const list: OrderListItem[] = applyStatusFilter(currentPeriodRows).map((order) => {
+    const client = normalizeOrderClient({
+      client_name: order.client_name,
+      first_name: order.first_name,
+      last_name: order.last_name,
+      full_name: order.full_name,
+    });
+    const creatorId = cleanText(order.created_by);
+
+    return {
+      ...order,
+      client_first_name: client.firstName,
+      client_last_name: client.lastName,
+      client_full_name: client.fullName,
+      manager_id: order.manager_id
+        ? String(order.manager_id)
+        : order.created_by
+          ? String(order.created_by)
+          : null,
+      manager_name:
+        actorNameById.get(String(order.manager_id ?? "")) ||
+        actorNameById.get(String(order.created_by ?? "")) ||
+        null,
+      created_by_name: actorNameById.get(creatorId) || null,
+      created_by_role: actorKindById.get(creatorId) ?? null,
+    };
+  });
   const resultCount = list.length;
   const requestedPage = normalizePageNumber(sp.page);
   const totalPages = Math.max(1, Math.ceil(resultCount / perPage));
@@ -559,8 +785,10 @@ export default async function Page({ params, searchParams }: PageProps) {
         current: currentSnapshot.activeOrders,
         previous: previousSnapshot?.activeOrders ?? null,
         comparisonLabel: summaryPeriod.comparisonLabel,
-        mode: "absolute",
+        mode: "percent",
         improvement: "up",
+        zeroPreviousBehavior: "absolute",
+        formatAbsoluteValue: fmtSignedCount,
       }),
     },
     {
@@ -571,8 +799,10 @@ export default async function Page({ params, searchParams }: PageProps) {
         current: currentSnapshot.overdueOrders,
         previous: previousSnapshot?.overdueOrders ?? null,
         comparisonLabel: summaryPeriod.comparisonLabel,
-        mode: "absolute",
+        mode: "percent",
         improvement: "down",
+        zeroPreviousBehavior: "absolute",
+        formatAbsoluteValue: fmtSignedCount,
       }),
     },
   ] as SummaryCardSeed[]).map(({ comparison, ...card }) => ({
@@ -628,6 +858,8 @@ export default async function Page({ params, searchParams }: PageProps) {
                 active: summaryRange === "custom",
                 startDate: summaryCustomStartDate,
                 endDate: summaryCustomEndDate,
+                resetHref: makeSummaryHref("thisMonth"),
+                quickOptions: summaryQuickRanges,
                 phoneRaw,
                 tableQuery: {
                   q: filters.q,
@@ -670,6 +902,7 @@ export default async function Page({ params, searchParams }: PageProps) {
               userRole={userRole}
               actors={teamActors}
               currentUserId={currentUserId}
+              currentUserName={currentUserName}
             />
           </div>
         </div>
