@@ -37,7 +37,10 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import type { DashboardRange } from "@/lib/order-dashboard-summary";
+import {
+  DASHBOARD_RANGE_OPTIONS,
+  type DashboardRange,
+} from "@/lib/order-dashboard-summary";
 
 type Status =
   | "NEW"
@@ -166,6 +169,10 @@ function getManagerTriggerLabel(value: string, currentUserId: string | null, opt
   if (value === "ME") return currentUserId ? "Me" : "All managers";
   if (value === "UNASSIGNED") return "Unassigned";
   return options.find((option) => option.value === value)?.label ?? "All managers";
+}
+
+function getPeriodTriggerLabel(value: DashboardRange) {
+  return DESKTOP_PERIOD_OPTIONS.find((option) => option.value === value)?.label ?? "Period";
 }
 
 function normalizeQuickActor(actorFilter: string, actors: TeamActor[], currentUserId: string | null) {
@@ -303,6 +310,17 @@ function ManagerAssignmentCell({
 }
 
 const PAGE_SIZE_OPTIONS = [20, 50, 100, 500] as const;
+const DESKTOP_PERIOD_OPTIONS = [
+  DASHBOARD_RANGE_OPTIONS.find((option) => option.value === "ALL"),
+  ...DASHBOARD_RANGE_OPTIONS.filter((option) => option.value !== "ALL"),
+].filter(
+  (
+    option,
+  ): option is {
+    value: DashboardRange;
+    label: string;
+  } => Boolean(option),
+);
 
 function getPaginationItems(currentPage: number, totalPages: number) {
   if (totalPages <= 1) return [1];
@@ -340,15 +358,20 @@ export default function DesktopOrdersTable({
 }: Props) {
   const router = useRouter();
   const [openId, setOpenId] = useState<string | null>(null);
+  const [periodMenuOpen, setPeriodMenuOpen] = useState(false);
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
   const [managerMenuOpen, setManagerMenuOpen] = useState(false);
   const [searchDraft, setSearchDraft] = useState(searchQuery);
+  const [rangeValue, setRangeValue] = useState<DashboardRange>(rangeFilter);
+  const [customStart, setCustomStart] = useState(rangeStartDate ?? "");
+  const [customEnd, setCustomEnd] = useState(rangeEndDate ?? "");
   const [statusValues, setStatusValues] = useState<StatusFilterValue[]>(
     normalizeQuickStatuses(statusFilter),
   );
   const [managerValue, setManagerValue] = useState<string>(
     normalizeQuickActor(actorFilter, actors, currentUserId),
   );
+  const [rangeTouched, setRangeTouched] = useState(false);
   const [statusTouched, setStatusTouched] = useState(false);
   const [managerTouched, setManagerTouched] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -382,6 +405,10 @@ export default function DesktopOrdersTable({
     statusTouched: boolean;
     managerValue: string;
     managerTouched: boolean;
+    rangeValue?: DashboardRange;
+    customStart?: string;
+    customEnd?: string;
+    rangeTouched?: boolean;
     page?: number;
     perPage?: number;
   }) => {
@@ -390,9 +417,14 @@ export default function DesktopOrdersTable({
     params.set("srange", summaryRange);
     params.set("page", String(next.page ?? 1));
     params.set("perPage", String(next.perPage ?? perPage));
-    if (rangeFilter !== "ALL") params.set("range", rangeFilter);
-    if (rangeStartDate) params.set("start", rangeStartDate);
-    if (rangeEndDate) params.set("end", rangeEndDate);
+
+    const nextRange = next.rangeTouched ? next.rangeValue ?? rangeValue : rangeFilter;
+    const nextStart = next.rangeTouched ? next.customStart ?? customStart : rangeStartDate ?? "";
+    const nextEnd = next.rangeTouched ? next.customEnd ?? customEnd : rangeEndDate ?? "";
+
+    if (nextRange !== "ALL") params.set("range", nextRange);
+    if (nextRange === "custom" && nextStart) params.set("start", nextStart);
+    if (nextRange === "custom" && nextEnd) params.set("end", nextEnd);
 
     const q = next.q.trim();
     if (q) params.set("q", q);
@@ -428,6 +460,10 @@ export default function DesktopOrdersTable({
       statusTouched,
       managerValue,
       managerTouched,
+      rangeValue,
+      customStart,
+      customEnd,
+      rangeTouched,
       page,
       perPage: nextPerPage,
     });
@@ -438,8 +474,13 @@ export default function DesktopOrdersTable({
     statusTouched: boolean;
     managerValue: string;
     managerTouched: boolean;
+    rangeValue: DashboardRange;
+    customStart: string;
+    customEnd: string;
+    rangeTouched: boolean;
   }) => {
     const href = buildHref(next);
+    setPeriodMenuOpen(false);
     setStatusMenuOpen(false);
     setManagerMenuOpen(false);
     startTransition(() => {
@@ -493,6 +534,9 @@ export default function DesktopOrdersTable({
     router.refresh();
   };
 
+  const showCustomRange = rangeValue === "custom";
+  const customRangeReady = !showCustomRange || (Boolean(customStart) && Boolean(customEnd));
+
   return (
     <section className="mx-auto w-full min-w-0 overflow-hidden rounded-[28px] border border-[#dde3ee] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
       <div className="border-b border-[#eef2f7] px-5 py-5">
@@ -524,6 +568,10 @@ export default function DesktopOrdersTable({
               statusTouched,
               managerValue,
               managerTouched,
+              rangeValue,
+              customStart,
+              customEnd,
+              rangeTouched,
             });
           }}
         >
@@ -545,6 +593,44 @@ export default function DesktopOrdersTable({
           </div>
 
           <div className="flex min-w-[320px] flex-1 flex-wrap items-center gap-3 xl:flex-none">
+            <DropdownMenu open={periodMenuOpen} onOpenChange={setPeriodMenuOpen}>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="inline-flex h-11 min-w-[170px] flex-1 items-center justify-between rounded-2xl border border-[#dde3ee] bg-white px-4 text-sm font-medium text-[#344054] outline-none transition hover:border-[#cfd8e6] focus:border-[#111827] focus:ring-2 focus:ring-[#111827]/10"
+                >
+                  <span className="truncate">{getPeriodTriggerLabel(rangeValue)}</span>
+                  <ChevronDown className="ml-3 h-4 w-4 shrink-0 text-[#98a2b3]" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="start"
+                sideOffset={8}
+                className="w-56 rounded-xl border-[#dde3ee] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
+                onClick={(event) => event.stopPropagation()}
+              >
+                <DropdownMenuRadioGroup value={rangeValue}>
+                  {DESKTOP_PERIOD_OPTIONS.map((option) => (
+                    <DropdownMenuRadioItem
+                      key={option.value}
+                      value={option.value}
+                      className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#344054] data-[state=checked]:bg-[#eef4ff] data-[state=checked]:font-semibold data-[state=checked]:text-[#2459d3]"
+                      onSelect={() => {
+                        setRangeValue(option.value);
+                        setRangeTouched(true);
+                        if (option.value !== "custom") {
+                          setCustomStart("");
+                          setCustomEnd("");
+                        }
+                      }}
+                    >
+                      {option.label}
+                    </DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             <DropdownMenu open={statusMenuOpen} onOpenChange={setStatusMenuOpen}>
               <DropdownMenuTrigger asChild>
                 <button
@@ -617,7 +703,7 @@ export default function DesktopOrdersTable({
                 <DropdownMenuRadioGroup value={managerValue}>
                   <DropdownMenuRadioItem
                     value="ALL"
-                    className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#344054]"
+                    className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#344054] data-[state=checked]:bg-[#eef4ff] data-[state=checked]:font-semibold data-[state=checked]:text-[#2459d3]"
                     onSelect={() => {
                       setManagerValue("ALL");
                       setManagerTouched(true);
@@ -628,7 +714,7 @@ export default function DesktopOrdersTable({
                   {currentUserId ? (
                     <DropdownMenuRadioItem
                       value="ME"
-                      className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#344054]"
+                      className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#344054] data-[state=checked]:bg-[#eef4ff] data-[state=checked]:font-semibold data-[state=checked]:text-[#2459d3]"
                       onSelect={() => {
                         setManagerValue("ME");
                         setManagerTouched(true);
@@ -639,7 +725,7 @@ export default function DesktopOrdersTable({
                   ) : null}
                   <DropdownMenuRadioItem
                     value="UNASSIGNED"
-                    className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#344054]"
+                    className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#344054] data-[state=checked]:bg-[#eef4ff] data-[state=checked]:font-semibold data-[state=checked]:text-[#2459d3]"
                     onSelect={() => {
                       setManagerValue("UNASSIGNED");
                       setManagerTouched(true);
@@ -651,7 +737,7 @@ export default function DesktopOrdersTable({
                     <DropdownMenuRadioItem
                       key={option.value}
                       value={option.value}
-                      className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#344054]"
+                      className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#344054] data-[state=checked]:bg-[#eef4ff] data-[state=checked]:font-semibold data-[state=checked]:text-[#2459d3]"
                       onSelect={() => {
                         setManagerValue(option.value);
                         setManagerTouched(true);
@@ -665,10 +751,33 @@ export default function DesktopOrdersTable({
             </DropdownMenu>
           </div>
 
+          {showCustomRange ? (
+            <div className="flex min-w-[260px] flex-wrap items-center gap-3 xl:flex-none">
+              <input
+                type="date"
+                value={customStart}
+                onChange={(event) => {
+                  setCustomStart(event.currentTarget.value);
+                  setRangeTouched(true);
+                }}
+                className="h-11 min-w-[170px] flex-1 rounded-2xl border border-[#dde3ee] bg-white px-4 text-sm font-medium text-[#344054] outline-none transition focus:border-[#111827] focus:ring-2 focus:ring-[#111827]/10"
+              />
+              <input
+                type="date"
+                value={customEnd}
+                onChange={(event) => {
+                  setCustomEnd(event.currentTarget.value);
+                  setRangeTouched(true);
+                }}
+                className="h-11 min-w-[170px] flex-1 rounded-2xl border border-[#dde3ee] bg-white px-4 text-sm font-medium text-[#344054] outline-none transition focus:border-[#111827] focus:ring-2 focus:ring-[#111827]/10"
+              />
+            </div>
+          ) : null}
+
           <div className="ml-auto flex shrink-0">
             <button
               type="submit"
-              disabled={statusValues.length === 0}
+              disabled={statusValues.length === 0 || !customRangeReady}
               className="inline-flex h-11 min-w-[152px] shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-2xl bg-[#111827] px-4 text-sm font-semibold transition hover:bg-[#0b1220] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:bg-[#111827]"
               style={{ color: "#ffffff" }}
             >
