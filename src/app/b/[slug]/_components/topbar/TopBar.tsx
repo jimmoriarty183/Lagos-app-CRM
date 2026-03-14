@@ -78,6 +78,7 @@ export default function TopBar({
             businessHref={businessHref ?? dashboardHref}
             clearHref={clearHref ?? dashboardHref}
             hasActiveFilters={hasActiveFilters}
+            canSeeAnalytics={role === "OWNER"}
           />
 
           <div className="sm:hidden">

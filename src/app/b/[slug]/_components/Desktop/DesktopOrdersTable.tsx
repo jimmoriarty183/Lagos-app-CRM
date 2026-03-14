@@ -2,6 +2,7 @@
 
 import React, { useMemo, useRef, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
+import { SlidersHorizontal } from "lucide-react";
 import { StatusCell } from "../../InlineCells";
 import { OrderChecklist } from "../../OrderChecklist";
 import { OrderComments } from "../../OrderComments";
@@ -29,6 +30,7 @@ type OrderRow = {
 
 type UserRole = "OWNER" | "MANAGER" | "GUEST";
 type Range = "ALL" | "today" | "week" | "month" | "year";
+const TOGGLE_FILTERS_EVENT = "orders-desktop-toggle-filters";
 
 function fmtAmount(n: number) {
   return new Intl.NumberFormat("uk-UA").format(n);
@@ -138,6 +140,10 @@ export default function DesktopOrdersTable({
     setOpen((prev) => ({ ...prev, [id]: false }));
   };
 
+  const openDesktopFilters = () => {
+    window.dispatchEvent(new Event(TOGGLE_FILTERS_EVENT));
+  };
+
   return (
     <div className="min-w-0 overflow-hidden rounded-3xl border border-[#dde3ee] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
       <div className="border-b border-[#eef2f7] px-5 py-4">
@@ -169,6 +175,16 @@ export default function DesktopOrdersTable({
           >
             Search
           </Button>
+
+          <button
+            type="button"
+            onClick={openDesktopFilters}
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-[#dde3ee] bg-white text-[#667085] transition hover:border-[#cfd8e6] hover:bg-[#f8fafc] hover:text-[#111827]"
+            aria-label="Open filters"
+            title="Open filters"
+          >
+            <SlidersHorizontal className="h-4 w-4" />
+          </button>
 
           {hasActiveFilters ? (
             <a

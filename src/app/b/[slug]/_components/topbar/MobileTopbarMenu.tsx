@@ -1,18 +1,20 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Building2, Menu, SlidersHorizontal, X } from "lucide-react";
+import { BarChart3, Building2, Menu, SlidersHorizontal, X } from "lucide-react";
 
 type Props = {
   businessHref: string;
   clearHref: string;
   hasActiveFilters: boolean;
+  canSeeAnalytics: boolean;
 };
 
 export default function MobileTopbarMenu({
   businessHref,
   clearHref,
   hasActiveFilters,
+  canSeeAnalytics,
 }: Props) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -47,6 +49,13 @@ export default function MobileTopbarMenu({
 
       {open ? (
         <div className="absolute left-0 top-[calc(100%+10px)] z-50 w-56 rounded-2xl border border-gray-200 bg-white p-2 shadow-xl">
+          {canSeeAnalytics ? (
+            <div className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-gray-800">
+              <BarChart3 className="h-4 w-4 text-gray-500" />
+              <span>Analytics</span>
+            </div>
+          ) : null}
+
           <button
             type="button"
             onClick={openFilters}

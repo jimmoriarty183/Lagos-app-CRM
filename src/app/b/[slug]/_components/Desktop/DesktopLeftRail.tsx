@@ -1,12 +1,12 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useState, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import {
+  BarChart3,
   Building2,
   ChevronsLeft,
   ChevronsRight,
-  LayoutDashboard,
   Settings,
   SlidersHorizontal,
 } from "lucide-react";
@@ -45,6 +45,7 @@ type Props = {
 
 const MENU_STORAGE_KEY = "orders-desktop-menu-expanded";
 const MENU_STORAGE_EVENT = "orders-desktop-menu-expanded-change";
+const TOGGLE_FILTERS_EVENT = "orders-desktop-toggle-filters";
 
 function subscribeExpanded(onStoreChange: () => void) {
   if (typeof window === "undefined") return () => {};
@@ -190,6 +191,15 @@ export default function DesktopLeftRail({
     window.dispatchEvent(new Event(MENU_STORAGE_EVENT));
   };
 
+  useEffect(() => {
+    const handleToggleFilters = () => {
+      setFiltersOpen((prev) => !prev);
+    };
+
+    window.addEventListener(TOGGLE_FILTERS_EVENT, handleToggleFilters);
+    return () => window.removeEventListener(TOGGLE_FILTERS_EVENT, handleToggleFilters);
+  }, []);
+
   return (
     <div
       className={[
@@ -237,11 +247,10 @@ export default function DesktopLeftRail({
 
               {canSeeAnalytics ? (
                 <RailLink
-                  icon={<LayoutDashboard className="h-5 w-5" />}
+                  icon={<BarChart3 className="h-5 w-5" />}
                   label="Analytics"
-                  description="Jump to KPI section"
+                  description="Owner tools coming soon"
                   expanded={expanded}
-                  href="#analytics"
                 />
               ) : null}
 

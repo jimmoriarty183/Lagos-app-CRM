@@ -1,7 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
-import { ArrowRight, AlertTriangle, CircleDollarSign, Package2, PlayCircle, SlidersHorizontal } from "lucide-react";
+import { ArrowRight, SlidersHorizontal } from "lucide-react";
 
 type Props = {
   totalOrders: number;
@@ -12,47 +11,41 @@ type Props = {
   clearHref: string;
 };
 
-type StatTone = "blue" | "neutral" | "green" | "red";
+function formatCompactRevenue(n: number) {
+  const abs = Math.abs(n);
+  if (abs >= 1_000_000) {
+    return `$${(n / 1_000_000).toFixed(1).replace(/\.0$/, "")}m`;
+  }
+  if (abs >= 1_000) {
+    return `$${(n / 1_000).toFixed(1).replace(/\.0$/, "")}k`;
+  }
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(n);
+}
 
-function StatCard({
+function PreviewPill({
   label,
   value,
-  meta,
-  tone,
-  icon,
+  tone = "neutral",
 }: {
   label: string;
   value: string;
-  meta: string;
-  tone: StatTone;
-  icon: ReactNode;
+  tone?: "neutral" | "red";
 }) {
-  const toneCls =
-    tone === "blue"
-      ? "bg-[#eef4ff] text-[#2459d3]"
-      : tone === "green"
-        ? "bg-[#ecfdf3] text-[#067647]"
-        : tone === "red"
-          ? "bg-[#fef3f2] text-[#d92d20]"
-          : "bg-[#f2f4f7] text-[#667085]";
-
-  const valueCls = tone === "red" ? "text-[#d92d20]" : "text-[#111827]";
-  const metaCls = tone === "red" ? "text-[#b42318]" : "text-[#667085]";
-
   return (
-    <div className="flex min-h-[138px] flex-col rounded-3xl border border-[#dde3ee] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
-      <div className="flex items-center justify-between gap-3">
-        <div className="text-[12px] font-semibold tracking-[-0.01em] text-[#667085]">
-          {label}
-        </div>
-        <div className={`inline-flex h-9 w-9 items-center justify-center rounded-2xl ${toneCls}`}>
-          {icon}
-        </div>
-      </div>
-      <div className={`mt-4 text-[24px] font-bold tracking-[-0.03em] tabular-nums ${valueCls}`}>
-        {value}
-      </div>
-      <div className={`mt-2 text-[12px] font-medium ${metaCls}`}>{meta}</div>
+    <div
+      className={[
+        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold",
+        tone === "red"
+          ? "border-[#ffd5d2] bg-[#fff5f4] text-[#d92d20]"
+          : "border-[#dde3ee] bg-white text-[#475467]",
+      ].join(" ")}
+    >
+      <span>{value}</span>
+      <span className="text-[#98a2b3]">{label}</span>
     </div>
   );
 }
@@ -65,28 +58,27 @@ export default function MobileSummaryBar({
   hasActiveFilters,
   clearHref,
 }: Props) {
-  const revenueLabel = new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(Math.round(totalRevenue));
+  const compactRevenueLabel = formatCompactRevenue(Math.round(totalRevenue));
 
   const openFilters = () => {
     window.dispatchEvent(new CustomEvent("orders-mobile-open-filters"));
   };
 
   return (
-    <section className="rounded-[28px] border border-[#dde3ee] bg-[#f8fafc]/92 p-4 shadow-[0_10px_30px_rgba(15,23,42,0.06)] backdrop-blur lg:hidden">
+    <section className="rounded-[24px] border border-[#dde3ee] bg-[#f8fafc]/92 p-3 shadow-[0_10px_30px_rgba(15,23,42,0.06)] backdrop-blur lg:hidden">
       <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#667085]">
-            Orders
-          </div>
-          <div className="mt-1 text-lg font-bold tracking-[-0.02em] text-[#111827]">
             Summary
           </div>
-          <div className="mt-1 text-xs text-[#667085]">
-            {hasActiveFilters ? "Based on filtered results" : "Based on all current orders"}
+          <div className="mt-2 flex flex-wrap gap-2">
+            <PreviewPill label="Orders" value={String(totalOrders)} />
+            <PreviewPill label="Revenue" value={compactRevenueLabel} />
+            <PreviewPill label="Active" value={String(activeOrders)} />
+            <PreviewPill label="Overdue" value={String(overdueCount)} tone="red" />
+          </div>
+          <div className="mt-2 text-[11px] font-medium text-[#98a2b3]">
+            {hasActiveFilters ? "Filtered results" : "All current orders"}
           </div>
         </div>
 
@@ -105,44 +97,11 @@ export default function MobileSummaryBar({
               href={clearHref}
               className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#667085]"
             >
-              Clear active
+              Clear
               <ArrowRight className="h-3 w-3" />
             </a>
-          ) : (
-            <span className="text-[11px] font-semibold text-[#98a2b3]">No filters</span>
-          )}
+          ) : null}
         </div>
-      </div>
-
-      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <StatCard
-          label="Total Orders"
-          value={String(totalOrders)}
-          meta="All orders in the current result set"
-          tone="blue"
-          icon={<Package2 className="h-4 w-4" />}
-        />
-        <StatCard
-          label="Total Revenue"
-          value={revenueLabel}
-          meta="Sum of visible order amounts"
-          tone="neutral"
-          icon={<CircleDollarSign className="h-4 w-4" />}
-        />
-        <StatCard
-          label="Active Orders"
-          value={String(activeOrders)}
-          meta="Open work currently in motion"
-          tone="green"
-          icon={<PlayCircle className="h-4 w-4" />}
-        />
-        <StatCard
-          label="Overdue Orders"
-          value={String(overdueCount)}
-          meta="Past due and still unresolved"
-          tone="red"
-          icon={<AlertTriangle className="h-4 w-4" />}
-        />
       </div>
     </section>
   );
