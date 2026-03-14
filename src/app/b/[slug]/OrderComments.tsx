@@ -33,7 +33,6 @@ export function OrderComments({ order, supabase, author }: Props) {
   const canWrite = author.role === "OWNER" || author.role === "MANAGER";
   const hasText = useMemo(() => text.trim().length > 0, [text]);
 
-  // ===== load comments =====
   useEffect(() => {
     let alive = true;
 
@@ -47,7 +46,6 @@ export function OrderComments({ order, supabase, author }: Props) {
       if (!alive) return;
 
       if (error) {
-        // Supabase иногда в dev показывает {} — это норм, но не ломаем UI
         console.error("load comments error:", error);
         setList([]);
         return;
@@ -61,7 +59,6 @@ export function OrderComments({ order, supabase, author }: Props) {
     };
   }, [order.id, supabase]);
 
-  // ===== add comment =====
   async function send() {
     const body = text.trim();
     if (!body || loading || !canWrite) return;
@@ -73,7 +70,7 @@ export function OrderComments({ order, supabase, author }: Props) {
       business_id: order.business_id,
       body,
       author_phone: author.phone || null,
-      author_role: author.role, // ✅ фикс роли (OWNER/MANAGER)
+      author_role: author.role,
     };
 
     const { data, error } = await supabase
@@ -97,35 +94,30 @@ export function OrderComments({ order, supabase, author }: Props) {
   }
 
   return (
-    <div className="mt-6 rounded-xl border border-gray-200 bg-white p-4">
-      {/* header */}
-      <div className="flex items-center justify-between">
-        <div className="text-sm font-semibold text-gray-900">
-          Comments ({list.length})
-        </div>
+    <div className="rounded-2xl border border-[#eef2f7] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+      <div className="flex items-center justify-between gap-3">
+        <div className="text-sm font-semibold text-[#111827]">Comments ({list.length})</div>
+        <div className="text-xs text-[#98a2b3]">{loading ? "Sending..." : ""}</div>
       </div>
 
-      {/* list */}
-      <div className="mt-3 space-y-3">
+      <div className="mt-3 max-h-[420px] space-y-3 overflow-y-auto pr-1">
         {list.length === 0 ? (
-          <div className="text-sm text-gray-500">No comments yet.</div>
+          <div className="rounded-2xl border border-dashed border-[#d8dee8] bg-[#fbfcfe] px-4 py-6 text-center text-sm text-[#98a2b3]">
+            No comments yet.
+          </div>
         ) : (
           list.map((c) => (
-            <div key={c.id} className="rounded-lg bg-gray-50 p-3">
-              <div className="mb-1 text-xs text-gray-500">
+            <div key={c.id} className="rounded-2xl border border-[#f2f4f7] bg-[#fbfcfe] p-3">
+              <div className="mb-1 text-xs text-[#98a2b3]">
                 {c.author_phone ?? "—"}
-                {c.author_role ? ` · ${c.author_role}` : ""} ·{" "}
-                {fmtDate(c.created_at)}
+                {c.author_role ? ` • ${c.author_role}` : ""} • {fmtDate(c.created_at)}
               </div>
-              <div className="whitespace-pre-wrap text-sm text-gray-900">
-                {c.body}
-              </div>
+              <div className="whitespace-pre-wrap text-sm leading-6 text-[#111827]">{c.body}</div>
             </div>
           ))
         )}
       </div>
 
-      {/* input */}
       {canWrite ? (
         <div className="mt-4 flex items-center gap-2">
           <input
@@ -135,35 +127,28 @@ export function OrderComments({ order, supabase, author }: Props) {
               if (e.key === "Enter") send();
             }}
             placeholder="Write a comment..."
-            className="h-10 flex-1 rounded-lg border border-gray-300 px-3 text-sm outline-none focus:border-blue-500"
+            className="h-10 flex-1 rounded-xl border border-[#dde3ee] bg-[#fbfcfe] px-3 text-sm outline-none transition focus:border-[#111827] focus:bg-white"
           />
 
-          {/* Логика как ты хотел:
-              - пусто => ЧЁРНАЯ
-              - есть текст => СЕРАЯ
-          */}
           <button
             type="button"
             onClick={send}
             disabled={loading || !hasText}
             aria-disabled={loading || !hasText}
             className={[
-              "h-10 shrink-0 min-w-[96px] rounded-lg px-4 text-sm font-semibold transition",
-              "disabled:opacity-100", // ✅ чтобы текст не исчезал
+              "h-10 min-w-[96px] shrink-0 rounded-xl px-4 text-sm font-semibold transition",
               !hasText
-                ? "!bg-gray-900 !text-white cursor-not-allowed"
+                ? "cursor-not-allowed bg-[#111827] text-white"
                 : loading
-                ? "!bg-gray-300 !text-gray-600 cursor-not-allowed"
-                : "!bg-gray-200 !text-gray-900 hover:!bg-gray-300",
+                  ? "cursor-not-allowed bg-[#d0d5dd] text-[#667085]"
+                  : "bg-[#eef2f7] text-[#111827] hover:bg-[#e4e7ec]",
             ].join(" ")}
           >
             {loading ? "Sending..." : "Send"}
           </button>
         </div>
       ) : (
-        <div className="mt-3 text-xs text-gray-400">
-          Only Owner / Manager can add comments.
-        </div>
+        <div className="mt-3 text-xs text-[#98a2b3]">Only Owner / Manager can add comments.</div>
       )}
     </div>
   );

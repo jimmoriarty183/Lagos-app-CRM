@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 type ChecklistItem = {
   id: string;
@@ -17,7 +18,7 @@ export function OrderChecklist({
   supabase,
 }: {
   order: { id: string; business_id: string };
-  supabase: any;
+  supabase: SupabaseClient;
 }) {
   const [items, setItems] = useState<ChecklistItem[]>([]);
   const [title, setTitle] = useState("");
@@ -77,10 +78,7 @@ export function OrderChecklist({
       done_at: nextDone ? new Date().toISOString() : null,
     };
 
-    // optimistic UI
-    setItems((prev) =>
-      prev.map((i) => (i.id === item.id ? { ...i, ...patch } : i))
-    );
+    setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, ...patch } : i)));
 
     const { error } = await supabase
       .from("order_checklist_items")
@@ -89,7 +87,6 @@ export function OrderChecklist({
 
     if (error) {
       console.error(error);
-      // rollback
       setItems((prev) => prev.map((i) => (i.id === item.id ? item : i)));
     }
   };
@@ -102,7 +99,6 @@ export function OrderChecklist({
 
     setLoading(true);
 
-    // optimistic
     const prevItems = items;
     setItems((prev) => prev.filter((i) => i.id !== item.id));
 
@@ -113,7 +109,6 @@ export function OrderChecklist({
 
     if (error) {
       console.error(error);
-      // rollback
       setItems(prevItems);
     }
 
@@ -121,64 +116,58 @@ export function OrderChecklist({
   };
 
   return (
-    <div className="mt-5 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-      <div className="mb-2 flex items-center justify-between">
-        <div className="text-sm font-semibold text-gray-900">
-          Checklist{" "}
-          <span className="text-xs font-semibold text-gray-500">
-            ({items.length})
-          </span>
+    <div className="rounded-2xl border border-[#eef2f7] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div className="text-sm font-semibold text-[#111827]">
+          Checklist <span className="text-xs font-semibold text-[#98a2b3]">({items.length})</span>
         </div>
 
-        <div className="text-xs text-gray-400">{loading ? "Saving…" : ""}</div>
+        <div className="text-xs text-[#98a2b3]">{loading ? "Saving..." : ""}</div>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-2.5">
         {items.map((i) => (
           <div
             key={i.id}
-            className="group flex items-start justify-between gap-2 text-sm"
+            className="group flex items-start justify-between gap-3 rounded-2xl border border-[#f2f4f7] bg-[#fbfcfe] px-3 py-2.5 text-sm"
           >
-            <label className="flex items-start gap-2 text-gray-900">
+            <label className="flex items-start gap-2 text-[#111827]">
               <input
                 type="checkbox"
                 checked={!!i.is_done}
                 onChange={() => toggle(i)}
-                className="mt-0.5 h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-0"
+                className="mt-0.5 h-4 w-4 rounded border-[#cfd8e6] text-[#111827] focus:ring-0"
               />
-              <span className={i.is_done ? "text-gray-400 line-through" : ""}>
+              <span className={i.is_done ? "text-[#98a2b3] line-through" : "text-[#344054]"}>
                 {i.title}
               </span>
             </label>
 
-            {/* delete (hover) */}
             <button
               type="button"
               onClick={() => remove(i)}
-              className="
-                text-gray-300 hover:text-red-500
-                opacity-0 group-hover:opacity-100
-                transition
-              "
+              className="text-[#c0c7d2] opacity-0 transition group-hover:opacity-100 hover:text-[#d92d20]"
               title="Delete"
               aria-label="Delete checklist item"
             >
-              ✕
+              ×
             </button>
           </div>
         ))}
 
-        {items.length === 0 && (
-          <div className="text-xs text-gray-500">No checklist items yet.</div>
-        )}
+        {items.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-[#d8dee8] bg-[#fbfcfe] px-4 py-6 text-center text-xs text-[#98a2b3]">
+            No checklist items yet.
+          </div>
+        ) : null}
       </div>
 
       <div className="mt-3 flex gap-2">
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Add checklist item…"
-          className="h-10 flex-1 rounded-lg border border-gray-200 px-3 text-sm outline-none focus:border-gray-300"
+          placeholder="Add checklist item..."
+          className="h-10 flex-1 rounded-xl border border-[#dde3ee] bg-[#fbfcfe] px-3 text-sm outline-none transition focus:border-[#111827] focus:bg-white"
           onKeyDown={(e) => {
             if (e.key === "Enter") add();
           }}
@@ -189,18 +178,14 @@ export function OrderChecklist({
           onClick={add}
           disabled={loading || !title.trim()}
           aria-disabled={loading || !title.trim()}
-          className={`
-    h-10 shrink-0 min-w-[92px]
-    !px-4 !text-sm !font-semibold
-    !rounded-lg transition
-    ${
-      !title.trim()
-        ? "!bg-gray-900 !text-white cursor-not-allowed"
-        : loading
-        ? "!bg-gray-300 !text-gray-600 cursor-not-allowed"
-        : "!bg-gray-200 !text-gray-900 hover:!bg-gray-300"
-    }
-  `}
+          className={[
+            "h-10 min-w-[92px] shrink-0 rounded-xl px-4 text-sm font-semibold transition",
+            !title.trim()
+              ? "cursor-not-allowed bg-[#111827] text-white"
+              : loading
+                ? "cursor-not-allowed bg-[#d0d5dd] text-[#667085]"
+                : "bg-[#eef2f7] text-[#111827] hover:bg-[#e4e7ec]",
+          ].join(" ")}
         >
           + Add
         </button>

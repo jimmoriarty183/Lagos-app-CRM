@@ -15,9 +15,8 @@ import {
 } from "lucide-react";
 
 import { StatusCell } from "../../InlineCells";
-import { OrderChecklist } from "../../OrderChecklist";
-import { OrderComments } from "../../OrderComments";
 import { setOrderManager } from "../../actions";
+import { OrderPreview } from "../orders/OrderPreview";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -202,7 +201,7 @@ function ManagerAssignmentCell({
   canManage: boolean;
   onAssigned?: () => void;
 }) {
-  const [isPending, startTransition] = useTransition();
+  const [isPending] = useTransition();
   const [localManagerId, setLocalManagerId] = useState<string | null>(managerId);
   const [localManagerName, setLocalManagerName] = useState<string | null>(managerName);
 
@@ -226,6 +225,7 @@ function ManagerAssignmentCell({
     <button
       type="button"
       disabled={!canManage || isPending}
+      onClick={(event) => event.stopPropagation()}
       className={[
         "inline-flex h-8 max-w-full items-center gap-1.5 rounded-full border px-2.5 text-xs font-medium transition",
         canManage ? "cursor-pointer" : "cursor-default",
@@ -375,7 +375,8 @@ export default function DesktopOrdersTable({
   const [statusTouched, setStatusTouched] = useState(false);
   const [managerTouched, setManagerTouched] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [isPending] = useTransition();
+  const [navigationMessage, setNavigationMessage] = useState<string | null>(null);
 
   const supabase = useMemo(
     () =>
@@ -398,6 +399,25 @@ export default function DesktopOrdersTable({
         })),
     [actors],
   );
+  const selectedOrder = useMemo(
+    () => rows.find((order) => order.id === openId) ?? null,
+    [openId, rows],
+  );
+
+  const toggleOrderPreview = (orderId: string) => {
+    if (shouldIgnoreOverlayCloseClick()) return;
+    setOpenId((current) => (current === orderId ? null : orderId));
+  };
+
+  const navigateWithFallback = (href: string) => {
+    setNavigationMessage("Updating orders...");
+    const currentHref = `${window.location.pathname}${window.location.search}`;
+    if (href === currentHref) {
+      window.location.reload();
+      return;
+    }
+    window.location.assign(href);
+  };
 
   const buildHref = (next: {
     q: string;
@@ -483,9 +503,7 @@ export default function DesktopOrdersTable({
     setPeriodMenuOpen(false);
     setStatusMenuOpen(false);
     setManagerMenuOpen(false);
-    startTransition(() => {
-      router.replace(href);
-    });
+    navigateWithFallback(href);
   };
 
   const toggleStatus = (status: StatusFilterValue) => {
@@ -785,6 +803,12 @@ export default function DesktopOrdersTable({
             </button>
           </div>
         </form>
+
+        {navigationMessage ? (
+          <div className="mt-3 rounded-2xl border border-[#dbe2ea] bg-[#f8fafc] px-4 py-3 text-sm text-[#475467]">
+            {navigationMessage}
+          </div>
+        ) : null}
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#eef2f7] px-5 py-3">
@@ -799,9 +823,7 @@ export default function DesktopOrdersTable({
           <select
             value={String(perPage)}
             onChange={(event) => {
-              startTransition(() => {
-                router.replace(paginationHref(1, Number(event.currentTarget.value)));
-              });
+              navigateWithFallback(paginationHref(1, Number(event.currentTarget.value)));
             }}
             className="h-9 rounded-xl border border-[#dde3ee] bg-white px-3 text-sm font-medium text-[#344054] outline-none transition focus:border-[#111827] focus:ring-2 focus:ring-[#111827]/10"
           >
@@ -849,17 +871,13 @@ export default function DesktopOrdersTable({
                 !!dueISO &&
                 dueISO < todayISO &&
                 (order.status === "NEW" || order.status === "IN_PROGRESS");
-              const isOpen = openId === order.id;
               const editHref = `/b/${businessSlug}/o/${order.id}?u=${encodeURIComponent(phoneRaw)}`;
 
               return (
                 <React.Fragment key={order.id}>
                   <tr
                     className="cursor-pointer border-b border-[#f2f4f7] transition-colors hover:bg-[#f8fafc]"
-                    onClick={() => {
-                      if (shouldIgnoreOverlayCloseClick()) return;
-                      setOpenId(order.id);
-                    }}
+                    onClick={() => toggleOrderPreview(order.id)}
                   >
                     <td className="px-5 py-3 align-middle">
                       <div className="text-sm font-semibold leading-5 text-[#111827]">
@@ -879,10 +897,7 @@ export default function DesktopOrdersTable({
                       </div>
                     </td>
 
-                    <td
-                      className="px-5 py-3 align-middle"
-                      onClick={(event) => event.stopPropagation()}
-                    >
+                    <td className="px-5 py-3 align-middle">
                       <ManagerAssignmentCell
                         orderId={order.id}
                         businessSlug={businessSlug}
@@ -910,8 +925,8 @@ export default function DesktopOrdersTable({
                       </div>
                     </td>
 
-                    <td className="px-5 py-3 align-middle" onClick={(event) => event.stopPropagation()}>
-                      <div className="inline-flex">
+                    <td className="px-5 py-3 align-middle">
+                      <div className="inline-flex" onClick={(event) => event.stopPropagation()}>
                         <StatusCell
                           orderId={order.id}
                           businessSlug={businessSlug}
@@ -979,112 +994,6 @@ export default function DesktopOrdersTable({
                       </DropdownMenu>
                     </td>
                   </tr>
-
-                  {isOpen ? (
-                    <tr className="border-b border-[#f2f4f7] bg-[#fcfdff]">
-                      <td colSpan={7} className="px-5 pb-5">
-                        <div
-                          className="mt-2 rounded-2xl border border-[#dde3ee] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]"
-                          onClick={(event) => event.stopPropagation()}
-                        >
-                          <div className="flex items-start justify-between gap-4">
-                            <div className="min-w-0 flex-1">
-                              <div className="grid gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(240px,0.65fr)]">
-                                <div className="min-w-0">
-                                  <div className="text-xs font-semibold uppercase tracking-wide text-[#98a2b3]">
-                                    Description
-                                  </div>
-                                  <div className="mt-2 whitespace-pre-wrap break-words text-sm text-[#364153]">
-                                    {order.description?.trim() ? order.description : "No description"}
-                                  </div>
-                                </div>
-
-                                <div className="grid gap-3 rounded-2xl border border-[#eef2f7] bg-[#fbfcfe] p-4">
-                                  <div>
-                                    <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
-                                      Client
-                                    </div>
-                                    <div className="mt-1 text-sm font-semibold text-[#111827]">
-                                      {order.client_name?.trim() || "Unknown"}
-                                    </div>
-                                    <div className="mt-1 text-xs text-[#98a2b3]">
-                                      {order.client_phone?.trim() || "No phone number"}
-                                    </div>
-                                  </div>
-
-                                  <div>
-                                    <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
-                                      Manager
-                                    </div>
-                                    <div className="mt-1">
-                                      <ManagerAssignmentCell
-                                        orderId={order.id}
-                                        businessSlug={businessSlug}
-                                        managerId={order.manager_id}
-                                        managerName={order.manager_name}
-                                        actors={actors}
-                                        canManage={canManage}
-                                        onAssigned={() => router.refresh()}
-                                      />
-                                    </div>
-                                  </div>
-
-                                  <div className="grid grid-cols-2 gap-3">
-                                    <div>
-                                      <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
-                                        Amount
-                                      </div>
-                                      <div className="mt-1 text-sm font-semibold tabular-nums text-[#111827]">
-                                        {fmtAmount(Number(order.amount))}
-                                      </div>
-                                    </div>
-                                    <div>
-                                      <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
-                                        Due
-                                      </div>
-                                      <div
-                                        className={[
-                                          "mt-1 text-sm font-medium",
-                                          isOverdue ? "text-[#d92d20]" : "text-[#475467]",
-                                        ].join(" ")}
-                                      >
-                                        {formatDueDate(order.due_date)}
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-
-                              <OrderChecklist
-                                order={{ id: order.id, business_id: businessId }}
-                                supabase={supabase}
-                              />
-
-                              <OrderComments
-                                order={{ id: order.id, business_id: businessId }}
-                                supabase={supabase}
-                                author={{
-                                  phone: phoneRaw,
-                                  role: userRole,
-                                }}
-                              />
-                            </div>
-
-                            <button
-                              type="button"
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                setOpenId((current) => (current === order.id ? null : current));
-                              }}
-                              className="inline-flex h-9 shrink-0 items-center justify-center rounded-xl border border-[#dde3ee] bg-white px-3 text-sm font-semibold text-[#111827] transition hover:bg-[#f8fafc]"
-                            >
-                              Close
-                            </button>
-                          </div>
-                        </div>
-                      </td>
-                    </tr>
-                  ) : null}
                 </React.Fragment>
               );
             })}
@@ -1151,6 +1060,18 @@ export default function DesktopOrdersTable({
           </Pagination>
         </div>
       ) : null}
+
+      <OrderPreview
+        open={Boolean(selectedOrder)}
+        order={selectedOrder}
+        businessId={businessId}
+        businessSlug={businessSlug}
+        phoneRaw={phoneRaw}
+        userRole={userRole}
+        canManage={canManage}
+        supabase={supabase}
+        onClose={() => setOpenId(null)}
+      />
     </section>
   );
 }

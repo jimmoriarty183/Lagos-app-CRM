@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useMemo, useRef, useState, useTransition } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
 import {
@@ -14,8 +14,8 @@ import {
 } from "lucide-react";
 
 import { StatusCell } from "../../InlineCells";
-import { OrderChecklist } from "../../OrderChecklist";
-import { OrderComments } from "../../OrderComments";
+import { OrderChecklist } from "@/app/b/[slug]/OrderChecklist";
+import { OrderComments } from "@/app/b/[slug]/OrderComments";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -184,8 +184,9 @@ export default function MobileOrdersList({
   const [statusTouched, setStatusTouched] = useState(false);
   const [managerTouched, setManagerTouched] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [isPending] = useTransition();
   const submitTimerRef = useRef<number | null>(null);
+  const [navigationMessage, setNavigationMessage] = useState<string | null>(null);
 
   const supabase = useMemo(
     () =>
@@ -253,6 +254,22 @@ export default function MobileOrdersList({
     return qs ? `/b/${businessSlug}?${qs}` : `/b/${businessSlug}`;
   };
 
+  useEffect(() => {
+    return () => {
+      if (submitTimerRef.current) window.clearTimeout(submitTimerRef.current);
+    };
+  }, []);
+
+  const navigateWithFallback = (href: string) => {
+    setNavigationMessage("Updating orders...");
+    const currentHref = `${window.location.pathname}${window.location.search}`;
+    if (href === currentHref) {
+      window.location.reload();
+      return;
+    }
+    window.location.assign(href);
+  };
+
   const submitFilters = (next: {
     q: string;
     statusValue: string;
@@ -260,9 +277,7 @@ export default function MobileOrdersList({
     managerValue: string;
     managerTouched: boolean;
   }) => {
-    startTransition(() => {
-      router.replace(buildHref(next));
-    });
+    navigateWithFallback(buildHref(next));
   };
 
   const handleDeleteOrder = async (orderId: string) => {
@@ -410,6 +425,12 @@ export default function MobileOrdersList({
           </div>
         </div>
 
+        {navigationMessage ? (
+          <div className="mt-3 rounded-2xl border border-[#dbe2ea] bg-[#f8fafc] px-4 py-3 text-sm text-[#475467]">
+            {navigationMessage}
+          </div>
+        ) : null}
+
         <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-[#eef2f7] pt-3">
           <div className="text-xs font-medium text-[#667085]">
             Showing {list.length === 0 ? 0 : (currentPage - 1) * perPage + 1}
@@ -422,9 +443,7 @@ export default function MobileOrdersList({
             <select
               value={String(perPage)}
               onChange={(event) => {
-                startTransition(() => {
-                  router.replace(paginationHref(1, Number(event.currentTarget.value)));
-                });
+                navigateWithFallback(paginationHref(1, Number(event.currentTarget.value)));
               }}
               className="h-9 rounded-xl border border-[#dde3ee] bg-white px-3 text-sm font-medium text-[#344054] outline-none transition focus:border-[#111827] focus:ring-2 focus:ring-[#111827]/10"
             >
