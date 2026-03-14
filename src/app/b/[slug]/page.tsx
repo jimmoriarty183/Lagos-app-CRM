@@ -39,10 +39,32 @@ type Status =
   | "DUPLICATE";
 
 type StatusFilterValue = Status | "OVERDUE";
+const DEFAULT_VISIBLE_STATUSES: readonly Status[] = [
+  "NEW",
+  "IN_PROGRESS",
+  "WAITING_PAYMENT",
+] as const;
+const DEFAULT_VISIBLE_STATUS_FILTERS: readonly StatusFilterValue[] = [
+  "NEW",
+  "IN_PROGRESS",
+  "WAITING_PAYMENT",
+  "OVERDUE",
+] as const;
+
+function isSameStatusFilterSet(
+  actual: readonly StatusFilterValue[],
+  expected: readonly StatusFilterValue[],
+) {
+  return (
+    actual.length === expected.length &&
+    expected.every((status) => actual.includes(status))
+  );
+}
 
 type Filters = {
   q: string;
   statuses: StatusFilterValue[];
+  statusMode: "default" | "all" | "custom";
   range: DashboardRange;
   startDate: string | null;
   endDate: string | null;
@@ -100,6 +122,7 @@ type PageProps = {
     page?: string;
     perPage?: string;
     actor?: string;
+    statusMode?: string;
   };
 };
 
@@ -362,9 +385,19 @@ export default async function Page({ params, searchParams }: PageProps) {
   const summaryCustomEndDate =
     summaryRangeInput.range === "custom" ? summaryRangeInput.endDate : null;
 
+  const parsedStatuses = normalizeStatusFilters(sp.status, allowedStatuses);
+  const statusMode: Filters["statusMode"] =
+    String(sp.statusMode ?? "").toLowerCase() === "all"
+      ? "all"
+      : parsedStatuses.length > 0 &&
+          !isSameStatusFilterSet(parsedStatuses, DEFAULT_VISIBLE_STATUS_FILTERS)
+        ? "custom"
+        : "default";
+
   const filters: Filters = {
     q: String(sp.q ?? "").trim(),
-    statuses: normalizeStatusFilters(sp.status, allowedStatuses),
+    statuses: parsedStatuses,
+    statusMode,
     range: rangeInput.range,
     startDate: customStartDate,
     endDate: customEndDate,
@@ -378,12 +411,12 @@ export default async function Page({ params, searchParams }: PageProps) {
 
   const hasActiveFilters =
     !!filters.q ||
-    filters.statuses.length > 0 ||
+    filters.statusMode !== "default" ||
     isRangeFilterActive ||
     filters.actor !== "ALL";
   const activeFiltersCount = [
     filters.q ? 1 : 0,
-    filters.statuses.length > 0 ? 1 : 0,
+    filters.statusMode !== "default" ? 1 : 0,
     isRangeFilterActive ? 1 : 0,
     filters.actor !== "ALL" ? 1 : 0,
   ].reduce((sum, count) => sum + count, 0);
@@ -408,7 +441,11 @@ export default async function Page({ params, searchParams }: PageProps) {
     if (phoneRaw && phoneRaw.length > 0) params.set("u", phoneRaw);
     params.set("perPage", String(perPage));
     if (filters.q) params.set("q", filters.q);
-    for (const status of filters.statuses) params.append("status", status);
+    if (filters.statusMode === "all") {
+      params.set("statusMode", "all");
+    } else {
+      for (const status of filters.statuses) params.append("status", status);
+    }
     if (filters.range !== "ALL") params.set("range", filters.range);
     if (filters.startDate) params.set("start", filters.startDate);
     if (filters.endDate) params.set("end", filters.endDate);
@@ -425,7 +462,11 @@ export default async function Page({ params, searchParams }: PageProps) {
     if (phoneRaw && phoneRaw.length > 0) params.set("u", phoneRaw);
     params.set("perPage", String(perPage));
     if (filters.q) params.set("q", filters.q);
-    for (const status of filters.statuses) params.append("status", status);
+    if (filters.statusMode === "all") {
+      params.set("statusMode", "all");
+    } else {
+      for (const status of filters.statuses) params.append("status", status);
+    }
     if (filters.range !== "ALL") params.set("range", filters.range);
     if (filters.startDate) params.set("start", filters.startDate);
     if (filters.endDate) params.set("end", filters.endDate);
@@ -670,15 +711,21 @@ export default async function Page({ params, searchParams }: PageProps) {
     : actorFilteredList;
 
   const applyStatusFilter = (rows: any[]) =>
-    filters.statuses.length === 0
+    filters.statusMode === "all"
       ? rows
-      : rows.filter((o) =>
-          filters.statuses.some((status) =>
-            status === "OVERDUE"
-              ? isOrderOverdue(o, todayISO)
-              : o.status === status,
-          ),
-        );
+      : filters.statuses.length === 0
+        ? rows.filter(
+            (o) =>
+              DEFAULT_VISIBLE_STATUSES.includes(o.status as Status) ||
+              isOrderOverdue(o, todayISO),
+          )
+        : rows.filter((o) =>
+            filters.statuses.some((status) =>
+              status === "OVERDUE"
+                ? isOrderOverdue(o, todayISO)
+                : o.status === status,
+            ),
+          );
 
   const tablePeriod = getDashboardPeriod(filters.range, {
     now,
@@ -885,7 +932,9 @@ export default async function Page({ params, searchParams }: PageProps) {
               businessId={String(currentBusiness.id)}
               phoneRaw={phoneRaw}
               searchQuery={filters.q}
-              statusFilter={filters.statuses}
+              statusFilter={
+                filters.statusMode === "all" ? [...allowedStatuses] : filters.statuses
+              }
               rangeFilter={filters.range}
               summaryRange={summaryRange}
               rangeStartDate={filters.startDate}
@@ -963,7 +1012,9 @@ export default async function Page({ params, searchParams }: PageProps) {
             actors={teamActors}
             currentUserId={currentUserId}
             searchQuery={filters.q}
-            statusFilter={filters.statuses}
+            statusFilter={
+              filters.statusMode === "all" ? [...allowedStatuses] : filters.statuses
+            }
             summaryRange={summaryRange}
             rangeFilter={filters.range}
             rangeStartDate={filters.startDate}

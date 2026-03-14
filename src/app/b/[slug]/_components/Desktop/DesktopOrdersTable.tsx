@@ -2,7 +2,6 @@
 
 import React, { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@supabase/supabase-js";
 import {
   AlertTriangle,
   ChevronDown,
@@ -36,6 +35,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { createClient } from "@/lib/supabase/client";
 import {
   DASHBOARD_RANGE_OPTIONS,
   type DashboardRange,
@@ -51,6 +51,12 @@ type Status =
   | "DUPLICATE";
 
 type StatusFilterValue = Status | "OVERDUE";
+const DEFAULT_VISIBLE_STATUSES: readonly StatusFilterValue[] = [
+  "NEW",
+  "IN_PROGRESS",
+  "WAITING_PAYMENT",
+  "OVERDUE",
+] as const;
 
 type UserRole = "OWNER" | "MANAGER" | "GUEST";
 
@@ -166,21 +172,45 @@ const STATUS_OPTIONS: { value: StatusFilterValue; label: string }[] = [
   { value: "IN_PROGRESS", label: "In progress" },
   { value: "WAITING_PAYMENT", label: "Waiting payment" },
   { value: "DONE", label: "Done" },
-  { value: "DUPLICATE", label: "Duplicate" },
   { value: "OVERDUE", label: "Overdue" },
+  { value: "CANCELED", label: "Canceled" },
+  { value: "DUPLICATE", label: "Duplicate" },
 ];
+const ACTIVE_STATUS_OPTIONS: readonly StatusFilterValue[] = [
+  "NEW",
+  "IN_PROGRESS",
+  "WAITING_PAYMENT",
+  "OVERDUE",
+] as const;
+const INACTIVE_STATUS_OPTIONS: readonly StatusFilterValue[] = [
+  "DONE",
+  "CANCELED",
+  "DUPLICATE",
+] as const;
 
 function normalizeQuickStatuses(statuses: StatusFilterValue[]) {
   const normalized = statuses.filter((status): status is StatusFilterValue =>
     STATUS_OPTIONS.some((option) => option.value === status),
   );
   return normalized.length === 0
-    ? STATUS_OPTIONS.map((option) => option.value)
+    ? [...DEFAULT_VISIBLE_STATUSES]
     : normalized;
 }
 
 function getStatusTriggerLabel(statuses: StatusFilterValue[]) {
   if (statuses.length === STATUS_OPTIONS.length) return "All statuses";
+  if (
+    statuses.length === DEFAULT_VISIBLE_STATUSES.length &&
+    DEFAULT_VISIBLE_STATUSES.every((status) => statuses.includes(status))
+  ) {
+    return "Active statuses";
+  }
+  if (
+    statuses.length === INACTIVE_STATUS_OPTIONS.length &&
+    INACTIVE_STATUS_OPTIONS.every((status) => statuses.includes(status))
+  ) {
+    return "Inactive statuses";
+  }
   if (statuses.length === 0) return "No statuses";
   if (statuses.length === 1) {
     return STATUS_OPTIONS.find((option) => option.value === statuses[0])?.label ?? "1 status";
@@ -475,14 +505,7 @@ export default function DesktopOrdersTable({
   const [navigationMessage, setNavigationMessage] = useState<string | null>(null);
   const [loadedActors, setLoadedActors] = useState<TeamActor[]>(actors);
 
-  const supabase = useMemo(
-    () =>
-      createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      ),
-    [],
-  );
+  const supabase = useMemo(() => createClient(), []);
 
   const effectiveActors = useMemo(() => mergeActors(actors, loadedActors), [actors, loadedActors]);
   const actorLabelById = useMemo(
@@ -618,13 +641,18 @@ export default function DesktopOrdersTable({
     const q = next.q.trim();
     if (q) params.set("q", q);
 
-    const nextStatuses = next.statusTouched
-      ? next.statusValues.length === STATUS_OPTIONS.length
-        ? []
-        : next.statusValues
-      : statusFilter;
-    for (const status of nextStatuses) {
-      params.append("status", status);
+    const nextStatuses = next.statusTouched ? next.statusValues : statusFilter;
+    const selectingAllStatuses = nextStatuses.length === STATUS_OPTIONS.length;
+    const selectingDefaultStatuses =
+      nextStatuses.length === DEFAULT_VISIBLE_STATUSES.length &&
+      DEFAULT_VISIBLE_STATUSES.every((status) => nextStatuses.includes(status));
+
+    if (selectingAllStatuses) {
+      params.set("statusMode", "all");
+    } else if (!selectingDefaultStatuses) {
+      for (const status of nextStatuses) {
+        params.append("status", status);
+      }
     }
 
     const nextActor =
@@ -735,18 +763,10 @@ export default function DesktopOrdersTable({
             </div>
           </div>
 
-          {hasActiveFilters ? (
-            <a
-              href={clearHref}
-              className="inline-flex h-9 items-center justify-center rounded-full border border-[#dde3ee] px-3 text-xs font-semibold text-[#667085] transition hover:border-[#cfd8e6] hover:text-[#111827]"
-            >
-              Reset filters
-            </a>
-          ) : null}
         </div>
 
         <form
-          className="mt-4 flex flex-wrap items-center gap-3 xl:flex-nowrap"
+          className="mt-4 flex flex-wrap items-center gap-3"
           onSubmit={(event) => {
             event.preventDefault();
             submitFilters({
@@ -762,7 +782,7 @@ export default function DesktopOrdersTable({
             });
           }}
         >
-          <div className="min-w-[260px] flex-[1.2]">
+          <div className="min-w-[220px] flex-[1.15]">
             <label className="relative block">
               <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#98a2b3]" />
               <input
@@ -779,12 +799,12 @@ export default function DesktopOrdersTable({
             </label>
           </div>
 
-          <div className="flex min-w-[320px] flex-1 flex-wrap items-center gap-3 xl:flex-none">
+          <div className="flex min-w-[300px] flex-1 flex-nowrap items-center gap-3 xl:flex-none">
             <DropdownMenu open={periodMenuOpen} onOpenChange={setPeriodMenuOpen}>
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
-                  className="inline-flex h-11 min-w-[170px] flex-1 items-center justify-between rounded-2xl border border-[#dde3ee] bg-white px-4 text-sm font-medium text-[#344054] outline-none transition hover:border-[#cfd8e6] focus:border-[#111827] focus:ring-2 focus:ring-[#111827]/10"
+                  className="inline-flex h-11 min-w-[150px] flex-1 items-center justify-between rounded-2xl border border-[#dde3ee] bg-white px-4 text-sm font-medium text-[#344054] outline-none transition hover:border-[#cfd8e6] focus:border-[#111827] focus:ring-2 focus:ring-[#111827]/10"
                 >
                   <span className="truncate">{getPeriodTriggerLabel(rangeValue)}</span>
                   <ChevronDown className="ml-3 h-4 w-4 shrink-0 text-[#98a2b3]" />
@@ -822,7 +842,7 @@ export default function DesktopOrdersTable({
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
-                  className="inline-flex h-11 min-w-[170px] flex-1 items-center justify-between rounded-2xl border border-[#dde3ee] bg-white px-4 text-sm font-medium text-[#344054] outline-none transition hover:border-[#cfd8e6] focus:border-[#111827] focus:ring-2 focus:ring-[#111827]/10"
+                  className="inline-flex h-11 min-w-[150px] flex-1 items-center justify-between rounded-2xl border border-[#dde3ee] bg-white px-4 text-sm font-medium text-[#344054] outline-none transition hover:border-[#cfd8e6] focus:border-[#111827] focus:ring-2 focus:ring-[#111827]/10"
                 >
                   <span className="truncate">{getStatusTriggerLabel(statusValues)}</span>
                   <ChevronDown className="ml-3 h-4 w-4 shrink-0 text-[#98a2b3]" />
@@ -851,7 +871,29 @@ export default function DesktopOrdersTable({
                   </button>
                 </div>
                 <DropdownMenuSeparator />
-                {STATUS_OPTIONS.map((option) => {
+                <div className="px-2 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
+                  Active
+                </div>
+                {STATUS_OPTIONS.filter((option) => ACTIVE_STATUS_OPTIONS.includes(option.value)).map((option) => {
+                  const isChecked = statusValues.includes(option.value);
+
+                  return (
+                    <DropdownMenuCheckboxItem
+                      key={option.value}
+                      checked={isChecked}
+                      className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#344054]"
+                      onSelect={(event) => event.preventDefault()}
+                      onCheckedChange={() => toggleStatus(option.value)}
+                    >
+                      {option.label}
+                    </DropdownMenuCheckboxItem>
+                  );
+                })}
+                <DropdownMenuSeparator />
+                <div className="px-2 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
+                  Inactive
+                </div>
+                {STATUS_OPTIONS.filter((option) => INACTIVE_STATUS_OPTIONS.includes(option.value)).map((option) => {
                   const isChecked = statusValues.includes(option.value);
 
                   return (
@@ -873,7 +915,7 @@ export default function DesktopOrdersTable({
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
-                  className="inline-flex h-11 min-w-[190px] flex-1 items-center justify-between rounded-2xl border border-[#dde3ee] bg-white px-4 text-sm font-medium text-[#344054] outline-none transition hover:border-[#cfd8e6] focus:border-[#111827] focus:ring-2 focus:ring-[#111827]/10"
+                  className="inline-flex h-11 min-w-[170px] flex-1 items-center justify-between rounded-2xl border border-[#dde3ee] bg-white px-4 text-sm font-medium text-[#344054] outline-none transition hover:border-[#cfd8e6] focus:border-[#111827] focus:ring-2 focus:ring-[#111827]/10"
                 >
                   <span className="truncate">
                     {getManagerTriggerLabel(managerValue, currentUserId, managerOptions)}
@@ -964,11 +1006,23 @@ export default function DesktopOrdersTable({
             </div>
           ) : null}
 
-          <div className="ml-auto flex shrink-0">
+          <div className="ml-auto flex w-[214px] shrink-0 items-center justify-end gap-3">
+            <a
+              href={hasActiveFilters ? clearHref : "#"}
+              aria-hidden={!hasActiveFilters}
+              tabIndex={hasActiveFilters ? 0 : -1}
+              className={`inline-flex h-11 min-w-[84px] shrink-0 items-center justify-center whitespace-nowrap rounded-2xl border px-3 text-sm font-semibold transition ${
+                hasActiveFilters
+                  ? "border-[#dde3ee] bg-white text-[#344054] hover:border-[#cfd8e6] hover:bg-[#f8fafc]"
+                  : "pointer-events-none border-transparent bg-transparent text-transparent"
+              }`}
+            >
+              Reset
+            </a>
             <button
               type="submit"
               disabled={statusValues.length === 0 || !customRangeReady}
-              className="inline-flex h-11 min-w-[152px] shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-2xl bg-[#111827] px-4 text-sm font-semibold transition hover:bg-[#0b1220] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:bg-[#111827]"
+              className="inline-flex h-11 min-w-[112px] shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-2xl bg-[#111827] px-4 text-sm font-semibold transition hover:bg-[#0b1220] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:bg-[#111827]"
               style={{ color: "#ffffff" }}
             >
               <span className="leading-none text-white">Apply</span>

@@ -34,9 +34,9 @@ export default function TopBar({
 }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const u = searchParams.get("u");
-  const dashboardHref = u
-    ? `/b/${businessSlug}?u=${encodeURIComponent(u)}`
+  const dashboardQuery = searchParams.toString();
+  const dashboardHref = dashboardQuery
+    ? `/b/${businessSlug}?${dashboardQuery}`
     : `/b/${businessSlug}`;
 
   const handleSelect = (slug: string) => {
@@ -44,9 +44,9 @@ export default function TopBar({
       slug
     )}; path=/; max-age=${60 * 60 * 24 * 365}`;
 
-    const url = new URL(window.location.href);
-    const u = url.searchParams.get("u");
-    router.push(u ? `/b/${slug}?u=${encodeURIComponent(u)}` : `/b/${slug}`);
+    const currentParams = new URLSearchParams(window.location.search);
+    const qs = currentParams.toString();
+    router.push(qs ? `/b/${slug}?${qs}` : `/b/${slug}`);
     router.refresh();
   };
 

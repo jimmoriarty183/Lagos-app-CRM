@@ -2,7 +2,6 @@
 
 import { Fragment, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@supabase/supabase-js";
 import {
   AlertTriangle,
   Ellipsis,
@@ -33,6 +32,8 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import type { DashboardRange } from "@/lib/order-dashboard-summary";
+import { createClient } from "@/lib/supabase/client";
+import { resolveUserDisplay } from "@/lib/user-display";
 
 declare global {
   interface Window {
@@ -57,9 +58,29 @@ type TeamActor = {
   kind: "OWNER" | "MANAGER";
 };
 
+type ManagerStatusResponse = {
+  owner?: {
+    id?: string | null;
+    full_name?: string | null;
+    first_name?: string | null;
+    last_name?: string | null;
+    email?: string | null;
+  } | null;
+  managers_active?: Array<{
+    user_id: string;
+    full_name?: string | null;
+    first_name?: string | null;
+    last_name?: string | null;
+    email?: string | null;
+  }>;
+};
+
 type OrderRow = {
   id: string;
   client_name: string | null;
+  client_first_name?: string | null;
+  client_last_name?: string | null;
+  client_full_name?: string | null;
   client_phone: string | null;
   amount: number;
   description: string | null;
@@ -116,6 +137,15 @@ function normalizeQuickActor(actorFilter: string, actors: TeamActor[], currentUs
   if (currentUserId && actorFilter === `user:${currentUserId}`) return "ME";
   if (actors.some((actor) => `user:${actor.id}` === actorFilter)) return actorFilter;
   return "ALL";
+}
+
+function mergeActors(baseActors: TeamActor[], nextActors: TeamActor[]) {
+  const map = new Map<string, TeamActor>();
+  for (const actor of [...baseActors, ...nextActors]) {
+    if (!actor?.id) continue;
+    map.set(actor.id, actor);
+  }
+  return Array.from(map.values());
 }
 
 const PAGE_SIZE_OPTIONS = [20, 50, 100, 500] as const;
@@ -187,26 +217,25 @@ export default function MobileOrdersList({
   const [isPending] = useTransition();
   const submitTimerRef = useRef<number | null>(null);
   const [navigationMessage, setNavigationMessage] = useState<string | null>(null);
+  const [loadedActors, setLoadedActors] = useState<TeamActor[]>(actors);
 
-  const supabase = useMemo(
-    () =>
-      createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      ),
-    [],
+  const supabase = useMemo(() => createClient(), []);
+
+  const effectiveActors = useMemo(() => mergeActors(actors, loadedActors), [actors, loadedActors]);
+  const actorLabelById = useMemo(
+    () => new Map(effectiveActors.map((actor) => [actor.id, actor.label])),
+    [effectiveActors],
   );
-
   const managerOptions = useMemo(
     () =>
-      actors
+      effectiveActors
         .slice()
         .sort((a, b) => a.label.localeCompare(b.label))
         .map((actor) => ({
           value: `user:${actor.id}`,
           label: actor.label,
         })),
-    [actors],
+    [effectiveActors],
   );
 
   const buildHref = (next: {
@@ -236,8 +265,13 @@ export default function MobileOrdersList({
           ? []
           : [next.statusValue]
         : statusFilter;
-    for (const status of nextStatuses) {
-      params.append("status", status);
+
+    if (next.statusTouched && next.statusValue === "ALL") {
+      params.set("statusMode", "all");
+    } else {
+      for (const status of nextStatuses) {
+        params.append("status", status);
+      }
     }
 
     const nextActor =
@@ -259,6 +293,65 @@ export default function MobileOrdersList({
       if (submitTimerRef.current) window.clearTimeout(submitTimerRef.current);
     };
   }, []);
+
+  useEffect(() => {
+    let alive = true;
+
+    async function loadActors() {
+      try {
+        const res = await fetch(`/api/manager/status?business_id=${encodeURIComponent(businessId)}`, {
+          credentials: "same-origin",
+          cache: "no-store",
+        });
+        if (!res.ok) return;
+
+        const data = (await res.json()) as ManagerStatusResponse;
+        if (!alive) return;
+
+        const nextActors: TeamActor[] = [];
+
+        if (data.owner?.id) {
+          const ownerDisplay = resolveUserDisplay({
+            full_name: data.owner.full_name ?? null,
+            first_name: data.owner.first_name ?? null,
+            last_name: data.owner.last_name ?? null,
+            email: data.owner.email ?? null,
+          });
+
+          nextActors.push({
+            id: String(data.owner.id),
+            label: ownerDisplay.primary,
+            kind: "OWNER",
+          });
+        }
+
+        for (const manager of data.managers_active ?? []) {
+          const managerDisplay = resolveUserDisplay({
+            full_name: manager.full_name ?? null,
+            first_name: manager.first_name ?? null,
+            last_name: manager.last_name ?? null,
+            email: manager.email ?? null,
+          });
+
+          nextActors.push({
+            id: String(manager.user_id),
+            label: managerDisplay.primary,
+            kind: "MANAGER",
+          });
+        }
+
+        setLoadedActors(nextActors);
+      } catch {
+        // Keep server-provided actors when the client fetch fails.
+      }
+    }
+
+    void loadActors();
+
+    return () => {
+      alive = false;
+    };
+  }, [businessId]);
 
   const navigateWithFallback = (href: string) => {
     setNavigationMessage("Updating orders...");
@@ -394,6 +487,7 @@ export default function MobileOrdersList({
               <option value="IN_PROGRESS">In Progress</option>
               <option value="WAITING_PAYMENT">Waiting Payment</option>
               <option value="DONE">Done</option>
+              <option value="CANCELED">Canceled</option>
               <option value="DUPLICATE">Duplicate</option>
             </select>
 
@@ -554,7 +648,7 @@ export default function MobileOrdersList({
                   Client
                 </div>
                 <div className="mt-1 text-sm font-semibold text-[#111827]">
-                  {order.client_name?.trim() || "No client name"}
+                  {order.client_full_name?.trim() || order.client_name?.trim() || "No client name"}
                 </div>
                 <div className="mt-1 text-xs text-[#98a2b3]">
                   {order.client_phone?.trim() || "No phone number"}
@@ -567,7 +661,7 @@ export default function MobileOrdersList({
                     Manager
                   </div>
                   <div className="mt-1 text-sm font-medium text-[#344054]">
-                    {order.manager_name || "Unassigned"}
+                    {order.manager_name || actorLabelById.get(String(order.manager_id ?? "")) || "Unassigned"}
                   </div>
                 </div>
 

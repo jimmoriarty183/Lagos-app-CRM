@@ -6,48 +6,59 @@ export type Status =
   | "CANCELED"
   | "DUPLICATE";
 
-export function statusTone(status: Status) {
-  // те самые "эталонные" стили
+type StatusTone = {
+  background: string;
+  color: string;
+  dot: string;
+  selectedBackground: string;
+};
+
+export function statusTone(status: Status): StatusTone {
   switch (status) {
     case "DONE":
       return {
-        background: "rgba(34,197,94,0.12)",
-        border: "1px solid rgba(34,197,94,0.25)",
-        color: "#15803d",
+        background: "#ECFDF5",
+        color: "#059669",
+        dot: "#047857",
+        selectedBackground: "#DDF7EA",
       };
     case "IN_PROGRESS":
       return {
-        background: "rgba(59,130,246,0.12)",
-        border: "1px solid rgba(59,130,246,0.25)",
-        color: "#1d4ed8",
+        background: "#EFF6FF",
+        color: "#2563EB",
+        dot: "#2563EB",
+        selectedBackground: "#DFECFF",
       };
     case "WAITING_PAYMENT":
       return {
-        background: "rgba(245,158,11,0.14)",
-        border: "1px solid rgba(245,158,11,0.28)",
-        color: "#b45309",
+        background: "#FFF7ED",
+        color: "#EA580C",
+        dot: "#C2410C",
+        selectedBackground: "#FFE9D6",
       };
     case "CANCELED":
       return {
-        background: "rgba(239,68,68,0.10)",
-        border: "1px solid rgba(239,68,68,0.22)",
-        color: "#b91c1c",
+        background: "#FEF2F2",
+        color: "#DC2626",
+        dot: "#B91C1C",
+        selectedBackground: "#FDE2E2",
       };
     case "DUPLICATE":
       return {
-        background: "rgba(148,163,184,0.14)",
-        border: "1px solid rgba(148,163,184,0.28)",
-        color: "#334155",
+        background: "#F5F3FF",
+        color: "#756EAE",
+        dot: "#9A93D6",
+        selectedBackground: "#ECE8FF",
       };
     case "NEW":
     default:
       return {
-        background: "rgba(0,0,0,0.04)",
-        border: "1px solid rgba(0,0,0,0.10)",
-        color: "#111827",
+        background: "#F1F5F9",
+        color: "#475569",
+        dot: "#64748B",
+        selectedBackground: "#E7EDF5",
       };
   }
 }
 
-// чтобы можно было импортить и так и так:
 export const badgeStyleStatus = statusTone;

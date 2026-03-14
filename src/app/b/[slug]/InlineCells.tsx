@@ -9,17 +9,9 @@ import React, {
   useTransition,
 } from "react";
 import { createPortal } from "react-dom";
-import { Check, ChevronDown } from "lucide-react";
 
 import { setOrderStatus } from "./actions";
-
-type Status =
-  | "NEW"
-  | "IN_PROGRESS"
-  | "WAITING_PAYMENT"
-  | "DONE"
-  | "CANCELED"
-  | "DUPLICATE";
+import { statusTone, type Status } from "./statusTone";
 
 declare global {
   interface Window {
@@ -47,56 +39,25 @@ function suppressOverlayEvent(event: React.SyntheticEvent) {
 }
 
 function badgeStyleStatus(status: Status): React.CSSProperties {
-  switch (status) {
-    case "DONE":
-      return {
-        background: "#ecfdf3",
-        border: "1px solid #abefc6",
-        color: "#067647",
-      };
-    case "IN_PROGRESS":
-      return {
-        background: "#eef4ff",
-        border: "1px solid #c7d7fe",
-        color: "#2459d3",
-      };
-    case "WAITING_PAYMENT":
-      return {
-        background: "#fff7e8",
-        border: "1px solid #f7d8a8",
-        color: "#b45309",
-      };
-    case "CANCELED":
-      return {
-        background: "#fef3f2",
-        border: "1px solid #fecdca",
-        color: "#d92d20",
-      };
-    case "DUPLICATE":
-      return {
-        background: "#f2f4f7",
-        border: "1px solid #d0d5dd",
-        color: "#334155",
-      };
-    case "NEW":
-    default:
-      return {
-        background: "#f8fafc",
-        border: "1px solid #dbe2ea",
-        color: "#111827",
-      };
-  }
+  const tone = statusTone(status);
+
+  return {
+    background: tone.background,
+    color: tone.color,
+  };
 }
 
 function Badge({
   children,
   style,
+  dotColor,
   onClick,
   disabled,
   title,
 }: {
   children: React.ReactNode;
   style: React.CSSProperties;
+  dotColor: string;
   onClick?: () => void;
   disabled?: boolean;
   title?: string;
@@ -107,24 +68,35 @@ function Badge({
       title={title}
       onClick={disabled ? undefined : onClick}
       style={{
-        height: 34,
-        padding: "0 14px",
+        height: 25,
+        padding: "0 11px",
         borderRadius: 999,
-        fontSize: 13,
-        fontWeight: 700,
-        letterSpacing: 0.2,
+        fontSize: 12,
+        fontWeight: 500,
         display: "inline-flex",
         alignItems: "center",
         gap: 6,
+        border: 0,
         cursor: disabled ? "default" : "pointer",
         userSelect: "none",
         whiteSpace: "nowrap",
         opacity: disabled ? 0.6 : 1,
+        lineHeight: 1,
+        transition: "background-color 140ms ease, color 140ms ease, opacity 140ms ease",
         ...style,
       }}
     >
+      <span
+        aria-hidden="true"
+        style={{
+          width: 6,
+          height: 6,
+          borderRadius: 999,
+          background: dotColor,
+          flexShrink: 0,
+        }}
+      />
       {children}
-      {!disabled ? <ChevronDown size={14} style={{ opacity: 0.55 }} /> : null}
     </button>
   );
 }
@@ -195,14 +167,14 @@ function Menu({
           }}
           onClick={(event) => event.stopPropagation()}
           style={{
-            width: "min(calc(100vw - 24px), 360px)",
-            maxHeight: "min(52vh, 360px)",
+            width: "min(calc(100vw - 24px), 320px)",
+            maxHeight: "min(52vh, 340px)",
             overflowY: "auto",
             background: "white",
-            border: "1px solid #dde3ee",
-            borderRadius: 16,
-            boxShadow: "0 24px 64px rgba(15,23,42,0.24)",
-            padding: 8,
+            border: "1px solid #E2E8F0",
+            borderRadius: 14,
+            boxShadow: "0 12px 32px rgba(15,23,42,0.12)",
+            padding: 6,
           }}
         >
           {children}
@@ -219,14 +191,14 @@ function Menu({
       ref={menuRef}
       style={{
         position: "absolute",
-        top: 40,
+        top: 34,
         right: 0,
-        minWidth: width ?? 180,
+        minWidth: width ?? 196,
         background: "white",
-        border: "1px solid #dde3ee",
-        borderRadius: 16,
-        boxShadow: "0 16px 40px rgba(15,23,42,0.14)",
-        padding: 8,
+        border: "1px solid #E2E8F0",
+        borderRadius: 14,
+        boxShadow: "0 12px 32px rgba(15,23,42,0.12)",
+        padding: 6,
         zIndex: 80,
       }}
     >
@@ -239,40 +211,51 @@ function MenuItem({
   children,
   onClick,
   disabled,
-  danger,
+  tone,
   active,
 }: {
   children: React.ReactNode;
   onClick: () => void;
   disabled?: boolean;
-  danger?: boolean;
+  tone: ReturnType<typeof statusTone>;
   active?: boolean;
 }) {
+  const [hovered, setHovered] = useState(false);
+
   return (
     <button
       type="button"
       disabled={disabled}
       onClick={disabled ? undefined : onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       style={{
         width: "100%",
         textAlign: "left",
-        padding: "10px 14px",
-        borderRadius: 12,
+        minHeight: 36,
+        padding: "8px 13px",
+        borderRadius: 10,
         border: 0,
-        background: active ? "#f2f4f7" : "transparent",
+        background: active
+          ? tone.selectedBackground
+          : hovered
+            ? "#F8FAFC"
+            : "transparent",
         cursor: disabled ? "default" : "pointer",
-        fontSize: 13,
-        fontWeight: 700,
-        color: danger ? "#d92d20" : "#111827",
+        fontSize: 14,
+        fontWeight: 500,
+        color: active ? tone.color : "#182230",
         opacity: disabled ? 0.5 : 1,
         display: "flex",
         alignItems: "center",
-        justifyContent: "space-between",
-        gap: 10,
+        justifyContent: "flex-start",
+        gap: 0,
+        transition: "background-color 120ms ease, color 120ms ease",
       }}
     >
-      <span>{children}</span>
-      {active ? <Check size={16} style={{ color: "#667085", flexShrink: 0 }} /> : null}
+      <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+        {children}
+      </span>
     </button>
   );
 }
@@ -374,24 +357,41 @@ export function StatusCell({
   );
 
   if (!canManage) {
+    const tone = statusTone(value);
+
     return (
       <span
         style={{
           ...badgeStyleStatus(value),
-          height: 34,
-          padding: "0 14px",
+          height: 25,
+          padding: "0 11px",
           borderRadius: 999,
-          fontSize: 13,
-          fontWeight: 700,
+          fontSize: 12,
+          fontWeight: 500,
           display: "inline-flex",
           alignItems: "center",
+          gap: 6,
+          border: 0,
           whiteSpace: "nowrap",
+          lineHeight: 1,
         }}
       >
+        <span
+          aria-hidden="true"
+          style={{
+            width: 6,
+            height: 6,
+            borderRadius: 999,
+            background: tone.dot,
+            flexShrink: 0,
+          }}
+        />
         {statusLabel(value)}
       </span>
     );
   }
+
+  const currentTone = statusTone(local);
 
   return (
     <div
@@ -404,6 +404,7 @@ export function StatusCell({
     >
       <Badge
         style={badgeStyleStatus(local)}
+        dotColor={currentTone.dot}
         disabled={isPending}
         title="Change status"
         onClick={() => setOpen((v) => !v)}
@@ -418,46 +419,62 @@ export function StatusCell({
         mobile={isMobile}
         onClose={() => setOpen(false)}
       >
-        {options.map((s) => (
-          <MenuItem
-            key={s}
-            active={s === local}
-            disabled={isPending}
-            danger={s === "CANCELED"}
-            onClick={() => {
-              if (s === local) {
-                markOverlayClosing();
-                setOpen(false);
-                return;
-              }
+        {options.map((s) => {
+          const tone = statusTone(s);
 
-              if (s === "CANCELED") {
-                const ok = confirm("Cancel this order?");
-                if (!ok) {
+          return (
+            <MenuItem
+              key={s}
+              active={s === local}
+              disabled={isPending}
+              tone={tone}
+              onClick={() => {
+                if (s === local) {
                   markOverlayClosing();
                   setOpen(false);
                   return;
                 }
-              }
 
-              const prev = local;
-              markOverlayClosing();
-              setOpen(false);
-
-              startTransition(async () => {
-                setLocal(s);
-                try {
-                  await setOrderStatus({ orderId, businessSlug, status: s });
-                } catch {
-                  setLocal(prev);
-                  alert("Failed to update status. Try again.");
+                if (s === "CANCELED") {
+                  const ok = confirm("Cancel this order?");
+                  if (!ok) {
+                    markOverlayClosing();
+                    setOpen(false);
+                    return;
+                  }
                 }
-              });
-            }}
-          >
-            {statusLabel(s)}
-          </MenuItem>
-        ))}
+
+                const prev = local;
+                markOverlayClosing();
+                setOpen(false);
+
+                startTransition(async () => {
+                  setLocal(s);
+                  try {
+                    await setOrderStatus({ orderId, businessSlug, status: s });
+                  } catch {
+                    setLocal(prev);
+                    alert("Failed to update status. Try again.");
+                  }
+                });
+              }}
+            >
+              <>
+                <span
+                  aria-hidden="true"
+                  style={{
+                    width: 6,
+                    height: 6,
+                    borderRadius: 999,
+                    background: tone.dot,
+                    flexShrink: 0,
+                  }}
+                />
+                {statusLabel(s)}
+              </>
+            </MenuItem>
+          );
+        })}
       </Menu>
     </div>
   );
