@@ -140,3 +140,20 @@ export async function updateOrder(input: {
 
   revalidatePath(`/b/${input.businessSlug}`);
 }
+
+export async function setOrderManager(input: {
+  orderId: string;
+  businessSlug: string;
+  managerId: string | null;
+}) {
+  const supabase = await supabaseServer();
+
+  const { error } = await supabase
+    .from("orders")
+    .update({ created_by: input.managerId })
+    .eq("id", input.orderId);
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath(`/b/${input.businessSlug}`);
+}

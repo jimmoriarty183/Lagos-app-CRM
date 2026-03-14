@@ -95,6 +95,11 @@ type TeamActor = {
   kind: "OWNER" | "MANAGER";
 };
 
+type OrderListItem = any & {
+  manager_id: string | null;
+  manager_name: string | null;
+};
+
 function upperRole(r: any): "OWNER" | "MANAGER" | "GUEST" {
   const s = String(r || "").toUpperCase();
   if (s === "OWNER") return "OWNER";
@@ -191,6 +196,7 @@ export default async function Page({ params, searchParams }: PageProps) {
   const canManage = userRole === "OWNER" || userRole === "MANAGER";
   const canEdit = canManage;
   const canSeeAnalyticsNav = userRole === "OWNER";
+  const currentUserId = user?.id ?? null;
 
   const phoneRaw = String(sp.u ?? "");
   const allowedStatuses = [
@@ -392,6 +398,10 @@ export default async function Page({ params, searchParams }: PageProps) {
   const actorFilteredList: any[] =
     filters.actor === "ALL"
       ? listRaw
+      : filters.actor === "ME"
+        ? listRaw.filter((o) => String(o.created_by ?? "") === String(currentUserId ?? ""))
+        : filters.actor === "UNASSIGNED"
+          ? listRaw.filter((o) => !String(o.created_by ?? "").trim())
       : filters.actor === "OWNER"
         ? listRaw.filter((o) => ownerIds.includes(String(o.created_by ?? "")))
         : filters.actor === "MANAGER"
@@ -446,7 +456,11 @@ export default async function Page({ params, searchParams }: PageProps) {
     ? filterOrdersByCreatedAt(listRaw, summaryPeriod.previous)
     : [];
 
-  const list: any[] = applyStatusFilter(currentPeriodRows);
+  const list: OrderListItem[] = applyStatusFilter(currentPeriodRows).map((order) => ({
+    ...order,
+    manager_id: order.created_by ? String(order.created_by) : null,
+    manager_name: actorNameById.get(String(order.created_by ?? "")) || null,
+  }));
   const previousList: any[] = previousPeriodRows;
 
   const currentSnapshot = getMetricSnapshot(summaryCurrentRows, todayISO);
@@ -559,6 +573,7 @@ export default async function Page({ params, searchParams }: PageProps) {
               periodLabel={summaryPeriod.current.label}
               comparisonLabel={summaryPeriod.comparisonLabel}
               hasComparison={Boolean(summaryPeriod.previous)}
+              hasOrdersEver={listRaw.length > 0}
               periodOptions={summaryPeriodOptions}
               extendedOptions={summaryExtendedOptions}
               customRange={{
@@ -583,7 +598,8 @@ export default async function Page({ params, searchParams }: PageProps) {
             />
 
             <DesktopOrdersTable
-              list={list as any}
+              key={`desktop-orders-${filters.q}-${filters.statuses.join(",")}-${filters.actor}-${filters.range}-${filters.startDate ?? ""}-${filters.endDate ?? ""}`}
+              list={list}
               todayISO={todayISO}
               businessSlug={String(currentBusiness.slug)}
               businessId={String(currentBusiness.id)}
@@ -601,6 +617,8 @@ export default async function Page({ params, searchParams }: PageProps) {
               canManage={canManage}
               canEdit={canEdit}
               userRole={userRole}
+              actors={teamActors}
+              currentUserId={currentUserId}
             />
           </div>
         </div>
@@ -645,7 +663,8 @@ export default async function Page({ params, searchParams }: PageProps) {
             actors={teamActors}
           />
           <MobileOrdersList
-            list={list as any}
+            key={`mobile-orders-${filters.q}-${filters.statuses.join(",")}-${filters.actor}-${filters.range}-${filters.startDate ?? ""}-${filters.endDate ?? ""}`}
+            list={list}
             todayISO={todayISO}
             businessSlug={String(currentBusiness.slug)}
             businessId={String(currentBusiness.id)}
@@ -654,6 +673,15 @@ export default async function Page({ params, searchParams }: PageProps) {
             canManage={canManage}
             canEdit={canEdit}
             userRole={userRole}
+            actors={teamActors}
+            currentUserId={currentUserId}
+            searchQuery={filters.q}
+            statusFilter={filters.statuses}
+            summaryRange={summaryRange}
+            rangeFilter={filters.range}
+            rangeStartDate={filters.startDate}
+            rangeEndDate={filters.endDate}
+            actorFilter={filters.actor}
           />
         </div>
       </main>

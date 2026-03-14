@@ -1,10 +1,29 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
+import {
+  AlertTriangle,
+  Ellipsis,
+  Eye,
+  PencilLine,
+  Plus,
+  Search,
+  Trash2,
+} from "lucide-react";
+
 import { StatusCell } from "../../InlineCells";
 import { OrderChecklist } from "../../OrderChecklist";
 import { OrderComments } from "../../OrderComments";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import type { DashboardRange } from "@/lib/order-dashboard-summary";
 
 declare global {
   interface Window {
@@ -20,9 +39,18 @@ type Status =
   | "CANCELED"
   | "DUPLICATE";
 
+type StatusFilterValue = Status | "OVERDUE";
+type UserRole = "OWNER" | "MANAGER" | "GUEST";
+
+type TeamActor = {
+  id: string;
+  label: string;
+  kind: "OWNER" | "MANAGER";
+};
+
 type OrderRow = {
   id: string;
-  client_name: string;
+  client_name: string | null;
   client_phone: string | null;
   amount: number;
   description: string | null;
@@ -30,12 +58,34 @@ type OrderRow = {
   status: Status;
   order_number: number | null;
   created_at: string;
+  manager_id: string | null;
+  manager_name: string | null;
 };
 
-type UserRole = "OWNER" | "MANAGER" | "GUEST";
-
 function fmtAmount(n: number) {
-  return new Intl.NumberFormat("uk-UA").format(n);
+  return new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(Number(n || 0));
+}
+
+function formatCreatedAt(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Unknown date";
+  return date.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function formatDueDate(value: string | null) {
+  if (!value) return "No due date";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
 }
 
 function shouldIgnoreOverlayCloseClick() {
@@ -45,68 +95,18 @@ function shouldIgnoreOverlayCloseClick() {
   );
 }
 
-function EyeIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className={className}
-      fill="none"
-      aria-hidden="true"
-    >
-      <path
-        d="M2.5 12s3.5-7 9.5-7 9.5 7 9.5 7-3.5 7-9.5 7-9.5-7-9.5-7Z"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
+function normalizeQuickStatus(statuses: StatusFilterValue[]) {
+  return statuses.length === 1 ? statuses[0] : "ALL";
 }
 
-function EyeOffIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className={className}
-      fill="none"
-      aria-hidden="true"
-    >
-      <path
-        d="M3 3l18 18"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-      <path
-        d="M10.6 10.6A3 3 0 0 0 13.4 13.4"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-      <path
-        d="M6.2 6.2C4 8 2.5 10.5 2.5 12c0 0 3.5 7 9.5 7 1.9 0 3.6-.5 5-1.2"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M9.5 5.3A10.4 10.4 0 0 1 12 5c6 0 9.5 7 9.5 7 0 0-1.1 2.2-3.2 4.1"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
+function normalizeQuickActor(actorFilter: string, actors: TeamActor[], currentUserId: string | null) {
+  if (!actorFilter || actorFilter === "ALL") return "ALL";
+  if (actorFilter === "UNASSIGNED") return "UNASSIGNED";
+  if (actorFilter === "ME") return "ME";
+  if (actorFilter.startsWith("user:")) return actorFilter;
+  if (currentUserId && actorFilter === `user:${currentUserId}`) return "ME";
+  if (actors.some((actor) => `user:${actor.id}` === actorFilter)) return actorFilter;
+  return "ALL";
 }
 
 export default function MobileOrdersList({
@@ -119,6 +119,15 @@ export default function MobileOrdersList({
   canManage,
   canEdit,
   userRole,
+  actors,
+  currentUserId,
+  searchQuery,
+  statusFilter,
+  summaryRange,
+  rangeFilter,
+  rangeStartDate,
+  rangeEndDate,
+  actorFilter,
 }: {
   list?: OrderRow[];
   todayISO: string;
@@ -128,210 +137,428 @@ export default function MobileOrdersList({
   resultsCount: number;
   canManage: boolean;
   canEdit: boolean;
-  userRole: UserRole; // ✅ ВАЖНО: реальная роль в этом business
+  userRole: UserRole;
+  actors: TeamActor[];
+  currentUserId: string | null;
+  searchQuery: string;
+  statusFilter: StatusFilterValue[];
+  summaryRange: DashboardRange;
+  rangeFilter: DashboardRange;
+  rangeStartDate: string | null;
+  rangeEndDate: string | null;
+  actorFilter: string;
 }) {
+  const router = useRouter();
   const [openId, setOpenId] = useState<string | null>(null);
-  const toggle = (id: string) => setOpenId((cur) => (cur === id ? null : id));
+  const [searchDraft, setSearchDraft] = useState(searchQuery);
+  const [statusValue, setStatusValue] = useState<string>(normalizeQuickStatus(statusFilter));
+  const [managerValue, setManagerValue] = useState<string>(
+    normalizeQuickActor(actorFilter, actors, currentUserId),
+  );
+  const [statusTouched, setStatusTouched] = useState(false);
+  const [managerTouched, setManagerTouched] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+  const submitTimerRef = useRef<number | null>(null);
 
-  const supabase = useMemo(() => {
-    return createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
-  }, []);
+  const supabase = useMemo(
+    () =>
+      createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      ),
+    [],
+  );
+
+  const managerOptions = useMemo(
+    () =>
+      actors
+        .slice()
+        .sort((a, b) => a.label.localeCompare(b.label))
+        .map((actor) => ({
+          value: `user:${actor.id}`,
+          label: actor.label,
+        })),
+    [actors],
+  );
+
+  const buildHref = (next: {
+    q: string;
+    statusValue: string;
+    statusTouched: boolean;
+    managerValue: string;
+    managerTouched: boolean;
+  }) => {
+    const params = new URLSearchParams();
+    if (phoneRaw) params.set("u", phoneRaw);
+    params.set("srange", summaryRange);
+    params.set("page", "1");
+    if (rangeFilter !== "ALL") params.set("range", rangeFilter);
+    if (rangeStartDate) params.set("start", rangeStartDate);
+    if (rangeEndDate) params.set("end", rangeEndDate);
+
+    const q = next.q.trim();
+    if (q) params.set("q", q);
+
+    const nextStatuses =
+      next.statusTouched || next.statusValue !== "ALL"
+        ? next.statusValue === "ALL"
+          ? []
+          : [next.statusValue]
+        : statusFilter;
+    for (const status of nextStatuses) {
+      params.append("status", status);
+    }
+
+    const nextActor =
+      next.managerTouched || next.managerValue !== "ALL"
+        ? next.managerValue === "ALL"
+          ? ""
+          : next.managerValue === "ME"
+            ? "ME"
+            : next.managerValue
+        : actorFilter;
+    if (nextActor) params.set("actor", nextActor);
+
+    const qs = params.toString();
+    return qs ? `/b/${businessSlug}?${qs}` : `/b/${businessSlug}`;
+  };
+
+  const submitFilters = (next: {
+    q: string;
+    statusValue: string;
+    statusTouched: boolean;
+    managerValue: string;
+    managerTouched: boolean;
+  }) => {
+    startTransition(() => {
+      router.replace(buildHref(next));
+    });
+  };
+
+  const handleDeleteOrder = async (orderId: string) => {
+    if (!canEdit || deletingId) return;
+    if (!window.confirm("Delete this order? This action cannot be undone.")) return;
+
+    setDeletingId(orderId);
+    const { error } = await supabase
+      .from("orders")
+      .delete()
+      .eq("id", orderId)
+      .eq("business_id", businessId);
+    setDeletingId(null);
+
+    if (error) {
+      window.alert(error.message || "Failed to delete order.");
+      return;
+    }
+
+    if (openId === orderId) setOpenId(null);
+    router.refresh();
+  };
 
   return (
-    <div className="grid gap-4 lg:hidden">
-      <div className="rounded-2xl border border-gray-200 bg-white px-4 py-3 shadow-sm">
-        <div className="text-sm font-semibold text-gray-900">Orders</div>
-        <div className="text-xs font-medium text-gray-500">
-          {resultsCount} {resultsCount === 1 ? "result" : "results"}
+    <section className="grid gap-4 lg:hidden">
+      <div className="rounded-[24px] border border-[#dde3ee] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <div className="text-sm font-semibold text-[#111827]">Orders</div>
+            <div className="mt-1 text-xs font-medium text-[#98a2b3]">
+              {resultsCount} {resultsCount === 1 ? "result" : "results"}
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              const target = document.getElementById("mobile-create-order");
+              target?.scrollIntoView({ behavior: "smooth", block: "start" });
+            }}
+            className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-2xl bg-[#111827] px-3.5 text-sm font-semibold text-white transition hover:bg-[#0b1220]"
+          >
+            <Plus className="h-4 w-4" />
+            Create
+          </button>
+        </div>
+
+        <div className="mt-4 grid gap-2">
+          <label className="relative">
+            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#98a2b3]" />
+            <input
+              value={searchDraft}
+              onChange={(event) => setSearchDraft(event.currentTarget.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  submitFilters({
+                    q: searchDraft,
+                    statusValue,
+                    statusTouched,
+                    managerValue,
+                    managerTouched,
+                  });
+                }
+              }}
+              onBlur={() => {
+                if (submitTimerRef.current) window.clearTimeout(submitTimerRef.current);
+                submitTimerRef.current = window.setTimeout(() => {
+                  submitFilters({
+                    q: searchDraft,
+                    statusValue,
+                    statusTouched,
+                    managerValue,
+                    managerTouched,
+                  });
+                }, 120);
+              }}
+              placeholder="Search by client, phone, order ID..."
+              className="h-11 w-full rounded-2xl border border-[#dde3ee] bg-[#fbfcfe] pl-11 pr-4 text-sm outline-none transition placeholder:text-[#98a2b3] focus:border-[#111827] focus:bg-white focus:ring-2 focus:ring-[#111827]/10"
+            />
+          </label>
+
+          <div className="grid grid-cols-2 gap-2">
+            <select
+              value={statusValue}
+              onChange={(event) => {
+                const next = event.currentTarget.value;
+                setStatusValue(next);
+                setStatusTouched(true);
+                submitFilters({
+                  q: searchDraft,
+                  statusValue: next,
+                  statusTouched: true,
+                  managerValue,
+                  managerTouched,
+                });
+              }}
+              className="h-11 min-w-0 rounded-2xl border border-[#dde3ee] bg-white px-3 text-sm font-medium text-[#344054] outline-none transition focus:border-[#111827] focus:ring-2 focus:ring-[#111827]/10"
+            >
+              <option value="ALL">All Statuses</option>
+              <option value="NEW">New</option>
+              <option value="IN_PROGRESS">In Progress</option>
+              <option value="WAITING_PAYMENT">Waiting Payment</option>
+              <option value="DONE">Done</option>
+              <option value="DUPLICATE">Duplicate</option>
+            </select>
+
+            <select
+              value={managerValue}
+              onChange={(event) => {
+                const next = event.currentTarget.value;
+                setManagerValue(next);
+                setManagerTouched(true);
+                submitFilters({
+                  q: searchDraft,
+                  statusValue,
+                  statusTouched,
+                  managerValue: next,
+                  managerTouched: true,
+                });
+              }}
+              className="h-11 min-w-0 rounded-2xl border border-[#dde3ee] bg-white px-3 text-sm font-medium text-[#344054] outline-none transition focus:border-[#111827] focus:ring-2 focus:ring-[#111827]/10"
+            >
+              <option value="ALL">All Managers</option>
+              {currentUserId ? <option value="ME">Me</option> : null}
+              <option value="UNASSIGNED">Unassigned</option>
+              {managerOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
-      {list.map((o) => {
-        const isOpen = openId === o.id;
-
-        const editHref = `/b/${businessSlug}/o/${o.id}?u=${encodeURIComponent(
-          phoneRaw
-        )}`;
+      {list.map((order) => {
+        const isOpen = openId === order.id;
+        const dueISO = order.due_date ? String(order.due_date).slice(0, 10) : null;
+        const isOverdue =
+          !!dueISO &&
+          dueISO < todayISO &&
+          (order.status === "NEW" || order.status === "IN_PROGRESS");
+        const editHref = `/b/${businessSlug}/o/${order.id}?u=${encodeURIComponent(phoneRaw)}`;
 
         return (
-          <div
-            key={o.id}
+          <article
+            key={order.id}
             onClick={() => {
-              if (shouldIgnoreOverlayCloseClick()) {
-                return;
-              }
-              toggle(o.id);
+              if (shouldIgnoreOverlayCloseClick()) return;
+              setOpenId(order.id);
             }}
-            className="cursor-pointer rounded-2xl border border-gray-200 bg-white p-4 shadow-sm"
-            style={{
-              position: "relative",
-              overflow: "visible",
-              isolation: "isolate",
-              zIndex: isOpen ? 5 : 1,
-            }}
+            className="cursor-pointer rounded-[24px] border border-[#dde3ee] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#cfd8e6]"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <div className="text-xs text-gray-500 mb-1">
-                  <span className="font-semibold text-gray-700">
-                    Order #{o.order_number ?? "-"}
-                  </span>{" "}
-                  <span className="text-gray-300">·</span>{" "}
-                  {new Date(o.created_at).toLocaleString("en-NG", {
-                    day: "2-digit",
-                    month: "short",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
+                <div className="text-sm font-semibold text-[#111827]">#{order.order_number ?? "—"}</div>
+                <div className="mt-1 text-xs font-medium text-[#98a2b3]">
+                  {formatCreatedAt(order.created_at)}
                 </div>
-
-                <div className="text-sm font-extrabold text-gray-900 truncate">
-                  {o.client_name || "—"}
-                </div>
-
-                {o.client_phone ? (
-                  <div className="mt-1 text-sm text-gray-600">
-                    📞 {o.client_phone}
-                  </div>
-                ) : null}
               </div>
 
-              <div
-                className="flex items-center gap-2"
-                style={{
-                  position: "relative",
-                  zIndex: 20,
-                  overflow: "visible",
-                }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div
-                  className="inline-flex"
-                  style={{
-                    position: "relative",
-                    zIndex: 20,
-                    overflow: "visible",
-                  }}
-                >
+              <div className="flex items-center gap-2" onClick={(event) => event.stopPropagation()}>
+                <div className="inline-flex">
                   <StatusCell
-                    orderId={o.id}
-                    value={o.status}
+                    orderId={order.id}
+                    businessSlug={businessSlug}
+                    value={order.status}
                     canManage={canManage}
                   />
                 </div>
 
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (shouldIgnoreOverlayCloseClick()) {
-                      return;
-                    }
-                    toggle(o.id);
-                  }}
-                  className="h-9 w-10 inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white hover:bg-gray-50 transition"
-                  title={isOpen ? "Hide preview" : "Preview"}
-                  aria-label={isOpen ? "Hide preview" : "Preview"}
-                >
-                  {isOpen ? (
-                    <EyeOffIcon className="h-5 w-5 text-gray-700" />
-                  ) : (
-                    <EyeIcon className="h-5 w-5 text-gray-700" />
-                  )}
-                </button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#dde3ee] bg-white text-[#667085] transition hover:border-[#cfd8e6] hover:bg-[#f8fafc] hover:text-[#111827]"
+                      aria-label="Open order actions"
+                    >
+                      <Ellipsis className="h-4 w-4" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    align="end"
+                    className="w-48 rounded-xl border-[#dde3ee] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
+                  >
+                    <DropdownMenuItem
+                      className="rounded-lg px-3 py-2 text-sm font-medium"
+                      onSelect={(event) => {
+                        event.preventDefault();
+                        setOpenId(order.id);
+                      }}
+                    >
+                      <Eye className="h-4 w-4" />
+                      View Details
+                    </DropdownMenuItem>
+                    {canEdit ? (
+                      <DropdownMenuItem
+                        className="rounded-lg px-3 py-2 text-sm font-medium"
+                        onSelect={(event) => {
+                          event.preventDefault();
+                          router.push(editHref);
+                        }}
+                      >
+                        <PencilLine className="h-4 w-4" />
+                        Edit Order
+                      </DropdownMenuItem>
+                    ) : null}
+                    {canEdit ? <DropdownMenuSeparator /> : null}
+                    {canEdit ? (
+                      <DropdownMenuItem
+                        className="rounded-lg px-3 py-2 text-sm font-medium text-red-700 focus:text-red-700"
+                        onSelect={(event) => {
+                          event.preventDefault();
+                          void handleDeleteOrder(order.id);
+                        }}
+                        disabled={deletingId === order.id}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        {deletingId === order.id ? "Deleting..." : "Delete Order"}
+                      </DropdownMenuItem>
+                    ) : null}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
 
-            <div className="mt-3 flex items-start justify-between gap-3">
-              <div>
-                <div className="text-xs text-gray-500">Amount</div>
-                <div className="text-lg font-extrabold text-gray-900 tabular-nums">
-                  {fmtAmount(Number(o.amount))}
+            <div className="mt-4 grid gap-4">
+              <div className="min-w-0">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
+                  Client
+                </div>
+                <div className="mt-1 text-sm font-semibold text-[#111827]">
+                  {order.client_name?.trim() || "No client name"}
+                </div>
+                <div className="mt-1 text-xs text-[#98a2b3]">
+                  {order.client_phone?.trim() || "No phone number"}
                 </div>
               </div>
 
-              <div className="text-right">
-                <div className="text-xs text-gray-500">Due</div>
-                <div className="font-extrabold text-gray-900">
-                  {o.due_date || "—"}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
+                    Manager
+                  </div>
+                  <div className="mt-1 text-sm font-medium text-[#344054]">
+                    {order.manager_name || "Unassigned"}
+                  </div>
                 </div>
-                {o.due_date &&
-                String(o.due_date).slice(0, 10) < todayISO &&
-                (o.status === "NEW" || o.status === "IN_PROGRESS") ? (
-                  <div className="text-xs text-red-600/80">Overdue</div>
-                ) : null}
+
+                <div>
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
+                    Amount
+                  </div>
+                  <div className="mt-1 text-sm font-semibold tabular-nums text-[#111827]">
+                    {fmtAmount(Number(order.amount))}
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
+                  Due
+                </div>
+                <div
+                  className={[
+                    "mt-1 inline-flex items-center gap-2 text-sm font-medium",
+                    isOverdue ? "text-[#d92d20]" : "text-[#475467]",
+                  ].join(" ")}
+                >
+                  {isOverdue ? <AlertTriangle className="h-4 w-4" /> : null}
+                  <span>{formatDueDate(order.due_date)}</span>
+                </div>
               </div>
             </div>
 
             {isOpen ? (
               <div
-                className="mt-3 rounded-2xl border border-gray-200 bg-gray-50 p-3"
-                onClick={(e) => e.stopPropagation()}
+                className="mt-4 rounded-2xl border border-[#dde3ee] bg-[#fbfcfe] p-3"
+                onClick={(event) => event.stopPropagation()}
               >
-                <div className="text-xs font-extrabold text-gray-500">
+                <div className="text-xs font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
                   Description
                 </div>
-                <div className="mt-2 text-sm text-gray-900 whitespace-pre-wrap break-words">
-                  {o.description?.trim() ? o.description : "No description"}
+                <div className="mt-2 whitespace-pre-wrap break-words text-sm text-[#364153]">
+                  {order.description?.trim() ? order.description : "No description"}
                 </div>
 
-                {/* ✅ CHECKLIST */}
                 <OrderChecklist
-                  order={{ id: o.id, business_id: businessId }}
+                  order={{ id: order.id, business_id: businessId }}
                   supabase={supabase}
                 />
 
-                {/* ✅ COMMENTS */}
                 <OrderComments
-                  order={{ id: o.id, business_id: businessId }}
+                  order={{ id: order.id, business_id: businessId }}
                   supabase={supabase}
                   author={{
                     phone: phoneRaw,
-                    role: userRole, // ✅ FIX: реальная роль (OWNER/MANAGER/GUEST)
+                    role: userRole,
                   }}
                 />
 
                 <div className="mt-3 flex justify-end">
                   <button
                     type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setOpenId(null);
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      setOpenId((current) => (current === order.id ? null : current));
                     }}
-                    className="h-8 px-3 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-xs font-extrabold"
+                    className="inline-flex h-9 items-center justify-center rounded-xl border border-[#dde3ee] bg-white px-3 text-sm font-semibold text-[#111827] transition hover:bg-[#f8fafc]"
                   >
                     Close
                   </button>
                 </div>
               </div>
             ) : null}
-
-            <div
-              className="mt-3 flex justify-end"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {canEdit ? (
-                <a
-                  href={editHref}
-                  onClick={(e) => e.stopPropagation()}
-                  className="h-10 px-4 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 inline-flex items-center text-sm font-extrabold text-gray-900"
-                >
-                  Edit
-                </a>
-              ) : null}
-            </div>
-          </div>
+          </article>
         );
       })}
 
       {list.length === 0 ? (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 text-center text-sm text-gray-500">
-          No orders found
+        <div className="rounded-[24px] border border-[#dde3ee] bg-white p-6 text-center text-sm text-[#98a2b3] shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+          {isPending ? "Updating orders..." : "No orders found"}
         </div>
       ) : null}
-    </div>
+    </section>
   );
 }

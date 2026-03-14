@@ -22,6 +22,7 @@ type Props = {
   periodLabel: string;
   comparisonLabel: string | null;
   hasComparison: boolean;
+  hasOrdersEver: boolean;
   periodOptions: {
     label: string;
     shortLabel: string;
@@ -56,6 +57,7 @@ function SummaryCard({
   label,
   value,
   periodLabel,
+  hasOrdersEver,
   trendText,
   trendDirection,
   trendTone,
@@ -65,12 +67,27 @@ function SummaryCard({
   label: string;
   value: string;
   periodLabel: string;
+  hasOrdersEver: boolean;
   trendText: string | null;
   trendDirection: "up" | "down" | "neutral";
   trendTone: "positive" | "negative" | "neutral";
   tone?: MetricTone;
   icon: ReactNode;
 }) {
+  const numericValue = Number(String(value).replace(/[^0-9.-]/g, ""));
+  const isZeroState = Number.isFinite(numericValue) && numericValue === 0;
+  const normalizedPeriodLabel = periodLabel.toLowerCase();
+  const emptyStateCopy = !hasOrdersEver
+    ? label === "Total Orders"
+      ? "No orders yet"
+      : "Create your first order to get started."
+    : label === "Total Orders"
+      ? `No orders in ${normalizedPeriodLabel}.`
+      : label === "Total Revenue"
+        ? `No revenue in ${normalizedPeriodLabel}.`
+        : label === "Active Orders"
+          ? `No active orders in ${normalizedPeriodLabel}.`
+          : `No overdue orders in ${normalizedPeriodLabel}.`;
   const toneClasses =
     tone === "blue"
       ? {
@@ -123,19 +140,27 @@ function SummaryCard({
         </div>
       </div>
 
-      <div className={`mt-5 text-[30px] font-bold leading-none tracking-[-0.04em] tabular-nums ${toneClasses.value}`}>
-        {value}
-      </div>
-
-      <div className="mt-3 space-y-1.5">
-        <div className={`text-[12px] font-medium ${toneClasses.meta}`}>{periodLabel}</div>
-        {trendText ? (
-          <div className={`inline-flex items-center gap-1 text-[12px] font-medium ${trendClasses}`}>
-            {TrendIcon ? <TrendIcon className="h-3.5 w-3.5" /> : null}
-            <span>{trendText}</span>
+      {isZeroState ? (
+        <div className="mt-5 max-w-[18rem] text-[13px] font-medium leading-5 text-[#667085]">
+          {emptyStateCopy}
+        </div>
+      ) : (
+        <>
+          <div className={`mt-5 text-[30px] font-bold leading-none tracking-[-0.04em] tabular-nums ${toneClasses.value}`}>
+            {value}
           </div>
-        ) : null}
-      </div>
+
+          <div className="mt-3 space-y-1.5">
+            <div className={`text-[12px] font-medium ${toneClasses.meta}`}>{periodLabel}</div>
+            {trendText ? (
+              <div className={`inline-flex items-center gap-1 text-[12px] font-medium ${trendClasses}`}>
+                {TrendIcon ? <TrendIcon className="h-3.5 w-3.5" /> : null}
+                <span>{trendText}</span>
+              </div>
+            ) : null}
+          </div>
+        </>
+      )}
     </article>
   );
 }
@@ -145,6 +170,7 @@ export default function DesktopAnalyticsCard({
   periodLabel,
   comparisonLabel,
   hasComparison,
+  hasOrdersEver,
   periodOptions,
   extendedOptions = [],
   customRange,
@@ -261,14 +287,15 @@ export default function DesktopAnalyticsCard({
 
       <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {cards.map((card) => (
-          <SummaryCard
-            key={card.label}
-            label={card.label}
-            value={card.value}
-            periodLabel={periodLabel}
-            trendText={card.trendText}
-            trendDirection={card.trendDirection}
-            trendTone={card.trendTone}
+            <SummaryCard
+              key={card.label}
+              label={card.label}
+              value={card.value}
+              periodLabel={periodLabel}
+              hasOrdersEver={hasOrdersEver}
+              trendText={card.trendText}
+              trendDirection={card.trendDirection}
+              trendTone={card.trendTone}
             tone={card.tone}
             icon={cardIcons[card.label]}
           />

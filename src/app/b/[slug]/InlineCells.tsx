@@ -25,9 +25,12 @@ declare global {
 }
 
 function statusLabel(s: Status) {
-  if (s === "IN_PROGRESS") return "IN PROGRESS";
-  if (s === "WAITING_PAYMENT") return "WAITING PAYMENT";
-  return s;
+  if (s === "IN_PROGRESS") return "In progress";
+  if (s === "WAITING_PAYMENT") return "Waiting payment";
+  if (s === "DONE") return "Done";
+  if (s === "CANCELED") return "Canceled";
+  if (s === "DUPLICATE") return "Duplicate";
+  return "New";
 }
 
 function markOverlayClosing() {
@@ -313,10 +316,12 @@ function useOutsideAndEscClose(
 
 export function StatusCell({
   orderId,
+  businessSlug,
   value,
   canManage,
 }: {
   orderId: string;
+  businessSlug: string;
   value: Status;
   canManage: boolean;
 }) {
@@ -443,7 +448,7 @@ export function StatusCell({
 
               startTransition(async () => {
                 try {
-                  await setOrderStatus({ orderId, status: s });
+                  await setOrderStatus({ orderId, businessSlug, status: s });
                 } catch {
                   setLocal(prev);
                   alert("Failed to update status. Try again.");
