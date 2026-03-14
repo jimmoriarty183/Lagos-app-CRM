@@ -166,6 +166,12 @@ export default async function Page({ params, searchParams }: PageProps) {
     filters.status !== "ALL" ||
     filters.range !== "ALL" ||
     filters.actor !== "ALL";
+  const activeFiltersCount = [
+    filters.q ? 1 : 0,
+    filters.status !== "ALL" ? 1 : 0,
+    filters.range !== "ALL" ? 1 : 0,
+    filters.actor !== "ALL" ? 1 : 0,
+  ].reduce((sum, count) => sum + count, 0);
 
   const clearHref =
     phoneRaw && phoneRaw.length > 0
@@ -337,26 +343,17 @@ export default async function Page({ params, searchParams }: PageProps) {
 
   const sumAmount = (rows: any[]) => rows.reduce((s, o) => s + Number(o.amount || 0), 0);
   const totalAmount = sumAmount(list);
+  const activeOrders = list.filter(
+    (o) => o.status === "NEW" || o.status === "IN_PROGRESS",
+  ).length;
   const overdueCount = list.filter((o) => isOrderOverdue(o)).length;
 
-  const waitingPaymentRows = list.filter((o) => o.status === "WAITING_PAYMENT");
-  const waitingPaymentCount = waitingPaymentRows.length;
-  const waitingPaymentAmount = sumAmount(waitingPaymentRows);
-
-  const doneRows = list.filter((o) => o.status === "DONE");
-  const doneCount = doneRows.length;
-  const doneAmount = sumAmount(doneRows);
-
-  const inProgressCount = list.filter((o) => o.status === "IN_PROGRESS").length;
-  const newCount = list.filter((o) => o.status === "NEW").length;
-  const canceledCount = list.filter((o) => o.status === "CANCELED").length;
-  const duplicateCount = list.filter((o) => o.status === "DUPLICATE").length;
-
-  const activeAmount = sumAmount(
-    list.filter((o) => o.status === "NEW" || o.status === "IN_PROGRESS"),
-  );
-
-  const fmtAmount = (n: number) => new Intl.NumberFormat("uk-UA").format(n);
+  const fmtRevenue = (n: number) =>
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 0,
+    }).format(n);
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-transparent text-slate-900">
@@ -380,6 +377,7 @@ export default async function Page({ params, searchParams }: PageProps) {
             actor={filters.actor}
             actors={teamActors}
             hasActiveFilters={hasActiveFilters}
+            activeFiltersCount={activeFiltersCount}
             clearHref={clearHref}
             businessHref={businessHref}
             canSeeAnalytics={canSeeAnalyticsNav}
@@ -388,18 +386,10 @@ export default async function Page({ params, searchParams }: PageProps) {
           <div className="min-w-0 space-y-4">
             <DesktopAnalyticsCard
               totalOrders={totalOrders}
-              totalAmount={totalAmount}
+              totalRevenue={totalAmount}
+              activeOrders={activeOrders}
               overdueCount={overdueCount}
-              waitingPaymentCount={waitingPaymentCount}
-              waitingPaymentAmount={waitingPaymentAmount}
-              doneCount={doneCount}
-              doneAmount={doneAmount}
-              inProgressCount={inProgressCount}
-              newCount={newCount}
-              canceledCount={canceledCount}
-              duplicateCount={duplicateCount}
-              activeAmount={activeAmount}
-              fmtAmount={fmtAmount}
+              fmtRevenue={fmtRevenue}
             />
 
             <DesktopCreateOrderAccordion
@@ -428,10 +418,10 @@ export default async function Page({ params, searchParams }: PageProps) {
 
         <div className="space-y-4 lg:hidden">
           <MobileSummaryBar
-            totalCount={totalOrders}
+            totalOrders={totalOrders}
+            totalRevenue={totalAmount}
+            activeOrders={activeOrders}
             overdueCount={overdueCount}
-            waitingPaymentCount={waitingPaymentCount}
-            activeAmountLabel={fmtAmount(activeAmount)}
             hasActiveFilters={hasActiveFilters}
             clearHref={clearHref}
           />

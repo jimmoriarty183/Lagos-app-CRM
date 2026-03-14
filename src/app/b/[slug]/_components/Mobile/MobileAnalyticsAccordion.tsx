@@ -1,69 +1,73 @@
-import { BarChart3 } from "lucide-react";
+import type { ReactNode } from "react";
+import {
+  AlertTriangle,
+  BarChart3,
+  CircleDollarSign,
+  Package2,
+  PlayCircle,
+} from "lucide-react";
+
 import MobileAccordion from "./MobileAccordion";
+
+type Props = {
+  canSeeAnalytics: boolean;
+  totalOrders: number;
+  totalRevenue: number;
+  activeOrders: number;
+  overdueCount: number;
+  fmtRevenue: (n: number) => string;
+};
+
+type MetricTone = "blue" | "neutral" | "green" | "red";
 
 function KpiCard({
   title,
   value,
   sub,
   tone = "neutral",
+  icon,
 }: {
   title: string;
   value: string;
-  sub?: string;
-  tone?: "neutral" | "blue" | "amber" | "green";
+  sub: string;
+  tone?: MetricTone;
+  icon: ReactNode;
 }) {
   const toneBg =
     tone === "blue"
-      ? "bg-blue-50/60 border-blue-100"
-      : tone === "amber"
-      ? "bg-amber-50/60 border-amber-100"
+      ? "bg-[#eef4ff] text-[#2459d3]"
       : tone === "green"
-      ? "bg-green-50/60 border-green-100"
-      : "bg-white border-gray-200";
+        ? "bg-[#ecfdf3] text-[#067647]"
+        : tone === "red"
+          ? "bg-[#fef3f2] text-[#d92d20]"
+          : "bg-[#f2f4f7] text-[#667085]";
+
+  const valueCls = tone === "red" ? "text-[#d92d20]" : "text-[#111827]";
+  const subCls = tone === "red" ? "text-[#b42318]" : "text-[#667085]";
 
   return (
-    <div className={`rounded-xl border ${toneBg} p-4`}>
-      <div className="text-xs font-semibold text-gray-500">{title}</div>
-      <div className="mt-1 text-xl font-extrabold text-gray-900 tabular-nums">
+    <div className="flex min-h-[136px] flex-col rounded-3xl border border-[#dde3ee] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+      <div className="flex items-center justify-between gap-3">
+        <div className="text-xs font-semibold text-[#667085]">{title}</div>
+        <div className={`inline-flex h-9 w-9 items-center justify-center rounded-2xl ${toneBg}`}>
+          {icon}
+        </div>
+      </div>
+      <div className={`mt-4 text-2xl font-bold tabular-nums tracking-[-0.03em] ${valueCls}`}>
         {value}
       </div>
-      {sub ? <div className="mt-2 text-xs text-gray-500">{sub}</div> : null}
+      <div className={`mt-2 text-xs font-medium ${subCls}`}>{sub}</div>
     </div>
   );
 }
 
-type Props = {
-  canSeeAnalytics: boolean;
-  totalOrders: number;
-  totalAmount: number;
-  overdueCount: number;
-  waitingPaymentCount: number;
-  waitingPaymentAmount: number;
-  doneCount: number;
-  doneAmount: number;
-  inProgressCount: number;
-  newCount: number;
-  canceledCount: number;
-  duplicateCount: number;
-  activeAmount: number;
-  fmtAmount: (n: number) => string;
-};
-
 export default function MobileAnalyticsAccordion({
   canSeeAnalytics,
   totalOrders,
-  totalAmount,
+  totalRevenue,
+  activeOrders,
   overdueCount,
-  waitingPaymentCount,
-  waitingPaymentAmount,
-  doneCount,
-  doneAmount,
-  inProgressCount,
-  newCount,
-  canceledCount,
-  duplicateCount,
-  activeAmount,
-  fmtAmount,
+  fmtRevenue,
 }: Props) {
   if (!canSeeAnalytics) return null;
 
@@ -72,56 +76,40 @@ export default function MobileAnalyticsAccordion({
       title={
         <span className="inline-flex items-center gap-2">
           <BarChart3 className="h-4 w-4 text-gray-400" />
-          Analytics
+          Summary
         </span>
       }
       defaultOpen={false}
     >
-      <div className="grid gap-3">
-        <div className="grid grid-cols-1 gap-3">
-          <KpiCard
-            title="Total orders"
-            value={String(totalOrders)}
-            tone="blue"
-          />
-          <KpiCard
-            title="Total amount"
-            value={fmtAmount(Math.round(totalAmount))}
-            tone="blue"
-          />
-          <KpiCard
-            title="Overdue (NEW+IN_PROGRESS)"
-            value={String(overdueCount)}
-            tone="amber"
-          />
-          <KpiCard
-            title="Waiting payment"
-            value={String(waitingPaymentCount)}
-            sub={`Amount: ${fmtAmount(Math.round(waitingPaymentAmount))}`}
-            tone="amber"
-          />
-          <KpiCard
-            title="Done"
-            value={String(doneCount)}
-            sub={`Amount: ${fmtAmount(Math.round(doneAmount))}`}
-            tone="green"
-          />
-          <KpiCard title="In progress" value={String(inProgressCount)} />
-          <KpiCard title="New" value={String(newCount)} />
-          <KpiCard
-            title="Removed"
-            value={String(canceledCount + duplicateCount)}
-            sub={`Canceled: ${canceledCount} · Duplicate: ${duplicateCount}`}
-          />
-          <KpiCard
-            title="Active amount"
-            value={fmtAmount(Math.round(activeAmount))}
-            sub="NEW + IN PROGRESS"
-            tone="blue"
-          />
-        </div>
-
-        <div className="text-xs text-gray-500">Based on current filters</div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <KpiCard
+          title="Total Orders"
+          value={String(totalOrders)}
+          sub="All orders in the current result set"
+          tone="blue"
+          icon={<Package2 className="h-4 w-4" />}
+        />
+        <KpiCard
+          title="Total Revenue"
+          value={fmtRevenue(Math.round(totalRevenue))}
+          sub="Sum of visible order amounts"
+          tone="neutral"
+          icon={<CircleDollarSign className="h-4 w-4" />}
+        />
+        <KpiCard
+          title="Active Orders"
+          value={String(activeOrders)}
+          sub="Open work currently in motion"
+          tone="green"
+          icon={<PlayCircle className="h-4 w-4" />}
+        />
+        <KpiCard
+          title="Overdue Orders"
+          value={String(overdueCount)}
+          sub="Past due and still unresolved"
+          tone="red"
+          icon={<AlertTriangle className="h-4 w-4" />}
+        />
       </div>
     </MobileAccordion>
   );

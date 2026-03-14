@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useState, useSyncExternalStore } from "react";
 import {
   Building2,
@@ -36,6 +37,7 @@ type Props = {
   actor: string;
   actors: TeamActor[];
   hasActiveFilters: boolean;
+  activeFiltersCount: number;
   clearHref: string;
   businessHref: string;
   canSeeAnalytics: boolean;
@@ -74,15 +76,17 @@ function RailLink({
   disabled = false,
   expanded = false,
   active = false,
+  badgeCount = 0,
   onClick,
 }: {
-  icon: React.ReactNode;
+  icon: ReactNode;
   label: string;
   description?: string;
   href?: string;
   disabled?: boolean;
   expanded?: boolean;
   active?: boolean;
+  badgeCount?: number;
   onClick?: () => void;
 }) {
   const cls = [
@@ -99,10 +103,29 @@ function RailLink({
 
   const body = (
     <>
-      <span className="shrink-0">{icon}</span>
+      <span className="relative shrink-0">
+        {icon}
+        {badgeCount > 0 ? (
+          <span
+            className={[
+              "absolute -right-2 -top-2 inline-flex min-w-5 items-center justify-center rounded-full border border-white bg-[#2f6fed] px-1 text-[10px] font-bold leading-5 text-white shadow-[0_6px_12px_rgba(47,111,237,0.28)]",
+              expanded ? "h-5" : "h-5",
+            ].join(" ")}
+          >
+            {badgeCount}
+          </span>
+        ) : null}
+      </span>
       {expanded ? (
-        <span className="min-w-0 pt-0.5 text-left">
-          <span className="block text-sm font-semibold leading-5">{label}</span>
+        <span className="min-w-0 flex-1 pt-0.5 text-left">
+          <span className="flex items-center gap-2">
+            <span className="block text-sm font-semibold leading-5">{label}</span>
+            {badgeCount > 0 ? (
+              <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#eef4ff] px-1.5 text-[10px] font-bold text-[#2459d3]">
+                {badgeCount}
+              </span>
+            ) : null}
+          </span>
           {description ? (
             <span className="mt-0.5 block text-xs font-medium leading-4 text-[#98a2b3]">
               {description}
@@ -149,6 +172,7 @@ export default function DesktopLeftRail({
   actor,
   actors,
   hasActiveFilters,
+  activeFiltersCount,
   clearHref,
   businessHref,
   canSeeAnalytics,
@@ -207,6 +231,7 @@ export default function DesktopLeftRail({
                 description="Search and narrow orders"
                 expanded={expanded}
                 active={filtersOpen}
+                badgeCount={activeFiltersCount}
                 onClick={() => setFiltersOpen((prev) => !prev)}
               />
 
