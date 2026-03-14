@@ -38,6 +38,13 @@ function fmtAmount(n: number) {
   return new Intl.NumberFormat("uk-UA").format(n);
 }
 
+function shouldIgnoreOverlayCloseClick() {
+  return (
+    typeof window !== "undefined" &&
+    (window.__ordersOverlayClosingUntil ?? 0) > Date.now()
+  );
+}
+
 function EyeIcon({ className }: { className?: string }) {
   return (
     <svg
@@ -153,10 +160,7 @@ export default function MobileOrdersList({
           <div
             key={o.id}
             onClick={() => {
-              if (
-                typeof window !== "undefined" &&
-                (window.__ordersOverlayClosingUntil ?? 0) > Date.now()
-              ) {
+              if (shouldIgnoreOverlayCloseClick()) {
                 return;
               }
               toggle(o.id);
@@ -223,6 +227,9 @@ export default function MobileOrdersList({
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
+                    if (shouldIgnoreOverlayCloseClick()) {
+                      return;
+                    }
                     toggle(o.id);
                   }}
                   className="h-9 w-10 inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white hover:bg-gray-50 transition"

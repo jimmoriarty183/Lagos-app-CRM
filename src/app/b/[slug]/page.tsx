@@ -38,9 +38,11 @@ type Status =
   | "CANCELED"
   | "DUPLICATE";
 
+type StatusFilterValue = Status | "OVERDUE";
+
 type Filters = {
   q: string;
-  status: "ALL" | "OVERDUE" | Status;
+  statuses: StatusFilterValue[];
   range: DashboardRange;
   startDate: string | null;
   endDate: string | null;
@@ -75,7 +77,7 @@ type PageProps = {
   searchParams?: {
     u?: string;
     q?: string;
-    status?: string;
+    status?: string | string[];
     range?: string;
     srange?: string;
     start?: string;
@@ -98,6 +100,20 @@ function upperRole(r: any): "OWNER" | "MANAGER" | "GUEST" {
   if (s === "OWNER") return "OWNER";
   if (s === "MANAGER") return "MANAGER";
   return "GUEST";
+}
+
+function normalizeStatusFilters(
+  value: string | string[] | undefined,
+  allowedStatuses: readonly StatusFilterValue[],
+) {
+  const normalized = (Array.isArray(value) ? value : [value])
+    .flatMap((item) => String(item ?? "").split(","))
+    .map((item) => item.trim().toUpperCase())
+    .filter((item): item is StatusFilterValue =>
+      allowedStatuses.includes(item as StatusFilterValue),
+    );
+
+  return Array.from(new Set(normalized));
 }
 
 export default async function Page({ params, searchParams }: PageProps) {
@@ -177,9 +193,7 @@ export default async function Page({ params, searchParams }: PageProps) {
   const canSeeAnalyticsNav = userRole === "OWNER";
 
   const phoneRaw = String(sp.u ?? "");
-  const statusRaw = String(sp.status ?? "ALL").toUpperCase();
   const allowedStatuses = [
-    "ALL",
     "NEW",
     "IN_PROGRESS",
     "WAITING_PAYMENT",
@@ -209,9 +223,7 @@ export default async function Page({ params, searchParams }: PageProps) {
 
   const filters: Filters = {
     q: String(sp.q ?? "").trim(),
-    status: allowedStatuses.includes(statusRaw as (typeof allowedStatuses)[number])
-      ? (statusRaw as Filters["status"])
-      : "ALL",
+    statuses: normalizeStatusFilters(sp.status, allowedStatuses),
     range: rangeInput.range,
     startDate: customStartDate,
     endDate: customEndDate,
@@ -224,12 +236,12 @@ export default async function Page({ params, searchParams }: PageProps) {
 
   const hasActiveFilters =
     !!filters.q ||
-    filters.status !== "ALL" ||
+    filters.statuses.length > 0 ||
     isRangeFilterActive ||
     filters.actor !== "ALL";
   const activeFiltersCount = [
     filters.q ? 1 : 0,
-    filters.status !== "ALL" ? 1 : 0,
+    filters.statuses.length > 0 ? 1 : 0,
     isRangeFilterActive ? 1 : 0,
     filters.actor !== "ALL" ? 1 : 0,
   ].reduce((sum, count) => sum + count, 0);
@@ -252,7 +264,7 @@ export default async function Page({ params, searchParams }: PageProps) {
     const params = new URLSearchParams();
     if (phoneRaw && phoneRaw.length > 0) params.set("u", phoneRaw);
     if (filters.q) params.set("q", filters.q);
-    if (filters.status !== "ALL") params.set("status", filters.status);
+    for (const status of filters.statuses) params.append("status", status);
     if (filters.range !== "ALL") params.set("range", filters.range);
     if (filters.startDate) params.set("start", filters.startDate);
     if (filters.endDate) params.set("end", filters.endDate);
@@ -408,11 +420,15 @@ export default async function Page({ params, searchParams }: PageProps) {
     : actorFilteredList;
 
   const applyStatusFilter = (rows: any[]) =>
-    filters.status === "ALL"
+    filters.statuses.length === 0
       ? rows
-      : filters.status === "OVERDUE"
-        ? rows.filter((o) => isOrderOverdue(o, todayISO))
-        : rows.filter((o) => o.status === filters.status);
+      : rows.filter((o) =>
+          filters.statuses.some((status) =>
+            status === "OVERDUE"
+              ? isOrderOverdue(o, todayISO)
+              : o.status === status,
+          ),
+        );
 
   const tablePeriod = getDashboardPeriod(filters.range, {
     now,
@@ -523,7 +539,7 @@ export default async function Page({ params, searchParams }: PageProps) {
             key={`desktop-rail-${filters.range}-${filters.startDate ?? ""}-${filters.endDate ?? ""}`}
             phoneRaw={phoneRaw}
             q={filters.q}
-            status={filters.status}
+            statuses={filters.statuses}
             range={filters.range}
             summaryRange={summaryRange}
             startDate={filters.startDate}
@@ -552,7 +568,7 @@ export default async function Page({ params, searchParams }: PageProps) {
                 phoneRaw,
                 tableQuery: {
                   q: filters.q,
-                  status: filters.status,
+                  statuses: filters.statuses,
                   range: filters.range,
                   startDate: filters.startDate,
                   endDate: filters.endDate,
@@ -573,7 +589,7 @@ export default async function Page({ params, searchParams }: PageProps) {
               businessId={String(currentBusiness.id)}
               phoneRaw={phoneRaw}
               searchQuery={filters.q}
-              statusFilter={filters.status}
+              statusFilter={filters.statuses}
               rangeFilter={filters.range}
               summaryRange={summaryRange}
               rangeStartDate={filters.startDate}
@@ -604,7 +620,7 @@ export default async function Page({ params, searchParams }: PageProps) {
               phoneRaw,
               tableQuery: {
                 q: filters.q,
-                status: filters.status,
+                statuses: filters.statuses,
                 range: filters.range,
                 startDate: filters.startDate,
                 endDate: filters.endDate,

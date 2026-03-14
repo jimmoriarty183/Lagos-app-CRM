@@ -35,6 +35,11 @@ function markOverlayClosing() {
   window.__ordersOverlayClosingUntil = Date.now() + 400;
 }
 
+function suppressOverlayEvent(event: React.SyntheticEvent) {
+  event.preventDefault();
+  event.stopPropagation();
+}
+
 function badgeStyleStatus(status: Status): React.CSSProperties {
   switch (status) {
     case "DONE":
@@ -141,13 +146,28 @@ function Menu({
     const overlay = (
       <div
         role="presentation"
+        onPointerDown={suppressOverlayEvent}
+        onPointerUp={(event) => {
+          if (event.target !== event.currentTarget) return;
+          suppressOverlayEvent(event);
+        }}
+        onTouchStart={(event) => {
+          if (event.target !== event.currentTarget) return;
+          suppressOverlayEvent(event);
+        }}
+        onTouchEnd={(event) => {
+          if (event.target !== event.currentTarget) return;
+          suppressOverlayEvent(event);
+          markOverlayClosing();
+          onClose?.();
+        }}
         onMouseDown={(event) => {
-          event.preventDefault();
-          event.stopPropagation();
+          if (event.target !== event.currentTarget) return;
+          suppressOverlayEvent(event);
         }}
         onClick={(event) => {
-          event.preventDefault();
-          event.stopPropagation();
+          if (event.target !== event.currentTarget) return;
+          suppressOverlayEvent(event);
           markOverlayClosing();
           onClose?.();
         }}
@@ -245,12 +265,6 @@ function MenuItem({
         alignItems: "center",
         justifyContent: "space-between",
         gap: 10,
-      }}
-      onMouseEnter={(e) => {
-        if (!active) e.currentTarget.style.background = "rgba(0,0,0,0.04)";
-      }}
-      onMouseLeave={(e) => {
-        if (!active) e.currentTarget.style.background = "transparent";
       }}
     >
       <span>{children}</span>

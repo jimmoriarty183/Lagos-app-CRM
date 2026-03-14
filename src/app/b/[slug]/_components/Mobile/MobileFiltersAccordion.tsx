@@ -16,6 +16,18 @@ type Status =
   | "CANCELED"
   | "DUPLICATE";
 
+type StatusFilterValue = Status | "OVERDUE";
+
+const STATUS_OPTIONS: { value: StatusFilterValue; label: string }[] = [
+  { value: "NEW", label: "New" },
+  { value: "IN_PROGRESS", label: "In progress" },
+  { value: "WAITING_PAYMENT", label: "Waiting" },
+  { value: "DONE", label: "Done" },
+  { value: "OVERDUE", label: "Overdue" },
+  { value: "CANCELED", label: "Canceled" },
+  { value: "DUPLICATE", label: "Duplicate" },
+];
+
 export type TeamActor = {
   id: string;
   label: string;
@@ -24,7 +36,7 @@ export type TeamActor = {
 
 export type Filters = {
   q: string;
-  status: "ALL" | "OVERDUE" | Status;
+  statuses: StatusFilterValue[];
   range: DashboardRange;
   startDate: string | null;
   endDate: string | null;
@@ -71,7 +83,7 @@ export default function MobileFiltersAccordion({
 
   const activeCount = [
     filters.q ? 1 : 0,
-    filters.status !== "ALL" ? 1 : 0,
+    filters.statuses.length > 0 ? 1 : 0,
     filters.range !== "ALL" ? 1 : 0,
     actor !== "ALL" ? 1 : 0,
   ].reduce((sum, item) => sum + item, 0);
@@ -157,21 +169,6 @@ export default function MobileFiltersAccordion({
 
           <div className="grid grid-cols-2 gap-2">
             <select
-              name="status"
-              defaultValue={filters.status}
-              className={inputCls}
-            >
-              <option value="ALL">All</option>
-              <option value="NEW">New</option>
-              <option value="IN_PROGRESS">In progress</option>
-              <option value="WAITING_PAYMENT">Waiting</option>
-              <option value="DONE">Done</option>
-              <option value="OVERDUE">Overdue</option>
-              <option value="CANCELED">Canceled</option>
-              <option value="DUPLICATE">Duplicate</option>
-            </select>
-
-            <select
               name="range"
               value={rangeValue}
               className={inputCls}
@@ -190,6 +187,40 @@ export default function MobileFiltersAccordion({
                 </option>
               ))}
             </select>
+            <select
+              name="actor"
+              defaultValue={actor}
+              className={inputCls}
+            >
+              <option value="ALL">All team</option>
+              <option value="OWNER">Owners</option>
+              <option value="MANAGER">Managers</option>
+              {actors.map((member) => (
+                <option key={member.id} value={`user:${member.id}`}>
+                  {member.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex flex-wrap gap-2 rounded-xl border border-gray-200 bg-[#fbfcfe] p-2">
+            {STATUS_OPTIONS.map((option) => (
+              <label
+                key={option.value}
+                className="cursor-pointer"
+              >
+                <input
+                  type="checkbox"
+                  name="status"
+                  value={option.value}
+                  defaultChecked={filters.statuses.includes(option.value)}
+                  className="peer sr-only"
+                />
+                <span className="inline-flex min-h-9 items-center rounded-full border border-[#dde3ee] bg-white px-3 py-2 text-[12px] font-medium leading-4 text-[#475467] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition peer-checked:border-[#111827] peer-checked:bg-[#111827] peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-[#111827]/20">
+                  {option.label}
+                </span>
+              </label>
+            ))}
           </div>
 
           {showCustomRange ? (
@@ -211,27 +242,7 @@ export default function MobileFiltersAccordion({
             </div>
           ) : null}
 
-          <div
-            className={[
-              "grid gap-2",
-              hasFiltersApplied ? "grid-cols-[minmax(0,1fr)_72px]" : "grid-cols-1",
-            ].join(" ")}
-          >
-            <select
-              name="actor"
-              defaultValue={actor}
-              className={inputCls}
-            >
-              <option value="ALL">All team</option>
-              <option value="OWNER">Owners</option>
-              <option value="MANAGER">Managers</option>
-              {actors.map((member) => (
-                <option key={member.id} value={`user:${member.id}`}>
-                  {member.label}
-                </option>
-              ))}
-            </select>
-
+          <div className={hasFiltersApplied ? "grid grid-cols-[minmax(0,1fr)_72px] gap-2" : "block"}>
             {hasFiltersApplied ? (
               <a
                 href={clearHref}
@@ -240,6 +251,10 @@ export default function MobileFiltersAccordion({
                 Clear
               </a>
             ) : null}
+          </div>
+
+          <div className="text-[11px] font-medium text-gray-500">
+            Choose one or several statuses. If none selected, all statuses are shown.
           </div>
 
           {showCustomRange ? (

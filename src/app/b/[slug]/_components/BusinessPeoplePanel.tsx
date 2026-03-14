@@ -3,9 +3,19 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { User, Trash2 } from "lucide-react";
+import { Crown, Mail, User } from "lucide-react";
 import InviteManager from "./InviteManager";
 import { resolveUserDisplay } from "@/lib/user-display";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type Role = "OWNER" | "MANAGER" | "GUEST";
 
@@ -84,7 +94,7 @@ function Pill({
         ? "border-amber-100 bg-amber-50 text-amber-700"
         : tone === "red"
           ? "border-red-200 bg-red-50 text-red-700"
-          : "border-gray-200 bg-gray-50 text-gray-700";
+          : "border-slate-200 bg-slate-50 text-slate-700";
 
   return (
     <span
@@ -95,56 +105,87 @@ function Pill({
   );
 }
 
-function Row({
-  icon,
-  label,
-  value,
-  right,
+function Section({
+  title,
+  count,
+  children,
 }: {
-  icon: React.ReactNode;
-  label?: string;
-  value: React.ReactNode;
-  right?: React.ReactNode;
+  title: string;
+  count?: number;
+  children: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3 rounded-2xl bg-gray-50/80 px-4 py-3">
-      <div className="flex min-w-0 flex-1 items-center gap-3">
-        <div className="shrink-0 rounded-xl bg-white p-2 text-gray-700 shadow-sm shadow-gray-200/60">
+    <section className="space-y-3">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-sm font-semibold text-slate-900">
+          {title}
+          {typeof count === "number" ? ` (${count})` : ""}
+        </h2>
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function RowShell({
+  icon,
+  primary,
+  secondary,
+  meta,
+  action,
+  tone = "default",
+}: {
+  icon: React.ReactNode;
+  primary: React.ReactNode;
+  secondary?: React.ReactNode;
+  meta?: React.ReactNode;
+  action?: React.ReactNode;
+  tone?: "default" | "owner";
+}) {
+  return (
+    <div
+      className={[
+        "flex flex-col gap-3 rounded-xl border px-4 py-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)] sm:flex-row sm:items-center sm:justify-between",
+        tone === "owner"
+          ? "border-blue-100 bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_100%)]"
+          : "border-slate-200 bg-white",
+      ].join(" ")}
+    >
+      <div className="flex min-w-0 items-center gap-3">
+        <div
+          className={[
+            "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border",
+            tone === "owner"
+              ? "border-blue-100 bg-blue-50 text-blue-700"
+              : "border-slate-200 bg-slate-50 text-slate-600",
+          ].join(" ")}
+        >
           {icon}
         </div>
 
-        <div className="min-w-0 flex-1">
-          {label ? (
-            <div className="text-[11px] font-semibold tracking-wide text-gray-500">
-              {label}
-            </div>
+        <div className="min-w-0">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <div className="truncate text-sm font-semibold text-slate-900">{primary}</div>
+            {meta ? <div className="flex flex-wrap items-center gap-2">{meta}</div> : null}
+          </div>
+          {secondary ? (
+            <div className="mt-0.5 truncate text-xs text-slate-500">{secondary}</div>
           ) : null}
-
-          <div className="min-w-0 text-sm font-semibold text-gray-900">{value}</div>
         </div>
       </div>
 
-      {right ? <div className="shrink-0">{right}</div> : null}
+      {action ? (
+        <div className="flex shrink-0 justify-end sm:justify-start">{action}</div>
+      ) : null}
     </div>
   );
 }
 
-function UserValue({
-  primary,
-  meta,
-}: {
-  primary: string;
-  meta: string;
-}) {
+function EmptyState({ text }: { text: string }) {
   return (
-    <span className="min-w-0">
-      <span className="block truncate font-semibold text-gray-900" title={primary}>
-        {primary}
-      </span>
-      <span className="block truncate text-xs text-gray-500" title={meta}>
-        {meta}
-      </span>
-    </span>
+    <div className="rounded-2xl border border-dashed border-slate-200 bg-white px-4 py-4 text-sm text-slate-500">
+      {text}
+    </div>
   );
 }
 
@@ -167,6 +208,21 @@ function getUserDisplay(input: {
   };
 }
 
+function formatRelativeTime(value?: string | null) {
+  if (!value) return "Pending";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Pending";
+
+  const diffMs = Date.now() - date.getTime();
+  const diffMinutes = Math.max(1, Math.round(diffMs / 60000));
+
+  if (diffMinutes < 60) return `Sent ${diffMinutes}m ago`;
+  const diffHours = Math.round(diffMinutes / 60);
+  if (diffHours < 24) return `Sent ${diffHours}h ago`;
+  const diffDays = Math.round(diffHours / 24);
+  return `Sent ${diffDays}d ago`;
+}
+
 export default function BusinessPeoplePanel({
   businessId,
   businessSlug,
@@ -185,11 +241,15 @@ export default function BusinessPeoplePanel({
 
   const [loading, setLoading] = React.useState(true);
   const [data, setData] = React.useState<StatusResponse | null>(null);
+  const [showAllManagers, setShowAllManagers] = React.useState(false);
+  const [managerToRemove, setManagerToRemove] = React.useState<ActiveManager | null>(null);
+  const [inviteToRevoke, setInviteToRevoke] = React.useState<PendingManager | null>(null);
+  const [actionLoading, setActionLoading] = React.useState(false);
 
   const canManage = role === "OWNER";
   const safeBusinessId = (businessId ?? "").trim();
 
-  async function load() {
+  const load = React.useCallback(async () => {
     if (!safeBusinessId) {
       setData(null);
       setLoading(false);
@@ -211,7 +271,7 @@ export default function BusinessPeoplePanel({
     } finally {
       setLoading(false);
     }
-  }
+  }, [safeBusinessId]);
 
   React.useEffect(() => {
     if (!safeBusinessId) {
@@ -219,20 +279,12 @@ export default function BusinessPeoplePanel({
       return;
     }
     load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [safeBusinessId]);
+  }, [load, safeBusinessId]);
 
   async function removeManager(managerUserId: string) {
-    if (!safeBusinessId) {
-      alert("Business is not loaded yet. Please retry.");
-      return;
-    }
+    if (!safeBusinessId) return;
 
-    const ok = confirm(
-      "Remove manager? They will lose access to this business immediately.",
-    );
-    if (!ok) return;
-
+    setActionLoading(true);
     try {
       const res = await fetch("/api/manager/remove", {
         method: "POST",
@@ -248,20 +300,42 @@ export default function BusinessPeoplePanel({
 
       await load();
       router.refresh();
+      setManagerToRemove(null);
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : "Remove failed";
       alert(message);
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  async function revokeInvite(inviteId: string) {
+    setActionLoading(true);
+    try {
+      const res = await fetch("/api/invite/revoke", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ invite_id: inviteId, inviteId }),
+      });
+
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || !json?.ok) {
+        throw new Error(json?.error || "Failed to revoke invite");
+      }
+
+      await load();
+      router.refresh();
+      setInviteToRevoke(null);
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Failed to revoke invite";
+      alert(message);
+    } finally {
+      setActionLoading(false);
     }
   }
 
   if (!safeBusinessId) {
-    return (
-      <div className="space-y-3">
-        <div className="rounded-2xl border border-gray-100 bg-white px-4 py-3 text-sm text-gray-600">
-          Loading business...
-        </div>
-      </div>
-    );
+    return <EmptyState text="Loading business..." />;
   }
 
   const ownerDisplay = getUserDisplay({
@@ -320,15 +394,18 @@ export default function BusinessPeoplePanel({
     data?.viewer_role === "OWNER" || data?.viewer_role === "MANAGER"
       ? data.viewer_role
       : role;
-  const ownerPillText = isOwnerManager ? "OWNER & MANAGER" : "OWNER";
+
+  const ownerPillText = isOwnerManager ? "Owner • Manager" : "Owner";
   const ownerIsYou =
     Boolean(currentUserId) &&
     Boolean(data?.owner?.id ?? initialOwner?.id) &&
     String(data?.owner?.id ?? initialOwner?.id) === String(currentUserId);
+
   const viewerManager =
     data?.viewer_manager ??
     managersActive.find((manager) => String(manager.user_id) === String(currentUserId)) ??
     null;
+
   const viewerManagerDisplay = viewerManager
     ? getUserDisplay({
         full_name: viewerManager.full_name,
@@ -340,81 +417,57 @@ export default function BusinessPeoplePanel({
       })
     : null;
 
+  const managersToShow = showAllManagers ? managersActive : managersActive.slice(0, 5);
+  const hasMoreManagers = managersActive.length > 5;
+
   if (mode === "summary") {
     const href = businessSlug
       ? `/b/${encodeURIComponent(String(businessSlug))}/settings/team${suffix}`
       : `./settings/team${suffix}`;
-    const actionLabel = "Manage access →";
 
     if (viewerRole === "MANAGER" && viewerManagerDisplay) {
       return (
         <div className="space-y-3">
-          <Row
+          <RowShell
             icon={<User className="h-4 w-4" />}
-            value={
-              <UserValue
-                primary={viewerManagerDisplay.primary}
-                meta={viewerManagerDisplay.meta}
-              />
-            }
-            right={
-              <div className="flex shrink-0 items-center gap-2">
-                <Pill tone="gray">MANAGER</Pill>
-                <Pill tone="gray">YOU</Pill>
-              </div>
+            primary={viewerManagerDisplay.primary}
+            secondary={viewerManagerDisplay.meta}
+            meta={
+              <>
+                <Pill tone="gray">Manager</Pill>
+                <Pill tone="gray">You</Pill>
+              </>
             }
           />
+          <Link
+            href={href}
+            className="block rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-900 hover:bg-slate-50"
+          >
+            Manage access →
+          </Link>
         </div>
       );
     }
 
-    const summaryManagers = managersActive.slice(0, 2);
-    const hiddenManagersCount = Math.max(0, managersActive.length - summaryManagers.length);
-
     return (
       <div className="space-y-3">
-        <Row
-          icon={<User className="h-4 w-4" />}
-          value={<UserValue primary={ownerDisplay.primary} meta={ownerDisplay.meta} />}
-          right={
-            <div className="flex shrink-0 items-center gap-2">
+        <RowShell
+          icon={<Crown className="h-4 w-4" />}
+          primary={ownerDisplay.primary}
+          secondary={ownerDisplay.meta}
+          tone="owner"
+          meta={
+            <>
               <Pill tone="blue">{ownerPillText}</Pill>
-              {ownerIsYou ? <Pill tone="gray">YOU</Pill> : null}
-            </div>
+              {ownerIsYou ? <Pill tone="gray">You</Pill> : null}
+            </>
           }
         />
-
-        {summaryManagers.map((manager) => {
-          const managerDisplay = getUserDisplay({
-            full_name: manager.full_name,
-            first_name: manager.first_name,
-            last_name: manager.last_name,
-            email: manager.email,
-            phone: manager.phone,
-            fallback: manager.safe_fallback ?? null,
-          });
-
-          return (
-            <Row
-              key={manager.user_id}
-              icon={<User className="h-4 w-4" />}
-              value={<UserValue primary={managerDisplay.primary} meta={managerDisplay.meta} />}
-              right={<Pill tone="gray">MANAGER</Pill>}
-            />
-          );
-        })}
-
-        {hiddenManagersCount > 0 ? (
-          <div className="px-2 text-xs font-semibold text-gray-500">
-            +{hiddenManagersCount} more
-          </div>
-        ) : null}
-
         <Link
           href={href}
-          className="block rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-900 hover:bg-gray-50"
+          className="block rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-900 hover:bg-slate-50"
         >
-          {actionLabel}
+          Manage access →
         </Link>
       </div>
     );
@@ -422,117 +475,250 @@ export default function BusinessPeoplePanel({
 
   if (viewerRole === "MANAGER") {
     return (
-      <div className="space-y-4">
-        <Row
-          icon={<User className="h-4 w-4" />}
-          value={
-            <UserValue
-              primary={viewerManagerDisplay?.primary ?? "No name"}
-              meta={viewerManagerDisplay?.meta ?? "No contact info"}
-            />
-          }
-          right={
-            <div className="flex shrink-0 items-center gap-2">
-              <Pill tone="gray">MANAGER</Pill>
-              <Pill tone="gray">YOU</Pill>
-            </div>
-          }
-        />
+      <div className="space-y-6">
+        <Section title="Owner">
+          <RowShell
+            icon={<Crown className="h-4 w-4" />}
+            primary={ownerDisplay.primary}
+            secondary={ownerDisplay.meta}
+            tone="owner"
+            meta={
+              <>
+                <Pill tone="blue">{ownerPillText}</Pill>
+                {ownerIsYou ? <Pill tone="gray">You</Pill> : null}
+              </>
+            }
+          />
+        </Section>
 
-        <div className="rounded-2xl bg-gray-50/80 px-4 py-3 text-sm text-gray-600">
-          Access for this business is managed by the owner.
-        </div>
+        <Section title="Your access">
+          <RowShell
+            icon={<User className="h-4 w-4" />}
+            primary={viewerManagerDisplay?.primary ?? "No name"}
+            secondary={viewerManagerDisplay?.meta ?? "No contact info"}
+            meta={
+              <>
+                <Pill tone="gray">Manager</Pill>
+                <Pill tone="gray">You</Pill>
+              </>
+            }
+          />
+          <EmptyState text="Access for this business is managed by the owner." />
+        </Section>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      <Row
-        icon={<User className="h-4 w-4" />}
-        value={<UserValue primary={ownerDisplay.primary} meta={ownerDisplay.meta} />}
-        right={
-          <div className="flex shrink-0 items-center gap-2">
-            <Pill tone="blue">{ownerPillText}</Pill>
-            {ownerIsYou ? <Pill tone="gray">YOU</Pill> : null}
-          </div>
-        }
-      />
-
-      <div className="space-y-3 max-h-[360px] overflow-auto pr-1">
-        {loading ? (
-          <div className="rounded-2xl border border-gray-100 bg-white px-4 py-3 text-sm text-gray-600">
-            Loading manager status...
-          </div>
-        ) : null}
-
-        {!loading && managersActive.length === 0 ? (
-          <Row
-            icon={<User className="h-4 w-4" />}
-            label="Manager"
-            value={<span className="text-gray-800">Not assigned</span>}
-            right={<Pill tone="gray">MANAGER</Pill>}
+    <>
+      <div className="space-y-6">
+        <Section title="Owner">
+          <RowShell
+            icon={<Crown className="h-4 w-4" />}
+            primary={ownerDisplay.primary}
+            secondary={ownerDisplay.meta}
+            tone="owner"
+            meta={
+              <>
+                <Pill tone="blue">{ownerPillText}</Pill>
+                {ownerIsYou ? <Pill tone="gray">You</Pill> : null}
+              </>
+            }
           />
-        ) : null}
+        </Section>
 
-        {!loading && managersActive.length > 0
-          ? managersActive.map((manager) => {
-              const managerIsYou =
-                Boolean(currentUserId) &&
-                String(manager.user_id) === String(currentUserId);
-              const managerDisplay = getUserDisplay({
-                full_name: manager.full_name,
-                first_name: manager.first_name,
-                last_name: manager.last_name,
-                email: manager.email,
-                phone: manager.phone,
-                fallback: manager.safe_fallback ?? null,
-              });
+        <Section title="Managers" count={managersActive.length}>
+          {loading ? <EmptyState text="Loading managers..." /> : null}
 
-              return (
-                <Row
-                  key={manager.user_id}
-                  icon={<User className="h-4 w-4" />}
-                  value={<UserValue primary={managerDisplay.primary} meta={managerDisplay.meta} />}
-                  right={
-                    <div className="flex items-center gap-2">
+          {!loading && managersActive.length === 0 ? (
+            <EmptyState text="No managers added yet." />
+          ) : null}
+
+          {!loading && managersToShow.length > 0 ? (
+            <div className="space-y-2">
+              {managersToShow.map((manager) => {
+                const managerIsYou =
+                  Boolean(currentUserId) &&
+                  String(manager.user_id) === String(currentUserId);
+                const managerDisplay = getUserDisplay({
+                  full_name: manager.full_name,
+                  first_name: manager.first_name,
+                  last_name: manager.last_name,
+                  email: manager.email,
+                  phone: manager.phone,
+                  fallback: manager.safe_fallback ?? null,
+                });
+
+                return (
+                  <RowShell
+                    key={manager.user_id}
+                    icon={<User className="h-4 w-4" />}
+                    primary={managerDisplay.primary}
+                    secondary={managerDisplay.meta}
+                    meta={
+                      <>
+                        <Pill tone="gray">Manager</Pill>
+                        {managerIsYou ? <Pill tone="gray">You</Pill> : null}
+                      </>
+                    }
+                    action={
                       <button
-                        onClick={() => removeManager(manager.user_id)}
-                        className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-50"
-                        title="Remove manager"
+                        type="button"
+                        onClick={() => setManagerToRemove(manager)}
+                        className="inline-flex h-8 items-center justify-center rounded-lg border border-slate-200 px-3 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
                       >
-                        <Trash2 className="h-4 w-4" />
                         Remove
                       </button>
-                      <Pill tone="gray">MANAGER</Pill>
-                      {managerIsYou ? <Pill tone="gray">YOU</Pill> : null}
-                    </div>
+                    }
+                  />
+                );
+              })}
+            </div>
+          ) : null}
+
+          {hasMoreManagers ? (
+            <button
+              type="button"
+              onClick={() => setShowAllManagers((prev) => !prev)}
+              className="text-sm font-semibold text-slate-700 hover:text-slate-900"
+            >
+              {showAllManagers ? "Show fewer managers" : "Show all managers"}
+            </button>
+          ) : null}
+        </Section>
+
+        {canManage ? (
+          <Section title="Invite manager">
+            <InviteManager
+              businessId={safeBusinessId}
+              onInvited={async () => {
+                await load();
+                router.refresh();
+              }}
+            />
+          </Section>
+        ) : null}
+
+        <Section title="Pending invites" count={managersPending.length}>
+          {managersPending.length === 0 ? (
+            <EmptyState text="No pending invites." />
+          ) : (
+            <div className="space-y-2">
+              {managersPending.map((invite) => (
+                <RowShell
+                  key={invite.invite_id}
+                  icon={<Mail className="h-4 w-4" />}
+                  primary={invite.email}
+                  secondary={
+                    <span className="inline-flex items-center gap-2">
+                      <span>Pending</span>
+                      <span className="text-slate-300">•</span>
+                      <span>{formatRelativeTime(invite.created_at)}</span>
+                    </span>
+                  }
+                  meta={<Pill tone="amber">Pending</Pill>}
+                    action={
+                      invite.invite_id !== "legacy" ? (
+                        <button
+                          type="button"
+                          onClick={() => setInviteToRevoke(invite)}
+                          className="inline-flex h-8 items-center justify-center rounded-lg border border-slate-200 px-3 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
+                        >
+                          Revoke
+                        </button>
+                    ) : null
                   }
                 />
-              );
-            })
-          : null}
-
-        {!loading && managersPending.length > 0
-          ? managersPending.map((pending, index) => (
-              <Row
-                key={pending.invite_id}
-                icon={<User className="h-4 w-4" />}
-                label={`Manager ${index + 1}`}
-                value={
-                  <span className="inline-flex flex-wrap items-center gap-2">
-                    <span className="font-semibold">Pending invite</span>
-                    <span className="text-gray-300">-</span>
-                    <span className="font-mono text-xs">{pending.email}</span>
-                  </span>
-                }
-                right={<Pill tone="amber">PENDING</Pill>}
-              />
-            ))
-          : null}
+              ))}
+            </div>
+          )}
+        </Section>
       </div>
 
-      {canManage ? <InviteManager businessId={safeBusinessId} /> : null}
-    </div>
+      <AlertDialog
+        open={Boolean(managerToRemove)}
+        onOpenChange={(open) => {
+          if (!open && !actionLoading) setManagerToRemove(null);
+        }}
+      >
+        <AlertDialogContent className="rounded-[24px] border-slate-200 bg-white p-6 shadow-[0_24px_64px_rgba(15,23,42,0.18)] sm:max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-xl tracking-[-0.02em] text-slate-900">
+              Remove manager?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-sm leading-6 text-slate-500">
+              {managerToRemove
+                ? `${getUserDisplay({
+                    full_name: managerToRemove.full_name,
+                    first_name: managerToRemove.first_name,
+                    last_name: managerToRemove.last_name,
+                    email: managerToRemove.email,
+                    phone: managerToRemove.phone,
+                    fallback: managerToRemove.safe_fallback ?? null,
+                  }).primary} will lose access to this business immediately.`
+                : "This manager will lose access to this business immediately."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              disabled={actionLoading}
+              className="rounded-xl border-slate-200 text-slate-700 shadow-none"
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={actionLoading || !managerToRemove}
+              onClick={(event) => {
+                event.preventDefault();
+                if (!managerToRemove || actionLoading) return;
+                void removeManager(managerToRemove.user_id);
+              }}
+              className="rounded-xl border border-red-600 bg-red-600 text-white shadow-none hover:bg-red-700"
+            >
+              {actionLoading ? "Removing..." : "Remove"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={Boolean(inviteToRevoke)}
+        onOpenChange={(open) => {
+          if (!open && !actionLoading) setInviteToRevoke(null);
+        }}
+      >
+        <AlertDialogContent className="rounded-[24px] border-slate-200 bg-white p-6 shadow-[0_24px_64px_rgba(15,23,42,0.18)] sm:max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-xl tracking-[-0.02em] text-slate-900">
+              Revoke invite?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-sm leading-6 text-slate-500">
+              {inviteToRevoke
+                ? `Pending invite for ${inviteToRevoke.email} will be revoked.`
+                : "This pending invite will be revoked."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              disabled={actionLoading}
+              className="rounded-xl border-slate-200 text-slate-700 shadow-none"
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={actionLoading || !inviteToRevoke}
+              onClick={(event) => {
+                event.preventDefault();
+                if (!inviteToRevoke || actionLoading) return;
+                void revokeInvite(inviteToRevoke.invite_id);
+              }}
+              className="rounded-xl border border-red-600 bg-red-600 text-white shadow-none hover:bg-red-700"
+            >
+              {actionLoading ? "Revoking..." : "Revoke"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

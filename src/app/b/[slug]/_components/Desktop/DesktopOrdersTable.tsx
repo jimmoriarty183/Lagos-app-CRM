@@ -17,6 +17,8 @@ type Status =
   | "CANCELED"
   | "DUPLICATE";
 
+type StatusFilterValue = Status | "OVERDUE";
+
 type OrderRow = {
   id: string;
   client_name: string;
@@ -34,6 +36,13 @@ const TOGGLE_FILTERS_EVENT = "orders-desktop-toggle-filters";
 
 function fmtAmount(n: number) {
   return new Intl.NumberFormat("uk-UA").format(n);
+}
+
+function shouldIgnoreOverlayCloseClick() {
+  return (
+    typeof window !== "undefined" &&
+    (window.__ordersOverlayClosingUntil ?? 0) > Date.now()
+  );
 }
 
 function EyeIcon({ className }: { className?: string }) {
@@ -92,7 +101,7 @@ type Props = {
   businessId: string;
   phoneRaw: string;
   searchQuery: string;
-  statusFilter: "ALL" | "OVERDUE" | Status;
+  statusFilter: StatusFilterValue[];
   rangeFilter: DashboardRange;
   summaryRange: DashboardRange;
   rangeStartDate: string | null;
@@ -167,7 +176,9 @@ export default function DesktopOrdersTable({
           <input type="hidden" name="u" defaultValue={phoneRaw} />
           <input type="hidden" name="srange" defaultValue={summaryRange} />
           <input type="hidden" name="page" defaultValue="1" />
-          <input type="hidden" name="status" defaultValue={statusFilter} />
+          {statusFilter.map((status) => (
+            <input key={status} type="hidden" name="status" defaultValue={status} />
+          ))}
           <input type="hidden" name="range" defaultValue={rangeFilter} />
           {rangeStartDate ? <input type="hidden" name="start" defaultValue={rangeStartDate} /> : null}
           {rangeEndDate ? <input type="hidden" name="end" defaultValue={rangeEndDate} /> : null}
@@ -251,7 +262,12 @@ export default function DesktopOrdersTable({
                 <React.Fragment key={o.id}>
                   <tr
                     className="cursor-pointer border-b border-[#f2f4f7] transition-colors hover:bg-[#fbfcfe]"
-                    onClick={() => eyeRefs.current[o.id]?.click()}
+                    onClick={() => {
+                      if (shouldIgnoreOverlayCloseClick()) {
+                        return;
+                      }
+                      eyeRefs.current[o.id]?.click();
+                    }}
                   >
                     <td className="px-5 py-4 align-top">
                       <div className="mb-1 text-[10px] font-medium text-[#98a2b3]">
@@ -310,6 +326,9 @@ export default function DesktopOrdersTable({
                           }}
                           onClick={(e) => {
                             e.stopPropagation();
+                            if (shouldIgnoreOverlayCloseClick()) {
+                              return;
+                            }
                             togglePreview(o.id);
                           }}
                           className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#dde3ee] bg-white transition-colors hover:bg-[#f8fafc]"

@@ -213,18 +213,21 @@ export default function PricingPage() {
           background: #f8fbff;
           color: #0f172a;
           padding: 20px 16px 44px;
+          overflow-x: hidden;
         }
         .shell {
           max-width: 1120px;
           margin: 0 auto;
           display: grid;
           gap: 18px;
+          min-width: 0;
         }
         .card {
           background: #ffffff;
           border: 1px solid #dbe5f1;
           border-radius: 18px;
           box-shadow: 0 6px 20px rgba(15, 23, 42, 0.05);
+          min-width: 0;
         }
         .topNav {
           display: flex;
@@ -235,6 +238,7 @@ export default function PricingPage() {
           border: 1px solid #dbe5f1;
           border-radius: 16px;
           padding: 12px;
+          min-width: 0;
         }
         .brand {
           border: none;
@@ -243,6 +247,7 @@ export default function PricingPage() {
           font-weight: 800;
           color: #1e3a8a;
           cursor: pointer;
+          min-width: 0;
         }
         .links {
           display: flex;
@@ -281,6 +286,7 @@ export default function PricingPage() {
         }
         .hero {
           padding: 30px;
+          min-width: 0;
         }
         .eyebrow {
           margin: 0;
@@ -298,6 +304,7 @@ export default function PricingPage() {
           font-size: clamp(28px, 5vw, 44px);
           line-height: 1.1;
           letter-spacing: -0.03em;
+          overflow-wrap: anywhere;
         }
         .heroCopy {
           margin: 0;
@@ -471,8 +478,29 @@ export default function PricingPage() {
         }
 
         @media (max-width: 760px) {
+          .page {
+            padding: 14px 12px 32px;
+          }
+          .topNav {
+            flex-wrap: wrap;
+            align-items: stretch;
+          }
+          .brand {
+            flex: 1 1 auto;
+            text-align: left;
+          }
+          .topNav > .primary {
+            width: 100%;
+          }
           .links {
             display: none;
+          }
+          .heroCopy {
+            max-width: 28ch;
+          }
+          .heroCtas > button {
+            flex: 1 1 calc(50% - 5px);
+            min-width: 0;
           }
           .hero,
           .plan,

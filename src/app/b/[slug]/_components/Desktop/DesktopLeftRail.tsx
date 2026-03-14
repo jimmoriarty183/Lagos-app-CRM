@@ -22,6 +22,8 @@ type Status =
   | "CANCELED"
   | "DUPLICATE";
 
+type StatusFilterValue = Status | "OVERDUE";
+
 type TeamActor = {
   id: string;
   label: string;
@@ -31,7 +33,7 @@ type TeamActor = {
 type Props = {
   phoneRaw: string;
   q: string;
-  status: "ALL" | "OVERDUE" | Status;
+  statuses: StatusFilterValue[];
   range: DashboardRange;
   summaryRange: DashboardRange;
   startDate: string | null;
@@ -170,7 +172,7 @@ function RailLink({
 export default function DesktopLeftRail({
   phoneRaw,
   q,
-  status,
+  statuses,
   range,
   summaryRange,
   startDate,
@@ -287,7 +289,7 @@ export default function DesktopLeftRail({
               <DesktopSidebarFilters
                 phoneRaw={phoneRaw}
                 q={q}
-                status={status}
+                statuses={statuses}
                 range={range}
                 summaryRange={summaryRange}
                 startDate={startDate}

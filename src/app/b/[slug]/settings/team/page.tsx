@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { supabaseServerReadOnly } from "@/lib/supabase/server";
 import BusinessPeoplePanel from "@/app/b/[slug]/_components/BusinessPeoplePanel";
+import TeamAccessTopBar from "./TeamAccessTopBar";
 
 type Role = "OWNER" | "MANAGER" | "GUEST";
 type MembershipRow = {
@@ -24,7 +25,6 @@ export default async function TeamPage({
   params,
   searchParams,
 }: {
-  // Next 16: params/searchParams могут быть Promise
   params: Promise<{ slug: string }>;
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
@@ -33,7 +33,6 @@ export default async function TeamPage({
 
   const supabase = await supabaseServerReadOnly();
 
-  // 0) user must be logged in
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -43,7 +42,6 @@ export default async function TeamPage({
     redirect(`/login?next=${encodeURIComponent(nextPath)}`);
   }
 
-  // 1) load business by slug
   const { data: business, error: bizErr } = await supabase
     .from("businesses")
     .select("id,slug,owner_phone,manager_phone")
@@ -54,7 +52,6 @@ export default async function TeamPage({
     redirect("/login?no_business=1");
   }
 
-  // 2) role by memberships (НЕ по phone)
   const { data: mem, error: memErr } = await supabase
     .from("memberships")
     .select("role")
@@ -63,18 +60,14 @@ export default async function TeamPage({
     .maybeSingle();
 
   if (memErr) {
-    // если RLS/ошибка - безопасно отправим на логин
     redirect(`/login?next=${encodeURIComponent(nextPath)}`);
   }
 
   const role: Role = upperRole(mem?.role);
-
-  // если гость — тоже на логин (или можешь показать read-only, но сейчас так)
   if (role === "GUEST") {
     redirect(`/login?next=${encodeURIComponent(nextPath)}`);
   }
 
-  // Owner-manager определяем по memberships, а не по legacy manager_phone
   const { data: ownerManagerMems } = await supabase
     .from("memberships")
     .select("role,user_id")
@@ -88,7 +81,6 @@ export default async function TeamPage({
     roleRows.find((row) => String(row.role).toUpperCase() === "MANAGER")?.user_id ?? null;
   const isOwnerManager = !!ownerId && !!managerId && String(ownerId) === String(managerId);
 
-  // 3) pending invites — ВАЖНО: у тебя таблица называется business_invites (судя по скрину)
   const { data: pendingInvites } = await supabase
     .from("business_invites")
     .select("id,business_id,email,role,status,created_at")
@@ -98,23 +90,32 @@ export default async function TeamPage({
     .order("created_at", { ascending: false });
 
   return (
-    <div className="min-h-screen">
-      <div className="mx-auto max-w-3xl px-4 py-6">
-        <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-          <div className="mb-1 text-[11px] font-semibold tracking-wide text-gray-500">
-            SETTINGS
-          </div>
+    <div className="min-h-screen bg-transparent text-slate-900">
+      <TeamAccessTopBar
+        ordersHref={`/b/${encodeURIComponent(business.slug)}`}
+        userLabel={user.email || user.phone || "User"}
+        profileHref={
+          user.phone
+            ? `/m/${encodeURIComponent(user.phone)}`
+            : `/b/${encodeURIComponent(business.slug)}`
+        }
+      />
 
-          <div className="text-xl font-semibold text-gray-900">
-            Team & Access
-          </div>
+      <div className="mx-auto max-w-[1220px] px-4 pb-10 pt-24 sm:px-6">
+        <div className="mx-auto max-w-4xl">
+          <section className="rounded-[28px] border border-[#dde3ee] bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:p-6">
+            <div className="mb-6">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                Settings
+              </div>
+              <h1 className="mt-2 text-[28px] font-semibold tracking-[-0.03em] text-slate-900">
+                Team &amp; Access
+              </h1>
+              <p className="mt-2 text-sm text-slate-500">
+                Manage who can access <span className="font-semibold">{business.slug}</span>
+              </p>
+            </div>
 
-          <div className="mt-1 text-sm text-gray-500">
-            Manage who can access{" "}
-            <span className="font-semibold">{business.slug}</span>
-          </div>
-
-          <div className="mt-5">
             <BusinessPeoplePanel
               businessId={business.id}
               businessSlug={business.slug}
@@ -124,16 +125,7 @@ export default async function TeamPage({
               currentUserId={user.id}
               mode="manage"
             />
-          </div>
-
-          <div className="mt-5">
-            <a
-              href={`/b/${encodeURIComponent(business.slug)}`}
-              className="text-sm font-semibold text-gray-900 hover:underline"
-            >
-              ← Back to orders
-            </a>
-          </div>
+          </section>
         </div>
       </div>
     </div>

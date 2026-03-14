@@ -1,19 +1,21 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Mail, Sparkles, Loader2, Send } from "lucide-react";
-import PendingInvites from "./PendingInvites";
+import { Loader2, Mail, Send } from "lucide-react";
 
-export default function InviteManager({ businessId }: { businessId: string }) {
+export default function InviteManager({
+  businessId,
+  onInvited,
+}: {
+  businessId: string;
+  onInvited?: () => void | Promise<void>;
+}) {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
-
   const [msg, setMsg] = useState<{
     type: "success" | "error" | "info";
     text: string;
   } | null>(null);
-
-  const [refreshKey, setRefreshKey] = useState(0);
 
   const emailOk = useMemo(() => {
     const v = email.trim().toLowerCase();
@@ -44,44 +46,32 @@ export default function InviteManager({ businessId }: { businessId: string }) {
       if (json?.existing_user) {
         setMsg({
           type: "info",
-          text: "User already has an account. They can accept this invite from the in-app bell icon and then the business will appear in their switcher.",
+          text: "User already has an account. They can accept this invite from the in-app bell icon.",
         });
       } else {
         setMsg({ type: "success", text: "Invite sent. Status: PENDING" });
       }
-      setEmail("");
 
-      // ✅ обновить список pending сразу
-      setRefreshKey((k) => k + 1);
-    } catch (e: any) {
-      setMsg({ type: "error", text: e?.message || "Failed to invite" });
+      setEmail("");
+      await onInvited?.();
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Failed to invite";
+      setMsg({ type: "error", text: message });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white/70 p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <div className="text-sm font-semibold text-gray-900">
-            Invite manager
-          </div>
-          <div className="mt-1 text-xs text-gray-500">
-            We’ll email an invite link. Invite stays pending until the manager
-            registers.
-          </div>
-        </div>
-
-        <span className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-900">
-          <Sparkles className="h-4 w-4 opacity-70" />
-          Email invite
-        </span>
+    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+      <div className="text-sm font-semibold text-slate-900">Invite manager</div>
+      <div className="mt-1 text-xs text-slate-500">
+        Invitation will remain pending until accepted.
       </div>
 
-      <div className="mt-3 flex items-center gap-2">
-        <div className="relative w-full">
-          <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+      <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+        <label className="relative block flex-1">
+          <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -92,20 +82,20 @@ export default function InviteManager({ businessId }: { businessId: string }) {
             onKeyDown={(e) => {
               if (e.key === "Enter") onInvite();
             }}
-            className="w-full rounded-xl border border-gray-200 bg-white px-10 py-2.5 text-sm font-medium outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+            className="h-11 w-full rounded-xl border border-slate-200 bg-white px-10 text-sm font-medium outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
           />
-        </div>
+        </label>
 
         <button
           onClick={onInvite}
           disabled={!emailOk || loading}
           className={[
-            "inline-flex shrink-0 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200",
+            "inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold transition-all duration-200 sm:min-w-[132px]",
             loading
-              ? "bg-black text-white"
+              ? "bg-[#111827] text-white"
               : emailOk
-                ? "bg-black text-white hover:bg-gray-900 active:scale-[0.98]"
-                : "border border-gray-300 bg-white text-gray-400 hover:border-gray-400",
+                ? "bg-[#111827] text-white hover:bg-[#0f172a] active:scale-[0.98]"
+                : "border border-slate-200 bg-slate-50 text-slate-400",
           ].join(" ")}
         >
           {loading ? (
@@ -115,12 +105,8 @@ export default function InviteManager({ businessId }: { businessId: string }) {
             </>
           ) : (
             <>
-              <Send
-                className={
-                  emailOk ? "h-4 w-4 text-white" : "h-4 w-4 text-gray-400"
-                }
-              />
-              <span className={emailOk ? "text-white" : "text-gray-400"}>
+              <Send className={emailOk ? "h-4 w-4 text-white" : "h-4 w-4 text-slate-400"} />
+              <span className={emailOk ? "text-white" : "text-slate-400"}>
                 Send invite
               </span>
             </>
@@ -136,14 +122,12 @@ export default function InviteManager({ businessId }: { businessId: string }) {
               ? "border-emerald-200 bg-emerald-50 text-emerald-800"
               : msg.type === "error"
                 ? "border-red-200 bg-red-50 text-red-800"
-                : "border-gray-200 bg-gray-50 text-gray-700",
+                : "border-slate-200 bg-slate-50 text-slate-700",
           ].join(" ")}
         >
           {msg.text}
         </div>
       ) : null}
-
-      <PendingInvites businessId={businessId} refreshKey={refreshKey} />
     </div>
   );
 }
