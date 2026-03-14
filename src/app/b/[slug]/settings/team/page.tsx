@@ -90,7 +90,7 @@ export default async function TeamPage({
     .order("created_at", { ascending: false });
 
   return (
-    <div className="min-h-screen bg-transparent text-slate-900">
+    <div className="min-h-[100svh] overflow-x-clip bg-transparent text-slate-900">
       <TeamAccessTopBar
         ordersHref={`/b/${encodeURIComponent(business.slug)}`}
         userLabel={user.email || user.phone || "User"}
@@ -101,17 +101,17 @@ export default async function TeamPage({
         }
       />
 
-      <div className="mx-auto max-w-[1220px] px-4 pb-10 pt-24 sm:px-6">
-        <div className="mx-auto max-w-4xl">
-          <section className="rounded-[28px] border border-[#dde3ee] bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:p-6">
-            <div className="mb-6">
+      <div className="mx-auto max-w-[1220px] overflow-x-clip px-2 pb-[max(96px,env(safe-area-inset-bottom))] pt-4 sm:px-6 sm:pb-8 sm:pt-14">
+        <div className="mx-auto w-full max-w-[920px] min-w-0">
+          <section className="w-full min-w-0 max-w-full rounded-[20px] border border-[#dde3ee] bg-white p-3.5 pb-6 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:rounded-[26px] sm:p-5">
+            <div className="mb-5 sm:mb-5">
               <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
                 Settings
               </div>
-              <h1 className="mt-2 text-[28px] font-semibold tracking-[-0.03em] text-slate-900">
+              <h1 className="mt-2 text-[24px] font-semibold tracking-[-0.03em] text-slate-900 sm:text-[24px]">
                 Team &amp; Access
               </h1>
-              <p className="mt-2 text-sm text-slate-500">
+              <p className="mt-2 text-sm leading-6 text-slate-500 sm:leading-5">
                 Manage who can access <span className="font-semibold">{business.slug}</span>
               </p>
             </div>

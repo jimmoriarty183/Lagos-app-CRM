@@ -115,7 +115,7 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="space-y-3">
+    <section className="min-w-0 max-w-full space-y-3 sm:space-y-2.5">
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-sm font-semibold text-slate-900">
           {title}
@@ -145,16 +145,16 @@ function RowShell({
   return (
     <div
       className={[
-        "flex flex-col gap-3 rounded-xl border px-4 py-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)] sm:flex-row sm:items-center sm:justify-between",
+        "flex w-full min-w-0 max-w-full flex-col gap-2.5 rounded-xl border p-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)] sm:flex-row sm:items-center sm:justify-between sm:px-4 sm:py-2.5",
         tone === "owner"
           ? "border-blue-100 bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_100%)]"
           : "border-slate-200 bg-white",
       ].join(" ")}
     >
-      <div className="flex min-w-0 items-center gap-3">
+      <div className="flex min-w-0 max-w-full items-start gap-3 sm:items-center">
         <div
           className={[
-            "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border",
+            "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border sm:h-10 sm:w-10",
             tone === "owner"
               ? "border-blue-100 bg-blue-50 text-blue-700"
               : "border-slate-200 bg-slate-50 text-slate-600",
@@ -163,20 +163,22 @@ function RowShell({
           {icon}
         </div>
 
-        <div className="min-w-0">
-          <div className="flex min-w-0 flex-wrap items-center gap-2">
-            <div className="truncate text-sm font-semibold text-slate-900">{primary}</div>
+        <div className="min-w-0 max-w-full flex-1">
+          <div className="flex min-w-0 flex-col items-start gap-1.5 sm:flex-row sm:flex-wrap sm:items-center sm:gap-1.5">
+            <div className="min-w-0 break-words text-[15px] font-semibold leading-5 text-slate-900 sm:text-[15px]">
+              {primary}
+            </div>
             {meta ? <div className="flex flex-wrap items-center gap-2">{meta}</div> : null}
           </div>
           {secondary ? (
-            <div className="mt-0.5 truncate text-xs text-slate-500">{secondary}</div>
+            <div className="mt-1 min-w-0 break-words text-xs leading-5 text-slate-500">
+              {secondary}
+            </div>
           ) : null}
         </div>
       </div>
 
-      {action ? (
-        <div className="flex shrink-0 justify-end sm:justify-start">{action}</div>
-      ) : null}
+      {action ? <div className="flex w-full min-w-0 shrink-0 justify-end sm:w-auto sm:justify-start">{action}</div> : null}
     </div>
   );
 }
@@ -511,7 +513,7 @@ export default function BusinessPeoplePanel({
 
   return (
     <>
-      <div className="space-y-6">
+      <div className="min-w-0 max-w-full space-y-5 pb-4 sm:space-y-4 sm:pb-0">
         <Section title="Owner">
           <RowShell
             icon={<Crown className="h-4 w-4" />}
@@ -535,7 +537,7 @@ export default function BusinessPeoplePanel({
           ) : null}
 
           {!loading && managersToShow.length > 0 ? (
-            <div className="space-y-2">
+            <div className="min-w-0 max-w-full space-y-2">
               {managersToShow.map((manager) => {
                 const managerIsYou =
                   Boolean(currentUserId) &&
@@ -565,7 +567,7 @@ export default function BusinessPeoplePanel({
                       <button
                         type="button"
                         onClick={() => setManagerToRemove(manager)}
-                        className="inline-flex h-8 items-center justify-center rounded-lg border border-slate-200 px-3 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
+                        className="inline-flex h-9 min-w-[104px] items-center justify-center rounded-xl border border-slate-200 px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 hover:text-slate-900 sm:h-8 sm:min-w-0 sm:rounded-lg sm:px-3 sm:text-xs sm:text-slate-600"
                       >
                         Remove
                       </button>
@@ -580,7 +582,7 @@ export default function BusinessPeoplePanel({
             <button
               type="button"
               onClick={() => setShowAllManagers((prev) => !prev)}
-              className="text-sm font-semibold text-slate-700 hover:text-slate-900"
+              className="inline-flex w-full items-center justify-center rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 hover:text-slate-900 sm:w-auto sm:justify-start sm:border-0 sm:px-0 sm:py-0"
             >
               {showAllManagers ? "Show fewer managers" : "Show all managers"}
             </button>
@@ -603,7 +605,7 @@ export default function BusinessPeoplePanel({
           {managersPending.length === 0 ? (
             <EmptyState text="No pending invites." />
           ) : (
-            <div className="space-y-2">
+            <div className="min-w-0 max-w-full space-y-2">
               {managersPending.map((invite) => (
                 <RowShell
                   key={invite.invite_id}
@@ -622,7 +624,7 @@ export default function BusinessPeoplePanel({
                         <button
                           type="button"
                           onClick={() => setInviteToRevoke(invite)}
-                          className="inline-flex h-8 items-center justify-center rounded-lg border border-slate-200 px-3 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
+                          className="inline-flex h-9 min-w-[104px] items-center justify-center rounded-xl border border-slate-200 px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 hover:text-slate-900 sm:h-8 sm:min-w-0 sm:rounded-lg sm:px-3 sm:text-xs sm:text-slate-600"
                         >
                           Revoke
                         </button>

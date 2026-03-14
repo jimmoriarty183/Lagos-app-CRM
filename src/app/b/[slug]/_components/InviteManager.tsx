@@ -63,14 +63,14 @@ export default function InviteManager({
   };
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+    <div className="w-full min-w-0 max-w-full rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
       <div className="text-sm font-semibold text-slate-900">Invite manager</div>
       <div className="mt-1 text-xs text-slate-500">
         Invitation will remain pending until accepted.
       </div>
 
-      <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
-        <label className="relative block flex-1">
+      <div className="mt-3 flex min-w-0 max-w-full flex-col gap-2 sm:flex-row sm:items-center">
+        <label className="relative block min-w-0 flex-1">
           <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input
             value={email}
@@ -82,7 +82,7 @@ export default function InviteManager({
             onKeyDown={(e) => {
               if (e.key === "Enter") onInvite();
             }}
-            className="h-11 w-full rounded-xl border border-slate-200 bg-white px-10 text-sm font-medium outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
+            className="h-11 w-full min-w-0 max-w-full rounded-xl border border-slate-200 bg-white px-10 text-sm font-medium outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
           />
         </label>
 
@@ -90,7 +90,7 @@ export default function InviteManager({
           onClick={onInvite}
           disabled={!emailOk || loading}
           className={[
-            "inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold transition-all duration-200 sm:min-w-[132px]",
+            "inline-flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold transition-all duration-200 sm:w-auto sm:min-w-[132px]",
             loading
               ? "bg-[#111827] text-white"
               : emailOk
