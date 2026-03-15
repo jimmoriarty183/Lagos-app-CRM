@@ -4,11 +4,18 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown, Search } from "lucide-react";
 
 import {
+  getDefaultVisibleStatusFilters,
+  getStatusLabel,
+  getStatusTone,
+  isTerminalStatus,
+  type StatusFilterValue,
+} from "@/lib/business-statuses";
+import {
   DASHBOARD_RANGE_OPTIONS,
   type DashboardRange,
 } from "@/lib/order-dashboard-summary";
-import { statusTone } from "@/app/b/[slug]/statusTone";
 import { resolveUserDisplay } from "@/lib/user-display";
+import { useBusinessStatuses } from "@/lib/use-business-statuses";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -20,15 +27,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-type Status =
-  | "NEW"
-  | "IN_PROGRESS"
-  | "WAITING_PAYMENT"
-  | "DONE"
-  | "CANCELED"
-  | "DUPLICATE";
-
-type SidebarStatus = Status | "OVERDUE";
+type SidebarStatus = StatusFilterValue;
 type TeamActor = {
   id: string;
   label: string;
@@ -52,34 +51,12 @@ type ManagerStatusResponse = {
   }>;
 };
 
-const STATUS_OPTIONS: { value: SidebarStatus; label: string }[] = [
-  { value: "NEW", label: "New" },
-  { value: "IN_PROGRESS", label: "In progress" },
-  { value: "WAITING_PAYMENT", label: "Waiting payment" },
-  { value: "OVERDUE", label: "Overdue" },
-  { value: "DONE", label: "Done" },
-  { value: "CANCELED", label: "Canceled" },
-  { value: "DUPLICATE", label: "Duplicate" },
-];
-
-const ACTIVE_STATUS_OPTIONS: readonly SidebarStatus[] = [
-  "NEW",
-  "IN_PROGRESS",
-  "WAITING_PAYMENT",
-  "OVERDUE",
-] as const;
-
-const INACTIVE_STATUS_OPTIONS: readonly SidebarStatus[] = [
-  "DONE",
-  "CANCELED",
-  "DUPLICATE",
-] as const;
-
 type Props = {
   businessId: string;
   phoneRaw: string;
   q: string;
   statuses: SidebarStatus[];
+  statusMode: "default" | "all" | "custom";
   range: DashboardRange;
   summaryRange: DashboardRange;
   startDate: string | null;
@@ -91,23 +68,26 @@ type Props = {
   clearHref?: string;
 };
 
-function getStatusTriggerLabel(statuses: SidebarStatus[]) {
-  if (statuses.length === STATUS_OPTIONS.length) return "All statuses";
+function getStatusTriggerLabel(
+  statuses: SidebarStatus[],
+  activeStatusOptions: readonly SidebarStatus[],
+  inactiveStatusOptions: readonly SidebarStatus[],
+) {
+  if (statuses.length === 0) return "All statuses";
   if (
-    statuses.length === ACTIVE_STATUS_OPTIONS.length &&
-    ACTIVE_STATUS_OPTIONS.every((status) => statuses.includes(status))
+    statuses.length === activeStatusOptions.length &&
+    activeStatusOptions.every((status) => statuses.includes(status))
   ) {
     return "Active statuses";
   }
   if (
-    statuses.length === INACTIVE_STATUS_OPTIONS.length &&
-    INACTIVE_STATUS_OPTIONS.every((status) => statuses.includes(status))
+    statuses.length === inactiveStatusOptions.length &&
+    inactiveStatusOptions.every((status) => statuses.includes(status))
   ) {
     return "Inactive statuses";
   }
-  if (statuses.length === 0) return "No statuses";
   if (statuses.length === 1) {
-    return STATUS_OPTIONS.find((option) => option.value === statuses[0])?.label ?? "1 status";
+    return statuses[0] === "OVERDUE" ? "Overdue" : getStatusLabel(statuses[0]);
   }
   return `${statuses.length} statuses`;
 }
@@ -152,6 +132,7 @@ export default function DesktopSidebarFilters({
   phoneRaw,
   q,
   statuses,
+  statusMode,
   range,
   summaryRange,
   startDate,
@@ -163,6 +144,7 @@ export default function DesktopSidebarFilters({
   clearHref,
 }: Props) {
   const formRef = useRef<HTMLFormElement | null>(null);
+  const { customStatuses, statuses: businessStatuses } = useBusinessStatuses(businessId);
   const [loadedActors, setLoadedActors] = useState<TeamActor[]>(actors);
   const [rangeValue, setRangeValue] = useState<DashboardRange>(range);
   const [customStart, setCustomStart] = useState(startDate ?? "");
@@ -174,6 +156,32 @@ export default function DesktopSidebarFilters({
   const [actorMenuOpen, setActorMenuOpen] = useState(false);
   const showCustomRange = rangeValue === "custom";
   const customRangeReady = !showCustomRange || (Boolean(customStart) && Boolean(customEnd));
+  const statusOptions = useMemo(
+    () => [
+      ...businessStatuses.map((status) => ({
+        value: status.value as SidebarStatus,
+        label: status.label,
+      })),
+      { value: "OVERDUE" as const, label: "Overdue" },
+    ],
+    [businessStatuses],
+  );
+  const activeStatusOptions = useMemo(
+    () => getDefaultVisibleStatusFilters(customStatuses),
+    [customStatuses],
+  );
+  const inactiveStatusOptions = useMemo(
+    () =>
+      businessStatuses
+        .filter((status) => isTerminalStatus(status.value))
+        .map((status) => status.value as SidebarStatus),
+    [businessStatuses],
+  );
+  const shouldKeepAllStatuses =
+    statusMode === "all" || statusValues.length === 0 || statusValues.length === statusOptions.length;
+  const shouldKeepDefaultStatuses =
+    statusValues.length === activeStatusOptions.length &&
+    activeStatusOptions.every((status) => statusValues.includes(status));
 
   const effectiveActors = useMemo(() => mergeActors(actors, loadedActors), [actors, loadedActors]);
   const actorOptions = useMemo(
@@ -294,10 +302,11 @@ export default function DesktopSidebarFilters({
         <input type="hidden" name="srange" value={summaryRange} />
         <input type="hidden" name="page" value="1" />
         <input type="hidden" name="range" value={rangeValue} />
+        {shouldKeepAllStatuses ? <input type="hidden" name="statusMode" value="all" /> : null}
         {showCustomRange && customStart ? <input type="hidden" name="start" value={customStart} /> : null}
         {showCustomRange && customEnd ? <input type="hidden" name="end" value={customEnd} /> : null}
         {normalizedActorValue !== "ALL" ? <input type="hidden" name="actor" value={normalizedActorValue} /> : null}
-        {statusValues.map((status) => (
+        {!shouldKeepAllStatuses && !shouldKeepDefaultStatuses && statusValues.map((status) => (
           <input key={status} type="hidden" name="status" value={status} />
         ))}
 
@@ -336,7 +345,9 @@ export default function DesktopSidebarFilters({
               type="button"
               className="inline-flex h-11 w-full items-center justify-between rounded-2xl border border-[#dde3ee] bg-white px-4 text-sm font-medium text-[#344054] outline-none transition hover:border-[#cfd8e6] focus:border-[#111827] focus:ring-2 focus:ring-[#111827]/10"
             >
-              <span className="truncate">{getStatusTriggerLabel(statusValues)}</span>
+              <span className="truncate">
+                {getStatusTriggerLabel(statusValues, activeStatusOptions, inactiveStatusOptions)}
+              </span>
               <ChevronDown className="ml-3 h-4 w-4 shrink-0 text-[#98a2b3]" />
             </button>
             </DropdownMenuTrigger>
@@ -351,7 +362,7 @@ export default function DesktopSidebarFilters({
               <div className="flex items-center justify-between gap-2 px-2 pb-1 pt-1">
                 <button
                   type="button"
-                  onClick={() => setStatusValues(STATUS_OPTIONS.map((option) => option.value))}
+                  onClick={() => setStatusValues(statusOptions.map((option) => option.value))}
                   className="text-[11px] font-semibold text-[#344054] transition hover:text-[#111827]"
                 >
                   Select all
@@ -368,11 +379,13 @@ export default function DesktopSidebarFilters({
               <div className="px-2 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
                 Active
               </div>
-              {STATUS_OPTIONS.filter((option) => ACTIVE_STATUS_OPTIONS.includes(option.value)).map((option) => {
+              {activeStatusOptions.map((statusValue) => {
+                const option = statusOptions.find((item) => item.value === statusValue);
+                if (!option) return null;
                 const tone =
                   option.value === "OVERDUE"
                     ? { dot: "#DC2626", color: "#DC2626", selectedBackground: "#FEF2F2" }
-                    : statusTone(option.value);
+                    : getStatusTone(option.value, customStatuses);
 
                 return (
                   <DropdownMenuCheckboxItem
@@ -402,8 +415,13 @@ export default function DesktopSidebarFilters({
               <div className="px-2 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
                 Inactive
               </div>
-              {STATUS_OPTIONS.filter((option) => INACTIVE_STATUS_OPTIONS.includes(option.value)).map((option) => {
-                const tone = statusTone(option.value as Status);
+              {inactiveStatusOptions.map((statusValue) => {
+                const option = statusOptions.find((item) => item.value === statusValue);
+                if (!option) return null;
+                const tone =
+                  option.value === "OVERDUE"
+                    ? { dot: "#DC2626", color: "#DC2626", selectedBackground: "#FEF2F2" }
+                    : getStatusTone(option.value, customStatuses);
 
                 return (
                   <DropdownMenuCheckboxItem
@@ -530,16 +548,16 @@ export default function DesktopSidebarFilters({
               onCloseAutoFocus={(event) => event.preventDefault()}
             >
               <DropdownMenuRadioGroup value={normalizedActorValue} className="max-h-[320px] overflow-y-auto pr-1">
-                {[
-                  { value: "ALL", label: "All managers" },
-                  ...(currentUserId ? [{ value: "ME", label: "Me" }] : []),
-                  { value: "UNASSIGNED", label: "Unassigned" },
+                {([
+                  { value: "ALL", label: "All managers", avatar: false },
+                  ...(currentUserId ? [{ value: "ME", label: "Me", avatar: false }] : []),
+                  { value: "UNASSIGNED", label: "Unassigned", avatar: false },
                   ...actorOptions.map((actorOption) => ({
                     value: `user:${actorOption.id}`,
                     label: actorOption.label,
                     avatar: true,
                   })),
-                ].map((option) => (
+                ] as Array<{ value: string; label: string; avatar: boolean }>).map((option) => (
                   <DropdownMenuRadioItem
                     key={option.value}
                     value={option.value}

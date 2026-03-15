@@ -8,7 +8,10 @@ export default function DesktopCreateOrderAccordion({
   businessSlug: string;
 }) {
   return (
-    <details className="group rounded-2xl border border-[#dde3ee] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+    <details
+      id="desktop-create-order"
+      className="group rounded-2xl border border-[#dde3ee] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)]"
+    >
       <summary className="list-none cursor-pointer select-none">
         <div className="flex items-center justify-between gap-3 px-5 py-4">
           <div className="flex items-center gap-3">

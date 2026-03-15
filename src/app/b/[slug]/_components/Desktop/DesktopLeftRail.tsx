@@ -12,17 +12,8 @@ import {
 } from "lucide-react";
 
 import DesktopSidebarFilters from "./DesktopSidebarFilters";
+import type { StatusFilterValue } from "@/lib/business-statuses";
 import type { DashboardRange } from "@/lib/order-dashboard-summary";
-
-type Status =
-  | "NEW"
-  | "IN_PROGRESS"
-  | "WAITING_PAYMENT"
-  | "DONE"
-  | "CANCELED"
-  | "DUPLICATE";
-
-type StatusFilterValue = Status | "OVERDUE";
 
 type TeamActor = {
   id: string;
@@ -35,6 +26,7 @@ type Props = {
   phoneRaw: string;
   q: string;
   statuses: StatusFilterValue[];
+  statusMode: "default" | "all" | "custom";
   range: DashboardRange;
   summaryRange: DashboardRange;
   startDate: string | null;
@@ -46,7 +38,10 @@ type Props = {
   activeFiltersCount: number;
   clearHref: string;
   businessHref: string;
+  settingsHref: string;
   canSeeAnalytics: boolean;
+  showFilters?: boolean;
+  activeSection?: "business" | "settings";
 };
 
 const MENU_STORAGE_KEY = "orders-desktop-menu-expanded";
@@ -176,6 +171,7 @@ export default function DesktopLeftRail({
   phoneRaw,
   q,
   statuses,
+  statusMode,
   range,
   summaryRange,
   startDate,
@@ -187,7 +183,10 @@ export default function DesktopLeftRail({
   activeFiltersCount,
   clearHref,
   businessHref,
+  settingsHref,
   canSeeAnalytics,
+  showFilters = true,
+  activeSection,
 }: Props) {
   const expanded = useSyncExternalStore(
     subscribeExpanded,
@@ -246,15 +245,17 @@ export default function DesktopLeftRail({
                 onClick={toggleExpanded}
               />
 
-              <RailLink
-                icon={<SlidersHorizontal className="h-5 w-5" />}
-                label="Filters"
-                description="Search and narrow orders"
-                expanded={expanded}
-                active={filtersOpen}
-                badgeCount={activeFiltersCount}
-                onClick={() => setFiltersOpen((prev) => !prev)}
-              />
+              {showFilters ? (
+                <RailLink
+                  icon={<SlidersHorizontal className="h-5 w-5" />}
+                  label="Filters"
+                  description="Search and narrow orders"
+                  expanded={expanded}
+                  active={filtersOpen}
+                  badgeCount={activeFiltersCount}
+                  onClick={() => setFiltersOpen((prev) => !prev)}
+                />
+              ) : null}
 
               {canSeeAnalytics ? (
                 <RailLink
@@ -271,19 +272,21 @@ export default function DesktopLeftRail({
                 description="Manage access and managers"
                 expanded={expanded}
                 href={businessHref}
+                active={activeSection === "business"}
               />
 
               <RailLink
                 icon={<Settings className="h-5 w-5" />}
                 label="Settings"
-                description="More options soon"
+                description="Team and statuses"
                 expanded={expanded}
-                disabled
+                href={settingsHref}
+                active={activeSection === "settings"}
               />
             </div>
           </div>
 
-          {filtersOpen ? (
+          {showFilters && filtersOpen ? (
             <div
               className={[
                 "absolute top-0 z-20 w-[312px]",
@@ -295,6 +298,7 @@ export default function DesktopLeftRail({
                 phoneRaw={phoneRaw}
                 q={q}
                 statuses={statuses}
+                statusMode={statusMode}
                 range={range}
                 summaryRange={summaryRange}
                 startDate={startDate}

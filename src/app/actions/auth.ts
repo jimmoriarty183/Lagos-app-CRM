@@ -3,6 +3,7 @@
 import { headers } from "next/headers";
 import { supabaseServer } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { isBusinessSegment } from "@/lib/business-segments";
 
 type State = { ok: boolean; error: string; next: string };
 const initial: State = { ok: false, error: "", next: "" };
@@ -13,6 +14,11 @@ function msg(e: unknown) {
     return maybeError.message || maybeError.error_description || "Unknown error";
   }
   return "Unknown error";
+}
+
+function isMissingColumnError(message: string) {
+  const lowered = message.toLowerCase();
+  return lowered.includes("column") && (lowered.includes("does not exist") || lowered.includes("schema cache"));
 }
 
 // ✅ генерация slug из названия
@@ -111,6 +117,7 @@ export async function registerOwnerAction(
     const password = String(formData.get("password") || "");
     const passwordConfirm = String(formData.get("password_confirm") || "");
     const businessName = String(formData.get("business_name") || "").trim();
+    const businessSegment = String(formData.get("business_segment") || "").trim();
 
     const firstName = String(formData.get("first_name") || "").trim();
     const lastName = String(formData.get("last_name") || "").trim();
@@ -131,6 +138,9 @@ export async function registerOwnerAction(
 
     if (!inviteId && !businessName) {
       return { ok: false, error: "Business name is required", next: "" };
+    }
+    if (businessSegment && !isBusinessSegment(businessSegment)) {
+      return { ok: false, error: "Select a valid business segment", next: "" };
     }
 
     const fullName = `${firstName} ${lastName}`.trim();
@@ -191,6 +201,17 @@ export async function registerOwnerAction(
       p_manager_phone: null,
     });
     if (rpcErr) return { ok: false, error: rpcErr.message, next: "" };
+
+    if (businessSegment) {
+      const { error: segmentErr } = await admin
+        .from("businesses")
+        .update({ business_segment: businessSegment })
+        .eq("slug", slug);
+
+      if (segmentErr && !isMissingColumnError(segmentErr.message)) {
+        return { ok: false, error: segmentErr.message, next: "" };
+      }
+    }
 
     return { ok: true, error: "", next: `/b/${slug}` };
   } catch (e) {

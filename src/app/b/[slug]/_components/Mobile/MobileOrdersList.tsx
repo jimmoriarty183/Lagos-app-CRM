@@ -39,9 +39,15 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import {
+  getStatusLabel,
+  type StatusFilterValue,
+  type StatusValue,
+} from "@/lib/business-statuses";
 import type { DashboardRange } from "@/lib/order-dashboard-summary";
 import { createClient } from "@/lib/supabase/client";
 import { resolveUserDisplay } from "@/lib/user-display";
+import { useBusinessStatuses } from "@/lib/use-business-statuses";
 
 declare global {
   interface Window {
@@ -49,15 +55,6 @@ declare global {
   }
 }
 
-type Status =
-  | "NEW"
-  | "IN_PROGRESS"
-  | "WAITING_PAYMENT"
-  | "DONE"
-  | "CANCELED"
-  | "DUPLICATE";
-
-type StatusFilterValue = Status | "OVERDUE";
 type OrderSort =
   | "default"
   | "newest"
@@ -103,7 +100,7 @@ type OrderRow = {
   amount: number;
   description: string | null;
   due_date: string | null;
-  status: Status;
+  status: StatusValue;
   order_number: number | null;
   created_at: string;
   manager_id: string | null;
@@ -206,6 +203,7 @@ export default function MobileOrdersList({
   currentUserName,
   searchQuery,
   sort,
+  statusMode,
   statusFilter,
   summaryRange,
   rangeFilter,
@@ -230,6 +228,7 @@ export default function MobileOrdersList({
   currentUserName: string;
   searchQuery: string;
   sort: OrderSort;
+  statusMode: "default" | "all" | "custom";
   statusFilter: StatusFilterValue[];
   summaryRange: DashboardRange;
   rangeFilter: DashboardRange;
@@ -238,6 +237,7 @@ export default function MobileOrdersList({
   actorFilter: string;
 }) {
   const router = useRouter();
+  const { statuses } = useBusinessStatuses(businessId);
   const [openId, setOpenId] = useState<string | null>(null);
   const [searchDraft, setSearchDraft] = useState(searchQuery);
   const [sortValue, setSortValue] = useState<OrderSort>(sort);
@@ -324,7 +324,9 @@ export default function MobileOrdersList({
           : [next.statusValue]
         : statusFilter;
 
-    if (next.statusTouched && next.statusValue === "ALL") {
+    if (!next.statusTouched && statusMode === "all") {
+      params.set("statusMode", "all");
+    } else if (next.statusTouched && next.statusValue === "ALL") {
       params.set("statusMode", "all");
     } else {
       for (const status of nextStatuses) {
@@ -432,7 +434,7 @@ export default function MobileOrdersList({
     navigateWithFallback(buildHref(next));
   };
 
-  const handleCancelOrder = async (orderId: string, status: Status) => {
+  const handleCancelOrder = async (orderId: string, status: StatusValue) => {
     if (!canEdit || deletingId) return;
     if (status === "CANCELED" || status === "DONE") return;
     if (!window.confirm("Cancel this order? The order will stay in the list with Canceled status.")) return;
@@ -569,12 +571,11 @@ export default function MobileOrdersList({
               className="h-11 min-w-0 rounded-2xl border border-[#dde3ee] bg-white px-3 text-sm font-medium text-[#344054] outline-none transition focus:border-[#111827] focus:ring-2 focus:ring-[#111827]/10"
             >
               <option value="ALL">All Statuses</option>
-              <option value="NEW">New</option>
-              <option value="IN_PROGRESS">In Progress</option>
-              <option value="WAITING_PAYMENT">Waiting Payment</option>
-              <option value="DONE">Done</option>
-              <option value="CANCELED">Canceled</option>
-              <option value="DUPLICATE">Duplicate</option>
+              {statuses.map((status) => (
+                <option key={status.value} value={status.value}>
+                  {getStatusLabel(status.value)}
+                </option>
+              ))}
             </select>
 
             <select
@@ -691,6 +692,7 @@ export default function MobileOrdersList({
                 <div className="inline-flex">
                   <StatusCell
                     orderId={order.id}
+                    businessId={businessId}
                     businessSlug={businessSlug}
                     value={order.status}
                     canManage={canManage}

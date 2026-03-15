@@ -10,6 +10,7 @@ import {
   Maximize2,
   Minimize2,
   MessageSquareText,
+  Plus,
   Tag,
   X,
 } from "lucide-react";
@@ -41,14 +42,15 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { statusTone } from "@/app/b/[slug]/statusTone";
-
-type Status =
-  | "NEW"
-  | "IN_PROGRESS"
-  | "WAITING_PAYMENT"
-  | "DONE"
-  | "CANCELED"
-  | "DUPLICATE";
+import {
+  getBusinessStatusesEventName,
+  getStatusLabel,
+  normalizeStatusColor,
+  sanitizeStatusValue,
+  STATUS_COLOR_OPTIONS,
+  type StatusValue,
+} from "@/lib/business-statuses";
+import { useBusinessStatuses } from "@/lib/use-business-statuses";
 
 type TeamActor = {
   id: string;
@@ -66,7 +68,7 @@ type OrderRow = {
   amount: number;
   description: string | null;
   due_date: string | null;
-  status: Status;
+  status: StatusValue;
   order_number: number | null;
   created_at: string;
   manager_id: string | null;
@@ -125,20 +127,7 @@ type CommentActivityRow = {
 };
 
 const LABEL_SUGGESTIONS = ["urgent", "VIP", "paid", "callback", "installation", "follow-up"];
-const STATUS_OPTIONS: Array<{ value: Status; label: string }> = [
-  { value: "NEW", label: "New" },
-  { value: "IN_PROGRESS", label: "In progress" },
-  { value: "WAITING_PAYMENT", label: "Waiting payment" },
-  { value: "DONE", label: "Done" },
-  { value: "CANCELED", label: "Canceled" },
-  { value: "DUPLICATE", label: "Duplicate" },
-];
-
 const ORDER_PREVIEW_LAYOUT_STORAGE_KEY = "order-preview-layout-mode";
-
-function statusLabel(status: Status) {
-  return STATUS_OPTIONS.find((option) => option.value === status)?.label ?? status;
-}
 
 function getActivityStorageKey(businessId: string, orderId: string) {
   return `order-activity:${businessId}:${orderId}`;
@@ -298,110 +287,305 @@ function DrawerStatusSelect({
   orderId: string;
   businessId: string;
   businessSlug: string;
-  value: Status;
+  value: StatusValue;
   canManage: boolean;
   currentUserName: string;
   userRole: "OWNER" | "MANAGER" | "GUEST";
-  onCommitted?: (nextStatus: Status) => void;
+  onCommitted?: (nextStatus: StatusValue) => void;
 }) {
-  const [localStatus, setLocalStatus] = React.useState<Status>(value);
+  const router = useRouter();
+  const { customStatuses, statuses } = useBusinessStatuses(businessId);
+  const workflowStatuses = statuses.filter((status) => status.active !== false);
+  const [localStatus, setLocalStatus] = React.useState<StatusValue>(value);
   const [open, setOpen] = React.useState(false);
   const [isPending, startTransition] = React.useTransition();
+  const [isCreateOpen, setIsCreateOpen] = React.useState(false);
+  const [draftStatusLabel, setDraftStatusLabel] = React.useState("");
+  const [draftStatusColor, setDraftStatusColor] = React.useState<string>("blue");
+  const [customStatusColor, setCustomStatusColor] = React.useState("#2563EB");
+  const [createError, setCreateError] = React.useState<string | null>(null);
+  const [isCreating, setIsCreating] = React.useState(false);
 
   React.useEffect(() => {
     setLocalStatus(value);
   }, [value]);
 
-  const tone = statusTone(localStatus);
+  const tone = statusTone(localStatus, customStatuses);
+  const canManageStatuses = userRole === "OWNER";
+
+  const refreshStatuses = React.useCallback(() => {
+    window.dispatchEvent(new CustomEvent(getBusinessStatusesEventName(), { detail: { businessId } }));
+  }, [businessId]);
+
+  const commitStatusChange = React.useCallback(
+    async (next: StatusValue, previous: StatusValue) => {
+      await setOrderStatus({ orderId, businessSlug, status: next });
+      onCommitted?.(next);
+      appendLocalActivityEvent(businessId, orderId, {
+        id: makeLocalActivityEventId("status"),
+        type: "status_changed",
+        actorName: currentUserName || "Manager",
+        actorRole: userRole,
+        description: `changed status from "${getStatusLabel(previous, customStatuses)}" to "${getStatusLabel(next, customStatuses)}"`,
+        ts: new Date().toISOString(),
+      });
+    },
+    [businessId, businessSlug, currentUserName, customStatuses, onCommitted, orderId, userRole],
+  );
+
+  const handleCreateStatus = async () => {
+    const label = draftStatusLabel.trim();
+    const valueToCreate = sanitizeStatusValue(label);
+
+    if (!canManageStatuses) {
+      setCreateError("Only the owner can add statuses.");
+      return;
+    }
+    if (!label || !valueToCreate) {
+      setCreateError("Enter a valid status name.");
+      return;
+    }
+
+    setIsCreating(true);
+    setCreateError(null);
+
+    try {
+      const res = await fetch("/api/business/statuses", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          businessId,
+          label,
+          value: valueToCreate,
+          color: normalizeStatusColor(draftStatusColor === "custom" ? customStatusColor : draftStatusColor),
+        }),
+      });
+      const json = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) {
+        throw new Error(json.error || "Failed to create status.");
+      }
+
+      refreshStatuses();
+      const prevStatus = localStatus;
+      setLocalStatus(valueToCreate);
+      setDraftStatusLabel("");
+      setDraftStatusColor("blue");
+      setCustomStatusColor("#2563EB");
+      setIsCreateOpen(false);
+
+      try {
+        await commitStatusChange(valueToCreate, prevStatus);
+      } catch (error) {
+        setLocalStatus(prevStatus);
+        throw error;
+      }
+    } catch (error) {
+      setCreateError(error instanceof Error ? error.message : "Failed to create status.");
+    } finally {
+      setIsCreating(false);
+    }
+  };
 
   return (
-    <DropdownMenu modal={false} open={open} onOpenChange={setOpen}>
-      <DropdownMenuTrigger asChild>
-        <button
-          type="button"
-          disabled={!canManage || isPending}
-          className="inline-flex h-[25px] min-w-[116px] items-center justify-between gap-2 rounded-full px-[11px] text-left text-[12px] font-medium leading-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111827]/10 disabled:cursor-default disabled:opacity-60"
-          style={{
-            background: tone.background,
-            color: tone.color,
-          }}
-        >
-          <span className="inline-flex items-center gap-1.5">
-            <span
-              aria-hidden="true"
-              className="h-[6px] w-[6px] rounded-full"
-              style={{ background: tone.dot }}
-            />
-            <span>{statusLabel(localStatus)}</span>
-          </span>
-          {canManage ? <ChevronDown className="h-3.5 w-3.5 shrink-0 opacity-60" /> : null}
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent
-        align="start"
-        sideOffset={8}
-        className="z-[120] w-56 rounded-xl border-[#dde3ee] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
-        onCloseAutoFocus={(event) => event.preventDefault()}
-      >
-        {STATUS_OPTIONS.map((option) => {
-          const optionTone = statusTone(option.value);
-          const selected = option.value === localStatus;
-
-          return (
-            <DropdownMenuItem
-              key={option.value}
-              className="rounded-lg px-3 py-2 text-sm font-medium text-[#182230] focus:bg-[#f8fafc] focus:text-[#182230]"
-              onSelect={(event) => {
-                event.preventDefault();
-                if (option.value === localStatus) {
-                  setOpen(false);
-                  return;
-                }
-
-                const next = option.value;
-                const prevStatus = localStatus;
-                setOpen(false);
-                setLocalStatus(next);
-
-                startTransition(async () => {
-                  try {
-                    await setOrderStatus({ orderId, businessSlug, status: next });
-                    onCommitted?.(next);
-                    appendLocalActivityEvent(businessId, orderId, {
-                      id: makeLocalActivityEventId("status"),
-                      type: "status_changed",
-                      actorName: currentUserName || "Manager",
-                      actorRole: userRole,
-                      description: `changed status from "${statusLabel(prevStatus)}" to "${statusLabel(next)}"`,
-                      ts: new Date().toISOString(),
-                    });
-                  } catch (error) {
-                    setLocalStatus(prevStatus);
-                    window.alert(error instanceof Error ? error.message : "Failed to update status.");
-                  }
-                });
-              }}
+    <div className="w-full space-y-2">
+      <div className="flex flex-wrap items-center gap-2">
+        <DropdownMenu modal={false} open={open} onOpenChange={setOpen}>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              disabled={!canManage || isPending}
+              className="inline-flex h-[25px] min-w-[116px] items-center justify-between gap-2 rounded-full px-[11px] text-left text-[12px] font-medium leading-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111827]/10 disabled:cursor-default disabled:opacity-60"
               style={{
-                background: selected ? optionTone.selectedBackground : undefined,
-                color: selected ? optionTone.color : undefined,
+                background: tone.background,
+                color: tone.color,
               }}
             >
-              <div className="flex w-full items-center justify-between gap-3">
-                <span className="inline-flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5">
+                <span
+                  aria-hidden="true"
+                  className="h-[6px] w-[6px] rounded-full"
+                  style={{ background: tone.dot }}
+                />
+                <span>{getStatusLabel(localStatus, customStatuses)}</span>
+              </span>
+              {canManage ? <ChevronDown className="h-3.5 w-3.5 shrink-0 opacity-60" /> : null}
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            align="start"
+            sideOffset={8}
+            className="z-[120] w-56 rounded-xl border-[#dde3ee] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
+            onCloseAutoFocus={(event) => event.preventDefault()}
+          >
+            {workflowStatuses.map((option) => {
+              const optionTone = statusTone(option.value, customStatuses);
+              const selected = option.value === localStatus;
+
+              return (
+                <DropdownMenuItem
+                  key={option.value}
+                  className="rounded-lg px-3 py-2 text-sm font-medium text-[#182230] focus:bg-[#f8fafc] focus:text-[#182230]"
+                  onSelect={(event) => {
+                    event.preventDefault();
+                    if (option.value === localStatus) {
+                      setOpen(false);
+                      return;
+                    }
+
+                    const next = option.value;
+                    const prevStatus = localStatus;
+                    setOpen(false);
+                    setLocalStatus(next);
+
+                    startTransition(async () => {
+                      try {
+                        await commitStatusChange(next, prevStatus);
+                      } catch (error) {
+                        setLocalStatus(prevStatus);
+                        window.alert(error instanceof Error ? error.message : "Failed to update status.");
+                      }
+                    });
+                  }}
+                  style={{
+                    background: selected ? optionTone.selectedBackground : undefined,
+                    color: selected ? optionTone.color : undefined,
+                  }}
+                >
+                  <div className="flex w-full items-center justify-between gap-3">
+                    <span className="inline-flex items-center gap-2">
+                      <span
+                        aria-hidden="true"
+                        className="h-[6px] w-[6px] rounded-full"
+                        style={{ background: optionTone.dot }}
+                      />
+                      <span>{option.label}</span>
+                    </span>
+                    {selected ? <Check className="h-4 w-4 shrink-0 text-[#667085]" /> : null}
+                  </div>
+                </DropdownMenuItem>
+              );
+            })}
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        {canManageStatuses ? (
+          <>
+            <button
+              type="button"
+              onClick={() => {
+                router.push(`/b/${businessSlug}/settings/statuses`);
+              }}
+              className="inline-flex h-7 items-center rounded-full border border-[#dbe3f0] bg-white px-2.5 text-[12px] font-semibold text-[#344054] transition hover:border-[#bfd0ec] hover:bg-[#f8fafc]"
+            >
+              Status settings
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setIsCreateOpen((prev) => !prev);
+                setCreateError(null);
+              }}
+              className="inline-flex h-7 items-center gap-1 rounded-full border border-[#dbe3f0] bg-[#f8fbff] px-2.5 text-[12px] font-semibold text-[#2459d3] transition hover:border-[#bfd0ec] hover:bg-[#eef4ff]"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Add status
+            </button>
+          </>
+        ) : null}
+      </div>
+
+      {isCreateOpen ? (
+        <div className="rounded-2xl border border-[#dde3ee] bg-[#fcfdff] p-3">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
+            New status
+          </div>
+          <div className="mt-2 grid gap-2">
+            <input
+              value={draftStatusLabel}
+              onChange={(event) => setDraftStatusLabel(event.currentTarget.value)}
+              placeholder="Ready for pickup"
+              className="h-10 rounded-xl border border-[#dde3ee] bg-white px-3 text-sm outline-none transition focus:border-[#111827]"
+            />
+            <div className="flex flex-wrap gap-2">
+              {STATUS_COLOR_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setDraftStatusColor(option.value)}
+                  className={[
+                    "inline-flex h-9 items-center gap-2 rounded-xl border px-3 text-xs font-semibold transition",
+                    draftStatusColor === option.value
+                      ? "border-[#111827] bg-[#111827] !text-white"
+                      : "border-[#dde3ee] bg-white text-[#344054] hover:border-[#cfd8e6] hover:bg-[#f8fafc]",
+                  ].join(" ")}
+                >
                   <span
                     aria-hidden="true"
-                    className="h-[6px] w-[6px] rounded-full"
-                    style={{ background: optionTone.dot }}
+                    className="h-2.5 w-2.5 rounded-full"
+                    style={{ background: option.swatch }}
                   />
-                  <span>{option.label}</span>
+                  {option.label}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => setDraftStatusColor("custom")}
+                className={[
+                  "inline-flex h-9 items-center gap-2 rounded-xl border px-3 text-xs font-semibold transition",
+                  draftStatusColor === "custom"
+                    ? "border-[#111827] bg-[#111827] !text-white"
+                    : "border-[#dde3ee] bg-white text-[#344054] hover:border-[#cfd8e6] hover:bg-[#f8fafc]",
+                ].join(" ")}
+              >
+                <span
+                  aria-hidden="true"
+                  className="h-2.5 w-2.5 rounded-full border border-white/30"
+                  style={{ background: customStatusColor }}
+                />
+                Custom
+              </button>
+            </div>
+            {draftStatusColor === "custom" ? (
+              <label className="flex items-center gap-3 rounded-xl border border-[#dde3ee] bg-white px-3 py-2">
+                <input
+                  type="color"
+                  value={customStatusColor}
+                  onChange={(event) => setCustomStatusColor(event.currentTarget.value.toUpperCase())}
+                  className="h-8 w-10 cursor-pointer rounded-md border border-[#dde3ee] bg-white"
+                />
+                <span className="text-xs font-medium text-[#667085]">
+                  {customStatusColor.toUpperCase()} keeps the chosen client color with softer badge tones
                 </span>
-                {selected ? <Check className="h-4 w-4 shrink-0 text-[#667085]" /> : null}
-              </div>
-            </DropdownMenuItem>
-          );
-        })}
-      </DropdownMenuContent>
-    </DropdownMenu>
+              </label>
+            ) : null}
+            {createError ? (
+              <div className="text-xs font-medium text-red-600">{createError}</div>
+            ) : null}
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                onClick={() => void handleCreateStatus()}
+                className="h-9 rounded-xl bg-[#111827] px-3 text-xs font-semibold !text-white hover:bg-[#1f2937]"
+                disabled={isCreating}
+              >
+                {isCreating ? "Saving..." : "Create and assign"}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setIsCreateOpen(false);
+                  setCreateError(null);
+                }}
+                className="h-9 rounded-xl px-3 text-xs font-semibold"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </div>
   );
 }
 

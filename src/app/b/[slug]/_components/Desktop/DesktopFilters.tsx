@@ -1,4 +1,8 @@
 import Button from "../../Button";
+import {
+  DASHBOARD_RANGE_OPTIONS,
+  type DashboardRange,
+} from "@/lib/order-dashboard-summary";
 
 type Status =
   | "NEW"
@@ -8,14 +12,13 @@ type Status =
   | "CANCELED"
   | "DUPLICATE";
 
-type Range = "ALL" | "today" | "week" | "month" | "year";
 type TeamActor = {
   id: string;
   label: string;
   kind: "OWNER" | "MANAGER";
 };
 
-type Filters = { q: string; status: "ALL" | Status; range: Range };
+type Filters = { q: string; status: "ALL" | Status; range: DashboardRange };
 
 type Props = {
   phoneRaw: string;
@@ -33,6 +36,8 @@ type Props = {
 export default function DesktopFilters({
   phoneRaw,
   filters,
+  clearHref,
+  hasActiveFilters,
   actor,
   actors = [],
   card,
@@ -42,25 +47,38 @@ export default function DesktopFilters({
 
   return (
     <section
-      className="desktopOnly sticky top-20 z-20 bg-white/95 backdrop-blur rounded-xl border border-gray-200 shadow-sm p-3"
+      className="desktopOnly rounded-2xl border border-gray-200 bg-white/95 p-4 shadow-sm backdrop-blur"
       style={card}
     >
-      <form method="get" className="grid grid-cols-12 gap-2 items-end">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div>
+          <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-500">
+            Filters
+          </div>
+          <div className="mt-1 text-sm text-gray-700">
+            Narrow the orders list
+          </div>
+        </div>
+        {hasActiveFilters ? (
+          <a
+            href={clearHref}
+            className="rounded-full border border-gray-200 px-2.5 py-1 text-xs font-medium text-gray-600 transition hover:border-gray-300 hover:text-gray-900"
+          >
+            Reset
+          </a>
+        ) : null}
+      </div>
+
+      <form method="get" className="space-y-3">
         <input type="hidden" name="u" value={phoneRaw} />
         <input type="hidden" name="page" value="1" />
 
-        <label className="col-span-4 xl:col-span-5">
-          <span className="sr-only">Search</span>
-          <input
-            name="q"
-            defaultValue={filters.q}
-            placeholder="Name, phone, amount..."
-            className={inputCls}
-          />
-        </label>
+        <input type="hidden" name="q" value={filters.q} />
 
-        <label className="col-span-3 xl:col-span-2">
-          <span className="sr-only">Status</span>
+        <label className="block">
+          <span className="mb-1.5 block text-xs font-medium text-gray-500">
+            Status
+          </span>
           <select name="status" defaultValue={filters.status} className={inputCls}>
             <option value="ALL">All</option>
             <option value="NEW">NEW</option>
@@ -72,19 +90,23 @@ export default function DesktopFilters({
           </select>
         </label>
 
-        <label className="col-span-2 xl:col-span-2">
-          <span className="sr-only">Period</span>
+        <label className="block">
+          <span className="mb-1.5 block text-xs font-medium text-gray-500">
+            Period
+          </span>
           <select name="range" defaultValue={filters.range} className={inputCls}>
-            <option value="ALL">All time</option>
-            <option value="today">Today</option>
-            <option value="week">Last 7 days</option>
-            <option value="month">This month</option>
-            <option value="year">This year</option>
+            {DASHBOARD_RANGE_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
           </select>
         </label>
 
-        <label className="col-span-2 xl:col-span-2">
-          <span className="sr-only">Created by</span>
+        <label className="block">
+          <span className="mb-1.5 block text-xs font-medium text-gray-500">
+            Team
+          </span>
           <select name="actor" defaultValue={actor} className={inputCls}>
             <option value="ALL">All team</option>
             {actors.map((member) => (
@@ -95,8 +117,8 @@ export default function DesktopFilters({
           </select>
         </label>
 
-        <div className="col-span-1 xl:col-span-1 flex justify-end">
-          <Button type="submit" size="sm">
+        <div className="pt-1">
+          <Button type="submit" size="sm" className="w-full justify-center">
             Apply
           </Button>
         </div>

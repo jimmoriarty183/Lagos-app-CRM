@@ -47,20 +47,19 @@ import {
 } from "@/components/ui/pagination";
 import { createClient } from "@/lib/supabase/client";
 import {
+  getDefaultVisibleStatusFilters,
+  getStatusLabel,
+  getStatusTone,
+  isTerminalStatus,
+  type StatusFilterValue,
+  type StatusValue,
+} from "@/lib/business-statuses";
+import {
   DASHBOARD_RANGE_OPTIONS,
   type DashboardRange,
 } from "@/lib/order-dashboard-summary";
 import { resolveUserDisplay } from "@/lib/user-display";
-
-type Status =
-  | "NEW"
-  | "IN_PROGRESS"
-  | "WAITING_PAYMENT"
-  | "DONE"
-  | "CANCELED"
-  | "DUPLICATE";
-
-type StatusFilterValue = Status | "OVERDUE";
+import { useBusinessStatuses } from "@/lib/use-business-statuses";
 type OrderSort =
   | "default"
   | "newest"
@@ -71,13 +70,6 @@ type OrderSort =
   | "statusDesc"
   | "amountHigh"
   | "amountLow";
-const DEFAULT_VISIBLE_STATUSES: readonly StatusFilterValue[] = [
-  "NEW",
-  "IN_PROGRESS",
-  "WAITING_PAYMENT",
-  "OVERDUE",
-] as const;
-
 type UserRole = "OWNER" | "MANAGER" | "GUEST";
 
 type TeamActor = {
@@ -113,7 +105,7 @@ type OrderRow = {
   amount: number;
   description: string | null;
   due_date: string | null;
-  status: Status;
+  status: StatusValue;
   order_number: number | null;
   created_at: string;
   manager_id: string | null;
@@ -131,6 +123,7 @@ type Props = {
   phoneRaw: string;
   searchQuery: string;
   sort: OrderSort;
+  statusMode: "default" | "all" | "custom";
   statusFilter: StatusFilterValue[];
   rangeFilter: DashboardRange;
   summaryRange: DashboardRange;
@@ -188,35 +181,14 @@ function shouldIgnoreOverlayCloseClick() {
   );
 }
 
-const STATUS_OPTIONS: { value: StatusFilterValue; label: string }[] = [
-  { value: "NEW", label: "New" },
-  { value: "IN_PROGRESS", label: "In progress" },
-  { value: "WAITING_PAYMENT", label: "Waiting payment" },
-  { value: "DONE", label: "Done" },
-  { value: "OVERDUE", label: "Overdue" },
-  { value: "CANCELED", label: "Canceled" },
-  { value: "DUPLICATE", label: "Duplicate" },
-];
-const ACTIVE_STATUS_OPTIONS: readonly StatusFilterValue[] = [
-  "NEW",
-  "IN_PROGRESS",
-  "WAITING_PAYMENT",
-  "OVERDUE",
-] as const;
-const INACTIVE_STATUS_OPTIONS: readonly StatusFilterValue[] = [
-  "DONE",
-  "CANCELED",
-  "DUPLICATE",
-] as const;
 type SortColumn = "order" | "amount" | "due" | "status";
 
-function normalizeQuickStatuses(statuses: StatusFilterValue[]) {
-  const normalized = statuses.filter((status): status is StatusFilterValue =>
-    STATUS_OPTIONS.some((option) => option.value === status),
-  );
-  return normalized.length === 0
-    ? [...DEFAULT_VISIBLE_STATUSES]
-    : normalized;
+function normalizeQuickStatuses(
+  statuses: StatusFilterValue[],
+  activeStatusOptions: readonly StatusFilterValue[],
+) {
+  const normalized = statuses.filter(Boolean);
+  return normalized.length === 0 ? [...activeStatusOptions] : normalized;
 }
 
 function getDesktopSortState(sort: OrderSort, column: SortColumn): "asc" | "desc" | null {
@@ -250,23 +222,26 @@ function getNextDesktopSort(sort: OrderSort, column: SortColumn): OrderSort {
   }
 }
 
-function getStatusTriggerLabel(statuses: StatusFilterValue[]) {
-  if (statuses.length === STATUS_OPTIONS.length) return "All statuses";
+function getStatusTriggerLabel(
+  statuses: StatusFilterValue[],
+  activeStatusOptions: readonly StatusFilterValue[],
+  inactiveStatusOptions: readonly StatusFilterValue[],
+) {
+  if (statuses.length === 0) return "All statuses";
   if (
-    statuses.length === DEFAULT_VISIBLE_STATUSES.length &&
-    DEFAULT_VISIBLE_STATUSES.every((status) => statuses.includes(status))
+    statuses.length === activeStatusOptions.length &&
+    activeStatusOptions.every((status) => statuses.includes(status))
   ) {
     return "Active statuses";
   }
   if (
-    statuses.length === INACTIVE_STATUS_OPTIONS.length &&
-    INACTIVE_STATUS_OPTIONS.every((status) => statuses.includes(status))
+    statuses.length === inactiveStatusOptions.length &&
+    inactiveStatusOptions.every((status) => statuses.includes(status))
   ) {
     return "Inactive statuses";
   }
-  if (statuses.length === 0) return "No statuses";
   if (statuses.length === 1) {
-    return STATUS_OPTIONS.find((option) => option.value === statuses[0])?.label ?? "1 status";
+    return statuses[0] === "OVERDUE" ? "Overdue" : getStatusLabel(statuses[0]);
   }
   return `${statuses.length} statuses`;
 }
@@ -634,6 +609,7 @@ export default function DesktopOrdersTable({
   phoneRaw,
   searchQuery,
   sort,
+  statusMode,
   statusFilter,
   rangeFilter,
   summaryRange,
@@ -654,6 +630,7 @@ export default function DesktopOrdersTable({
   currentUserName,
 }: Props) {
   const router = useRouter();
+  const { customStatuses, statuses } = useBusinessStatuses(businessId);
   const [openId, setOpenId] = useState<string | null>(null);
   const [periodMenuOpen, setPeriodMenuOpen] = useState(false);
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
@@ -664,9 +641,6 @@ export default function DesktopOrdersTable({
   const [rangeValue, setRangeValue] = useState<DashboardRange>(rangeFilter);
   const [customStart, setCustomStart] = useState(rangeStartDate ?? "");
   const [customEnd, setCustomEnd] = useState(rangeEndDate ?? "");
-  const [statusValues, setStatusValues] = useState<StatusFilterValue[]>(
-    normalizeQuickStatuses(statusFilter),
-  );
   const [managerValue, setManagerValue] = useState<string>(
     normalizeQuickActor(actorFilter, actors, currentUserId),
   );
@@ -719,6 +693,42 @@ export default function DesktopOrdersTable({
     () => rows.find((order) => order.id === openId) ?? null,
     [openId, rows],
   );
+  const statusOptions = useMemo(
+    () => [
+      ...statuses.map((status) => ({
+        value: status.value as StatusFilterValue,
+        label: status.label,
+      })),
+      { value: "OVERDUE" as const, label: "Overdue" },
+    ],
+    [statuses],
+  );
+  const allSelectableStatuses = useMemo(
+    () => statusOptions.map((option) => option.value),
+    [statusOptions],
+  );
+  const activeStatusOptions = useMemo(
+    () => getDefaultVisibleStatusFilters(customStatuses),
+    [customStatuses],
+  );
+  const inactiveStatusOptions = useMemo(
+    () =>
+      statuses
+        .filter((status) => isTerminalStatus(status.value))
+        .map((status) => status.value as StatusFilterValue),
+    [statuses],
+  );
+  const [statusValues, setStatusValues] = useState<StatusFilterValue[]>(
+    normalizeQuickStatuses(statusFilter, activeStatusOptions),
+  );
+  React.useEffect(() => {
+    if (statusTouched) return;
+    setStatusValues(
+      statusMode === "all"
+        ? allSelectableStatuses
+        : normalizeQuickStatuses(statusFilter, activeStatusOptions),
+    );
+  }, [activeStatusOptions, allSelectableStatuses, statusFilter, statusMode, statusTouched]);
 
   const toggleOrderPreview = (orderId: string) => {
     if (shouldIgnoreOverlayCloseClick()) return;
@@ -828,12 +838,15 @@ export default function DesktopOrdersTable({
     if (nextSort !== "default") params.set("sort", nextSort);
 
     const nextStatuses = next.statusTouched ? next.statusValues : statusFilter;
-    const selectingAllStatuses = nextStatuses.length === STATUS_OPTIONS.length;
+    const selectingAllStatuses =
+      nextStatuses.length > 0 && allSelectableStatuses.every((status) => nextStatuses.includes(status));
     const selectingDefaultStatuses =
-      nextStatuses.length === DEFAULT_VISIBLE_STATUSES.length &&
-      DEFAULT_VISIBLE_STATUSES.every((status) => nextStatuses.includes(status));
+      nextStatuses.length === activeStatusOptions.length &&
+      activeStatusOptions.every((status) => nextStatuses.includes(status));
 
-    if (selectingAllStatuses) {
+    if (!next.statusTouched && statusMode === "all") {
+      params.set("statusMode", "all");
+    } else if (selectingAllStatuses || (next.statusTouched && nextStatuses.length === 0)) {
       params.set("statusMode", "all");
     } else if (!selectingDefaultStatuses) {
       for (const status of nextStatuses) {
@@ -915,7 +928,7 @@ export default function DesktopOrdersTable({
     const hasStatus = statusValues.includes(status);
     const nextStatuses = hasStatus
       ? statusValues.filter((value) => value !== status)
-      : STATUS_OPTIONS.map((option) => option.value).filter(
+      : allSelectableStatuses.filter(
           (value) => value === status || statusValues.includes(value),
         );
 
@@ -924,7 +937,7 @@ export default function DesktopOrdersTable({
   };
 
   const selectAllStatuses = () => {
-    setStatusValues(STATUS_OPTIONS.map((option) => option.value));
+    setStatusValues(allSelectableStatuses);
     setStatusTouched(true);
   };
 
@@ -933,7 +946,7 @@ export default function DesktopOrdersTable({
     setStatusTouched(true);
   };
 
-  const handleCancelOrder = async (orderId: string, status: Status) => {
+  const handleCancelOrder = async (orderId: string, status: StatusValue) => {
     if (!canEdit || deletingId) return;
     if (status === "CANCELED" || status === "DONE") return;
     if (!window.confirm("Cancel this order? The order will stay in the list with Canceled status.")) return;
@@ -987,7 +1000,7 @@ export default function DesktopOrdersTable({
   const customRangeReady = !showCustomRange || (Boolean(customStart) && Boolean(customEnd));
 
   return (
-    <section className="mx-auto w-full min-w-0 overflow-hidden rounded-[28px] border border-[#dde3ee] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+    <section className="mx-auto w-full min-w-0 overflow-visible rounded-[28px] border border-[#dde3ee] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
       <div className="border-b border-[#eef2f7] px-5 py-5">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
@@ -1081,7 +1094,9 @@ export default function DesktopOrdersTable({
                   type="button"
                   className="inline-flex h-11 min-w-[150px] flex-1 items-center justify-between rounded-2xl border border-[#dde3ee] bg-white px-4 text-sm font-medium text-[#344054] outline-none transition hover:border-[#cfd8e6] focus:border-[#111827] focus:ring-2 focus:ring-[#111827]/10"
                 >
-                  <span className="truncate">{getStatusTriggerLabel(statusValues)}</span>
+                  <span className="truncate">
+                    {getStatusTriggerLabel(statusValues, activeStatusOptions, inactiveStatusOptions)}
+                  </span>
                   <ChevronDown className="ml-3 h-4 w-4 shrink-0 text-[#98a2b3]" />
                 </button>
               </DropdownMenuTrigger>
@@ -1112,8 +1127,14 @@ export default function DesktopOrdersTable({
                 <div className="px-2 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
                   Active
                 </div>
-                {STATUS_OPTIONS.filter((option) => ACTIVE_STATUS_OPTIONS.includes(option.value)).map((option) => {
+                {activeStatusOptions.map((statusValue) => {
+                  const option = statusOptions.find((item) => item.value === statusValue);
+                  if (!option) return null;
                   const isChecked = statusValues.includes(option.value);
+                  const tone =
+                    option.value === "OVERDUE"
+                      ? { dot: "#DC2626", color: "#DC2626", selectedBackground: "#FEF2F2" }
+                      : getStatusTone(option.value, customStatuses);
 
                   return (
                     <DropdownMenuCheckboxItem
@@ -1122,8 +1143,16 @@ export default function DesktopOrdersTable({
                       className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#344054]"
                       onSelect={(event) => event.preventDefault()}
                       onCheckedChange={() => toggleStatus(option.value)}
+                      style={isChecked ? { background: tone.selectedBackground, color: tone.color } : undefined}
                     >
-                      {option.label}
+                      <span className="inline-flex items-center gap-2">
+                        <span
+                          aria-hidden="true"
+                          className="h-[6px] w-[6px] rounded-full"
+                          style={{ background: tone.dot }}
+                        />
+                        {option.label}
+                      </span>
                     </DropdownMenuCheckboxItem>
                   );
                 })}
@@ -1131,8 +1160,14 @@ export default function DesktopOrdersTable({
                 <div className="px-2 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
                   Inactive
                 </div>
-                {STATUS_OPTIONS.filter((option) => INACTIVE_STATUS_OPTIONS.includes(option.value)).map((option) => {
+                {inactiveStatusOptions.map((statusValue) => {
+                  const option = statusOptions.find((item) => item.value === statusValue);
+                  if (!option) return null;
                   const isChecked = statusValues.includes(option.value);
+                  const tone =
+                    option.value === "OVERDUE"
+                      ? { dot: "#DC2626", color: "#DC2626", selectedBackground: "#FEF2F2" }
+                      : getStatusTone(option.value, customStatuses);
 
                   return (
                     <DropdownMenuCheckboxItem
@@ -1141,8 +1176,16 @@ export default function DesktopOrdersTable({
                       className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#344054]"
                       onSelect={(event) => event.preventDefault()}
                       onCheckedChange={() => toggleStatus(option.value)}
+                      style={isChecked ? { background: tone.selectedBackground, color: tone.color } : undefined}
                     >
-                      {option.label}
+                      <span className="inline-flex items-center gap-2">
+                        <span
+                          aria-hidden="true"
+                          className="h-[6px] w-[6px] rounded-full"
+                          style={{ background: tone.dot }}
+                        />
+                        {option.label}
+                      </span>
                     </DropdownMenuCheckboxItem>
                   );
                 })}
@@ -1323,7 +1366,7 @@ export default function DesktopOrdersTable({
           </div>
         </div>
 
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto overflow-y-visible">
         <table className="min-w-[1040px] w-full border-collapse">
           <thead>
             <tr className="border-b border-[#eef2f7] text-left">
@@ -1417,6 +1460,7 @@ export default function DesktopOrdersTable({
                       <div className="inline-flex" onClick={(event) => event.stopPropagation()}>
                         <StatusCell
                           orderId={order.id}
+                          businessId={businessId}
                           businessSlug={businessSlug}
                           value={order.status}
                           canManage={canManage}

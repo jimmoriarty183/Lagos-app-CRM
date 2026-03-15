@@ -1,6 +1,7 @@
 import Button from "../../Button";
 
 import { createOrder } from "../../actions";
+import { buildClientFullName } from "@/lib/order-client";
 
 type Props = {
   businessId: string;
@@ -22,17 +23,18 @@ export default function DesktopCreateOrder({
       action={async (fd) => {
         "use server";
 
-        const clientName = String(fd.get("client_name") || "").trim();
+        const firstName = String(fd.get("first_name") || "").trim();
+        const lastName = String(fd.get("last_name") || "").trim();
+        const clientName = buildClientFullName(firstName, lastName);
         const clientPhoneRaw = String(fd.get("client_phone") || "").trim();
         const clientPhone = clientPhoneRaw.replace(/\s+/g, " ").trim();
 
         const amountRaw = String(fd.get("amount") || "").trim();
         const dueDate = String(fd.get("due_date") || "").trim();
         const description = String(fd.get("description") || "").trim();
-
         const amount = Number(amountRaw);
 
-        if (!clientName) throw new Error("Client name is required");
+        if (!firstName) throw new Error("First name is required");
         if (!Number.isFinite(amount) || amount <= 0) {
           throw new Error("Amount must be greater than 0");
         }
@@ -41,21 +43,33 @@ export default function DesktopCreateOrder({
           businessId,
           businessSlug,
           clientName,
+          firstName,
+          lastName,
           clientPhone: clientPhone || undefined,
           amount,
           dueDate: dueDate || undefined,
           description: description || undefined,
+          status: "NEW",
         });
       }}
       className="grid gap-4 xl:grid-cols-12"
     >
       <label className="grid gap-1 xl:col-span-3">
-        <span className={labelCls}>Client name *</span>
+        <span className={labelCls}>First Name *</span>
         <input
-          name="client_name"
-          placeholder="John"
+          name="first_name"
+          placeholder="Naruto"
           className={inputCls}
           required
+        />
+      </label>
+
+      <label className="grid gap-1 xl:col-span-3">
+        <span className={labelCls}>Last Name</span>
+        <input
+          name="last_name"
+          placeholder="Uzumaki"
+          className={inputCls}
         />
       </label>
 

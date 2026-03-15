@@ -1,20 +1,11 @@
 import { redirect } from "next/navigation";
 import { supabaseServerReadOnly } from "@/lib/supabase/server";
-import BusinessPeoplePanel from "@/app/b/[slug]/_components/BusinessPeoplePanel";
-import TeamAccessTopBar from "./TeamAccessTopBar";
-import SettingsTabs from "../SettingsTabs";
-import DesktopLeftRail from "@/app/b/[slug]/_components/Desktop/DesktopLeftRail";
+import TeamAccessTopBar from "./team/TeamAccessTopBar";
+import SettingsTabs from "./SettingsTabs";
+import BusinessInfoPanel from "./BusinessInfoPanel";
+import DesktopLeftRail from "../_components/Desktop/DesktopLeftRail";
 
 type Role = "OWNER" | "MANAGER" | "GUEST";
-type MembershipRow = {
-  role: string | null;
-  user_id: string | null;
-};
-type PendingInviteRow = {
-  id?: string;
-  email?: string;
-  created_at?: string | null;
-};
 
 function upperRole(r: unknown): Role {
   const s = String(r ?? "").toUpperCase();
@@ -23,30 +14,26 @@ function upperRole(r: unknown): Role {
   return "GUEST";
 }
 
-export default async function TeamPage({
+export default async function SettingsPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { slug } = await params;
-  await searchParams;
-
   const supabase = await supabaseServerReadOnly();
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const nextPath = `/b/${slug}/settings/team`;
+  const nextPath = `/b/${slug}/settings`;
   if (!user) {
     redirect(`/login?next=${encodeURIComponent(nextPath)}`);
   }
 
   const { data: business, error: bizErr } = await supabase
     .from("businesses")
-    .select("id,slug,owner_phone,manager_phone")
+    .select("*")
     .eq("slug", slug)
     .single();
 
@@ -69,27 +56,6 @@ export default async function TeamPage({
   if (role === "GUEST") {
     redirect(`/login?next=${encodeURIComponent(nextPath)}`);
   }
-
-  const { data: ownerManagerMems } = await supabase
-    .from("memberships")
-    .select("role,user_id")
-    .eq("business_id", business.id)
-    .in("role", ["OWNER", "MANAGER"]);
-  const roleRows = (ownerManagerMems ?? []) as MembershipRow[];
-
-  const ownerId =
-    roleRows.find((row) => String(row.role).toUpperCase() === "OWNER")?.user_id ?? null;
-  const managerId =
-    roleRows.find((row) => String(row.role).toUpperCase() === "MANAGER")?.user_id ?? null;
-  const isOwnerManager = !!ownerId && !!managerId && String(ownerId) === String(managerId);
-
-  const { data: pendingInvites } = await supabase
-    .from("business_invites")
-    .select("id,business_id,email,role,status,created_at")
-    .eq("business_id", business.id)
-    .eq("status", "PENDING")
-    .eq("role", "MANAGER")
-    .order("created_at", { ascending: false });
 
   return (
     <div className="min-h-[100svh] overflow-x-clip bg-transparent text-slate-900">
@@ -125,74 +91,76 @@ export default async function TeamPage({
             settingsHref={`/b/${business.slug}/settings/team`}
             canSeeAnalytics={role === "OWNER"}
             showFilters={false}
-            activeSection="settings"
+            activeSection="business"
           />
 
           <section className="w-full min-w-0 max-w-full rounded-[20px] border border-[#dde3ee] bg-white p-3.5 pb-6 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:rounded-[26px] sm:p-5">
-            <div className="mb-5 sm:mb-5">
+            <div className="mb-5">
               <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
                 Settings
               </div>
               <h1 className="mt-2 text-[24px] font-semibold tracking-[-0.03em] text-slate-900 sm:text-[24px]">
-                Team &amp; Access
+                Business
               </h1>
               <p className="mt-2 text-sm leading-6 text-slate-500 sm:leading-5">
-                Manage who can access <span className="font-semibold">{business.slug}</span>
+                Core workspace context for <span className="font-semibold">{business.slug}</span>
               </p>
             </div>
 
             <SettingsTabs
               tabs={[
-                { href: `/b/${business.slug}/settings`, label: "Business", active: false },
-                { href: `/b/${business.slug}/settings/team`, label: "Team", active: true },
+                { href: `/b/${business.slug}/settings`, label: "Business", active: true },
+                { href: `/b/${business.slug}/settings/team`, label: "Team", active: false },
                 { href: `/b/${business.slug}/settings/invites`, label: "Invites", active: false },
                 { href: `/b/${business.slug}/settings/statuses`, label: "Statuses", active: false },
               ]}
             />
 
-            <BusinessPeoplePanel
+            <BusinessInfoPanel
               businessId={business.id}
-              businessSlug={business.slug}
-              role={role}
-              isOwnerManager={isOwnerManager}
-              pendingInvites={((pendingInvites ?? []) as PendingInviteRow[]) ?? []}
-              currentUserId={user.id}
-              mode="teamOnly"
+              slug={business.slug}
+              name={business.name}
+              plan={business.plan}
+              businessPhone={business.business_phone}
+              businessAddress={business.business_address}
+              businessSegment={business.business_segment}
+              businessWebsite={business.business_website}
             />
           </section>
         </div>
 
         <div className="mx-auto w-full max-w-[920px] min-w-0 lg:hidden">
           <section className="w-full min-w-0 max-w-full rounded-[20px] border border-[#dde3ee] bg-white p-3.5 pb-6 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:rounded-[26px] sm:p-5">
-            <div className="mb-5 sm:mb-5">
+            <div className="mb-5">
               <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
                 Settings
               </div>
               <h1 className="mt-2 text-[24px] font-semibold tracking-[-0.03em] text-slate-900 sm:text-[24px]">
-                Team &amp; Access
+                Business
               </h1>
               <p className="mt-2 text-sm leading-6 text-slate-500 sm:leading-5">
-                Manage who can access <span className="font-semibold">{business.slug}</span>
+                Core workspace context for <span className="font-semibold">{business.slug}</span>
               </p>
             </div>
 
             <SettingsTabs
               tabs={[
-                { href: `/b/${business.slug}/settings`, label: "Business", active: false },
-                { href: `/b/${business.slug}/settings/team`, label: "Team", active: true },
+                { href: `/b/${business.slug}/settings`, label: "Business", active: true },
+                { href: `/b/${business.slug}/settings/team`, label: "Team", active: false },
                 { href: `/b/${business.slug}/settings/invites`, label: "Invites", active: false },
                 { href: `/b/${business.slug}/settings/statuses`, label: "Statuses", active: false },
               ]}
             />
 
-            <BusinessPeoplePanel
+            <BusinessInfoPanel
               businessId={business.id}
-              businessSlug={business.slug}
-              role={role}
-              isOwnerManager={isOwnerManager}
-              pendingInvites={((pendingInvites ?? []) as PendingInviteRow[]) ?? []}
-              currentUserId={user.id}
-              mode="teamOnly"
+              slug={business.slug}
+              name={business.name}
+              plan={business.plan}
+              businessPhone={business.business_phone}
+              businessAddress={business.business_address}
+              businessSegment={business.business_segment}
+              businessWebsite={business.business_website}
             />
           </section>
         </div>

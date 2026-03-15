@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useId, useState } from "react";
+import { ReactNode, useEffect, useId, useState } from "react";
 import { ChevronDown } from "lucide-react";
 
 type Props = {
@@ -18,6 +18,10 @@ export default function MobileAccordion({
 }: Props) {
   const [open, setOpen] = useState(defaultOpen);
   const id = useId();
+
+  useEffect(() => {
+    setOpen(defaultOpen);
+  }, [defaultOpen]);
 
   return (
     <div className="w-full">

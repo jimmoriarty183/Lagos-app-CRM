@@ -77,7 +77,7 @@ type Props = {
   isOwnerManager: boolean;
   currentUserId?: string | null;
   pendingInvites?: Array<{ id?: string; email?: string; created_at?: string | null }>;
-  mode?: "summary" | "manage";
+  mode?: "summary" | "manage" | "teamOnly";
 };
 
 function Pill({
@@ -249,6 +249,7 @@ export default function BusinessPeoplePanel({
   const [actionLoading, setActionLoading] = React.useState(false);
 
   const canManage = role === "OWNER";
+  const showInviteSections = mode === "manage";
   const safeBusinessId = (businessId ?? "").trim();
 
   const load = React.useCallback(async () => {
@@ -424,8 +425,8 @@ export default function BusinessPeoplePanel({
 
   if (mode === "summary") {
     const href = businessSlug
-      ? `/b/${encodeURIComponent(String(businessSlug))}/settings/team${suffix}`
-      : `./settings/team${suffix}`;
+      ? `/b/${encodeURIComponent(String(businessSlug))}/settings${suffix}`
+      : `./settings${suffix}`;
 
     if (viewerRole === "MANAGER" && viewerManagerDisplay) {
       return (
@@ -589,7 +590,7 @@ export default function BusinessPeoplePanel({
           ) : null}
         </Section>
 
-        {canManage ? (
+        {showInviteSections && canManage ? (
           <Section title="Invite manager">
             <InviteManager
               businessId={safeBusinessId}
@@ -601,7 +602,7 @@ export default function BusinessPeoplePanel({
           </Section>
         ) : null}
 
-        <Section title="Pending invites" count={managersPending.length}>
+        {showInviteSections ? <Section title="Pending invites" count={managersPending.length}>
           {managersPending.length === 0 ? (
             <EmptyState text="No pending invites." />
           ) : (
@@ -634,7 +635,7 @@ export default function BusinessPeoplePanel({
               ))}
             </div>
           )}
-        </Section>
+        </Section> : null}
       </div>
 
       <AlertDialog

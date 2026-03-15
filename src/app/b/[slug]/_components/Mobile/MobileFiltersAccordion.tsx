@@ -7,26 +7,11 @@ import {
   DASHBOARD_RANGE_OPTIONS,
   type DashboardRange,
 } from "@/lib/order-dashboard-summary";
-
-type Status =
-  | "NEW"
-  | "IN_PROGRESS"
-  | "WAITING_PAYMENT"
-  | "DONE"
-  | "CANCELED"
-  | "DUPLICATE";
-
-type StatusFilterValue = Status | "OVERDUE";
-
-const STATUS_OPTIONS: { value: StatusFilterValue; label: string }[] = [
-  { value: "NEW", label: "New" },
-  { value: "IN_PROGRESS", label: "In progress" },
-  { value: "WAITING_PAYMENT", label: "Waiting" },
-  { value: "DONE", label: "Done" },
-  { value: "OVERDUE", label: "Overdue" },
-  { value: "CANCELED", label: "Canceled" },
-  { value: "DUPLICATE", label: "Duplicate" },
-];
+import {
+  getDefaultVisibleStatusFilters,
+  type StatusFilterValue,
+} from "@/lib/business-statuses";
+import { useBusinessStatuses } from "@/lib/use-business-statuses";
 
 export type TeamActor = {
   id: string;
@@ -43,8 +28,10 @@ export type Filters = {
 };
 
 type Props = {
+  businessId: string;
   phoneRaw: string;
   filters: Filters;
+  statusMode: "default" | "all" | "custom";
   summaryRange: DashboardRange;
   clearHref: string;
   hasActiveFilters: boolean;
@@ -53,14 +40,17 @@ type Props = {
 };
 
 export default function MobileFiltersAccordion({
+  businessId,
   phoneRaw,
   filters,
+  statusMode,
   summaryRange,
   clearHref,
   hasActiveFilters,
   actor,
   actors = [],
 }: Props) {
+  const { customStatuses, statuses } = useBusinessStatuses(businessId);
   const rootRef = useRef<HTMLElement | null>(null);
   const searchRef = useRef<HTMLInputElement | null>(null);
   const [rangeValue, setRangeValue] = useState<DashboardRange>(filters.range);
@@ -81,6 +71,7 @@ export default function MobileFiltersAccordion({
     "h-10 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm outline-none " +
     "focus:border-gray-900 focus:ring-2 focus:ring-gray-900";
 
+  const defaultVisibleStatuses = getDefaultVisibleStatusFilters(customStatuses);
   const activeCount = [
     filters.q ? 1 : 0,
     filters.statuses.length > 0 ? 1 : 0,
@@ -90,6 +81,15 @@ export default function MobileFiltersAccordion({
 
   const hasFiltersApplied = activeCount > 0;
   const showCustomRange = rangeValue === "custom";
+  const statusOptions = [
+    ...statuses.map((status) => ({ value: status.value as StatusFilterValue, label: status.label })),
+    { value: "OVERDUE" as const, label: "Overdue" },
+  ];
+  const shouldKeepAllStatuses = statusMode === "all";
+  const shouldKeepDefaultStatuses =
+    statusMode === "default" ||
+    (filters.statuses.length === defaultVisibleStatuses.length &&
+      defaultVisibleStatuses.every((status) => filters.statuses.includes(status)));
 
   return (
     <section id="mobile-filters" ref={rootRef} className="lg:hidden">
@@ -105,6 +105,7 @@ export default function MobileFiltersAccordion({
         <input type="hidden" name="u" value={phoneRaw} />
         <input type="hidden" name="srange" value={summaryRange} />
         <input type="hidden" name="page" value="1" />
+        {shouldKeepAllStatuses ? <input type="hidden" name="statusMode" value="all" /> : null}
 
         <div className="mb-2.5 flex items-center justify-between gap-2">
           <span className="inline-flex min-w-0 items-center gap-2">
@@ -204,7 +205,7 @@ export default function MobileFiltersAccordion({
           </div>
 
           <div className="flex flex-wrap gap-2 rounded-xl border border-gray-200 bg-[#fbfcfe] p-2">
-            {STATUS_OPTIONS.map((option) => (
+            {statusOptions.map((option) => (
               <label
                 key={option.value}
                 className="cursor-pointer"
@@ -213,7 +214,7 @@ export default function MobileFiltersAccordion({
                   type="checkbox"
                   name="status"
                   value={option.value}
-                  defaultChecked={filters.statuses.includes(option.value)}
+                  defaultChecked={shouldKeepAllStatuses || filters.statuses.includes(option.value)}
                   className="peer sr-only"
                 />
                 <span className="inline-flex min-h-9 items-center rounded-full border border-[#dde3ee] bg-white px-3 py-2 text-[12px] font-medium leading-4 text-[#475467] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition peer-checked:border-[#111827] peer-checked:bg-[#111827] peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-[#111827]/20">
@@ -254,7 +255,9 @@ export default function MobileFiltersAccordion({
           </div>
 
           <div className="text-[11px] font-medium text-gray-500">
-            Choose one or several statuses. If none selected, all statuses are shown.
+            {shouldKeepDefaultStatuses
+              ? "Default view shows active statuses. Select custom combinations as needed."
+              : "Choose one or several statuses. Clear everything to switch back to default."}
           </div>
 
           {showCustomRange ? (

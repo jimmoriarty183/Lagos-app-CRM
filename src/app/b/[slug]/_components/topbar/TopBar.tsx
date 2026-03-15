@@ -18,6 +18,7 @@ type Props = {
   pill?: React.CSSProperties;
   businesses?: BusinessOption[];
   businessHref?: string;
+  settingsHref?: string;
   clearHref?: string;
   hasActiveFilters?: boolean;
 };
@@ -29,6 +30,7 @@ export default function TopBar({
   currentUserName,
   businesses,
   businessHref,
+  settingsHref,
   clearHref,
   hasActiveFilters = false,
 }: Props) {
@@ -81,6 +83,7 @@ export default function TopBar({
 
           <MobileTopbarMenu
             businessHref={businessHref ?? dashboardHref}
+            settingsHref={settingsHref ?? `${businessHref ?? dashboardHref}`}
             clearHref={clearHref ?? dashboardHref}
             hasActiveFilters={hasActiveFilters}
             canSeeAnalytics={role === "OWNER"}

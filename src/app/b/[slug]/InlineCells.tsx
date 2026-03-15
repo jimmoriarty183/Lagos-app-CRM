@@ -2,8 +2,6 @@
 
 import React, {
   useEffect,
-  useMemo,
-  useOptimistic,
   useRef,
   useState,
   useTransition,
@@ -12,20 +10,13 @@ import { createPortal } from "react-dom";
 
 import { setOrderStatus } from "./actions";
 import { statusTone, type Status } from "./statusTone";
+import { getStatusLabel, type BusinessStatusDefinition } from "@/lib/business-statuses";
+import { useBusinessStatuses } from "@/lib/use-business-statuses";
 
 declare global {
   interface Window {
     __ordersOverlayClosingUntil?: number;
   }
-}
-
-function statusLabel(s: Status) {
-  if (s === "IN_PROGRESS") return "In progress";
-  if (s === "WAITING_PAYMENT") return "Waiting payment";
-  if (s === "DONE") return "Done";
-  if (s === "CANCELED") return "Canceled";
-  if (s === "DUPLICATE") return "Duplicate";
-  return "New";
 }
 
 function markOverlayClosing() {
@@ -38,8 +29,11 @@ function suppressOverlayEvent(event: React.SyntheticEvent) {
   event.stopPropagation();
 }
 
-function badgeStyleStatus(status: Status): React.CSSProperties {
-  const tone = statusTone(status);
+function badgeStyleStatus(
+  status: Status,
+  customStatuses: BusinessStatusDefinition[] = [],
+) {
+  const tone = statusTone(status, customStatuses);
 
   return {
     background: tone.background,
@@ -300,11 +294,13 @@ function useOutsideAndEscClose(
 
 export function StatusCell({
   orderId,
+  businessId,
   businessSlug,
   value,
   canManage,
 }: {
   orderId: string;
+  businessId: string;
   businessSlug: string;
   value: Status;
   canManage: boolean;
@@ -313,7 +309,9 @@ export function StatusCell({
   const [isPending, startTransition] = useTransition();
   const [isMobile, setIsMobile] = useState(false);
 
-  const [local, setLocal] = useOptimistic<Status, Status>(value);
+  const [local, setLocal] = useState<Status>(value);
+  const { statuses, customStatuses } = useBusinessStatuses(businessId);
+  const workflowStatuses = statuses.filter((statusOption) => statusOption.active !== false);
 
   const rootRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -343,26 +341,13 @@ export function StatusCell({
     };
   }, [open, isMobile]);
 
-  const options = useMemo(
-    () =>
-      [
-        "NEW",
-        "IN_PROGRESS",
-        "WAITING_PAYMENT",
-        "DONE",
-        "CANCELED",
-        "DUPLICATE",
-      ] as Status[],
-    []
-  );
-
   if (!canManage) {
-    const tone = statusTone(value);
+    const tone = statusTone(value, customStatuses);
 
     return (
       <span
         style={{
-          ...badgeStyleStatus(value),
+          ...badgeStyleStatus(value, customStatuses),
           height: 25,
           padding: "0 11px",
           borderRadius: 999,
@@ -375,7 +360,7 @@ export function StatusCell({
           whiteSpace: "nowrap",
           lineHeight: 1,
         }}
-      >
+        >
         <span
           aria-hidden="true"
           style={{
@@ -386,12 +371,12 @@ export function StatusCell({
             flexShrink: 0,
           }}
         />
-        {statusLabel(value)}
+        {getStatusLabel(value, customStatuses)}
       </span>
     );
   }
 
-  const currentTone = statusTone(local);
+  const currentTone = statusTone(local, customStatuses);
 
   return (
     <div
@@ -403,13 +388,13 @@ export function StatusCell({
       }}
     >
       <Badge
-        style={badgeStyleStatus(local)}
+        style={badgeStyleStatus(local, customStatuses)}
         dotColor={currentTone.dot}
         disabled={isPending}
         title="Change status"
         onClick={() => setOpen((v) => !v)}
       >
-        {statusLabel(local)}
+        {getStatusLabel(local, customStatuses)}
       </Badge>
 
       <Menu
@@ -419,8 +404,9 @@ export function StatusCell({
         mobile={isMobile}
         onClose={() => setOpen(false)}
       >
-        {options.map((s) => {
-          const tone = statusTone(s);
+        {workflowStatuses.map((statusOption) => {
+          const s = statusOption.value;
+          const tone = statusTone(s, customStatuses);
 
           return (
             <MenuItem
@@ -470,7 +456,7 @@ export function StatusCell({
                     flexShrink: 0,
                   }}
                 />
-                {statusLabel(s)}
+                {getStatusLabel(s, customStatuses)}
               </>
             </MenuItem>
           );

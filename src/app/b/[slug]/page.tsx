@@ -26,30 +26,16 @@ import {
   type TrendTone,
 } from "@/lib/order-dashboard-summary";
 import { supabaseServerReadOnly } from "@/lib/supabase/server";
+import {
+  getDefaultVisibleStatusFilters,
+  getDefaultVisibleStatuses,
+  type StatusFilterValue,
+  type StatusValue,
+} from "@/lib/business-statuses";
+import { loadBusinessStatuses } from "@/lib/business-statuses.server";
 import { resolveUserDisplay } from "@/lib/user-display";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { normalizeOrderClient } from "@/lib/order-client";
-
-type Status =
-  | "NEW"
-  | "IN_PROGRESS"
-  | "WAITING_PAYMENT"
-  | "DONE"
-  | "CANCELED"
-  | "DUPLICATE";
-
-type StatusFilterValue = Status | "OVERDUE";
-const DEFAULT_VISIBLE_STATUSES: readonly Status[] = [
-  "NEW",
-  "IN_PROGRESS",
-  "WAITING_PAYMENT",
-] as const;
-const DEFAULT_VISIBLE_STATUS_FILTERS: readonly StatusFilterValue[] = [
-  "NEW",
-  "IN_PROGRESS",
-  "WAITING_PAYMENT",
-  "OVERDUE",
-] as const;
 
 function isSameStatusFilterSet(
   actual: readonly StatusFilterValue[],
@@ -271,14 +257,11 @@ function upperRole(r: any): "OWNER" | "MANAGER" | "GUEST" {
 
 function normalizeStatusFilters(
   value: string | string[] | undefined,
-  allowedStatuses: readonly StatusFilterValue[],
 ) {
   const normalized = (Array.isArray(value) ? value : [value])
     .flatMap((item) => String(item ?? "").split(","))
     .map((item) => item.trim().toUpperCase())
-    .filter((item): item is StatusFilterValue =>
-      allowedStatuses.includes(item as StatusFilterValue),
-    );
+    .filter((item): item is StatusFilterValue => Boolean(item) && item !== "ALL");
 
   return Array.from(new Set(normalized));
 }
@@ -378,6 +361,10 @@ export default async function Page({ params, searchParams }: PageProps) {
     }
   }
 
+  const customStatuses = await loadBusinessStatuses(dataClient, String(currentBusiness.id));
+  const defaultVisibleStatuses = getDefaultVisibleStatuses(customStatuses);
+  const defaultVisibleStatusFilters = getDefaultVisibleStatusFilters(customStatuses);
+
   const myRoleRaw =
     (memberships ?? []).find((m: any) => m.business_id === currentBusiness.id)?.role ??
     (bypassUser ? "MANAGER" : "GUEST");
@@ -414,15 +401,6 @@ export default async function Page({ params, searchParams }: PageProps) {
   }
 
   const phoneRaw = String(sp.u ?? "");
-  const allowedStatuses = [
-    "NEW",
-    "IN_PROGRESS",
-    "WAITING_PAYMENT",
-    "DONE",
-    "CANCELED",
-    "DUPLICATE",
-    "OVERDUE",
-  ] as const;
   const rangeInput = resolveDashboardRangeInput({
     range: sp.range,
     startDate: sp.start,
@@ -442,12 +420,12 @@ export default async function Page({ params, searchParams }: PageProps) {
   const summaryCustomEndDate =
     summaryRangeInput.range === "custom" ? summaryRangeInput.endDate : null;
 
-  const parsedStatuses = normalizeStatusFilters(sp.status, allowedStatuses);
+  const parsedStatuses = normalizeStatusFilters(sp.status);
   const statusMode: Filters["statusMode"] =
     String(sp.statusMode ?? "").toLowerCase() === "all"
       ? "all"
       : parsedStatuses.length > 0 &&
-          !isSameStatusFilterSet(parsedStatuses, DEFAULT_VISIBLE_STATUS_FILTERS)
+          !isSameStatusFilterSet(parsedStatuses, defaultVisibleStatusFilters)
         ? "custom"
         : "default";
 
@@ -491,8 +469,12 @@ export default async function Page({ params, searchParams }: PageProps) {
   })();
   const businessHref =
     phoneRaw && phoneRaw.length > 0
-      ? `/b/${slug}/settings/team?u=${encodeURIComponent(phoneRaw)}`
-      : `/b/${slug}/settings/team`;
+      ? `/b/${slug}/settings?u=${encodeURIComponent(phoneRaw)}`
+      : `/b/${slug}/settings`;
+  const settingsHref =
+    phoneRaw && phoneRaw.length > 0
+      ? `/b/${slug}/settings?u=${encodeURIComponent(phoneRaw)}`
+      : `/b/${slug}/settings`;
 
   const makeSummaryHref = (nextSummaryRange: DashboardRange) => {
     const params = new URLSearchParams();
@@ -783,7 +765,7 @@ export default async function Page({ params, searchParams }: PageProps) {
       : filters.statuses.length === 0
         ? rows.filter(
             (o) =>
-              DEFAULT_VISIBLE_STATUSES.includes(o.status as Status) ||
+              defaultVisibleStatuses.includes(String(o.status ?? "") as StatusValue) ||
               isOrderOverdue(o, todayISO),
           )
         : rows.filter((o) =>
@@ -973,6 +955,7 @@ export default async function Page({ params, searchParams }: PageProps) {
         currentUserName={currentUserName}
         businesses={businessOptions}
         businessHref={businessHref}
+        settingsHref={settingsHref}
         clearHref={clearHref}
         hasActiveFilters={hasActiveFilters}
       />
@@ -990,12 +973,14 @@ export default async function Page({ params, searchParams }: PageProps) {
             startDate={filters.startDate}
             endDate={filters.endDate}
             actor={filters.actor}
+            statusMode={filters.statusMode}
             actors={teamActors}
             currentUserId={currentUserId}
             hasActiveFilters={hasActiveFilters}
             activeFiltersCount={activeFiltersCount}
             clearHref={clearHref}
             businessHref={businessHref}
+            settingsHref={settingsHref}
             canSeeAnalytics={canSeeAnalyticsNav}
           />
 
@@ -1041,9 +1026,8 @@ export default async function Page({ params, searchParams }: PageProps) {
               phoneRaw={phoneRaw}
               searchQuery={filters.q}
               sort={sort}
-              statusFilter={
-                filters.statusMode === "all" ? [...allowedStatuses] : filters.statuses
-              }
+              statusMode={filters.statusMode}
+              statusFilter={filters.statusMode === "all" ? [] : filters.statuses}
               rangeFilter={filters.range}
               summaryRange={summaryRange}
               rangeStartDate={filters.startDate}
@@ -1097,8 +1081,10 @@ export default async function Page({ params, searchParams }: PageProps) {
 
           <MobileFiltersAccordion
             key={`mobile-filters-${filters.range}-${filters.startDate ?? ""}-${filters.endDate ?? ""}`}
+            businessId={String(currentBusiness.id)}
             phoneRaw={phoneRaw}
             filters={filters}
+            statusMode={filters.statusMode}
             summaryRange={summaryRange}
             clearHref={clearHref}
             hasActiveFilters={hasActiveFilters}
@@ -1124,9 +1110,8 @@ export default async function Page({ params, searchParams }: PageProps) {
             currentUserName={currentUserName}
             searchQuery={filters.q}
             sort={sort}
-            statusFilter={
-              filters.statusMode === "all" ? [...allowedStatuses] : filters.statuses
-            }
+            statusMode={filters.statusMode}
+            statusFilter={filters.statusMode === "all" ? [] : filters.statuses}
             summaryRange={summaryRange}
             rangeFilter={filters.range}
             rangeStartDate={filters.startDate}

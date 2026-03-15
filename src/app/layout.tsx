@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -31,6 +32,7 @@ export default function RootLayout({
       <head>
         <meta name="color-scheme" content="light only" />
         <meta name="theme-color" content="#f5f6f8" />
+        <Script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
