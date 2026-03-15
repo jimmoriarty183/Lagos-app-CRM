@@ -7,14 +7,13 @@ import {
   ChevronDown,
   Ellipsis,
   Eye,
-  PencilLine,
   Search,
   Trash2,
   UserRound,
 } from "lucide-react";
 
 import { StatusCell } from "../../InlineCells";
-import { setOrderManager } from "../../actions";
+import { setOrderManager, setOrderStatus } from "../../actions";
 import { OrderPreview } from "../orders/OrderPreview";
 import {
   DropdownMenu,
@@ -26,6 +25,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Pagination,
   PaginationContent,
@@ -502,6 +511,7 @@ export default function DesktopOrdersTable({
   const [statusTouched, setStatusTouched] = useState(false);
   const [managerTouched, setManagerTouched] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [isPending] = useTransition();
   const [navigationMessage, setNavigationMessage] = useState<string | null>(null);
   const [loadedActors, setLoadedActors] = useState<TeamActor[]>(actors);
@@ -727,9 +737,34 @@ export default function DesktopOrdersTable({
     setStatusTouched(true);
   };
 
-  const handleDeleteOrder = async (orderId: string) => {
+  const handleCancelOrder = async (orderId: string, status: Status) => {
     if (!canEdit || deletingId) return;
-    if (!window.confirm("Delete this order? This action cannot be undone.")) return;
+    if (status === "CANCELED" || status === "DONE") return;
+    if (!window.confirm("Cancel this order? The order will stay in the list with Canceled status.")) return;
+
+    setDeletingId(orderId);
+    try {
+      await setOrderStatus({
+        orderId,
+        businessSlug,
+        status: "CANCELED",
+      });
+    } catch (error) {
+      setDeletingId(null);
+      window.alert(error instanceof Error ? error.message : "Failed to cancel order.");
+      return;
+    }
+
+    setDeletingId(null);
+
+    if (openId === orderId) {
+      setOpenId(null);
+    }
+    router.refresh();
+  };
+
+  const handlePermanentDeleteOrder = async (orderId: string) => {
+    if (userRole !== "OWNER" || deletingId) return;
 
     setDeletingId(orderId);
     const { error } = await supabase
@@ -741,10 +776,11 @@ export default function DesktopOrdersTable({
     setDeletingId(null);
 
     if (error) {
-      window.alert(error.message || "Failed to delete order.");
+      window.alert(error.message || "Failed to delete order permanently.");
       return;
     }
 
+    setConfirmDeleteId(null);
     if (openId === orderId) {
       setOpenId(null);
     }
@@ -1124,7 +1160,8 @@ export default function DesktopOrdersTable({
                 !!dueISO &&
                 dueISO < todayISO &&
                 (order.status === "NEW" || order.status === "IN_PROGRESS");
-              const editHref = `/b/${businessSlug}/o/${order.id}?u=${encodeURIComponent(phoneRaw)}`;
+              const canCancel = canEdit && order.status !== "CANCELED" && order.status !== "DONE";
+              const canDeletePermanently = userRole === "OWNER";
 
               return (
                 <React.Fragment key={order.id}>
@@ -1215,33 +1252,36 @@ export default function DesktopOrdersTable({
                             }}
                           >
                             <Eye className="h-4 w-4" />
-                            View details
+                            Open order
                           </DropdownMenuItem>
-                          {canEdit ? (
-                            <DropdownMenuItem
-                              className="rounded-lg px-3 py-2 text-sm font-medium"
-                              onSelect={(event) => {
-                                event.preventDefault();
-                                router.push(editHref);
-                              }}
-                            >
-                              <PencilLine className="h-4 w-4" />
-                              Edit order
-                            </DropdownMenuItem>
-                          ) : null}
-                          {canEdit ? <DropdownMenuSeparator /> : null}
-                          {canEdit ? (
+                          {canCancel ? (
                             <DropdownMenuItem
                               className="rounded-lg px-3 py-2 text-sm font-medium text-red-700 focus:text-red-700"
                               onSelect={(event) => {
                                 event.preventDefault();
-                                void handleDeleteOrder(order.id);
+                                void handleCancelOrder(order.id, order.status);
                               }}
                               disabled={deletingId === order.id}
                             >
                               <Trash2 className="h-4 w-4" />
-                              {deletingId === order.id ? "Deleting..." : "Delete order"}
+                              {deletingId === order.id ? "Canceling..." : "Cancel order"}
                             </DropdownMenuItem>
+                          ) : null}
+                          {canDeletePermanently ? (
+                            <>
+                              {canCancel ? <DropdownMenuSeparator /> : null}
+                              <DropdownMenuItem
+                                className="rounded-lg px-3 py-2 text-sm font-medium text-red-700 focus:text-red-700"
+                                onSelect={(event) => {
+                                  event.preventDefault();
+                                  setConfirmDeleteId(order.id);
+                                }}
+                                disabled={deletingId === order.id}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                                {deletingId === order.id ? "Deleting..." : "Delete permanently"}
+                              </DropdownMenuItem>
+                            </>
                           ) : null}
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -1327,6 +1367,43 @@ export default function DesktopOrdersTable({
         supabase={supabase}
         onClose={() => setOpenId(null)}
       />
+      <AlertDialog
+        open={Boolean(confirmDeleteId)}
+        onOpenChange={(open) => {
+          if (!open && !deletingId) setConfirmDeleteId(null);
+        }}
+      >
+        <AlertDialogContent className="rounded-[24px] border-slate-200 bg-white p-6 shadow-[0_24px_64px_rgba(15,23,42,0.18)] sm:max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-xl tracking-[-0.02em] text-slate-900">
+              Delete order permanently?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-sm leading-6 text-slate-500">
+              This order will be permanently removed from the orders list, analytics, and future dashboard
+              calculations. It cannot be restored.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              className="rounded-xl border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+              disabled={Boolean(deletingId)}
+            >
+              Keep order
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="rounded-xl border border-red-600 bg-red-600 text-white hover:bg-red-700"
+              disabled={!confirmDeleteId || Boolean(deletingId)}
+              onClick={(event) => {
+                event.preventDefault();
+                if (!confirmDeleteId) return;
+                void handlePermanentDeleteOrder(confirmDeleteId);
+              }}
+            >
+              {deletingId ? "Deleting..." : "Delete permanently"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </section>
   );
 }

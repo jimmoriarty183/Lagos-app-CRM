@@ -7,6 +7,8 @@ import {
   CalendarClock,
   Check,
   ChevronDown,
+  Maximize2,
+  Minimize2,
   MessageSquareText,
   Tag,
   X,
@@ -131,6 +133,8 @@ const STATUS_OPTIONS: Array<{ value: Status; label: string }> = [
   { value: "CANCELED", label: "Canceled" },
   { value: "DUPLICATE", label: "Duplicate" },
 ];
+
+const ORDER_PREVIEW_LAYOUT_STORAGE_KEY = "order-preview-layout-mode";
 
 function statusLabel(status: Status) {
   return STATUS_OPTIONS.find((option) => option.value === status)?.label ?? status;
@@ -805,6 +809,7 @@ export function OrderPreview({
   const router = useRouter();
   const [activeTab, setActiveTab] = React.useState("overview");
   const [labels, setLabels] = React.useState<string[]>([]);
+  const [layoutMode, setLayoutMode] = React.useState<"default" | "wide">("default");
   const [isEditingOverview, setIsEditingOverview] = React.useState(false);
   const [isSavingOverview, startSavingOverview] = React.useTransition();
   const [previewOrder, setPreviewOrder] = React.useState<OrderRow | null>(order);
@@ -832,6 +837,19 @@ export function OrderPreview({
   React.useEffect(() => {
     setPreviewOrder(order);
   }, [order]);
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    const stored = window.localStorage.getItem(ORDER_PREVIEW_LAYOUT_STORAGE_KEY);
+    if (stored === "wide" || stored === "default") {
+      setLayoutMode(stored);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(ORDER_PREVIEW_LAYOUT_STORAGE_KEY, layoutMode);
+  }, [layoutMode]);
 
   React.useEffect(() => {
     if (!labelStorageKey || typeof window === "undefined") return;
@@ -885,12 +903,16 @@ export function OrderPreview({
     !!dueISO &&
     dueISO < todayISO &&
     (currentOrder.status === "NEW" || currentOrder.status === "IN_PROGRESS");
+  const isWideLayout = layoutMode === "wide";
 
   return (
     <Sheet open={open} onOpenChange={(next) => (!next ? onClose() : undefined)}>
       <SheetContent
         side="right"
-        className="w-full border-l border-[#e4e7ec] bg-[#f8fafc] p-0 sm:max-w-[680px]"
+        className={[
+          "w-full border-l border-[#e4e7ec] bg-[#f8fafc] p-0 transition-[max-width] duration-200",
+          isWideLayout ? "sm:max-w-[calc(100vw-32px)]" : "sm:max-w-[680px]",
+        ].join(" ")}
       >
         <SheetTitle className="sr-only">
           {currentOrder ? `Order #${currentOrder.order_number ?? currentOrder.id} details` : "Order details"}
@@ -939,14 +961,25 @@ export function OrderPreview({
                     </div>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={onClose}
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-[#dde3ee] bg-white text-[#667085] transition hover:bg-[#f8fafc] hover:text-[#111827]"
-                    aria-label="Close order preview"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setLayoutMode((current) => (current === "wide" ? "default" : "wide"))}
+                      className="hidden h-10 items-center gap-2 rounded-2xl border border-[#dde3ee] bg-white px-3 text-sm font-semibold text-[#475467] transition hover:bg-[#f8fafc] hover:text-[#111827] sm:inline-flex"
+                      aria-label={isWideLayout ? "Use default order preview width" : "Use wide order preview width"}
+                    >
+                      {isWideLayout ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                      {isWideLayout ? "Default width" : "Expand"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={onClose}
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-[#dde3ee] bg-white text-[#667085] transition hover:bg-[#f8fafc] hover:text-[#111827]"
+                      aria-label="Close order preview"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
 
