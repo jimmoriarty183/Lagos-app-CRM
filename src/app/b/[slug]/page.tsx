@@ -71,6 +71,21 @@ type Filters = {
   actor: string;
 };
 
+type OrderSort =
+  | "default"
+  | "newest"
+  | "oldest"
+  | "clientAsc"
+  | "clientDesc"
+  | "managerAsc"
+  | "managerDesc"
+  | "dueSoonest"
+  | "dueLatest"
+  | "statusAsc"
+  | "statusDesc"
+  | "amountHigh"
+  | "amountLow";
+
 type SummaryPeriodOption = {
   label: string;
   shortLabel: string;
@@ -123,6 +138,7 @@ type PageProps = {
     perPage?: string;
     actor?: string;
     statusMode?: string;
+    sort?: string;
   };
 };
 
@@ -221,6 +237,35 @@ function getClientSearchBlob(order: {
     .join(" ");
 }
 
+function formatSearchDate(value: unknown) {
+  const text = cleanText(value);
+  if (!text) return "";
+  const date = new Date(text);
+  if (Number.isNaN(date.getTime())) return text;
+  return [
+    text,
+    date.toISOString(),
+    date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    }),
+    date.toLocaleString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }),
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
+function getStatusSearchLabel(status: unknown) {
+  return cleanText(status).replaceAll("_", " ");
+}
+
 function upperRole(r: any): "OWNER" | "MANAGER" | "GUEST" {
   const s = String(r || "").toUpperCase();
   if (s === "OWNER") return "OWNER";
@@ -252,6 +297,26 @@ function normalizePageSize(value: string | undefined) {
 function normalizePageNumber(value: string | undefined) {
   const parsed = Number.parseInt(String(value ?? ""), 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+}
+
+const ORDER_SORT_OPTIONS: readonly OrderSort[] = [
+  "default",
+  "newest",
+  "oldest",
+  "clientAsc",
+  "clientDesc",
+  "managerAsc",
+  "managerDesc",
+  "dueSoonest",
+  "dueLatest",
+  "statusAsc",
+  "statusDesc",
+  "amountHigh",
+  "amountLow",
+] as const;
+
+function normalizeOrderSort(value: string | undefined): OrderSort {
+  return ORDER_SORT_OPTIONS.includes(value as OrderSort) ? (value as OrderSort) : "default";
 }
 
 export default async function Page({ params, searchParams }: PageProps) {
@@ -404,6 +469,7 @@ export default async function Page({ params, searchParams }: PageProps) {
     actor: String(sp.actor ?? "ALL"),
   };
   const perPage = normalizePageSize(sp.perPage);
+  const sort = normalizeOrderSort(sp.sort);
   const hasCustomRange = filters.range === "custom" && !!filters.startDate && !!filters.endDate;
   const rangeIsDefault = filters.range === "ALL" && !hasCustomRange;
   const isRangeFilterActive = !rangeIsDefault;
@@ -440,6 +506,7 @@ export default async function Page({ params, searchParams }: PageProps) {
     const params = new URLSearchParams();
     if (phoneRaw && phoneRaw.length > 0) params.set("u", phoneRaw);
     params.set("perPage", String(perPage));
+    if (sort !== "default") params.set("sort", sort);
     if (filters.q) params.set("q", filters.q);
     if (filters.statusMode === "all") {
       params.set("statusMode", "all");
@@ -461,6 +528,7 @@ export default async function Page({ params, searchParams }: PageProps) {
     const params = new URLSearchParams();
     if (phoneRaw && phoneRaw.length > 0) params.set("u", phoneRaw);
     params.set("perPage", String(perPage));
+    if (sort !== "default") params.set("sort", sort);
     if (filters.q) params.set("q", filters.q);
     if (filters.statusMode === "all") {
       params.set("statusMode", "all");
@@ -693,6 +761,7 @@ export default async function Page({ params, searchParams }: PageProps) {
   const searchedList: any[] = qNeedle
     ? actorFilteredList.filter((o) => {
         const actorName = actorNameById.get(getOrderManagerValue(o)) ?? "";
+        const creatorName = actorNameById.get(cleanText(o.created_by)) ?? "";
         const blob = [
           String(o.id ?? ""),
           String(o.order_number ?? ""),
@@ -700,8 +769,14 @@ export default async function Page({ params, searchParams }: PageProps) {
           getClientSearchBlob(o),
           String(o.client_phone ?? ""),
           String(o.amount ?? ""),
+          `$${String(o.amount ?? "")}`,
           String(o.description ?? ""),
           actorName,
+          creatorName,
+          String(o.created_by ?? ""),
+          getStatusSearchLabel(o.status),
+          formatSearchDate(o.created_at),
+          formatSearchDate(o.due_date),
         ]
           .join(" ")
           .toLowerCase();
@@ -748,7 +823,61 @@ export default async function Page({ params, searchParams }: PageProps) {
     if (actor?.id) actorKindById.set(String(actor.id), actor.kind);
   }
 
-  const list: OrderListItem[] = applyStatusFilter(currentPeriodRows).map((order) => {
+  const filteredRows = [...applyStatusFilter(currentPeriodRows)];
+  const sortedRows = sort === "default" ? filteredRows : filteredRows.sort((a, b) => {
+    const createdA = new Date(String(a.created_at ?? "")).getTime();
+    const createdB = new Date(String(b.created_at ?? "")).getTime();
+    const dueA = a.due_date ? new Date(String(a.due_date)).getTime() : null;
+    const dueB = b.due_date ? new Date(String(b.due_date)).getTime() : null;
+    const amountA = Number(a.amount ?? 0);
+    const amountB = Number(b.amount ?? 0);
+    const clientA = getClientSearchBlob(a).toLowerCase();
+    const clientB = getClientSearchBlob(b).toLowerCase();
+    const managerA = String(
+      actorNameById.get(String(a.manager_id ?? a.created_by ?? "")) ?? "",
+    ).toLowerCase();
+    const managerB = String(
+      actorNameById.get(String(b.manager_id ?? b.created_by ?? "")) ?? "",
+    ).toLowerCase();
+    const statusA = getStatusSearchLabel(a.status).toLowerCase();
+    const statusB = getStatusSearchLabel(b.status).toLowerCase();
+
+    switch (sort) {
+      case "oldest":
+        return createdA - createdB;
+      case "clientAsc":
+        return clientA.localeCompare(clientB) || createdB - createdA;
+      case "clientDesc":
+        return clientB.localeCompare(clientA) || createdB - createdA;
+      case "managerAsc":
+        return managerA.localeCompare(managerB) || createdB - createdA;
+      case "managerDesc":
+        return managerB.localeCompare(managerA) || createdB - createdA;
+      case "dueSoonest":
+        if (dueA === null && dueB === null) return createdB - createdA;
+        if (dueA === null) return 1;
+        if (dueB === null) return -1;
+        return dueA - dueB || createdB - createdA;
+      case "dueLatest":
+        if (dueA === null && dueB === null) return createdB - createdA;
+        if (dueA === null) return 1;
+        if (dueB === null) return -1;
+        return dueB - dueA || createdB - createdA;
+      case "statusAsc":
+        return statusA.localeCompare(statusB) || createdB - createdA;
+      case "statusDesc":
+        return statusB.localeCompare(statusA) || createdB - createdA;
+      case "amountHigh":
+        return amountB - amountA || createdB - createdA;
+      case "amountLow":
+        return amountA - amountB || createdB - createdA;
+      case "newest":
+      default:
+        return createdB - createdA;
+    }
+  });
+
+  const list: OrderListItem[] = sortedRows.map((order) => {
     const client = normalizeOrderClient({
       client_name: order.client_name,
       first_name: order.first_name,
@@ -912,6 +1041,7 @@ export default async function Page({ params, searchParams }: PageProps) {
                 phoneRaw,
                 tableQuery: {
                   q: filters.q,
+                  sort,
                   statuses: filters.statuses,
                   range: filters.range,
                   startDate: filters.startDate,
@@ -927,13 +1057,14 @@ export default async function Page({ params, searchParams }: PageProps) {
             />
 
             <DesktopOrdersTable
-              key={`desktop-orders-${filters.q}-${filters.statuses.join(",")}-${filters.actor}-${filters.range}-${filters.startDate ?? ""}-${filters.endDate ?? ""}`}
+              key={`desktop-orders-${filters.q}-${filters.statuses.join(",")}-${filters.actor}-${filters.range}-${filters.startDate ?? ""}-${filters.endDate ?? ""}-${sort}`}
               list={paginatedList}
               todayISO={todayISO}
               businessSlug={String(currentBusiness.slug)}
               businessId={String(currentBusiness.id)}
               phoneRaw={phoneRaw}
               searchQuery={filters.q}
+              sort={sort}
               statusFilter={
                 filters.statusMode === "all" ? [...allowedStatuses] : filters.statuses
               }
@@ -973,6 +1104,7 @@ export default async function Page({ params, searchParams }: PageProps) {
               phoneRaw,
               tableQuery: {
                 q: filters.q,
+                sort,
                 statuses: filters.statuses,
                 range: filters.range,
                 startDate: filters.startDate,
@@ -998,7 +1130,7 @@ export default async function Page({ params, searchParams }: PageProps) {
             actors={teamActors}
           />
           <MobileOrdersList
-            key={`mobile-orders-${filters.q}-${filters.statuses.join(",")}-${filters.actor}-${filters.range}-${filters.startDate ?? ""}-${filters.endDate ?? ""}`}
+            key={`mobile-orders-${filters.q}-${filters.statuses.join(",")}-${filters.actor}-${filters.range}-${filters.startDate ?? ""}-${filters.endDate ?? ""}-${sort}`}
             list={paginatedList}
             todayISO={todayISO}
             businessSlug={String(currentBusiness.slug)}
@@ -1013,7 +1145,9 @@ export default async function Page({ params, searchParams }: PageProps) {
             userRole={userRole}
             actors={teamActors}
             currentUserId={currentUserId}
+            currentUserName={currentUserName}
             searchQuery={filters.q}
+            sort={sort}
             statusFilter={
               filters.statusMode === "all" ? [...allowedStatuses] : filters.statuses
             }

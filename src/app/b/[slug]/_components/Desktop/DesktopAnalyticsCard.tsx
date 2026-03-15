@@ -49,6 +49,7 @@ type Props = {
     phoneRaw: string;
     tableQuery: {
       q: string;
+      sort: string;
       statuses: string[];
       range: string;
       startDate: string | null;
@@ -247,6 +248,9 @@ export default function DesktopAnalyticsCard({
         <form method="get" className="space-y-3 rounded-2xl border border-[#dde3ee] bg-white px-3 py-3">
           <input type="hidden" name="u" value={customRange.phoneRaw} />
           {customRange.tableQuery.q ? <input type="hidden" name="q" value={customRange.tableQuery.q} /> : null}
+          {customRange.tableQuery.sort && customRange.tableQuery.sort !== "newest" ? (
+            <input type="hidden" name="sort" value={customRange.tableQuery.sort} />
+          ) : null}
           {customRange.tableQuery.statuses.map((status) => (
             <input key={status} type="hidden" name="status" value={status} />
           ))}

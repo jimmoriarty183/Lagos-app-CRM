@@ -12,9 +12,8 @@ import {
 } from "lucide-react";
 
 import { StatusCell } from "../../InlineCells";
-import { OrderChecklist } from "@/app/b/[slug]/OrderChecklist";
-import { OrderComments } from "@/app/b/[slug]/OrderComments";
 import { setOrderStatus } from "../../actions";
+import { OrderPreview } from "../orders/OrderPreview";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -59,6 +58,20 @@ type Status =
   | "DUPLICATE";
 
 type StatusFilterValue = Status | "OVERDUE";
+type OrderSort =
+  | "default"
+  | "newest"
+  | "oldest"
+  | "clientAsc"
+  | "clientDesc"
+  | "managerAsc"
+  | "managerDesc"
+  | "dueSoonest"
+  | "dueLatest"
+  | "statusAsc"
+  | "statusDesc"
+  | "amountHigh"
+  | "amountLow";
 type UserRole = "OWNER" | "MANAGER" | "GUEST";
 
 type TeamActor = {
@@ -158,6 +171,21 @@ function mergeActors(baseActors: TeamActor[], nextActors: TeamActor[]) {
 }
 
 const PAGE_SIZE_OPTIONS = [20, 50, 100, 500] as const;
+const SORT_OPTIONS: Array<{ value: OrderSort; label: string }> = [
+  { value: "default", label: "Default order" },
+  { value: "newest", label: "Newest first" },
+  { value: "oldest", label: "Oldest first" },
+  { value: "clientAsc", label: "Client: A to Z" },
+  { value: "clientDesc", label: "Client: Z to A" },
+  { value: "managerAsc", label: "Manager: A to Z" },
+  { value: "managerDesc", label: "Manager: Z to A" },
+  { value: "dueSoonest", label: "Due soonest" },
+  { value: "dueLatest", label: "Due latest" },
+  { value: "statusAsc", label: "Status: A to Z" },
+  { value: "statusDesc", label: "Status: Z to A" },
+  { value: "amountHigh", label: "Amount: high to low" },
+  { value: "amountLow", label: "Amount: low to high" },
+];
 
 function getPaginationItems(currentPage: number, totalPages: number) {
   if (totalPages <= 1) return [1];
@@ -183,7 +211,9 @@ export default function MobileOrdersList({
   userRole,
   actors,
   currentUserId,
+  currentUserName,
   searchQuery,
+  sort,
   statusFilter,
   summaryRange,
   rangeFilter,
@@ -205,7 +235,9 @@ export default function MobileOrdersList({
   userRole: UserRole;
   actors: TeamActor[];
   currentUserId: string | null;
+  currentUserName: string;
   searchQuery: string;
+  sort: OrderSort;
   statusFilter: StatusFilterValue[];
   summaryRange: DashboardRange;
   rangeFilter: DashboardRange;
@@ -216,6 +248,7 @@ export default function MobileOrdersList({
   const router = useRouter();
   const [openId, setOpenId] = useState<string | null>(null);
   const [searchDraft, setSearchDraft] = useState(searchQuery);
+  const [sortValue, setSortValue] = useState<OrderSort>(sort);
   const [statusValue, setStatusValue] = useState<string>(normalizeQuickStatus(statusFilter));
   const [managerValue, setManagerValue] = useState<string>(
     normalizeQuickActor(actorFilter, actors, currentUserId),
@@ -228,6 +261,14 @@ export default function MobileOrdersList({
   const submitTimerRef = useRef<number | null>(null);
   const [navigationMessage, setNavigationMessage] = useState<string | null>(null);
   const [loadedActors, setLoadedActors] = useState<TeamActor[]>(actors);
+  const isMountedRef = useRef(false);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   const supabase = useMemo(() => createClient(), []);
 
@@ -235,6 +276,19 @@ export default function MobileOrdersList({
   const actorLabelById = useMemo(
     () => new Map(effectiveActors.map((actor) => [actor.id, actor.label])),
     [effectiveActors],
+  );
+  const rows = useMemo(
+    () =>
+      (list ?? []).map((order) => ({
+        ...order,
+        manager_name:
+          order.manager_name || actorLabelById.get(String(order.manager_id ?? "")) || null,
+      })),
+    [actorLabelById, list],
+  );
+  const selectedOrder = useMemo(
+    () => rows.find((order) => order.id === openId) ?? null,
+    [openId, rows],
   );
   const managerOptions = useMemo(
     () =>
@@ -250,6 +304,7 @@ export default function MobileOrdersList({
 
   const buildHref = (next: {
     q: string;
+    sortValue: OrderSort;
     statusValue: string;
     statusTouched: boolean;
     managerValue: string;
@@ -268,6 +323,7 @@ export default function MobileOrdersList({
 
     const q = next.q.trim();
     if (q) params.set("q", q);
+    if (next.sortValue !== "default") params.set("sort", next.sortValue);
 
     const nextStatuses =
       next.statusTouched || next.statusValue !== "ALL"
@@ -350,7 +406,7 @@ export default function MobileOrdersList({
           });
         }
 
-        setLoadedActors(nextActors);
+        if (isMountedRef.current) setLoadedActors(nextActors);
       } catch {
         // Keep server-provided actors when the client fetch fails.
       }
@@ -364,7 +420,7 @@ export default function MobileOrdersList({
   }, [businessId]);
 
   const navigateWithFallback = (href: string) => {
-    setNavigationMessage("Updating orders...");
+    if (isMountedRef.current) setNavigationMessage("Updating orders...");
     const currentHref = `${window.location.pathname}${window.location.search}`;
     if (href === currentHref) {
       window.location.reload();
@@ -375,6 +431,7 @@ export default function MobileOrdersList({
 
   const submitFilters = (next: {
     q: string;
+    sortValue: OrderSort;
     statusValue: string;
     statusTouched: boolean;
     managerValue: string;
@@ -431,6 +488,7 @@ export default function MobileOrdersList({
   const paginationHref = (page: number, nextPerPage = perPage) =>
     buildHref({
       q: searchDraft,
+      sortValue,
       statusValue,
       statusTouched,
       managerValue,
@@ -474,6 +532,7 @@ export default function MobileOrdersList({
                   event.preventDefault();
                   submitFilters({
                     q: searchDraft,
+                    sortValue,
                     statusValue,
                     statusTouched,
                     managerValue,
@@ -486,6 +545,7 @@ export default function MobileOrdersList({
                 submitTimerRef.current = window.setTimeout(() => {
                   submitFilters({
                     q: searchDraft,
+                    sortValue,
                     statusValue,
                     statusTouched,
                     managerValue,
@@ -493,12 +553,12 @@ export default function MobileOrdersList({
                   });
                 }, 120);
               }}
-              placeholder="Search by client, phone, order ID..."
+              placeholder="Search by client, phone, manager, status, amount..."
               className="h-11 w-full rounded-2xl border border-[#dde3ee] bg-[#fbfcfe] pl-11 pr-4 text-sm outline-none transition placeholder:text-[#98a2b3] focus:border-[#111827] focus:bg-white focus:ring-2 focus:ring-[#111827]/10"
             />
           </label>
 
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
             <select
               value={statusValue}
               onChange={(event) => {
@@ -507,6 +567,7 @@ export default function MobileOrdersList({
                 setStatusTouched(true);
                 submitFilters({
                   q: searchDraft,
+                  sortValue,
                   statusValue: next,
                   statusTouched: true,
                   managerValue,
@@ -532,6 +593,7 @@ export default function MobileOrdersList({
                 setManagerTouched(true);
                 submitFilters({
                   q: searchDraft,
+                  sortValue,
                   statusValue,
                   statusTouched,
                   managerValue: next,
@@ -544,6 +606,29 @@ export default function MobileOrdersList({
               {currentUserId ? <option value="ME">Me</option> : null}
               <option value="UNASSIGNED">Unassigned</option>
               {managerOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={sortValue}
+              onChange={(event) => {
+                const next = event.currentTarget.value as OrderSort;
+                setSortValue(next);
+                submitFilters({
+                  q: searchDraft,
+                  sortValue: next,
+                  statusValue,
+                  statusTouched,
+                  managerValue,
+                  managerTouched,
+                });
+              }}
+              className="h-11 min-w-0 rounded-2xl border border-[#dde3ee] bg-white px-3 text-sm font-medium text-[#344054] outline-none transition focus:border-[#111827] focus:ring-2 focus:ring-[#111827]/10"
+            >
+              {SORT_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
@@ -584,8 +669,7 @@ export default function MobileOrdersList({
         </div>
       </div>
 
-      {list.map((order) => {
-        const isOpen = openId === order.id;
+      {rows.map((order) => {
         const dueISO = order.due_date ? String(order.due_date).slice(0, 10) : null;
         const isOverdue =
           !!dueISO &&
@@ -725,46 +809,6 @@ export default function MobileOrdersList({
               </div>
             </div>
 
-            {isOpen ? (
-              <div
-                className="mt-4 rounded-2xl border border-[#dde3ee] bg-[#fbfcfe] p-3"
-                onClick={(event) => event.stopPropagation()}
-              >
-                <div className="text-xs font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
-                  Description
-                </div>
-                <div className="mt-2 whitespace-pre-wrap break-words text-sm text-[#364153]">
-                  {order.description?.trim() ? order.description : "No description"}
-                </div>
-
-                <OrderChecklist
-                  order={{ id: order.id, business_id: businessId }}
-                  supabase={supabase}
-                />
-
-                <OrderComments
-                  order={{ id: order.id, business_id: businessId }}
-                  supabase={supabase}
-                  author={{
-                    phone: phoneRaw,
-                    role: userRole,
-                  }}
-                />
-
-                <div className="mt-3 flex justify-end">
-                  <button
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      setOpenId((current) => (current === order.id ? null : current));
-                    }}
-                    className="inline-flex h-9 items-center justify-center rounded-xl border border-[#dde3ee] bg-white px-3 text-sm font-semibold text-[#111827] transition hover:bg-[#f8fafc]"
-                  >
-                    Close
-                  </button>
-                </div>
-              </div>
-            ) : null}
           </article>
         );
       })}
@@ -863,6 +907,19 @@ export default function MobileOrdersList({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <OrderPreview
+        open={Boolean(selectedOrder)}
+        order={selectedOrder}
+        businessId={businessId}
+        businessSlug={businessSlug}
+        phoneRaw={phoneRaw}
+        userRole={userRole}
+        canManage={canManage}
+        currentUserName={currentUserName}
+        actors={effectiveActors}
+        supabase={supabase}
+        onClose={() => setOpenId(null)}
+      />
     </section>
   );
 }

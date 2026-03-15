@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
   ChevronDown,
+  ChevronUp,
   Ellipsis,
   Eye,
   Search,
@@ -60,6 +61,20 @@ type Status =
   | "DUPLICATE";
 
 type StatusFilterValue = Status | "OVERDUE";
+type OrderSort =
+  | "default"
+  | "newest"
+  | "oldest"
+  | "clientAsc"
+  | "clientDesc"
+  | "managerAsc"
+  | "managerDesc"
+  | "dueSoonest"
+  | "dueLatest"
+  | "statusAsc"
+  | "statusDesc"
+  | "amountHigh"
+  | "amountLow";
 const DEFAULT_VISIBLE_STATUSES: readonly StatusFilterValue[] = [
   "NEW",
   "IN_PROGRESS",
@@ -119,6 +134,7 @@ type Props = {
   businessId: string;
   phoneRaw: string;
   searchQuery: string;
+  sort: OrderSort;
   statusFilter: StatusFilterValue[];
   rangeFilter: DashboardRange;
   summaryRange: DashboardRange;
@@ -196,6 +212,7 @@ const INACTIVE_STATUS_OPTIONS: readonly StatusFilterValue[] = [
   "CANCELED",
   "DUPLICATE",
 ] as const;
+type SortColumn = "order" | "client" | "manager" | "amount" | "due" | "status";
 
 function normalizeQuickStatuses(statuses: StatusFilterValue[]) {
   const normalized = statuses.filter((status): status is StatusFilterValue =>
@@ -204,6 +221,45 @@ function normalizeQuickStatuses(statuses: StatusFilterValue[]) {
   return normalized.length === 0
     ? [...DEFAULT_VISIBLE_STATUSES]
     : normalized;
+}
+
+function getDesktopSortState(sort: OrderSort, column: SortColumn): "asc" | "desc" | null {
+  switch (column) {
+    case "order":
+      return sort === "newest" ? "desc" : sort === "oldest" ? "asc" : null;
+    case "client":
+      return sort === "clientAsc" ? "asc" : sort === "clientDesc" ? "desc" : null;
+    case "manager":
+      return sort === "managerAsc" ? "asc" : sort === "managerDesc" ? "desc" : null;
+    case "amount":
+      return sort === "amountLow" ? "asc" : sort === "amountHigh" ? "desc" : null;
+    case "due":
+      return sort === "dueSoonest" ? "asc" : sort === "dueLatest" ? "desc" : null;
+    case "status":
+      return sort === "statusAsc" ? "asc" : sort === "statusDesc" ? "desc" : null;
+    default:
+      return null;
+  }
+}
+
+function getNextDesktopSort(sort: OrderSort, column: SortColumn): OrderSort {
+  const current = getDesktopSortState(sort, column);
+  switch (column) {
+    case "order":
+      return current === null ? "newest" : current === "desc" ? "oldest" : "default";
+    case "client":
+      return current === null ? "clientAsc" : current === "asc" ? "clientDesc" : "default";
+    case "manager":
+      return current === null ? "managerAsc" : current === "asc" ? "managerDesc" : "default";
+    case "amount":
+      return current === null ? "amountHigh" : current === "desc" ? "amountLow" : "default";
+    case "due":
+      return current === null ? "dueSoonest" : current === "asc" ? "dueLatest" : "default";
+    case "status":
+      return current === null ? "statusAsc" : current === "asc" ? "statusDesc" : "default";
+    default:
+      return "default";
+  }
 }
 
 function getStatusTriggerLabel(statuses: StatusFilterValue[]) {
@@ -259,6 +315,119 @@ function ActorAvatar({ label }: { label: string }) {
     <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-900 text-[11px] font-semibold text-white">
       {getInitials(label)}
     </div>
+  );
+}
+
+function SortableHeader({
+  label,
+  column,
+  sortValue,
+  onClick,
+  align = "left",
+}: {
+  label: string;
+  column: SortColumn;
+  sortValue: OrderSort;
+  onClick: (column: SortColumn) => void;
+  align?: "left" | "right";
+}) {
+  const state = getDesktopSortState(sortValue, column);
+  const indicator = state === "asc" ? "↑" : state === "desc" ? "↓" : "↕";
+
+  return (
+    <button
+      type="button"
+      onClick={() => onClick(column)}
+      className={[
+        "inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.08em] transition",
+        state ? "text-[#667085]" : "text-[#98a2b3] hover:text-[#667085]",
+        align === "right" ? "ml-auto" : "",
+      ].join(" ")}
+    >
+      <span>{label}</span>
+      <span className="text-[11px]">{indicator}</span>
+    </button>
+  );
+}
+
+function TableSortHeader({
+  label,
+  column,
+  sortValue,
+  onClick,
+  align = "left",
+}: {
+  label: string;
+  column: SortColumn;
+  sortValue: OrderSort;
+  onClick: (column: SortColumn) => void;
+  align?: "left" | "right";
+}) {
+  const state = getDesktopSortState(sortValue, column);
+  const indicator = state === "asc" ? "↑" : state === "desc" ? "↓" : "↕";
+
+  return (
+    <button
+      type="button"
+      onClick={() => onClick(column)}
+      className={[
+        "inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3] transition hover:text-[#667085]",
+        align === "right" ? "ml-auto" : "",
+      ].join(" ")}
+    >
+      <span>{label}</span>
+      <span className="text-[10px] leading-none text-[#98a2b3]">{indicator}</span>
+    </button>
+  );
+}
+
+function ActiveTableSortHeader({
+  label,
+  column,
+  sortValue,
+  onClick,
+  align = "left",
+}: {
+  label: string;
+  column: SortColumn;
+  sortValue: OrderSort;
+  onClick: (column: SortColumn) => void;
+  align?: "left" | "right";
+}) {
+  const state = getDesktopSortState(sortValue, column);
+
+  return (
+    <button
+      type="button"
+      onClick={() => onClick(column)}
+      className={[
+        "inline-flex appearance-none items-center gap-0.5 border-0 bg-transparent p-0 align-middle transition",
+        align === "right" ? "ml-auto" : "",
+      ].join(" ")}
+    >
+      <span
+        className={[
+          "text-[10px] font-semibold uppercase leading-none tracking-[0.08em]",
+          state ? "text-[#344054]" : "text-[#98a2b3]",
+        ].join(" ")}
+      >
+        {label}
+      </span>
+      <span className="inline-flex flex-col items-center justify-center leading-none opacity-100">
+        <ChevronUp
+          className={[
+            "h-2 w-2",
+            state === "asc" ? "text-[#344054]" : "text-[#b8c1d1]",
+          ].join(" ")}
+        />
+        <ChevronDown
+          className={[
+            "-mt-1 h-2 w-2",
+            state === "desc" ? "text-[#344054]" : "text-[#b8c1d1]",
+          ].join(" ")}
+        />
+      </span>
+    </button>
   );
 }
 
@@ -472,6 +641,7 @@ export default function DesktopOrdersTable({
   businessId,
   phoneRaw,
   searchQuery,
+  sort,
   statusFilter,
   rangeFilter,
   summaryRange,
@@ -498,6 +668,7 @@ export default function DesktopOrdersTable({
   const [managerMenuOpen, setManagerMenuOpen] = useState(false);
   const [perPageMenuOpen, setPerPageMenuOpen] = useState(false);
   const [searchDraft, setSearchDraft] = useState(searchQuery);
+  const [sortValue, setSortValue] = useState<OrderSort>(sort);
   const [rangeValue, setRangeValue] = useState<DashboardRange>(rangeFilter);
   const [customStart, setCustomStart] = useState(rangeStartDate ?? "");
   const [customEnd, setCustomEnd] = useState(rangeEndDate ?? "");
@@ -515,6 +686,14 @@ export default function DesktopOrdersTable({
   const [isPending] = useTransition();
   const [navigationMessage, setNavigationMessage] = useState<string | null>(null);
   const [loadedActors, setLoadedActors] = useState<TeamActor[]>(actors);
+  const isMountedRef = React.useRef(false);
+
+  React.useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   const supabase = useMemo(() => createClient(), []);
 
@@ -555,7 +734,7 @@ export default function DesktopOrdersTable({
   };
 
   const navigateWithFallback = (href: string) => {
-    setNavigationMessage("Updating orders...");
+    if (isMountedRef.current) setNavigationMessage("Updating orders...");
     const currentHref = `${window.location.pathname}${window.location.search}`;
     if (href === currentHref) {
       window.location.reload();
@@ -610,7 +789,7 @@ export default function DesktopOrdersTable({
           });
         }
 
-        setLoadedActors(nextActors);
+        if (isMountedRef.current) setLoadedActors(nextActors);
       } catch {
         // Keep server-provided actors when the client fetch fails.
       }
@@ -629,6 +808,7 @@ export default function DesktopOrdersTable({
     statusTouched: boolean;
     managerValue: string;
     managerTouched: boolean;
+    sortValue?: OrderSort;
     rangeValue?: DashboardRange;
     customStart?: string;
     customEnd?: string;
@@ -652,6 +832,8 @@ export default function DesktopOrdersTable({
 
     const q = next.q.trim();
     if (q) params.set("q", q);
+    const nextSort = next.sortValue ?? sortValue;
+    if (nextSort !== "default") params.set("sort", nextSort);
 
     const nextStatuses = next.statusTouched ? next.statusValues : statusFilter;
     const selectingAllStatuses = nextStatuses.length === STATUS_OPTIONS.length;
@@ -689,6 +871,7 @@ export default function DesktopOrdersTable({
       statusTouched,
       managerValue,
       managerTouched,
+      sortValue,
       rangeValue,
       customStart,
       customEnd,
@@ -703,6 +886,7 @@ export default function DesktopOrdersTable({
     statusTouched: boolean;
     managerValue: string;
     managerTouched: boolean;
+    sortValue: OrderSort;
     rangeValue: DashboardRange;
     customStart: string;
     customEnd: string;
@@ -713,6 +897,26 @@ export default function DesktopOrdersTable({
     setStatusMenuOpen(false);
     setManagerMenuOpen(false);
     navigateWithFallback(href);
+  };
+
+  const handleSortChange = (column: SortColumn) => {
+    const nextSort = getNextDesktopSort(sortValue, column);
+    setSortValue(nextSort);
+    navigateWithFallback(
+      buildHref({
+        q: searchDraft,
+        statusValues,
+        statusTouched,
+        managerValue,
+        managerTouched,
+        sortValue: nextSort,
+        rangeValue,
+        customStart,
+        customEnd,
+        rangeTouched,
+        page: 1,
+      }),
+    );
   };
 
   const toggleStatus = (status: StatusFilterValue) => {
@@ -813,6 +1017,7 @@ export default function DesktopOrdersTable({
               statusTouched,
               managerValue,
               managerTouched,
+              sortValue,
               rangeValue,
               customStart,
               customEnd,
@@ -831,7 +1036,7 @@ export default function DesktopOrdersTable({
                     return;
                   }
                 }}
-                placeholder="Search orders..."
+                placeholder="Search by client, phone, manager, status, amount..."
                 className="h-11 w-full rounded-2xl border border-[#dde3ee] bg-[#fbfcfe] pl-11 pr-4 text-sm outline-none transition placeholder:text-[#98a2b3] focus:border-[#111827] focus:bg-white focus:ring-2 focus:ring-[#111827]/10"
               />
             </label>
@@ -1023,6 +1228,7 @@ export default function DesktopOrdersTable({
                 </DropdownMenuRadioGroup>
               </DropdownMenuContent>
             </DropdownMenu>
+
           </div>
 
           {showCustomRange ? (
@@ -1129,23 +1335,23 @@ export default function DesktopOrdersTable({
         <table className="min-w-[1040px] w-full border-collapse">
           <thead>
             <tr className="border-b border-[#eef2f7] text-left">
-              <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
-                Order
+              <th className="px-5 py-2.5">
+                <ActiveTableSortHeader label="Order" column="order" sortValue={sortValue} onClick={handleSortChange} />
               </th>
-              <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
-                Client
+              <th className="px-5 py-2.5">
+                <ActiveTableSortHeader label="Client" column="client" sortValue={sortValue} onClick={handleSortChange} />
               </th>
-              <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
-                Manager
+              <th className="px-5 py-2.5">
+                <ActiveTableSortHeader label="Manager" column="manager" sortValue={sortValue} onClick={handleSortChange} />
               </th>
-              <th className="px-5 py-3 text-right text-[10px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
-                Amount
+              <th className="px-5 py-2.5 text-right">
+                <ActiveTableSortHeader label="Amount" column="amount" sortValue={sortValue} onClick={handleSortChange} align="right" />
               </th>
-              <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
-                Due
+              <th className="px-5 py-2.5">
+                <ActiveTableSortHeader label="Due" column="due" sortValue={sortValue} onClick={handleSortChange} />
               </th>
-              <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
-                Status
+              <th className="px-5 py-2.5">
+                <ActiveTableSortHeader label="Status" column="status" sortValue={sortValue} onClick={handleSortChange} />
               </th>
               <th className="px-5 py-3 text-right text-[10px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
                 Actions

@@ -33,6 +33,7 @@ type Props = {
     phoneRaw: string;
     tableQuery: {
       q: string;
+      sort: string;
       statuses: string[];
       range: string;
       startDate: string | null;
@@ -108,6 +109,9 @@ export default function MobileSummaryBar({
           <form method="get" className="mt-2 grid gap-2 rounded-2xl border border-[#dde3ee] bg-white p-3">
             <input type="hidden" name="u" value={customRange.phoneRaw} />
             {customRange.tableQuery.q ? <input type="hidden" name="q" value={customRange.tableQuery.q} /> : null}
+            {customRange.tableQuery.sort && customRange.tableQuery.sort !== "newest" ? (
+              <input type="hidden" name="sort" value={customRange.tableQuery.sort} />
+            ) : null}
             {customRange.tableQuery.statuses.map((status) => (
               <input key={status} type="hidden" name="status" value={status} />
             ))}
