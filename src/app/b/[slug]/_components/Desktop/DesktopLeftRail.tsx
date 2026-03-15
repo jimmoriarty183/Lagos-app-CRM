@@ -91,21 +91,31 @@ function RailLink({
   badgeCount?: number;
   onClick?: () => void;
 }) {
+  const hoverable = !disabled;
   const cls = [
-    "group relative flex border shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition-colors",
+    "group relative flex border shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition-all duration-150",
     expanded
       ? "min-h-14 w-full items-start justify-start gap-3 rounded-2xl px-4 py-3"
       : "h-12 w-12 items-center justify-center rounded-2xl",
     active
-      ? "border-[#cfd8e6] bg-[#eef3fb] text-[#111827]"
+      ? "border-[#b7c8e6] bg-[#eaf2ff] text-[#0f172a] shadow-[0_10px_24px_rgba(59,130,246,0.12)] ring-1 ring-[#d7e5ff]"
       : disabled
-        ? "border-[#e3e7ef] bg-white text-[#c0c7d4]"
-        : "border-[#dde3ee] bg-white text-[#667085] hover:bg-[#f8fafc]",
+        ? "cursor-not-allowed border-[#e3e7ef] bg-[#f8fafc] text-[#b1b9c8] opacity-90"
+        : "cursor-pointer border-[#dde3ee] bg-white text-[#667085] hover:-translate-y-[1px] hover:border-[#bfd0ea] hover:bg-[#f4f8ff] hover:text-[#0f172a] hover:shadow-[0_10px_24px_rgba(15,23,42,0.08)]",
   ].join(" ");
 
   const body = (
     <>
-      <span className="relative shrink-0">
+      <span
+        className={[
+          "relative shrink-0 rounded-xl transition-colors duration-150",
+          active
+            ? "bg-white/80 p-2 text-[#1d4ed8]"
+            : disabled
+              ? "bg-white/70 p-2 text-[#b1b9c8]"
+              : "p-2 text-current group-hover:bg-white",
+        ].join(" ")}
+      >
         {icon}
         {badgeCount > 0 ? (
           <span
@@ -127,9 +137,24 @@ function RailLink({
                 {badgeCount}
               </span>
             ) : null}
+            {active ? (
+              <span className="inline-flex items-center rounded-full border border-[#cfe0ff] bg-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[#2459d3]">
+                Active
+              </span>
+            ) : null}
+            {disabled ? (
+              <span className="inline-flex items-center rounded-full border border-[#e3e7ef] bg-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[#98a2b3]">
+                Soon
+              </span>
+            ) : null}
           </span>
           {description ? (
-            <span className="mt-0.5 block text-xs font-medium leading-4 text-[#98a2b3]">
+            <span
+              className={[
+                "mt-0.5 block text-xs font-medium leading-4",
+                active ? "text-[#49627f]" : disabled ? "text-[#a5afbe]" : "text-[#98a2b3]",
+              ].join(" ")}
+            >
               {description}
             </span>
           ) : null}
@@ -137,8 +162,19 @@ function RailLink({
       ) : (
         <>
           <span className="sr-only">{label}</span>
-          <span className="pointer-events-none absolute left-[calc(100%+10px)] top-1/2 z-20 hidden -translate-y-1/2 whitespace-nowrap rounded-lg border border-[#dde3ee] bg-white px-2 py-1 text-xs font-medium text-[#475467] shadow-sm group-hover:block">
+          <span
+            className={[
+              "pointer-events-none absolute left-[calc(100%+10px)] top-1/2 z-20 hidden -translate-y-1/2 whitespace-nowrap rounded-xl border bg-white px-2.5 py-1.5 text-xs font-medium shadow-sm",
+              hoverable ? "group-hover:block group-focus-visible:block" : "",
+              active
+                ? "border-[#cfe0ff] text-[#2459d3]"
+                : disabled
+                  ? "border-[#e3e7ef] text-[#98a2b3]"
+                  : "border-[#dde3ee] text-[#475467]",
+            ].join(" ")}
+          >
             {label}
+            {active ? " · Active" : disabled ? " · Soon" : ""}
           </span>
         </>
       )}
@@ -261,8 +297,9 @@ export default function DesktopLeftRail({
                 <RailLink
                   icon={<BarChart3 className="h-5 w-5" />}
                   label="Analytics"
-                  description="Owner tools coming soon"
+                  description="Dashboard insights are not live yet"
                   expanded={expanded}
+                  disabled
                 />
               ) : null}
 
