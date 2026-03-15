@@ -57,6 +57,7 @@ export async function createOrder(input: {
   dueDate?: string;
   description?: string;
   status?: string;
+  managerId?: string | null;
 }) {
   const supabase = await supabaseServer();
 
@@ -89,7 +90,7 @@ export async function createOrder(input: {
     status: input.status ?? "NEW",
     paid: false,
     ...(createdByExists ? { created_by: createdBy } : {}),
-    ...(managerIdExists ? { manager_id: createdBy } : {}),
+    ...(managerIdExists ? { manager_id: input.managerId ?? createdBy } : {}),
   });
 
   if (error) throw new Error(error.message);

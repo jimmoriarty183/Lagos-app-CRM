@@ -72,6 +72,7 @@ type ViewMode = "list" | "kanban";
 type HiddenKanbanCounts = {
   done: number;
   canceled: number;
+  duplicate: number;
 };
 
 type SummaryPeriodOption = {
@@ -805,6 +806,7 @@ export default async function Page({ params, searchParams }: PageProps) {
   const kanbanHiddenCounts: HiddenKanbanCounts = {
     done: currentPeriodRows.filter((order) => order.status === "DONE").length,
     canceled: currentPeriodRows.filter((order) => order.status === "CANCELED").length,
+    duplicate: currentPeriodRows.filter((order) => order.status === "DUPLICATE").length,
   };
   const summaryCurrentRows = filterOrdersByCreatedAt(listRaw, summaryPeriod.current);
   const previousPeriodRows = summaryPeriod.previous

@@ -5,25 +5,45 @@ import { createOrderFromForm } from "../../actions";
 type Props = {
   businessId: string;
   businessSlug: string;
+  compact?: boolean;
+  submitLabel?: string;
+  stacked?: boolean;
 };
 
 export default function DesktopCreateOrder({
   businessId,
   businessSlug,
+  compact = false,
+  submitLabel = "Create order",
+  stacked = false,
 }: Props) {
   const createOrderAction = createOrderFromForm.bind(null, businessId, businessSlug);
   const inputCls =
-    "h-11 w-full min-w-0 rounded-xl border border-gray-200 bg-white px-3 outline-none " +
-    "focus:border-gray-900 focus:ring-2 focus:ring-gray-900";
+    "h-11 w-full min-w-0 rounded-2xl border border-[#dde3ee] bg-white px-3.5 text-sm text-[#111827] outline-none transition " +
+    "focus:border-[#111827] focus:ring-2 focus:ring-[#111827]/10";
 
-  const labelCls = "text-xs font-semibold text-gray-600";
+  const labelCls = "text-[11px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]";
+  const textareaCls =
+    "min-h-[96px] w-full rounded-2xl border border-[#dde3ee] bg-white px-3.5 py-3 text-sm text-[#111827] outline-none transition resize-y " +
+    "focus:border-[#111827] focus:ring-2 focus:ring-[#111827]/10";
 
   return (
     <form
       action={createOrderAction}
-      className="grid gap-4 xl:grid-cols-12"
+      className={[
+        "grid gap-4",
+        stacked ? "grid-cols-1 sm:grid-cols-2" : compact ? "xl:grid-cols-8" : "xl:grid-cols-12",
+      ].join(" ")}
     >
-      <label className="grid gap-1 xl:col-span-3">
+      <label
+        className={
+          stacked
+            ? "grid gap-1.5"
+            : compact
+              ? "grid gap-1.5 xl:col-span-2"
+              : "grid gap-1.5 xl:col-span-3"
+        }
+      >
         <span className={labelCls}>First Name *</span>
         <input
           name="first_name"
@@ -33,7 +53,15 @@ export default function DesktopCreateOrder({
         />
       </label>
 
-      <label className="grid gap-1 xl:col-span-3">
+      <label
+        className={
+          stacked
+            ? "grid gap-1.5"
+            : compact
+              ? "grid gap-1.5 xl:col-span-2"
+              : "grid gap-1.5 xl:col-span-3"
+        }
+      >
         <span className={labelCls}>Last Name</span>
         <input
           name="last_name"
@@ -42,7 +70,15 @@ export default function DesktopCreateOrder({
         />
       </label>
 
-      <label className="grid gap-1 xl:col-span-3">
+      <label
+        className={
+          stacked
+            ? "grid gap-1.5"
+            : compact
+              ? "grid gap-1.5 xl:col-span-2"
+              : "grid gap-1.5 xl:col-span-3"
+        }
+      >
         <span className={labelCls}>Client phone</span>
         <input
           name="client_phone"
@@ -51,7 +87,15 @@ export default function DesktopCreateOrder({
         />
       </label>
 
-      <label className="grid gap-1 xl:col-span-2">
+      <label
+        className={
+          stacked
+            ? "grid gap-1.5"
+            : compact
+              ? "grid gap-1.5 xl:col-span-1"
+              : "grid gap-1.5 xl:col-span-2"
+        }
+      >
         <span className={labelCls}>Amount *</span>
         <input
           name="amount"
@@ -62,24 +106,55 @@ export default function DesktopCreateOrder({
         />
       </label>
 
-      <label className="grid gap-1 xl:col-span-2">
+      <label
+        className={
+          stacked
+            ? "grid gap-1.5"
+            : compact
+              ? "grid gap-1.5 xl:col-span-1"
+              : "grid gap-1.5 xl:col-span-2"
+        }
+      >
         <span className={labelCls}>Due date</span>
         <input name="due_date" type="date" className={inputCls} />
       </label>
 
-      <div className="flex items-end xl:col-span-2">
-        <Button type="submit" size="sm" className="h-11 w-full justify-center">
-          Create order
+      <div
+        className={
+          stacked
+            ? "flex items-end sm:col-span-2"
+            : compact
+              ? "flex items-end xl:col-span-8"
+              : "flex items-end xl:col-span-2"
+        }
+      >
+        <Button
+          type="submit"
+          size="sm"
+          className={[
+            "h-11 justify-center rounded-2xl bg-[#111827] text-sm font-semibold text-white hover:bg-[#0b1220]",
+            stacked ? "w-full" : compact ? "w-full xl:ml-auto xl:w-[220px]" : "w-full",
+          ].join(" ")}
+        >
+          {submitLabel}
         </Button>
       </div>
 
-      <label className="grid gap-1 xl:col-span-12">
+      <label
+        className={
+          stacked
+            ? "grid gap-1.5 sm:col-span-2"
+            : compact
+              ? "grid gap-1.5 xl:col-span-8"
+              : "grid gap-1.5 xl:col-span-12"
+        }
+      >
         <span className={labelCls}>Description</span>
         <textarea
           name="description"
           rows={2}
           placeholder="Delivery address, comment..."
-          className="min-h-[84px] w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 outline-none resize-y focus:border-gray-900 focus:ring-2 focus:ring-gray-900"
+          className={textareaCls}
         />
       </label>
     </form>

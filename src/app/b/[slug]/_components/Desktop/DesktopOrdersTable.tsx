@@ -144,6 +144,7 @@ type Props = {
   hiddenKanbanCounts: {
     done: number;
     canceled: number;
+    duplicate: number;
   };
   canManage: boolean;
   canEdit: boolean;
@@ -291,11 +292,11 @@ function orderMatchesAppliedStatusFilter(
   order: { due_date: string | null; status: StatusValue },
   todayISO: string,
   statusMode: "default" | "all" | "custom",
-  statusFilter: StatusFilterValue[],
+  activeStatuses: StatusFilterValue[],
 ) {
   if (statusMode === "all") return true;
-  if (statusFilter.includes(order.status)) return true;
-  return statusFilter.includes("OVERDUE") && isOrderOverdue(order, todayISO);
+  if (activeStatuses.includes(order.status)) return true;
+  return activeStatuses.includes("OVERDUE") && isOrderOverdue(order, todayISO);
 }
 
 function moveOrderToStatus(
@@ -708,6 +709,7 @@ export default function DesktopOrdersTable({
   const router = useRouter();
   const { customStatuses, statuses } = useBusinessStatuses(businessId);
   const [openId, setOpenId] = useState<string | null>(null);
+  const [createPreviewOpen, setCreatePreviewOpen] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>(initialViewMode);
   const [periodMenuOpen, setPeriodMenuOpen] = useState(false);
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
@@ -828,6 +830,10 @@ export default function DesktopOrdersTable({
     statusMode === "all" ||
     statusValues.includes("CANCELED") ||
     (!statusTouched && statusFilter.includes("CANCELED"));
+  const duplicateVisibleInFilter =
+    statusMode === "all" ||
+    statusValues.includes("DUPLICATE") ||
+    (!statusTouched && statusFilter.includes("DUPLICATE"));
   const kanbanColumns = useMemo(
     () =>
       workflowStatuses.map((status) => ({
@@ -839,10 +845,20 @@ export default function DesktopOrdersTable({
   const visibleKanbanColumns = useMemo(
     () =>
       kanbanColumns.filter((column) => {
-        if (column.value === "CANCELED") return canceledVisibleInFilter;
+        if (column.value === "DONE") return doneVisibleInFilter || hiddenKanbanCounts.done > 0;
+        if (column.value === "CANCELED") return canceledVisibleInFilter || hiddenKanbanCounts.canceled > 0;
+        if (column.value === "DUPLICATE") return duplicateVisibleInFilter || hiddenKanbanCounts.duplicate > 0;
         return true;
       }),
-    [canceledVisibleInFilter, kanbanColumns],
+    [
+      canceledVisibleInFilter,
+      doneVisibleInFilter,
+      duplicateVisibleInFilter,
+      hiddenKanbanCounts.canceled,
+      hiddenKanbanCounts.done,
+      hiddenKanbanCounts.duplicate,
+      kanbanColumns,
+    ],
   );
 
   const toggleOrderPreview = (orderId: string) => {
@@ -1169,7 +1185,13 @@ export default function DesktopOrdersTable({
     }
 
     const nextOrder = { ...order, status: nextStatus };
-    const keepVisible = orderMatchesAppliedStatusFilter(nextOrder, todayISO, statusMode, statusFilter);
+    const appliedStatuses =
+      statusMode === "all"
+        ? allSelectableStatuses
+        : statusTouched
+          ? statusValues
+          : normalizeQuickStatuses(statusFilter, activeStatusOptions);
+    const keepVisible = orderMatchesAppliedStatusFilter(nextOrder, todayISO, statusMode, appliedStatuses);
     const previousRows = boardRows;
 
     setSavingStatusOrderId(orderId);
@@ -1793,9 +1815,31 @@ export default function DesktopOrdersTable({
             >
               {visibleKanbanColumns.map((column) => {
                 const tone = getStatusTone(column.value, customStatuses);
-                const doneHiddenByFilter =
-                  column.value === "DONE" && !doneVisibleInFilter && hiddenKanbanCounts.done > 0;
+                const hiddenTerminalCount =
+                  column.value === "DONE"
+                    ? hiddenKanbanCounts.done
+                    : column.value === "CANCELED"
+                      ? hiddenKanbanCounts.canceled
+                      : column.value === "DUPLICATE"
+                        ? hiddenKanbanCounts.duplicate
+                        : 0;
+                const hiddenByFilter =
+                  (column.value === "DONE" && !doneVisibleInFilter && hiddenKanbanCounts.done > 0) ||
+                  (column.value === "CANCELED" && !canceledVisibleInFilter && hiddenKanbanCounts.canceled > 0) ||
+                  (column.value === "DUPLICATE" && !duplicateVisibleInFilter && hiddenKanbanCounts.duplicate > 0);
                 const showInlineCreate = column.value === "NEW";
+                const revealLabel =
+                  column.value === "DONE"
+                    ? "Show done"
+                    : column.value === "CANCELED"
+                      ? "Show canceled"
+                      : column.value === "DUPLICATE"
+                        ? "Show duplicates"
+                        : `Show ${column.label.toLowerCase()}`;
+                const hiddenTitle =
+                  column.value === "DONE"
+                    ? "Done is hidden by filters"
+                    : `${column.label} is hidden by filters`;
 
                 return (
                   <div
@@ -1843,25 +1887,27 @@ export default function DesktopOrdersTable({
                     <div className="flex min-h-0 flex-1 flex-col gap-3 rounded-[20px] bg-white/50 p-1">
                       {showInlineCreate ? (
                         <DesktopKanbanCreateOrder
-                          businessId={businessId}
-                          businessSlug={businessSlug}
+                          onCreate={() => {
+                            setOpenId(null);
+                            setCreatePreviewOpen(true);
+                          }}
                         />
                       ) : null}
 
-                      {doneHiddenByFilter ? (
+                      {hiddenByFilter ? (
                         <div className="flex min-h-[160px] flex-col items-center justify-center rounded-[20px] border border-dashed border-[#dbe2ea] bg-white/70 px-4 text-center">
                           <div className="text-sm font-semibold text-[#344054]">
-                            Done is hidden by filters
+                            {hiddenTitle}
                           </div>
                           <div className="mt-1 text-sm text-[#98a2b3]">
-                            {hiddenKanbanCounts.done} {hiddenKanbanCounts.done === 1 ? "order" : "orders"} completed
+                            {hiddenTerminalCount} {hiddenTerminalCount === 1 ? "order" : "orders"} in this status
                           </div>
                           <button
                             type="button"
-                            onClick={() => revealStatusInBoard("DONE")}
+                            onClick={() => revealStatusInBoard(column.value)}
                             className="mt-3 inline-flex h-9 items-center justify-center rounded-xl border border-[#dde3ee] bg-white px-3 text-sm font-semibold text-[#344054] transition hover:border-[#cfd8e6] hover:bg-[#f8fafc]"
                           >
-                            Show done
+                            {revealLabel}
                           </button>
                         </div>
                       ) : null}
@@ -2036,7 +2082,7 @@ export default function DesktopOrdersTable({
                         );
                       })}
 
-                      {column.orders.length === 0 && !doneHiddenByFilter ? (
+                      {column.orders.length === 0 && !hiddenByFilter ? (
                         <div className="flex min-h-[160px] items-center justify-center rounded-[20px] border border-dashed border-[#dbe2ea] bg-white/70 px-4 text-center text-sm text-[#98a2b3]">
                           {dropStatusValue === column.value ? "Drop order here" : "No orders in this status"}
                         </div>
@@ -2109,7 +2155,7 @@ export default function DesktopOrdersTable({
       ) : null}
 
       <OrderPreview
-        open={Boolean(selectedOrder)}
+        open={Boolean(selectedOrder) || createPreviewOpen}
         order={selectedOrder}
         businessId={businessId}
         businessSlug={businessSlug}
@@ -2119,7 +2165,11 @@ export default function DesktopOrdersTable({
         actors={effectiveActors}
         currentUserName={currentUserName}
         supabase={supabase}
-        onClose={() => setOpenId(null)}
+        mode={createPreviewOpen ? "create" : "view"}
+        onClose={() => {
+          setOpenId(null);
+          setCreatePreviewOpen(false);
+        }}
       />
       <AlertDialog
         open={Boolean(confirmDeleteId)}
