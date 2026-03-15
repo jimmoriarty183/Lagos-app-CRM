@@ -487,6 +487,7 @@ export default function DesktopOrdersTable({
   const [periodMenuOpen, setPeriodMenuOpen] = useState(false);
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
   const [managerMenuOpen, setManagerMenuOpen] = useState(false);
+  const [perPageMenuOpen, setPerPageMenuOpen] = useState(false);
   const [searchDraft, setSearchDraft] = useState(searchQuery);
   const [rangeValue, setRangeValue] = useState<DashboardRange>(rangeFilter);
   const [customStart, setCustomStart] = useState(rangeStartDate ?? "");
@@ -524,13 +525,14 @@ export default function DesktopOrdersTable({
   const managerOptions = useMemo(
     () =>
       effectiveActors
+        .filter((actor) => !currentUserId || actor.id !== currentUserId)
         .slice()
         .sort((a, b) => a.label.localeCompare(b.label))
         .map((actor) => ({
           value: `user:${actor.id}`,
           label: actor.label,
         })),
-    [effectiveActors],
+    [currentUserId, effectiveActors],
   );
   const selectedOrder = useMemo(
     () => rows.find((order) => order.id === openId) ?? null,
@@ -800,7 +802,7 @@ export default function DesktopOrdersTable({
           </div>
 
           <div className="flex min-w-[300px] flex-1 flex-nowrap items-center gap-3 xl:flex-none">
-            <DropdownMenu open={periodMenuOpen} onOpenChange={setPeriodMenuOpen}>
+            <DropdownMenu modal={false} open={periodMenuOpen} onOpenChange={setPeriodMenuOpen}>
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
@@ -812,9 +814,11 @@ export default function DesktopOrdersTable({
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 align="start"
+                side="top"
                 sideOffset={8}
                 className="w-56 rounded-xl border-[#dde3ee] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
                 onClick={(event) => event.stopPropagation()}
+                onCloseAutoFocus={(event) => event.preventDefault()}
               >
                 <DropdownMenuRadioGroup value={rangeValue}>
                   {DESKTOP_PERIOD_OPTIONS.map((option) => (
@@ -838,7 +842,7 @@ export default function DesktopOrdersTable({
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <DropdownMenu open={statusMenuOpen} onOpenChange={setStatusMenuOpen}>
+            <DropdownMenu modal={false} open={statusMenuOpen} onOpenChange={setStatusMenuOpen}>
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
@@ -853,6 +857,7 @@ export default function DesktopOrdersTable({
                 sideOffset={8}
                 className="w-56 rounded-xl border-[#dde3ee] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
                 onClick={(event) => event.stopPropagation()}
+                onCloseAutoFocus={(event) => event.preventDefault()}
               >
                 <div className="flex items-center justify-between gap-2 px-2 pb-1 pt-1">
                   <button
@@ -911,7 +916,7 @@ export default function DesktopOrdersTable({
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <DropdownMenu open={managerMenuOpen} onOpenChange={setManagerMenuOpen}>
+            <DropdownMenu modal={false} open={managerMenuOpen} onOpenChange={setManagerMenuOpen}>
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
@@ -928,6 +933,7 @@ export default function DesktopOrdersTable({
                 sideOffset={8}
                 className="w-56 rounded-xl border-[#dde3ee] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
                 onClick={(event) => event.stopPropagation()}
+                onCloseAutoFocus={(event) => event.preventDefault()}
               >
                 <DropdownMenuRadioGroup value={managerValue}>
                   <DropdownMenuRadioItem
@@ -1006,7 +1012,11 @@ export default function DesktopOrdersTable({
             </div>
           ) : null}
 
-          <div className="ml-auto flex w-[214px] shrink-0 items-center justify-end gap-3">
+          <div
+            className={`ml-auto flex shrink-0 items-center justify-end gap-3 ${
+              hasActiveFilters ? "w-[214px]" : "w-[112px]"
+            }`}
+          >
             <a
               href={hasActiveFilters ? clearHref : "#"}
               aria-hidden={!hasActiveFilters}
@@ -1044,23 +1054,40 @@ export default function DesktopOrdersTable({
           {(currentPage - 1) * perPage + rows.length} of {resultCount}
         </div>
 
-        <label className="flex items-center gap-2 text-xs font-medium text-[#667085]">
-          <span>Per page</span>
-          <select
-            value={String(perPage)}
-            onChange={(event) => {
-              navigateWithFallback(paginationHref(1, Number(event.currentTarget.value)));
-            }}
-            className="h-9 rounded-xl border border-[#dde3ee] bg-white px-3 text-sm font-medium text-[#344054] outline-none transition focus:border-[#111827] focus:ring-2 focus:ring-[#111827]/10"
-          >
-            {PAGE_SIZE_OPTIONS.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
+          <div className="flex items-center gap-2 text-xs font-medium text-[#667085]">
+            <span>Per page</span>
+            <DropdownMenu modal={false} open={perPageMenuOpen} onOpenChange={setPerPageMenuOpen}>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="inline-flex h-9 min-w-[74px] items-center justify-between rounded-xl border border-[#dde3ee] bg-white px-3 text-sm font-medium text-[#344054] outline-none transition hover:border-[#cfd8e6] focus:border-[#111827] focus:ring-2 focus:ring-[#111827]/10"
+                >
+                  <span>{perPage}</span>
+                  <ChevronDown className="ml-3 h-4 w-4 shrink-0 text-[#98a2b3]" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                sideOffset={8}
+                className="z-[70] w-24 rounded-xl border-[#dde3ee] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
+                onCloseAutoFocus={(event) => event.preventDefault()}
+              >
+                <DropdownMenuRadioGroup value={String(perPage)}>
+                  {PAGE_SIZE_OPTIONS.map((option) => (
+                    <DropdownMenuRadioItem
+                      key={option}
+                      value={String(option)}
+                      className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#344054] data-[state=checked]:bg-[#eef4ff] data-[state=checked]:font-semibold data-[state=checked]:text-[#2459d3]"
+                      onSelect={() => navigateWithFallback(paginationHref(1, option))}
+                    >
+                      {option}
+                    </DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
 
       <div className="overflow-x-auto">
         <table className="min-w-[1040px] w-full border-collapse">

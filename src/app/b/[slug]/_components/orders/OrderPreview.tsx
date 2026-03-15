@@ -5,9 +5,10 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 import {
   CalendarClock,
+  Check,
+  ChevronDown,
   MessageSquareText,
   Tag,
-  UserRound,
   X,
 } from "lucide-react";
 
@@ -23,6 +24,12 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -31,6 +38,7 @@ import {
 } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { statusTone } from "@/app/b/[slug]/statusTone";
 
 type Status =
   | "NEW"
@@ -123,6 +131,10 @@ const STATUS_OPTIONS: Array<{ value: Status; label: string }> = [
   { value: "CANCELED", label: "Canceled" },
   { value: "DUPLICATE", label: "Duplicate" },
 ];
+
+function statusLabel(status: Status) {
+  return STATUS_OPTIONS.find((option) => option.value === status)?.label ?? status;
+}
 
 function getActivityStorageKey(businessId: string, orderId: string) {
   return `order-activity:${businessId}:${orderId}`;
@@ -254,6 +266,21 @@ function formatAmountValue(value: number | string | null) {
   return `$${fmtAmount(amount)}`;
 }
 
+function ActorAvatar({ label }: { label: string }) {
+  const initials = label
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("") || "?";
+
+  return (
+    <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#111827] text-[10px] font-semibold text-white">
+      {initials}
+    </span>
+  );
+}
+
 function DrawerStatusSelect({
   orderId,
   businessId,
@@ -262,6 +289,7 @@ function DrawerStatusSelect({
   canManage,
   currentUserName,
   userRole,
+  onCommitted,
 }: {
   orderId: string;
   businessId: string;
@@ -270,55 +298,106 @@ function DrawerStatusSelect({
   canManage: boolean;
   currentUserName: string;
   userRole: "OWNER" | "MANAGER" | "GUEST";
+  onCommitted?: (nextStatus: Status) => void;
 }) {
   const [localStatus, setLocalStatus] = React.useState<Status>(value);
+  const [open, setOpen] = React.useState(false);
   const [isPending, startTransition] = React.useTransition();
 
   React.useEffect(() => {
     setLocalStatus(value);
   }, [value]);
 
+  const tone = statusTone(localStatus);
+
   return (
-    <Select
-      value={localStatus}
-      disabled={!canManage || isPending}
-      onValueChange={(nextStatus) => {
-        const next = nextStatus as Status;
-        if (next === localStatus) return;
-        const prevStatus = localStatus;
-        setLocalStatus(next);
-        startTransition(async () => {
-          try {
-            await setOrderStatus({ orderId, businessSlug, status: next });
-            appendLocalActivityEvent(businessId, orderId, {
-              id: makeLocalActivityEventId("status"),
-              type: "status_changed",
-              actorName: currentUserName || "Manager",
-              actorRole: userRole,
-              description: `changed status from "${STATUS_OPTIONS.find((item) => item.value === prevStatus)?.label ?? prevStatus}" to "${STATUS_OPTIONS.find((item) => item.value === next)?.label ?? next}"`,
-              ts: new Date().toISOString(),
-            });
-          } catch (error) {
-            setLocalStatus(prevStatus);
-            window.alert(error instanceof Error ? error.message : "Failed to update status.");
-          }
-        });
-      }}
-    >
-      <SelectTrigger
-        size="sm"
-        className="h-9 min-w-[116px] rounded-full border-[#dbe2ea] bg-[#f8fafc] px-3 text-sm font-semibold text-[#111827] shadow-none focus-visible:ring-2 focus-visible:ring-[#111827]/10"
+    <DropdownMenu modal={false} open={open} onOpenChange={setOpen}>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          disabled={!canManage || isPending}
+          className="inline-flex h-[25px] min-w-[116px] items-center justify-between gap-2 rounded-full px-[11px] text-left text-[12px] font-medium leading-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111827]/10 disabled:cursor-default disabled:opacity-60"
+          style={{
+            background: tone.background,
+            color: tone.color,
+          }}
+        >
+          <span className="inline-flex items-center gap-1.5">
+            <span
+              aria-hidden="true"
+              className="h-[6px] w-[6px] rounded-full"
+              style={{ background: tone.dot }}
+            />
+            <span>{statusLabel(localStatus)}</span>
+          </span>
+          {canManage ? <ChevronDown className="h-3.5 w-3.5 shrink-0 opacity-60" /> : null}
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="start"
+        sideOffset={8}
+        className="z-[120] w-56 rounded-xl border-[#dde3ee] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
+        onCloseAutoFocus={(event) => event.preventDefault()}
       >
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent className="z-[120] rounded-2xl border-[#dde3ee] bg-white shadow-[0_16px_40px_rgba(15,23,42,0.18)]">
-        {STATUS_OPTIONS.map((option) => (
-          <SelectItem key={option.value} value={option.value} className="rounded-xl py-2 text-sm font-medium">
-            {option.label}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+        {STATUS_OPTIONS.map((option) => {
+          const optionTone = statusTone(option.value);
+          const selected = option.value === localStatus;
+
+          return (
+            <DropdownMenuItem
+              key={option.value}
+              className="rounded-lg px-3 py-2 text-sm font-medium text-[#182230] focus:bg-[#f8fafc] focus:text-[#182230]"
+              onSelect={(event) => {
+                event.preventDefault();
+                if (option.value === localStatus) {
+                  setOpen(false);
+                  return;
+                }
+
+                const next = option.value;
+                const prevStatus = localStatus;
+                setOpen(false);
+                setLocalStatus(next);
+
+                startTransition(async () => {
+                  try {
+                    await setOrderStatus({ orderId, businessSlug, status: next });
+                    onCommitted?.(next);
+                    appendLocalActivityEvent(businessId, orderId, {
+                      id: makeLocalActivityEventId("status"),
+                      type: "status_changed",
+                      actorName: currentUserName || "Manager",
+                      actorRole: userRole,
+                      description: `changed status from "${statusLabel(prevStatus)}" to "${statusLabel(next)}"`,
+                      ts: new Date().toISOString(),
+                    });
+                  } catch (error) {
+                    setLocalStatus(prevStatus);
+                    window.alert(error instanceof Error ? error.message : "Failed to update status.");
+                  }
+                });
+              }}
+              style={{
+                background: selected ? optionTone.selectedBackground : undefined,
+                color: selected ? optionTone.color : undefined,
+              }}
+            >
+              <div className="flex w-full items-center justify-between gap-3">
+                <span className="inline-flex items-center gap-2">
+                  <span
+                    aria-hidden="true"
+                    className="h-[6px] w-[6px] rounded-full"
+                    style={{ background: optionTone.dot }}
+                  />
+                  <span>{option.label}</span>
+                </span>
+                {selected ? <Check className="h-4 w-4 shrink-0 text-[#667085]" /> : null}
+              </div>
+            </DropdownMenuItem>
+          );
+        })}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
@@ -728,9 +807,10 @@ export function OrderPreview({
   const [labels, setLabels] = React.useState<string[]>([]);
   const [isEditingOverview, setIsEditingOverview] = React.useState(false);
   const [isSavingOverview, startSavingOverview] = React.useTransition();
+  const [previewOrder, setPreviewOrder] = React.useState<OrderRow | null>(order);
   const labelStorageKey = React.useMemo(
-    () => (order ? `order-labels:${businessId}:${order.id}` : null),
-    [businessId, order],
+    () => (previewOrder ? `order-labels:${businessId}:${previewOrder.id}` : null),
+    [businessId, previewOrder],
   );
   const [draft, setDraft] = React.useState({
     firstName: "",
@@ -748,6 +828,10 @@ export function OrderPreview({
       setIsEditingOverview(false);
     }
   }, [open, order?.id]);
+
+  React.useEffect(() => {
+    setPreviewOrder(order);
+  }, [order]);
 
   React.useEffect(() => {
     if (!labelStorageKey || typeof window === "undefined") return;
@@ -770,10 +854,10 @@ export function OrderPreview({
   }, [labelStorageKey, labels]);
 
   const client = normalizeOrderClient({
-    client_name: order?.client_name,
-    first_name: order?.client_first_name,
-    last_name: order?.client_last_name,
-    full_name: order?.client_full_name,
+    client_name: previewOrder?.client_name,
+    first_name: previewOrder?.client_first_name,
+    last_name: previewOrder?.client_last_name,
+    full_name: previewOrder?.client_full_name,
   });
   const displayName = client.fullName;
   const managerOptions = React.useMemo(
@@ -782,24 +866,25 @@ export function OrderPreview({
   );
 
   React.useEffect(() => {
-    if (!order) return;
+    if (!previewOrder) return;
     setDraft({
-      firstName: order.client_first_name?.trim() || client.firstName || "",
-      lastName: order.client_last_name?.trim() || client.lastName || "",
-      phone: order.client_phone?.trim() || "",
-      managerId: order.manager_id || "",
-      amount: String(order.amount ?? ""),
-      dueDate: order.due_date ? String(order.due_date).slice(0, 10) : "",
-      description: order.description?.trim() || "",
+      firstName: previewOrder.client_first_name?.trim() || client.firstName || "",
+      lastName: previewOrder.client_last_name?.trim() || client.lastName || "",
+      phone: previewOrder.client_phone?.trim() || "",
+      managerId: previewOrder.manager_id || "",
+      amount: String(previewOrder.amount ?? ""),
+      dueDate: previewOrder.due_date ? String(previewOrder.due_date).slice(0, 10) : "",
+      description: previewOrder.description?.trim() || "",
     });
-  }, [client.firstName, client.lastName, order]);
-  const dueISO = order?.due_date ? String(order.due_date).slice(0, 10) : null;
+  }, [client.firstName, client.lastName, previewOrder]);
+  const currentOrder = previewOrder;
+  const dueISO = currentOrder?.due_date ? String(currentOrder.due_date).slice(0, 10) : null;
   const todayISO = new Date().toISOString().slice(0, 10);
   const isOverdue =
-    !!order &&
+    !!currentOrder &&
     !!dueISO &&
     dueISO < todayISO &&
-    (order.status === "NEW" || order.status === "IN_PROGRESS");
+    (currentOrder.status === "NEW" || currentOrder.status === "IN_PROGRESS");
 
   return (
     <Sheet open={open} onOpenChange={(next) => (!next ? onClose() : undefined)}>
@@ -808,13 +893,13 @@ export function OrderPreview({
         className="w-full border-l border-[#e4e7ec] bg-[#f8fafc] p-0 sm:max-w-[680px]"
       >
         <SheetTitle className="sr-only">
-          {order ? `Order #${order.order_number ?? order.id} details` : "Order details"}
+          {currentOrder ? `Order #${currentOrder.order_number ?? currentOrder.id} details` : "Order details"}
         </SheetTitle>
         <SheetDescription className="sr-only">
           CRM-style order detail drawer with overview, checklist, comments, activity, and notes.
         </SheetDescription>
 
-        {order ? (
+        {currentOrder ? (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="flex h-full min-h-0 flex-col">
             <div className="sticky top-0 z-20 border-b border-[#e4e7ec] bg-white/95 backdrop-blur">
               <div className="px-5 py-5 sm:px-6">
@@ -822,19 +907,19 @@ export function OrderPreview({
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-3">
                       <div className="text-lg font-semibold text-[#111827]">
-                        Order #{order.order_number ?? order.id}
+                        Order #{currentOrder.order_number ?? currentOrder.id}
                       </div>
                     </div>
 
                     <div className="mt-3 text-lg font-semibold text-[#111827]">{displayName}</div>
-                    <div className="mt-1 text-sm text-[#667085]">{order.client_phone?.trim() || "No phone number"}</div>
+                    <div className="mt-1 text-sm text-[#667085]">{currentOrder.client_phone?.trim() || "No phone number"}</div>
 
                     <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-[#475467]">
-                      <span>${fmtAmount(order.amount)}</span>
-                      <span className={isOverdue ? "font-semibold text-[#d92d20]" : ""}>Due {formatDate(order.due_date)}</span>
+                      <span>${fmtAmount(currentOrder.amount)}</span>
+                      <span className={isOverdue ? "font-semibold text-[#d92d20]" : ""}>Due {formatDate(currentOrder.due_date)}</span>
                       <span className="inline-flex items-center gap-1.5">
-                        <UserRound className="h-4 w-4 text-[#98a2b3]" />
-                        Manager: {order.manager_name?.trim() || "Unassigned"}
+                        <ActorAvatar label={currentOrder.manager_name?.trim() || "Unassigned"} />
+                        Manager: {currentOrder.manager_name?.trim() || "Unassigned"}
                       </span>
                     </div>
 
@@ -908,13 +993,13 @@ export function OrderPreview({
                                   onClick={() => {
                                     setIsEditingOverview(false);
                                     setDraft({
-                                      firstName: order.client_first_name?.trim() || client.firstName || "",
-                                      lastName: order.client_last_name?.trim() || client.lastName || "",
-                                      phone: order.client_phone?.trim() || "",
-                                      managerId: order.manager_id || "",
-                                      amount: String(order.amount ?? ""),
-                                      dueDate: order.due_date ? String(order.due_date).slice(0, 10) : "",
-                                      description: order.description?.trim() || "",
+                                      firstName: currentOrder.client_first_name?.trim() || client.firstName || "",
+                                      lastName: currentOrder.client_last_name?.trim() || client.lastName || "",
+                                      phone: currentOrder.client_phone?.trim() || "",
+                                      managerId: currentOrder.manager_id || "",
+                                      amount: String(currentOrder.amount ?? ""),
+                                      dueDate: currentOrder.due_date ? String(currentOrder.due_date).slice(0, 10) : "",
+                                      description: currentOrder.description?.trim() || "",
                                     });
                                   }}
                                 >
@@ -937,55 +1022,55 @@ export function OrderPreview({
                                     const nextAmount = Number(draft.amount || 0);
                                     const nextDueDate = draft.dueDate || null;
                                     const nextManagerId = draft.managerId || null;
-                                    const managerChanged = (order.manager_id || null) !== nextManagerId;
+                                    const managerChanged = (currentOrder.manager_id || null) !== nextManagerId;
                                     const overviewChanges: Array<{ type: LocalActivityEvent["type"]; description: string }> = [];
 
-                                    if ((order.client_first_name?.trim() || client.firstName || "") !== nextFirstName) {
+                                    if ((currentOrder.client_first_name?.trim() || client.firstName || "") !== nextFirstName) {
                                       overviewChanges.push({
                                         type: "order_updated",
-                                        description: `changed first name from "${order.client_first_name?.trim() || client.firstName || "Unknown"}" to "${nextFirstName}"`,
+                                        description: `changed first name from "${currentOrder.client_first_name?.trim() || client.firstName || "Unknown"}" to "${nextFirstName}"`,
                                       });
                                     }
 
-                                    if ((order.client_last_name?.trim() || client.lastName || "") !== nextLastName) {
+                                    if ((currentOrder.client_last_name?.trim() || client.lastName || "") !== nextLastName) {
                                       overviewChanges.push({
                                         type: "order_updated",
-                                        description: `changed last name from "${order.client_last_name?.trim() || client.lastName || "Not provided"}" to "${nextLastName || "Not provided"}"`,
+                                        description: `changed last name from "${currentOrder.client_last_name?.trim() || client.lastName || "Not provided"}" to "${nextLastName || "Not provided"}"`,
                                       });
                                     }
 
-                                    if ((order.client_phone?.trim() || null) !== nextPhone) {
+                                    if ((currentOrder.client_phone?.trim() || null) !== nextPhone) {
                                       overviewChanges.push({
                                         type: "order_updated",
-                                        description: `changed phone from "${formatPhoneValue(order.client_phone || null)}" to "${formatPhoneValue(nextPhone)}"`,
+                                        description: `changed phone from "${formatPhoneValue(currentOrder.client_phone || null)}" to "${formatPhoneValue(nextPhone)}"`,
                                       });
                                     }
 
-                                    if (String(order.amount ?? 0) !== String(nextAmount)) {
+                                    if (String(currentOrder.amount ?? 0) !== String(nextAmount)) {
                                       overviewChanges.push({
                                         type: "order_updated",
-                                        description: `changed amount from "${formatAmountValue(order.amount)}" to "${formatAmountValue(nextAmount)}"`,
+                                        description: `changed amount from "${formatAmountValue(currentOrder.amount)}" to "${formatAmountValue(nextAmount)}"`,
                                       });
                                     }
 
-                                    if ((order.due_date ? String(order.due_date).slice(0, 10) : null) !== nextDueDate) {
+                                    if ((currentOrder.due_date ? String(currentOrder.due_date).slice(0, 10) : null) !== nextDueDate) {
                                       overviewChanges.push({
                                         type: "order_updated",
-                                        description: `changed due date from "${formatDate(order.due_date)}" to "${formatDate(nextDueDate)}"`,
+                                        description: `changed due date from "${formatDate(currentOrder.due_date)}" to "${formatDate(nextDueDate)}"`,
                                       });
                                     }
 
-                                    if ((order.description?.trim() || null) !== nextDescription) {
+                                    if ((currentOrder.description?.trim() || null) !== nextDescription) {
                                       overviewChanges.push({
                                         type: "order_updated",
-                                        description: `changed description from ${formatDescriptionValue(order.description)} to ${formatDescriptionValue(nextDescription)}`,
+                                        description: `changed description from ${formatDescriptionValue(currentOrder.description)} to ${formatDescriptionValue(nextDescription)}`,
                                       });
                                     }
 
                                     startSavingOverview(async () => {
                                       try {
                                         await updateOrder({
-                                          orderId: order.id,
+                                          orderId: currentOrder.id,
                                           businessSlug,
                                           clientName: [nextFirstName, nextLastName].filter(Boolean).join(" "),
                                           firstName: nextFirstName,
@@ -998,24 +1083,24 @@ export function OrderPreview({
 
                                         if (managerChanged) {
                                           await setOrderManager({
-                                            orderId: order.id,
+                                            orderId: currentOrder.id,
                                             businessSlug,
                                             managerId: nextManagerId,
                                           });
-                                          appendLocalActivityEvent(businessId, order.id, {
+                                          appendLocalActivityEvent(businessId, currentOrder.id, {
                                             id: makeLocalActivityEventId("manager"),
                                             type: "manager_changed",
                                             actorName: currentUserName || "Manager",
                                             actorRole: userRole,
                                             description: nextManagerId
-                                              ? `changed manager from "${order.manager_name?.trim() || "Unassigned"}" to "${managerOptions.find((actor) => actor.id === nextManagerId)?.label || "Manager"}"`
-                                              : `changed manager from "${order.manager_name?.trim() || "Unassigned"}" to "Unassigned"`,
+                                              ? `changed manager from "${currentOrder.manager_name?.trim() || "Unassigned"}" to "${managerOptions.find((actor) => actor.id === nextManagerId)?.label || "Manager"}"`
+                                              : `changed manager from "${currentOrder.manager_name?.trim() || "Unassigned"}" to "Unassigned"`,
                                             ts: new Date().toISOString(),
                                           });
                                         }
 
                                         for (const change of overviewChanges) {
-                                          appendLocalActivityEvent(businessId, order.id, {
+                                          appendLocalActivityEvent(businessId, currentOrder.id, {
                                             id: makeLocalActivityEventId("order-updated"),
                                             type: change.type,
                                             actorName: currentUserName || "Manager",
@@ -1025,6 +1110,25 @@ export function OrderPreview({
                                           });
                                         }
 
+                                        setPreviewOrder((prev) =>
+                                          prev
+                                            ? {
+                                                ...prev,
+                                                client_name: [nextFirstName, nextLastName].filter(Boolean).join(" ") || prev.client_name,
+                                                client_first_name: nextFirstName,
+                                                client_last_name: nextLastName,
+                                                client_full_name: [nextFirstName, nextLastName].filter(Boolean).join(" "),
+                                                client_phone: nextPhone,
+                                                manager_id: nextManagerId,
+                                                manager_name: nextManagerId
+                                                  ? managerOptions.find((actor) => actor.id === nextManagerId)?.label || prev.manager_name
+                                                  : null,
+                                                amount: nextAmount,
+                                                due_date: nextDueDate,
+                                                description: nextDescription,
+                                              }
+                                            : prev,
+                                        );
                                         setIsEditingOverview(false);
                                         router.refresh();
                                       } catch (error) {
@@ -1066,7 +1170,7 @@ export function OrderPreview({
                                 className="h-10 w-full rounded-xl border border-[#dde3ee] bg-white px-3 text-sm outline-none transition focus:border-[#111827]"
                               />
                             ) : (
-                              order.client_first_name?.trim() || client.firstName || "Unknown"
+                              currentOrder.client_first_name?.trim() || client.firstName || "Unknown"
                             )
                           }
                         />
@@ -1083,7 +1187,7 @@ export function OrderPreview({
                                 className="h-10 w-full rounded-xl border border-[#dde3ee] bg-white px-3 text-sm outline-none transition focus:border-[#111827]"
                               />
                             ) : (
-                              order.client_last_name?.trim() || client.lastName || "Not provided"
+                              currentOrder.client_last_name?.trim() || client.lastName || "Not provided"
                             )
                           }
                         />
@@ -1100,7 +1204,7 @@ export function OrderPreview({
                                 className="h-10 w-full rounded-xl border border-[#dde3ee] bg-white px-3 text-sm outline-none transition focus:border-[#111827]"
                               />
                             ) : (
-                              order.client_phone?.trim() || "No phone number"
+                              currentOrder.client_phone?.trim() || "No phone number"
                             )
                           }
                         />
@@ -1130,11 +1234,14 @@ export function OrderPreview({
                                 </SelectContent>
                               </Select>
                             ) : (
-                              order.manager_name?.trim() || "Unassigned"
+                              <span className="inline-flex items-center gap-2">
+                                <ActorAvatar label={currentOrder.manager_name?.trim() || "Unassigned"} />
+                                <span>{currentOrder.manager_name?.trim() || "Unassigned"}</span>
+                              </span>
                             )
                           }
                         />
-                        <MetaItem label="Created" value={formatDateTime(order.created_at)} />
+                        <MetaItem label="Created" value={formatDateTime(currentOrder.created_at)} />
                         <MetaItem
                           label="Due date"
                           value={
@@ -1149,7 +1256,7 @@ export function OrderPreview({
                                 className="h-10 w-full rounded-xl border border-[#dde3ee] bg-white px-3 text-sm outline-none transition focus:border-[#111827]"
                               />
                             ) : (
-                              formatDate(order.due_date)
+                              formatDate(currentOrder.due_date)
                             )
                           }
                         />
@@ -1167,7 +1274,7 @@ export function OrderPreview({
                                 className="h-10 w-full rounded-xl border border-[#dde3ee] bg-white px-3 text-sm outline-none transition focus:border-[#111827]"
                               />
                             ) : (
-                              `$${fmtAmount(order.amount)}`
+                              `$${fmtAmount(currentOrder.amount)}`
                             )
                           }
                         />
@@ -1175,13 +1282,23 @@ export function OrderPreview({
                           label="Status"
                           value={
                             <DrawerStatusSelect
-                              orderId={order.id}
+                              orderId={currentOrder.id}
                               businessSlug={businessSlug}
-                              value={order.status}
+                              value={currentOrder.status}
                               canManage={canManage}
                               businessId={businessId}
                               currentUserName={currentUserName}
                               userRole={userRole}
+                              onCommitted={(nextStatus) =>
+                                setPreviewOrder((prev) =>
+                                  prev
+                                    ? {
+                                        ...prev,
+                                        status: nextStatus,
+                                      }
+                                    : prev,
+                                )
+                              }
                             />
                           }
                         />
@@ -1200,14 +1317,14 @@ export function OrderPreview({
                           />
                         ) : (
                           <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-[#475467]">
-                            {order.description?.trim() || "No description provided yet."}
+                            {currentOrder.description?.trim() || "No description provided yet."}
                           </p>
                         )}
                       </div>
 
                       <LabelsSection
                         businessId={businessId}
-                        orderId={order.id}
+                        orderId={currentOrder.id}
                         currentUserName={currentUserName}
                         userRole={userRole}
                         value={labels}
@@ -1217,12 +1334,12 @@ export function OrderPreview({
                   </TabsContent>
 
                   <TabsContent value="checklist" className="mt-0">
-                    <OrderChecklist order={{ id: order.id, business_id: businessId }} supabase={supabase} />
+                    <OrderChecklist order={{ id: currentOrder.id, business_id: businessId }} supabase={supabase} />
                   </TabsContent>
 
                   <TabsContent value="comments" className="mt-0">
                     <OrderComments
-                      order={{ id: order.id, business_id: businessId }}
+                      order={{ id: currentOrder.id, business_id: businessId }}
                       supabase={supabase}
                       author={{ phone: phoneRaw, role: userRole }}
                     />
@@ -1230,7 +1347,7 @@ export function OrderPreview({
 
                   <TabsContent value="activity" className="mt-0">
                     <ActivityTab
-                      order={order}
+                      order={currentOrder}
                       businessId={businessId}
                       supabase={supabase}
                       phoneRaw={phoneRaw}

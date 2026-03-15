@@ -31,6 +31,7 @@ type TeamActor = {
 };
 
 type Props = {
+  businessId: string;
   phoneRaw: string;
   q: string;
   statuses: StatusFilterValue[];
@@ -40,6 +41,7 @@ type Props = {
   endDate: string | null;
   actor: string;
   actors: TeamActor[];
+  currentUserId: string | null;
   hasActiveFilters: boolean;
   activeFiltersCount: number;
   clearHref: string;
@@ -170,6 +172,7 @@ function RailLink({
 }
 
 export default function DesktopLeftRail({
+  businessId,
   phoneRaw,
   q,
   statuses,
@@ -179,6 +182,7 @@ export default function DesktopLeftRail({
   endDate,
   actor,
   actors,
+  currentUserId,
   hasActiveFilters,
   activeFiltersCount,
   clearHref,
@@ -287,6 +291,7 @@ export default function DesktopLeftRail({
               ].join(" ")}
             >
               <DesktopSidebarFilters
+                businessId={businessId}
                 phoneRaw={phoneRaw}
                 q={q}
                 statuses={statuses}
@@ -295,6 +300,7 @@ export default function DesktopLeftRail({
                 startDate={startDate}
                 endDate={endDate}
                 actor={actor}
+                currentUserId={currentUserId}
                 actors={actors}
                 hasActiveFilters={hasActiveFilters}
                 clearHref={clearHref}

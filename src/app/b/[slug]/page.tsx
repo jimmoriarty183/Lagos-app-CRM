@@ -876,6 +876,7 @@ export default async function Page({ params, searchParams }: PageProps) {
         <div className="hidden items-start lg:grid lg:grid-cols-[auto_minmax(0,1fr)] lg:gap-5">
           <DesktopLeftRail
             key={`desktop-rail-${filters.range}-${filters.startDate ?? ""}-${filters.endDate ?? ""}`}
+            businessId={String(currentBusiness.id)}
             phoneRaw={phoneRaw}
             q={filters.q}
             statuses={filters.statuses}
@@ -885,6 +886,7 @@ export default async function Page({ params, searchParams }: PageProps) {
             endDate={filters.endDate}
             actor={filters.actor}
             actors={teamActors}
+            currentUserId={currentUserId}
             hasActiveFilters={hasActiveFilters}
             activeFiltersCount={activeFiltersCount}
             clearHref={clearHref}
