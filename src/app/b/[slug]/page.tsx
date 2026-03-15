@@ -75,10 +75,6 @@ type OrderSort =
   | "default"
   | "newest"
   | "oldest"
-  | "clientAsc"
-  | "clientDesc"
-  | "managerAsc"
-  | "managerDesc"
   | "dueSoonest"
   | "dueLatest"
   | "statusAsc"
@@ -303,10 +299,6 @@ const ORDER_SORT_OPTIONS: readonly OrderSort[] = [
   "default",
   "newest",
   "oldest",
-  "clientAsc",
-  "clientDesc",
-  "managerAsc",
-  "managerDesc",
   "dueSoonest",
   "dueLatest",
   "statusAsc",
@@ -831,28 +823,12 @@ export default async function Page({ params, searchParams }: PageProps) {
     const dueB = b.due_date ? new Date(String(b.due_date)).getTime() : null;
     const amountA = Number(a.amount ?? 0);
     const amountB = Number(b.amount ?? 0);
-    const clientA = getClientSearchBlob(a).toLowerCase();
-    const clientB = getClientSearchBlob(b).toLowerCase();
-    const managerA = String(
-      actorNameById.get(String(a.manager_id ?? a.created_by ?? "")) ?? "",
-    ).toLowerCase();
-    const managerB = String(
-      actorNameById.get(String(b.manager_id ?? b.created_by ?? "")) ?? "",
-    ).toLowerCase();
     const statusA = getStatusSearchLabel(a.status).toLowerCase();
     const statusB = getStatusSearchLabel(b.status).toLowerCase();
 
     switch (sort) {
       case "oldest":
         return createdA - createdB;
-      case "clientAsc":
-        return clientA.localeCompare(clientB) || createdB - createdA;
-      case "clientDesc":
-        return clientB.localeCompare(clientA) || createdB - createdA;
-      case "managerAsc":
-        return managerA.localeCompare(managerB) || createdB - createdA;
-      case "managerDesc":
-        return managerB.localeCompare(managerA) || createdB - createdA;
       case "dueSoonest":
         if (dueA === null && dueB === null) return createdB - createdA;
         if (dueA === null) return 1;

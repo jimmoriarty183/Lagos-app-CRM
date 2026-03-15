@@ -62,10 +62,6 @@ type OrderSort =
   | "default"
   | "newest"
   | "oldest"
-  | "clientAsc"
-  | "clientDesc"
-  | "managerAsc"
-  | "managerDesc"
   | "dueSoonest"
   | "dueLatest"
   | "statusAsc"
@@ -175,10 +171,6 @@ const SORT_OPTIONS: Array<{ value: OrderSort; label: string }> = [
   { value: "default", label: "Default order" },
   { value: "newest", label: "Newest first" },
   { value: "oldest", label: "Oldest first" },
-  { value: "clientAsc", label: "Client: A to Z" },
-  { value: "clientDesc", label: "Client: Z to A" },
-  { value: "managerAsc", label: "Manager: A to Z" },
-  { value: "managerDesc", label: "Manager: Z to A" },
   { value: "dueSoonest", label: "Due soonest" },
   { value: "dueLatest", label: "Due latest" },
   { value: "statusAsc", label: "Status: A to Z" },

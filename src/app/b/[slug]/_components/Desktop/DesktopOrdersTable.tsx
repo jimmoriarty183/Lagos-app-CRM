@@ -65,10 +65,6 @@ type OrderSort =
   | "default"
   | "newest"
   | "oldest"
-  | "clientAsc"
-  | "clientDesc"
-  | "managerAsc"
-  | "managerDesc"
   | "dueSoonest"
   | "dueLatest"
   | "statusAsc"
@@ -212,7 +208,7 @@ const INACTIVE_STATUS_OPTIONS: readonly StatusFilterValue[] = [
   "CANCELED",
   "DUPLICATE",
 ] as const;
-type SortColumn = "order" | "client" | "manager" | "amount" | "due" | "status";
+type SortColumn = "order" | "amount" | "due" | "status";
 
 function normalizeQuickStatuses(statuses: StatusFilterValue[]) {
   const normalized = statuses.filter((status): status is StatusFilterValue =>
@@ -227,10 +223,6 @@ function getDesktopSortState(sort: OrderSort, column: SortColumn): "asc" | "desc
   switch (column) {
     case "order":
       return sort === "newest" ? "desc" : sort === "oldest" ? "asc" : null;
-    case "client":
-      return sort === "clientAsc" ? "asc" : sort === "clientDesc" ? "desc" : null;
-    case "manager":
-      return sort === "managerAsc" ? "asc" : sort === "managerDesc" ? "desc" : null;
     case "amount":
       return sort === "amountLow" ? "asc" : sort === "amountHigh" ? "desc" : null;
     case "due":
@@ -247,10 +239,6 @@ function getNextDesktopSort(sort: OrderSort, column: SortColumn): OrderSort {
   switch (column) {
     case "order":
       return current === null ? "newest" : current === "desc" ? "oldest" : "default";
-    case "client":
-      return current === null ? "clientAsc" : current === "asc" ? "clientDesc" : "default";
-    case "manager":
-      return current === null ? "managerAsc" : current === "asc" ? "managerDesc" : "default";
     case "amount":
       return current === null ? "amountHigh" : current === "desc" ? "amountLow" : "default";
     case "due":
@@ -318,6 +306,8 @@ function ActorAvatar({ label }: { label: string }) {
   );
 }
 
+// Kept for potential fallback header styling variants.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function SortableHeader({
   label,
   column,
@@ -350,6 +340,8 @@ function SortableHeader({
   );
 }
 
+// Kept for potential fallback header styling variants.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function TableSortHeader({
   label,
   column,
@@ -1338,11 +1330,11 @@ export default function DesktopOrdersTable({
               <th className="px-5 py-2.5">
                 <ActiveTableSortHeader label="Order" column="order" sortValue={sortValue} onClick={handleSortChange} />
               </th>
-              <th className="px-5 py-2.5">
-                <ActiveTableSortHeader label="Client" column="client" sortValue={sortValue} onClick={handleSortChange} />
+              <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
+                Client
               </th>
-              <th className="px-5 py-2.5">
-                <ActiveTableSortHeader label="Manager" column="manager" sortValue={sortValue} onClick={handleSortChange} />
+              <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
+                Manager
               </th>
               <th className="px-5 py-2.5 text-right">
                 <ActiveTableSortHeader label="Amount" column="amount" sortValue={sortValue} onClick={handleSortChange} align="right" />
