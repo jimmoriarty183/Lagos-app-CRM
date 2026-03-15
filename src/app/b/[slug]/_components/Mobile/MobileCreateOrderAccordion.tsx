@@ -2,8 +2,7 @@ import { Plus } from "lucide-react";
 
 import MobileAccordion from "./MobileAccordion";
 import Button from "../../Button";
-import { createOrder } from "../../actions";
-import { buildClientFullName } from "@/lib/order-client";
+import { createOrderFromForm } from "../../actions";
 
 type Props = {
   businessId: string;
@@ -14,6 +13,7 @@ export default function MobileCreateOrderAccordion({
   businessId,
   businessSlug,
 }: Props) {
+  const createOrderAction = createOrderFromForm.bind(null, businessId, businessSlug);
   const inputCls =
     "w-full max-w-full min-w-0 h-11 rounded-xl border border-gray-200 px-3 outline-none " +
     "focus:ring-2 focus:ring-gray-900 focus:border-gray-900 bg-white";
@@ -32,38 +32,7 @@ export default function MobileCreateOrderAccordion({
         defaultOpen={false}
       >
         <form
-          action={async (fd) => {
-            "use server";
-
-            const firstName = String(fd.get("first_name") || "").trim();
-            const lastName = String(fd.get("last_name") || "").trim();
-            const clientName = buildClientFullName(firstName, lastName);
-            const clientPhoneRaw = String(fd.get("client_phone") || "").trim();
-            const clientPhone = clientPhoneRaw.replace(/\s+/g, " ").trim();
-
-            const amountRaw = String(fd.get("amount") || "").trim();
-            const dueDate = String(fd.get("due_date") || "").trim();
-            const description = String(fd.get("description") || "").trim();
-            const amount = Number(amountRaw);
-
-            if (!firstName) throw new Error("First name is required");
-            if (!Number.isFinite(amount) || amount <= 0) {
-              throw new Error("Amount must be > 0");
-            }
-
-            await createOrder({
-              businessId,
-              businessSlug,
-              clientName,
-              firstName,
-              lastName,
-              clientPhone: clientPhone || undefined,
-              amount,
-              dueDate: dueDate || undefined,
-              description: description || undefined,
-              status: "NEW",
-            });
-          }}
+          action={createOrderAction}
           className="mt-1 grid gap-3"
           style={{ overflowX: "hidden" }}
         >

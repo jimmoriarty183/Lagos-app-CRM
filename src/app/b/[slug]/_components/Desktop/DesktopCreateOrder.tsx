@@ -1,7 +1,6 @@
 import Button from "../../Button";
 
-import { createOrder } from "../../actions";
-import { buildClientFullName } from "@/lib/order-client";
+import { createOrderFromForm } from "../../actions";
 
 type Props = {
   businessId: string;
@@ -12,6 +11,7 @@ export default function DesktopCreateOrder({
   businessId,
   businessSlug,
 }: Props) {
+  const createOrderAction = createOrderFromForm.bind(null, businessId, businessSlug);
   const inputCls =
     "h-11 w-full min-w-0 rounded-xl border border-gray-200 bg-white px-3 outline-none " +
     "focus:border-gray-900 focus:ring-2 focus:ring-gray-900";
@@ -20,38 +20,7 @@ export default function DesktopCreateOrder({
 
   return (
     <form
-      action={async (fd) => {
-        "use server";
-
-        const firstName = String(fd.get("first_name") || "").trim();
-        const lastName = String(fd.get("last_name") || "").trim();
-        const clientName = buildClientFullName(firstName, lastName);
-        const clientPhoneRaw = String(fd.get("client_phone") || "").trim();
-        const clientPhone = clientPhoneRaw.replace(/\s+/g, " ").trim();
-
-        const amountRaw = String(fd.get("amount") || "").trim();
-        const dueDate = String(fd.get("due_date") || "").trim();
-        const description = String(fd.get("description") || "").trim();
-        const amount = Number(amountRaw);
-
-        if (!firstName) throw new Error("First name is required");
-        if (!Number.isFinite(amount) || amount <= 0) {
-          throw new Error("Amount must be greater than 0");
-        }
-
-        await createOrder({
-          businessId,
-          businessSlug,
-          clientName,
-          firstName,
-          lastName,
-          clientPhone: clientPhone || undefined,
-          amount,
-          dueDate: dueDate || undefined,
-          description: description || undefined,
-          status: "NEW",
-        });
-      }}
+      action={createOrderAction}
       className="grid gap-4 xl:grid-cols-12"
     >
       <label className="grid gap-1 xl:col-span-3">

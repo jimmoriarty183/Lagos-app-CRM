@@ -42,6 +42,7 @@ type Props = {
   canSeeAnalytics: boolean;
   showFilters?: boolean;
   activeSection?: "business" | "settings";
+  layoutMode?: "list" | "kanban";
 };
 
 const MENU_STORAGE_KEY = "orders-desktop-menu-expanded";
@@ -223,6 +224,7 @@ export default function DesktopLeftRail({
   canSeeAnalytics,
   showFilters = true,
   activeSection,
+  layoutMode = "list",
 }: Props) {
   const expanded = useSyncExternalStore(
     subscribeExpanded,
@@ -256,8 +258,14 @@ export default function DesktopLeftRail({
       <div
         className="fixed z-30"
         style={{
-          top: "calc(env(safe-area-inset-top) + 88px)",
-          left: "max(24px, calc((100vw - 1220px) / 2 + 24px))",
+          top:
+            layoutMode === "kanban"
+              ? "calc(env(safe-area-inset-top) + 96px)"
+              : "calc(env(safe-area-inset-top) + 88px)",
+          left:
+            layoutMode === "kanban"
+              ? "24px"
+              : "max(24px, calc((100vw - 1220px) / 2 + 24px))",
         }}
       >
         <div className="relative">

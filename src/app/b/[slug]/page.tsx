@@ -68,6 +68,12 @@ type OrderSort =
   | "amountHigh"
   | "amountLow";
 
+type ViewMode = "list" | "kanban";
+type HiddenKanbanCounts = {
+  done: number;
+  canceled: number;
+};
+
 type SummaryPeriodOption = {
   label: string;
   shortLabel: string;
@@ -109,6 +115,7 @@ type PageProps = {
   searchParams?: {
     u?: string;
     q?: string;
+    view?: string;
     status?: string | string[];
     range?: string;
     srange?: string;
@@ -294,6 +301,10 @@ function normalizeOrderSort(value: string | undefined): OrderSort {
   return ORDER_SORT_OPTIONS.includes(value as OrderSort) ? (value as OrderSort) : "default";
 }
 
+function normalizeViewMode(value: string | undefined): ViewMode {
+  return value === "kanban" ? "kanban" : "list";
+}
+
 export default async function Page({ params, searchParams }: PageProps) {
   const { slug } = await params;
   const sp = (await searchParams) ?? {};
@@ -440,6 +451,7 @@ export default async function Page({ params, searchParams }: PageProps) {
   };
   const perPage = normalizePageSize(sp.perPage);
   const sort = normalizeOrderSort(sp.sort);
+  const viewMode = normalizeViewMode(sp.view);
   const hasCustomRange = filters.range === "custom" && !!filters.startDate && !!filters.endDate;
   const rangeIsDefault = filters.range === "ALL" && !hasCustomRange;
   const isRangeFilterActive = !rangeIsDefault;
@@ -461,6 +473,7 @@ export default async function Page({ params, searchParams }: PageProps) {
     const params = new URLSearchParams();
     if (phoneRaw && phoneRaw.length > 0) params.set("u", phoneRaw);
     params.set("perPage", String(perPage));
+    if (viewMode === "kanban") params.set("view", viewMode);
     if (summaryRange !== DEFAULT_SUMMARY_RANGE) params.set("srange", summaryRange);
     if (summaryRange === "custom" && summaryCustomStartDate) params.set("sstart", summaryCustomStartDate);
     if (summaryRange === "custom" && summaryCustomEndDate) params.set("send", summaryCustomEndDate);
@@ -480,6 +493,7 @@ export default async function Page({ params, searchParams }: PageProps) {
     const params = new URLSearchParams();
     if (phoneRaw && phoneRaw.length > 0) params.set("u", phoneRaw);
     params.set("perPage", String(perPage));
+    if (viewMode === "kanban") params.set("view", viewMode);
     if (sort !== "default") params.set("sort", sort);
     if (filters.q) params.set("q", filters.q);
     if (filters.statusMode === "all") {
@@ -502,6 +516,7 @@ export default async function Page({ params, searchParams }: PageProps) {
     const params = new URLSearchParams();
     if (phoneRaw && phoneRaw.length > 0) params.set("u", phoneRaw);
     params.set("perPage", String(perPage));
+    if (viewMode === "kanban") params.set("view", viewMode);
     if (sort !== "default") params.set("sort", sort);
     if (filters.q) params.set("q", filters.q);
     if (filters.statusMode === "all") {
@@ -787,6 +802,10 @@ export default async function Page({ params, searchParams }: PageProps) {
     endDate: summaryCustomEndDate,
   });
   const currentPeriodRows = filterOrdersByCreatedAt(searchedList, tablePeriod.current);
+  const kanbanHiddenCounts: HiddenKanbanCounts = {
+    done: currentPeriodRows.filter((order) => order.status === "DONE").length,
+    canceled: currentPeriodRows.filter((order) => order.status === "CANCELED").length,
+  };
   const summaryCurrentRows = filterOrdersByCreatedAt(listRaw, summaryPeriod.current);
   const previousPeriodRows = summaryPeriod.previous
     ? filterOrdersByCreatedAt(listRaw, summaryPeriod.previous)
@@ -960,7 +979,12 @@ export default async function Page({ params, searchParams }: PageProps) {
         hasActiveFilters={hasActiveFilters}
       />
 
-      <main className="mx-auto max-w-[1220px] overflow-x-hidden px-4 pb-8 pt-20 sm:px-6">
+      <main
+        className={[
+          "overflow-x-hidden px-4 pb-8 pt-20 sm:px-6",
+          viewMode === "kanban" ? "mx-0 max-w-none" : "mx-auto max-w-[1220px]",
+        ].join(" ")}
+      >
         <div className="hidden items-start lg:grid lg:grid-cols-[auto_minmax(0,1fr)] lg:gap-5">
           <DesktopLeftRail
             key={`desktop-rail-${filters.range}-${filters.startDate ?? ""}-${filters.endDate ?? ""}`}
@@ -982,43 +1006,48 @@ export default async function Page({ params, searchParams }: PageProps) {
             businessHref={businessHref}
             settingsHref={settingsHref}
             canSeeAnalytics={canSeeAnalyticsNav}
+            layoutMode={viewMode}
           />
 
           <div className="min-w-0 space-y-4">
-            <DesktopAnalyticsCard
-              cards={summaryCards}
-              periodLabel={summaryPeriod.current.label}
-              comparisonLabel={summaryPeriod.comparisonLabel}
-              hasComparison={Boolean(summaryPeriod.previous)}
-              hasOrdersEver={listRaw.length > 0}
-              periodOptions={summaryPeriodOptions}
-              extendedOptions={summaryExtendedOptions}
-              customRange={{
-                active: summaryRange === "custom",
-                startDate: summaryCustomStartDate,
-                endDate: summaryCustomEndDate,
-                resetHref: makeSummaryHref("thisMonth"),
-                quickOptions: summaryQuickRanges,
-                phoneRaw,
-                tableQuery: {
-                  q: filters.q,
-                  sort,
-                  statuses: filters.statuses,
-                  range: filters.range,
-                  startDate: filters.startDate,
-                  endDate: filters.endDate,
-                  actor: filters.actor,
-                },
-              }}
-            />
+            {viewMode === "list" ? (
+              <DesktopAnalyticsCard
+                cards={summaryCards}
+                periodLabel={summaryPeriod.current.label}
+                comparisonLabel={summaryPeriod.comparisonLabel}
+                hasComparison={Boolean(summaryPeriod.previous)}
+                hasOrdersEver={listRaw.length > 0}
+                periodOptions={summaryPeriodOptions}
+                extendedOptions={summaryExtendedOptions}
+                customRange={{
+                  active: summaryRange === "custom",
+                  startDate: summaryCustomStartDate,
+                  endDate: summaryCustomEndDate,
+                  resetHref: makeSummaryHref("thisMonth"),
+                  quickOptions: summaryQuickRanges,
+                  phoneRaw,
+                  tableQuery: {
+                    q: filters.q,
+                    sort,
+                    statuses: filters.statuses,
+                    range: filters.range,
+                    startDate: filters.startDate,
+                    endDate: filters.endDate,
+                    actor: filters.actor,
+                  },
+                }}
+              />
+            ) : null}
 
-            <DesktopCreateOrderAccordion
-              businessId={String(currentBusiness.id)}
-              businessSlug={String(currentBusiness.slug)}
-            />
+            {viewMode === "list" ? (
+              <DesktopCreateOrderAccordion
+                businessId={String(currentBusiness.id)}
+                businessSlug={String(currentBusiness.slug)}
+              />
+            ) : null}
 
             <DesktopOrdersTable
-              key={`desktop-orders-${filters.q}-${filters.statuses.join(",")}-${filters.actor}-${filters.range}-${filters.startDate ?? ""}-${filters.endDate ?? ""}-${sort}`}
+              key={`desktop-orders-${viewMode}-${filters.q}-${filters.statuses.join(",")}-${filters.actor}-${filters.range}-${filters.startDate ?? ""}-${filters.endDate ?? ""}-${sort}`}
               list={paginatedList}
               todayISO={todayISO}
               businessSlug={String(currentBusiness.slug)}
@@ -1026,6 +1055,7 @@ export default async function Page({ params, searchParams }: PageProps) {
               phoneRaw={phoneRaw}
               searchQuery={filters.q}
               sort={sort}
+              initialViewMode={viewMode}
               statusMode={filters.statusMode}
               statusFilter={filters.statusMode === "all" ? [] : filters.statuses}
               rangeFilter={filters.range}
@@ -1039,6 +1069,7 @@ export default async function Page({ params, searchParams }: PageProps) {
               currentPage={currentPage}
               perPage={perPage}
               totalPages={totalPages}
+              hiddenKanbanCounts={kanbanHiddenCounts}
               canManage={canManage}
               canEdit={canEdit}
               userRole={userRole}

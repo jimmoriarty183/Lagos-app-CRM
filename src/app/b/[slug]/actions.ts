@@ -97,6 +97,69 @@ export async function createOrder(input: {
   revalidatePath(`/b/${input.businessSlug}`);
 }
 
+export async function createOrderFromForm(
+  businessId: string,
+  businessSlug: string,
+  fd: FormData,
+) {
+  const firstName = String(fd.get("first_name") || "").trim();
+  const lastName = String(fd.get("last_name") || "").trim();
+  const clientName = buildClientFullName(firstName, lastName);
+  const clientPhoneRaw = String(fd.get("client_phone") || "").trim();
+  const clientPhone = clientPhoneRaw.replace(/\s+/g, " ").trim();
+  const amountRaw = String(fd.get("amount") || "").trim();
+  const dueDate = String(fd.get("due_date") || "").trim();
+  const description = String(fd.get("description") || "").trim();
+  const amount = Number(amountRaw);
+
+  if (!firstName) throw new Error("First name is required");
+  if (!Number.isFinite(amount) || amount <= 0) {
+    throw new Error("Amount must be greater than 0");
+  }
+
+  await createOrder({
+    businessId,
+    businessSlug,
+    clientName,
+    firstName,
+    lastName,
+    clientPhone: clientPhone || undefined,
+    amount,
+    dueDate: dueDate || undefined,
+    description: description || undefined,
+    status: "NEW",
+  });
+}
+
+export async function createQuickOrderFromForm(
+  businessId: string,
+  businessSlug: string,
+  fd: FormData,
+) {
+  const firstName = String(fd.get("first_name") || "").trim();
+  const lastName = String(fd.get("last_name") || "").trim();
+  const clientPhoneRaw = String(fd.get("client_phone") || "").trim();
+  const clientPhone = clientPhoneRaw.replace(/\s+/g, " ").trim();
+  const amountRaw = String(fd.get("amount") || "").trim();
+  const amount = Number(amountRaw);
+
+  if (!firstName) throw new Error("First name is required");
+  if (!Number.isFinite(amount) || amount <= 0) {
+    throw new Error("Amount must be greater than 0");
+  }
+
+  await createOrder({
+    businessId,
+    businessSlug,
+    clientName: buildClientFullName(firstName, lastName),
+    firstName,
+    lastName,
+    clientPhone: clientPhone || undefined,
+    amount,
+    status: "NEW",
+  });
+}
+
 export async function setOrderStatus(input: {
   orderId: string;
   businessSlug: string;

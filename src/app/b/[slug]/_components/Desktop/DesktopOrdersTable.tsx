@@ -6,8 +6,10 @@ import {
   AlertTriangle,
   ChevronDown,
   ChevronUp,
+  Columns3,
   Ellipsis,
   Eye,
+  List,
   Search,
   Trash2,
   UserRound,
@@ -16,6 +18,7 @@ import {
 import { StatusCell } from "../../InlineCells";
 import { setOrderManager, setOrderStatus } from "../../actions";
 import { OrderPreview } from "../orders/OrderPreview";
+import DesktopKanbanCreateOrder from "./DesktopKanbanCreateOrder";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -71,6 +74,7 @@ type OrderSort =
   | "amountHigh"
   | "amountLow";
 type UserRole = "OWNER" | "MANAGER" | "GUEST";
+type ViewMode = "list" | "kanban";
 
 type TeamActor = {
   id: string;
@@ -123,6 +127,7 @@ type Props = {
   phoneRaw: string;
   searchQuery: string;
   sort: OrderSort;
+  initialViewMode: ViewMode;
   statusMode: "default" | "all" | "custom";
   statusFilter: StatusFilterValue[];
   rangeFilter: DashboardRange;
@@ -136,6 +141,10 @@ type Props = {
   currentPage: number;
   perPage: number;
   totalPages: number;
+  hiddenKanbanCounts: {
+    done: number;
+    canceled: number;
+  };
   canManage: boolean;
   canEdit: boolean;
   userRole: UserRole;
@@ -271,6 +280,46 @@ function getCompactManagerLabel(label: string) {
   const firstInitial = parts[0]?.slice(0, 1).toUpperCase();
   const lastName = parts[parts.length - 1];
   return firstInitial ? `${firstInitial}. ${lastName}` : clean;
+}
+
+function isOrderOverdue(order: { due_date: string | null; status: StatusValue }, todayISO: string) {
+  const dueISO = order.due_date ? String(order.due_date).slice(0, 10) : null;
+  return !!dueISO && dueISO < todayISO && (order.status === "NEW" || order.status === "IN_PROGRESS");
+}
+
+function orderMatchesAppliedStatusFilter(
+  order: { due_date: string | null; status: StatusValue },
+  todayISO: string,
+  statusMode: "default" | "all" | "custom",
+  statusFilter: StatusFilterValue[],
+) {
+  if (statusMode === "all") return true;
+  if (statusFilter.includes(order.status)) return true;
+  return statusFilter.includes("OVERDUE") && isOrderOverdue(order, todayISO);
+}
+
+function moveOrderToStatus(
+  rows: OrderRow[],
+  orderId: string,
+  nextStatus: StatusValue,
+  keepVisible: boolean,
+) {
+  const current = rows.find((order) => order.id === orderId);
+  if (!current) return rows;
+
+  const updatedOrder = { ...current, status: nextStatus };
+  const withoutCurrent = rows.filter((order) => order.id !== orderId);
+  if (!keepVisible) return withoutCurrent;
+
+  const insertAt = withoutCurrent.reduce((lastIndex, order, index) => {
+    return order.status === nextStatus ? index + 1 : lastIndex;
+  }, 0);
+
+  return [
+    ...withoutCurrent.slice(0, insertAt),
+    updatedOrder,
+    ...withoutCurrent.slice(insertAt),
+  ];
 }
 
 function ActorAvatar({ label }: { label: string }) {
@@ -428,6 +477,7 @@ function ManagerAssignmentCell({
   managerName,
   actors,
   canManage,
+  avatarOnly = false,
   onAssigned,
 }: {
   orderId: string;
@@ -436,6 +486,7 @@ function ManagerAssignmentCell({
   managerName: string | null;
   actors: TeamActor[];
   canManage: boolean;
+  avatarOnly?: boolean;
   onAssigned?: () => void;
 }) {
   const [isPending, startTransition] = useTransition();
@@ -463,7 +514,28 @@ function ManagerAssignmentCell({
   const isUnassigned = !localManagerId;
   const compactLabel = isUnassigned ? label : getCompactManagerLabel(label);
 
-  const trigger = (
+  const triggerButton = avatarOnly ? (
+    <button
+      type="button"
+      disabled={!canManage || isPending}
+      onClick={(event) => event.stopPropagation()}
+      aria-label={label}
+      title={label}
+      className={[
+        "inline-flex h-8 w-8 items-center justify-center rounded-full border transition",
+        canManage ? "cursor-pointer" : "cursor-default",
+        isUnassigned
+          ? "border-[#dbe2ea] bg-[#f8fafc] text-[#667085]"
+          : "border-white bg-transparent shadow-[0_0_0_1px_rgba(221,227,238,0.95)] hover:shadow-[0_0_0_1px_rgba(17,24,39,0.18)]",
+      ].join(" ")}
+    >
+      {isUnassigned ? (
+        <UserRound className="h-3.5 w-3.5 text-[#98a2b3]" />
+      ) : (
+        <ActorAvatar label={label} />
+      )}
+    </button>
+  ) : (
     <button
       type="button"
       disabled={!canManage || isPending}
@@ -487,6 +559,8 @@ function ManagerAssignmentCell({
       {canManage ? <ChevronDown className="h-3.5 w-3.5 text-[#98a2b3]" /> : null}
     </button>
   );
+
+  const trigger = triggerButton;
 
   if (!canManage) return trigger;
 
@@ -609,6 +683,7 @@ export default function DesktopOrdersTable({
   phoneRaw,
   searchQuery,
   sort,
+  initialViewMode,
   statusMode,
   statusFilter,
   rangeFilter,
@@ -622,6 +697,7 @@ export default function DesktopOrdersTable({
   currentPage,
   perPage,
   totalPages,
+  hiddenKanbanCounts,
   canManage,
   canEdit,
   userRole,
@@ -632,10 +708,14 @@ export default function DesktopOrdersTable({
   const router = useRouter();
   const { customStatuses, statuses } = useBusinessStatuses(businessId);
   const [openId, setOpenId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>(initialViewMode);
   const [periodMenuOpen, setPeriodMenuOpen] = useState(false);
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
   const [managerMenuOpen, setManagerMenuOpen] = useState(false);
   const [perPageMenuOpen, setPerPageMenuOpen] = useState(false);
+  const [draggingOrderId, setDraggingOrderId] = useState<string | null>(null);
+  const [dropStatusValue, setDropStatusValue] = useState<string | null>(null);
+  const [savingStatusOrderId, setSavingStatusOrderId] = useState<string | null>(null);
   const [searchDraft, setSearchDraft] = useState(searchQuery);
   const [sortValue, setSortValue] = useState<OrderSort>(sort);
   const [rangeValue, setRangeValue] = useState<DashboardRange>(rangeFilter);
@@ -677,6 +757,13 @@ export default function DesktopOrdersTable({
       })),
     [actorLabelById, list],
   );
+  const [boardRows, setBoardRows] = useState<OrderRow[]>(rows);
+  React.useEffect(() => {
+    setBoardRows(rows);
+  }, [rows]);
+  React.useEffect(() => {
+    setViewMode(initialViewMode);
+  }, [initialViewMode]);
   const managerOptions = useMemo(
     () =>
       effectiveActors
@@ -690,8 +777,8 @@ export default function DesktopOrdersTable({
     [currentUserId, effectiveActors],
   );
   const selectedOrder = useMemo(
-    () => rows.find((order) => order.id === openId) ?? null,
-    [openId, rows],
+    () => boardRows.find((order) => order.id === openId) ?? null,
+    [boardRows, openId],
   );
   const statusOptions = useMemo(
     () => [
@@ -729,6 +816,34 @@ export default function DesktopOrdersTable({
         : normalizeQuickStatuses(statusFilter, activeStatusOptions),
     );
   }, [activeStatusOptions, allSelectableStatuses, statusFilter, statusMode, statusTouched]);
+  const workflowStatuses = useMemo(
+    () => statuses.filter((status) => status.active !== false),
+    [statuses],
+  );
+  const doneVisibleInFilter =
+    statusMode === "all" ||
+    statusValues.includes("DONE") ||
+    (!statusTouched && statusFilter.includes("DONE"));
+  const canceledVisibleInFilter =
+    statusMode === "all" ||
+    statusValues.includes("CANCELED") ||
+    (!statusTouched && statusFilter.includes("CANCELED"));
+  const kanbanColumns = useMemo(
+    () =>
+      workflowStatuses.map((status) => ({
+        ...status,
+        orders: boardRows.filter((order) => order.status === status.value),
+      })),
+    [boardRows, workflowStatuses],
+  );
+  const visibleKanbanColumns = useMemo(
+    () =>
+      kanbanColumns.filter((column) => {
+        if (column.value === "CANCELED") return canceledVisibleInFilter;
+        return true;
+      }),
+    [canceledVisibleInFilter, kanbanColumns],
+  );
 
   const toggleOrderPreview = (orderId: string) => {
     if (shouldIgnoreOverlayCloseClick()) return;
@@ -817,12 +932,15 @@ export default function DesktopOrdersTable({
     rangeTouched?: boolean;
     page?: number;
     perPage?: number;
+    viewMode?: ViewMode;
   }) => {
     const params = new URLSearchParams();
     if (phoneRaw) params.set("u", phoneRaw);
     params.set("srange", summaryRange);
     params.set("page", String(next.page ?? 1));
     params.set("perPage", String(next.perPage ?? perPage));
+    const nextViewMode = next.viewMode ?? viewMode;
+    if (nextViewMode === "kanban") params.set("view", nextViewMode);
 
     const nextRange = next.rangeTouched ? next.rangeValue ?? rangeValue : rangeFilter;
     const nextStart = next.rangeTouched ? next.customStart ?? customStart : rangeStartDate ?? "";
@@ -884,6 +1002,47 @@ export default function DesktopOrdersTable({
       page,
       perPage: nextPerPage,
     });
+  const viewHref = (nextViewMode: ViewMode) =>
+    buildHref({
+      q: searchDraft,
+      statusValues,
+      statusTouched,
+      managerValue,
+      managerTouched,
+      sortValue,
+      rangeValue,
+      customStart,
+      customEnd,
+      rangeTouched,
+      page: 1,
+      viewMode: nextViewMode,
+    });
+  const revealStatusInBoard = (status: StatusFilterValue) => {
+    const baseStatuses =
+      statusMode === "all"
+        ? allSelectableStatuses
+        : statusTouched
+          ? statusValues
+          : normalizeQuickStatuses(statusFilter, activeStatusOptions);
+    const nextStatuses = Array.from(new Set([...baseStatuses, status]));
+    setStatusValues(nextStatuses);
+    setStatusTouched(true);
+    navigateWithFallback(
+      buildHref({
+        q: searchDraft,
+        statusValues: nextStatuses,
+        statusTouched: true,
+        managerValue,
+        managerTouched,
+        sortValue,
+        rangeValue,
+        customStart,
+        customEnd,
+        rangeTouched,
+        page: 1,
+      }),
+    );
+  };
 
   const submitFilters = (next: {
     q: string;
@@ -996,11 +1155,53 @@ export default function DesktopOrdersTable({
     router.refresh();
   };
 
+  const handleDropToStatus = async (orderId: string, nextStatus: StatusValue) => {
+    const order = boardRows.find((row) => row.id === orderId);
+    if (!order || savingStatusOrderId || order.status === nextStatus) return;
+
+    if (nextStatus === "CANCELED") {
+      const ok = window.confirm("Cancel this order? The order will stay in the list with Canceled status.");
+      if (!ok) {
+        setDraggingOrderId(null);
+        setDropStatusValue(null);
+        return;
+      }
+    }
+
+    const nextOrder = { ...order, status: nextStatus };
+    const keepVisible = orderMatchesAppliedStatusFilter(nextOrder, todayISO, statusMode, statusFilter);
+    const previousRows = boardRows;
+
+    setSavingStatusOrderId(orderId);
+    setBoardRows((currentRows) => moveOrderToStatus(currentRows, orderId, nextStatus, keepVisible));
+    setDraggingOrderId(null);
+    setDropStatusValue(null);
+
+    try {
+      await setOrderStatus({
+        orderId,
+        businessSlug,
+        status: nextStatus,
+      });
+    } catch (error) {
+      setBoardRows(previousRows);
+      window.alert(error instanceof Error ? error.message : "Failed to update status.");
+    } finally {
+      setSavingStatusOrderId(null);
+    }
+  };
+
   const showCustomRange = rangeValue === "custom";
   const customRangeReady = !showCustomRange || (Boolean(customStart) && Boolean(customEnd));
+  const shouldStretchKanban = visibleKanbanColumns.length > 0 && visibleKanbanColumns.length <= 4;
 
   return (
-    <section className="mx-auto w-full min-w-0 overflow-visible rounded-[28px] border border-[#dde3ee] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+    <section
+      className={[
+        "w-full min-w-0 overflow-visible rounded-[28px] border border-[#dde3ee] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)]",
+        viewMode === "kanban" ? "mx-0" : "mx-auto",
+      ].join(" ")}
+    >
       <div className="border-b border-[#eef2f7] px-5 py-5">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
@@ -1009,7 +1210,42 @@ export default function DesktopOrdersTable({
               {resultCount} {resultCount === 1 ? "result" : "results"} · Page {currentPage} of {totalPages}
             </div>
           </div>
-
+          <div className="inline-flex items-center rounded-2xl border border-[#dde3ee] bg-[#f8fafc] p-1">
+            <button
+              type="button"
+              onClick={() => {
+                if (viewMode === "list") return;
+                setViewMode("list");
+                navigateWithFallback(viewHref("list"));
+              }}
+              className={[
+                "inline-flex h-9 items-center gap-2 rounded-[14px] px-3 text-sm font-semibold transition",
+                viewMode === "list"
+                  ? "bg-white text-[#111827] shadow-[0_1px_2px_rgba(16,24,40,0.08)]"
+                  : "text-[#667085] hover:text-[#111827]",
+              ].join(" ")}
+            >
+              <List className="h-4 w-4" />
+              List
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (viewMode === "kanban") return;
+                setViewMode("kanban");
+                navigateWithFallback(viewHref("kanban"));
+              }}
+              className={[
+                "inline-flex h-9 items-center gap-2 rounded-[14px] px-3 text-sm font-semibold transition",
+                viewMode === "kanban"
+                  ? "bg-white text-[#111827] shadow-[0_1px_2px_rgba(16,24,40,0.08)]"
+                  : "text-[#667085] hover:text-[#111827]",
+              ].join(" ")}
+            >
+              <Columns3 className="h-4 w-4" />
+              Kanban
+            </button>
+          </div>
         </div>
 
         <form
@@ -1326,9 +1562,9 @@ export default function DesktopOrdersTable({
 
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#eef2f7] px-5 py-3">
         <div className="text-xs font-medium text-[#667085]">
-          Showing {rows.length === 0 ? 0 : (currentPage - 1) * perPage + 1}
+          Showing {boardRows.length === 0 ? 0 : (currentPage - 1) * perPage + 1}
           -
-          {(currentPage - 1) * perPage + rows.length} of {resultCount}
+          {(currentPage - 1) * perPage + boardRows.length} of {resultCount}
         </div>
 
           <div className="flex items-center gap-2 text-xs font-medium text-[#667085]">
@@ -1366,7 +1602,8 @@ export default function DesktopOrdersTable({
           </div>
         </div>
 
-      <div className="overflow-x-auto overflow-y-visible">
+      {viewMode === "list" ? (
+        <div className="overflow-x-auto overflow-y-visible">
         <table className="min-w-[1040px] w-full border-collapse">
           <thead>
             <tr className="border-b border-[#eef2f7] text-left">
@@ -1395,12 +1632,8 @@ export default function DesktopOrdersTable({
           </thead>
 
           <tbody>
-            {rows.map((order) => {
-              const dueISO = order.due_date ? String(order.due_date).slice(0, 10) : null;
-              const isOverdue =
-                !!dueISO &&
-                dueISO < todayISO &&
-                (order.status === "NEW" || order.status === "IN_PROGRESS");
+            {boardRows.map((order) => {
+              const isOverdue = isOrderOverdue(order, todayISO);
               const canCancel = canEdit && order.status !== "CANCELED" && order.status !== "DONE";
               const canDeletePermanently = userRole === "OWNER";
 
@@ -1533,7 +1766,7 @@ export default function DesktopOrdersTable({
               );
             })}
 
-            {rows.length === 0 ? (
+            {boardRows.length === 0 ? (
               <tr>
                 <td colSpan={7} className="px-6 py-12 text-center text-sm text-[#98a2b3]">
                   {isPending ? "Updating orders..." : "No orders found"}
@@ -1542,7 +1775,286 @@ export default function DesktopOrdersTable({
             ) : null}
           </tbody>
         </table>
-      </div>
+        </div>
+      ) : (
+        <div className="px-5 py-5">
+          {visibleKanbanColumns.length > 0 ? (
+            <div className="overflow-x-auto overflow-y-hidden pb-2">
+            <div
+              className="grid min-h-[calc(100vh-320px)] gap-4"
+              style={
+                shouldStretchKanban
+                  ? { gridTemplateColumns: `repeat(${visibleKanbanColumns.length}, minmax(0, 1fr))` }
+                  : {
+                      minWidth: `${visibleKanbanColumns.length * 280}px`,
+                      gridTemplateColumns: `repeat(${visibleKanbanColumns.length}, minmax(280px, 1fr))`,
+                    }
+              }
+            >
+              {visibleKanbanColumns.map((column) => {
+                const tone = getStatusTone(column.value, customStatuses);
+                const doneHiddenByFilter =
+                  column.value === "DONE" && !doneVisibleInFilter && hiddenKanbanCounts.done > 0;
+                const showInlineCreate = column.value === "NEW";
+
+                return (
+                  <div
+                    key={column.value}
+                    className={[
+                      "flex h-[calc(100vh-320px)] min-h-[560px] flex-col rounded-[26px] border p-3 transition",
+                      dropStatusValue === column.value
+                        ? "border-[#111827] bg-[#f8fbff] shadow-[0_18px_40px_rgba(15,23,42,0.08)]"
+                        : "border-[#e2e8f0] bg-[#fbfcfe]",
+                    ].join(" ")}
+                    onDragOver={(event) => {
+                      if (!canManage) return;
+                      event.preventDefault();
+                      setDropStatusValue(column.value);
+                    }}
+                    onDragLeave={(event) => {
+                      if (event.currentTarget.contains(event.relatedTarget as Node | null)) return;
+                      setDropStatusValue((current) => (current === column.value ? null : current));
+                    }}
+                    onDrop={(event) => {
+                      event.preventDefault();
+                      const orderId = event.dataTransfer.getData("text/order-id") || draggingOrderId;
+                      if (!orderId) return;
+                      void handleDropToStatus(orderId, column.value);
+                    }}
+                  >
+                    <div className="flex items-center justify-between gap-3 rounded-[20px] px-2 pb-3">
+                      <div className="flex min-w-0 items-center gap-3">
+                        <span className="h-3 w-3 shrink-0 rounded-full" style={{ background: tone.dot }} />
+                        <div className="min-w-0">
+                          <div className="truncate text-sm font-semibold text-[#111827]">{column.label}</div>
+                          <div className="text-xs font-medium text-[#98a2b3]">
+                            {column.orders.length} {column.orders.length === 1 ? "order" : "orders"}
+                          </div>
+                        </div>
+                      </div>
+                      <div
+                        className="inline-flex h-8 min-w-8 items-center justify-center rounded-full px-2 text-xs font-semibold"
+                        style={{ background: tone.background, color: tone.color }}
+                      >
+                        {column.orders.length}
+                      </div>
+                    </div>
+
+                    <div className="flex min-h-0 flex-1 flex-col gap-3 rounded-[20px] bg-white/50 p-1">
+                      {showInlineCreate ? (
+                        <DesktopKanbanCreateOrder
+                          businessId={businessId}
+                          businessSlug={businessSlug}
+                        />
+                      ) : null}
+
+                      {doneHiddenByFilter ? (
+                        <div className="flex min-h-[160px] flex-col items-center justify-center rounded-[20px] border border-dashed border-[#dbe2ea] bg-white/70 px-4 text-center">
+                          <div className="text-sm font-semibold text-[#344054]">
+                            Done is hidden by filters
+                          </div>
+                          <div className="mt-1 text-sm text-[#98a2b3]">
+                            {hiddenKanbanCounts.done} {hiddenKanbanCounts.done === 1 ? "order" : "orders"} completed
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => revealStatusInBoard("DONE")}
+                            className="mt-3 inline-flex h-9 items-center justify-center rounded-xl border border-[#dde3ee] bg-white px-3 text-sm font-semibold text-[#344054] transition hover:border-[#cfd8e6] hover:bg-[#f8fafc]"
+                          >
+                            Show done
+                          </button>
+                        </div>
+                      ) : null}
+
+                      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
+                      {column.orders.map((order) => {
+                        const isOverdue = isOrderOverdue(order, todayISO);
+                        const canCancel = canEdit && order.status !== "CANCELED" && order.status !== "DONE";
+                        const canDeletePermanently = userRole === "OWNER";
+                        const isDragging = draggingOrderId === order.id;
+                        const isSavingCard = savingStatusOrderId === order.id;
+
+                        return (
+                          <div
+                            key={order.id}
+                            draggable={canManage && !isSavingCard}
+                            onDragStart={(event) => {
+                              if (!canManage) return;
+                              event.dataTransfer.effectAllowed = "move";
+                              event.dataTransfer.setData("text/order-id", order.id);
+                              setDraggingOrderId(order.id);
+                              setDropStatusValue(column.value);
+                            }}
+                            onDragEnd={() => {
+                              setDraggingOrderId(null);
+                              setDropStatusValue(null);
+                            }}
+                            className={[
+                              "group rounded-[22px] border border-[#e2e8f0] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition",
+                              isDragging ? "scale-[0.985] opacity-60" : "hover:-translate-y-0.5 hover:shadow-[0_20px_40px_rgba(15,23,42,0.08)]",
+                              canManage && !isSavingCard ? "cursor-grab active:cursor-grabbing" : "",
+                            ].join(" ")}
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <button
+                                type="button"
+                                onClick={() => toggleOrderPreview(order.id)}
+                                className="min-w-0 text-left"
+                              >
+                                <div className="text-sm font-semibold text-[#111827]">
+                                  #{order.order_number ?? "—"}
+                                </div>
+                                <div className="mt-1 text-xs font-medium text-[#98a2b3]">
+                                  {formatCreatedAt(order.created_at)}
+                                </div>
+                              </button>
+
+                              <div onClick={(event) => event.stopPropagation()}>
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <button
+                                      type="button"
+                                      className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#dde3ee] bg-white text-[#667085] transition hover:border-[#cfd8e6] hover:bg-[#f8fafc] hover:text-[#111827]"
+                                      aria-label="Open order actions"
+                                    >
+                                      <Ellipsis className="h-4 w-4" />
+                                    </button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent
+                                    align="end"
+                                    className="w-48 rounded-xl border-[#dde3ee] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
+                                  >
+                                    <DropdownMenuItem
+                                      className="rounded-lg px-3 py-2 text-sm font-medium"
+                                      onSelect={(event) => {
+                                        event.preventDefault();
+                                        setOpenId(order.id);
+                                      }}
+                                    >
+                                      <Eye className="h-4 w-4" />
+                                      Open order
+                                    </DropdownMenuItem>
+                                    {canCancel ? (
+                                      <DropdownMenuItem
+                                        className="rounded-lg px-3 py-2 text-sm font-medium text-red-700 focus:text-red-700"
+                                        onSelect={(event) => {
+                                          event.preventDefault();
+                                          void handleCancelOrder(order.id, order.status);
+                                        }}
+                                        disabled={deletingId === order.id}
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                        {deletingId === order.id ? "Canceling..." : "Cancel order"}
+                                      </DropdownMenuItem>
+                                    ) : null}
+                                    {canDeletePermanently ? (
+                                      <>
+                                        {canCancel ? <DropdownMenuSeparator /> : null}
+                                        <DropdownMenuItem
+                                          className="rounded-lg px-3 py-2 text-sm font-medium text-red-700 focus:text-red-700"
+                                          onSelect={(event) => {
+                                            event.preventDefault();
+                                            setConfirmDeleteId(order.id);
+                                          }}
+                                          disabled={deletingId === order.id}
+                                        >
+                                          <Trash2 className="h-4 w-4" />
+                                          {deletingId === order.id ? "Deleting..." : "Delete permanently"}
+                                        </DropdownMenuItem>
+                                      </>
+                                    ) : null}
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </div>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => toggleOrderPreview(order.id)}
+                              className="mt-4 block w-full text-left"
+                            >
+                              <div className="text-sm font-semibold text-[#111827]">
+                                {order.client_full_name?.trim() || order.client_name?.trim() || "Unknown"}
+                              </div>
+                              <div className="mt-1 truncate text-xs text-[#98a2b3]">
+                                {order.client_phone?.trim() || "No phone number"}
+                              </div>
+                            </button>
+
+                            <div className="mt-4 grid gap-3 rounded-[18px] bg-[#f8fafc] p-3">
+                              <div className="flex items-center justify-between gap-3">
+                                <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
+                                  Amount
+                                </span>
+                                <span className="text-sm font-semibold tabular-nums text-[#111827]">
+                                  {fmtAmount(Number(order.amount))}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between gap-3">
+                                <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
+                                  Due
+                                </span>
+                                <span className={["inline-flex items-center gap-2 text-sm font-medium", isOverdue ? "text-[#d92d20]" : "text-[#475467]"].join(" ")}>
+                                  <span>{formatDueDate(order.due_date)}</span>
+                                  {isOverdue ? <AlertTriangle className="h-4 w-4" /> : null}
+                                </span>
+                              </div>
+                              <div className="flex items-start justify-between gap-3">
+                                <span className="pt-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
+                                  Manager
+                                </span>
+                                <div onClick={(event) => event.stopPropagation()}>
+                                  <ManagerAssignmentCell
+                                    orderId={order.id}
+                                    businessSlug={businessSlug}
+                                    managerId={order.manager_id}
+                                    managerName={order.manager_name}
+                                    actors={effectiveActors}
+                                    canManage={canManage}
+                                    avatarOnly
+                                    onAssigned={() => router.refresh()}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="mt-4 flex items-center justify-between gap-3">
+                              <div onClick={(event) => event.stopPropagation()}>
+                                <StatusCell
+                                  orderId={order.id}
+                                  businessId={businessId}
+                                  businessSlug={businessSlug}
+                                  value={order.status}
+                                  canManage={canManage}
+                                />
+                              </div>
+                              <div className="text-[11px] font-medium text-[#98a2b3]">
+                                {isSavingCard ? "Saving..." : canManage ? "Drag to move" : "Read only"}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+
+                      {column.orders.length === 0 && !doneHiddenByFilter ? (
+                        <div className="flex min-h-[160px] items-center justify-center rounded-[20px] border border-dashed border-[#dbe2ea] bg-white/70 px-4 text-center text-sm text-[#98a2b3]">
+                          {dropStatusValue === column.value ? "Drop order here" : "No orders in this status"}
+                        </div>
+                      ) : null}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            </div>
+          ) : (
+            <div className="rounded-[24px] border border-[#dde3ee] bg-white px-6 py-12 text-center text-sm text-[#98a2b3]">
+              No workflow statuses available
+            </div>
+          )}
+        </div>
+      )}
 
       {totalPages > 1 ? (
         <div className="border-t border-[#eef2f7] px-5 py-4">
