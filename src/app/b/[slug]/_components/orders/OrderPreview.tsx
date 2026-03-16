@@ -7,6 +7,7 @@ import {
   CalendarClock,
   Check,
   ChevronDown,
+  ChevronLeft,
   Maximize2,
   Minimize2,
   MessageSquareText,
@@ -18,6 +19,7 @@ import {
 import { OrderChecklist } from "@/app/b/[slug]/OrderChecklist";
 import { OrderComments } from "@/app/b/[slug]/OrderComments";
 import { createOrder, setOrderManager, setOrderStatus, updateOrder } from "@/app/b/[slug]/actions";
+import { CANCELED_REASONS } from "@/app/b/[slug]/InlineCells";
 import { normalizeOrderClient } from "@/lib/order-client";
 import {
   Sheet,
@@ -76,6 +78,7 @@ type OrderRow = {
   created_by?: string | null;
   created_by_name?: string | null;
   created_by_role?: "OWNER" | "MANAGER" | null;
+  status_reason?: string | null;
 };
 
 type Props = {
@@ -292,7 +295,7 @@ function DrawerStatusSelect({
   canManage: boolean;
   currentUserName: string;
   userRole: "OWNER" | "MANAGER" | "GUEST";
-  onCommitted?: (nextStatus: StatusValue) => void;
+  onCommitted?: (nextStatus: StatusValue, reason?: string | null) => void;
 }) {
   const router = useRouter();
   const { customStatuses, statuses } = useBusinessStatuses(businessId);
@@ -301,6 +304,8 @@ function DrawerStatusSelect({
   const [open, setOpen] = React.useState(false);
   const [isPending, startTransition] = React.useTransition();
   const [isCreateOpen, setIsCreateOpen] = React.useState(false);
+  const [reasonTarget, setReasonTarget] = React.useState<StatusValue | null>(null);
+  const [customReason, setCustomReason] = React.useState("");
   const [draftStatusLabel, setDraftStatusLabel] = React.useState("");
   const [draftStatusColor, setDraftStatusColor] = React.useState<string>("blue");
   const [customStatusColor, setCustomStatusColor] = React.useState("#2563EB");
@@ -311,6 +316,13 @@ function DrawerStatusSelect({
     setLocalStatus(value);
   }, [value]);
 
+  React.useEffect(() => {
+    if (!open) {
+      setReasonTarget(null);
+      setCustomReason("");
+    }
+  }, [open]);
+
   const tone = statusTone(localStatus, customStatuses);
   const canManageStatuses = userRole === "OWNER";
 
@@ -319,9 +331,9 @@ function DrawerStatusSelect({
   }, [businessId]);
 
   const commitStatusChange = React.useCallback(
-    async (next: StatusValue, previous: StatusValue) => {
-      await setOrderStatus({ orderId, businessSlug, status: next });
-      onCommitted?.(next);
+    async (next: StatusValue, previous: StatusValue, reason?: string | null) => {
+      await setOrderStatus({ orderId, businessSlug, status: next, reason });
+      onCommitted?.(next, reason ?? null);
       appendLocalActivityEvent(businessId, orderId, {
         id: makeLocalActivityEventId("status"),
         type: "status_changed",
@@ -332,6 +344,26 @@ function DrawerStatusSelect({
       });
     },
     [businessId, businessSlug, currentUserName, customStatuses, onCommitted, orderId, userRole],
+  );
+
+  const applyStatusSelection = React.useCallback(
+    (next: StatusValue, reason?: string | null) => {
+      const prevStatus = localStatus;
+      setOpen(false);
+      setReasonTarget(null);
+      setCustomReason("");
+      setLocalStatus(next);
+
+      startTransition(async () => {
+        try {
+          await commitStatusChange(next, prevStatus, reason);
+        } catch (error) {
+          setLocalStatus(prevStatus);
+          window.alert(error instanceof Error ? error.message : "Failed to update status.");
+        }
+      });
+    },
+    [commitStatusChange, localStatus],
   );
 
   const handleCreateStatus = async () => {
@@ -375,7 +407,7 @@ function DrawerStatusSelect({
       setIsCreateOpen(false);
 
       try {
-        await commitStatusChange(valueToCreate, prevStatus);
+        await commitStatusChange(valueToCreate, prevStatus, null);
       } catch (error) {
         setLocalStatus(prevStatus);
         throw error;
@@ -415,57 +447,108 @@ function DrawerStatusSelect({
           <DropdownMenuContent
             align="start"
             sideOffset={8}
-            className="z-[120] w-56 rounded-xl border-[#dde3ee] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
+            className="z-[120] w-72 rounded-xl border-[#dde3ee] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
             onCloseAutoFocus={(event) => event.preventDefault()}
           >
-            {workflowStatuses.map((option) => {
-              const optionTone = statusTone(option.value, customStatuses);
-              const selected = option.value === localStatus;
-
-              return (
-                <DropdownMenuItem
-                  key={option.value}
-                  className="rounded-lg px-3 py-2 text-sm font-medium text-[#182230] focus:bg-[#f8fafc] focus:text-[#182230]"
-                  onSelect={(event) => {
-                    event.preventDefault();
-                    if (option.value === localStatus) {
-                      setOpen(false);
-                      return;
-                    }
-
-                    const next = option.value;
-                    const prevStatus = localStatus;
-                    setOpen(false);
-                    setLocalStatus(next);
-
-                    startTransition(async () => {
-                      try {
-                        await commitStatusChange(next, prevStatus);
-                      } catch (error) {
-                        setLocalStatus(prevStatus);
-                        window.alert(error instanceof Error ? error.message : "Failed to update status.");
-                      }
-                    });
-                  }}
-                  style={{
-                    background: selected ? optionTone.selectedBackground : undefined,
-                    color: selected ? optionTone.color : undefined,
-                  }}
-                >
-                  <div className="flex w-full items-center justify-between gap-3">
-                    <span className="inline-flex items-center gap-2">
-                      <span
-                        aria-hidden="true"
-                        className="h-[6px] w-[6px] rounded-full"
-                        style={{ background: optionTone.dot }}
-                      />
-                      <span>{option.label}</span>
-                    </span>
-                    {selected ? <Check className="h-4 w-4 shrink-0 text-[#667085]" /> : null}
+            {reasonTarget === "CANCELED" ? (
+              <div className="p-1">
+                <div className="mb-2 flex items-start justify-between gap-3 px-2 py-1">
+                  <div>
+                    <div className="text-sm font-semibold text-[#182230]">
+                      Why is this order canceled?
+                    </div>
+                    <div className="mt-1 text-xs text-[#667085]">
+                      Pick a quick reason or write your own.
+                    </div>
                   </div>
-                </DropdownMenuItem>
-              );
-            })}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setReasonTarget(null);
+                      setCustomReason("");
+                    }}
+                    className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-[#667085] transition hover:bg-[#f8fafc] hover:text-[#111827]"
+                  >
+                    <ChevronLeft className="h-3.5 w-3.5" />
+                    Back
+                  </button>
+                </div>
+
+                <div className="grid gap-1.5">
+                  {CANCELED_REASONS.map((reason) => (
+                    <button
+                      key={reason}
+                      type="button"
+                      disabled={isPending}
+                      onClick={() => applyStatusSelection("CANCELED", reason)}
+                      className="w-full rounded-lg border border-[#e4eaf2] bg-white px-3 py-2 text-left text-sm font-medium text-[#182230] transition hover:border-[#cfd8e6] hover:bg-[#f8fafc] disabled:cursor-default disabled:opacity-60"
+                    >
+                      {reason}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="mt-3 border-t border-[#eef2f7] px-2 pt-3">
+                  <textarea
+                    value={customReason}
+                    onChange={(event) => setCustomReason(event.currentTarget.value)}
+                    placeholder="Other reason..."
+                    rows={3}
+                    className="w-full resize-none rounded-xl border border-[#dde3ee] px-3 py-2 text-sm outline-none transition placeholder:text-[#98a2b3] focus:border-[#111827]"
+                  />
+                  <button
+                    type="button"
+                    disabled={isPending || !customReason.trim()}
+                    onClick={() => applyStatusSelection("CANCELED", customReason.trim())}
+                    className="mt-2 inline-flex h-9 w-full items-center justify-center rounded-xl bg-[#111827] px-3 text-sm font-semibold text-white transition hover:bg-[#0b1220] disabled:cursor-default disabled:opacity-50"
+                  >
+                    Save reason
+                  </button>
+                </div>
+              </div>
+            ) : (
+              workflowStatuses.map((option) => {
+                const optionTone = statusTone(option.value, customStatuses);
+                const selected = option.value === localStatus;
+
+                return (
+                  <DropdownMenuItem
+                    key={option.value}
+                    className="rounded-lg px-3 py-2 text-sm font-medium text-[#182230] focus:bg-[#f8fafc] focus:text-[#182230]"
+                    onSelect={(event) => {
+                      event.preventDefault();
+                      if (option.value === localStatus) {
+                        setOpen(false);
+                        return;
+                      }
+
+                      if (option.value === "CANCELED") {
+                        setReasonTarget("CANCELED");
+                        return;
+                      }
+
+                      applyStatusSelection(option.value, null);
+                    }}
+                    style={{
+                      background: selected ? optionTone.selectedBackground : undefined,
+                      color: selected ? optionTone.color : undefined,
+                    }}
+                  >
+                    <div className="flex w-full items-center justify-between gap-3">
+                      <span className="inline-flex items-center gap-2">
+                        <span
+                          aria-hidden="true"
+                          className="h-[6px] w-[6px] rounded-full"
+                          style={{ background: optionTone.dot }}
+                        />
+                        <span>{option.label}</span>
+                      </span>
+                      {selected ? <Check className="h-4 w-4 shrink-0 text-[#667085]" /> : null}
+                    </div>
+                  </DropdownMenuItem>
+                );
+              })
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
 
@@ -1353,6 +1436,15 @@ export function OrderPreview({
                       </span>
                     </div>
 
+                    {currentOrder.status === "CANCELED" && currentOrder.status_reason?.trim() ? (
+                      <div className="mt-3 inline-flex max-w-full items-start gap-2 rounded-2xl border border-[#f3d1cd] bg-[#fff6f5] px-3 py-2 text-sm text-[#9f1239]">
+                        <span className="font-semibold text-[#b42318]">Canceled:</span>
+                        <span className="min-w-0 break-words text-[#7a271a]">
+                          {currentOrder.status_reason.trim()}
+                        </span>
+                      </div>
+                    ) : null}
+
                     <div className="mt-4 flex flex-wrap gap-2">
                       {labels.length > 0 ? (
                         labels.map((label) => (
@@ -1730,12 +1822,16 @@ export function OrderPreview({
                               businessId={businessId}
                               currentUserName={currentUserName}
                               userRole={userRole}
-                              onCommitted={(nextStatus) =>
+                              onCommitted={(nextStatus, reason) =>
                                 setPreviewOrder((prev) =>
                                   prev
                                     ? {
                                         ...prev,
                                         status: nextStatus,
+                                        status_reason:
+                                          nextStatus === "CANCELED"
+                                            ? (reason ?? prev.status_reason ?? null)
+                                            : null,
                                       }
                                     : prev,
                                 )
@@ -1743,6 +1839,12 @@ export function OrderPreview({
                             />
                           }
                         />
+                        {currentOrder.status === "CANCELED" && currentOrder.status_reason?.trim() ? (
+                          <MetaItem
+                            label="Cancel reason"
+                            value={currentOrder.status_reason.trim()}
+                          />
+                        ) : null}
                       </div>
 
                       <div className="rounded-2xl border border-[#eef2f7] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">

@@ -12,15 +12,16 @@ import {
   Ellipsis,
   Eye,
   List,
+  Plus,
   Search,
+  SlidersHorizontal,
   Trash2,
   UserRound,
 } from "lucide-react";
 
-import { StatusCell } from "../../InlineCells";
+import { CANCELED_REASONS, StatusCell } from "../../InlineCells";
 import { setOrderManager, setOrderStatus } from "../../actions";
 import { OrderPreview } from "../orders/OrderPreview";
-import DesktopKanbanCreateOrder from "./DesktopKanbanCreateOrder";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -77,6 +78,8 @@ type OrderSort =
   | "amountLow";
 type UserRole = "OWNER" | "MANAGER" | "GUEST";
 type ViewMode = "list" | "kanban";
+const TOGGLE_FILTERS_EVENT = "orders-desktop-toggle-filters";
+const KANBAN_TERMINAL_VISIBILITY_KEY = "orders-kanban-terminal-visibility";
 
 type TeamActor = {
   id: string;
@@ -119,6 +122,7 @@ type OrderRow = {
   created_by?: string | null;
   created_by_name?: string | null;
   created_by_role?: "OWNER" | "MANAGER" | null;
+  status_reason?: string | null;
 };
 
 type Props = {
@@ -146,7 +150,6 @@ type Props = {
   hiddenKanbanCounts: {
     done: number;
     canceled: number;
-    duplicate: number;
   };
   canManage: boolean;
   canEdit: boolean;
@@ -816,6 +819,8 @@ export default function DesktopOrdersTable({
   const [managerTouched, setManagerTouched] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [cancelReasonDialogOpen, setCancelReasonDialogOpen] = useState(false);
+  const [cancelReasonDraft, setCancelReasonDraft] = useState("");
   const [isPending] = useTransition();
   const [navigationMessage, setNavigationMessage] = useState<string | null>(
     null,
@@ -825,6 +830,16 @@ export default function DesktopOrdersTable({
   const kanbanScrollRef = React.useRef<HTMLDivElement | null>(null);
   const [kanbanCanScrollLeft, setKanbanCanScrollLeft] = useState(false);
   const [kanbanCanScrollRight, setKanbanCanScrollRight] = useState(false);
+  const [terminalColumnHidden, setTerminalColumnHidden] = useState<{
+    DONE: boolean;
+    CANCELED: boolean;
+  }>({
+    DONE: false,
+    CANCELED: true,
+  });
+  const cancelReasonResolverRef = React.useRef<((reason: string | null) => void) | null>(
+    null,
+  );
 
   React.useEffect(() => {
     isMountedRef.current = true;
@@ -832,6 +847,33 @@ export default function DesktopOrdersTable({
       isMountedRef.current = false;
     };
   }, []);
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = window.localStorage.getItem(KANBAN_TERMINAL_VISIBILITY_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as Partial<{
+        DONE: boolean;
+        CANCELED: boolean;
+      }>;
+      setTerminalColumnHidden({
+        DONE: Boolean(parsed.DONE),
+        CANCELED:
+          typeof parsed.CANCELED === "boolean" ? parsed.CANCELED : true,
+      });
+    } catch {
+      // Ignore invalid persisted visibility state.
+    }
+  }, []);
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(
+      KANBAN_TERMINAL_VISIBILITY_KEY,
+      JSON.stringify(terminalColumnHidden),
+    );
+  }, [terminalColumnHidden]);
 
   const supabase = useMemo(() => createClient(), []);
 
@@ -931,10 +973,12 @@ export default function DesktopOrdersTable({
     statusMode === "all" ||
     statusValues.includes("CANCELED") ||
     (!statusTouched && statusFilter.includes("CANCELED"));
-  const duplicateVisibleInFilter =
-    statusMode === "all" ||
-    statusValues.includes("DUPLICATE") ||
-    (!statusTouched && statusFilter.includes("DUPLICATE"));
+  const appliedStatuses =
+    statusMode === "all"
+      ? allSelectableStatuses
+      : statusTouched
+        ? statusValues
+        : normalizeQuickStatuses(statusFilter, activeStatusOptions);
   const kanbanColumns = useMemo(
     () => {
       const columns = workflowStatuses.map((status) => ({
@@ -970,29 +1014,7 @@ export default function DesktopOrdersTable({
   );
   const visibleKanbanColumns = useMemo(
     () => {
-      const visibleColumns = kanbanColumns.filter((column) => {
-        // Only built-in terminal statuses (DONE, CANCELED, DUPLICATE) can be hidden
-        // Custom statuses must always be visible
-        const isBuiltInTerminal =
-          column.builtIn &&
-          (column.value === "DONE" ||
-            column.value === "CANCELED" ||
-            column.value === "DUPLICATE");
-
-        if (!isBuiltInTerminal) {
-          // Custom statuses and non-terminal built-in statuses are always visible
-          return true;
-        }
-
-        // Built-in terminal statuses follow the visibility filter
-        if (column.value === "DONE")
-          return doneVisibleInFilter || hiddenKanbanCounts.done > 0;
-        if (column.value === "CANCELED")
-          return canceledVisibleInFilter || hiddenKanbanCounts.canceled > 0;
-        if (column.value === "DUPLICATE")
-          return duplicateVisibleInFilter || hiddenKanbanCounts.duplicate > 0;
-        return true;
-      });
+      const visibleColumns = kanbanColumns;
 
       console.log("[desktop-orders-table] visibleKanbanColumns", {
         statusMode,
@@ -1006,7 +1028,7 @@ export default function DesktopOrdersTable({
           builtIn: column.builtIn ?? false,
           isBuiltInTerminal:
             Boolean(column.builtIn) &&
-            ["DONE", "CANCELED", "DUPLICATE"].includes(column.value),
+            ["DONE", "CANCELED"].includes(column.value),
           ordersCount: column.orders.length,
         })),
       });
@@ -1014,12 +1036,6 @@ export default function DesktopOrdersTable({
       return visibleColumns;
     },
     [
-      canceledVisibleInFilter,
-      doneVisibleInFilter,
-      duplicateVisibleInFilter,
-      hiddenKanbanCounts.canceled,
-      hiddenKanbanCounts.done,
-      hiddenKanbanCounts.duplicate,
       kanbanColumns,
       statusFilter,
       statusMode,
@@ -1300,15 +1316,73 @@ export default function DesktopOrdersTable({
     setStatusTouched(true);
   };
 
+  const requestCanceledReason = () =>
+    new Promise<string | null>((resolve) => {
+      cancelReasonResolverRef.current = resolve;
+      setCancelReasonDraft("");
+      setCancelReasonDialogOpen(true);
+    });
+
+  const closeCanceledReasonDialog = (reason: string | null) => {
+    setCancelReasonDialogOpen(false);
+    setCancelReasonDraft("");
+    cancelReasonResolverRef.current?.(reason);
+    cancelReasonResolverRef.current = null;
+  };
+
+  const showTerminalColumn = (status: "DONE" | "CANCELED") => {
+    setTerminalColumnHidden((current) => ({
+      ...current,
+      [status]: false,
+    }));
+  };
+
+  const hideTerminalColumn = (status: "DONE" | "CANCELED") => {
+    setTerminalColumnHidden((current) => ({
+      ...current,
+      [status]: true,
+    }));
+
+    if (statusMode !== "custom" || !appliedStatuses.includes(status)) {
+      return;
+    }
+
+    const nextStatuses = appliedStatuses.filter((value) => value !== status);
+    setStatusValues(nextStatuses);
+    setStatusTouched(true);
+    navigateWithFallback(
+      buildHref({
+        q: searchDraft,
+        statusValues: nextStatuses,
+        statusTouched: true,
+        managerValue,
+        managerTouched,
+        sortValue,
+        rangeValue,
+        customStart,
+        customEnd,
+        rangeTouched,
+        page: 1,
+      }),
+    );
+  };
+
+  const revealTerminalColumn = (status: "DONE" | "CANCELED") => {
+    showTerminalColumn(status);
+
+    if (
+      (status === "DONE" && !doneVisibleInFilter) ||
+      (status === "CANCELED" && !canceledVisibleInFilter)
+    ) {
+      revealStatusInBoard(status);
+    }
+  };
+
   const handleCancelOrder = async (orderId: string, status: StatusValue) => {
     if (!canEdit || deletingId) return;
     if (status === "CANCELED" || status === "DONE") return;
-    if (
-      !window.confirm(
-        "Cancel this order? The order will stay in the list with Canceled status.",
-      )
-    )
-      return;
+    const reason = await requestCanceledReason();
+    if (!reason) return;
 
     setDeletingId(orderId);
     try {
@@ -1316,6 +1390,7 @@ export default function DesktopOrdersTable({
         orderId,
         businessSlug,
         status: "CANCELED",
+        reason,
       });
     } catch (error) {
       setDeletingId(null);
@@ -1364,18 +1439,22 @@ export default function DesktopOrdersTable({
     const order = boardRows.find((row) => row.id === orderId);
     if (!order || savingStatusOrderId || order.status === nextStatus) return;
 
+    let cancelReason: string | null = null;
+
     if (nextStatus === "CANCELED") {
-      const ok = window.confirm(
-        "Cancel this order? The order will stay in the list with Canceled status.",
-      );
-      if (!ok) {
+      cancelReason = await requestCanceledReason();
+      if (!cancelReason) {
         setDraggingOrderId(null);
         setDropStatusValue(null);
         return;
       }
     }
 
-    const nextOrder = { ...order, status: nextStatus };
+    const nextOrder = {
+      ...order,
+      status: nextStatus,
+      status_reason: nextStatus === "CANCELED" ? cancelReason : null,
+    };
     const appliedStatuses =
       statusMode === "all"
         ? allSelectableStatuses
@@ -1402,6 +1481,7 @@ export default function DesktopOrdersTable({
         orderId,
         businessSlug,
         status: nextStatus,
+        reason: cancelReason,
       });
     } catch (error) {
       setBoardRows(previousRows);
@@ -1417,7 +1497,26 @@ export default function DesktopOrdersTable({
   const customRangeReady =
     !showCustomRange || (Boolean(customStart) && Boolean(customEnd));
   const shouldStretchKanban =
-    visibleKanbanColumns.length > 0 && visibleKanbanColumns.length <= 4;
+    visibleKanbanColumns.length > 0 && visibleKanbanColumns.length <= 5;
+  const kanbanColumnMinWidth = 220;
+  const collapsedKanbanColumnWidth = 132;
+  const isCollapsedKanbanColumn = (column: (typeof visibleKanbanColumns)[number]) =>
+    Boolean(column.builtIn) &&
+    ((column.value === "DONE" &&
+      terminalColumnHidden.DONE) ||
+      (column.value === "CANCELED" &&
+        terminalColumnHidden.CANCELED));
+  const hasCollapsedKanbanColumns = visibleKanbanColumns.some((column) =>
+    isCollapsedKanbanColumn(column),
+  );
+  const kanbanGridMinWidth = visibleKanbanColumns.reduce(
+    (total, column) =>
+      total +
+      (isCollapsedKanbanColumn(column)
+        ? collapsedKanbanColumnWidth
+        : kanbanColumnMinWidth),
+    0,
+  );
 
   React.useEffect(() => {
     if (viewMode !== "kanban") {
@@ -1461,65 +1560,125 @@ export default function DesktopOrdersTable({
     () => boardRows.find((row) => row.id === draggingOrderId) ?? null,
     [boardRows, draggingOrderId],
   );
+  const openKanbanFilters = () => {
+    window.dispatchEvent(new Event(TOGGLE_FILTERS_EVENT));
+  };
 
   return (
     <section
       className={[
-        "w-full min-w-0 overflow-visible rounded-[28px] border border-[#dde3ee] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)]",
-        viewMode === "kanban" ? "mx-0" : "mx-auto",
+        "w-full min-w-0 rounded-[28px] border border-[#dde3ee] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)]",
+        viewMode === "kanban"
+          ? "mx-0 flex h-[calc(100vh-132px)] flex-col overflow-hidden"
+          : "mx-auto overflow-visible",
       ].join(" ")}
     >
-      <div className="border-b border-[#eef2f7] px-5 py-5">
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <div>
+      <div
+        className={
+          viewMode === "kanban"
+            ? "border-b border-[#eef2f7] px-5 py-3"
+            : "border-b border-[#eef2f7] px-5 py-5"
+        }
+      >
+        <div
+          className={`flex flex-wrap justify-between gap-3 ${
+            viewMode === "kanban" ? "items-center" : "items-start"
+          }`}
+        >
+          <div
+            className={
+              viewMode === "kanban"
+                ? "flex flex-wrap items-center gap-x-3 gap-y-1"
+                : ""
+            }
+          >
             <div className="text-[13px] font-semibold text-[#111827]">
               Orders
             </div>
-            <div className="mt-1 text-[12px] font-medium text-[#98a2b3]">
-              {resultCount} {resultCount === 1 ? "result" : "results"} · Page{" "}
-              {currentPage} of {totalPages}
+            <div
+              className={`text-[12px] font-medium text-[#98a2b3] ${
+                viewMode === "kanban" ? "" : "mt-1"
+              }`}
+            >
+              {resultCount} {resultCount === 1 ? "result" : "results"}
+              {viewMode === "list" ? (
+                <>
+                  {" "}
+                  · Page {currentPage} of {totalPages}
+                </>
+              ) : null}
             </div>
           </div>
-          <div className="inline-flex items-center rounded-2xl border border-[#dde3ee] bg-[#f8fafc] p-1">
+          <div
+            className={`flex items-center gap-2 ${
+              viewMode === "kanban" ? "" : "self-start"
+            }`}
+          >
             <button
               type="button"
-              onClick={() => {
-                if (viewMode === "list") return;
-                setViewMode("list");
-                navigateWithFallback(viewHref("list"));
-              }}
-              className={[
-                "inline-flex h-9 items-center gap-2 rounded-[14px] px-3 text-sm font-semibold transition",
-                viewMode === "list"
-                  ? "bg-white text-[#111827] shadow-[0_1px_2px_rgba(16,24,40,0.08)]"
-                  : "text-[#667085] hover:text-[#111827]",
-              ].join(" ")}
+              onClick={openKanbanFilters}
+              className="relative inline-flex h-8 items-center justify-center gap-1.5 rounded-xl border border-[#dde3ee] bg-white px-2.5 text-sm font-semibold text-[#344054] transition hover:border-[#cfd8e6] hover:bg-[#f8fafc]"
+              aria-label="Open search and filters"
+              title="Search and filters"
             >
-              <List className="h-4 w-4" />
-              List
+              <Search className="h-[14px] w-[14px]" />
+              <SlidersHorizontal className="h-[15px] w-[15px]" />
+              {hasActiveFilters ? (
+                <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[#eef4ff] px-1 text-[9px] font-bold text-[#2459d3]">
+                  1
+                </span>
+              ) : null}
             </button>
-            <button
-              type="button"
-              onClick={() => {
-                if (viewMode === "kanban") return;
-                setViewMode("kanban");
-                navigateWithFallback(viewHref("kanban"));
-              }}
-              className={[
-                "inline-flex h-9 items-center gap-2 rounded-[14px] px-3 text-sm font-semibold transition",
-                viewMode === "kanban"
-                  ? "bg-white text-[#111827] shadow-[0_1px_2px_rgba(16,24,40,0.08)]"
-                  : "text-[#667085] hover:text-[#111827]",
-              ].join(" ")}
-            >
-              <Columns3 className="h-4 w-4" />
-              Kanban
-            </button>
+            {hasActiveFilters ? (
+              <a
+                href={clearHref}
+                className="inline-flex h-8 items-center justify-center rounded-xl border border-[#dde3ee] bg-white px-2.5 text-[13px] font-semibold text-[#667085] transition hover:border-[#cfd8e6] hover:bg-[#f8fafc] hover:text-[#111827]"
+              >
+                Reset
+              </a>
+            ) : null}
+
+            <div className="inline-flex items-center rounded-xl border border-[#d8e1ee] bg-[#f8fafc] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]">
+              <button
+                type="button"
+                onClick={() => {
+                  if (viewMode === "list") return;
+                  setViewMode("list");
+                  navigateWithFallback(viewHref("list"));
+                }}
+                className={[
+                  "inline-flex h-8 items-center gap-2 rounded-[10px] px-3 text-[15px] font-semibold transition",
+                  viewMode === "list"
+                    ? "border border-[#e2e8f0] bg-white text-[#111827] shadow-[0_6px_16px_rgba(15,23,42,0.08)]"
+                    : "border border-transparent text-[#667085] hover:text-[#111827]",
+                ].join(" ")}
+              >
+                <List className="h-[15px] w-[15px]" />
+                List
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (viewMode === "kanban") return;
+                  setViewMode("kanban");
+                  navigateWithFallback(viewHref("kanban"));
+                }}
+                className={[
+                  "inline-flex h-8 items-center gap-2 rounded-[10px] px-3 text-[15px] font-semibold transition",
+                  viewMode === "kanban"
+                    ? "border border-[#e2e8f0] bg-white text-[#111827] shadow-[0_6px_16px_rgba(15,23,42,0.08)]"
+                    : "border border-transparent text-[#667085] hover:text-[#111827]",
+                ].join(" ")}
+              >
+                <Columns3 className="h-[15px] w-[15px]" />
+                Kanban
+              </button>
+            </div>
           </div>
         </div>
 
         <form
-          className="mt-4 flex flex-wrap items-center gap-3"
+          className="hidden"
           onSubmit={(event) => {
             event.preventDefault();
             submitFilters({
@@ -1877,52 +2036,49 @@ export default function DesktopOrdersTable({
         ) : null}
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#eef2f7] px-5 py-3">
-        <div className="text-xs font-medium text-[#667085]">
-          Showing {boardRows.length === 0 ? 0 : (currentPage - 1) * perPage + 1}
-          -{(currentPage - 1) * perPage + boardRows.length} of {resultCount}
-        </div>
-
-        <div className="flex items-center gap-2 text-xs font-medium text-[#667085]">
-          <span>Per page</span>
-          <DropdownMenu
-            modal={false}
-            open={perPageMenuOpen}
-            onOpenChange={setPerPageMenuOpen}
-          >
-            <DropdownMenuTrigger asChild>
-              <button
-                type="button"
-                className="inline-flex h-9 min-w-[74px] items-center justify-between rounded-xl border border-[#dde3ee] bg-white px-3 text-sm font-medium text-[#344054] outline-none transition hover:border-[#cfd8e6] focus:border-[#111827] focus:ring-2 focus:ring-[#111827]/10"
-              >
-                <span>{perPage}</span>
-                <ChevronDown className="ml-3 h-4 w-4 shrink-0 text-[#98a2b3]" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="end"
-              sideOffset={8}
-              className="z-[70] w-24 rounded-xl border-[#dde3ee] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
-              onCloseAutoFocus={(event) => event.preventDefault()}
+      {viewMode === "list" ? (
+        <div className="flex flex-wrap items-center justify-end gap-3 border-b border-[#eef2f7] px-5 py-3">
+          <div className="flex items-center gap-2 text-xs font-medium text-[#667085]">
+            <span>Per page</span>
+            <DropdownMenu
+              modal={false}
+              open={perPageMenuOpen}
+              onOpenChange={setPerPageMenuOpen}
             >
-              <DropdownMenuRadioGroup value={String(perPage)}>
-                {PAGE_SIZE_OPTIONS.map((option) => (
-                  <DropdownMenuRadioItem
-                    key={option}
-                    value={String(option)}
-                    className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#344054] data-[state=checked]:bg-[#eef4ff] data-[state=checked]:font-semibold data-[state=checked]:text-[#2459d3]"
-                    onSelect={() =>
-                      navigateWithFallback(paginationHref(1, option))
-                    }
-                  >
-                    {option}
-                  </DropdownMenuRadioItem>
-                ))}
-              </DropdownMenuRadioGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="inline-flex h-9 min-w-[74px] items-center justify-between rounded-xl border border-[#dde3ee] bg-white px-3 text-sm font-medium text-[#344054] outline-none transition hover:border-[#cfd8e6] focus:border-[#111827] focus:ring-2 focus:ring-[#111827]/10"
+                >
+                  <span>{perPage}</span>
+                  <ChevronDown className="ml-3 h-4 w-4 shrink-0 text-[#98a2b3]" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                sideOffset={8}
+                className="z-[70] w-24 rounded-xl border-[#dde3ee] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
+                onCloseAutoFocus={(event) => event.preventDefault()}
+              >
+                <DropdownMenuRadioGroup value={String(perPage)}>
+                  {PAGE_SIZE_OPTIONS.map((option) => (
+                    <DropdownMenuRadioItem
+                      key={option}
+                      value={String(option)}
+                      className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#344054] data-[state=checked]:bg-[#eef4ff] data-[state=checked]:font-semibold data-[state=checked]:text-[#2459d3]"
+                      onSelect={() =>
+                        navigateWithFallback(paginationHref(1, option))
+                      }
+                    >
+                      {option}
+                    </DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
-      </div>
+      ) : null}
 
       {viewMode === "list" ? (
         <div className="overflow-x-auto overflow-y-visible">
@@ -2140,7 +2296,7 @@ export default function DesktopOrdersTable({
           </table>
         </div>
       ) : (
-        <div className="relative px-5 py-5">
+        <div className="relative flex-1 overflow-hidden px-4 py-4">
           {visibleKanbanColumns.length > 0 ? (
             <>
               {kanbanCanScrollLeft ? (
@@ -2167,18 +2323,24 @@ export default function DesktopOrdersTable({
 
               <div
                 ref={kanbanScrollRef}
-                className="overflow-x-auto overflow-y-hidden pb-2"
+                className="h-full overflow-x-auto overflow-y-hidden pb-1"
               >
                 <div
-                  className="grid min-h-[calc(100vh-320px)] gap-4"
+                  className="grid h-full gap-3"
                   style={
-                    shouldStretchKanban
+                    shouldStretchKanban && !hasCollapsedKanbanColumns
                       ? {
                           gridTemplateColumns: `repeat(${visibleKanbanColumns.length}, minmax(0, 1fr))`,
                         }
                       : {
-                          minWidth: `${visibleKanbanColumns.length * 280}px`,
-                          gridTemplateColumns: `repeat(${visibleKanbanColumns.length}, minmax(280px, 1fr))`,
+                          minWidth: `${kanbanGridMinWidth}px`,
+                          gridTemplateColumns: visibleKanbanColumns
+                            .map((column) =>
+                              isCollapsedKanbanColumn(column)
+                                ? `${collapsedKanbanColumnWidth}px`
+                                : `minmax(${kanbanColumnMinWidth}px, 1fr)`,
+                            )
+                            .join(" "),
                         }
                   }
                 >
@@ -2189,56 +2351,62 @@ export default function DesktopOrdersTable({
                   const isBuiltInTerminal =
                     column.builtIn &&
                     (column.value === "DONE" ||
-                      column.value === "CANCELED" ||
-                      column.value === "DUPLICATE");
+                      column.value === "CANCELED");
 
                   const hiddenTerminalCount = isBuiltInTerminal
                     ? column.value === "DONE"
                       ? hiddenKanbanCounts.done
                       : column.value === "CANCELED"
                         ? hiddenKanbanCounts.canceled
-                        : column.value === "DUPLICATE"
-                          ? hiddenKanbanCounts.duplicate
-                          : 0
+                        : 0
                     : 0;
 
                   const hiddenByFilter = isBuiltInTerminal
-                    ? (column.value === "DONE" &&
+                    ? statusMode === "custom" &&
+                      ((column.value === "DONE" &&
                         !doneVisibleInFilter &&
                         hiddenKanbanCounts.done > 0) ||
                       (column.value === "CANCELED" &&
                         !canceledVisibleInFilter &&
-                        hiddenKanbanCounts.canceled > 0) ||
-                      (column.value === "DUPLICATE" &&
-                        !duplicateVisibleInFilter &&
-                        hiddenKanbanCounts.duplicate > 0)
+                        hiddenKanbanCounts.canceled > 0))
                     : false;
+                  const hiddenByPreference = isBuiltInTerminal
+                    ? column.value === "DONE"
+                      ? terminalColumnHidden.DONE
+                      : terminalColumnHidden.CANCELED
+                    : false;
+                  const hiddenCardCount =
+                    hiddenByFilter || hiddenByPreference
+                      ? hiddenTerminalCount
+                      : column.orders.length;
 
                   const showInlineCreate = column.value === "NEW";
-                  const revealLabel = isBuiltInTerminal
-                    ? column.value === "DONE"
-                      ? "Show done"
-                      : column.value === "CANCELED"
-                        ? "Show canceled"
-                        : column.value === "DUPLICATE"
-                          ? "Show duplicates"
-                          : `Show ${column.label.toLowerCase()}`
-                    : `Show ${column.label.toLowerCase()}`;
                   const hiddenTitle = isBuiltInTerminal
-                    ? column.value === "DONE"
-                      ? "Done is hidden by filters"
-                      : `${column.label} is hidden by filters`
+                    ? hiddenByPreference
+                      ? `${column.label} is hidden`
+                      : hiddenByFilter
+                        ? column.value === "DONE"
+                          ? "Done is hidden by filters"
+                          : `${column.label} is hidden by filters`
+                      : `${column.label} is hidden`
                     : `${column.label} is hidden by filters`;
+                  const isCollapsedColumn = isCollapsedKanbanColumn(column);
 
                   return (
                     <div
                       key={column.value}
                       className={[
-                        "flex h-[calc(100vh-320px)] min-h-[560px] flex-col rounded-[26px] border p-3 transition",
+                        "flex h-full min-h-0 flex-col rounded-[24px] border p-2.5 transition",
+                        isCollapsedColumn ? "px-2.5" : "",
                         dropStatusValue === column.value
-                          ? "border-[#111827] bg-[#f8fbff] shadow-[0_18px_40px_rgba(15,23,42,0.08)]"
-                          : "border-[#e2e8f0] bg-[#fbfcfe]",
+                          ? "border-[#111827] shadow-[0_18px_40px_rgba(15,23,42,0.08)]"
+                          : "border-[#e2e8f0]",
                       ].join(" ")}
+                      style={{
+                        background: dropStatusValue === column.value
+                          ? `linear-gradient(180deg, ${tone.selectedBackground} 0%, #f8fbff 28%, #ffffff 100%)`
+                          : `linear-gradient(180deg, ${tone.background} 0%, #fbfcfe 22%, #ffffff 100%)`,
+                      }}
                       onDragOver={(event) => {
                         if (!canManage) return;
                         event.preventDefault();
@@ -2264,64 +2432,185 @@ export default function DesktopOrdersTable({
                         void handleDropToStatus(orderId, column.value);
                       }}
                     >
-                      <div className="flex items-center justify-between gap-3 rounded-[20px] px-2 pb-3">
-                        <div className="flex min-w-0 items-center gap-3">
+                      <div
+                        className={[
+                          "sticky top-0 z-[1] flex items-center justify-between gap-3 rounded-[18px] border border-transparent bg-[#fbfcfe]/95 pb-2.5 backdrop-blur",
+                          isCollapsedColumn ? "px-0" : "px-1.5",
+                        ].join(" ")}
+                        style={{
+                          background: isCollapsedColumn
+                            ? `${tone.background}`
+                            : `${tone.background}CC`,
+                        }}
+                      >
+                        <div
+                          className={[
+                            "flex min-w-0 items-center",
+                            isCollapsedColumn
+                              ? "gap-1.5"
+                              : "gap-3",
+                          ].join(" ")}
+                        >
                           <span
                             className="h-3 w-3 shrink-0 rounded-full"
                             style={{ background: tone.dot }}
                           />
                           <div className="min-w-0">
-                            <div className="truncate text-sm font-semibold text-[#111827]">
+                            <div
+                              className={[
+                                "font-semibold text-[#111827]",
+                                isCollapsedColumn
+                                  ? "text-[13px] leading-4 whitespace-normal"
+                                  : "truncate text-[15px]",
+                              ].join(" ")}
+                            >
                               {column.label}
                             </div>
-                            <div className="text-xs font-medium text-[#98a2b3]">
-                              {column.orders.length}{" "}
-                              {column.orders.length === 1 ? "order" : "orders"}
+                            <div
+                              className={[
+                                "font-medium text-[#98a2b3]",
+                                isCollapsedColumn
+                                  ? "text-[11px] leading-4"
+                                  : "text-xs",
+                              ].join(" ")}
+                            >
+                              {isCollapsedColumn
+                                ? `${hiddenCardCount} hidden`
+                                : hiddenByFilter || hiddenByPreference
+                                  ? `${hiddenCardCount} hidden`
+                                : `${column.orders.length} ${column.orders.length === 1 ? "order" : "orders"}`}
                             </div>
                           </div>
                         </div>
                         <div
-                          className="inline-flex h-8 min-w-8 items-center justify-center rounded-full px-2 text-xs font-semibold"
-                          style={{
-                            background: tone.background,
-                            color: tone.color,
-                          }}
+                          className={`flex ${
+                            isCollapsedColumn
+                              ? "flex-col items-end gap-1"
+                              : hiddenByPreference
+                                ? "flex-col items-end gap-1.5"
+                              : "items-center gap-2"
+                          }`}
                         >
-                          {column.orders.length}
+                          {showInlineCreate && !isCollapsedColumn ? (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setOpenId(null);
+                                setCreatePreviewOpen(true);
+                              }}
+                              aria-label="Create order"
+                              title="Create order"
+                              className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-[#1f2937]/10 bg-[#111827] text-white shadow-[0_8px_18px_rgba(17,24,39,0.18)] transition hover:bg-[#0b1220] hover:shadow-[0_10px_22px_rgba(17,24,39,0.24)]"
+                            >
+                              <Plus className="h-3.5 w-3.5 text-white" />
+                            </button>
+                          ) : null}
+                          <div
+                            className="inline-flex h-7 min-w-7 items-center justify-center rounded-full px-2 text-[11px] font-semibold"
+                            style={{
+                              background: tone.background,
+                              color: tone.color,
+                            }}
+                          >
+                            {hiddenByFilter || hiddenByPreference
+                              ? hiddenCardCount
+                              : column.orders.length}
+                          </div>
+                          {isBuiltInTerminal ? (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                hiddenByFilter || hiddenByPreference
+                                  ? revealTerminalColumn(
+                                      column.value as "DONE" | "CANCELED",
+                                    )
+                                  : hideTerminalColumn(
+                                      column.value as "DONE" | "CANCELED",
+                                    )
+                              }
+                              aria-label={
+                                hiddenByFilter || hiddenByPreference
+                                  ? "Show"
+                                  : `Hide ${column.label.toLowerCase()}`
+                              }
+                              title={
+                                hiddenByFilter || hiddenByPreference
+                                  ? "Show"
+                                  : `Hide ${column.label.toLowerCase()}`
+                              }
+                              className={[
+                                "inline-flex items-center justify-center rounded-full transition",
+                                hiddenByFilter || hiddenByPreference
+                                  ? isCollapsedColumn
+                                    ? "h-6 min-w-[42px] px-1.5 text-[10px] font-semibold"
+                                    : "h-7 min-w-[48px] px-2 text-[11px] font-semibold"
+                                  : "h-7 w-7 border border-[#dde3ee] bg-white text-[#667085] hover:border-[#cfd8e6] hover:bg-[#f8fafc] hover:text-[#111827]",
+                              ].join(" ")}
+                              style={
+                                hiddenByFilter || hiddenByPreference
+                                  ? {
+                                      background: tone.background,
+                                      color: tone.color,
+                                    }
+                                  : undefined
+                              }
+                            >
+                              {hiddenByFilter || hiddenByPreference ? (
+                                "Show"
+                              ) : (
+                                <Eye className="h-3.5 w-3.5" />
+                              )}
+                            </button>
+                          ) : null}
                         </div>
                       </div>
 
-                      <div className="flex min-h-0 flex-1 flex-col gap-3 rounded-[20px] bg-white/50 p-1">
-                        {showInlineCreate ? (
-                          <DesktopKanbanCreateOrder
-                            onCreate={() => {
-                              setOpenId(null);
-                              setCreatePreviewOpen(true);
+                      <div
+                        className="flex min-h-0 flex-1 flex-col gap-2.5 rounded-[18px] p-0.5"
+                        style={{
+                          background: isCollapsedColumn
+                            ? `${tone.background}80`
+                            : "rgba(255,255,255,0.4)",
+                        }}
+                      >
+                        {hiddenByFilter || hiddenByPreference ? (
+                          <div
+                            className={[
+                              "flex flex-col items-center justify-center rounded-[20px] border border-dashed text-center",
+                              isCollapsedColumn
+                                ? "min-h-[220px] px-2 py-4"
+                                : "min-h-[160px] px-4",
+                            ].join(" ")}
+                            style={{
+                              borderColor: `${tone.dot}33`,
+                              background: "rgba(255,255,255,0.72)",
                             }}
-                          />
-                        ) : null}
-
-                        {hiddenByFilter ? (
-                          <div className="flex min-h-[160px] flex-col items-center justify-center rounded-[20px] border border-dashed border-[#dbe2ea] bg-white/70 px-4 text-center">
-                            <div className="text-sm font-semibold text-[#344054]">
+                          >
+                            <div
+                              className={`font-semibold text-[#344054] ${
+                                isCollapsedColumn
+                                  ? "text-[13px] leading-5"
+                                  : "text-sm"
+                              }`}
+                            >
                               {hiddenTitle}
                             </div>
-                            <div className="mt-1 text-sm text-[#98a2b3]">
-                              {hiddenTerminalCount}{" "}
-                              {hiddenTerminalCount === 1 ? "order" : "orders"}{" "}
+                            <div
+                              className={`mt-1 text-[#98a2b3] ${
+                                isCollapsedColumn
+                                  ? "text-[12px] leading-5"
+                                  : "text-sm"
+                              }`}
+                            >
+                              {hiddenCardCount}{" "}
+                              {hiddenCardCount === 1 ? "order" : "orders"}{" "}
                               in this status
                             </div>
-                            <button
-                              type="button"
-                              onClick={() => revealStatusInBoard(column.value)}
-                              className="mt-3 inline-flex h-9 items-center justify-center rounded-xl border border-[#dde3ee] bg-white px-3 text-sm font-semibold text-[#344054] transition hover:border-[#cfd8e6] hover:bg-[#f8fafc]"
-                            >
-                              {revealLabel}
-                            </button>
                           </div>
                         ) : null}
 
-                        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
+                        {!hiddenByFilter && !hiddenByPreference ? (
+                          <div className="min-h-0 flex-1 space-y-2.5 overflow-y-auto pr-1">
                           {column.orders.map((order) => {
                             const isOverdue = isOrderOverdue(order, todayISO);
                             const canCancel =
@@ -2352,10 +2641,10 @@ export default function DesktopOrdersTable({
                                   setDropStatusValue(null);
                                 }}
                                 className={[
-                                  "group rounded-[22px] border border-[#e2e8f0] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition",
+                                  "group rounded-[16px] border border-[#e2e8f0] bg-white px-2.5 py-2 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition",
                                   isDragging
-                                    ? "scale-[0.985] opacity-60"
-                                    : "hover:-translate-y-0.5 hover:shadow-[0_20px_40px_rgba(15,23,42,0.08)]",
+                                    ? "scale-[0.99] border-[#cfd8e6] bg-[#fcfdff] opacity-90 shadow-[0_18px_36px_rgba(15,23,42,0.14)]"
+                                    : "hover:-translate-y-0.5 hover:border-[#d6dee9] hover:shadow-[0_16px_32px_rgba(15,23,42,0.08)]",
                                   canManage && !isSavingCard
                                     ? "cursor-grab active:cursor-grabbing"
                                     : "",
@@ -2367,9 +2656,9 @@ export default function DesktopOrdersTable({
                                         ? "grabbing"
                                         : "grab"
                                       : undefined,
-                                }}
-                              >
-                                <div className="flex items-start justify-between gap-3">
+                                  }}
+                                >
+                                <div className="flex items-start justify-between gap-2.5">
                                   <button
                                     type="button"
                                     onClick={() => toggleOrderPreview(order.id)}
@@ -2383,10 +2672,10 @@ export default function DesktopOrdersTable({
                                           : undefined,
                                     }}
                                   >
-                                    <div className="text-sm font-semibold text-[#111827]">
+                                    <div className="text-[15px] font-semibold leading-5 text-[#111827]">
                                       #{order.order_number ?? "—"}
                                     </div>
-                                    <div className="mt-1 text-xs font-medium text-[#98a2b3]">
+                                    <div className="mt-0.5 text-[12px] font-medium text-[#98a2b3]">
                                       {formatCreatedAt(order.created_at)}
                                     </div>
                                   </button>
@@ -2398,7 +2687,7 @@ export default function DesktopOrdersTable({
                                       <DropdownMenuTrigger asChild>
                                         <button
                                           type="button"
-                                          className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#dde3ee] bg-white text-[#667085] transition hover:border-[#cfd8e6] hover:bg-[#f8fafc] hover:text-[#111827]"
+                                          className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-[#dde3ee] bg-white text-[#667085] transition hover:border-[#cfd8e6] hover:bg-[#f8fafc] hover:text-[#111827]"
                                           aria-label="Open order actions"
                                           style={{
                                             cursor:
@@ -2472,7 +2761,7 @@ export default function DesktopOrdersTable({
                                 <button
                                   type="button"
                                   onClick={() => toggleOrderPreview(order.id)}
-                                  className="mt-4 block w-full text-left"
+                                  className="mt-2 block w-full text-left"
                                   style={{
                                     cursor:
                                       canManage && !isSavingCard
@@ -2482,78 +2771,60 @@ export default function DesktopOrdersTable({
                                         : undefined,
                                   }}
                                 >
-                                  <div className="text-sm font-semibold text-[#111827]">
+                                  <div className="truncate text-[14px] font-semibold leading-5 text-[#111827]">
                                     {order.client_full_name?.trim() ||
                                       order.client_name?.trim() ||
                                       "Unknown"}
                                   </div>
-                                  <div className="mt-1 truncate text-xs text-[#98a2b3]">
-                                    {order.client_phone?.trim() ||
-                                      "No phone number"}
-                                  </div>
-                                </button>
-
-                                <div className="mt-4 grid gap-3 rounded-[18px] bg-[#f8fafc] p-3">
-                                  <div className="flex items-center justify-between gap-3">
-                                    <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
-                                      Amount
-                                    </span>
-                                    <span className="text-sm font-semibold tabular-nums text-[#111827]">
+                                  <div className="mt-0.5 flex items-center justify-between gap-2 text-[12px] text-[#98a2b3]">
+                                    <span className="truncate">
                                       {fmtAmount(Number(order.amount))}
-                                    </span>
-                                  </div>
-                                  <div className="flex items-center justify-between gap-3">
-                                    <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
-                                      Due
                                     </span>
                                     <span
                                       className={[
-                                        "inline-flex items-center gap-2 text-sm font-medium",
+                                        "inline-flex items-center gap-1 truncate font-medium",
                                         isOverdue
                                           ? "text-[#d92d20]"
-                                          : "text-[#475467]",
+                                          : "text-[#667085]",
                                       ].join(" ")}
                                     >
-                                      <span>
+                                      {isOverdue ? (
+                                        <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                                      ) : null}
+                                      <span className="truncate">
                                         {formatDueDate(order.due_date)}
                                       </span>
-                                      {isOverdue ? (
-                                        <AlertTriangle className="h-4 w-4" />
-                                      ) : null}
                                     </span>
                                   </div>
-                                  <div className="flex items-start justify-between gap-3">
-                                    <span className="pt-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
-                                      Manager
-                                    </span>
-                                    <div
-                                      onClick={(event) =>
-                                        event.stopPropagation()
-                                      }
-                                      style={{
-                                        cursor:
-                                          canManage && !isSavingCard
-                                            ? isDragging
-                                              ? "grabbing"
-                                              : "grab"
-                                            : undefined,
-                                      }}
-                                    >
-                                      <ManagerAssignmentCell
-                                        orderId={order.id}
-                                        businessSlug={businessSlug}
-                                        managerId={order.manager_id}
-                                        managerName={order.manager_name}
-                                        actors={effectiveActors}
-                                        canManage={canManage}
-                                        avatarOnly
-                                        onAssigned={() => router.refresh()}
-                                      />
-                                    </div>
-                                  </div>
-                                </div>
+                                </button>
 
-                                <div className="mt-4 flex items-center justify-between gap-3">
+                                <div className="mt-2 flex items-center justify-between gap-2">
+                                  <div
+                                    className="min-w-0 flex items-center gap-2"
+                                    onClick={(event) => event.stopPropagation()}
+                                    style={{
+                                      cursor:
+                                        canManage && !isSavingCard
+                                          ? isDragging
+                                            ? "grabbing"
+                                            : "grab"
+                                          : undefined,
+                                    }}
+                                  >
+                                    <ManagerAssignmentCell
+                                      orderId={order.id}
+                                      businessSlug={businessSlug}
+                                      managerId={order.manager_id}
+                                      managerName={order.manager_name}
+                                      actors={effectiveActors}
+                                      canManage={canManage}
+                                      avatarOnly
+                                      onAssigned={() => router.refresh()}
+                                    />
+                                    <span className="truncate text-[12px] font-medium text-[#667085]">
+                                      {order.manager_name?.trim() || "Unassigned"}
+                                    </span>
+                                  </div>
                                   <div
                                     onClick={(event) => event.stopPropagation()}
                                     style={{
@@ -2573,26 +2844,20 @@ export default function DesktopOrdersTable({
                                       canManage={canManage}
                                     />
                                   </div>
-                                  <div className="text-[11px] font-medium text-[#98a2b3]">
-                                    {isSavingCard
-                                      ? "Saving..."
-                                      : canManage
-                                        ? "Drag to move"
-                                        : "Read only"}
-                                  </div>
                                 </div>
                               </div>
                             );
                           })}
 
-                          {column.orders.length === 0 && !hiddenByFilter ? (
+                          {column.orders.length === 0 ? (
                             <div className="flex min-h-[160px] items-center justify-center rounded-[20px] border border-dashed border-[#dbe2ea] bg-white/70 px-4 text-center text-sm text-[#98a2b3]">
                               {dropStatusValue === column.value
                                 ? "Drop order here"
                                 : "No orders in this status"}
                             </div>
                           ) : null}
-                        </div>
+                          </div>
+                        ) : null}
                       </div>
                     </div>
                   );
@@ -2678,7 +2943,7 @@ export default function DesktopOrdersTable({
         </div>
       )}
 
-      {totalPages > 1 ? (
+      {viewMode === "list" && totalPages > 1 ? (
         <div className="border-t border-[#eef2f7] px-5 py-4">
           <Pagination className="justify-end">
             <PaginationContent>
@@ -2760,6 +3025,72 @@ export default function DesktopOrdersTable({
           setCreatePreviewOpen(false);
         }}
       />
+      <AlertDialog
+        open={cancelReasonDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) closeCanceledReasonDialog(null);
+        }}
+      >
+        <AlertDialogContent className="rounded-[24px] border-slate-200 bg-white p-6 shadow-[0_24px_64px_rgba(15,23,42,0.18)] sm:max-w-lg">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-xl tracking-[-0.02em] text-slate-900">
+              Why is this order canceled?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-sm leading-6 text-slate-500">
+              Pick a common reason or write your own. This reason will be saved with the order.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div className="grid gap-2">
+            {CANCELED_REASONS.map((reason) => (
+              <button
+                key={reason}
+                type="button"
+                onClick={() => closeCanceledReasonDialog(reason)}
+                className="w-full rounded-xl border border-[#e4eaf2] bg-white px-3 py-2.5 text-left text-sm font-medium text-[#182230] transition hover:border-[#cfd8e6] hover:bg-[#f8fafc]"
+              >
+                {reason}
+              </button>
+            ))}
+          </div>
+
+          <div className="mt-2">
+            <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
+              Custom reason
+            </label>
+            <textarea
+              value={cancelReasonDraft}
+              onChange={(event) => setCancelReasonDraft(event.currentTarget.value)}
+              placeholder="Write the cancel reason..."
+              className="min-h-24 w-full resize-none rounded-2xl border border-[#dde3ee] bg-white px-4 py-3 text-sm text-[#182230] outline-none transition placeholder:text-[#98a2b3] focus:border-[#111827] focus:ring-2 focus:ring-[#111827]/10"
+            />
+          </div>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              className="rounded-xl border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+              onClick={(event) => {
+                event.preventDefault();
+                closeCanceledReasonDialog(null);
+              }}
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="rounded-xl border border-slate-900 bg-slate-900 text-white hover:bg-slate-800"
+              disabled={!cancelReasonDraft.trim()}
+              onClick={(event) => {
+                event.preventDefault();
+                const reason = cancelReasonDraft.trim();
+                if (!reason) return;
+                closeCanceledReasonDialog(reason);
+              }}
+            >
+              Save reason
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <AlertDialog
         open={Boolean(confirmDeleteId)}
         onOpenChange={(open) => {
