@@ -4,15 +4,21 @@ import { Fragment, useEffect, useMemo, useRef, useState, useTransition } from "r
 import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
+  ChevronLeft,
+  ChevronRight,
+  Columns3,
   Ellipsis,
   Eye,
+  List,
   Plus,
   Search,
+  SlidersHorizontal,
   Trash2,
 } from "lucide-react";
 
 import { StatusCell } from "../../InlineCells";
 import { setOrderStatus } from "../../actions";
+import { CANCELED_REASONS } from "../../order-status-reasons";
 import { OrderPreview } from "../orders/OrderPreview";
 import {
   DropdownMenu,
@@ -40,7 +46,8 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import {
-  getStatusLabel,
+  getDefaultVisibleStatusFilters,
+  getStatusTone,
   type StatusFilterValue,
   type StatusValue,
 } from "@/lib/business-statuses";
@@ -66,6 +73,7 @@ type OrderSort =
   | "amountHigh"
   | "amountLow";
 type UserRole = "OWNER" | "MANAGER" | "GUEST";
+type ViewMode = "list" | "kanban";
 
 type TeamActor = {
   id: string;
@@ -106,6 +114,13 @@ type OrderRow = {
   manager_id: string | null;
   manager_name: string | null;
 };
+
+type HiddenKanbanCounts = {
+  done: number;
+  canceled: number;
+};
+
+const MOBILE_KANBAN_TERMINAL_VISIBILITY_KEY = "orders-mobile-kanban-terminal-visibility";
 
 function fmtAmount(n: number) {
   return new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(Number(n || 0));
@@ -185,6 +200,18 @@ function getPaginationItems(currentPage: number, totalPages: number) {
     .sort((a, b) => a - b);
 }
 
+function isOrderOverdue(
+  order: { due_date: string | null; status: StatusValue },
+  todayISO: string,
+) {
+  const dueISO = order.due_date ? String(order.due_date).slice(0, 10) : null;
+  return (
+    !!dueISO &&
+    dueISO < todayISO &&
+    (order.status === "NEW" || order.status === "IN_PROGRESS")
+  );
+}
+
 export default function MobileOrdersList({
   list = [],
   todayISO,
@@ -203,6 +230,7 @@ export default function MobileOrdersList({
   currentUserName,
   searchQuery,
   sort,
+  initialViewMode,
   statusMode,
   statusFilter,
   summaryRange,
@@ -210,6 +238,7 @@ export default function MobileOrdersList({
   rangeStartDate,
   rangeEndDate,
   actorFilter,
+  hiddenKanbanCounts,
 }: {
   list?: OrderRow[];
   todayISO: string;
@@ -228,6 +257,7 @@ export default function MobileOrdersList({
   currentUserName: string;
   searchQuery: string;
   sort: OrderSort;
+  initialViewMode: ViewMode;
   statusMode: "default" | "all" | "custom";
   statusFilter: StatusFilterValue[];
   summaryRange: DashboardRange;
@@ -235,22 +265,49 @@ export default function MobileOrdersList({
   rangeStartDate: string | null;
   rangeEndDate: string | null;
   actorFilter: string;
+  hiddenKanbanCounts: HiddenKanbanCounts;
 }) {
   const router = useRouter();
-  const { statuses } = useBusinessStatuses(businessId);
-  const [openId, setOpenId] = useState<string | null>(null);
-  const [searchDraft, setSearchDraft] = useState(searchQuery);
-  const [sortValue, setSortValue] = useState<OrderSort>(sort);
-  const [statusValue, setStatusValue] = useState<string>(normalizeQuickStatus(statusFilter));
-  const [managerValue, setManagerValue] = useState<string>(
-    normalizeQuickActor(actorFilter, actors, currentUserId),
+  const { customStatuses, statuses } = useBusinessStatuses(businessId);
+  const activeStatusOptions = useMemo(
+    () => getDefaultVisibleStatusFilters(customStatuses),
+    [customStatuses],
   );
+  const statusOptions = useMemo(
+    () => [
+      ...statuses.map((status) => ({
+        value: status.value as StatusFilterValue,
+        label: status.label,
+      })),
+      { value: "OVERDUE" as const, label: "Overdue" },
+    ],
+    [statuses],
+  );
+  const allSelectableStatuses = useMemo(
+    () => statusOptions.map((option) => option.value),
+    [statusOptions],
+  );
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [createPreviewOpen, setCreatePreviewOpen] = useState(false);
+  const searchDraft = searchQuery;
+  const sortValue = sort;
+  const [viewMode, setViewMode] = useState<ViewMode>(initialViewMode);
+  const [statusValues, setStatusValues] = useState<StatusFilterValue[]>(statusFilter);
+  const managerValue = normalizeQuickActor(actorFilter, actors, currentUserId);
   const [statusTouched, setStatusTouched] = useState(false);
-  const [managerTouched, setManagerTouched] = useState(false);
+  const managerTouched = false;
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [selectedKanbanStatus, setSelectedKanbanStatus] = useState<string | null>(null);
+  const [kanbanCanScrollLeft, setKanbanCanScrollLeft] = useState(false);
+  const [kanbanCanScrollRight, setKanbanCanScrollRight] = useState(false);
+  const [terminalColumnHidden, setTerminalColumnHidden] = useState({
+    DONE: false,
+    CANCELED: false,
+  });
+  const [terminalVisibilityReady, setTerminalVisibilityReady] = useState(false);
   const [isPending] = useTransition();
-  const submitTimerRef = useRef<number | null>(null);
+  const kanbanTabsRef = useRef<HTMLDivElement | null>(null);
   const [navigationMessage, setNavigationMessage] = useState<string | null>(null);
   const [loadedActors, setLoadedActors] = useState<TeamActor[]>(actors);
   const isMountedRef = useRef(false);
@@ -261,6 +318,34 @@ export default function MobileOrdersList({
       isMountedRef.current = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    try {
+      const stored = window.localStorage.getItem(MOBILE_KANBAN_TERMINAL_VISIBILITY_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored) as Partial<Record<"DONE" | "CANCELED", boolean>>;
+        setTerminalColumnHidden({
+          DONE: Boolean(parsed.DONE),
+          CANCELED: Boolean(parsed.CANCELED),
+        });
+      }
+    } catch {
+      // Ignore malformed local storage payloads.
+    } finally {
+      setTerminalVisibilityReady(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !terminalVisibilityReady) return;
+
+    window.localStorage.setItem(
+      MOBILE_KANBAN_TERMINAL_VISIBILITY_KEY,
+      JSON.stringify(terminalColumnHidden),
+    );
+  }, [terminalColumnHidden, terminalVisibilityReady]);
 
   const supabase = useMemo(() => createClient(), []);
 
@@ -293,22 +378,65 @@ export default function MobileOrdersList({
         })),
     [effectiveActors],
   );
+  const workflowStatuses = useMemo(
+    () => statuses.filter((status) => status.active !== false),
+    [statuses],
+  );
+  const appliedStatuses =
+    statusMode === "all"
+      ? allSelectableStatuses
+      : statusTouched
+        ? statusValues
+        : normalizeQuickStatus(statusFilter) === "ALL"
+          ? activeStatusOptions
+          : statusFilter;
+  const doneVisibleInFilter =
+    statusMode === "all" ||
+    appliedStatuses.includes("DONE") ||
+    (!statusTouched && statusFilter.includes("DONE"));
+  const canceledVisibleInFilter =
+    statusMode === "all" ||
+    appliedStatuses.includes("CANCELED") ||
+    (!statusTouched && statusFilter.includes("CANCELED"));
+  const visibleKanbanColumns = useMemo(
+    () =>
+      workflowStatuses.map((status) => ({
+        ...status,
+        orders: rows.filter(
+          (order) => String(order.status ?? "").toUpperCase() === status.value.toUpperCase(),
+        ),
+      })),
+    [rows, workflowStatuses],
+  );
+  const effectiveSelectedKanbanStatus =
+    selectedKanbanStatus && visibleKanbanColumns.some((column) => column.value === selectedKanbanStatus)
+      ? selectedKanbanStatus
+      : (visibleKanbanColumns[0]?.value ?? null);
+  const selectedKanbanColumn = useMemo(
+    () =>
+      visibleKanbanColumns.find((column) => column.value === effectiveSelectedKanbanStatus) ??
+      null,
+    [effectiveSelectedKanbanStatus, visibleKanbanColumns],
+  );
 
   const buildHref = (next: {
     q: string;
     sortValue: OrderSort;
-    statusValue: string;
+    statusValues: StatusFilterValue[];
     statusTouched: boolean;
     managerValue: string;
     managerTouched: boolean;
     page?: number;
     perPage?: number;
+    viewMode?: ViewMode;
   }) => {
     const params = new URLSearchParams();
     if (phoneRaw) params.set("u", phoneRaw);
     params.set("srange", summaryRange);
     params.set("page", String(next.page ?? 1));
     params.set("perPage", String(next.perPage ?? perPage));
+    const nextViewMode = next.viewMode ?? viewMode;
+    if (nextViewMode === "kanban") params.set("view", nextViewMode);
     if (rangeFilter !== "ALL") params.set("range", rangeFilter);
     if (rangeStartDate) params.set("start", rangeStartDate);
     if (rangeEndDate) params.set("end", rangeEndDate);
@@ -317,18 +445,19 @@ export default function MobileOrdersList({
     if (q) params.set("q", q);
     if (next.sortValue !== "default") params.set("sort", next.sortValue);
 
-    const nextStatuses =
-      next.statusTouched || next.statusValue !== "ALL"
-        ? next.statusValue === "ALL"
-          ? []
-          : [next.statusValue]
-        : statusFilter;
+    const nextStatuses = next.statusTouched ? next.statusValues : statusFilter;
+    const selectingAllStatuses =
+      nextStatuses.length > 0 &&
+      allSelectableStatuses.every((status) => nextStatuses.includes(status));
+    const selectingDefaultStatuses =
+      nextStatuses.length === activeStatusOptions.length &&
+      activeStatusOptions.every((status) => nextStatuses.includes(status));
 
     if (!next.statusTouched && statusMode === "all") {
       params.set("statusMode", "all");
-    } else if (next.statusTouched && next.statusValue === "ALL") {
+    } else if (selectingAllStatuses || (next.statusTouched && nextStatuses.length === 0)) {
       params.set("statusMode", "all");
-    } else {
+    } else if (!selectingDefaultStatuses) {
       for (const status of nextStatuses) {
         params.append("status", status);
       }
@@ -349,10 +478,26 @@ export default function MobileOrdersList({
   };
 
   useEffect(() => {
-    return () => {
-      if (submitTimerRef.current) window.clearTimeout(submitTimerRef.current);
+    if (viewMode !== "kanban") return;
+
+    const node = kanbanTabsRef.current;
+    if (!node) return;
+
+    const updateScrollState = () => {
+      const maxScrollLeft = node.scrollWidth - node.clientWidth;
+      setKanbanCanScrollLeft(node.scrollLeft > 8);
+      setKanbanCanScrollRight(node.scrollLeft < maxScrollLeft - 8);
     };
-  }, []);
+
+    updateScrollState();
+    node.addEventListener("scroll", updateScrollState, { passive: true });
+    window.addEventListener("resize", updateScrollState);
+
+    return () => {
+      node.removeEventListener("scroll", updateScrollState);
+      window.removeEventListener("resize", updateScrollState);
+    };
+  }, [viewMode, visibleKanbanColumns.length]);
 
   useEffect(() => {
     let alive = true;
@@ -423,21 +568,65 @@ export default function MobileOrdersList({
     window.location.assign(href);
   };
 
-  const submitFilters = (next: {
-    q: string;
-    sortValue: OrderSort;
-    statusValue: string;
-    statusTouched: boolean;
-    managerValue: string;
-    managerTouched: boolean;
-  }) => {
-    navigateWithFallback(buildHref(next));
+  const openFilters = () => {
+    window.dispatchEvent(new Event("orders-mobile-open-filters"));
+  };
+
+  const hideTerminalColumn = (status: "DONE" | "CANCELED") => {
+    setTerminalColumnHidden((current) => ({
+      ...current,
+      [status]: true,
+    }));
+  };
+
+  const revealTerminalColumn = (status: "DONE" | "CANCELED") => {
+    setTerminalColumnHidden((current) => ({
+      ...current,
+      [status]: false,
+    }));
+  };
+
+  const revealStatusInBoard = (status: StatusFilterValue) => {
+    const nextStatuses = Array.from(new Set([...appliedStatuses, status]));
+    setStatusValues(nextStatuses);
+    setStatusTouched(true);
+    navigateWithFallback(
+      buildHref({
+        q: searchDraft,
+        sortValue,
+        statusValues: nextStatuses,
+        statusTouched: true,
+        managerValue,
+        managerTouched,
+        page: 1,
+        viewMode: "kanban",
+      }),
+    );
+  };
+
+  const handleRevealTerminalStatus = (status: "DONE" | "CANCELED") => {
+    revealTerminalColumn(status);
+
+    const statusVisibleInFilter =
+      statusMode === "all" ||
+      appliedStatuses.includes(status) ||
+      (!statusTouched && statusFilter.includes(status));
+
+    if (!statusVisibleInFilter) {
+      revealStatusInBoard(status);
+    }
   };
 
   const handleCancelOrder = async (orderId: string, status: StatusValue) => {
     if (!canEdit || deletingId) return;
     if (status === "CANCELED" || status === "DONE") return;
-    if (!window.confirm("Cancel this order? The order will stay in the list with Canceled status.")) return;
+    const presetOptions = CANCELED_REASONS.map((reason, index) => `${index + 1}. ${reason}`).join("\n");
+    const reasonInput = window.prompt(
+      `Cancel reason is required.\nEnter a custom reason or choose preset:\n${presetOptions}\n\nUse "duplicate" for duplicate orders.`,
+      "duplicate",
+    );
+    const normalizedReason = String(reasonInput ?? "").trim();
+    if (!normalizedReason) return;
 
     setDeletingId(orderId);
     try {
@@ -445,6 +634,7 @@ export default function MobileOrdersList({
         orderId,
         businessSlug,
         status: "CANCELED",
+        reason: normalizedReason,
       });
     } catch (error) {
       setDeletingId(null);
@@ -483,13 +673,28 @@ export default function MobileOrdersList({
     buildHref({
       q: searchDraft,
       sortValue,
-      statusValue,
+      statusValues,
       statusTouched,
       managerValue,
       managerTouched,
       page,
       perPage: nextPerPage,
     });
+  const viewHref = (nextViewMode: ViewMode) =>
+    buildHref({
+      q: searchDraft,
+      sortValue,
+      statusValues,
+      statusTouched,
+      managerValue,
+      managerTouched,
+      page: 1,
+      viewMode: nextViewMode,
+    });
+  const openCreateOrder = () => {
+    setOpenId(null);
+    setCreatePreviewOpen(true);
+  };
 
   return (
     <section className="grid gap-4 lg:hidden">
@@ -501,132 +706,94 @@ export default function MobileOrdersList({
               {resultsCount} {resultsCount === 1 ? "result" : "results"} · Page {currentPage} of {totalPages}
             </div>
           </div>
-
           <button
             type="button"
-            onClick={() => {
-              const target = document.getElementById("mobile-create-order");
-              target?.scrollIntoView({ behavior: "smooth", block: "start" });
-            }}
-            className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-2xl bg-[#111827] px-3.5 text-sm font-semibold text-white transition hover:bg-[#0b1220]"
+            onClick={openCreateOrder}
+            className="inline-flex h-10 shrink-0 items-center gap-2 rounded-2xl bg-[#111827] px-3.5 text-sm font-semibold text-white transition hover:bg-[#0b1220]"
           >
-            <Plus className="h-4 w-4" />
-            Create
+            <Plus className="h-4 w-4 text-white" />
+            <span className="text-white">New Order</span>
           </button>
         </div>
 
-        <div className="mt-4 grid gap-2">
-          <label className="relative">
-            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#98a2b3]" />
-            <input
-              value={searchDraft}
-              onChange={(event) => setSearchDraft(event.currentTarget.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  event.preventDefault();
-                  submitFilters({
-                    q: searchDraft,
-                    sortValue,
-                    statusValue,
-                    statusTouched,
-                    managerValue,
-                    managerTouched,
-                  });
-                }
-              }}
-              onBlur={() => {
-                if (submitTimerRef.current) window.clearTimeout(submitTimerRef.current);
-                submitTimerRef.current = window.setTimeout(() => {
-                  submitFilters({
-                    q: searchDraft,
-                    sortValue,
-                    statusValue,
-                    statusTouched,
-                    managerValue,
-                    managerTouched,
-                  });
-                }, 120);
-              }}
-              placeholder="Search by client, phone, manager, status, amount..."
-              className="h-11 w-full rounded-2xl border border-[#dde3ee] bg-[#fbfcfe] pl-11 pr-4 text-sm outline-none transition placeholder:text-[#98a2b3] focus:border-[#111827] focus:bg-white focus:ring-2 focus:ring-[#111827]/10"
-            />
-          </label>
-
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-            <select
-              value={statusValue}
-              onChange={(event) => {
-                const next = event.currentTarget.value;
-                setStatusValue(next);
-                setStatusTouched(true);
-                submitFilters({
-                  q: searchDraft,
-                  sortValue,
-                  statusValue: next,
-                  statusTouched: true,
-                  managerValue,
-                  managerTouched,
-                });
-              }}
-              className="h-11 min-w-0 rounded-2xl border border-[#dde3ee] bg-white px-3 text-sm font-medium text-[#344054] outline-none transition focus:border-[#111827] focus:ring-2 focus:ring-[#111827]/10"
+        <div className="mt-4 grid gap-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="inline-flex flex-1 items-center rounded-2xl border border-[#d8e1ee] bg-[#f8fafc] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]">
+              <button
+                type="button"
+                onClick={() => {
+                  if (viewMode === "list") return;
+                  setViewMode("list");
+                  navigateWithFallback(viewHref("list"));
+                }}
+                className={[
+                  "inline-flex h-9 flex-1 items-center justify-center gap-2 rounded-[14px] text-sm font-semibold transition",
+                  viewMode === "list"
+                    ? "border border-[#cbd5e1] bg-[#e9eef5] text-[#0f172a] shadow-[0_8px_18px_rgba(15,23,42,0.12)]"
+                    : "border border-transparent text-[#667085] hover:text-[#111827]",
+                ].join(" ")}
+              >
+                <List className="h-4 w-4" />
+                List
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (viewMode === "kanban") return;
+                  setViewMode("kanban");
+                  navigateWithFallback(viewHref("kanban"));
+                }}
+                className={[
+                  "inline-flex h-9 flex-1 items-center justify-center gap-2 rounded-[14px] text-sm font-semibold transition",
+                  viewMode === "kanban"
+                    ? "border border-[#cbd5e1] bg-[#e9eef5] text-[#0f172a] shadow-[0_8px_18px_rgba(15,23,42,0.12)]"
+                    : "border border-transparent text-[#667085] hover:text-[#111827]",
+                ].join(" ")}
+              >
+                <Columns3 className="h-4 w-4" />
+                Kanban
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={openFilters}
+              className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-2xl border border-[#dde3ee] bg-white px-4 text-sm font-semibold text-[#344054] transition hover:border-[#cfd8e6] hover:bg-[#f8fafc]"
             >
-              <option value="ALL">All Statuses</option>
-              {statuses.map((status) => (
-                <option key={status.value} value={status.value}>
-                  {getStatusLabel(status.value)}
-                </option>
-              ))}
-            </select>
+              <Search className="h-4 w-4" />
+              <SlidersHorizontal className="h-4 w-4" />
+              Search & Filters
+            </button>
+          </div>
 
-            <select
-              value={managerValue}
-              onChange={(event) => {
-                const next = event.currentTarget.value;
-                setManagerValue(next);
-                setManagerTouched(true);
-                submitFilters({
-                  q: searchDraft,
-                  sortValue,
-                  statusValue,
-                  statusTouched,
-                  managerValue: next,
-                  managerTouched: true,
-                });
-              }}
-              className="h-11 min-w-0 rounded-2xl border border-[#dde3ee] bg-white px-3 text-sm font-medium text-[#344054] outline-none transition focus:border-[#111827] focus:ring-2 focus:ring-[#111827]/10"
-            >
-              <option value="ALL">All Managers</option>
-              {currentUserId ? <option value="ME">Me</option> : null}
-              <option value="UNASSIGNED">Unassigned</option>
-              {managerOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-
-            <select
-              value={sortValue}
-              onChange={(event) => {
-                const next = event.currentTarget.value as OrderSort;
-                setSortValue(next);
-                submitFilters({
-                  q: searchDraft,
-                  sortValue: next,
-                  statusValue,
-                  statusTouched,
-                  managerValue,
-                  managerTouched,
-                });
-              }}
-              className="h-11 min-w-0 rounded-2xl border border-[#dde3ee] bg-white px-3 text-sm font-medium text-[#344054] outline-none transition focus:border-[#111827] focus:ring-2 focus:ring-[#111827]/10"
-            >
-              {SORT_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+          <div className="rounded-2xl border border-[#eef2f7] bg-[#fbfcfe] px-3 py-3">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
+                  Current setup
+                </div>
+                <div className="mt-1 truncate text-sm font-semibold text-[#111827]">
+                  {searchDraft ? `Search: ${searchDraft}` : "No search query"}
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
+                  Sort
+                </div>
+                <div className="mt-1 text-sm font-semibold text-[#111827]">
+                  {SORT_OPTIONS.find((option) => option.value === sortValue)?.label ?? "Default order"}
+                </div>
+              </div>
+            </div>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <span className="inline-flex items-center rounded-full border border-[#dde3ee] bg-white px-2.5 py-1 text-[11px] font-medium text-[#475467]">
+                {managerValue === "ALL"
+                  ? "All managers"
+                  : managerOptions.find((option) => option.value === managerValue)?.label ?? managerValue}
+              </span>
+              <span className="inline-flex items-center rounded-full border border-[#dde3ee] bg-white px-2.5 py-1 text-[11px] font-medium text-[#475467]">
+                {statusMode === "all" ? "All statuses" : `${appliedStatuses.length} status filters`}
+              </span>
+            </div>
           </div>
         </div>
 
@@ -636,40 +803,47 @@ export default function MobileOrdersList({
           </div>
         ) : null}
 
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-[#eef2f7] pt-3">
-          <div className="text-xs font-medium text-[#667085]">
-            Showing {list.length === 0 ? 0 : (currentPage - 1) * perPage + 1}
-            -
-            {(currentPage - 1) * perPage + list.length} of {resultsCount}
-          </div>
+        {viewMode === "list" ? (
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-[#eef2f7] pt-3">
+            <div className="text-xs font-medium text-[#667085]">
+              Showing {list.length === 0 ? 0 : (currentPage - 1) * perPage + 1}
+              -
+              {(currentPage - 1) * perPage + list.length} of {resultsCount}
+            </div>
 
-          <label className="flex items-center gap-2 text-xs font-medium text-[#667085]">
-            <span>Per page</span>
-            <select
-              value={String(perPage)}
-              onChange={(event) => {
-                navigateWithFallback(paginationHref(1, Number(event.currentTarget.value)));
-              }}
-              className="h-9 rounded-xl border border-[#dde3ee] bg-white px-3 text-sm font-medium text-[#344054] outline-none transition focus:border-[#111827] focus:ring-2 focus:ring-[#111827]/10"
-            >
-              {PAGE_SIZE_OPTIONS.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
+            <label className="flex items-center gap-2 text-xs font-medium text-[#667085]">
+              <span>Per page</span>
+              <select
+                value={String(perPage)}
+                onChange={(event) => {
+                  navigateWithFallback(paginationHref(1, Number(event.currentTarget.value)));
+                }}
+                className="h-9 rounded-xl border border-[#dde3ee] bg-white px-3 text-sm font-medium text-[#344054] outline-none transition focus:border-[#111827] focus:ring-2 focus:ring-[#111827]/10"
+              >
+                {PAGE_SIZE_OPTIONS.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        ) : null}
       </div>
 
-      {rows.map((order) => {
-        const dueISO = order.due_date ? String(order.due_date).slice(0, 10) : null;
+      {viewMode === "list"
+        ? rows.map((order) => {
         const isOverdue =
-          !!dueISO &&
-          dueISO < todayISO &&
-          (order.status === "NEW" || order.status === "IN_PROGRESS");
+          isOrderOverdue(order, todayISO);
         const canCancel = canEdit && order.status !== "CANCELED" && order.status !== "DONE";
         const canDeletePermanently = userRole === "OWNER";
+        const clientName =
+          order.client_full_name?.trim() || order.client_name?.trim() || "No client name";
+        const clientPhone = order.client_phone?.trim() || "No phone number";
+        const managerName =
+          order.manager_name || actorLabelById.get(String(order.manager_id ?? "")) || "Unassigned";
+        const amount = fmtAmount(Number(order.amount));
+        const dueDate = formatDueDate(order.due_date);
 
         return (
           <article
@@ -678,18 +852,19 @@ export default function MobileOrdersList({
               if (shouldIgnoreOverlayCloseClick()) return;
               setOpenId(order.id);
             }}
-            className="cursor-pointer rounded-[24px] border border-[#dde3ee] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#cfd8e6]"
+            className="cursor-pointer rounded-[20px] border border-[#dde3ee] bg-white px-3 py-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#cfd8e6]"
           >
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">
                 <div className="text-sm font-semibold text-[#111827]">#{order.order_number ?? "—"}</div>
-                <div className="mt-1 text-xs font-medium text-[#98a2b3]">
+                <div className="mt-0.5 truncate text-sm font-semibold text-[#111827]">{clientName}</div>
+                <div className="mt-0.5 text-[11px] font-medium text-[#98a2b3]">
                   {formatCreatedAt(order.created_at)}
                 </div>
               </div>
 
-              <div className="flex items-center gap-2" onClick={(event) => event.stopPropagation()}>
-                <div className="inline-flex">
+              <div className="flex items-start gap-2" onClick={(event) => event.stopPropagation()}>
+                <div className="inline-flex shrink-0">
                   <StatusCell
                     orderId={order.id}
                     businessId={businessId}
@@ -703,7 +878,7 @@ export default function MobileOrdersList({
                   <DropdownMenuTrigger asChild>
                     <button
                       type="button"
-                      className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#dde3ee] bg-white text-[#667085] transition hover:border-[#cfd8e6] hover:bg-[#f8fafc] hover:text-[#111827]"
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-[#dde3ee] bg-white text-[#667085] transition hover:border-[#cfd8e6] hover:bg-[#f8fafc] hover:text-[#111827]"
                       aria-label="Open order actions"
                     >
                       <Ellipsis className="h-4 w-4" />
@@ -754,58 +929,357 @@ export default function MobileOrdersList({
               </div>
             </div>
 
-            <div className="mt-4 grid gap-4">
-              <div className="min-w-0">
-                <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
-                  Client
-                </div>
-                <div className="mt-1 text-sm font-semibold text-[#111827]">
-                  {order.client_full_name?.trim() || order.client_name?.trim() || "No client name"}
-                </div>
-                <div className="mt-1 text-xs text-[#98a2b3]">
-                  {order.client_phone?.trim() || "No phone number"}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
+            <div className="mt-2 grid gap-1.5 text-xs text-[#667085]">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <span className="mr-1.5 font-semibold uppercase tracking-[0.06em] text-[#98a2b3]">
                     Manager
-                  </div>
-                  <div className="mt-1 text-sm font-medium text-[#344054]">
-                    {order.manager_name || actorLabelById.get(String(order.manager_id ?? "")) || "Unassigned"}
-                  </div>
+                  </span>
+                  <span className="font-medium text-[#344054]">{managerName}</span>
                 </div>
-
-                <div>
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
+                <div className="shrink-0 text-right">
+                  <span className="mr-1.5 font-semibold uppercase tracking-[0.06em] text-[#98a2b3]">
                     Amount
-                  </div>
-                  <div className="mt-1 text-sm font-semibold tabular-nums text-[#111827]">
-                    {fmtAmount(Number(order.amount))}
-                  </div>
+                  </span>
+                  <span className="font-semibold tabular-nums text-[#111827]">{amount}</span>
                 </div>
               </div>
 
-              <div>
-                <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
-                  Due
-                </div>
+              <div className="flex items-start justify-between gap-3">
                 <div
                   className={[
-                    "mt-1 inline-flex items-center gap-2 text-sm font-medium",
+                    "min-w-0 inline-flex items-center gap-1.5 font-medium",
                     isOverdue ? "text-[#d92d20]" : "text-[#475467]",
                   ].join(" ")}
                 >
-                  {isOverdue ? <AlertTriangle className="h-4 w-4" /> : null}
-                  <span>{formatDueDate(order.due_date)}</span>
+                  <span className="font-semibold uppercase tracking-[0.06em] text-[#98a2b3]">
+                    Due
+                  </span>
+                  {isOverdue ? <AlertTriangle className="h-3.5 w-3.5" /> : null}
+                  <span className="truncate">{dueDate}</span>
+                </div>
+                <div className="min-w-0 truncate text-right text-[11px] text-[#98a2b3]">
+                  {clientPhone}
                 </div>
               </div>
             </div>
 
           </article>
         );
-      })}
+      })
+        : selectedKanbanColumn ? (() => {
+        const column = selectedKanbanColumn;
+        const tone = getStatusTone(column.value, customStatuses);
+        const isBuiltInTerminal =
+          Boolean(column.builtIn) &&
+          (column.value === "DONE" || column.value === "CANCELED");
+        const hiddenByFilter =
+          isBuiltInTerminal &&
+          statusMode === "custom" &&
+          ((column.value === "DONE" && !doneVisibleInFilter && hiddenKanbanCounts.done > 0) ||
+            (column.value === "CANCELED" &&
+              !canceledVisibleInFilter &&
+              hiddenKanbanCounts.canceled > 0));
+        const hiddenByPreference = isBuiltInTerminal
+          ? column.value === "DONE"
+            ? terminalColumnHidden.DONE
+            : terminalColumnHidden.CANCELED
+          : false;
+        const hiddenCardCount = isBuiltInTerminal
+          ? column.value === "DONE"
+            ? hiddenKanbanCounts.done
+            : hiddenKanbanCounts.canceled
+          : column.orders.length;
+
+        return (
+          <div className="grid gap-3">
+            <section className="overflow-hidden rounded-[24px] border border-[#dde3ee] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+              <div className="relative border-b border-[#eef2f7] px-4 py-3">
+                {kanbanCanScrollLeft ? (
+                  <div className="pointer-events-none absolute left-0 top-0 z-[1] h-full w-10 bg-gradient-to-r from-white via-white/80 to-transparent" />
+                ) : null}
+                {kanbanCanScrollRight ? (
+                  <div className="pointer-events-none absolute right-0 top-0 z-[1] h-full w-10 bg-gradient-to-l from-white via-white/80 to-transparent" />
+                ) : null}
+
+                <div className="mb-2 flex items-center justify-between gap-3">
+                  <div>
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
+                      Status lane
+                    </div>
+                    <div className="mt-1 text-xs text-[#667085]">
+                      Swipe horizontally to move between statuses
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 text-[#98a2b3]">
+                    <ChevronLeft className={`h-4 w-4 ${kanbanCanScrollLeft ? "opacity-100" : "opacity-30"}`} />
+                    <ChevronRight className={`h-4 w-4 ${kanbanCanScrollRight ? "opacity-100" : "opacity-30"}`} />
+                  </div>
+                </div>
+
+                <div ref={kanbanTabsRef} className="overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  <div className="flex w-max gap-2">
+                    {visibleKanbanColumns.map((statusColumn) => {
+                      const tabTone = getStatusTone(statusColumn.value, customStatuses);
+                      const isSelected = statusColumn.value === column.value;
+                      const isBuiltInTerminal =
+                        Boolean(statusColumn.builtIn) &&
+                        (statusColumn.value === "DONE" || statusColumn.value === "CANCELED");
+                      const hiddenByPreference = isBuiltInTerminal
+                        ? statusColumn.value === "DONE"
+                          ? terminalColumnHidden.DONE
+                          : terminalColumnHidden.CANCELED
+                        : false;
+                      const hiddenByFilter = isBuiltInTerminal
+                        ? statusMode === "custom" &&
+                          ((statusColumn.value === "DONE" &&
+                            !doneVisibleInFilter &&
+                            hiddenKanbanCounts.done > 0) ||
+                            (statusColumn.value === "CANCELED" &&
+                              !canceledVisibleInFilter &&
+                              hiddenKanbanCounts.canceled > 0))
+                        : false;
+                      const visibleCount =
+                        hiddenByFilter || hiddenByPreference
+                          ? statusColumn.value === "DONE"
+                            ? hiddenKanbanCounts.done
+                            : statusColumn.value === "CANCELED"
+                              ? hiddenKanbanCounts.canceled
+                              : statusColumn.orders.length
+                          : statusColumn.orders.length;
+                      return (
+                        <button
+                          key={statusColumn.value}
+                          type="button"
+                          onClick={() => setSelectedKanbanStatus(statusColumn.value)}
+                          className={[
+                            "inline-flex min-h-10 items-center gap-2 rounded-full border px-3 py-2 text-sm font-semibold transition",
+                            isSelected ? "border-transparent text-[#111827]" : "border-[#dde3ee] bg-white text-[#667085]",
+                            hiddenByFilter || hiddenByPreference ? "opacity-80" : "",
+                          ].join(" ")}
+                          style={isSelected ? { background: tabTone.background } : undefined}
+                        >
+                          <span className="h-2.5 w-2.5 rounded-full" style={{ background: tabTone.dot }} />
+                          <span>{statusColumn.label}</span>
+                          <span className="rounded-full bg-white/80 px-1.5 py-0.5 text-[11px] font-semibold text-[#475467]">
+                            {visibleCount}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              <div
+                className="border-b px-4 py-3"
+                style={{
+                  borderColor: tone.background,
+                  background: `linear-gradient(180deg, ${tone.background} 0%, #ffffff 100%)`,
+                }}
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="h-3 w-3 shrink-0 rounded-full" style={{ background: tone.dot }} />
+                      <div className="truncate text-sm font-semibold text-[#111827]">{column.label}</div>
+                    </div>
+                    <div className="mt-1 text-xs font-medium text-[#667085]">
+                      {hiddenByFilter || hiddenByPreference
+                        ? hiddenByPreference
+                          ? `${hiddenCardCount} hidden manually`
+                          : `${hiddenCardCount} hidden by filters`
+                        : `${column.orders.length} ${column.orders.length === 1 ? "order" : "orders"}`}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="inline-flex h-8 min-w-8 items-center justify-center rounded-full px-2 text-xs font-semibold"
+                      style={{ background: tone.background, color: tone.color }}
+                    >
+                      {hiddenByFilter || hiddenByPreference ? hiddenCardCount : column.orders.length}
+                    </div>
+                    {isBuiltInTerminal ? (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          hiddenByPreference
+                            ? handleRevealTerminalStatus(column.value as "DONE" | "CANCELED")
+                            : hideTerminalColumn(column.value as "DONE" | "CANCELED")
+                        }
+                        className="inline-flex h-8 items-center justify-center rounded-full border border-[#dde3ee] bg-white px-3 text-[11px] font-semibold text-[#475467]"
+                      >
+                        {hiddenByPreference ? "Show" : "Hide"}
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+
+              {hiddenByFilter || hiddenByPreference ? (
+                <div className="p-4">
+                  <div className="rounded-[20px] border border-dashed border-[#d8e1ee] bg-[#f8fafc] px-4 py-5 text-center">
+                    <div className="text-sm font-semibold text-[#111827]">{column.label} hidden</div>
+                    <div className="mt-1 text-xs text-[#667085]">
+                      {hiddenByPreference
+                        ? "This status is manually hidden on mobile."
+                        : "Status is excluded by the current filter set."}
+                    </div>
+                    {hiddenByPreference ? null : (
+                      <button
+                        type="button"
+                        onClick={() => revealStatusInBoard(column.value as StatusFilterValue)}
+                        className="mt-3 inline-flex h-9 items-center justify-center rounded-xl bg-[#111827] px-3.5 text-sm font-semibold text-white"
+                      >
+                        Show status
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ) : column.orders.length > 0 ? (
+                <div className="grid gap-3 p-3">
+                  {column.orders.map((order) => {
+                    const isOverdue = isOrderOverdue(order, todayISO);
+                    const canCancel =
+                      canEdit && order.status !== "CANCELED" && order.status !== "DONE";
+                    const canDeletePermanently = userRole === "OWNER";
+
+                    return (
+                      <article
+                        key={order.id}
+                        onClick={() => {
+                          if (shouldIgnoreOverlayCloseClick()) return;
+                          setOpenId(order.id);
+                        }}
+                        className="cursor-pointer rounded-[20px] border border-transparent bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="text-sm font-semibold text-[#111827]">
+                              #{order.order_number ?? "-"}
+                            </div>
+                            <div className="mt-1 text-xs font-medium text-[#98a2b3]">
+                              {formatCreatedAt(order.created_at)}
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2" onClick={(event) => event.stopPropagation()}>
+                            <div className="inline-flex">
+                              <StatusCell
+                                orderId={order.id}
+                                businessId={businessId}
+                                businessSlug={businessSlug}
+                                value={order.status}
+                                canManage={canManage}
+                              />
+                            </div>
+
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <button
+                                  type="button"
+                                  className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#dde3ee] bg-white text-[#667085]"
+                                  aria-label="Open order actions"
+                                >
+                                  <Ellipsis className="h-4 w-4" />
+                                </button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent
+                                align="end"
+                                className="w-48 rounded-xl border-[#dde3ee] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
+                              >
+                                <DropdownMenuItem
+                                  className="rounded-lg px-3 py-2 text-sm font-medium"
+                                  onSelect={(event) => {
+                                    event.preventDefault();
+                                    setOpenId(order.id);
+                                  }}
+                                >
+                                  <Eye className="h-4 w-4" />
+                                  Open order
+                                </DropdownMenuItem>
+                                {canCancel ? (
+                                  <DropdownMenuItem
+                                    className="rounded-lg px-3 py-2 text-sm font-medium text-red-700 focus:text-red-700"
+                                    onSelect={(event) => {
+                                      event.preventDefault();
+                                      void handleCancelOrder(order.id, order.status);
+                                    }}
+                                    disabled={deletingId === order.id}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                    {deletingId === order.id ? "Canceling..." : "Cancel order"}
+                                  </DropdownMenuItem>
+                                ) : null}
+                                {canDeletePermanently ? (
+                                  <DropdownMenuItem
+                                    className="rounded-lg px-3 py-2 text-sm font-medium text-red-700 focus:text-red-700"
+                                    onSelect={(event) => {
+                                      event.preventDefault();
+                                      setConfirmDeleteId(order.id);
+                                    }}
+                                    disabled={deletingId === order.id}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                    {deletingId === order.id ? "Deleting..." : "Delete permanently"}
+                                  </DropdownMenuItem>
+                                ) : null}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </div>
+
+                        <div className="mt-4 grid gap-3">
+                          <div className="min-w-0">
+                            <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
+                              Client
+                            </div>
+                            <div className="mt-1 text-sm font-semibold text-[#111827]">
+                              {order.client_full_name?.trim() || order.client_name?.trim() || "No client name"}
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
+                                Manager
+                              </div>
+                              <div className="mt-1 text-sm font-medium text-[#344054]">
+                                {order.manager_name || actorLabelById.get(String(order.manager_id ?? "")) || "Unassigned"}
+                              </div>
+                            </div>
+                            <div>
+                              <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
+                                Amount
+                              </div>
+                              <div className="mt-1 text-sm font-semibold tabular-nums text-[#111827]">
+                                {fmtAmount(Number(order.amount))}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="inline-flex items-center gap-2 text-sm font-medium text-[#475467]">
+                            {isOverdue ? <AlertTriangle className="h-4 w-4 text-[#d92d20]" /> : null}
+                            <span>{formatDueDate(order.due_date)}</span>
+                          </div>
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="p-4">
+                  <div className="rounded-[20px] border border-dashed border-[#d8e1ee] bg-[#f8fafc] px-4 py-5 text-center text-sm text-[#98a2b3]">
+                    No orders in this status
+                  </div>
+                </div>
+              )}
+            </section>
+          </div>
+        );
+      })() : (
+        <div className="rounded-[24px] border border-[#dde3ee] bg-white p-6 text-center text-sm text-[#98a2b3] shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+          No workflow statuses available
+        </div>
+      )}
 
       {list.length === 0 ? (
         <div className="rounded-[24px] border border-[#dde3ee] bg-white p-6 text-center text-sm text-[#98a2b3] shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
@@ -902,17 +1376,22 @@ export default function MobileOrdersList({
         </AlertDialogContent>
       </AlertDialog>
       <OrderPreview
-        open={Boolean(selectedOrder)}
+        open={Boolean(selectedOrder) || createPreviewOpen}
         order={selectedOrder}
         businessId={businessId}
         businessSlug={businessSlug}
         phoneRaw={phoneRaw}
+        currentUserId={currentUserId}
         userRole={userRole}
         canManage={canManage}
         currentUserName={currentUserName}
         actors={effectiveActors}
         supabase={supabase}
-        onClose={() => setOpenId(null)}
+        mode={createPreviewOpen ? "create" : "view"}
+        onClose={() => {
+          setOpenId(null);
+          setCreatePreviewOpen(false);
+        }}
       />
     </section>
   );

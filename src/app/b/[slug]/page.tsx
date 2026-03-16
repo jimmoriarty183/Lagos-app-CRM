@@ -3,12 +3,10 @@ import { redirect } from "next/navigation";
 
 import TopBar from "./_components/topbar/TopBar";
 import DesktopAnalyticsCard from "./_components/Desktop/DesktopAnalyticsCard";
-import DesktopCreateOrderAccordion from "./_components/Desktop/DesktopCreateOrderAccordion";
 import DesktopLeftRail from "./_components/Desktop/DesktopLeftRail";
 import DesktopOrdersTable from "./_components/Desktop/DesktopOrdersTable";
 
 import MobileOrdersList from "./_components/Mobile/MobileOrdersList";
-import MobileCreateOrderAccordion from "./_components/Mobile/MobileCreateOrderAccordion";
 import MobileFiltersAccordion from "./_components/Mobile/MobileFiltersAccordion";
 import MobileSummaryBar from "./_components/Mobile/MobileSummaryBar";
 
@@ -72,7 +70,6 @@ type ViewMode = "list" | "kanban";
 type HiddenKanbanCounts = {
   done: number;
   canceled: number;
-  duplicate: number;
 };
 
 type SummaryPeriodOption = {
@@ -195,7 +192,10 @@ function normalizeActorLabel(input: {
   return display.primary || cleanText(input.fallback) || "No name";
 }
 
-function getOrderManagerValue(order: { manager_id?: unknown; created_by?: unknown }) {
+function getOrderManagerValue(order: {
+  manager_id?: unknown;
+  created_by?: unknown;
+}) {
   const managerId = cleanText(order.manager_id);
   if (managerId) return managerId;
   const createdBy = cleanText(order.created_by);
@@ -218,11 +218,7 @@ function getClientSearchBlob(order: {
     full_name: String(order.full_name ?? order.client_full_name ?? ""),
   });
 
-  return [
-    normalized.fullName,
-    normalized.firstName,
-    normalized.lastName,
-  ]
+  return [normalized.fullName, normalized.firstName, normalized.lastName]
     .filter(Boolean)
     .join(" ");
 }
@@ -263,13 +259,13 @@ function upperRole(r: any): "OWNER" | "MANAGER" | "GUEST" {
   return "GUEST";
 }
 
-function normalizeStatusFilters(
-  value: string | string[] | undefined,
-) {
+function normalizeStatusFilters(value: string | string[] | undefined) {
   const normalized = (Array.isArray(value) ? value : [value])
     .flatMap((item) => String(item ?? "").split(","))
     .map((item) => item.trim().toUpperCase())
-    .filter((item): item is StatusFilterValue => Boolean(item) && item !== "ALL");
+    .filter(
+      (item): item is StatusFilterValue => Boolean(item) && item !== "ALL",
+    );
 
   return Array.from(new Set(normalized));
 }
@@ -278,7 +274,11 @@ const PAGE_SIZE_OPTIONS = [20, 50, 100, 500] as const;
 
 function normalizePageSize(value: string | undefined) {
   const parsed = Number.parseInt(String(value ?? ""), 10);
-  return PAGE_SIZE_OPTIONS.includes(parsed as (typeof PAGE_SIZE_OPTIONS)[number]) ? parsed : 20;
+  return PAGE_SIZE_OPTIONS.includes(
+    parsed as (typeof PAGE_SIZE_OPTIONS)[number],
+  )
+    ? parsed
+    : 20;
 }
 
 function normalizePageNumber(value: string | undefined) {
@@ -299,7 +299,9 @@ const ORDER_SORT_OPTIONS: readonly OrderSort[] = [
 ] as const;
 
 function normalizeOrderSort(value: string | undefined): OrderSort {
-  return ORDER_SORT_OPTIONS.includes(value as OrderSort) ? (value as OrderSort) : "default";
+  return ORDER_SORT_OPTIONS.includes(value as OrderSort)
+    ? (value as OrderSort)
+    : "default";
 }
 
 function normalizeViewMode(value: string | undefined): ViewMode {
@@ -324,6 +326,7 @@ export default async function Page({ params, searchParams }: PageProps) {
     Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY);
   const admin = bypassMode && canUseAdmin ? supabaseAdmin() : null;
   const dataClient = admin ?? supabase;
+  const statusClient = canUseAdmin ? supabaseAdmin() : dataClient;
 
   let memberships: any[] = [];
   let businesses: any[] = [];
@@ -373,13 +376,32 @@ export default async function Page({ params, searchParams }: PageProps) {
     }
   }
 
-  const customStatuses = await loadBusinessStatuses(dataClient, String(currentBusiness.id));
+  const customStatuses = await loadBusinessStatuses(
+    statusClient,
+    String(currentBusiness.id),
+  );
   const defaultVisibleStatuses = getDefaultVisibleStatuses(customStatuses);
-  const defaultVisibleStatusFilters = getDefaultVisibleStatusFilters(customStatuses);
+  const defaultVisibleStatusFilters =
+    getDefaultVisibleStatusFilters(customStatuses);
+
+  console.log("[orders-page] status bootstrap", {
+    businessId: String(currentBusiness.id),
+    customStatuses: customStatuses.map((status) => ({
+      value: status.value,
+      label: status.label,
+      active: status.active,
+      builtIn: status.builtIn ?? false,
+      sortOrder: status.sortOrder,
+    })),
+    defaultVisibleStatuses,
+    defaultVisibleStatusFilters,
+    hasDELInCustomStatuses: customStatuses.some((status) => status.value === "DEL"),
+    hasDELInDefaultVisibleStatuses: defaultVisibleStatuses.includes("DEL"),
+  });
 
   const myRoleRaw =
-    (memberships ?? []).find((m: any) => m.business_id === currentBusiness.id)?.role ??
-    (bypassUser ? "MANAGER" : "GUEST");
+    (memberships ?? []).find((m: any) => m.business_id === currentBusiness.id)
+      ?.role ?? (bypassUser ? "MANAGER" : "GUEST");
 
   const userRole = upperRole(myRoleRaw);
   const canManage = userRole === "OWNER" || userRole === "MANAGER";
@@ -387,7 +409,9 @@ export default async function Page({ params, searchParams }: PageProps) {
   const canSeeAnalyticsNav = userRole === "OWNER";
   const currentUserId = user?.id ?? null;
   let currentUserName =
-    bypassUser && !user ? bypassUser : user?.email ?? (userRole === "OWNER" ? "Owner" : "User");
+    bypassUser && !user
+      ? bypassUser
+      : (user?.email ?? (userRole === "OWNER" ? "Owner" : "User"));
 
   if (user?.id) {
     try {
@@ -398,9 +422,15 @@ export default async function Page({ params, searchParams }: PageProps) {
         .maybeSingle();
 
       const currentUserDisplay = resolveUserDisplay({
-        full_name: currentProfile?.full_name ?? String(user.user_metadata?.full_name ?? ""),
-        first_name: currentProfile?.first_name ?? String(user.user_metadata?.first_name ?? ""),
-        last_name: currentProfile?.last_name ?? String(user.user_metadata?.last_name ?? ""),
+        full_name:
+          currentProfile?.full_name ??
+          String(user.user_metadata?.full_name ?? ""),
+        first_name:
+          currentProfile?.first_name ??
+          String(user.user_metadata?.first_name ?? ""),
+        last_name:
+          currentProfile?.last_name ??
+          String(user.user_metadata?.last_name ?? ""),
         email: currentProfile?.email ?? user.email ?? null,
         phone: bypassUser || null,
       });
@@ -408,7 +438,12 @@ export default async function Page({ params, searchParams }: PageProps) {
       currentUserName = currentUserDisplay.primary;
     } catch {
       currentUserName =
-        user.email ?? (userRole === "OWNER" ? "Owner" : userRole === "MANAGER" ? "Manager" : "Guest");
+        user.email ??
+        (userRole === "OWNER"
+          ? "Owner"
+          : userRole === "MANAGER"
+            ? "Manager"
+            : "Guest");
     }
   }
 
@@ -425,8 +460,10 @@ export default async function Page({ params, searchParams }: PageProps) {
     endDate: sp.send,
     fallbackRange: DEFAULT_SUMMARY_RANGE,
   });
-  const customStartDate = rangeInput.range === "custom" ? rangeInput.startDate : null;
-  const customEndDate = rangeInput.range === "custom" ? rangeInput.endDate : null;
+  const customStartDate =
+    rangeInput.range === "custom" ? rangeInput.startDate : null;
+  const customEndDate =
+    rangeInput.range === "custom" ? rangeInput.endDate : null;
   const summaryCustomStartDate =
     summaryRangeInput.range === "custom" ? summaryRangeInput.startDate : null;
   const summaryCustomEndDate =
@@ -453,7 +490,8 @@ export default async function Page({ params, searchParams }: PageProps) {
   const perPage = normalizePageSize(sp.perPage);
   const sort = normalizeOrderSort(sp.sort);
   const viewMode = normalizeViewMode(sp.view);
-  const hasCustomRange = filters.range === "custom" && !!filters.startDate && !!filters.endDate;
+  const hasCustomRange =
+    filters.range === "custom" && !!filters.startDate && !!filters.endDate;
   const rangeIsDefault = filters.range === "ALL" && !hasCustomRange;
   const isRangeFilterActive = !rangeIsDefault;
   const summaryRange = summaryRangeInput.range;
@@ -475,9 +513,12 @@ export default async function Page({ params, searchParams }: PageProps) {
     if (phoneRaw && phoneRaw.length > 0) params.set("u", phoneRaw);
     params.set("perPage", String(perPage));
     if (viewMode === "kanban") params.set("view", viewMode);
-    if (summaryRange !== DEFAULT_SUMMARY_RANGE) params.set("srange", summaryRange);
-    if (summaryRange === "custom" && summaryCustomStartDate) params.set("sstart", summaryCustomStartDate);
-    if (summaryRange === "custom" && summaryCustomEndDate) params.set("send", summaryCustomEndDate);
+    if (summaryRange !== DEFAULT_SUMMARY_RANGE)
+      params.set("srange", summaryRange);
+    if (summaryRange === "custom" && summaryCustomStartDate)
+      params.set("sstart", summaryCustomStartDate);
+    if (summaryRange === "custom" && summaryCustomEndDate)
+      params.set("send", summaryCustomEndDate);
     const qs = params.toString();
     return qs ? `/b/${slug}?${qs}` : `/b/${slug}`;
   })();
@@ -506,9 +547,12 @@ export default async function Page({ params, searchParams }: PageProps) {
     if (filters.startDate) params.set("start", filters.startDate);
     if (filters.endDate) params.set("end", filters.endDate);
     if (filters.actor !== "ALL") params.set("actor", filters.actor);
-    if (nextSummaryRange !== DEFAULT_SUMMARY_RANGE) params.set("srange", nextSummaryRange);
-    if (nextSummaryRange === "custom" && summaryCustomStartDate) params.set("sstart", summaryCustomStartDate);
-    if (nextSummaryRange === "custom" && summaryCustomEndDate) params.set("send", summaryCustomEndDate);
+    if (nextSummaryRange !== DEFAULT_SUMMARY_RANGE)
+      params.set("srange", nextSummaryRange);
+    if (nextSummaryRange === "custom" && summaryCustomStartDate)
+      params.set("sstart", summaryCustomStartDate);
+    if (nextSummaryRange === "custom" && summaryCustomEndDate)
+      params.set("send", summaryCustomEndDate);
     const qs = params.toString();
     return qs ? `/b/${slug}?${qs}` : `/b/${slug}`;
   };
@@ -539,18 +583,68 @@ export default async function Page({ params, searchParams }: PageProps) {
   const summaryPeriodOptions: SummaryPeriodOption[] =
     userRole === "OWNER"
       ? [
-          { label: "Today", shortLabel: "Today", href: makeSummaryHref("today"), active: summaryRange === "today" },
-          { label: "Yesterday", shortLabel: "Yesterday", href: makeSummaryHref("yesterday"), active: summaryRange === "yesterday" },
-          { label: "This week", shortLabel: "Week", href: makeSummaryHref("thisWeek"), active: summaryRange === "thisWeek" },
-          { label: "This month", shortLabel: "Month", href: makeSummaryHref("thisMonth"), active: summaryRange === "thisMonth" },
-          { label: "This year", shortLabel: "Year", href: makeSummaryHref("thisYear"), active: summaryRange === "thisYear" },
-          { label: "Custom range", shortLabel: "Custom", href: makeSummaryHref("custom"), active: summaryRange === "custom" },
+          {
+            label: "Today",
+            shortLabel: "Today",
+            href: makeSummaryHref("today"),
+            active: summaryRange === "today",
+          },
+          {
+            label: "Yesterday",
+            shortLabel: "Yesterday",
+            href: makeSummaryHref("yesterday"),
+            active: summaryRange === "yesterday",
+          },
+          {
+            label: "This week",
+            shortLabel: "Week",
+            href: makeSummaryHref("thisWeek"),
+            active: summaryRange === "thisWeek",
+          },
+          {
+            label: "This month",
+            shortLabel: "Month",
+            href: makeSummaryHref("thisMonth"),
+            active: summaryRange === "thisMonth",
+          },
+          {
+            label: "This year",
+            shortLabel: "Year",
+            href: makeSummaryHref("thisYear"),
+            active: summaryRange === "thisYear",
+          },
+          {
+            label: "Custom range",
+            shortLabel: "Custom",
+            href: makeSummaryHref("custom"),
+            active: summaryRange === "custom",
+          },
         ]
       : [
-          { label: "Today", shortLabel: "Today", href: makeSummaryHref("today"), active: summaryRange === "today" },
-          { label: "Yesterday", shortLabel: "Yesterday", href: makeSummaryHref("yesterday"), active: summaryRange === "yesterday" },
-          { label: "This week", shortLabel: "Week", href: makeSummaryHref("thisWeek"), active: summaryRange === "thisWeek" },
-          { label: "This month", shortLabel: "Month", href: makeSummaryHref("thisMonth"), active: summaryRange === "thisMonth" },
+          {
+            label: "Today",
+            shortLabel: "Today",
+            href: makeSummaryHref("today"),
+            active: summaryRange === "today",
+          },
+          {
+            label: "Yesterday",
+            shortLabel: "Yesterday",
+            href: makeSummaryHref("yesterday"),
+            active: summaryRange === "yesterday",
+          },
+          {
+            label: "This week",
+            shortLabel: "Week",
+            href: makeSummaryHref("thisWeek"),
+            active: summaryRange === "thisWeek",
+          },
+          {
+            label: "This month",
+            shortLabel: "Month",
+            href: makeSummaryHref("thisMonth"),
+            active: summaryRange === "thisMonth",
+          },
         ];
   const summaryExtendedOptions: SummaryPeriodOption[] = [];
 
@@ -560,30 +654,38 @@ export default async function Page({ params, searchParams }: PageProps) {
 
   try {
     const adminClient = supabaseAdmin();
-    const { data: primaryMemberships, error: primaryMembershipsError } = await adminClient
-      .from("memberships")
-      .select("user_id, role, profiles:profiles(id, full_name, first_name, last_name, email)")
-      .eq("business_id", currentBusiness.id)
-      .or("role.eq.OWNER,role.eq.owner,role.eq.MANAGER,role.eq.manager");
+    const { data: primaryMemberships, error: primaryMembershipsError } =
+      await adminClient
+        .from("memberships")
+        .select(
+          "user_id, role, profiles:profiles(id, full_name, first_name, last_name, email)",
+        )
+        .eq("business_id", currentBusiness.id)
+        .or("role.eq.OWNER,role.eq.owner,role.eq.MANAGER,role.eq.manager");
 
-    const { data: fallbackMemberships, error: fallbackMembershipsError } = await adminClient
-      .from("business_memberships")
-      .select("user_id, role")
-      .eq("business_id", currentBusiness.id)
-      .or("role.eq.OWNER,role.eq.owner,role.eq.MANAGER,role.eq.manager");
+    const { data: fallbackMemberships, error: fallbackMembershipsError } =
+      await adminClient
+        .from("business_memberships")
+        .select("user_id, role")
+        .eq("business_id", currentBusiness.id)
+        .or("role.eq.OWNER,role.eq.owner,role.eq.MANAGER,role.eq.manager");
 
     if (primaryMembershipsError && fallbackMembershipsError) {
       throw primaryMembershipsError || fallbackMembershipsError;
     }
 
-    const primaryRows = ((primaryMemberships ?? []) as ActorMembershipRow[]) || [];
-    const fallbackRows = (((fallbackMemberships ?? []) as { user_id: string | null; role: string | null }[]) || []).map(
-      (row) => ({
-        user_id: row.user_id,
-        role: row.role,
-        profiles: null,
-      }),
-    );
+    const primaryRows =
+      ((primaryMemberships ?? []) as ActorMembershipRow[]) || [];
+    const fallbackRows = (
+      ((fallbackMemberships ?? []) as {
+        user_id: string | null;
+        role: string | null;
+      }[]) || []
+    ).map((row) => ({
+      user_id: row.user_id,
+      role: row.role,
+      profiles: null,
+    }));
 
     const actorIds = Array.from(
       new Set(
@@ -598,7 +700,7 @@ export default async function Page({ params, searchParams }: PageProps) {
           .from("profiles")
           .select("id, full_name, first_name, last_name, email")
           .in("id", actorIds)
-      : { data: [], error: null };
+      : { data: [] };
 
     const profileMap = new Map<string, ActorProfileRow>();
     for (const profile of (actorProfiles ?? []) as ActorProfileRow[]) {
@@ -621,7 +723,8 @@ export default async function Page({ params, searchParams }: PageProps) {
 
       if (!email) {
         try {
-          const { data: authLookup } = await adminClient.auth.admin.getUserById(id);
+          const { data: authLookup } =
+            await adminClient.auth.admin.getUserById(id);
           email = cleanText(authLookup?.user?.email);
         } catch {
           email = "";
@@ -644,8 +747,12 @@ export default async function Page({ params, searchParams }: PageProps) {
     }
 
     teamActors = Array.from(membershipMap.values());
-    ownerIds = teamActors.filter((actor) => actor.kind === "OWNER").map((actor) => actor.id);
-    managerIds = teamActors.filter((actor) => actor.kind === "MANAGER").map((actor) => actor.id);
+    ownerIds = teamActors
+      .filter((actor) => actor.kind === "OWNER")
+      .map((actor) => actor.id);
+    managerIds = teamActors
+      .filter((actor) => actor.kind === "MANAGER")
+      .map((actor) => actor.id);
   } catch {
     teamActors = [];
   }
@@ -653,7 +760,8 @@ export default async function Page({ params, searchParams }: PageProps) {
   const businessOptions = (businesses ?? [])
     .map((b: any) => {
       const roleForBiz =
-        (memberships ?? []).find((m: any) => m.business_id === b.id)?.role ?? "GUEST";
+        (memberships ?? []).find((m: any) => m.business_id === b.id)?.role ??
+        "GUEST";
 
       return {
         id: String(b.id),
@@ -672,9 +780,24 @@ export default async function Page({ params, searchParams }: PageProps) {
   if (oErr && !bypassMode) throw oErr;
 
   const listRaw: any[] = orders ?? [];
+  console.log("[orders-page] orders loaded", {
+    businessId: String(currentBusiness.id),
+    listRawCount: listRaw.length,
+    delOrdersCount: listRaw.filter(
+      (order) => String(order.status ?? "").toUpperCase() === "DEL",
+    ).length,
+    delStatuses: Array.from(
+      new Set(
+        listRaw
+          .map((order) => String(order.status ?? "").toUpperCase())
+          .filter(Boolean),
+      ),
+    ),
+  });
   const actorNameById = new Map<string, string>();
   for (const actor of teamActors) {
-    if (actor?.id) actorNameById.set(String(actor.id), String(actor.label ?? ""));
+    if (actor?.id)
+      actorNameById.set(String(actor.id), String(actor.label ?? ""));
   }
 
   const now = new Date();
@@ -684,12 +807,18 @@ export default async function Page({ params, searchParams }: PageProps) {
       label: "Today",
       shortLabel: "Today",
       href: makeSummaryCustomHref(todayISO, todayISO),
-      active: summaryRange === "custom" && summaryCustomStartDate === todayISO && summaryCustomEndDate === todayISO,
+      active:
+        summaryRange === "custom" &&
+        summaryCustomStartDate === todayISO &&
+        summaryCustomEndDate === todayISO,
     },
     {
       label: "Yesterday",
       shortLabel: "Yesterday",
-      href: makeSummaryCustomHref(formatDateInput(addDays(now, -1)), formatDateInput(addDays(now, -1))),
+      href: makeSummaryCustomHref(
+        formatDateInput(addDays(now, -1)),
+        formatDateInput(addDays(now, -1)),
+      ),
       active:
         summaryRange === "custom" &&
         summaryCustomStartDate === formatDateInput(addDays(now, -1)) &&
@@ -698,10 +827,14 @@ export default async function Page({ params, searchParams }: PageProps) {
     {
       label: "This week",
       shortLabel: "Week",
-      href: makeSummaryCustomHref(formatDateInput(addDays(now, -((now.getDay() + 6) % 7))), todayISO),
+      href: makeSummaryCustomHref(
+        formatDateInput(addDays(now, -((now.getDay() + 6) % 7))),
+        todayISO,
+      ),
       active:
         summaryRange === "custom" &&
-        summaryCustomStartDate === formatDateInput(addDays(now, -((now.getDay() + 6) % 7))) &&
+        summaryCustomStartDate ===
+          formatDateInput(addDays(now, -((now.getDay() + 6) % 7))) &&
         summaryCustomEndDate === todayISO,
     },
     {
@@ -714,15 +847,17 @@ export default async function Page({ params, searchParams }: PageProps) {
         summaryCustomEndDate === todayISO,
     },
     ...(userRole === "OWNER"
-      ? [{
-          label: "This year",
-          shortLabel: "Year",
-          href: makeSummaryCustomHref(`${now.getFullYear()}-01-01`, todayISO),
-          active:
-            summaryRange === "custom" &&
-            summaryCustomStartDate === `${now.getFullYear()}-01-01` &&
-            summaryCustomEndDate === todayISO,
-        } satisfies SummaryPeriodOption]
+      ? [
+          {
+            label: "This year",
+            shortLabel: "Year",
+            href: makeSummaryCustomHref(`${now.getFullYear()}-01-01`, todayISO),
+            active:
+              summaryRange === "custom" &&
+              summaryCustomStartDate === `${now.getFullYear()}-01-01` &&
+              summaryCustomEndDate === todayISO,
+          } satisfies SummaryPeriodOption,
+        ]
       : []),
     {
       label: "Reset",
@@ -731,22 +866,30 @@ export default async function Page({ params, searchParams }: PageProps) {
       active: false,
     },
   ];
-  const qNeedle = String(filters.q ?? "").trim().toLowerCase();
+  const qNeedle = String(filters.q ?? "")
+    .trim()
+    .toLowerCase();
 
   const actorFilteredList: any[] =
     filters.actor === "ALL"
       ? listRaw
       : filters.actor === "ME"
-        ? listRaw.filter((o) => getOrderManagerValue(o) === String(currentUserId ?? ""))
+        ? listRaw.filter(
+            (o) => getOrderManagerValue(o) === String(currentUserId ?? ""),
+          )
         : filters.actor === "UNASSIGNED"
           ? listRaw.filter((o) => !getOrderManagerValue(o))
-      : filters.actor === "OWNER"
-        ? listRaw.filter((o) => ownerIds.includes(getOrderManagerValue(o)))
-        : filters.actor === "MANAGER"
-          ? listRaw.filter((o) => managerIds.includes(getOrderManagerValue(o)))
-          : filters.actor.startsWith("user:")
-            ? listRaw.filter((o) => getOrderManagerValue(o) === filters.actor.slice(5))
-            : listRaw;
+          : filters.actor === "OWNER"
+            ? listRaw.filter((o) => ownerIds.includes(getOrderManagerValue(o)))
+            : filters.actor === "MANAGER"
+              ? listRaw.filter((o) =>
+                  managerIds.includes(getOrderManagerValue(o)),
+                )
+              : filters.actor.startsWith("user:")
+                ? listRaw.filter(
+                    (o) => getOrderManagerValue(o) === filters.actor.slice(5),
+                  )
+                : listRaw;
 
   const searchedList: any[] = qNeedle
     ? actorFilteredList.filter((o) => {
@@ -775,22 +918,45 @@ export default async function Page({ params, searchParams }: PageProps) {
       })
     : actorFilteredList;
 
-  const applyStatusFilter = (rows: any[]) =>
-    filters.statusMode === "all"
-      ? rows
-      : filters.statuses.length === 0
-        ? rows.filter(
-            (o) =>
-              defaultVisibleStatuses.includes(String(o.status ?? "") as StatusValue) ||
-              isOrderOverdue(o, todayISO),
-          )
-        : rows.filter((o) =>
-            filters.statuses.some((status) =>
-              status === "OVERDUE"
-                ? isOrderOverdue(o, todayISO)
-                : o.status === status,
-            ),
-          );
+  const applyStatusFilter = (rows: any[]) => {
+    const filtered =
+      filters.statusMode === "all"
+        ? rows
+        : filters.statuses.length === 0
+          ? rows.filter((o) => {
+              const orderStatus = String(o.status ?? "").toUpperCase();
+              return (
+                defaultVisibleStatuses.some(
+                  (s) => s.toUpperCase() === orderStatus,
+                ) || isOrderOverdue(o, todayISO)
+              );
+            })
+          : rows.filter((o) =>
+              filters.statuses.some((status) => {
+                if (status === "OVERDUE") return isOrderOverdue(o, todayISO);
+                const orderStatus = String(o.status ?? "").toUpperCase();
+                return orderStatus === status.toUpperCase();
+              }),
+            );
+
+    console.log("[orders-page] applyStatusFilter", {
+      statusMode: filters.statusMode,
+      filtersStatuses: filters.statuses,
+      defaultVisibleStatuses,
+      inputCount: rows.length,
+      outputCount: filtered.length,
+      inputDELCount: rows.filter(
+        (order) => String(order.status ?? "").toUpperCase() === "DEL",
+      ).length,
+      outputDELCount: filtered.filter(
+        (order) => String(order.status ?? "").toUpperCase() === "DEL",
+      ).length,
+      hasDELInFilters: filters.statuses.includes("DEL"),
+      hasDELInDefaultVisibleStatuses: defaultVisibleStatuses.includes("DEL"),
+    });
+
+    return filtered;
+  };
 
   const tablePeriod = getDashboardPeriod(filters.range, {
     now,
@@ -802,13 +968,29 @@ export default async function Page({ params, searchParams }: PageProps) {
     startDate: summaryCustomStartDate,
     endDate: summaryCustomEndDate,
   });
-  const currentPeriodRows = filterOrdersByCreatedAt(searchedList, tablePeriod.current);
+  const currentPeriodRows = filterOrdersByCreatedAt(
+    searchedList,
+    tablePeriod.current,
+  );
+  console.log("[orders-page] pre-filter status diagnostics", {
+    searchedListCount: searchedList.length,
+    currentPeriodRowsCount: currentPeriodRows.length,
+    currentPeriodDELCount: currentPeriodRows.filter(
+      (order) => String(order.status ?? "").toUpperCase() === "DEL",
+    ).length,
+  });
   const kanbanHiddenCounts: HiddenKanbanCounts = {
-    done: currentPeriodRows.filter((order) => order.status === "DONE").length,
-    canceled: currentPeriodRows.filter((order) => order.status === "CANCELED").length,
-    duplicate: currentPeriodRows.filter((order) => order.status === "DUPLICATE").length,
+    done: currentPeriodRows.filter(
+      (order) => String(order.status ?? "").toUpperCase() === "DONE",
+    ).length,
+    canceled: currentPeriodRows.filter(
+      (order) => String(order.status ?? "").toUpperCase() === "CANCELED",
+    ).length,
   };
-  const summaryCurrentRows = filterOrdersByCreatedAt(listRaw, summaryPeriod.current);
+  const summaryCurrentRows = filterOrdersByCreatedAt(
+    listRaw,
+    summaryPeriod.current,
+  );
   const previousPeriodRows = summaryPeriod.previous
     ? filterOrdersByCreatedAt(listRaw, summaryPeriod.previous)
     : [];
@@ -819,42 +1001,55 @@ export default async function Page({ params, searchParams }: PageProps) {
   }
 
   const filteredRows = [...applyStatusFilter(currentPeriodRows)];
-  const sortedRows = sort === "default" ? filteredRows : filteredRows.sort((a, b) => {
-    const createdA = new Date(String(a.created_at ?? "")).getTime();
-    const createdB = new Date(String(b.created_at ?? "")).getTime();
-    const dueA = a.due_date ? new Date(String(a.due_date)).getTime() : null;
-    const dueB = b.due_date ? new Date(String(b.due_date)).getTime() : null;
-    const amountA = Number(a.amount ?? 0);
-    const amountB = Number(b.amount ?? 0);
-    const statusA = getStatusSearchLabel(a.status).toLowerCase();
-    const statusB = getStatusSearchLabel(b.status).toLowerCase();
-
-    switch (sort) {
-      case "oldest":
-        return createdA - createdB;
-      case "dueSoonest":
-        if (dueA === null && dueB === null) return createdB - createdA;
-        if (dueA === null) return 1;
-        if (dueB === null) return -1;
-        return dueA - dueB || createdB - createdA;
-      case "dueLatest":
-        if (dueA === null && dueB === null) return createdB - createdA;
-        if (dueA === null) return 1;
-        if (dueB === null) return -1;
-        return dueB - dueA || createdB - createdA;
-      case "statusAsc":
-        return statusA.localeCompare(statusB) || createdB - createdA;
-      case "statusDesc":
-        return statusB.localeCompare(statusA) || createdB - createdA;
-      case "amountHigh":
-        return amountB - amountA || createdB - createdA;
-      case "amountLow":
-        return amountA - amountB || createdB - createdA;
-      case "newest":
-      default:
-        return createdB - createdA;
-    }
+  console.log("[orders-page] filtered rows", {
+    filteredRowsCount: filteredRows.length,
+    filteredDELCount: filteredRows.filter(
+      (order) => String(order.status ?? "").toUpperCase() === "DEL",
+    ).length,
   });
+  const sortedRows =
+    sort === "default"
+      ? filteredRows
+      : filteredRows.sort((a, b) => {
+          const createdA = new Date(String(a.created_at ?? "")).getTime();
+          const createdB = new Date(String(b.created_at ?? "")).getTime();
+          const dueA = a.due_date
+            ? new Date(String(a.due_date)).getTime()
+            : null;
+          const dueB = b.due_date
+            ? new Date(String(b.due_date)).getTime()
+            : null;
+          const amountA = Number(a.amount ?? 0);
+          const amountB = Number(b.amount ?? 0);
+          const statusA = getStatusSearchLabel(a.status).toLowerCase();
+          const statusB = getStatusSearchLabel(b.status).toLowerCase();
+
+          switch (sort) {
+            case "oldest":
+              return createdA - createdB;
+            case "dueSoonest":
+              if (dueA === null && dueB === null) return createdB - createdA;
+              if (dueA === null) return 1;
+              if (dueB === null) return -1;
+              return dueA - dueB || createdB - createdA;
+            case "dueLatest":
+              if (dueA === null && dueB === null) return createdB - createdA;
+              if (dueA === null) return 1;
+              if (dueB === null) return -1;
+              return dueB - dueA || createdB - createdA;
+            case "statusAsc":
+              return statusA.localeCompare(statusB) || createdB - createdA;
+            case "statusDesc":
+              return statusB.localeCompare(statusA) || createdB - createdA;
+            case "amountHigh":
+              return amountB - amountA || createdB - createdA;
+            case "amountLow":
+              return amountA - amountB || createdB - createdA;
+            case "newest":
+            default:
+              return createdB - createdA;
+          }
+        });
 
   const list: OrderListItem[] = sortedRows.map((order) => {
     const client = normalizeOrderClient({
@@ -892,7 +1087,9 @@ export default async function Page({ params, searchParams }: PageProps) {
   const previousList: any[] = previousPeriodRows;
 
   const currentSnapshot = getMetricSnapshot(summaryCurrentRows, todayISO);
-  const previousSnapshot = summaryPeriod.previous ? getMetricSnapshot(previousList, todayISO) : null;
+  const previousSnapshot = summaryPeriod.previous
+    ? getMetricSnapshot(previousList, todayISO)
+    : null;
 
   const fmtRevenue = (n: number) =>
     new Intl.NumberFormat("en-US", {
@@ -900,67 +1097,71 @@ export default async function Page({ params, searchParams }: PageProps) {
       currency: "USD",
       maximumFractionDigits: 0,
     }).format(n);
-  const fmtSignedRevenue = (n: number) => `${n >= 0 ? "+" : "-"}${fmtRevenue(Math.abs(Math.round(n)))}`;
-  const fmtSignedCount = (n: number) => `${n >= 0 ? "+" : "-"}${Math.abs(Math.round(n))}`;
+  const fmtSignedRevenue = (n: number) =>
+    `${n >= 0 ? "+" : "-"}${fmtRevenue(Math.abs(Math.round(n)))}`;
+  const fmtSignedCount = (n: number) =>
+    `${n >= 0 ? "+" : "-"}${Math.abs(Math.round(n))}`;
 
-  const summaryCards: SummaryCardData[] = ([
-    {
-      label: "Total Orders",
-      value: String(currentSnapshot.totalOrders),
-      tone: "blue",
-      comparison: formatMetricComparison({
-        current: currentSnapshot.totalOrders,
-        previous: previousSnapshot?.totalOrders ?? null,
-        comparisonLabel: summaryPeriod.comparisonLabel,
-        mode: "percent",
-        improvement: "up",
-        zeroPreviousBehavior: "absolute",
-        formatAbsoluteValue: fmtSignedCount,
-      }),
-    },
-    {
-      label: "Total Revenue",
-      value: fmtRevenue(Math.round(currentSnapshot.totalRevenue)),
-      tone: "neutral",
-      comparison: formatMetricComparison({
-        current: currentSnapshot.totalRevenue,
-        previous: previousSnapshot?.totalRevenue ?? null,
-        comparisonLabel: summaryPeriod.comparisonLabel,
-        mode: "percent",
-        improvement: "up",
-        zeroPreviousBehavior: "absolute",
-        formatAbsoluteValue: fmtSignedRevenue,
-      }),
-    },
-    {
-      label: "Active Orders",
-      value: String(currentSnapshot.activeOrders),
-      tone: "green",
-      comparison: formatMetricComparison({
-        current: currentSnapshot.activeOrders,
-        previous: previousSnapshot?.activeOrders ?? null,
-        comparisonLabel: summaryPeriod.comparisonLabel,
-        mode: "percent",
-        improvement: "up",
-        zeroPreviousBehavior: "absolute",
-        formatAbsoluteValue: fmtSignedCount,
-      }),
-    },
-    {
-      label: "Overdue Orders",
-      value: String(currentSnapshot.overdueOrders),
-      tone: "red",
-      comparison: formatMetricComparison({
-        current: currentSnapshot.overdueOrders,
-        previous: previousSnapshot?.overdueOrders ?? null,
-        comparisonLabel: summaryPeriod.comparisonLabel,
-        mode: "percent",
-        improvement: "down",
-        zeroPreviousBehavior: "absolute",
-        formatAbsoluteValue: fmtSignedCount,
-      }),
-    },
-  ] as SummaryCardSeed[]).map(({ comparison, ...card }) => ({
+  const summaryCards: SummaryCardData[] = (
+    [
+      {
+        label: "Total Orders",
+        value: String(currentSnapshot.totalOrders),
+        tone: "blue",
+        comparison: formatMetricComparison({
+          current: currentSnapshot.totalOrders,
+          previous: previousSnapshot?.totalOrders ?? null,
+          comparisonLabel: summaryPeriod.comparisonLabel,
+          mode: "percent",
+          improvement: "up",
+          zeroPreviousBehavior: "absolute",
+          formatAbsoluteValue: fmtSignedCount,
+        }),
+      },
+      {
+        label: "Total Revenue",
+        value: fmtRevenue(Math.round(currentSnapshot.totalRevenue)),
+        tone: "neutral",
+        comparison: formatMetricComparison({
+          current: currentSnapshot.totalRevenue,
+          previous: previousSnapshot?.totalRevenue ?? null,
+          comparisonLabel: summaryPeriod.comparisonLabel,
+          mode: "percent",
+          improvement: "up",
+          zeroPreviousBehavior: "absolute",
+          formatAbsoluteValue: fmtSignedRevenue,
+        }),
+      },
+      {
+        label: "Active Orders",
+        value: String(currentSnapshot.activeOrders),
+        tone: "green",
+        comparison: formatMetricComparison({
+          current: currentSnapshot.activeOrders,
+          previous: previousSnapshot?.activeOrders ?? null,
+          comparisonLabel: summaryPeriod.comparisonLabel,
+          mode: "percent",
+          improvement: "up",
+          zeroPreviousBehavior: "absolute",
+          formatAbsoluteValue: fmtSignedCount,
+        }),
+      },
+      {
+        label: "Overdue Orders",
+        value: String(currentSnapshot.overdueOrders),
+        tone: "red",
+        comparison: formatMetricComparison({
+          current: currentSnapshot.overdueOrders,
+          previous: previousSnapshot?.overdueOrders ?? null,
+          comparisonLabel: summaryPeriod.comparisonLabel,
+          mode: "percent",
+          improvement: "down",
+          zeroPreviousBehavior: "absolute",
+          formatAbsoluteValue: fmtSignedCount,
+        }),
+      },
+    ] as SummaryCardSeed[]
+  ).map(({ comparison, ...card }) => ({
     ...card,
     trendText: comparison.text,
     trendDirection: comparison.direction,
@@ -983,35 +1184,48 @@ export default async function Page({ params, searchParams }: PageProps) {
 
       <main
         className={[
-          "overflow-x-hidden px-4 pb-8 pt-20 sm:px-6",
-          viewMode === "kanban" ? "mx-0 max-w-none" : "mx-auto max-w-[1220px]",
+          "overflow-x-hidden px-4 pt-20 sm:px-6",
+          viewMode === "kanban"
+            ? "mx-0 max-w-none overflow-hidden pb-4"
+            : "mx-auto max-w-[1220px] pb-8",
         ].join(" ")}
       >
-        <div className="hidden items-start lg:grid lg:grid-cols-[auto_minmax(0,1fr)] lg:gap-5">
-          <DesktopLeftRail
-            key={`desktop-rail-${filters.range}-${filters.startDate ?? ""}-${filters.endDate ?? ""}`}
-            businessId={String(currentBusiness.id)}
-            phoneRaw={phoneRaw}
-            q={filters.q}
-            statuses={filters.statuses}
-            range={filters.range}
-            summaryRange={summaryRange}
-            startDate={filters.startDate}
-            endDate={filters.endDate}
-            actor={filters.actor}
-            statusMode={filters.statusMode}
-            actors={teamActors}
-            currentUserId={currentUserId}
-            hasActiveFilters={hasActiveFilters}
-            activeFiltersCount={activeFiltersCount}
-            clearHref={clearHref}
-            businessHref={businessHref}
-            settingsHref={settingsHref}
-            canSeeAnalytics={canSeeAnalyticsNav}
-            layoutMode={viewMode}
-          />
+        <div
+          className={`hidden items-start lg:grid lg:grid-cols-[auto_minmax(0,1fr)] ${
+            viewMode === "kanban" ? "lg:h-[calc(100vh-100px)] lg:gap-3" : "lg:gap-5"
+          }`}
+        >
+          <div className="relative shrink-0">
+            <DesktopLeftRail
+              key={`desktop-rail-${filters.range}-${filters.startDate ?? ""}-${filters.endDate ?? ""}`}
+              businessId={String(currentBusiness.id)}
+              phoneRaw={phoneRaw}
+              q={filters.q}
+              statuses={filters.statuses}
+              range={filters.range}
+              summaryRange={summaryRange}
+              startDate={filters.startDate}
+              endDate={filters.endDate}
+              actor={filters.actor}
+              sort={sort}
+              statusMode={filters.statusMode}
+              actors={teamActors}
+              currentUserId={currentUserId}
+              hasActiveFilters={hasActiveFilters}
+              activeFiltersCount={activeFiltersCount}
+              clearHref={clearHref}
+              businessHref={businessHref}
+              settingsHref={settingsHref}
+              canSeeAnalytics={canSeeAnalyticsNav}
+              layoutMode={viewMode}
+            />
+          </div>
 
-          <div className="min-w-0 space-y-4">
+          <div
+            className={`min-w-0 space-y-4 ${
+              viewMode === "kanban" ? "h-full pl-0.5" : "pl-2"
+            }`}
+          >
             {viewMode === "list" ? (
               <DesktopAnalyticsCard
                 cards={summaryCards}
@@ -1041,13 +1255,6 @@ export default async function Page({ params, searchParams }: PageProps) {
               />
             ) : null}
 
-            {viewMode === "list" ? (
-              <DesktopCreateOrderAccordion
-                businessId={String(currentBusiness.id)}
-                businessSlug={String(currentBusiness.slug)}
-              />
-            ) : null}
-
             <DesktopOrdersTable
               key={`desktop-orders-${viewMode}-${filters.q}-${filters.statuses.join(",")}-${filters.actor}-${filters.range}-${filters.startDate ?? ""}-${filters.endDate ?? ""}-${sort}`}
               list={paginatedList}
@@ -1059,7 +1266,9 @@ export default async function Page({ params, searchParams }: PageProps) {
               sort={sort}
               initialViewMode={viewMode}
               statusMode={filters.statusMode}
-              statusFilter={filters.statusMode === "all" ? [] : filters.statuses}
+              statusFilter={
+                filters.statusMode === "all" ? [] : filters.statuses
+              }
               rangeFilter={filters.range}
               summaryRange={summaryRange}
               rangeStartDate={filters.startDate}
@@ -1090,6 +1299,7 @@ export default async function Page({ params, searchParams }: PageProps) {
             hasComparison={Boolean(summaryPeriod.previous)}
             periodOptions={summaryPeriodOptions}
             extendedOptions={summaryExtendedOptions}
+            storageKey={`orders-mobile-summary-hidden:${String(currentBusiness.id)}`}
             customRange={{
               active: summaryRange === "custom",
               startDate: summaryCustomStartDate,
@@ -1107,11 +1317,6 @@ export default async function Page({ params, searchParams }: PageProps) {
             }}
           />
 
-          <MobileCreateOrderAccordion
-            businessId={String(currentBusiness.id)}
-            businessSlug={String(currentBusiness.slug)}
-          />
-
           <MobileFiltersAccordion
             key={`mobile-filters-${filters.range}-${filters.startDate ?? ""}-${filters.endDate ?? ""}`}
             businessId={String(currentBusiness.id)}
@@ -1123,6 +1328,8 @@ export default async function Page({ params, searchParams }: PageProps) {
             hasActiveFilters={hasActiveFilters}
             actor={filters.actor}
             actors={teamActors}
+            sort={sort}
+            viewMode={viewMode}
           />
           <MobileOrdersList
             key={`mobile-orders-${filters.q}-${filters.statuses.join(",")}-${filters.actor}-${filters.range}-${filters.startDate ?? ""}-${filters.endDate ?? ""}-${sort}`}
@@ -1143,6 +1350,7 @@ export default async function Page({ params, searchParams }: PageProps) {
             currentUserName={currentUserName}
             searchQuery={filters.q}
             sort={sort}
+            initialViewMode={viewMode}
             statusMode={filters.statusMode}
             statusFilter={filters.statusMode === "all" ? [] : filters.statuses}
             summaryRange={summaryRange}
@@ -1150,6 +1358,7 @@ export default async function Page({ params, searchParams }: PageProps) {
             rangeStartDate={filters.startDate}
             rangeEndDate={filters.endDate}
             actorFilter={filters.actor}
+            hiddenKanbanCounts={kanbanHiddenCounts}
           />
         </div>
       </main>

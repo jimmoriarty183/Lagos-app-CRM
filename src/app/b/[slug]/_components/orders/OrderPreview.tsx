@@ -4,22 +4,29 @@ import * as React from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 import {
-  CalendarClock,
   Check,
   ChevronDown,
   ChevronLeft,
+  Download,
+  FileText,
   Maximize2,
   Minimize2,
-  MessageSquareText,
   Plus,
+  Paperclip,
   Tag,
   X,
 } from "lucide-react";
 
 import { OrderChecklist } from "@/app/b/[slug]/OrderChecklist";
-import { OrderComments } from "@/app/b/[slug]/OrderComments";
+import { OrderActivitySection } from "@/app/b/[slug]/_components/orders/OrderActivitySection";
+import { OrderNotesPanel, type OrderNote } from "@/app/b/[slug]/_components/orders/OrderNotesPanel";
 import { createOrder, setOrderManager, setOrderStatus, updateOrder } from "@/app/b/[slug]/actions";
 import { CANCELED_REASONS } from "@/app/b/[slug]/order-status-reasons";
+import {
+  appendLocalActivityEvent,
+  makeLocalActivityEventId,
+  type LocalActivityEvent,
+} from "@/app/b/[slug]/_components/orders/order-activity";
 import { normalizeOrderClient } from "@/lib/order-client";
 import {
   Sheet,
@@ -87,6 +94,7 @@ type Props = {
   businessId: string;
   businessSlug: string;
   phoneRaw: string;
+  currentUserId?: string | null;
   userRole: "OWNER" | "MANAGER" | "GUEST";
   canManage: boolean;
   currentUserName: string;
@@ -96,46 +104,16 @@ type Props = {
   onClose: () => void;
 };
 
-type ActivityEvent = {
-  id: string;
-  actorName: string;
-  actorRole?: string | null;
-  description: string;
-  ts: string;
-  tone?: "default" | "success" | "warning";
-};
-
-type LocalActivityEvent = {
-  id: string;
-  type: "status_changed" | "label_added" | "label_removed" | "order_updated" | "manager_changed";
-  actorName: string;
-  actorRole?: string | null;
-  description: string;
-  ts: string;
-};
-
-type ChecklistActivityRow = {
-  id: string;
-  title: string;
-  created_at: string;
-  done_at: string | null;
-  is_done: boolean;
-};
-
-type CommentActivityRow = {
-  id: string;
-  body: string;
-  author_phone: string | null;
-  author_role: string | null;
-  created_at: string;
-};
-
 const LABEL_SUGGESTIONS = ["urgent", "VIP", "paid", "callback", "installation", "follow-up"];
 const ORDER_PREVIEW_LAYOUT_STORAGE_KEY = "order-preview-layout-mode";
-
-function getActivityStorageKey(businessId: string, orderId: string) {
-  return `order-activity:${businessId}:${orderId}`;
-}
+type OverviewAttachmentRow = {
+  id: string;
+  file_name: string;
+  storage_path: string;
+  mime_type: string | null;
+  file_size: number | null;
+  created_at: string | null;
+};
 
 function getSuggestedLabelsStorageKey(businessId: string) {
   return `order-label-suggestions:${businessId}`;
@@ -177,49 +155,6 @@ function saveSuggestedLabel(businessId: string, label: string) {
   window.localStorage.setItem(getSuggestedLabelsStorageKey(businessId), JSON.stringify(next));
 }
 
-function dedupeLocalActivityEvents(events: LocalActivityEvent[]) {
-  const deduped: LocalActivityEvent[] = [];
-  const seen = new Set<string>();
-
-  for (const event of events) {
-    if (!event?.id || seen.has(event.id)) continue;
-    seen.add(event.id);
-    deduped.push(event);
-  }
-
-  return deduped;
-}
-
-function readLocalActivityEvents(businessId: string, orderId: string) {
-  if (typeof window === "undefined") return [] as LocalActivityEvent[];
-  try {
-    const raw = window.localStorage.getItem(getActivityStorageKey(businessId, orderId));
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    const deduped = dedupeLocalActivityEvents(parsed as LocalActivityEvent[]);
-    if (deduped.length !== parsed.length) {
-      window.localStorage.setItem(getActivityStorageKey(businessId, orderId), JSON.stringify(deduped));
-    }
-    return deduped;
-  } catch {
-    return [];
-  }
-}
-
-function appendLocalActivityEvent(businessId: string, orderId: string, event: LocalActivityEvent) {
-  if (typeof window === "undefined") return;
-  const next = dedupeLocalActivityEvents([...readLocalActivityEvents(businessId, orderId), event]).slice(-50);
-  window.localStorage.setItem(getActivityStorageKey(businessId, orderId), JSON.stringify(next));
-}
-
-function makeLocalActivityEventId(prefix: string) {
-  const randomPart =
-    typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
-      ? crypto.randomUUID()
-      : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-  return `${prefix}-${randomPart}`;
-}
 
 function fmtAmount(n: number) {
   return new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(Number(n || 0));
@@ -263,6 +198,15 @@ function formatAmountValue(value: number | string | null) {
   return `$${fmtAmount(amount)}`;
 }
 
+function formatFileSize(value: number | null) {
+  const size = Number(value || 0);
+  if (!Number.isFinite(size) || size <= 0) return "Unknown size";
+  if (size < 1024) return `${size} B`;
+  if (size < 1024 * 1024) return `${(size / 1024).toFixed(size >= 10 * 1024 ? 0 : 1)} KB`;
+  if (size < 1024 * 1024 * 1024) return `${(size / (1024 * 1024)).toFixed(size >= 10 * 1024 * 1024 ? 0 : 1)} MB`;
+  return `${(size / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+}
+
 function ActorAvatar({ label }: { label: string }) {
   const initials = label
     .split(/\s+/)
@@ -277,6 +221,7 @@ function ActorAvatar({ label }: { label: string }) {
     </span>
   );
 }
+
 
 function DrawerStatusSelect({
   orderId,
@@ -341,6 +286,13 @@ function DrawerStatusSelect({
         actorRole: userRole,
         description: `changed status from "${getStatusLabel(previous, customStatuses)}" to "${getStatusLabel(next, customStatuses)}"`,
         ts: new Date().toISOString(),
+        payload: {
+          field: "status",
+          from: previous,
+          to: next,
+          fromLabel: getStatusLabel(previous, customStatuses),
+          toLabel: getStatusLabel(next, customStatuses),
+        },
       });
     },
     [businessId, businessSlug, currentUserName, customStatuses, onCommitted, orderId, userRole],
@@ -675,9 +627,91 @@ function DrawerStatusSelect({
 
 function MetaItem({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="rounded-2xl border border-[#eef2f7] bg-[#fbfcfe] px-4 py-3">
+    <div className="rounded-[18px] border border-[#eef2f7] bg-[#fbfcfe] px-3.5 py-2.5">
       <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">{label}</div>
-      <div className="mt-1 text-sm font-medium text-[#111827]">{value}</div>
+      <div className="mt-1 text-sm font-medium leading-5 text-[#111827]">{value}</div>
+    </div>
+  );
+}
+
+function FilesSection({
+  files,
+  loading,
+  uploading,
+  canUpload,
+  successMessage,
+  onAddFiles,
+}: {
+  files: OverviewAttachmentRow[];
+  loading: boolean;
+  uploading: boolean;
+  canUpload: boolean;
+  successMessage: string | null;
+  onAddFiles: () => void;
+}) {
+  return (
+    <div className="rounded-[20px] border border-[#eef2f7] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <div className="flex items-center gap-2 text-sm font-semibold text-[#111827]">
+            <Paperclip className="h-4 w-4 text-[#98a2b3]" />
+            Files
+          </div>
+          <p className="mt-1 text-xs text-[#667085]">Contracts, photos, invoices, and any order-related documents.</p>
+        </div>
+        {canUpload ? (
+          <button
+            type="button"
+            onClick={onAddFiles}
+            disabled={uploading}
+            className="inline-flex h-10 items-center gap-2 rounded-xl border border-[#dde3ee] bg-white px-4 text-sm font-semibold text-[#344054] transition hover:bg-[#f8fafc] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <Plus className="h-4 w-4" />
+            {uploading ? "Uploading..." : "Add file"}
+          </button>
+        ) : null}
+      </div>
+
+      {successMessage ? (
+        <div className="mt-3 rounded-[16px] border border-[#b7ebc6] bg-[#ecfdf3] px-3.5 py-2.5 text-sm font-medium text-[#067647]">
+          {successMessage}
+        </div>
+      ) : null}
+
+      <div className="mt-3 space-y-2">
+        {loading ? (
+          <div className="rounded-[18px] border border-dashed border-[#dbe2ea] bg-[#fbfcfe] px-4 py-5 text-sm text-[#667085]">
+            Loading files...
+          </div>
+        ) : files.length > 0 ? (
+          files.map((file) => (
+            <a
+              key={file.id}
+              href={`/api/activity-attachments/${file.id}`}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center justify-between gap-3 rounded-[18px] border border-[#eef2f7] bg-[#fbfcfe] px-3.5 py-3 transition hover:border-[#d5dde7] hover:bg-white"
+            >
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 text-sm font-semibold text-[#111827]">
+                  <FileText className="h-4 w-4 shrink-0 text-[#98a2b3]" />
+                  <span className="truncate">{file.file_name}</span>
+                </div>
+                <div className="mt-1 text-xs text-[#667085]">
+                  {[formatFileSize(file.file_size), file.created_at ? formatDateTime(file.created_at) : null].filter(Boolean).join(" • ")}
+                </div>
+              </div>
+              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[#dde3ee] bg-white text-[#344054]">
+                <Download className="h-4 w-4" />
+              </span>
+            </a>
+          ))
+        ) : (
+          <div className="rounded-[18px] border border-dashed border-[#dbe2ea] bg-[#fbfcfe] px-4 py-5 text-sm text-[#667085]">
+            No files attached yet.
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -739,6 +773,10 @@ function LabelsSection({
         actorRole: userRole,
         description: `added label "${normalized}"`,
         ts: new Date().toISOString(),
+        payload: {
+          field: "tags",
+          added: [normalized],
+        },
       });
       return [...prev, normalized];
     });
@@ -754,19 +792,23 @@ function LabelsSection({
         actorRole: userRole,
         description: `removed label "${label}"`,
         ts: new Date().toISOString(),
+        payload: {
+          field: "tags",
+          removed: [label],
+        },
       });
       return prev.filter((item) => item !== label);
     });
   };
 
   return (
-    <div className="rounded-2xl border border-[#eef2f7] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+    <div className="rounded-[20px] border border-[#eef2f7] bg-white p-3.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
       <div className="flex items-center gap-2 text-sm font-semibold text-[#111827]">
         <Tag className="h-4 w-4 text-[#98a2b3]" />
         Labels
       </div>
 
-      <div className="mt-3 flex flex-wrap gap-2">
+      <div className="mt-2.5 flex flex-wrap gap-1.5">
         {value.length > 0 ? (
           value.map((label) => (
             <button
@@ -783,7 +825,7 @@ function LabelsSection({
         )}
       </div>
 
-      <div className="mt-4 flex flex-wrap gap-2">
+      <div className="mt-3 flex flex-wrap gap-1.5">
         {suggestedLabels.filter((label) => !value.some((item) => item.toLowerCase() === label.toLowerCase())).map((label) => (
           <button
             key={label}
@@ -796,7 +838,7 @@ function LabelsSection({
         ))}
       </div>
 
-      <div className="mt-4 flex gap-2">
+      <div className="mt-3 flex gap-2">
         <input
           value={draft}
           onChange={(event) => setDraft(event.currentTarget.value)}
@@ -819,244 +861,9 @@ function LabelsSection({
         </button>
       </div>
 
-      <p className="mt-3 text-xs leading-5 text-[#98a2b3]">
+      <p className="mt-2.5 text-xs leading-5 text-[#98a2b3]">
         Labels are currently session-only UI until backend storage is connected.
       </p>
-    </div>
-  );
-}
-
-function ActivityTab({
-  order,
-  businessId,
-  supabase,
-  phoneRaw,
-  currentUserName,
-  actors,
-}: {
-  order: OrderRow;
-  businessId: string;
-  supabase: SupabaseClient;
-  phoneRaw: string;
-  currentUserName: string;
-  actors: TeamActor[];
-}) {
-  const [events, setEvents] = React.useState<ActivityEvent[]>([]);
-  const [loading, setLoading] = React.useState(true);
-  const actorById = React.useMemo(() => new Map(actors.map((actor) => [actor.id, actor])), [actors]);
-
-  React.useEffect(() => {
-    let active = true;
-
-    async function load() {
-      setLoading(true);
-
-      const [commentsResult, checklistResult] = await Promise.all([
-        supabase
-          .from("order_comments")
-          .select("id, body, author_phone, author_role, created_at")
-          .eq("order_id", order.id)
-          .order("created_at", { ascending: true }),
-        supabase
-          .from("order_checklist_items")
-          .select("id, title, created_at, done_at, is_done")
-          .eq("order_id", order.id)
-          .order("created_at", { ascending: true }),
-      ]);
-
-      if (!active) return;
-
-      const nextEvents: ActivityEvent[] = [];
-      const localEvents = readLocalActivityEvents(businessId, order.id);
-
-      nextEvents.push({
-        id: `order-created-${order.id}`,
-        actorName:
-          order.created_by_name ||
-          (order.created_by && actorById.get(order.created_by)?.label) ||
-          order.manager_name ||
-          (order.created_by_role === "MANAGER" ? "Manager" : order.created_by_role === "OWNER" ? "Owner" : "Team member"),
-        actorRole: order.created_by_role || null,
-        description: "created this order",
-        ts: order.created_at,
-      });
-
-      if (order.manager_name?.trim()) {
-        const managerActor = order.manager_id ? actorById.get(order.manager_id) : null;
-        nextEvents.push({
-          id: `manager-assigned-${order.id}`,
-          actorName: managerActor?.label || order.manager_name,
-          actorRole: managerActor?.kind || "MANAGER",
-          description: "is currently assigned as manager",
-          ts: order.created_at,
-        });
-      } else {
-        nextEvents.push({
-          id: `manager-unassigned-${order.id}`,
-          actorName: "System",
-          actorRole: null,
-          description: "shows no assigned manager",
-          ts: order.created_at,
-          tone: "warning",
-        });
-      }
-
-      if (order.due_date) {
-        nextEvents.push({
-          id: `due-date-${order.id}`,
-          actorName: "System",
-          actorRole: null,
-          description: `set due date to ${formatDate(order.due_date)}`,
-          ts: order.due_date,
-          tone: "warning",
-        });
-      }
-
-      if (!commentsResult.error) {
-        for (const comment of (commentsResult.data ?? []) as CommentActivityRow[]) {
-          const actorName =
-            comment.author_phone && comment.author_phone === phoneRaw
-              ? currentUserName
-              : comment.author_phone || "Unknown teammate";
-
-          nextEvents.push({
-            id: `comment-${comment.id}`,
-            actorName,
-            actorRole: comment.author_role,
-            description: `added comment: "${comment.body.trim().slice(0, 72)}${comment.body.trim().length > 72 ? "..." : ""}"`,
-            ts: comment.created_at,
-          });
-        }
-      }
-
-      if (!checklistResult.error) {
-        for (const item of (checklistResult.data ?? []) as ChecklistActivityRow[]) {
-          nextEvents.push({
-            id: `checklist-created-${item.id}`,
-            actorName: "Team member",
-            actorRole: null,
-            description: `added checklist item "${item.title}"`,
-            ts: item.created_at,
-          });
-
-          if (item.is_done && item.done_at) {
-            nextEvents.push({
-              id: `checklist-done-${item.id}`,
-              actorName: "Team member",
-              actorRole: null,
-              description: `completed checklist item "${item.title}"`,
-              ts: item.done_at,
-              tone: "success",
-            });
-          }
-        }
-      }
-
-      for (const event of localEvents) {
-        nextEvents.push({
-          id: event.id,
-          actorName: event.actorName,
-          actorRole: event.actorRole,
-          description: event.description,
-          ts: event.ts,
-          tone: event.type === "status_changed" ? "default" : event.type === "label_added" ? "success" : "warning",
-        });
-      }
-
-      nextEvents.sort((a, b) => new Date(b.ts).getTime() - new Date(a.ts).getTime());
-      setEvents(nextEvents);
-      setLoading(false);
-    }
-
-    void load();
-
-    return () => {
-      active = false;
-    };
-  }, [actorById, businessId, currentUserName, order, phoneRaw, supabase]);
-
-  return (
-    <div className="space-y-4">
-      <div className="rounded-2xl border border-[#eef2f7] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
-        <div className="flex items-center gap-2 text-sm font-semibold text-[#111827]">
-          <CalendarClock className="h-4 w-4 text-[#98a2b3]" />
-          Activity
-        </div>
-        <p className="mt-1 text-xs leading-5 text-[#98a2b3]">
-          User attribution is shown where current backend data provides it. Status changes, edits, due date changes, and labels are ready for deeper audit history.
-        </p>
-        <div className="mt-3 flex flex-wrap gap-3 text-[11px] font-medium text-[#98a2b3]">
-          <span className="inline-flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-full bg-[#2459d3]" />
-            Info
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-full bg-[#12b76a]" />
-            Added / completed
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-full bg-[#f79009]" />
-            Removed / warning
-          </span>
-        </div>
-      </div>
-
-      <div className="rounded-2xl border border-[#eef2f7] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
-        {loading ? (
-          <div className="text-sm text-[#98a2b3]">Loading activity...</div>
-        ) : (
-          <div className="space-y-4">
-            {events.map((event, index) => (
-              <div key={event.id} className="flex gap-3">
-                <div className="flex w-5 flex-col items-center">
-                  <span
-                    className={[
-                      "mt-1 h-2.5 w-2.5 rounded-full",
-                      event.tone === "success"
-                        ? "bg-[#12b76a]"
-                        : event.tone === "warning"
-                          ? "bg-[#f79009]"
-                          : "bg-[#2459d3]",
-                    ].join(" ")}
-                  />
-                  {index < events.length - 1 ? <span className="mt-2 h-full w-px bg-[#e4e7ec]" /> : null}
-                </div>
-                <div className="min-w-0 flex-1 pb-4">
-                  <div className="text-sm leading-6 text-[#111827]">
-                    <span className="font-semibold">{event.actorName}</span>
-                    {event.actorRole ? (
-                      <span className="ml-2 rounded-full bg-[#f2f4f7] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#667085]">
-                        {event.actorRole}
-                      </span>
-                    ) : null}
-                    <span className="ml-2 text-[#475467]">{event.description}</span>
-                  </div>
-                  <div className="mt-1 text-xs font-medium text-[#98a2b3]">{formatDateTime(event.ts)}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function NotesTab({ canManage }: { canManage: boolean }) {
-  return (
-    <div className="rounded-2xl border border-[#eef2f7] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
-      <div className="flex items-center gap-2 text-sm font-semibold text-[#111827]">
-        <MessageSquareText className="h-4 w-4 text-[#98a2b3]" />
-        Internal notes
-      </div>
-      <p className="mt-1 text-xs leading-5 text-[#98a2b3]">
-        Reserved for manager-only notes. The UI is ready, but persistence is intentionally deferred until backend support exists.
-      </p>
-      <textarea
-        disabled
-        placeholder={canManage ? "Internal notes will appear here once storage is connected." : "Notes are available to managers."}
-        className="mt-4 min-h-40 w-full resize-none rounded-2xl border border-[#dde3ee] bg-[#fbfcfe] px-4 py-3 text-sm text-[#98a2b3] outline-none"
-      />
     </div>
   );
 }
@@ -1067,6 +874,7 @@ export function OrderPreview({
   businessId,
   businessSlug,
   phoneRaw,
+  currentUserId,
   userRole,
   canManage,
   currentUserName,
@@ -1083,6 +891,12 @@ export function OrderPreview({
   const [isEditingOverview, setIsEditingOverview] = React.useState(false);
   const [isSavingOverview, startSavingOverview] = React.useTransition();
   const [previewOrder, setPreviewOrder] = React.useState<OrderRow | null>(order);
+  const [notesByOrderId, setNotesByOrderId] = React.useState<Record<string, OrderNote[]>>({});
+  const [overviewFiles, setOverviewFiles] = React.useState<OverviewAttachmentRow[]>([]);
+  const [isLoadingOverviewFiles, setIsLoadingOverviewFiles] = React.useState(false);
+  const [isUploadingOverviewFiles, setIsUploadingOverviewFiles] = React.useState(false);
+  const [overviewUploadSuccess, setOverviewUploadSuccess] = React.useState<string | null>(null);
+  const overviewFileInputRef = React.useRef<HTMLInputElement | null>(null);
   const labelStorageKey = React.useMemo(
     () => (previewOrder ? `order-labels:${businessId}:${previewOrder.id}` : null),
     [businessId, previewOrder],
@@ -1173,13 +987,203 @@ export function OrderPreview({
     dueISO < todayISO &&
     (currentOrder.status === "NEW" || currentOrder.status === "IN_PROGRESS");
   const isWideLayout = layoutMode === "wide";
+  const isCompactTop = activeTab !== "overview";
+  const currentNotes = currentOrder ? notesByOrderId[currentOrder.id] ?? [] : [];
+  const canUploadFiles = userRole === "OWNER" || userRole === "MANAGER";
+
+  const loadOverviewFiles = React.useCallback(async (orderId: string) => {
+    setIsLoadingOverviewFiles(true);
+    const { data, error } = await supabase
+      .from("activity_attachments")
+      .select("id, file_name, storage_path, mime_type, file_size, created_at")
+      .eq("business_id", businessId)
+      .eq("order_id", orderId)
+      .order("created_at", { ascending: false })
+      .limit(8);
+
+    if (error) {
+      console.error("load overview files error:", error);
+      setOverviewFiles([]);
+      setIsLoadingOverviewFiles(false);
+      return;
+    }
+
+    setOverviewFiles((data ?? []) as OverviewAttachmentRow[]);
+    setIsLoadingOverviewFiles(false);
+  }, [businessId, supabase]);
+
+  React.useEffect(() => {
+    if (!open || !currentOrder || isCreateMode) {
+      setOverviewFiles([]);
+      setOverviewUploadSuccess(null);
+      return;
+    }
+    void loadOverviewFiles(currentOrder.id);
+  }, [currentOrder, isCreateMode, loadOverviewFiles, open]);
+
+  React.useEffect(() => {
+    if (!overviewUploadSuccess) return;
+    const timeout = window.setTimeout(() => {
+      setOverviewUploadSuccess(null);
+    }, 3500);
+    return () => window.clearTimeout(timeout);
+  }, [overviewUploadSuccess]);
+
+  const openOverviewFilePicker = React.useCallback(() => {
+    overviewFileInputRef.current?.click();
+  }, []);
+
+  const handleOverviewFilesSelected = React.useCallback(async (fileList: FileList | null) => {
+    if (!fileList?.length || !currentOrder || !canUploadFiles || isUploadingOverviewFiles) return;
+
+    setIsUploadingOverviewFiles(true);
+    setOverviewUploadSuccess(null);
+
+    try {
+      const uploadedNames: string[] = [];
+      for (const file of Array.from(fileList)) {
+        const formData = new FormData();
+        formData.set("businessId", businessId);
+        formData.set("orderId", currentOrder.id);
+        formData.set("file", file);
+
+        const response = await fetch("/api/activity-attachments/upload", {
+          method: "POST",
+          body: formData,
+        });
+        const payload = (await response.json().catch(() => ({}))) as {
+          ok?: boolean;
+          error?: string;
+          attachment?: OverviewAttachmentRow;
+        };
+
+        if (!response.ok || !payload.attachment) {
+          throw new Error(payload.error || "Failed to upload file.");
+        }
+
+        appendLocalActivityEvent(businessId, currentOrder.id, {
+          id: makeLocalActivityEventId("file-uploaded"),
+          type: "file_uploaded",
+          actorName: currentUserName || "Manager",
+          actorRole: userRole,
+          description: `uploaded file ${file.name}`,
+          ts: payload.attachment.created_at || new Date().toISOString(),
+          payload: {
+            attachmentId: payload.attachment.id,
+            attachment_id: payload.attachment.id,
+            fileName: file.name,
+            fileType: file.type || null,
+            fileSize: file.size,
+          },
+        });
+        uploadedNames.push(file.name);
+      }
+
+      await loadOverviewFiles(currentOrder.id);
+      if (uploadedNames.length === 1) {
+        setOverviewUploadSuccess(`File uploaded: ${uploadedNames[0]}`);
+      } else if (uploadedNames.length > 1) {
+        setOverviewUploadSuccess(`${uploadedNames.length} files uploaded successfully.`);
+      }
+    } catch (error) {
+      console.error("overview file upload error:", error);
+      window.alert(error instanceof Error ? error.message : "Failed to upload file.");
+    } finally {
+      if (overviewFileInputRef.current) {
+        overviewFileInputRef.current.value = "";
+      }
+      setIsUploadingOverviewFiles(false);
+    }
+  }, [businessId, canUploadFiles, currentOrder, currentUserName, isUploadingOverviewFiles, loadOverviewFiles, supabase, userRole]);
+
+  function buildOrderNoteId() {
+    if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+      return crypto.randomUUID();
+    }
+
+    return `note-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  }
+
+  function buildNoteAuthorInitials(value: string) {
+    const initials = value
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase() ?? "")
+      .join("");
+
+    return initials || "M";
+  }
+
+  function handleCreateNote(note: { body: string; isPinned: boolean }) {
+    if (!currentOrder) return;
+    const timestamp = new Date().toISOString();
+
+    setNotesByOrderId((current) => {
+      const previous = current[currentOrder.id] ?? [];
+      const nextNote: OrderNote = {
+        id: buildOrderNoteId(),
+        orderId: currentOrder.id,
+        businessId,
+        authorId: currentUserId?.trim() || "local-user",
+        authorName: currentUserName.trim() || "Manager",
+        authorInitials: buildNoteAuthorInitials(currentUserName || "Manager"),
+        body: note.body,
+        isPinned: note.isPinned,
+        createdAt: timestamp,
+      };
+
+      return {
+        ...current,
+        [currentOrder.id]: [nextNote, ...previous],
+      };
+    });
+  }
+
+  function handleUpdateNote(noteId: string, note: { body: string; isPinned: boolean }) {
+    if (!currentOrder) return;
+    const timestamp = new Date().toISOString();
+
+    setNotesByOrderId((current) => {
+      const previous = current[currentOrder.id] ?? [];
+
+      return {
+        ...current,
+        [currentOrder.id]: previous.map((entry) =>
+          entry.id === noteId
+            ? {
+                ...entry,
+                body: note.body,
+                isPinned: note.isPinned,
+                updatedAt: timestamp,
+              }
+            : entry,
+        ),
+      };
+    });
+  }
+
+  function handleDeleteNote(noteId: string) {
+    if (!currentOrder) return;
+
+    setNotesByOrderId((current) => {
+      const previous = current[currentOrder.id] ?? [];
+
+      return {
+        ...current,
+        [currentOrder.id]: previous.filter((entry) => entry.id !== noteId),
+      };
+    });
+  }
 
   return (
     <Sheet open={open} onOpenChange={(next) => (!next ? onClose() : undefined)}>
       <SheetContent
         side="right"
+        showClose={false}
         className={[
-          "w-full border-l border-[#e4e7ec] bg-[#f8fafc] p-0 transition-[max-width] duration-200",
+          "top-3 right-3 bottom-3 h-auto w-[calc(100vw-24px)] overflow-hidden border border-[#e4e7ec] bg-[#f8fafc] p-0 transition-[max-width] duration-200 sm:left-auto sm:w-full sm:rounded-[28px] sm:shadow-[0_20px_60px_rgba(15,23,42,0.18)]",
           isWideLayout ? "sm:max-w-[calc(100vw-32px)]" : "sm:max-w-[680px]",
         ].join(" ")}
       >
@@ -1199,7 +1203,7 @@ export function OrderPreview({
         {isCreateMode ? (
           <div className="flex h-full min-h-0 flex-col">
             <div className="sticky top-0 z-20 border-b border-[#e4e7ec] bg-white/95 backdrop-blur">
-              <div className="px-5 py-5 sm:px-6">
+              <div className="px-5 py-4 sm:px-6">
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0 flex-1">
                     <div className="text-lg font-semibold text-[#111827]">Create order</div>
@@ -1215,7 +1219,8 @@ export function OrderPreview({
                     <button
                       type="button"
                       onClick={() => setLayoutMode((current) => (current === "wide" ? "default" : "wide"))}
-                      className="hidden h-10 items-center gap-2 rounded-2xl border border-[#dde3ee] bg-white px-3 text-sm font-semibold text-[#475467] transition hover:bg-[#f8fafc] hover:text-[#111827] sm:inline-flex"
+                      className="hidden h-10 items-center gap-2 rounded-2xl border border-[#d7dee8] bg-white px-4 text-sm font-semibold text-[#1f2937] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#c3ccd8] hover:bg-[#f8fafc] hover:text-[#111827] sm:inline-flex"
+                      style={{ color: "#1f2937" }}
                       aria-label={isWideLayout ? "Use default order preview width" : "Use wide order preview width"}
                     >
                       {isWideLayout ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
@@ -1224,7 +1229,8 @@ export function OrderPreview({
                     <button
                       type="button"
                       onClick={onClose}
-                      className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-[#dde3ee] bg-white text-[#667085] transition hover:bg-[#f8fafc] hover:text-[#111827]"
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-[#d7dee8] bg-white text-[#344054] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#c3ccd8] hover:bg-[#f8fafc] hover:text-[#111827]"
+                      style={{ color: "#344054" }}
                       aria-label="Close order preview"
                     >
                       <X className="h-4 w-4" />
@@ -1414,20 +1420,20 @@ export function OrderPreview({
           </div>
         ) : currentOrder ? (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="flex h-full min-h-0 flex-col">
-            <div className="sticky top-0 z-20 border-b border-[#e4e7ec] bg-white/95 backdrop-blur">
-              <div className="px-5 py-5 sm:px-6">
+            <div className="border-b border-[#e4e7ec] bg-white">
+              <div className={["px-5 sm:px-6 transition-all", isCompactTop ? "py-3" : "py-5"].join(" ")}>
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-3">
-                      <div className="text-lg font-semibold text-[#111827]">
+                      <div className={["font-semibold text-[#111827] transition-all", isCompactTop ? "text-[14px] sm:text-[15px]" : "text-[15px] sm:text-[16px]"].join(" ")}>
                         Order #{currentOrder.order_number ?? currentOrder.id}
                       </div>
                     </div>
 
-                    <div className="mt-3 text-lg font-semibold text-[#111827]">{displayName}</div>
-                    <div className="mt-1 text-sm text-[#667085]">{currentOrder.client_phone?.trim() || "No phone number"}</div>
+                    <div className={["font-semibold leading-none text-[#111827] transition-all", isCompactTop ? "mt-1 text-[22px]" : "mt-2 text-[28px]"].join(" ")}>{displayName}</div>
+                    <div className={["text-sm text-[#667085] transition-all", isCompactTop ? "mt-0.5" : "mt-1"].join(" ")}>{currentOrder.client_phone?.trim() || "No phone number"}</div>
 
-                    <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-[#475467]">
+                    <div className={["flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-[#475467] transition-all", isCompactTop ? "mt-2" : "mt-3"].join(" ")}>
                       <span>${fmtAmount(currentOrder.amount)}</span>
                       <span className={isOverdue ? "font-semibold text-[#d92d20]" : ""}>Due {formatDate(currentOrder.due_date)}</span>
                       <span className="inline-flex items-center gap-1.5">
@@ -1436,7 +1442,7 @@ export function OrderPreview({
                       </span>
                     </div>
 
-                    {currentOrder.status === "CANCELED" && currentOrder.status_reason?.trim() ? (
+                    {!isCompactTop && currentOrder.status === "CANCELED" && currentOrder.status_reason?.trim() ? (
                       <div className="mt-3 inline-flex max-w-full items-start gap-2 rounded-2xl border border-[#f3d1cd] bg-[#fff6f5] px-3 py-2 text-sm text-[#9f1239]">
                         <span className="font-semibold text-[#b42318]">Canceled:</span>
                         <span className="min-w-0 break-words text-[#7a271a]">
@@ -1445,7 +1451,7 @@ export function OrderPreview({
                       </div>
                     ) : null}
 
-                    <div className="mt-4 flex flex-wrap gap-2">
+                    {!isCompactTop ? <div className="mt-3 flex flex-wrap gap-1.5">
                       {labels.length > 0 ? (
                         labels.map((label) => (
                           <span
@@ -1458,14 +1464,14 @@ export function OrderPreview({
                       ) : (
                         <span className="text-xs text-[#98a2b3]">No labels yet</span>
                       )}
-                    </div>
+                    </div> : null}
                   </div>
 
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
                       onClick={() => setLayoutMode((current) => (current === "wide" ? "default" : "wide"))}
-                      className="hidden h-10 items-center gap-2 rounded-2xl border border-[#dde3ee] bg-white px-3 text-sm font-semibold text-[#475467] transition hover:bg-[#f8fafc] hover:text-[#111827] sm:inline-flex"
+                      className="hidden h-9 items-center gap-2 rounded-2xl border border-[#dde3ee] bg-white px-3 text-sm font-semibold text-[#475467] transition hover:bg-[#f8fafc] hover:text-[#111827] sm:inline-flex"
                       aria-label={isWideLayout ? "Use default order preview width" : "Use wide order preview width"}
                     >
                       {isWideLayout ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
@@ -1482,39 +1488,46 @@ export function OrderPreview({
                   </div>
                 </div>
               </div>
+            </div>
 
-              <div className="px-5 pb-3 sm:px-6">
-                <TabsList className="grid h-auto w-full grid-cols-5 gap-2 rounded-2xl border border-[#e4e7ec] bg-[#f5f7fb] p-1.5">
+            <div className="sticky top-0 z-30 bg-white shadow-[0_8px_18px_rgba(15,23,42,0.06)]">
+              <div className={["px-5 sm:px-6 transition-all", isCompactTop ? "py-2" : "py-2.5"].join(" ")}>
+                <TabsList className="grid h-auto w-full grid-cols-4 gap-1.5 rounded-[20px] border border-[#e4e7ec] bg-[linear-gradient(180deg,#f8fafc_0%,#f2f5f9_100%)] p-1">
                   {[
                     ["overview", "Overview"],
                     ["checklist", "Checklist"],
-                    ["comments", "Comments"],
                     ["activity", "Activity"],
                     ["notes", "Notes"],
                   ].map(([value, label]) => (
                     <TabsTrigger
                       key={value}
                       value={value}
-                      className="min-w-0 rounded-xl border border-transparent px-3 py-2.5 text-sm font-semibold text-[#667085] shadow-none transition data-[state=active]:border-[#cbd5e1] data-[state=active]:bg-white data-[state=active]:text-[#111827] data-[state=active]:shadow-[0_4px_12px_rgba(15,23,42,0.08)]"
+                      className="min-w-0 rounded-[16px] border border-transparent px-3 py-2 text-sm font-semibold text-[#667085] shadow-none transition data-[state=active]:border-[#cbd5e1] data-[state=active]:bg-white data-[state=active]:text-[#111827] data-[state=active]:shadow-[0_6px_16px_rgba(15,23,42,0.10)]"
+                      style={{ color: "#667085" }}
                     >
                       {label}
                     </TabsTrigger>
                   ))}
                 </TabsList>
               </div>
+              <div className="h-2 border-t border-[#eef2f7] bg-white" />
             </div>
 
-              <ScrollArea className="min-h-0 flex-1">
-                <div className="space-y-4 px-5 py-5 sm:px-6">
+            <ScrollArea className="min-h-0 flex-1">
+              <div className="space-y-3 px-5 pb-5 pt-1 sm:px-6">
                   <TabsContent value="overview" className="mt-0">
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                       {canManage ? (
-                        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#eef2f7] bg-white px-4 py-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                        <div className="flex flex-wrap items-center justify-between gap-3 rounded-[20px] border border-[#eef2f7] bg-white px-4 py-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
                           <div>
                             <div className="text-sm font-semibold text-[#111827]">Overview</div>
-                            <p className="text-xs text-[#667085]">
-                              {isEditingOverview ? "You are editing order details." : "Edit customer, manager, amount, due date, and description."}
-                            </p>
+                            <p className="text-xs text-[#667085]">{isEditingOverview ? "Editing order details." : "Customer, manager, amount, due date, and description."}</p>
+                            {overviewUploadSuccess ? (
+                              <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-[#b7ebc6] bg-[#ecfdf3] px-3 py-1 text-xs font-semibold text-[#067647]">
+                                <Check className="h-3.5 w-3.5" />
+                                <span>{overviewUploadSuccess}</span>
+                              </div>
+                            ) : null}
                           </div>
                           <div className="flex items-center gap-2">
                             {isEditingOverview ? (
@@ -1556,12 +1569,21 @@ export function OrderPreview({
                                     const nextDueDate = draft.dueDate || null;
                                     const nextManagerId = draft.managerId || null;
                                     const managerChanged = (currentOrder.manager_id || null) !== nextManagerId;
-                                    const overviewChanges: Array<{ type: LocalActivityEvent["type"]; description: string }> = [];
+                                    const overviewChanges: Array<{
+                                      type: LocalActivityEvent["type"];
+                                      description: string;
+                                      payload: NonNullable<LocalActivityEvent["payload"]>;
+                                    }> = [];
 
                                     if ((currentOrder.client_first_name?.trim() || client.firstName || "") !== nextFirstName) {
                                       overviewChanges.push({
                                         type: "order_updated",
                                         description: `changed first name from "${currentOrder.client_first_name?.trim() || client.firstName || "Unknown"}" to "${nextFirstName}"`,
+                                        payload: {
+                                          field: "first_name",
+                                          from: currentOrder.client_first_name?.trim() || client.firstName || "Unknown",
+                                          to: nextFirstName,
+                                        },
                                       });
                                     }
 
@@ -1569,6 +1591,11 @@ export function OrderPreview({
                                       overviewChanges.push({
                                         type: "order_updated",
                                         description: `changed last name from "${currentOrder.client_last_name?.trim() || client.lastName || "Not provided"}" to "${nextLastName || "Not provided"}"`,
+                                        payload: {
+                                          field: "last_name",
+                                          from: currentOrder.client_last_name?.trim() || client.lastName || "Not provided",
+                                          to: nextLastName || "Not provided",
+                                        },
                                       });
                                     }
 
@@ -1576,6 +1603,11 @@ export function OrderPreview({
                                       overviewChanges.push({
                                         type: "order_updated",
                                         description: `changed phone from "${formatPhoneValue(currentOrder.client_phone || null)}" to "${formatPhoneValue(nextPhone)}"`,
+                                        payload: {
+                                          field: "phone",
+                                          from: formatPhoneValue(currentOrder.client_phone || null),
+                                          to: formatPhoneValue(nextPhone),
+                                        },
                                       });
                                     }
 
@@ -1583,6 +1615,13 @@ export function OrderPreview({
                                       overviewChanges.push({
                                         type: "order_updated",
                                         description: `changed amount from "${formatAmountValue(currentOrder.amount)}" to "${formatAmountValue(nextAmount)}"`,
+                                        payload: {
+                                          field: "amount",
+                                          from: currentOrder.amount,
+                                          to: nextAmount,
+                                          fromLabel: formatAmountValue(currentOrder.amount),
+                                          toLabel: formatAmountValue(nextAmount),
+                                        },
                                       });
                                     }
 
@@ -1590,6 +1629,13 @@ export function OrderPreview({
                                       overviewChanges.push({
                                         type: "order_updated",
                                         description: `changed due date from "${formatDate(currentOrder.due_date)}" to "${formatDate(nextDueDate)}"`,
+                                        payload: {
+                                          field: "due_date",
+                                          from: currentOrder.due_date || null,
+                                          to: nextDueDate || null,
+                                          fromLabel: formatDate(currentOrder.due_date),
+                                          toLabel: formatDate(nextDueDate),
+                                        },
                                       });
                                     }
 
@@ -1597,6 +1643,13 @@ export function OrderPreview({
                                       overviewChanges.push({
                                         type: "order_updated",
                                         description: `changed description from ${formatDescriptionValue(currentOrder.description)} to ${formatDescriptionValue(nextDescription)}`,
+                                        payload: {
+                                          field: "description",
+                                          from: currentOrder.description?.trim() || null,
+                                          to: nextDescription,
+                                          fromLabel: formatDescriptionValue(currentOrder.description),
+                                          toLabel: formatDescriptionValue(nextDescription),
+                                        },
                                       });
                                     }
 
@@ -1629,6 +1682,15 @@ export function OrderPreview({
                                               ? `changed manager from "${currentOrder.manager_name?.trim() || "Unassigned"}" to "${managerOptions.find((actor) => actor.id === nextManagerId)?.label || "Manager"}"`
                                               : `changed manager from "${currentOrder.manager_name?.trim() || "Unassigned"}" to "Unassigned"`,
                                             ts: new Date().toISOString(),
+                                            payload: {
+                                              field: "manager_id",
+                                              from: currentOrder.manager_id,
+                                              to: nextManagerId,
+                                              fromLabel: currentOrder.manager_name?.trim() || "Unassigned",
+                                              toLabel: nextManagerId
+                                                ? managerOptions.find((actor) => actor.id === nextManagerId)?.label || "Manager"
+                                                : "Unassigned",
+                                            },
                                           });
                                         }
 
@@ -1640,6 +1702,7 @@ export function OrderPreview({
                                             actorRole: userRole,
                                             description: change.description,
                                             ts: new Date().toISOString(),
+                                            payload: change.payload,
                                           });
                                         }
 
@@ -1676,20 +1739,33 @@ export function OrderPreview({
                                 </button>
                               </>
                             ) : (
-                              <Button
-                                type="button"
-                                variant="outline"
-                                className="rounded-xl border-[#dde3ee] bg-white text-[#344054] hover:bg-[#f8fafc]"
-                                onClick={() => setIsEditingOverview(true)}
-                              >
-                                Edit overview
-                              </Button>
+                              <>
+                                {canUploadFiles ? (
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="rounded-xl border-[#dde3ee] bg-white text-[#344054] hover:bg-[#f8fafc]"
+                                    onClick={openOverviewFilePicker}
+                                    disabled={isUploadingOverviewFiles}
+                                  >
+                                    {isUploadingOverviewFiles ? "Uploading..." : "Add file"}
+                                  </Button>
+                                ) : null}
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  className="rounded-xl border-[#dde3ee] bg-white text-[#344054] hover:bg-[#f8fafc]"
+                                  onClick={() => setIsEditingOverview(true)}
+                                >
+                                  Edit overview
+                                </Button>
+                              </>
                             )}
                           </div>
                         </div>
                       ) : null}
 
-                      <div className="grid gap-3 sm:grid-cols-2">
+                      <div className="grid gap-2.5 sm:grid-cols-2">
                         <MetaItem
                           label="First Name"
                           value={
@@ -1847,7 +1923,7 @@ export function OrderPreview({
                         ) : null}
                       </div>
 
-                      <div className="rounded-2xl border border-[#eef2f7] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                      <div className="rounded-[20px] border border-[#eef2f7] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
                         <div className="text-sm font-semibold text-[#111827]">Description</div>
                         {isEditingOverview ? (
                           <textarea
@@ -1856,14 +1932,23 @@ export function OrderPreview({
                               const nextValue = event.currentTarget.value;
                               setDraft((prev) => ({ ...prev, description: nextValue }));
                             }}
-                            className="mt-2 min-h-28 w-full rounded-2xl border border-[#dde3ee] bg-white px-4 py-3 text-sm leading-6 text-[#111827] outline-none transition focus:border-[#111827]"
+                            className="mt-2 min-h-24 w-full rounded-[18px] border border-[#dde3ee] bg-white px-4 py-3 text-sm leading-6 text-[#111827] outline-none transition focus:border-[#111827]"
                           />
                         ) : (
-                          <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-[#475467]">
+                          <p className="mt-2 whitespace-pre-wrap text-sm leading-5 text-[#475467]">
                             {currentOrder.description?.trim() || "No description provided yet."}
                           </p>
                         )}
                       </div>
+
+                      <FilesSection
+                        files={overviewFiles}
+                        loading={isLoadingOverviewFiles}
+                        uploading={isUploadingOverviewFiles}
+                        canUpload={canUploadFiles}
+                        successMessage={overviewUploadSuccess}
+                        onAddFiles={openOverviewFilePicker}
+                      />
 
                       <LabelsSection
                         businessId={businessId}
@@ -1880,31 +1965,41 @@ export function OrderPreview({
                     <OrderChecklist order={{ id: currentOrder.id, business_id: businessId }} supabase={supabase} />
                   </TabsContent>
 
-                  <TabsContent value="comments" className="mt-0">
-                    <OrderComments
-                      order={{ id: currentOrder.id, business_id: businessId }}
-                      supabase={supabase}
-                      author={{ phone: phoneRaw, role: userRole }}
-                    />
-                  </TabsContent>
-
                   <TabsContent value="activity" className="mt-0">
-                    <ActivityTab
+                    <OrderActivitySection
                       order={currentOrder}
                       businessId={businessId}
                       supabase={supabase}
                       phoneRaw={phoneRaw}
+                      currentUserId={currentUserId}
                       currentUserName={currentUserName}
+                      userRole={userRole}
                       actors={actors}
+                      ownerName={actors.find((actor) => actor.kind === "OWNER")?.label ?? null}
+                      managerName={currentOrder.manager_name?.trim() || actors.find((actor) => actor.kind === "MANAGER")?.label || null}
                     />
                   </TabsContent>
 
                   <TabsContent value="notes" className="mt-0">
-                    <NotesTab canManage={canManage} />
+                    <OrderNotesPanel
+                      orderId={currentOrder.id}
+                      notes={currentNotes}
+                      canManage={canManage}
+                      onCreateNote={handleCreateNote}
+                      onUpdateNote={handleUpdateNote}
+                      onDeleteNote={handleDeleteNote}
+                    />
                   </TabsContent>
+                  <input
+                    ref={overviewFileInputRef}
+                    type="file"
+                    multiple
+                    className="hidden"
+                    onChange={(event) => void handleOverviewFilesSelected(event.currentTarget.files)}
+                  />
                 </div>
               </ScrollArea>
-          </Tabs>
+            </Tabs>
         ) : null}
       </SheetContent>
     </Sheet>

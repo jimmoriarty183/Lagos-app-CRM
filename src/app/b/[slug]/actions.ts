@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { buildClientFullName, splitLegacyClientName } from "@/lib/order-client";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { supabaseServer } from "@/lib/supabase/server";
 
 function isMissingColumnError(error: unknown, column: string) {
@@ -12,13 +13,95 @@ function isMissingColumnError(error: unknown, column: string) {
   );
 }
 
-async function canUseOrdersColumn(supabase: Awaited<ReturnType<typeof supabaseServer>>, column: string) {
-  const { error } = await supabase.from("orders").select(column).limit(1);
-  return !error;
+function cleanText(value: unknown) {
+  return String(value ?? "").trim();
+}
+
+function upperRole(value: unknown) {
+  return cleanText(value).toUpperCase();
+}
+
+type OrdersPayload = Record<string, string | number | boolean | null>;
+
+function omitKeys<T extends OrdersPayload>(payload: T, keys: readonly string[]) {
+  const next = { ...payload };
+  for (const key of keys) delete next[key];
+  return next;
+}
+
+async function runOrdersMutation<T>(
+  payload: OrdersPayload,
+  action: (nextPayload: OrdersPayload) => PromiseLike<{ data?: T | null; error: { message?: string } | null }>,
+) {
+  let nextPayload = { ...payload };
+  const stripped = new Set<string>();
+
+  while (true) {
+    const result = await action(nextPayload);
+    if (!result.error) return result;
+
+    const missingColumn = ["first_name", "last_name", "full_name", "created_by", "manager_id", "status_reason"]
+      .find((column) => !stripped.has(column) && isMissingColumnError(result.error, column));
+
+    if (!missingColumn) return result;
+
+    stripped.add(missingColumn);
+    nextPayload = omitKeys(nextPayload, [missingColumn]);
+  }
+}
+
+async function requireBusinessManagerAccess(businessId: string) {
+  const supabase = await supabaseServer();
+  const admin = supabaseAdmin();
+  const { data: authData } = await supabase.auth.getUser();
+  const userId = authData?.user?.id;
+
+  if (!userId) throw new Error("Not authenticated");
+
+  const { data: membership, error } = await admin
+    .from("memberships")
+    .select("role")
+    .eq("business_id", businessId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+
+  const role = upperRole(membership?.role);
+  if (role !== "OWNER" && role !== "MANAGER") {
+    throw new Error("Forbidden");
+  }
+
+  return { admin, userId };
+}
+
+async function requireOrderManagerAccess(orderId: string) {
+  const { admin, userId } = await requireBusinessManagerAccessForOrderLookup(orderId);
+  return { admin, userId };
+}
+
+async function requireBusinessManagerAccessForOrderLookup(orderId: string) {
+  const supabase = await supabaseServer();
+  const admin = supabaseAdmin();
+  const { data: authData } = await supabase.auth.getUser();
+  const userId = authData?.user?.id;
+
+  if (!userId) throw new Error("Not authenticated");
+
+  const { data: orderRow, error: orderError } = await admin
+    .from("orders")
+    .select("business_id")
+    .eq("id", orderId)
+    .maybeSingle();
+
+  if (orderError) throw new Error(orderError.message);
+  if (!orderRow?.business_id) throw new Error("Order not found");
+
+  const access = await requireBusinessManagerAccess(orderRow.business_id);
+  return { ...access, userId };
 }
 
 async function buildClientColumns(
-  supabase: Awaited<ReturnType<typeof supabaseServer>>,
   input: {
     clientName?: string | null;
     firstName?: string | null;
@@ -37,11 +120,10 @@ async function buildClientColumns(
   const fullName = buildClientFullName(derived.firstName, derived.lastName, fallback);
   const clientColumns: Record<string, string | null> = {
     client_name: fullName || fallback || null,
+    first_name: derived.firstName || null,
+    last_name: derived.lastName || null,
+    full_name: fullName || null,
   };
-
-  if (await canUseOrdersColumn(supabase, "first_name")) clientColumns.first_name = derived.firstName || null;
-  if (await canUseOrdersColumn(supabase, "last_name")) clientColumns.last_name = derived.lastName || null;
-  if (await canUseOrdersColumn(supabase, "full_name")) clientColumns.full_name = fullName || null;
 
   return { clientColumns, fullName, firstName: derived.firstName, lastName: derived.lastName };
 }
@@ -59,9 +141,9 @@ export async function createOrder(input: {
   status?: string;
   managerId?: string | null;
 }) {
-  const supabase = await supabaseServer();
+  const { admin, userId } = await requireBusinessManagerAccess(input.businessId);
 
-  const { count, error: countError } = await supabase
+  const { count, error: countError } = await admin
     .from("orders")
     .select("*", { count: "exact", head: true })
     .eq("business_id", input.businessId);
@@ -69,29 +151,28 @@ export async function createOrder(input: {
   if (countError) throw new Error(countError.message);
 
   const orderNumber = (count ?? 0) + 1;
-  const { clientColumns } = await buildClientColumns(supabase, {
+  const { clientColumns } = await buildClientColumns({
     clientName: input.clientName,
     firstName: input.firstName,
     lastName: input.lastName,
   });
-  const { data: authData } = await supabase.auth.getUser();
-  const createdBy = authData?.user?.id ?? null;
-  const createdByExists = await canUseOrdersColumn(supabase, "created_by");
-  const managerIdExists = await canUseOrdersColumn(supabase, "manager_id");
 
-  const { error } = await supabase.from("orders").insert({
-    business_id: input.businessId,
-    order_number: orderNumber,
-    ...clientColumns,
-    client_phone: input.clientPhone || null,
-    amount: input.amount,
-    due_date: input.dueDate || null,
-    description: input.description || null,
-    status: input.status ?? "NEW",
-    paid: false,
-    ...(createdByExists ? { created_by: createdBy } : {}),
-    ...(managerIdExists ? { manager_id: input.managerId ?? createdBy } : {}),
-  });
+  const { error } = await runOrdersMutation(
+    {
+      business_id: input.businessId,
+      order_number: orderNumber,
+      ...clientColumns,
+      client_phone: input.clientPhone || null,
+      amount: input.amount,
+      due_date: input.dueDate || null,
+      description: input.description || null,
+      status: input.status ?? "NEW",
+      paid: false,
+      created_by: userId,
+      manager_id: input.managerId ?? userId,
+    },
+    (nextPayload) => admin.from("orders").insert(nextPayload),
+  );
 
   if (error) throw new Error(error.message);
 
@@ -165,15 +246,29 @@ export async function setOrderStatus(input: {
   orderId: string;
   businessSlug: string;
   status: string;
+  reason?: string | null;
 }) {
-  const supabase = await supabaseServer();
+  const { admin } = await requireOrderManagerAccess(input.orderId);
+  const normalizedStatus = String(input.status ?? "").trim().toUpperCase();
+  const normalizedReason = String(input.reason ?? "").trim();
+
+  if (normalizedStatus === "CANCELED" && !normalizedReason) {
+    throw new Error("Cancel reason is required");
+  }
 
   const patch: Record<string, string | null> = {
     status: input.status,
-    closed_at: input.status === "DONE" ? new Date().toISOString() : null,
+    closed_at: normalizedStatus === "DONE" ? new Date().toISOString() : null,
+    status_reason:
+      normalizedStatus === "CANCELED"
+        ? normalizedReason
+        : null,
   };
 
-  const { error } = await supabase.from("orders").update(patch).eq("id", input.orderId);
+  const { error } = await runOrdersMutation(
+    patch,
+    (nextPayload) => admin.from("orders").update(nextPayload).eq("id", input.orderId),
+  );
   if (error) throw new Error(error.message);
 
   revalidatePath(`/b/${input.businessSlug}`);
@@ -207,23 +302,23 @@ export async function updateOrder(input: {
   amount: number;
   dueDate: string | null;
 }) {
-  const supabase = await supabaseServer();
-  const { clientColumns } = await buildClientColumns(supabase, {
+  const { admin } = await requireOrderManagerAccess(input.orderId);
+  const { clientColumns } = await buildClientColumns({
     clientName: input.clientName,
     firstName: input.firstName,
     lastName: input.lastName,
   });
 
-  const { error } = await supabase
-    .from("orders")
-    .update({
+  const { error } = await runOrdersMutation(
+    {
       ...clientColumns,
       client_phone: input.clientPhone,
       description: input.description,
       amount: input.amount,
       due_date: input.dueDate,
-    })
-    .eq("id", input.orderId);
+    },
+    (nextPayload) => admin.from("orders").update(nextPayload).eq("id", input.orderId),
+  );
 
   if (error) throw new Error(error.message);
 
@@ -235,9 +330,9 @@ export async function setOrderManager(input: {
   businessSlug: string;
   managerId: string | null;
 }) {
-  const supabase = await supabaseServer();
+  const { admin } = await requireOrderManagerAccess(input.orderId);
 
-  const { error: managerError } = await supabase
+  const { error: managerError } = await admin
     .from("orders")
     .update({ manager_id: input.managerId })
     .eq("id", input.orderId);
@@ -248,9 +343,8 @@ export async function setOrderManager(input: {
   }
 
   if (isMissingColumnError(managerError, "manager_id")) {
-    const createdByExists = await canUseOrdersColumn(supabase, "created_by");
-    if (createdByExists) {
-      const { error: fallbackError } = await supabase
+    {
+      const { error: fallbackError } = await admin
         .from("orders")
         .update({ created_by: input.managerId })
         .eq("id", input.orderId);

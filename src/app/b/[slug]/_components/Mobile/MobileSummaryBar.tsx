@@ -1,6 +1,7 @@
 "use client";
 
-import { TrendingDown, TrendingUp } from "lucide-react";
+import { useSyncExternalStore } from "react";
+import { ChevronDown, ChevronUp, TrendingDown, TrendingUp } from "lucide-react";
 
 type Props = {
   cards: {
@@ -41,6 +42,7 @@ type Props = {
       actor: string;
     };
   };
+  storageKey?: string;
 };
 
 export default function MobileSummaryBar({
@@ -51,7 +53,39 @@ export default function MobileSummaryBar({
   periodOptions,
   extendedOptions = [],
   customRange,
+  storageKey = "orders-mobile-summary-hidden",
 }: Props) {
+  const hidden = useSyncExternalStore(
+    (onStoreChange) => {
+      if (typeof window === "undefined") return () => {};
+      const eventName = `summary-visibility:${storageKey}`;
+      const listener = () => onStoreChange();
+      window.addEventListener(eventName, listener);
+      return () => {
+        window.removeEventListener(eventName, listener);
+      };
+    },
+    () => {
+      if (typeof window === "undefined") return false;
+      try {
+        return window.localStorage.getItem(storageKey) === "1";
+      } catch {
+        return false;
+      }
+    },
+    () => false,
+  );
+
+  const setHidden = (nextHidden: boolean) => {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(storageKey, nextHidden ? "1" : "0");
+      window.dispatchEvent(new CustomEvent(`summary-visibility:${storageKey}`));
+    } catch {
+      // Ignore storage write failures.
+    }
+  };
+
   return (
     <section className="rounded-[24px] border border-[#dde3ee] bg-[#f8fafc]/92 p-3 shadow-[0_10px_30px_rgba(15,23,42,0.06)] backdrop-blur lg:hidden">
       <div className="min-w-0">
@@ -61,9 +95,22 @@ export default function MobileSummaryBar({
               Summary
             </div>
           </div>
-          <div className="text-[11px] font-medium text-[#98a2b3]">{periodLabel}</div>
+          <div className="flex items-center gap-2">
+            <div className="text-[11px] font-medium text-[#98a2b3]">{periodLabel}</div>
+            <button
+              type="button"
+              onClick={() => setHidden(!hidden)}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-[#dde3ee] bg-white text-[#667085] transition hover:border-[#cfd8e6] hover:text-[#111827]"
+              aria-label={hidden ? "Show summary" : "Hide summary"}
+              title={hidden ? "Show summary" : "Hide summary"}
+            >
+              {hidden ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+            </button>
+          </div>
         </div>
 
+        {hidden ? null : (
+          <>
         <div className="mt-2 inline-flex rounded-full border border-[#dde3ee] bg-white p-1">
           {periodOptions.map((option) => (
             <a
@@ -195,6 +242,8 @@ export default function MobileSummaryBar({
             ? `${periodLabel} vs ${comparisonLabel ?? "previous period"}`
             : "All-time summary"}
         </div>
+          </>
+        )}
       </div>
     </section>
   );

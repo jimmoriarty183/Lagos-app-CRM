@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 export type Filters = {
   q: string;
-  status: "ALL" | "NEW" | "IN_PROGRESS" | "DONE" | "CANCELED" | "DUPLICATE";
+  status: "ALL" | "NEW" | "IN_PROGRESS" | "DONE" | "CANCELED";
   range: "ALL" | "today" | "week" | "month" | "year";
 };
 
@@ -143,7 +143,6 @@ export default function FiltersBar({
             <option value="IN_PROGRESS">IN_PROGRESS</option>
             <option value="DONE">DONE</option>
             <option value="CANCELED">CANCELED</option>
-            <option value="DUPLICATE">DUPLICATE</option>
           </select>
         </label>
 

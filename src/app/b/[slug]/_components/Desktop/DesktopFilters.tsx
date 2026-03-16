@@ -1,4 +1,4 @@
-import Button from "../../Button";
+import { Button } from "@/components/ui/button";
 import {
   DASHBOARD_RANGE_OPTIONS,
   type DashboardRange,
@@ -9,8 +9,7 @@ type Status =
   | "IN_PROGRESS"
   | "WAITING_PAYMENT"
   | "DONE"
-  | "CANCELED"
-  | "DUPLICATE";
+  | "CANCELED";
 
 type TeamActor = {
   id: string;
@@ -86,7 +85,6 @@ export default function DesktopFilters({
             <option value="WAITING_PAYMENT">WAITING PAYMENT</option>
             <option value="DONE">DONE</option>
             <option value="CANCELED">CANCELED</option>
-            <option value="DUPLICATE">DUPLICATE</option>
           </select>
         </label>
 

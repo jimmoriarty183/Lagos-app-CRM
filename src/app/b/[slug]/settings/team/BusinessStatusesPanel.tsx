@@ -438,7 +438,7 @@ export default function BusinessStatusesPanel({ businessId, canManageStatuses }:
 
   const toggleWorkflow = (value: string, nextActive: boolean) => {
     if (!nextActive && isRequiredWorkflowStatus(value)) {
-      setError("New, In progress, Done, Canceled, and Duplicate must stay in the workflow.");
+      setError("New, In progress, Done, and Canceled must stay in the workflow.");
       return;
     }
 
@@ -869,7 +869,7 @@ export default function BusinessStatusesPanel({ businessId, canManageStatuses }:
               })}
           </div>
           <div className="mt-2 text-[11px] text-slate-400">
-            New, In progress, Done, Canceled, and Duplicate are fixed. Waiting payment can be removed from the active workflow if needed.
+            New, In progress, Done, and Canceled are fixed. Waiting payment can be removed from the active workflow if needed.
           </div>
         </div>
 

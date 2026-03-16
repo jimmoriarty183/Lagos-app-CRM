@@ -7,7 +7,8 @@ type Props = {
   title: ReactNode;
   defaultOpen?: boolean;
   children: ReactNode;
-  rightSlot?: ReactNode; // действия справа (например Clear)
+  rightSlot?: ReactNode;
+  storageKey?: string;
 };
 
 export default function MobileAccordion({
@@ -15,13 +16,21 @@ export default function MobileAccordion({
   defaultOpen = false,
   children,
   rightSlot,
+  storageKey,
 }: Props) {
-  const [open, setOpen] = useState(defaultOpen);
+  const [open, setOpen] = useState(() => {
+    if (!storageKey || typeof window === "undefined") return defaultOpen;
+    const stored = window.localStorage.getItem(storageKey);
+    if (stored === "open") return true;
+    if (stored === "closed") return false;
+    return defaultOpen;
+  });
   const id = useId();
 
   useEffect(() => {
-    setOpen(defaultOpen);
-  }, [defaultOpen]);
+    if (!storageKey || typeof window === "undefined") return;
+    window.localStorage.setItem(storageKey, open ? "open" : "closed");
+  }, [open, storageKey]);
 
   return (
     <div className="w-full">
@@ -29,34 +38,26 @@ export default function MobileAccordion({
         type="button"
         aria-controls={id}
         aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => setOpen((value) => !value)}
         className={[
-          "w-full flex items-center justify-between gap-3",
-          "px-4 py-3 rounded-xl border border-gray-200 bg-white shadow-sm",
-          "hover:bg-gray-50 transition-colors",
+          "flex w-full items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm",
+          "transition-colors hover:bg-gray-50",
         ].join(" ")}
       >
         <div className="min-w-0 flex items-center gap-2">
-          <span className="text-sm font-extrabold text-gray-900 truncate">
-            {title}
-          </span>
+          <span className="truncate text-sm font-extrabold text-gray-900">{title}</span>
         </div>
 
         <div className="flex items-center gap-2">
           {rightSlot ? (
-            <span
-              onClick={(e) => e.stopPropagation()} // чтобы клик по Clear не открывал/закрывал
-              className="inline-flex items-center"
-            >
+            <span onClick={(event) => event.stopPropagation()} className="inline-flex items-center">
               {rightSlot}
             </span>
           ) : null}
 
           <span
             className={[
-              "inline-flex items-center justify-center",
-              "h-8 w-8 rounded-lg border border-gray-200 bg-white",
-              "text-gray-600",
+              "inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600",
               "transition-transform",
               open ? "rotate-180" : "rotate-0",
             ].join(" ")}

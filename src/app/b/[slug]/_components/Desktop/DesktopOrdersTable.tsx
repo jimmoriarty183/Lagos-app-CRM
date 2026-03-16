@@ -355,12 +355,17 @@ function moveOrderToStatus(
   rows: OrderRow[],
   orderId: string,
   nextStatus: StatusValue,
+  nextStatusReason: string | null,
   keepVisible: boolean,
 ) {
   const current = rows.find((order) => order.id === orderId);
   if (!current) return rows;
 
-  const updatedOrder = { ...current, status: nextStatus };
+  const updatedOrder = {
+    ...current,
+    status: nextStatus,
+    status_reason: nextStatus === "CANCELED" ? nextStatusReason : null,
+  };
   const withoutCurrent = rows.filter((order) => order.id !== orderId);
   if (!keepVisible) return withoutCurrent;
 
@@ -1472,7 +1477,13 @@ export default function DesktopOrdersTable({
 
     setSavingStatusOrderId(orderId);
     setBoardRows((currentRows) =>
-      moveOrderToStatus(currentRows, orderId, nextStatus, keepVisible),
+      moveOrderToStatus(
+        currentRows,
+        orderId,
+        nextStatus,
+        nextStatus === "CANCELED" ? cancelReason : null,
+        keepVisible,
+      ),
     );
     setDraggingOrderId(null);
     setDropStatusValue(null);
@@ -1602,7 +1613,7 @@ export default function DesktopOrdersTable({
               }`}
             >
               {resultCount} {resultCount === 1 ? "result" : "results"}
-              {viewMode === "list" ? (
+              {false ? (
                 <>
                   {" "}
                   · Page {currentPage} of {totalPages}
@@ -1615,6 +1626,19 @@ export default function DesktopOrdersTable({
               viewMode === "kanban" ? "" : "self-start"
             }`}
           >
+            {viewMode === "list" || viewMode === "kanban" ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setOpenId(null);
+                  setCreatePreviewOpen(true);
+                }}
+                className="inline-flex h-8 shrink-0 items-center gap-2 whitespace-nowrap rounded-xl bg-[#111827] px-3 text-[13px] font-semibold text-white transition hover:bg-[#0b1220]"
+              >
+                <Plus className="h-3.5 w-3.5 text-white" />
+                <span className="text-white">New Order</span>
+              </button>
+            ) : null}
             <button
               type="button"
               onClick={openKanbanFilters}
@@ -2038,50 +2062,6 @@ export default function DesktopOrdersTable({
       </div>
 
       {viewMode === "list" ? (
-        <div className="flex flex-wrap items-center justify-end gap-3 border-b border-[#eef2f7] px-5 py-3">
-          <div className="flex items-center gap-2 text-xs font-medium text-[#667085]">
-            <span>Per page</span>
-            <DropdownMenu
-              modal={false}
-              open={perPageMenuOpen}
-              onOpenChange={setPerPageMenuOpen}
-            >
-              <DropdownMenuTrigger asChild>
-                <button
-                  type="button"
-                  className="inline-flex h-9 min-w-[74px] items-center justify-between rounded-xl border border-[#dde3ee] bg-white px-3 text-sm font-medium text-[#344054] outline-none transition hover:border-[#cfd8e6] focus:border-[#111827] focus:ring-2 focus:ring-[#111827]/10"
-                >
-                  <span>{perPage}</span>
-                  <ChevronDown className="ml-3 h-4 w-4 shrink-0 text-[#98a2b3]" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                align="end"
-                sideOffset={8}
-                className="z-[70] w-24 rounded-xl border-[#dde3ee] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
-                onCloseAutoFocus={(event) => event.preventDefault()}
-              >
-                <DropdownMenuRadioGroup value={String(perPage)}>
-                  {PAGE_SIZE_OPTIONS.map((option) => (
-                    <DropdownMenuRadioItem
-                      key={option}
-                      value={String(option)}
-                      className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#344054] data-[state=checked]:bg-[#eef4ff] data-[state=checked]:font-semibold data-[state=checked]:text-[#2459d3]"
-                      onSelect={() =>
-                        navigateWithFallback(paginationHref(1, option))
-                      }
-                    >
-                      {option}
-                    </DropdownMenuRadioItem>
-                  ))}
-                </DropdownMenuRadioGroup>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-      ) : null}
-
-      {viewMode === "list" ? (
         <div className="overflow-x-auto overflow-y-visible">
           <table className="min-w-[1040px] w-full border-collapse">
             <thead>
@@ -2381,7 +2361,6 @@ export default function DesktopOrdersTable({
                       ? hiddenTerminalCount
                       : column.orders.length;
 
-                  const showInlineCreate = column.value === "NEW";
                   const hiddenTitle = isBuiltInTerminal
                     ? hiddenByPreference
                       ? `${column.label} is hidden`
@@ -2492,20 +2471,6 @@ export default function DesktopOrdersTable({
                               : "items-center gap-2"
                           }`}
                         >
-                          {showInlineCreate && !isCollapsedColumn ? (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setOpenId(null);
-                                setCreatePreviewOpen(true);
-                              }}
-                              aria-label="Create order"
-                              title="Create order"
-                              className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-[#1f2937]/10 bg-[#111827] text-white shadow-[0_8px_18px_rgba(17,24,39,0.18)] transition hover:bg-[#0b1220] hover:shadow-[0_10px_22px_rgba(17,24,39,0.24)]"
-                            >
-                              <Plus className="h-3.5 w-3.5 text-white" />
-                            </button>
-                          ) : null}
                           <div
                             className="inline-flex h-7 min-w-7 items-center justify-center rounded-full px-2 text-[11px] font-semibold"
                             style={{
@@ -2944,68 +2909,112 @@ export default function DesktopOrdersTable({
         </div>
       )}
 
-      {viewMode === "list" && totalPages > 1 ? (
+      {viewMode === "list" ? (
         <div className="border-t border-[#eef2f7] px-5 py-4">
-          <Pagination className="justify-end">
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious
-                  href={paginationHref(Math.max(1, currentPage - 1))}
-                  aria-disabled={currentPage === 1}
-                  className={
-                    currentPage === 1 ? "pointer-events-none opacity-50" : ""
-                  }
-                />
-              </PaginationItem>
-              {pageItems.map((page, index) => {
-                const prevPage = pageItems[index - 1];
-                const needsEllipsis = prevPage && page - prevPage > 1;
-
-                return (
-                  <React.Fragment key={page}>
-                    {needsEllipsis ? (
-                      <PaginationItem>
-                        <PaginationEllipsis />
-                      </PaginationItem>
-                    ) : null}
-                    <PaginationItem>
-                      <PaginationLink
-                        href={paginationHref(page)}
-                        isActive={page === currentPage}
-                      >
-                        {page}
-                      </PaginationLink>
-                    </PaginationItem>
-                  </React.Fragment>
-                );
-              })}
-              <PaginationItem>
-                <PaginationNext
-                  href={paginationHref(Math.min(totalPages, currentPage + 1))}
-                  aria-disabled={currentPage === totalPages}
-                  className={
-                    currentPage === totalPages
-                      ? "pointer-events-none opacity-50"
-                      : ""
-                  }
-                />
-              </PaginationItem>
-              <PaginationItem>
-                <PaginationLink
-                  href={paginationHref(totalPages)}
-                  size="default"
-                  aria-disabled={currentPage === totalPages}
-                  className={
-                    currentPage === totalPages
-                      ? "pointer-events-none opacity-50"
-                      : ""
-                  }
+          <div className="flex flex-wrap items-center justify-end gap-3">
+            <div className="flex items-center gap-2 text-xs font-medium text-[#667085]">
+              <span>Per page</span>
+              <DropdownMenu
+                modal={false}
+                open={perPageMenuOpen}
+                onOpenChange={setPerPageMenuOpen}
+              >
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    className="inline-flex h-9 min-w-[74px] items-center justify-between rounded-xl border border-[#dde3ee] bg-white px-3 text-sm font-medium text-[#344054] outline-none transition hover:border-[#cfd8e6] focus:border-[#111827] focus:ring-2 focus:ring-[#111827]/10"
+                  >
+                    <span>{perPage}</span>
+                    <ChevronDown className="ml-3 h-4 w-4 shrink-0 text-[#98a2b3]" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="end"
+                  sideOffset={8}
+                  className="z-[70] w-24 rounded-xl border-[#dde3ee] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
+                  onCloseAutoFocus={(event) => event.preventDefault()}
                 >
-                  Last
-                </PaginationLink>
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
+                  <DropdownMenuRadioGroup value={String(perPage)}>
+                    {PAGE_SIZE_OPTIONS.map((option) => (
+                      <DropdownMenuRadioItem
+                        key={option}
+                        value={String(option)}
+                        className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#344054] data-[state=checked]:bg-[#eef4ff] data-[state=checked]:font-semibold data-[state=checked]:text-[#2459d3]"
+                        onSelect={() =>
+                          navigateWithFallback(paginationHref(1, option))
+                        }
+                      >
+                        {option}
+                      </DropdownMenuRadioItem>
+                    ))}
+                  </DropdownMenuRadioGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
+            {totalPages > 1 ? (
+              <Pagination className="justify-end">
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      href={paginationHref(Math.max(1, currentPage - 1))}
+                      aria-disabled={currentPage === 1}
+                      className={
+                        currentPage === 1 ? "pointer-events-none opacity-50" : ""
+                      }
+                    />
+                  </PaginationItem>
+                  {pageItems.map((page, index) => {
+                    const prevPage = pageItems[index - 1];
+                    const needsEllipsis = prevPage && page - prevPage > 1;
+
+                    return (
+                      <React.Fragment key={page}>
+                        {needsEllipsis ? (
+                          <PaginationItem>
+                            <PaginationEllipsis />
+                          </PaginationItem>
+                        ) : null}
+                        <PaginationItem>
+                          <PaginationLink
+                            href={paginationHref(page)}
+                            isActive={page === currentPage}
+                          >
+                            {page}
+                          </PaginationLink>
+                        </PaginationItem>
+                      </React.Fragment>
+                    );
+                  })}
+                  <PaginationItem>
+                    <PaginationNext
+                      href={paginationHref(Math.min(totalPages, currentPage + 1))}
+                      aria-disabled={currentPage === totalPages}
+                      className={
+                        currentPage === totalPages
+                          ? "pointer-events-none opacity-50"
+                          : ""
+                      }
+                    />
+                  </PaginationItem>
+                  <PaginationItem>
+                    <PaginationLink
+                      href={paginationHref(totalPages)}
+                      size="default"
+                      aria-disabled={currentPage === totalPages}
+                      className={
+                        currentPage === totalPages
+                          ? "pointer-events-none opacity-50"
+                          : ""
+                      }
+                    >
+                      Last
+                    </PaginationLink>
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            ) : null}
+          </div>
         </div>
       ) : null}
 
@@ -3015,6 +3024,7 @@ export default function DesktopOrdersTable({
         businessId={businessId}
         businessSlug={businessSlug}
         phoneRaw={phoneRaw}
+        currentUserId={currentUserId}
         userRole={userRole}
         canManage={canManage}
         actors={effectiveActors}

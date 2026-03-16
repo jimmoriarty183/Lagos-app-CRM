@@ -36,7 +36,19 @@ export function useBusinessStatuses(businessId: string) {
         };
 
         if (alive) {
-          setCustomStatuses(Array.isArray(json.statuses) ? json.statuses : []);
+          const nextStatuses = Array.isArray(json.statuses) ? json.statuses : [];
+          console.log("[use-business-statuses] API statuses", {
+            businessId,
+            statuses: nextStatuses.map((status) => ({
+              value: status.value,
+              label: status.label,
+              active: status.active,
+              builtIn: status.builtIn ?? false,
+              sortOrder: status.sortOrder,
+            })),
+            hasDEL: nextStatuses.some((status) => status.value === "DEL"),
+          });
+          setCustomStatuses(nextStatuses);
         }
       } catch {
         if (alive) setCustomStatuses([]);
@@ -63,6 +75,20 @@ export function useBusinessStatuses(businessId: string) {
     () => mergeBusinessStatuses(customStatuses),
     [customStatuses],
   );
+
+  useEffect(() => {
+    console.log("[use-business-statuses] merged statuses", {
+      businessId,
+      statuses: statuses.map((status) => ({
+        value: status.value,
+        label: status.label,
+        active: status.active,
+        builtIn: status.builtIn ?? false,
+        sortOrder: status.sortOrder,
+      })),
+      hasDEL: statuses.some((status) => status.value === "DEL"),
+    });
+  }, [businessId, statuses]);
 
   return {
     builtInStatuses: DEFAULT_STATUS_DEFINITIONS,

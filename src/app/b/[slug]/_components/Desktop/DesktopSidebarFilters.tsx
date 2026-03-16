@@ -28,6 +28,29 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 type SidebarStatus = StatusFilterValue;
+type OrderSort =
+  | "default"
+  | "newest"
+  | "oldest"
+  | "dueSoonest"
+  | "dueLatest"
+  | "statusAsc"
+  | "statusDesc"
+  | "amountHigh"
+  | "amountLow";
+
+const SORT_OPTIONS: Array<{ value: OrderSort; label: string }> = [
+  { value: "default", label: "Default order" },
+  { value: "newest", label: "Newest first" },
+  { value: "oldest", label: "Oldest first" },
+  { value: "dueSoonest", label: "Due soonest" },
+  { value: "dueLatest", label: "Due latest" },
+  { value: "statusAsc", label: "Status: A to Z" },
+  { value: "statusDesc", label: "Status: Z to A" },
+  { value: "amountHigh", label: "Amount: high to low" },
+  { value: "amountLow", label: "Amount: low to high" },
+];
+
 type TeamActor = {
   id: string;
   label: string;
@@ -62,10 +85,12 @@ type Props = {
   startDate: string | null;
   endDate: string | null;
   actor: string;
+  sort: OrderSort;
   currentUserId?: string | null;
   actors?: TeamActor[];
   hasActiveFilters?: boolean;
   clearHref?: string;
+  layoutMode?: "list" | "kanban";
 };
 
 function getStatusTriggerLabel(
@@ -138,10 +163,12 @@ export default function DesktopSidebarFilters({
   startDate,
   endDate,
   actor,
+  sort,
   currentUserId,
   actors = [],
   hasActiveFilters = false,
   clearHref,
+  layoutMode = "list",
 }: Props) {
   const formRef = useRef<HTMLFormElement | null>(null);
   const { customStatuses, statuses: businessStatuses } = useBusinessStatuses(businessId);
@@ -151,9 +178,11 @@ export default function DesktopSidebarFilters({
   const [customEnd, setCustomEnd] = useState(endDate ?? "");
   const [statusValues, setStatusValues] = useState<SidebarStatus[]>(statuses);
   const [actorValue, setActorValue] = useState(actor || "ALL");
+  const [sortValue, setSortValue] = useState<OrderSort>(sort);
   const [rangeMenuOpen, setRangeMenuOpen] = useState(false);
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
   const [actorMenuOpen, setActorMenuOpen] = useState(false);
+  const [sortMenuOpen, setSortMenuOpen] = useState(false);
   const showCustomRange = rangeValue === "custom";
   const customRangeReady = !showCustomRange || (Boolean(customStart) && Boolean(customEnd));
   const statusOptions = useMemo(
@@ -301,6 +330,8 @@ export default function DesktopSidebarFilters({
         <input type="hidden" name="u" value={phoneRaw} />
         <input type="hidden" name="srange" value={summaryRange} />
         <input type="hidden" name="page" value="1" />
+        <input type="hidden" name="sort" value={sortValue} />
+        {layoutMode === "kanban" ? <input type="hidden" name="view" value="kanban" /> : null}
         <input type="hidden" name="range" value={rangeValue} />
         {shouldKeepAllStatuses ? <input type="hidden" name="statusMode" value="all" /> : null}
         {showCustomRange && customStart ? <input type="hidden" name="start" value={customStart} /> : null}
@@ -580,6 +611,50 @@ export default function DesktopSidebarFilters({
                 ))}
               </DropdownMenuRadioGroup>
             </DropdownMenuContent>
+            </DropdownMenuPortal>
+          </DropdownMenu>
+        </label>
+
+        <label className="block">
+          <span className="mb-1.5 block text-xs font-medium text-[#667085]">
+            Sort
+          </span>
+          <DropdownMenu modal={false} open={sortMenuOpen} onOpenChange={setSortMenuOpen}>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="inline-flex h-11 w-full items-center justify-between rounded-2xl border border-[#dde3ee] bg-white px-4 text-sm font-medium text-[#344054] outline-none transition hover:border-[#cfd8e6] focus:border-[#111827] focus:ring-2 focus:ring-[#111827]/10"
+              >
+                <span className="truncate">
+                  {SORT_OPTIONS.find((option) => option.value === sortValue)?.label ?? "Default order"}
+                </span>
+                <ChevronDown className="ml-3 h-4 w-4 shrink-0 text-[#98a2b3]" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuPortal>
+              <DropdownMenuContent
+                align="start"
+                sideOffset={8}
+                className="z-[140] w-56 rounded-xl border-[#dde3ee] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
+                onCloseAutoFocus={(event) => event.preventDefault()}
+              >
+                <DropdownMenuRadioGroup value={sortValue}>
+                  {SORT_OPTIONS.map((option) => (
+                    <DropdownMenuRadioItem
+                      key={option.value}
+                      value={option.value}
+                      className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#344054] data-[state=checked]:bg-[#eef4ff] data-[state=checked]:font-semibold data-[state=checked]:text-[#2459d3]"
+                      onSelect={() => {
+                        setSortValue(option.value);
+                        setSortMenuOpen(false);
+                        setTimeout(submitNow, 0);
+                      }}
+                    >
+                      {option.label}
+                    </DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
+              </DropdownMenuContent>
             </DropdownMenuPortal>
           </DropdownMenu>
         </label>

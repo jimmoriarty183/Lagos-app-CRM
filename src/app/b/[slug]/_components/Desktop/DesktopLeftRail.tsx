@@ -15,6 +15,17 @@ import DesktopSidebarFilters from "./DesktopSidebarFilters";
 import type { StatusFilterValue } from "@/lib/business-statuses";
 import type { DashboardRange } from "@/lib/order-dashboard-summary";
 
+type OrderSort =
+  | "default"
+  | "newest"
+  | "oldest"
+  | "dueSoonest"
+  | "dueLatest"
+  | "statusAsc"
+  | "statusDesc"
+  | "amountHigh"
+  | "amountLow";
+
 type TeamActor = {
   id: string;
   label: string;
@@ -32,6 +43,7 @@ type Props = {
   startDate: string | null;
   endDate: string | null;
   actor: string;
+  sort: OrderSort;
   actors: TeamActor[];
   currentUserId: string | null;
   hasActiveFilters: boolean;
@@ -97,7 +109,7 @@ function RailLink({
     "group relative flex border shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition-all duration-150",
     expanded
       ? "min-h-14 w-full items-start justify-start gap-3 rounded-2xl px-4 py-3"
-      : "h-12 w-12 items-center justify-center rounded-2xl",
+      : "h-12 w-full items-center justify-center rounded-2xl",
     active
       ? "border-[#b7c8e6] bg-[#eaf2ff] text-[#0f172a] shadow-[0_10px_24px_rgba(59,130,246,0.12)] ring-1 ring-[#d7e5ff]"
       : disabled
@@ -132,7 +144,9 @@ function RailLink({
       {expanded ? (
         <span className="min-w-0 flex-1 pt-0.5 text-left">
           <span className="flex items-center gap-2">
-            <span className="block text-sm font-semibold leading-5">{label}</span>
+            <span className="block text-sm font-semibold leading-5">
+              {label}
+            </span>
             {badgeCount > 0 ? (
               <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#eef4ff] px-1.5 text-[10px] font-bold text-[#2459d3]">
                 {badgeCount}
@@ -153,7 +167,11 @@ function RailLink({
             <span
               className={[
                 "mt-0.5 block text-xs font-medium leading-4",
-                active ? "text-[#49627f]" : disabled ? "text-[#a5afbe]" : "text-[#98a2b3]",
+                active
+                  ? "text-[#49627f]"
+                  : disabled
+                    ? "text-[#a5afbe]"
+                    : "text-[#98a2b3]",
               ].join(" ")}
             >
               {description}
@@ -214,6 +232,7 @@ export default function DesktopLeftRail({
   startDate,
   endDate,
   actor,
+  sort,
   actors,
   currentUserId,
   hasActiveFilters,
@@ -232,6 +251,48 @@ export default function DesktopLeftRail({
     getExpandedServerSnapshot,
   );
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [kanbanPeekOpen, setKanbanPeekOpen] = useState(false);
+  const isKanban = layoutMode === "kanban";
+  const collapsedRailWidth =
+    isKanban && !kanbanPeekOpen && !expanded && !filtersOpen
+      ? "w-0"
+      : isKanban
+        ? "w-[60px]"
+        : "w-[72px]";
+  const expandedRailWidth = isKanban ? "w-[208px]" : "w-[232px]";
+  const collapsedPanelWidth = isKanban ? "w-[60px]" : "w-[68px]";
+  const expandedPanelWidth = isKanban ? "w-[192px]" : "w-[216px]";
+  const topOffset =
+    layoutMode === "kanban"
+      ? "calc(env(safe-area-inset-top) + 112px)"
+      : "calc(env(safe-area-inset-top) + 112px)";
+  const leftOffset =
+    layoutMode === "list"
+      ? "max(1.5rem, calc((100vw - 1220px) / 2 + 1.5rem))"
+      : undefined;
+
+  const openCollapsedRail = () => {
+    if (isKanban && !expanded) {
+      setKanbanPeekOpen(true);
+    }
+  };
+
+  const closeCollapsedRail = () => {
+    if (isKanban && !expanded) {
+      setFiltersOpen(false);
+      setKanbanPeekOpen(false);
+    }
+  };
+
+  const toggleFiltersPanel = () => {
+    setFiltersOpen((prev) => {
+      const next = !prev;
+      if (isKanban && !expanded) {
+        setKanbanPeekOpen(next);
+      }
+      return next;
+    });
+  };
 
   const toggleExpanded = () => {
     const next = !expanded;
@@ -241,101 +302,153 @@ export default function DesktopLeftRail({
 
   useEffect(() => {
     const handleToggleFilters = () => {
-      setFiltersOpen((prev) => !prev);
+      toggleFiltersPanel();
     };
 
     window.addEventListener(TOGGLE_FILTERS_EVENT, handleToggleFilters);
-    return () => window.removeEventListener(TOGGLE_FILTERS_EVENT, handleToggleFilters);
-  }, []);
+    return () =>
+      window.removeEventListener(TOGGLE_FILTERS_EVENT, handleToggleFilters);
+  }, [expanded, isKanban]);
+
+  useEffect(() => {
+    if (!isKanban) {
+      setKanbanPeekOpen(false);
+    }
+  }, [isKanban]);
 
   return (
     <div
       className={[
-        "relative hidden shrink-0 lg:block",
-        expanded ? "w-[232px]" : "w-[72px]",
+        "relative z-40 hidden shrink-0 lg:block",
+        expanded ? expandedRailWidth : collapsedRailWidth,
       ].join(" ")}
     >
       <div
-        className="fixed z-30"
+        className={layoutMode === "list" ? "fixed" : "sticky"}
         style={{
-          top:
-            layoutMode === "kanban"
-              ? "calc(env(safe-area-inset-top) + 96px)"
-              : "calc(env(safe-area-inset-top) + 88px)",
-          left:
-            layoutMode === "kanban"
-              ? "24px"
-              : "max(24px, calc((100vw - 1220px) / 2 + 24px))",
+          top: topOffset,
+          ...(layoutMode === "list" ? { left: leftOffset } : {}),
         }}
       >
         <div className="relative">
-          <div
-            className={[
-              "rounded-[28px] border border-[#dde3ee] bg-[#f8fafc]/96 p-2 shadow-[0_10px_34px_rgba(15,23,42,0.06)] backdrop-blur transition-all",
-              expanded ? "w-[216px]" : "w-[68px]",
-            ].join(" ")}
-          >
-            <div className="flex flex-col gap-2">
-              <RailLink
-                icon={
-                  expanded ? (
+          {isKanban && !expanded && !kanbanPeekOpen && !filtersOpen ? (
+            <button
+              type="button"
+              onClick={openCollapsedRail}
+              aria-label="Open rail menu"
+              className="fixed left-0 z-50 inline-flex h-[84px] w-7 flex-col items-center justify-center gap-1 rounded-r-xl border border-[#dde3ee] border-l-0 bg-white/96 text-[#475467] shadow-[0_10px_28px_rgba(15,23,42,0.10)] backdrop-blur transition hover:bg-white hover:text-[#111827]"
+              style={{ top: topOffset }}
+            >
+              <ChevronsRight className="h-3.5 w-3.5 shrink-0" />
+              <span
+                className="text-[9px] font-semibold uppercase tracking-[0.18em]"
+                style={{ writingMode: "vertical-rl", textOrientation: "mixed" }}
+              >
+                Menu
+              </span>
+            </button>
+          ) : (
+            <div
+              className={[
+                "rounded-[26px] border border-[#dde3ee] bg-[#f8fafc]/96 p-1.5 shadow-[0_10px_34px_rgba(15,23,42,0.06)] backdrop-blur transition-all",
+                expanded ? expandedPanelWidth : collapsedPanelWidth,
+              ].join(" ")}
+            >
+              <div className="flex flex-col items-stretch gap-1.5">
+                {isKanban && !expanded ? (
+                  <button
+                    type="button"
+                    onClick={closeCollapsedRail}
+                    className="inline-flex h-12 w-full items-center justify-center rounded-2xl border border-[#dde3ee] bg-white text-[#667085] transition hover:border-[#cfd8e6] hover:bg-[#f8fafc] hover:text-[#111827]"
+                    aria-label="Hide rail menu"
+                    title="Hide menu"
+                  >
                     <ChevronsLeft className="h-5 w-5" />
-                  ) : (
+                  </button>
+                ) : null}
+
+                {isKanban && !expanded ? (
+                  <button
+                    type="button"
+                    onClick={toggleExpanded}
+                    className="inline-flex h-12 w-full items-center justify-center rounded-2xl border border-[#dde3ee] bg-white text-[#667085] transition hover:border-[#cfd8e6] hover:bg-[#f8fafc] hover:text-[#111827]"
+                    aria-label="Open full menu"
+                    title="Open full menu"
+                  >
                     <ChevronsRight className="h-5 w-5" />
-                  )
-                }
-                label={expanded ? "Collapse menu" : "Expand menu"}
-                expanded={expanded}
-                onClick={toggleExpanded}
-              />
+                  </button>
+                ) : null}
 
-              {showFilters ? (
+                {!(isKanban && !expanded) ? (
+                  <RailLink
+                    icon={
+                      expanded ? (
+                        <ChevronsLeft className="h-5 w-5" />
+                      ) : (
+                        <ChevronsRight className="h-5 w-5" />
+                      )
+                    }
+                    label={expanded ? "Collapse menu" : "Expand menu"}
+                    expanded={expanded}
+                    onClick={toggleExpanded}
+                  />
+                ) : null}
+
+                {showFilters ? (
+                  <RailLink
+                    icon={<SlidersHorizontal className="h-5 w-5" />}
+                    label="Filters"
+                    description="Search and narrow orders"
+                    expanded={expanded}
+                    active={filtersOpen}
+                    badgeCount={activeFiltersCount}
+                    onClick={toggleFiltersPanel}
+                  />
+                ) : null}
+
+                {canSeeAnalytics ? (
+                  <RailLink
+                    icon={<BarChart3 className="h-5 w-5" />}
+                    label="Analytics"
+                    description="Dashboard insights are not live yet"
+                    expanded={expanded}
+                    disabled
+                  />
+                ) : null}
+
                 <RailLink
-                  icon={<SlidersHorizontal className="h-5 w-5" />}
-                  label="Filters"
-                  description="Search and narrow orders"
+                  icon={<Building2 className="h-5 w-5" />}
+                  label="Business"
+                  description="Manage access and managers"
                   expanded={expanded}
-                  active={filtersOpen}
-                  badgeCount={activeFiltersCount}
-                  onClick={() => setFiltersOpen((prev) => !prev)}
+                  href={businessHref}
+                  active={activeSection === "business"}
                 />
-              ) : null}
 
-              {canSeeAnalytics ? (
                 <RailLink
-                  icon={<BarChart3 className="h-5 w-5" />}
-                  label="Analytics"
-                  description="Dashboard insights are not live yet"
+                  icon={<Settings className="h-5 w-5" />}
+                  label="Settings"
+                  description="Team and statuses"
                   expanded={expanded}
-                  disabled
+                  href={settingsHref}
+                  active={activeSection === "settings"}
                 />
-              ) : null}
 
-              <RailLink
-                icon={<Building2 className="h-5 w-5" />}
-                label="Business"
-                description="Manage access and managers"
-                expanded={expanded}
-                href={businessHref}
-                active={activeSection === "business"}
-              />
-
-              <RailLink
-                icon={<Settings className="h-5 w-5" />}
-                label="Settings"
-                description="Team and statuses"
-                expanded={expanded}
-                href={settingsHref}
-                active={activeSection === "settings"}
-              />
+              </div>
             </div>
-          </div>
+          )}
 
           {showFilters && filtersOpen ? (
             <div
               className={[
                 "absolute top-0 z-20 w-[312px]",
-                expanded ? "left-[228px]" : "left-[84px]",
+                expanded
+                  ? isKanban
+                    ? "left-[204px]"
+                    : "left-[228px]"
+                  : isKanban
+                    ? "left-[72px]"
+                    : "left-[84px]",
               ].join(" ")}
             >
               <DesktopSidebarFilters
@@ -349,10 +462,12 @@ export default function DesktopLeftRail({
                 startDate={startDate}
                 endDate={endDate}
                 actor={actor}
+                sort={sort}
                 currentUserId={currentUserId}
                 actors={actors}
                 hasActiveFilters={hasActiveFilters}
                 clearHref={clearHref}
+                layoutMode={layoutMode}
               />
             </div>
           ) : null}

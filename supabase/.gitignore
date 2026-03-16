@@ -1,0 +1,9 @@
+# Supabase
+.branches
+.temp
+
+# dotenvx
+.env.keys
+.env.local
+.env.*.local
+__codex_test*.txt

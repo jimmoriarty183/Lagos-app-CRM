@@ -126,7 +126,6 @@ export const DEFAULT_STATUS_DEFINITIONS: readonly BusinessStatusDefinition[] = [
   { value: "WAITING_PAYMENT", label: "Waiting payment", color: "amber", builtIn: true, active: true, sortOrder: 2 },
   { value: "DONE", label: "Done", color: "green", builtIn: true, active: true, sortOrder: 3 },
   { value: "CANCELED", label: "Canceled", color: "red", builtIn: true, active: true, sortOrder: 4 },
-  { value: "DUPLICATE", label: "Duplicate", color: "violet", builtIn: true, active: true, sortOrder: 5 },
 ] as const;
 
 export const DEFAULT_VISIBLE_STATUSES: readonly StatusValue[] = [
@@ -144,14 +143,12 @@ export const STATUS_COLOR_OPTIONS = Object.values(STATUS_COLOR_MAP);
 export const TERMINAL_STATUS_VALUES: readonly StatusValue[] = [
   "DONE",
   "CANCELED",
-  "DUPLICATE",
 ] as const;
 export const REQUIRED_WORKFLOW_STATUS_VALUES: readonly StatusValue[] = [
   "NEW",
   "IN_PROGRESS",
   "DONE",
   "CANCELED",
-  "DUPLICATE",
 ] as const;
 
 function cleanText(value: unknown) {
@@ -330,7 +327,7 @@ export function normalizeStatusDefinition(
   const sortOrderRaw = Number(input.sort_order);
   const sortOrder = Number.isFinite(sortOrderRaw) ? sortOrderRaw : undefined;
 
-  if (!label || !value || value === "OVERDUE") return null;
+  if (!label || !value || value === "OVERDUE" || value === "DUPLICATE") return null;
 
   return {
     value,
@@ -352,6 +349,7 @@ export function mergeBusinessStatuses(
 
   for (const item of customStatuses) {
     if (!item?.value) continue;
+    if (cleanText(item.value).toUpperCase() === "DUPLICATE") continue;
     const normalizedItem: BusinessStatusDefinition = {
       value: item.value,
       label: cleanText(item.label) || humanizeStatusValue(item.value),
@@ -368,7 +366,7 @@ export function mergeBusinessStatuses(
     DEFAULT_STATUS_DEFINITIONS.map((item, index) => [item.value, index]),
   );
 
-  return Array.from(merged.values()).sort((left, right) => {
+  const result = Array.from(merged.values()).sort((left, right) => {
     const leftActive = left.active !== false;
     const rightActive = right.active !== false;
     if (leftActive !== rightActive) return leftActive ? -1 : 1;
@@ -389,6 +387,27 @@ export function mergeBusinessStatuses(
 
     return left.label.localeCompare(right.label);
   });
+
+  console.log("[business-statuses] mergeBusinessStatuses", {
+    customStatuses: customStatuses.map((status) => ({
+      value: status.value,
+      label: status.label,
+      active: status.active,
+      builtIn: status.builtIn ?? false,
+      sortOrder: status.sortOrder,
+    })),
+    mergedStatuses: result.map((status) => ({
+      value: status.value,
+      label: status.label,
+      active: status.active,
+      builtIn: status.builtIn ?? false,
+      sortOrder: status.sortOrder,
+    })),
+    hasDELInCustom: customStatuses.some((status) => status.value === "DEL"),
+    hasDELInMerged: result.some((status) => status.value === "DEL"),
+  });
+
+  return result;
 }
 
 export function getStatusDefinition(

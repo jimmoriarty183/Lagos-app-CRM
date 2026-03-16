@@ -32,11 +32,30 @@ export async function loadBusinessStatuses(
     .order("created_at", { ascending: true });
 
   if (error) {
+    console.log("[business-statuses.server] loadBusinessStatuses error", {
+      businessId,
+      message: String((error as { message?: string } | null)?.message ?? error),
+    });
     if (isMissingRelationError(error, "business_statuses")) return [] as BusinessStatusDefinition[];
     throw error;
   }
 
-  return ((data ?? []) as BusinessStatusRow[])
+  const statuses = ((data ?? []) as BusinessStatusRow[])
     .map((row) => normalizeStatusDefinition(row))
     .filter((row): row is BusinessStatusDefinition => Boolean(row));
+
+  console.log("[business-statuses.server] loadBusinessStatuses", {
+    businessId,
+    rawCount: Array.isArray(data) ? data.length : 0,
+    statuses: statuses.map((status) => ({
+      value: status.value,
+      label: status.label,
+      active: status.active,
+      builtIn: status.builtIn ?? false,
+      sortOrder: status.sortOrder,
+    })),
+    hasDEL: statuses.some((status) => status.value === "DEL"),
+  });
+
+  return statuses;
 }

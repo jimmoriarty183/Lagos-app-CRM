@@ -19,7 +19,7 @@ export default function DesktopCreateOrderAccordion({
               +
             </div>
             <div>
-              <div className="text-sm font-semibold text-[#111827]">New order</div>
+              <div className="text-sm font-semibold text-[#111827]">New Order</div>
               <div className="text-xs text-[#98a2b3]">Fill the form for incoming work</div>
             </div>
           </div>
