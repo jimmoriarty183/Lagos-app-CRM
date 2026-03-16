@@ -9,6 +9,7 @@ import React, {
 import { createPortal } from "react-dom";
 
 import { setOrderStatus } from "./actions";
+import { CANCELED_REASONS } from "./order-status-reasons";
 import { statusTone, type Status } from "./statusTone";
 import { getStatusLabel, type BusinessStatusDefinition } from "@/lib/business-statuses";
 import { useBusinessStatuses } from "@/lib/use-business-statuses";
@@ -308,6 +309,8 @@ export function StatusCell({
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [isMobile, setIsMobile] = useState(false);
+  const [reasonTarget, setReasonTarget] = useState<"CANCELED" | null>(null);
+  const [customReason, setCustomReason] = useState("");
 
   const [local, setLocal] = useState<Status>(value);
   const { statuses, customStatuses } = useBusinessStatuses(businessId);
@@ -377,6 +380,30 @@ export function StatusCell({
   }
 
   const currentTone = statusTone(local, customStatuses);
+  const reasonOptions = reasonTarget === "CANCELED" ? CANCELED_REASONS : [];
+
+  const applyStatusChange = (nextStatus: Status, reason?: string | null) => {
+    const prev = local;
+    markOverlayClosing();
+    setOpen(false);
+    setReasonTarget(null);
+    setCustomReason("");
+
+    startTransition(async () => {
+      setLocal(nextStatus);
+      try {
+        await setOrderStatus({
+          orderId,
+          businessSlug,
+          status: nextStatus,
+          reason,
+        });
+      } catch {
+        setLocal(prev);
+        alert("Failed to update status. Try again.");
+      }
+    });
+  };
 
   return (
     <div
@@ -400,67 +427,175 @@ export function StatusCell({
       <Menu
         open={open}
         menuRef={menuRef}
-        width={210}
+        width={reasonTarget ? 280 : 210}
         mobile={isMobile}
-        onClose={() => setOpen(false)}
+        onClose={() => {
+          setOpen(false);
+          setReasonTarget(null);
+          setCustomReason("");
+        }}
       >
-        {workflowStatuses.map((statusOption) => {
-          const s = statusOption.value;
-          const tone = statusTone(s, customStatuses);
+        {reasonTarget ? (
+          <div style={{ padding: 6 }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 12,
+                padding: "6px 8px 10px",
+              }}
+            >
+              <div>
+                <div
+                  style={{
+                    fontSize: 14,
+                    fontWeight: 600,
+                    color: "#182230",
+                  }}
+                >
+                  Why is this canceled?
+                </div>
+                <div
+                  style={{
+                    marginTop: 4,
+                    fontSize: 12,
+                    color: "#667085",
+                  }}
+                >
+                  Pick a quick reason or write your own.
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setReasonTarget(null);
+                  setCustomReason("");
+                }}
+                style={{
+                  border: 0,
+                  background: "transparent",
+                  color: "#667085",
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                Back
+              </button>
+            </div>
 
-          return (
-            <MenuItem
-              key={s}
-              active={s === local}
-              disabled={isPending}
-              tone={tone}
-              onClick={() => {
-                if (s === local) {
-                  markOverlayClosing();
-                  setOpen(false);
-                  return;
+            <div style={{ display: "grid", gap: 6 }}>
+              {reasonOptions.map((reason) => (
+                <button
+                  key={reason}
+                  type="button"
+                  disabled={isPending}
+                  onClick={() => applyStatusChange(reasonTarget, reason)}
+                  style={{
+                    width: "100%",
+                    minHeight: 36,
+                    borderRadius: 10,
+                    border: "1px solid #E4EAF2",
+                    background: "white",
+                    padding: "8px 12px",
+                    textAlign: "left",
+                    fontSize: 13,
+                    fontWeight: 500,
+                    color: "#182230",
+                    cursor: isPending ? "default" : "pointer",
+                  }}
+                >
+                  {reason}
+                </button>
+              ))}
+            </div>
+
+            <div style={{ marginTop: 10 }}>
+              <textarea
+                value={customReason}
+                onChange={(event) => setCustomReason(event.currentTarget.value)}
+                placeholder="Other reason..."
+                rows={3}
+                style={{
+                  width: "100%",
+                  resize: "none",
+                  borderRadius: 10,
+                  border: "1px solid #DDE3EE",
+                  padding: "10px 12px",
+                  fontSize: 13,
+                  outline: "none",
+                }}
+              />
+              <button
+                type="button"
+                disabled={isPending || !customReason.trim()}
+                onClick={() =>
+                  applyStatusChange(reasonTarget, customReason.trim())
                 }
+                style={{
+                  marginTop: 8,
+                  width: "100%",
+                  height: 38,
+                  borderRadius: 10,
+                  border: 0,
+                  background: "#111827",
+                  color: "white",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor:
+                    isPending || !customReason.trim() ? "default" : "pointer",
+                  opacity: isPending || !customReason.trim() ? 0.5 : 1,
+                }}
+              >
+                Save reason
+              </button>
+            </div>
+          </div>
+        ) : (
+          workflowStatuses.map((statusOption) => {
+            const s = statusOption.value;
+            const tone = statusTone(s, customStatuses);
 
-                if (s === "CANCELED") {
-                  const ok = confirm("Cancel this order?");
-                  if (!ok) {
+            return (
+              <MenuItem
+                key={s}
+                active={s === local}
+                disabled={isPending}
+                tone={tone}
+                onClick={() => {
+                  if (s === local) {
                     markOverlayClosing();
                     setOpen(false);
                     return;
                   }
-                }
 
-                const prev = local;
-                markOverlayClosing();
-                setOpen(false);
-
-                startTransition(async () => {
-                  setLocal(s);
-                  try {
-                    await setOrderStatus({ orderId, businessSlug, status: s });
-                  } catch {
-                    setLocal(prev);
-                    alert("Failed to update status. Try again.");
+                  if (s === "CANCELED") {
+                    setReasonTarget("CANCELED");
+                    setCustomReason("");
+                    return;
                   }
-                });
-              }}
-            >
-              <>
-                <span
-                  aria-hidden="true"
-                  style={{
-                    width: 6,
-                    height: 6,
-                    borderRadius: 999,
-                    background: tone.dot,
-                    flexShrink: 0,
-                  }}
-                />
-                {getStatusLabel(s, customStatuses)}
-              </>
-            </MenuItem>
-          );
-        })}
+
+                  applyStatusChange(s, null);
+                }}
+              >
+                <>
+                  <span
+                    aria-hidden="true"
+                    style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: 999,
+                      background: tone.dot,
+                      flexShrink: 0,
+                    }}
+                  />
+                  {getStatusLabel(s, customStatuses)}
+                </>
+              </MenuItem>
+            );
+          })
+        )}
       </Menu>
     </div>
   );

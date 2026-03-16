@@ -19,8 +19,9 @@ import {
   UserRound,
 } from "lucide-react";
 
-import { CANCELED_REASONS, StatusCell } from "../../InlineCells";
+import { StatusCell } from "../../InlineCells";
 import { setOrderManager, setOrderStatus } from "../../actions";
+import { CANCELED_REASONS } from "../../order-status-reasons";
 import { OrderPreview } from "../orders/OrderPreview";
 import {
   DropdownMenu,

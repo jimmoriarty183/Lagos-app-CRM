@@ -19,7 +19,7 @@ import {
 import { OrderChecklist } from "@/app/b/[slug]/OrderChecklist";
 import { OrderComments } from "@/app/b/[slug]/OrderComments";
 import { createOrder, setOrderManager, setOrderStatus, updateOrder } from "@/app/b/[slug]/actions";
-import { CANCELED_REASONS } from "@/app/b/[slug]/InlineCells";
+import { CANCELED_REASONS } from "@/app/b/[slug]/order-status-reasons";
 import { normalizeOrderClient } from "@/lib/order-client";
 import {
   Sheet,
