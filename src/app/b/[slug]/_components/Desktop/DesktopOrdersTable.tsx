@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   ChevronUp,
   Columns3,
   Ellipsis,
@@ -155,7 +157,9 @@ type Props = {
 };
 
 function fmtAmount(n: number) {
-  return new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(Number(n || 0));
+  return new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(
+    Number(n || 0),
+  );
 }
 
 function formatCreatedAt(value: string) {
@@ -201,16 +205,31 @@ function normalizeQuickStatuses(
   return normalized.length === 0 ? [...activeStatusOptions] : normalized;
 }
 
-function getDesktopSortState(sort: OrderSort, column: SortColumn): "asc" | "desc" | null {
+function getDesktopSortState(
+  sort: OrderSort,
+  column: SortColumn,
+): "asc" | "desc" | null {
   switch (column) {
     case "order":
       return sort === "newest" ? "desc" : sort === "oldest" ? "asc" : null;
     case "amount":
-      return sort === "amountLow" ? "asc" : sort === "amountHigh" ? "desc" : null;
+      return sort === "amountLow"
+        ? "asc"
+        : sort === "amountHigh"
+          ? "desc"
+          : null;
     case "due":
-      return sort === "dueSoonest" ? "asc" : sort === "dueLatest" ? "desc" : null;
+      return sort === "dueSoonest"
+        ? "asc"
+        : sort === "dueLatest"
+          ? "desc"
+          : null;
     case "status":
-      return sort === "statusAsc" ? "asc" : sort === "statusDesc" ? "desc" : null;
+      return sort === "statusAsc"
+        ? "asc"
+        : sort === "statusDesc"
+          ? "desc"
+          : null;
     default:
       return null;
   }
@@ -220,13 +239,29 @@ function getNextDesktopSort(sort: OrderSort, column: SortColumn): OrderSort {
   const current = getDesktopSortState(sort, column);
   switch (column) {
     case "order":
-      return current === null ? "newest" : current === "desc" ? "oldest" : "default";
+      return current === null
+        ? "newest"
+        : current === "desc"
+          ? "oldest"
+          : "default";
     case "amount":
-      return current === null ? "amountHigh" : current === "desc" ? "amountLow" : "default";
+      return current === null
+        ? "amountHigh"
+        : current === "desc"
+          ? "amountLow"
+          : "default";
     case "due":
-      return current === null ? "dueSoonest" : current === "asc" ? "dueLatest" : "default";
+      return current === null
+        ? "dueSoonest"
+        : current === "asc"
+          ? "dueLatest"
+          : "default";
     case "status":
-      return current === null ? "statusAsc" : current === "asc" ? "statusDesc" : "default";
+      return current === null
+        ? "statusAsc"
+        : current === "asc"
+          ? "statusDesc"
+          : "default";
     default:
       return "default";
   }
@@ -256,11 +291,17 @@ function getStatusTriggerLabel(
   return `${statuses.length} statuses`;
 }
 
-function getManagerTriggerLabel(value: string, currentUserId: string | null, options: { value: string; label: string }[]) {
+function getManagerTriggerLabel(
+  value: string,
+  currentUserId: string | null,
+  options: { value: string; label: string }[],
+) {
   if (!value || value === "ALL") return "All managers";
   if (value === "ME") return currentUserId ? "Me" : "All managers";
   if (value === "UNASSIGNED") return "Unassigned";
-  return options.find((option) => option.value === value)?.label ?? "All managers";
+  return (
+    options.find((option) => option.value === value)?.label ?? "All managers"
+  );
 }
 
 function getInitials(label: string) {
@@ -283,9 +324,16 @@ function getCompactManagerLabel(label: string) {
   return firstInitial ? `${firstInitial}. ${lastName}` : clean;
 }
 
-function isOrderOverdue(order: { due_date: string | null; status: StatusValue }, todayISO: string) {
+function isOrderOverdue(
+  order: { due_date: string | null; status: StatusValue },
+  todayISO: string,
+) {
   const dueISO = order.due_date ? String(order.due_date).slice(0, 10) : null;
-  return !!dueISO && dueISO < todayISO && (order.status === "NEW" || order.status === "IN_PROGRESS");
+  return (
+    !!dueISO &&
+    dueISO < todayISO &&
+    (order.status === "NEW" || order.status === "IN_PROGRESS")
+  );
 }
 
 function orderMatchesAppliedStatusFilter(
@@ -393,7 +441,9 @@ function TableSortHeader({
       ].join(" ")}
     >
       <span>{label}</span>
-      <span className="text-[10px] leading-none text-[#98a2b3]">{indicator}</span>
+      <span className="text-[10px] leading-none text-[#98a2b3]">
+        {indicator}
+      </span>
     </button>
   );
 }
@@ -449,16 +499,24 @@ function ActiveTableSortHeader({
 }
 
 function getPeriodTriggerLabel(value: DashboardRange) {
-  return DESKTOP_PERIOD_OPTIONS.find((option) => option.value === value)?.label ?? "Period";
+  return (
+    DESKTOP_PERIOD_OPTIONS.find((option) => option.value === value)?.label ??
+    "Period"
+  );
 }
 
-function normalizeQuickActor(actorFilter: string, actors: TeamActor[], currentUserId: string | null) {
+function normalizeQuickActor(
+  actorFilter: string,
+  actors: TeamActor[],
+  currentUserId: string | null,
+) {
   if (!actorFilter || actorFilter === "ALL") return "ALL";
   if (actorFilter === "UNASSIGNED") return "UNASSIGNED";
   if (actorFilter === "ME") return "ME";
   if (actorFilter.startsWith("user:")) return actorFilter;
   if (currentUserId && actorFilter === `user:${currentUserId}`) return "ME";
-  if (actors.some((actor) => `user:${actor.id}` === actorFilter)) return actorFilter;
+  if (actors.some((actor) => `user:${actor.id}` === actorFilter))
+    return actorFilter;
   return "ALL";
 }
 
@@ -491,8 +549,12 @@ function ManagerAssignmentCell({
   onAssigned?: () => void;
 }) {
   const [isPending, startTransition] = useTransition();
-  const [localManagerId, setLocalManagerId] = useState<string | null>(managerId);
-  const [localManagerName, setLocalManagerName] = useState<string | null>(managerName);
+  const [localManagerId, setLocalManagerId] = useState<string | null>(
+    managerId,
+  );
+  const [localManagerName, setLocalManagerName] = useState<string | null>(
+    managerName,
+  );
 
   React.useEffect(() => {
     setLocalManagerId(managerId);
@@ -500,10 +562,7 @@ function ManagerAssignmentCell({
   }, [managerId, managerName]);
 
   const options = useMemo(
-    () =>
-      actors
-        .slice()
-        .sort((a, b) => a.label.localeCompare(b.label)),
+    () => actors.slice().sort((a, b) => a.label.localeCompare(b.label)),
     [actors],
   );
 
@@ -557,7 +616,9 @@ function ManagerAssignmentCell({
       <span className="truncate" title={label}>
         {compactLabel}
       </span>
-      {canManage ? <ChevronDown className="h-3.5 w-3.5 text-[#98a2b3]" /> : null}
+      {canManage ? (
+        <ChevronDown className="h-3.5 w-3.5 text-[#98a2b3]" />
+      ) : null}
     </button>
   );
 
@@ -582,7 +643,9 @@ function ManagerAssignmentCell({
             type="button"
             className={[
               "flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm transition",
-              !localManagerId ? "bg-[#eef4ff] text-[#2459d3]" : "text-[#475467] hover:bg-[#f8fafc]",
+              !localManagerId
+                ? "bg-[#eef4ff] text-[#2459d3]"
+                : "text-[#475467] hover:bg-[#f8fafc]",
             ].join(" ")}
             onClick={() => {
               const prevId = localManagerId;
@@ -591,13 +654,19 @@ function ManagerAssignmentCell({
               setLocalManagerName(null);
               startTransition(async () => {
                 try {
-                  await setOrderManager({ orderId, businessSlug, managerId: null });
+                  await setOrderManager({
+                    orderId,
+                    businessSlug,
+                    managerId: null,
+                  });
                   onAssigned?.();
                 } catch (error) {
                   setLocalManagerId(prevId);
                   setLocalManagerName(prevName);
                   const message =
-                    error instanceof Error ? error.message : "Failed to update manager. Try again.";
+                    error instanceof Error
+                      ? error.message
+                      : "Failed to update manager. Try again.";
                   window.alert(message);
                 }
               });
@@ -629,13 +698,19 @@ function ManagerAssignmentCell({
                 setLocalManagerName(actor.label);
                 startTransition(async () => {
                   try {
-                    await setOrderManager({ orderId, businessSlug, managerId: actor.id });
+                    await setOrderManager({
+                      orderId,
+                      businessSlug,
+                      managerId: actor.id,
+                    });
                     onAssigned?.();
                   } catch (error) {
                     setLocalManagerId(prevId);
                     setLocalManagerName(prevName);
                     const message =
-                      error instanceof Error ? error.message : "Failed to update manager. Try again.";
+                      error instanceof Error
+                        ? error.message
+                        : "Failed to update manager. Try again.";
                     window.alert(message);
                   }
                 });
@@ -644,7 +719,9 @@ function ManagerAssignmentCell({
               <ActorAvatar label={actor.label} />
               <div className="min-w-0 flex-1">
                 <div className="truncate font-medium">{actor.label}</div>
-                <div className="text-[11px] uppercase tracking-[0.08em] text-[#98a2b3]">{actor.kind}</div>
+                <div className="text-[11px] uppercase tracking-[0.08em] text-[#98a2b3]">
+                  {actor.kind}
+                </div>
               </div>
             </button>
           ))}
@@ -670,7 +747,13 @@ const DESKTOP_PERIOD_OPTIONS = [
 function getPaginationItems(currentPage: number, totalPages: number) {
   if (totalPages <= 1) return [1];
 
-  const pages = new Set<number>([1, totalPages, currentPage, currentPage - 1, currentPage + 1]);
+  const pages = new Set<number>([
+    1,
+    totalPages,
+    currentPage,
+    currentPage - 1,
+    currentPage + 1,
+  ]);
   return Array.from(pages)
     .filter((page) => page >= 1 && page <= totalPages)
     .sort((a, b) => a - b);
@@ -717,7 +800,9 @@ export default function DesktopOrdersTable({
   const [perPageMenuOpen, setPerPageMenuOpen] = useState(false);
   const [draggingOrderId, setDraggingOrderId] = useState<string | null>(null);
   const [dropStatusValue, setDropStatusValue] = useState<string | null>(null);
-  const [savingStatusOrderId, setSavingStatusOrderId] = useState<string | null>(null);
+  const [savingStatusOrderId, setSavingStatusOrderId] = useState<string | null>(
+    null,
+  );
   const [searchDraft, setSearchDraft] = useState(searchQuery);
   const [sortValue, setSortValue] = useState<OrderSort>(sort);
   const [rangeValue, setRangeValue] = useState<DashboardRange>(rangeFilter);
@@ -732,9 +817,14 @@ export default function DesktopOrdersTable({
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [isPending] = useTransition();
-  const [navigationMessage, setNavigationMessage] = useState<string | null>(null);
+  const [navigationMessage, setNavigationMessage] = useState<string | null>(
+    null,
+  );
   const [loadedActors, setLoadedActors] = useState<TeamActor[]>(actors);
   const isMountedRef = React.useRef(false);
+  const kanbanScrollRef = React.useRef<HTMLDivElement | null>(null);
+  const [kanbanCanScrollLeft, setKanbanCanScrollLeft] = useState(false);
+  const [kanbanCanScrollRight, setKanbanCanScrollRight] = useState(false);
 
   React.useEffect(() => {
     isMountedRef.current = true;
@@ -745,7 +835,10 @@ export default function DesktopOrdersTable({
 
   const supabase = useMemo(() => createClient(), []);
 
-  const effectiveActors = useMemo(() => mergeActors(actors, loadedActors), [actors, loadedActors]);
+  const effectiveActors = useMemo(
+    () => mergeActors(actors, loadedActors),
+    [actors, loadedActors],
+  );
   const actorLabelById = useMemo(
     () => new Map(effectiveActors.map((actor) => [actor.id, actor.label])),
     [effectiveActors],
@@ -755,7 +848,9 @@ export default function DesktopOrdersTable({
       (list ?? []).map((order) => ({
         ...order,
         manager_name:
-          order.manager_name || actorLabelById.get(String(order.manager_id ?? "")) || null,
+          order.manager_name ||
+          actorLabelById.get(String(order.manager_id ?? "")) ||
+          null,
       })),
     [actorLabelById, list],
   );
@@ -817,7 +912,13 @@ export default function DesktopOrdersTable({
         ? allSelectableStatuses
         : normalizeQuickStatuses(statusFilter, activeStatusOptions),
     );
-  }, [activeStatusOptions, allSelectableStatuses, statusFilter, statusMode, statusTouched]);
+  }, [
+    activeStatusOptions,
+    allSelectableStatuses,
+    statusFilter,
+    statusMode,
+    statusTouched,
+  ]);
   const workflowStatuses = useMemo(
     () => statuses.filter((status) => status.active !== false),
     [statuses],
@@ -835,21 +936,83 @@ export default function DesktopOrdersTable({
     statusValues.includes("DUPLICATE") ||
     (!statusTouched && statusFilter.includes("DUPLICATE"));
   const kanbanColumns = useMemo(
-    () =>
-      workflowStatuses.map((status) => ({
+    () => {
+      const columns = workflowStatuses.map((status) => ({
         ...status,
-        orders: boardRows.filter((order) => order.status === status.value),
-      })),
+        orders: boardRows.filter((order) => {
+          const orderStatus = String(order.status ?? "").toUpperCase();
+          return orderStatus === status.value.toUpperCase();
+        }),
+      }));
+
+      console.log("[desktop-orders-table] kanbanColumns", {
+        workflowStatuses: workflowStatuses.map((status) => ({
+          value: status.value,
+          label: status.label,
+          builtIn: status.builtIn ?? false,
+          active: status.active,
+        })),
+        workflowHasDEL: workflowStatuses.some((status) => status.value === "DEL"),
+        boardRowsCount: boardRows.length,
+        boardDELCount: boardRows.filter(
+          (order) => String(order.status ?? "").toUpperCase() === "DEL",
+        ).length,
+        columns: columns.map((column) => ({
+          value: column.value,
+          builtIn: column.builtIn ?? false,
+          ordersCount: column.orders.length,
+        })),
+      });
+
+      return columns;
+    },
     [boardRows, workflowStatuses],
   );
   const visibleKanbanColumns = useMemo(
-    () =>
-      kanbanColumns.filter((column) => {
-        if (column.value === "DONE") return doneVisibleInFilter || hiddenKanbanCounts.done > 0;
-        if (column.value === "CANCELED") return canceledVisibleInFilter || hiddenKanbanCounts.canceled > 0;
-        if (column.value === "DUPLICATE") return duplicateVisibleInFilter || hiddenKanbanCounts.duplicate > 0;
+    () => {
+      const visibleColumns = kanbanColumns.filter((column) => {
+        // Only built-in terminal statuses (DONE, CANCELED, DUPLICATE) can be hidden
+        // Custom statuses must always be visible
+        const isBuiltInTerminal =
+          column.builtIn &&
+          (column.value === "DONE" ||
+            column.value === "CANCELED" ||
+            column.value === "DUPLICATE");
+
+        if (!isBuiltInTerminal) {
+          // Custom statuses and non-terminal built-in statuses are always visible
+          return true;
+        }
+
+        // Built-in terminal statuses follow the visibility filter
+        if (column.value === "DONE")
+          return doneVisibleInFilter || hiddenKanbanCounts.done > 0;
+        if (column.value === "CANCELED")
+          return canceledVisibleInFilter || hiddenKanbanCounts.canceled > 0;
+        if (column.value === "DUPLICATE")
+          return duplicateVisibleInFilter || hiddenKanbanCounts.duplicate > 0;
         return true;
-      }),
+      });
+
+      console.log("[desktop-orders-table] visibleKanbanColumns", {
+        statusMode,
+        statusFilter,
+        workflowStatuses: workflowStatuses.map((status) => ({
+          value: status.value,
+          builtIn: status.builtIn ?? false,
+        })),
+        visibleColumns: visibleColumns.map((column) => ({
+          value: column.value,
+          builtIn: column.builtIn ?? false,
+          isBuiltInTerminal:
+            Boolean(column.builtIn) &&
+            ["DONE", "CANCELED", "DUPLICATE"].includes(column.value),
+          ordersCount: column.orders.length,
+        })),
+      });
+
+      return visibleColumns;
+    },
     [
       canceledVisibleInFilter,
       doneVisibleInFilter,
@@ -858,6 +1021,9 @@ export default function DesktopOrdersTable({
       hiddenKanbanCounts.done,
       hiddenKanbanCounts.duplicate,
       kanbanColumns,
+      statusFilter,
+      statusMode,
+      workflowStatuses,
     ],
   );
 
@@ -881,10 +1047,13 @@ export default function DesktopOrdersTable({
 
     async function loadActors() {
       try {
-        const res = await fetch(`/api/manager/status?business_id=${encodeURIComponent(businessId)}`, {
-          credentials: "same-origin",
-          cache: "no-store",
-        });
+        const res = await fetch(
+          `/api/manager/status?business_id=${encodeURIComponent(businessId)}`,
+          {
+            credentials: "same-origin",
+            cache: "no-store",
+          },
+        );
         if (!res.ok) return;
 
         const data = (await res.json()) as ManagerStatusResponse;
@@ -958,9 +1127,15 @@ export default function DesktopOrdersTable({
     const nextViewMode = next.viewMode ?? viewMode;
     if (nextViewMode === "kanban") params.set("view", nextViewMode);
 
-    const nextRange = next.rangeTouched ? next.rangeValue ?? rangeValue : rangeFilter;
-    const nextStart = next.rangeTouched ? next.customStart ?? customStart : rangeStartDate ?? "";
-    const nextEnd = next.rangeTouched ? next.customEnd ?? customEnd : rangeEndDate ?? "";
+    const nextRange = next.rangeTouched
+      ? (next.rangeValue ?? rangeValue)
+      : rangeFilter;
+    const nextStart = next.rangeTouched
+      ? (next.customStart ?? customStart)
+      : (rangeStartDate ?? "");
+    const nextEnd = next.rangeTouched
+      ? (next.customEnd ?? customEnd)
+      : (rangeEndDate ?? "");
 
     if (nextRange !== "ALL") params.set("range", nextRange);
     if (nextRange === "custom" && nextStart) params.set("start", nextStart);
@@ -973,14 +1148,18 @@ export default function DesktopOrdersTable({
 
     const nextStatuses = next.statusTouched ? next.statusValues : statusFilter;
     const selectingAllStatuses =
-      nextStatuses.length > 0 && allSelectableStatuses.every((status) => nextStatuses.includes(status));
+      nextStatuses.length > 0 &&
+      allSelectableStatuses.every((status) => nextStatuses.includes(status));
     const selectingDefaultStatuses =
       nextStatuses.length === activeStatusOptions.length &&
       activeStatusOptions.every((status) => nextStatuses.includes(status));
 
     if (!next.statusTouched && statusMode === "all") {
       params.set("statusMode", "all");
-    } else if (selectingAllStatuses || (next.statusTouched && nextStatuses.length === 0)) {
+    } else if (
+      selectingAllStatuses ||
+      (next.statusTouched && nextStatuses.length === 0)
+    ) {
       params.set("statusMode", "all");
     } else if (!selectingDefaultStatuses) {
       for (const status of nextStatuses) {
@@ -1124,7 +1303,12 @@ export default function DesktopOrdersTable({
   const handleCancelOrder = async (orderId: string, status: StatusValue) => {
     if (!canEdit || deletingId) return;
     if (status === "CANCELED" || status === "DONE") return;
-    if (!window.confirm("Cancel this order? The order will stay in the list with Canceled status.")) return;
+    if (
+      !window.confirm(
+        "Cancel this order? The order will stay in the list with Canceled status.",
+      )
+    )
+      return;
 
     setDeletingId(orderId);
     try {
@@ -1135,7 +1319,9 @@ export default function DesktopOrdersTable({
       });
     } catch (error) {
       setDeletingId(null);
-      window.alert(error instanceof Error ? error.message : "Failed to cancel order.");
+      window.alert(
+        error instanceof Error ? error.message : "Failed to cancel order.",
+      );
       return;
     }
 
@@ -1171,12 +1357,17 @@ export default function DesktopOrdersTable({
     router.refresh();
   };
 
-  const handleDropToStatus = async (orderId: string, nextStatus: StatusValue) => {
+  const handleDropToStatus = async (
+    orderId: string,
+    nextStatus: StatusValue,
+  ) => {
     const order = boardRows.find((row) => row.id === orderId);
     if (!order || savingStatusOrderId || order.status === nextStatus) return;
 
     if (nextStatus === "CANCELED") {
-      const ok = window.confirm("Cancel this order? The order will stay in the list with Canceled status.");
+      const ok = window.confirm(
+        "Cancel this order? The order will stay in the list with Canceled status.",
+      );
       if (!ok) {
         setDraggingOrderId(null);
         setDropStatusValue(null);
@@ -1191,11 +1382,18 @@ export default function DesktopOrdersTable({
         : statusTouched
           ? statusValues
           : normalizeQuickStatuses(statusFilter, activeStatusOptions);
-    const keepVisible = orderMatchesAppliedStatusFilter(nextOrder, todayISO, statusMode, appliedStatuses);
+    const keepVisible = orderMatchesAppliedStatusFilter(
+      nextOrder,
+      todayISO,
+      statusMode,
+      appliedStatuses,
+    );
     const previousRows = boardRows;
 
     setSavingStatusOrderId(orderId);
-    setBoardRows((currentRows) => moveOrderToStatus(currentRows, orderId, nextStatus, keepVisible));
+    setBoardRows((currentRows) =>
+      moveOrderToStatus(currentRows, orderId, nextStatus, keepVisible),
+    );
     setDraggingOrderId(null);
     setDropStatusValue(null);
 
@@ -1207,15 +1405,62 @@ export default function DesktopOrdersTable({
       });
     } catch (error) {
       setBoardRows(previousRows);
-      window.alert(error instanceof Error ? error.message : "Failed to update status.");
+      window.alert(
+        error instanceof Error ? error.message : "Failed to update status.",
+      );
     } finally {
       setSavingStatusOrderId(null);
     }
   };
 
   const showCustomRange = rangeValue === "custom";
-  const customRangeReady = !showCustomRange || (Boolean(customStart) && Boolean(customEnd));
-  const shouldStretchKanban = visibleKanbanColumns.length > 0 && visibleKanbanColumns.length <= 4;
+  const customRangeReady =
+    !showCustomRange || (Boolean(customStart) && Boolean(customEnd));
+  const shouldStretchKanban =
+    visibleKanbanColumns.length > 0 && visibleKanbanColumns.length <= 4;
+
+  React.useEffect(() => {
+    if (viewMode !== "kanban") {
+      setKanbanCanScrollLeft(false);
+      setKanbanCanScrollRight(false);
+      return;
+    }
+
+    const node = kanbanScrollRef.current;
+    if (!node) return;
+
+    const updateScrollButtons = () => {
+      const maxScrollLeft = Math.max(0, node.scrollWidth - node.clientWidth);
+      setKanbanCanScrollLeft(node.scrollLeft > 8);
+      setKanbanCanScrollRight(node.scrollLeft < maxScrollLeft - 8);
+    };
+
+    const frameId = window.requestAnimationFrame(updateScrollButtons);
+
+    node.addEventListener("scroll", updateScrollButtons, { passive: true });
+    window.addEventListener("resize", updateScrollButtons);
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      node.removeEventListener("scroll", updateScrollButtons);
+      window.removeEventListener("resize", updateScrollButtons);
+    };
+  }, [viewMode, visibleKanbanColumns.length, shouldStretchKanban]);
+
+  const scrollKanban = (direction: "left" | "right") => {
+    const node = kanbanScrollRef.current;
+    if (!node) return;
+
+    const scrollAmount = Math.max(node.clientWidth * 0.72, 320);
+    node.scrollBy({
+      left: direction === "left" ? -scrollAmount : scrollAmount,
+      behavior: "smooth",
+    });
+  };
+  const draggingOrder = useMemo(
+    () => boardRows.find((row) => row.id === draggingOrderId) ?? null,
+    [boardRows, draggingOrderId],
+  );
 
   return (
     <section
@@ -1227,9 +1472,12 @@ export default function DesktopOrdersTable({
       <div className="border-b border-[#eef2f7] px-5 py-5">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <div className="text-[13px] font-semibold text-[#111827]">Orders</div>
+            <div className="text-[13px] font-semibold text-[#111827]">
+              Orders
+            </div>
             <div className="mt-1 text-[12px] font-medium text-[#98a2b3]">
-              {resultCount} {resultCount === 1 ? "result" : "results"} · Page {currentPage} of {totalPages}
+              {resultCount} {resultCount === 1 ? "result" : "results"} · Page{" "}
+              {currentPage} of {totalPages}
             </div>
           </div>
           <div className="inline-flex items-center rounded-2xl border border-[#dde3ee] bg-[#f8fafc] p-1">
@@ -1306,13 +1554,19 @@ export default function DesktopOrdersTable({
           </div>
 
           <div className="flex min-w-[300px] flex-1 flex-nowrap items-center gap-3 xl:flex-none">
-            <DropdownMenu modal={false} open={periodMenuOpen} onOpenChange={setPeriodMenuOpen}>
+            <DropdownMenu
+              modal={false}
+              open={periodMenuOpen}
+              onOpenChange={setPeriodMenuOpen}
+            >
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
                   className="inline-flex h-11 min-w-[150px] flex-1 items-center justify-between rounded-2xl border border-[#dde3ee] bg-white px-4 text-sm font-medium text-[#344054] outline-none transition hover:border-[#cfd8e6] focus:border-[#111827] focus:ring-2 focus:ring-[#111827]/10"
                 >
-                  <span className="truncate">{getPeriodTriggerLabel(rangeValue)}</span>
+                  <span className="truncate">
+                    {getPeriodTriggerLabel(rangeValue)}
+                  </span>
                   <ChevronDown className="ml-3 h-4 w-4 shrink-0 text-[#98a2b3]" />
                 </button>
               </DropdownMenuTrigger>
@@ -1346,14 +1600,22 @@ export default function DesktopOrdersTable({
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <DropdownMenu modal={false} open={statusMenuOpen} onOpenChange={setStatusMenuOpen}>
+            <DropdownMenu
+              modal={false}
+              open={statusMenuOpen}
+              onOpenChange={setStatusMenuOpen}
+            >
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
                   className="inline-flex h-11 min-w-[150px] flex-1 items-center justify-between rounded-2xl border border-[#dde3ee] bg-white px-4 text-sm font-medium text-[#344054] outline-none transition hover:border-[#cfd8e6] focus:border-[#111827] focus:ring-2 focus:ring-[#111827]/10"
                 >
                   <span className="truncate">
-                    {getStatusTriggerLabel(statusValues, activeStatusOptions, inactiveStatusOptions)}
+                    {getStatusTriggerLabel(
+                      statusValues,
+                      activeStatusOptions,
+                      inactiveStatusOptions,
+                    )}
                   </span>
                   <ChevronDown className="ml-3 h-4 w-4 shrink-0 text-[#98a2b3]" />
                 </button>
@@ -1386,12 +1648,18 @@ export default function DesktopOrdersTable({
                   Active
                 </div>
                 {activeStatusOptions.map((statusValue) => {
-                  const option = statusOptions.find((item) => item.value === statusValue);
+                  const option = statusOptions.find(
+                    (item) => item.value === statusValue,
+                  );
                   if (!option) return null;
                   const isChecked = statusValues.includes(option.value);
                   const tone =
                     option.value === "OVERDUE"
-                      ? { dot: "#DC2626", color: "#DC2626", selectedBackground: "#FEF2F2" }
+                      ? {
+                          dot: "#DC2626",
+                          color: "#DC2626",
+                          selectedBackground: "#FEF2F2",
+                        }
                       : getStatusTone(option.value, customStatuses);
 
                   return (
@@ -1401,7 +1669,14 @@ export default function DesktopOrdersTable({
                       className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#344054]"
                       onSelect={(event) => event.preventDefault()}
                       onCheckedChange={() => toggleStatus(option.value)}
-                      style={isChecked ? { background: tone.selectedBackground, color: tone.color } : undefined}
+                      style={
+                        isChecked
+                          ? {
+                              background: tone.selectedBackground,
+                              color: tone.color,
+                            }
+                          : undefined
+                      }
                     >
                       <span className="inline-flex items-center gap-2">
                         <span
@@ -1419,12 +1694,18 @@ export default function DesktopOrdersTable({
                   Inactive
                 </div>
                 {inactiveStatusOptions.map((statusValue) => {
-                  const option = statusOptions.find((item) => item.value === statusValue);
+                  const option = statusOptions.find(
+                    (item) => item.value === statusValue,
+                  );
                   if (!option) return null;
                   const isChecked = statusValues.includes(option.value);
                   const tone =
                     option.value === "OVERDUE"
-                      ? { dot: "#DC2626", color: "#DC2626", selectedBackground: "#FEF2F2" }
+                      ? {
+                          dot: "#DC2626",
+                          color: "#DC2626",
+                          selectedBackground: "#FEF2F2",
+                        }
                       : getStatusTone(option.value, customStatuses);
 
                   return (
@@ -1434,7 +1715,14 @@ export default function DesktopOrdersTable({
                       className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#344054]"
                       onSelect={(event) => event.preventDefault()}
                       onCheckedChange={() => toggleStatus(option.value)}
-                      style={isChecked ? { background: tone.selectedBackground, color: tone.color } : undefined}
+                      style={
+                        isChecked
+                          ? {
+                              background: tone.selectedBackground,
+                              color: tone.color,
+                            }
+                          : undefined
+                      }
                     >
                       <span className="inline-flex items-center gap-2">
                         <span
@@ -1450,14 +1738,22 @@ export default function DesktopOrdersTable({
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <DropdownMenu modal={false} open={managerMenuOpen} onOpenChange={setManagerMenuOpen}>
+            <DropdownMenu
+              modal={false}
+              open={managerMenuOpen}
+              onOpenChange={setManagerMenuOpen}
+            >
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
                   className="inline-flex h-11 min-w-[170px] flex-1 items-center justify-between rounded-2xl border border-[#dde3ee] bg-white px-4 text-sm font-medium text-[#344054] outline-none transition hover:border-[#cfd8e6] focus:border-[#111827] focus:ring-2 focus:ring-[#111827]/10"
                 >
                   <span className="truncate">
-                    {getManagerTriggerLabel(managerValue, currentUserId, managerOptions)}
+                    {getManagerTriggerLabel(
+                      managerValue,
+                      currentUserId,
+                      managerOptions,
+                    )}
                   </span>
                   <ChevronDown className="ml-3 h-4 w-4 shrink-0 text-[#98a2b3]" />
                 </button>
@@ -1521,7 +1817,6 @@ export default function DesktopOrdersTable({
                 </DropdownMenuRadioGroup>
               </DropdownMenuContent>
             </DropdownMenu>
-
           </div>
 
           {showCustomRange ? (
@@ -1585,515 +1880,796 @@ export default function DesktopOrdersTable({
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#eef2f7] px-5 py-3">
         <div className="text-xs font-medium text-[#667085]">
           Showing {boardRows.length === 0 ? 0 : (currentPage - 1) * perPage + 1}
-          -
-          {(currentPage - 1) * perPage + boardRows.length} of {resultCount}
+          -{(currentPage - 1) * perPage + boardRows.length} of {resultCount}
         </div>
 
-          <div className="flex items-center gap-2 text-xs font-medium text-[#667085]">
-            <span>Per page</span>
-            <DropdownMenu modal={false} open={perPageMenuOpen} onOpenChange={setPerPageMenuOpen}>
-              <DropdownMenuTrigger asChild>
-                <button
-                  type="button"
-                  className="inline-flex h-9 min-w-[74px] items-center justify-between rounded-xl border border-[#dde3ee] bg-white px-3 text-sm font-medium text-[#344054] outline-none transition hover:border-[#cfd8e6] focus:border-[#111827] focus:ring-2 focus:ring-[#111827]/10"
-                >
-                  <span>{perPage}</span>
-                  <ChevronDown className="ml-3 h-4 w-4 shrink-0 text-[#98a2b3]" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                align="end"
-                sideOffset={8}
-                className="z-[70] w-24 rounded-xl border-[#dde3ee] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
-                onCloseAutoFocus={(event) => event.preventDefault()}
+        <div className="flex items-center gap-2 text-xs font-medium text-[#667085]">
+          <span>Per page</span>
+          <DropdownMenu
+            modal={false}
+            open={perPageMenuOpen}
+            onOpenChange={setPerPageMenuOpen}
+          >
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="inline-flex h-9 min-w-[74px] items-center justify-between rounded-xl border border-[#dde3ee] bg-white px-3 text-sm font-medium text-[#344054] outline-none transition hover:border-[#cfd8e6] focus:border-[#111827] focus:ring-2 focus:ring-[#111827]/10"
               >
-                <DropdownMenuRadioGroup value={String(perPage)}>
-                  {PAGE_SIZE_OPTIONS.map((option) => (
-                    <DropdownMenuRadioItem
-                      key={option}
-                      value={String(option)}
-                      className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#344054] data-[state=checked]:bg-[#eef4ff] data-[state=checked]:font-semibold data-[state=checked]:text-[#2459d3]"
-                      onSelect={() => navigateWithFallback(paginationHref(1, option))}
-                    >
-                      {option}
-                    </DropdownMenuRadioItem>
-                  ))}
-                </DropdownMenuRadioGroup>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+                <span>{perPage}</span>
+                <ChevronDown className="ml-3 h-4 w-4 shrink-0 text-[#98a2b3]" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              sideOffset={8}
+              className="z-[70] w-24 rounded-xl border-[#dde3ee] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
+              onCloseAutoFocus={(event) => event.preventDefault()}
+            >
+              <DropdownMenuRadioGroup value={String(perPage)}>
+                {PAGE_SIZE_OPTIONS.map((option) => (
+                  <DropdownMenuRadioItem
+                    key={option}
+                    value={String(option)}
+                    className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#344054] data-[state=checked]:bg-[#eef4ff] data-[state=checked]:font-semibold data-[state=checked]:text-[#2459d3]"
+                    onSelect={() =>
+                      navigateWithFallback(paginationHref(1, option))
+                    }
+                  >
+                    {option}
+                  </DropdownMenuRadioItem>
+                ))}
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
+      </div>
 
       {viewMode === "list" ? (
         <div className="overflow-x-auto overflow-y-visible">
-        <table className="min-w-[1040px] w-full border-collapse">
-          <thead>
-            <tr className="border-b border-[#eef2f7] text-left">
-              <th className="px-5 py-2.5">
-                <ActiveTableSortHeader label="Order" column="order" sortValue={sortValue} onClick={handleSortChange} />
-              </th>
-              <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
-                Client
-              </th>
-              <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
-                Manager
-              </th>
-              <th className="px-5 py-2.5 text-right">
-                <ActiveTableSortHeader label="Amount" column="amount" sortValue={sortValue} onClick={handleSortChange} align="right" />
-              </th>
-              <th className="px-5 py-2.5">
-                <ActiveTableSortHeader label="Due" column="due" sortValue={sortValue} onClick={handleSortChange} />
-              </th>
-              <th className="px-5 py-2.5">
-                <ActiveTableSortHeader label="Status" column="status" sortValue={sortValue} onClick={handleSortChange} />
-              </th>
-              <th className="px-5 py-3 text-right text-[10px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
-                Actions
-              </th>
-            </tr>
-          </thead>
+          <table className="min-w-[1040px] w-full border-collapse">
+            <thead>
+              <tr className="border-b border-[#eef2f7] text-left">
+                <th className="px-5 py-2.5">
+                  <ActiveTableSortHeader
+                    label="Order"
+                    column="order"
+                    sortValue={sortValue}
+                    onClick={handleSortChange}
+                  />
+                </th>
+                <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
+                  Client
+                </th>
+                <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
+                  Manager
+                </th>
+                <th className="px-5 py-2.5 text-right">
+                  <ActiveTableSortHeader
+                    label="Amount"
+                    column="amount"
+                    sortValue={sortValue}
+                    onClick={handleSortChange}
+                    align="right"
+                  />
+                </th>
+                <th className="px-5 py-2.5">
+                  <ActiveTableSortHeader
+                    label="Due"
+                    column="due"
+                    sortValue={sortValue}
+                    onClick={handleSortChange}
+                  />
+                </th>
+                <th className="px-5 py-2.5">
+                  <ActiveTableSortHeader
+                    label="Status"
+                    column="status"
+                    sortValue={sortValue}
+                    onClick={handleSortChange}
+                  />
+                </th>
+                <th className="px-5 py-3 text-right text-[10px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
+                  Actions
+                </th>
+              </tr>
+            </thead>
 
-          <tbody>
-            {boardRows.map((order) => {
-              const isOverdue = isOrderOverdue(order, todayISO);
-              const canCancel = canEdit && order.status !== "CANCELED" && order.status !== "DONE";
-              const canDeletePermanently = userRole === "OWNER";
+            <tbody>
+              {boardRows.map((order) => {
+                const isOverdue = isOrderOverdue(order, todayISO);
+                const canCancel =
+                  canEdit &&
+                  order.status !== "CANCELED" &&
+                  order.status !== "DONE";
+                const canDeletePermanently = userRole === "OWNER";
 
-              return (
-                <React.Fragment key={order.id}>
-                  <tr
-                    className="cursor-pointer border-b border-[#f2f4f7] transition-colors hover:bg-[#f8fafc]"
-                    onClick={() => toggleOrderPreview(order.id)}
-                  >
-                    <td className="px-5 py-3 align-middle">
-                      <div className="text-sm font-semibold leading-5 text-[#111827]">
-                        #{order.order_number ?? "—"}
-                      </div>
-                      <div className="mt-0.5 text-xs font-medium leading-4 text-[#98a2b3]">
-                        {formatCreatedAt(order.created_at)}
-                      </div>
-                    </td>
-
-                    <td className="px-5 py-3 align-middle">
-                      <div className="text-sm font-semibold leading-5 text-[#111827]">
-                        {order.client_full_name?.trim() || order.client_name?.trim() || "Unknown"}
-                      </div>
-                      <div className="mt-0.5 text-xs leading-4 text-[#98a2b3]">
-                        {order.client_phone?.trim() || "No phone number"}
-                      </div>
-                    </td>
-
-                    <td className="px-5 py-3 align-middle">
-                      <ManagerAssignmentCell
-                        orderId={order.id}
-                        businessSlug={businessSlug}
-                        managerId={order.manager_id}
-                        managerName={order.manager_name}
-                        actors={effectiveActors}
-                        canManage={canManage}
-                        onAssigned={() => router.refresh()}
-                      />
-                    </td>
-
-                    <td className="px-5 py-3 text-right align-middle text-sm font-semibold tabular-nums text-[#111827]">
-                      {fmtAmount(Number(order.amount))}
-                    </td>
-
-                    <td className="px-5 py-3 align-middle">
-                      <div
-                        className={[
-                          "inline-flex items-center gap-2 text-sm font-medium",
-                          isOverdue ? "text-[#d92d20]" : "text-[#475467]",
-                        ].join(" ")}
-                      >
-                        <span>{formatDueDate(order.due_date)}</span>
-                        {isOverdue ? <AlertTriangle className="h-4 w-4" /> : null}
-                      </div>
-                    </td>
-
-                    <td className="px-5 py-3 align-middle">
-                      <div className="inline-flex" onClick={(event) => event.stopPropagation()}>
-                        <StatusCell
-                          orderId={order.id}
-                          businessId={businessId}
-                          businessSlug={businessSlug}
-                          value={order.status}
-                          canManage={canManage}
-                        />
-                      </div>
-                    </td>
-
-                    <td
-                      className="px-5 py-3 align-middle text-right"
-                      onClick={(event) => event.stopPropagation()}
+                return (
+                  <React.Fragment key={order.id}>
+                    <tr
+                      className="cursor-pointer border-b border-[#f2f4f7] transition-colors hover:bg-[#f8fafc]"
+                      onClick={() => toggleOrderPreview(order.id)}
                     >
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <button
-                            type="button"
-                            className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#dde3ee] bg-white text-[#667085] transition hover:border-[#cfd8e6] hover:bg-[#f8fafc] hover:text-[#111827]"
-                            aria-label="Open order actions"
-                          >
-                            <Ellipsis className="h-4 w-4" />
-                          </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent
-                          align="end"
-                          className="w-48 rounded-xl border-[#dde3ee] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
+                      <td className="px-5 py-3 align-middle">
+                        <div className="text-sm font-semibold leading-5 text-[#111827]">
+                          #{order.order_number ?? "—"}
+                        </div>
+                        <div className="mt-0.5 text-xs font-medium leading-4 text-[#98a2b3]">
+                          {formatCreatedAt(order.created_at)}
+                        </div>
+                      </td>
+
+                      <td className="px-5 py-3 align-middle">
+                        <div className="text-sm font-semibold leading-5 text-[#111827]">
+                          {order.client_full_name?.trim() ||
+                            order.client_name?.trim() ||
+                            "Unknown"}
+                        </div>
+                        <div className="mt-0.5 text-xs leading-4 text-[#98a2b3]">
+                          {order.client_phone?.trim() || "No phone number"}
+                        </div>
+                      </td>
+
+                      <td className="px-5 py-3 align-middle">
+                        <ManagerAssignmentCell
+                          orderId={order.id}
+                          businessSlug={businessSlug}
+                          managerId={order.manager_id}
+                          managerName={order.manager_name}
+                          actors={effectiveActors}
+                          canManage={canManage}
+                          onAssigned={() => router.refresh()}
+                        />
+                      </td>
+
+                      <td className="px-5 py-3 text-right align-middle text-sm font-semibold tabular-nums text-[#111827]">
+                        {fmtAmount(Number(order.amount))}
+                      </td>
+
+                      <td className="px-5 py-3 align-middle">
+                        <div
+                          className={[
+                            "inline-flex items-center gap-2 text-sm font-medium",
+                            isOverdue ? "text-[#d92d20]" : "text-[#475467]",
+                          ].join(" ")}
                         >
-                          <DropdownMenuItem
-                            className="rounded-lg px-3 py-2 text-sm font-medium"
-                            onSelect={(event) => {
-                              event.preventDefault();
-                              setOpenId(order.id);
-                            }}
+                          <span>{formatDueDate(order.due_date)}</span>
+                          {isOverdue ? (
+                            <AlertTriangle className="h-4 w-4" />
+                          ) : null}
+                        </div>
+                      </td>
+
+                      <td className="px-5 py-3 align-middle">
+                        <div
+                          className="inline-flex"
+                          onClick={(event) => event.stopPropagation()}
+                        >
+                          <StatusCell
+                            orderId={order.id}
+                            businessId={businessId}
+                            businessSlug={businessSlug}
+                            value={order.status}
+                            canManage={canManage}
+                          />
+                        </div>
+                      </td>
+
+                      <td
+                        className="px-5 py-3 align-middle text-right"
+                        onClick={(event) => event.stopPropagation()}
+                      >
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button
+                              type="button"
+                              className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#dde3ee] bg-white text-[#667085] transition hover:border-[#cfd8e6] hover:bg-[#f8fafc] hover:text-[#111827]"
+                              aria-label="Open order actions"
+                            >
+                              <Ellipsis className="h-4 w-4" />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent
+                            align="end"
+                            className="w-48 rounded-xl border-[#dde3ee] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
                           >
-                            <Eye className="h-4 w-4" />
-                            Open order
-                          </DropdownMenuItem>
-                          {canCancel ? (
                             <DropdownMenuItem
-                              className="rounded-lg px-3 py-2 text-sm font-medium text-red-700 focus:text-red-700"
+                              className="rounded-lg px-3 py-2 text-sm font-medium"
                               onSelect={(event) => {
                                 event.preventDefault();
-                                void handleCancelOrder(order.id, order.status);
+                                setOpenId(order.id);
                               }}
-                              disabled={deletingId === order.id}
                             >
-                              <Trash2 className="h-4 w-4" />
-                              {deletingId === order.id ? "Canceling..." : "Cancel order"}
+                              <Eye className="h-4 w-4" />
+                              Open order
                             </DropdownMenuItem>
-                          ) : null}
-                          {canDeletePermanently ? (
-                            <>
-                              {canCancel ? <DropdownMenuSeparator /> : null}
+                            {canCancel ? (
                               <DropdownMenuItem
                                 className="rounded-lg px-3 py-2 text-sm font-medium text-red-700 focus:text-red-700"
                                 onSelect={(event) => {
                                   event.preventDefault();
-                                  setConfirmDeleteId(order.id);
+                                  void handleCancelOrder(
+                                    order.id,
+                                    order.status,
+                                  );
                                 }}
                                 disabled={deletingId === order.id}
                               >
                                 <Trash2 className="h-4 w-4" />
-                                {deletingId === order.id ? "Deleting..." : "Delete permanently"}
+                                {deletingId === order.id
+                                  ? "Canceling..."
+                                  : "Cancel order"}
                               </DropdownMenuItem>
-                            </>
-                          ) : null}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </td>
-                  </tr>
-                </React.Fragment>
-              );
-            })}
-
-            {boardRows.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="px-6 py-12 text-center text-sm text-[#98a2b3]">
-                  {isPending ? "Updating orders..." : "No orders found"}
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
-        </div>
-      ) : (
-        <div className="px-5 py-5">
-          {visibleKanbanColumns.length > 0 ? (
-            <div className="overflow-x-auto overflow-y-hidden pb-2">
-            <div
-              className="grid min-h-[calc(100vh-320px)] gap-4"
-              style={
-                shouldStretchKanban
-                  ? { gridTemplateColumns: `repeat(${visibleKanbanColumns.length}, minmax(0, 1fr))` }
-                  : {
-                      minWidth: `${visibleKanbanColumns.length * 280}px`,
-                      gridTemplateColumns: `repeat(${visibleKanbanColumns.length}, minmax(280px, 1fr))`,
-                    }
-              }
-            >
-              {visibleKanbanColumns.map((column) => {
-                const tone = getStatusTone(column.value, customStatuses);
-                const hiddenTerminalCount =
-                  column.value === "DONE"
-                    ? hiddenKanbanCounts.done
-                    : column.value === "CANCELED"
-                      ? hiddenKanbanCounts.canceled
-                      : column.value === "DUPLICATE"
-                        ? hiddenKanbanCounts.duplicate
-                        : 0;
-                const hiddenByFilter =
-                  (column.value === "DONE" && !doneVisibleInFilter && hiddenKanbanCounts.done > 0) ||
-                  (column.value === "CANCELED" && !canceledVisibleInFilter && hiddenKanbanCounts.canceled > 0) ||
-                  (column.value === "DUPLICATE" && !duplicateVisibleInFilter && hiddenKanbanCounts.duplicate > 0);
-                const showInlineCreate = column.value === "NEW";
-                const revealLabel =
-                  column.value === "DONE"
-                    ? "Show done"
-                    : column.value === "CANCELED"
-                      ? "Show canceled"
-                      : column.value === "DUPLICATE"
-                        ? "Show duplicates"
-                        : `Show ${column.label.toLowerCase()}`;
-                const hiddenTitle =
-                  column.value === "DONE"
-                    ? "Done is hidden by filters"
-                    : `${column.label} is hidden by filters`;
-
-                return (
-                  <div
-                    key={column.value}
-                    className={[
-                      "flex h-[calc(100vh-320px)] min-h-[560px] flex-col rounded-[26px] border p-3 transition",
-                      dropStatusValue === column.value
-                        ? "border-[#111827] bg-[#f8fbff] shadow-[0_18px_40px_rgba(15,23,42,0.08)]"
-                        : "border-[#e2e8f0] bg-[#fbfcfe]",
-                    ].join(" ")}
-                    onDragOver={(event) => {
-                      if (!canManage) return;
-                      event.preventDefault();
-                      setDropStatusValue(column.value);
-                    }}
-                    onDragLeave={(event) => {
-                      if (event.currentTarget.contains(event.relatedTarget as Node | null)) return;
-                      setDropStatusValue((current) => (current === column.value ? null : current));
-                    }}
-                    onDrop={(event) => {
-                      event.preventDefault();
-                      const orderId = event.dataTransfer.getData("text/order-id") || draggingOrderId;
-                      if (!orderId) return;
-                      void handleDropToStatus(orderId, column.value);
-                    }}
-                  >
-                    <div className="flex items-center justify-between gap-3 rounded-[20px] px-2 pb-3">
-                      <div className="flex min-w-0 items-center gap-3">
-                        <span className="h-3 w-3 shrink-0 rounded-full" style={{ background: tone.dot }} />
-                        <div className="min-w-0">
-                          <div className="truncate text-sm font-semibold text-[#111827]">{column.label}</div>
-                          <div className="text-xs font-medium text-[#98a2b3]">
-                            {column.orders.length} {column.orders.length === 1 ? "order" : "orders"}
-                          </div>
-                        </div>
-                      </div>
-                      <div
-                        className="inline-flex h-8 min-w-8 items-center justify-center rounded-full px-2 text-xs font-semibold"
-                        style={{ background: tone.background, color: tone.color }}
-                      >
-                        {column.orders.length}
-                      </div>
-                    </div>
-
-                    <div className="flex min-h-0 flex-1 flex-col gap-3 rounded-[20px] bg-white/50 p-1">
-                      {showInlineCreate ? (
-                        <DesktopKanbanCreateOrder
-                          onCreate={() => {
-                            setOpenId(null);
-                            setCreatePreviewOpen(true);
-                          }}
-                        />
-                      ) : null}
-
-                      {hiddenByFilter ? (
-                        <div className="flex min-h-[160px] flex-col items-center justify-center rounded-[20px] border border-dashed border-[#dbe2ea] bg-white/70 px-4 text-center">
-                          <div className="text-sm font-semibold text-[#344054]">
-                            {hiddenTitle}
-                          </div>
-                          <div className="mt-1 text-sm text-[#98a2b3]">
-                            {hiddenTerminalCount} {hiddenTerminalCount === 1 ? "order" : "orders"} in this status
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => revealStatusInBoard(column.value)}
-                            className="mt-3 inline-flex h-9 items-center justify-center rounded-xl border border-[#dde3ee] bg-white px-3 text-sm font-semibold text-[#344054] transition hover:border-[#cfd8e6] hover:bg-[#f8fafc]"
-                          >
-                            {revealLabel}
-                          </button>
-                        </div>
-                      ) : null}
-
-                      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
-                      {column.orders.map((order) => {
-                        const isOverdue = isOrderOverdue(order, todayISO);
-                        const canCancel = canEdit && order.status !== "CANCELED" && order.status !== "DONE";
-                        const canDeletePermanently = userRole === "OWNER";
-                        const isDragging = draggingOrderId === order.id;
-                        const isSavingCard = savingStatusOrderId === order.id;
-
-                        return (
-                          <div
-                            key={order.id}
-                            draggable={canManage && !isSavingCard}
-                            onDragStart={(event) => {
-                              if (!canManage) return;
-                              event.dataTransfer.effectAllowed = "move";
-                              event.dataTransfer.setData("text/order-id", order.id);
-                              setDraggingOrderId(order.id);
-                              setDropStatusValue(column.value);
-                            }}
-                            onDragEnd={() => {
-                              setDraggingOrderId(null);
-                              setDropStatusValue(null);
-                            }}
-                            className={[
-                              "group rounded-[22px] border border-[#e2e8f0] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition",
-                              isDragging ? "scale-[0.985] opacity-60" : "hover:-translate-y-0.5 hover:shadow-[0_20px_40px_rgba(15,23,42,0.08)]",
-                              canManage && !isSavingCard ? "cursor-grab active:cursor-grabbing" : "",
-                            ].join(" ")}
-                          >
-                            <div className="flex items-start justify-between gap-3">
-                              <button
-                                type="button"
-                                onClick={() => toggleOrderPreview(order.id)}
-                                className="min-w-0 text-left"
-                              >
-                                <div className="text-sm font-semibold text-[#111827]">
-                                  #{order.order_number ?? "—"}
-                                </div>
-                                <div className="mt-1 text-xs font-medium text-[#98a2b3]">
-                                  {formatCreatedAt(order.created_at)}
-                                </div>
-                              </button>
-
-                              <div onClick={(event) => event.stopPropagation()}>
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <button
-                                      type="button"
-                                      className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#dde3ee] bg-white text-[#667085] transition hover:border-[#cfd8e6] hover:bg-[#f8fafc] hover:text-[#111827]"
-                                      aria-label="Open order actions"
-                                    >
-                                      <Ellipsis className="h-4 w-4" />
-                                    </button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent
-                                    align="end"
-                                    className="w-48 rounded-xl border-[#dde3ee] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
-                                  >
-                                    <DropdownMenuItem
-                                      className="rounded-lg px-3 py-2 text-sm font-medium"
-                                      onSelect={(event) => {
-                                        event.preventDefault();
-                                        setOpenId(order.id);
-                                      }}
-                                    >
-                                      <Eye className="h-4 w-4" />
-                                      Open order
-                                    </DropdownMenuItem>
-                                    {canCancel ? (
-                                      <DropdownMenuItem
-                                        className="rounded-lg px-3 py-2 text-sm font-medium text-red-700 focus:text-red-700"
-                                        onSelect={(event) => {
-                                          event.preventDefault();
-                                          void handleCancelOrder(order.id, order.status);
-                                        }}
-                                        disabled={deletingId === order.id}
-                                      >
-                                        <Trash2 className="h-4 w-4" />
-                                        {deletingId === order.id ? "Canceling..." : "Cancel order"}
-                                      </DropdownMenuItem>
-                                    ) : null}
-                                    {canDeletePermanently ? (
-                                      <>
-                                        {canCancel ? <DropdownMenuSeparator /> : null}
-                                        <DropdownMenuItem
-                                          className="rounded-lg px-3 py-2 text-sm font-medium text-red-700 focus:text-red-700"
-                                          onSelect={(event) => {
-                                            event.preventDefault();
-                                            setConfirmDeleteId(order.id);
-                                          }}
-                                          disabled={deletingId === order.id}
-                                        >
-                                          <Trash2 className="h-4 w-4" />
-                                          {deletingId === order.id ? "Deleting..." : "Delete permanently"}
-                                        </DropdownMenuItem>
-                                      </>
-                                    ) : null}
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              </div>
-                            </div>
-
-                            <button
-                              type="button"
-                              onClick={() => toggleOrderPreview(order.id)}
-                              className="mt-4 block w-full text-left"
-                            >
-                              <div className="text-sm font-semibold text-[#111827]">
-                                {order.client_full_name?.trim() || order.client_name?.trim() || "Unknown"}
-                              </div>
-                              <div className="mt-1 truncate text-xs text-[#98a2b3]">
-                                {order.client_phone?.trim() || "No phone number"}
-                              </div>
-                            </button>
-
-                            <div className="mt-4 grid gap-3 rounded-[18px] bg-[#f8fafc] p-3">
-                              <div className="flex items-center justify-between gap-3">
-                                <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
-                                  Amount
-                                </span>
-                                <span className="text-sm font-semibold tabular-nums text-[#111827]">
-                                  {fmtAmount(Number(order.amount))}
-                                </span>
-                              </div>
-                              <div className="flex items-center justify-between gap-3">
-                                <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
-                                  Due
-                                </span>
-                                <span className={["inline-flex items-center gap-2 text-sm font-medium", isOverdue ? "text-[#d92d20]" : "text-[#475467]"].join(" ")}>
-                                  <span>{formatDueDate(order.due_date)}</span>
-                                  {isOverdue ? <AlertTriangle className="h-4 w-4" /> : null}
-                                </span>
-                              </div>
-                              <div className="flex items-start justify-between gap-3">
-                                <span className="pt-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
-                                  Manager
-                                </span>
-                                <div onClick={(event) => event.stopPropagation()}>
-                                  <ManagerAssignmentCell
-                                    orderId={order.id}
-                                    businessSlug={businessSlug}
-                                    managerId={order.manager_id}
-                                    managerName={order.manager_name}
-                                    actors={effectiveActors}
-                                    canManage={canManage}
-                                    avatarOnly
-                                    onAssigned={() => router.refresh()}
-                                  />
-                                </div>
-                              </div>
-                            </div>
-
-                            <div className="mt-4 flex items-center justify-between gap-3">
-                              <div onClick={(event) => event.stopPropagation()}>
-                                <StatusCell
-                                  orderId={order.id}
-                                  businessId={businessId}
-                                  businessSlug={businessSlug}
-                                  value={order.status}
-                                  canManage={canManage}
-                                />
-                              </div>
-                              <div className="text-[11px] font-medium text-[#98a2b3]">
-                                {isSavingCard ? "Saving..." : canManage ? "Drag to move" : "Read only"}
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-
-                      {column.orders.length === 0 && !hiddenByFilter ? (
-                        <div className="flex min-h-[160px] items-center justify-center rounded-[20px] border border-dashed border-[#dbe2ea] bg-white/70 px-4 text-center text-sm text-[#98a2b3]">
-                          {dropStatusValue === column.value ? "Drop order here" : "No orders in this status"}
-                        </div>
-                      ) : null}
-                      </div>
-                    </div>
-                  </div>
+                            ) : null}
+                            {canDeletePermanently ? (
+                              <>
+                                {canCancel ? <DropdownMenuSeparator /> : null}
+                                <DropdownMenuItem
+                                  className="rounded-lg px-3 py-2 text-sm font-medium text-red-700 focus:text-red-700"
+                                  onSelect={(event) => {
+                                    event.preventDefault();
+                                    setConfirmDeleteId(order.id);
+                                  }}
+                                  disabled={deletingId === order.id}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                  {deletingId === order.id
+                                    ? "Deleting..."
+                                    : "Delete permanently"}
+                                </DropdownMenuItem>
+                              </>
+                            ) : null}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </td>
+                    </tr>
+                  </React.Fragment>
                 );
               })}
-            </div>
-            </div>
+
+              {boardRows.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={7}
+                    className="px-6 py-12 text-center text-sm text-[#98a2b3]"
+                  >
+                    {isPending ? "Updating orders..." : "No orders found"}
+                  </td>
+                </tr>
+              ) : null}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="relative px-5 py-5">
+          {visibleKanbanColumns.length > 0 ? (
+            <>
+              {kanbanCanScrollLeft ? (
+                <button
+                  type="button"
+                  onClick={() => scrollKanban("left")}
+                  aria-label="Scroll kanban left"
+                  className="absolute top-1/2 left-2 z-10 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-[#d8e1ee] bg-white/96 text-[#344054] shadow-[0_12px_28px_rgba(15,23,42,0.14)] backdrop-blur transition hover:border-[#c2cfdf] hover:bg-white hover:text-[#111827]"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </button>
+              ) : null}
+
+              {kanbanCanScrollRight ? (
+                <button
+                  type="button"
+                  onClick={() => scrollKanban("right")}
+                  aria-label="Scroll kanban right"
+                  className="absolute top-1/2 right-2 z-10 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-[#d8e1ee] bg-white/96 text-[#344054] shadow-[0_12px_28px_rgba(15,23,42,0.14)] backdrop-blur transition hover:border-[#c2cfdf] hover:bg-white hover:text-[#111827]"
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </button>
+              ) : null}
+
+              <div
+                ref={kanbanScrollRef}
+                className="overflow-x-auto overflow-y-hidden pb-2"
+              >
+                <div
+                  className="grid min-h-[calc(100vh-320px)] gap-4"
+                  style={
+                    shouldStretchKanban
+                      ? {
+                          gridTemplateColumns: `repeat(${visibleKanbanColumns.length}, minmax(0, 1fr))`,
+                        }
+                      : {
+                          minWidth: `${visibleKanbanColumns.length * 280}px`,
+                          gridTemplateColumns: `repeat(${visibleKanbanColumns.length}, minmax(280px, 1fr))`,
+                        }
+                  }
+                >
+                  {visibleKanbanColumns.map((column) => {
+                  const tone = getStatusTone(column.value, customStatuses);
+
+                  // Only built-in terminal statuses can be hidden
+                  const isBuiltInTerminal =
+                    column.builtIn &&
+                    (column.value === "DONE" ||
+                      column.value === "CANCELED" ||
+                      column.value === "DUPLICATE");
+
+                  const hiddenTerminalCount = isBuiltInTerminal
+                    ? column.value === "DONE"
+                      ? hiddenKanbanCounts.done
+                      : column.value === "CANCELED"
+                        ? hiddenKanbanCounts.canceled
+                        : column.value === "DUPLICATE"
+                          ? hiddenKanbanCounts.duplicate
+                          : 0
+                    : 0;
+
+                  const hiddenByFilter = isBuiltInTerminal
+                    ? (column.value === "DONE" &&
+                        !doneVisibleInFilter &&
+                        hiddenKanbanCounts.done > 0) ||
+                      (column.value === "CANCELED" &&
+                        !canceledVisibleInFilter &&
+                        hiddenKanbanCounts.canceled > 0) ||
+                      (column.value === "DUPLICATE" &&
+                        !duplicateVisibleInFilter &&
+                        hiddenKanbanCounts.duplicate > 0)
+                    : false;
+
+                  const showInlineCreate = column.value === "NEW";
+                  const revealLabel = isBuiltInTerminal
+                    ? column.value === "DONE"
+                      ? "Show done"
+                      : column.value === "CANCELED"
+                        ? "Show canceled"
+                        : column.value === "DUPLICATE"
+                          ? "Show duplicates"
+                          : `Show ${column.label.toLowerCase()}`
+                    : `Show ${column.label.toLowerCase()}`;
+                  const hiddenTitle = isBuiltInTerminal
+                    ? column.value === "DONE"
+                      ? "Done is hidden by filters"
+                      : `${column.label} is hidden by filters`
+                    : `${column.label} is hidden by filters`;
+
+                  return (
+                    <div
+                      key={column.value}
+                      className={[
+                        "flex h-[calc(100vh-320px)] min-h-[560px] flex-col rounded-[26px] border p-3 transition",
+                        dropStatusValue === column.value
+                          ? "border-[#111827] bg-[#f8fbff] shadow-[0_18px_40px_rgba(15,23,42,0.08)]"
+                          : "border-[#e2e8f0] bg-[#fbfcfe]",
+                      ].join(" ")}
+                      onDragOver={(event) => {
+                        if (!canManage) return;
+                        event.preventDefault();
+                        setDropStatusValue(column.value);
+                      }}
+                      onDragLeave={(event) => {
+                        if (
+                          event.currentTarget.contains(
+                            event.relatedTarget as Node | null,
+                          )
+                        )
+                          return;
+                        setDropStatusValue((current) =>
+                          current === column.value ? null : current,
+                        );
+                      }}
+                      onDrop={(event) => {
+                        event.preventDefault();
+                        const orderId =
+                          event.dataTransfer.getData("text/order-id") ||
+                          draggingOrderId;
+                        if (!orderId) return;
+                        void handleDropToStatus(orderId, column.value);
+                      }}
+                    >
+                      <div className="flex items-center justify-between gap-3 rounded-[20px] px-2 pb-3">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <span
+                            className="h-3 w-3 shrink-0 rounded-full"
+                            style={{ background: tone.dot }}
+                          />
+                          <div className="min-w-0">
+                            <div className="truncate text-sm font-semibold text-[#111827]">
+                              {column.label}
+                            </div>
+                            <div className="text-xs font-medium text-[#98a2b3]">
+                              {column.orders.length}{" "}
+                              {column.orders.length === 1 ? "order" : "orders"}
+                            </div>
+                          </div>
+                        </div>
+                        <div
+                          className="inline-flex h-8 min-w-8 items-center justify-center rounded-full px-2 text-xs font-semibold"
+                          style={{
+                            background: tone.background,
+                            color: tone.color,
+                          }}
+                        >
+                          {column.orders.length}
+                        </div>
+                      </div>
+
+                      <div className="flex min-h-0 flex-1 flex-col gap-3 rounded-[20px] bg-white/50 p-1">
+                        {showInlineCreate ? (
+                          <DesktopKanbanCreateOrder
+                            onCreate={() => {
+                              setOpenId(null);
+                              setCreatePreviewOpen(true);
+                            }}
+                          />
+                        ) : null}
+
+                        {hiddenByFilter ? (
+                          <div className="flex min-h-[160px] flex-col items-center justify-center rounded-[20px] border border-dashed border-[#dbe2ea] bg-white/70 px-4 text-center">
+                            <div className="text-sm font-semibold text-[#344054]">
+                              {hiddenTitle}
+                            </div>
+                            <div className="mt-1 text-sm text-[#98a2b3]">
+                              {hiddenTerminalCount}{" "}
+                              {hiddenTerminalCount === 1 ? "order" : "orders"}{" "}
+                              in this status
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => revealStatusInBoard(column.value)}
+                              className="mt-3 inline-flex h-9 items-center justify-center rounded-xl border border-[#dde3ee] bg-white px-3 text-sm font-semibold text-[#344054] transition hover:border-[#cfd8e6] hover:bg-[#f8fafc]"
+                            >
+                              {revealLabel}
+                            </button>
+                          </div>
+                        ) : null}
+
+                        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
+                          {column.orders.map((order) => {
+                            const isOverdue = isOrderOverdue(order, todayISO);
+                            const canCancel =
+                              canEdit &&
+                              order.status !== "CANCELED" &&
+                              order.status !== "DONE";
+                            const canDeletePermanently = userRole === "OWNER";
+                            const isDragging = draggingOrderId === order.id;
+                            const isSavingCard =
+                              savingStatusOrderId === order.id;
+
+                            return (
+                              <div
+                                key={order.id}
+                                draggable={canManage && !isSavingCard}
+                                onDragStart={(event) => {
+                                  if (!canManage) return;
+                                  event.dataTransfer.effectAllowed = "move";
+                                  event.dataTransfer.setData(
+                                    "text/order-id",
+                                    order.id,
+                                  );
+                                  setDraggingOrderId(order.id);
+                                  setDropStatusValue(column.value);
+                                }}
+                                onDragEnd={() => {
+                                  setDraggingOrderId(null);
+                                  setDropStatusValue(null);
+                                }}
+                                className={[
+                                  "group rounded-[22px] border border-[#e2e8f0] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition",
+                                  isDragging
+                                    ? "scale-[0.985] opacity-60"
+                                    : "hover:-translate-y-0.5 hover:shadow-[0_20px_40px_rgba(15,23,42,0.08)]",
+                                  canManage && !isSavingCard
+                                    ? "cursor-grab active:cursor-grabbing"
+                                    : "",
+                                ].join(" ")}
+                                style={{
+                                  cursor:
+                                    canManage && !isSavingCard
+                                      ? isDragging
+                                        ? "grabbing"
+                                        : "grab"
+                                      : undefined,
+                                }}
+                              >
+                                <div className="flex items-start justify-between gap-3">
+                                  <button
+                                    type="button"
+                                    onClick={() => toggleOrderPreview(order.id)}
+                                    className="min-w-0 text-left"
+                                    style={{
+                                      cursor:
+                                        canManage && !isSavingCard
+                                          ? isDragging
+                                            ? "grabbing"
+                                            : "grab"
+                                          : undefined,
+                                    }}
+                                  >
+                                    <div className="text-sm font-semibold text-[#111827]">
+                                      #{order.order_number ?? "—"}
+                                    </div>
+                                    <div className="mt-1 text-xs font-medium text-[#98a2b3]">
+                                      {formatCreatedAt(order.created_at)}
+                                    </div>
+                                  </button>
+
+                                  <div
+                                    onClick={(event) => event.stopPropagation()}
+                                  >
+                                    <DropdownMenu>
+                                      <DropdownMenuTrigger asChild>
+                                        <button
+                                          type="button"
+                                          className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#dde3ee] bg-white text-[#667085] transition hover:border-[#cfd8e6] hover:bg-[#f8fafc] hover:text-[#111827]"
+                                          aria-label="Open order actions"
+                                          style={{
+                                            cursor:
+                                              canManage && !isSavingCard
+                                                ? isDragging
+                                                  ? "grabbing"
+                                                  : "grab"
+                                                : undefined,
+                                          }}
+                                        >
+                                          <Ellipsis className="h-4 w-4" />
+                                        </button>
+                                      </DropdownMenuTrigger>
+                                      <DropdownMenuContent
+                                        align="end"
+                                        className="w-48 rounded-xl border-[#dde3ee] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
+                                      >
+                                        <DropdownMenuItem
+                                          className="rounded-lg px-3 py-2 text-sm font-medium"
+                                          onSelect={(event) => {
+                                            event.preventDefault();
+                                            setOpenId(order.id);
+                                          }}
+                                        >
+                                          <Eye className="h-4 w-4" />
+                                          Open order
+                                        </DropdownMenuItem>
+                                        {canCancel ? (
+                                          <DropdownMenuItem
+                                            className="rounded-lg px-3 py-2 text-sm font-medium text-red-700 focus:text-red-700"
+                                            onSelect={(event) => {
+                                              event.preventDefault();
+                                              void handleCancelOrder(
+                                                order.id,
+                                                order.status,
+                                              );
+                                            }}
+                                            disabled={deletingId === order.id}
+                                          >
+                                            <Trash2 className="h-4 w-4" />
+                                            {deletingId === order.id
+                                              ? "Canceling..."
+                                              : "Cancel order"}
+                                          </DropdownMenuItem>
+                                        ) : null}
+                                        {canDeletePermanently ? (
+                                          <>
+                                            {canCancel ? (
+                                              <DropdownMenuSeparator />
+                                            ) : null}
+                                            <DropdownMenuItem
+                                              className="rounded-lg px-3 py-2 text-sm font-medium text-red-700 focus:text-red-700"
+                                              onSelect={(event) => {
+                                                event.preventDefault();
+                                                setConfirmDeleteId(order.id);
+                                              }}
+                                              disabled={deletingId === order.id}
+                                            >
+                                              <Trash2 className="h-4 w-4" />
+                                              {deletingId === order.id
+                                                ? "Deleting..."
+                                                : "Delete permanently"}
+                                            </DropdownMenuItem>
+                                          </>
+                                        ) : null}
+                                      </DropdownMenuContent>
+                                    </DropdownMenu>
+                                  </div>
+                                </div>
+
+                                <button
+                                  type="button"
+                                  onClick={() => toggleOrderPreview(order.id)}
+                                  className="mt-4 block w-full text-left"
+                                  style={{
+                                    cursor:
+                                      canManage && !isSavingCard
+                                        ? isDragging
+                                          ? "grabbing"
+                                          : "grab"
+                                        : undefined,
+                                  }}
+                                >
+                                  <div className="text-sm font-semibold text-[#111827]">
+                                    {order.client_full_name?.trim() ||
+                                      order.client_name?.trim() ||
+                                      "Unknown"}
+                                  </div>
+                                  <div className="mt-1 truncate text-xs text-[#98a2b3]">
+                                    {order.client_phone?.trim() ||
+                                      "No phone number"}
+                                  </div>
+                                </button>
+
+                                <div className="mt-4 grid gap-3 rounded-[18px] bg-[#f8fafc] p-3">
+                                  <div className="flex items-center justify-between gap-3">
+                                    <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
+                                      Amount
+                                    </span>
+                                    <span className="text-sm font-semibold tabular-nums text-[#111827]">
+                                      {fmtAmount(Number(order.amount))}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center justify-between gap-3">
+                                    <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
+                                      Due
+                                    </span>
+                                    <span
+                                      className={[
+                                        "inline-flex items-center gap-2 text-sm font-medium",
+                                        isOverdue
+                                          ? "text-[#d92d20]"
+                                          : "text-[#475467]",
+                                      ].join(" ")}
+                                    >
+                                      <span>
+                                        {formatDueDate(order.due_date)}
+                                      </span>
+                                      {isOverdue ? (
+                                        <AlertTriangle className="h-4 w-4" />
+                                      ) : null}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-start justify-between gap-3">
+                                    <span className="pt-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
+                                      Manager
+                                    </span>
+                                    <div
+                                      onClick={(event) =>
+                                        event.stopPropagation()
+                                      }
+                                      style={{
+                                        cursor:
+                                          canManage && !isSavingCard
+                                            ? isDragging
+                                              ? "grabbing"
+                                              : "grab"
+                                            : undefined,
+                                      }}
+                                    >
+                                      <ManagerAssignmentCell
+                                        orderId={order.id}
+                                        businessSlug={businessSlug}
+                                        managerId={order.manager_id}
+                                        managerName={order.manager_name}
+                                        actors={effectiveActors}
+                                        canManage={canManage}
+                                        avatarOnly
+                                        onAssigned={() => router.refresh()}
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className="mt-4 flex items-center justify-between gap-3">
+                                  <div
+                                    onClick={(event) => event.stopPropagation()}
+                                    style={{
+                                      cursor:
+                                        canManage && !isSavingCard
+                                          ? isDragging
+                                            ? "grabbing"
+                                            : "grab"
+                                          : undefined,
+                                    }}
+                                  >
+                                    <StatusCell
+                                      orderId={order.id}
+                                      businessId={businessId}
+                                      businessSlug={businessSlug}
+                                      value={order.status}
+                                      canManage={canManage}
+                                    />
+                                  </div>
+                                  <div className="text-[11px] font-medium text-[#98a2b3]">
+                                    {isSavingCard
+                                      ? "Saving..."
+                                      : canManage
+                                        ? "Drag to move"
+                                        : "Read only"}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+
+                          {column.orders.length === 0 && !hiddenByFilter ? (
+                            <div className="flex min-h-[160px] items-center justify-center rounded-[20px] border border-dashed border-[#dbe2ea] bg-white/70 px-4 text-center text-sm text-[#98a2b3]">
+                              {dropStatusValue === column.value
+                                ? "Drop order here"
+                                : "No orders in this status"}
+                            </div>
+                          ) : null}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                  })}
+                </div>
+              </div>
+
+              {canManage && draggingOrder ? (
+                <div className="pointer-events-none absolute top-6 right-6 z-20 flex w-[220px] flex-col gap-2 rounded-[24px] border border-[#d8e1ee] bg-white/96 p-3 shadow-[0_20px_48px_rgba(15,23,42,0.16)] backdrop-blur">
+                  <div className="px-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
+                    Move order
+                  </div>
+                  <div className="px-1 text-sm font-semibold text-[#111827]">
+                    #{draggingOrder.order_number ?? "—"}
+                  </div>
+                  <div className="space-y-2">
+                    {visibleKanbanColumns.map((statusColumn) => {
+                      const tone = getStatusTone(statusColumn.value, customStatuses);
+                      const isCurrentStatus =
+                        draggingOrder.status === statusColumn.value;
+                      const isActiveTarget =
+                        dropStatusValue === statusColumn.value;
+
+                      return (
+                        <div
+                          key={`drag-target-${statusColumn.value}`}
+                          onDragOver={(event) => {
+                            event.preventDefault();
+                            setDropStatusValue(statusColumn.value);
+                          }}
+                          onDragLeave={(event) => {
+                            if (
+                              event.currentTarget.contains(
+                                event.relatedTarget as Node | null,
+                              )
+                            )
+                              return;
+                            setDropStatusValue((current) =>
+                              current === statusColumn.value ? null : current,
+                            );
+                          }}
+                          onDrop={(event) => {
+                            event.preventDefault();
+                            const orderId =
+                              event.dataTransfer.getData("text/order-id") ||
+                              draggingOrderId;
+                            if (!orderId) return;
+                            void handleDropToStatus(orderId, statusColumn.value);
+                          }}
+                          className={[
+                            "pointer-events-auto flex min-h-11 items-center justify-between rounded-[16px] border px-3 py-2 transition",
+                            isCurrentStatus
+                              ? "border-transparent bg-[#f4f7fb] text-[#98a2b3]"
+                              : isActiveTarget
+                                ? "border-[#111827] bg-[#f8fbff] text-[#111827]"
+                                : "border-[#e4eaf2] bg-white text-[#344054]",
+                          ].join(" ")}
+                        >
+                          <div className="flex min-w-0 items-center gap-2">
+                            <span
+                              className="h-2.5 w-2.5 shrink-0 rounded-full"
+                              style={{ background: tone.dot }}
+                            />
+                            <span className="truncate text-sm font-medium">
+                              {statusColumn.label}
+                            </span>
+                          </div>
+                          <span className="text-[11px] font-semibold uppercase tracking-[0.08em]">
+                            {isCurrentStatus ? "Current" : "Drop"}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : null}
+            </>
           ) : (
             <div className="rounded-[24px] border border-[#dde3ee] bg-white px-6 py-12 text-center text-sm text-[#98a2b3]">
               No workflow statuses available
@@ -2110,7 +2686,9 @@ export default function DesktopOrdersTable({
                 <PaginationPrevious
                   href={paginationHref(Math.max(1, currentPage - 1))}
                   aria-disabled={currentPage === 1}
-                  className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                  className={
+                    currentPage === 1 ? "pointer-events-none opacity-50" : ""
+                  }
                 />
               </PaginationItem>
               {pageItems.map((page, index) => {
@@ -2125,7 +2703,10 @@ export default function DesktopOrdersTable({
                       </PaginationItem>
                     ) : null}
                     <PaginationItem>
-                      <PaginationLink href={paginationHref(page)} isActive={page === currentPage}>
+                      <PaginationLink
+                        href={paginationHref(page)}
+                        isActive={page === currentPage}
+                      >
                         {page}
                       </PaginationLink>
                     </PaginationItem>
@@ -2136,7 +2717,11 @@ export default function DesktopOrdersTable({
                 <PaginationNext
                   href={paginationHref(Math.min(totalPages, currentPage + 1))}
                   aria-disabled={currentPage === totalPages}
-                  className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                  className={
+                    currentPage === totalPages
+                      ? "pointer-events-none opacity-50"
+                      : ""
+                  }
                 />
               </PaginationItem>
               <PaginationItem>
@@ -2144,7 +2729,11 @@ export default function DesktopOrdersTable({
                   href={paginationHref(totalPages)}
                   size="default"
                   aria-disabled={currentPage === totalPages}
-                  className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                  className={
+                    currentPage === totalPages
+                      ? "pointer-events-none opacity-50"
+                      : ""
+                  }
                 >
                   Last
                 </PaginationLink>
@@ -2183,8 +2772,9 @@ export default function DesktopOrdersTable({
               Delete order permanently?
             </AlertDialogTitle>
             <AlertDialogDescription className="text-sm leading-6 text-slate-500">
-              This order will be permanently removed from the orders list, analytics, and future dashboard
-              calculations. It cannot be restored.
+              This order will be permanently removed from the orders list,
+              analytics, and future dashboard calculations. It cannot be
+              restored.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
