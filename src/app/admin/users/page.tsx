@@ -6,8 +6,6 @@ import {
   PaginationEllipsis,
   PaginationItem,
   PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
 } from "@/components/ui/pagination";
 import { supabaseServerReadOnly } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
@@ -115,12 +113,12 @@ function normalizeStatusFilter(value: string | string[] | undefined): StatusFilt
 }
 
 function formatDate(value: string | null) {
-  if (!value) return "Never";
+  if (!value) return "Никогда";
 
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
 
-  return new Intl.DateTimeFormat("en-GB", {
+  return new Intl.DateTimeFormat("ru-RU", {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(date);
@@ -135,9 +133,9 @@ function formatRelativeDays(value: string | null) {
   const diffMs = Date.now() - target.getTime();
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-  if (diffDays <= 0) return "today";
-  if (diffDays === 1) return "1 day ago";
-  return `${diffDays} days ago`;
+  if (diffDays <= 0) return "сегодня";
+  if (diffDays === 1) return "1 день назад";
+  return `${diffDays} дн. назад`;
 }
 
 function buildDisplayName(profile: ProfileRow | null, fallbackEmail: string | null) {
@@ -149,7 +147,7 @@ function buildDisplayName(profile: ProfileRow | null, fallbackEmail: string | nu
   const fromParts = `${firstName} ${lastName}`.trim();
   if (fromParts) return fromParts;
 
-  return fallbackEmail || "Unnamed user";
+  return fallbackEmail || "Без имени";
 }
 
 function getPaginationItems(currentPage: number, totalPages: number) {
@@ -456,46 +454,46 @@ export default async function AdminUsersPage({
                 href={backHref}
                 className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:text-slate-900"
               >
-                Back to workspace
+                Назад в бизнес
               </Link>
               <div className="mt-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                Admin
+                Админка
               </div>
               <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">
-                Registered users
+                Зарегистрированные пользователи
               </h1>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                Supabase Auth users loaded into this screen. You can search by name, email, ID, or business.
+                Пользователи Supabase Auth. Можно искать по имени, email, ID или бизнесу.
               </p>
             </div>
 
             <div className="flex flex-wrap items-center gap-3 text-sm">
               <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-slate-600">
-                Signed in as <span className="font-semibold text-slate-900">{user.email}</span>
+                Вход выполнен как <span className="font-semibold text-slate-900">{user.email}</span>
               </div>
               <Link
                 href={refreshHref}
                 className="rounded-xl border border-slate-300 bg-white px-3 py-2 font-medium text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
               >
-                Refresh
+                Обновить
               </Link>
             </div>
           </div>
 
           <div className="mt-5 grid gap-4 sm:grid-cols-3">
-            <StatCard label="Loaded users" value={totalUsers} hint="First 200 users returned by Supabase Auth" />
-            <StatCard label="Last 24 hours" value={last24Hours} hint="Users registered in the last 24 hours" />
-            <StatCard label="Last 7 days" value={last7Days} hint="Users registered in the last 7 days" />
+            <StatCard label="Загружено" value={totalUsers} hint="Первые 200 пользователей из Supabase Auth" />
+            <StatCard label="За 24 часа" value={last24Hours} hint="Сколько зарегистрировалось за последние 24 часа" />
+            <StatCard label="За 7 дней" value={last7Days} hint="Сколько зарегистрировалось за последние 7 дней" />
           </div>
 
           <div className="mt-4 rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm">
-            <div className="grid gap-3 lg:grid-cols-[minmax(0,1.4fr)_180px_200px_130px]">
-              <form action={getAdminUsersPath()} className="lg:col-span-4 grid gap-3 lg:grid-cols-[minmax(0,1.4fr)_180px_200px_130px]">
+            <div className="grid gap-3 lg:grid-cols-[minmax(0,1.4fr)_190px_220px_150px_130px]">
+              <form action={getAdminUsersPath()} className="lg:col-span-5 grid gap-3 lg:grid-cols-[minmax(0,1.4fr)_190px_220px_150px_130px]">
                 <input
                   type="text"
                   name="q"
                   defaultValue={query}
-                  placeholder="Search by email, name, ID, or business..."
+                  placeholder="Поиск по email, имени, ID или бизнесу..."
                   className="h-11 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
                 />
                 <select
@@ -503,53 +501,51 @@ export default async function AdminUsersPage({
                   defaultValue={statusFilter}
                   className="h-11 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
                 >
-                  <option value="all">All statuses</option>
-                  <option value="confirmed">Confirmed only</option>
-                  <option value="pending">Pending only</option>
-                  <option value="withBusiness">With business</option>
-                  <option value="withoutBusiness">No business</option>
+                  <option value="all">Все статусы</option>
+                  <option value="confirmed">Только подтверждённые</option>
+                  <option value="pending">Только неподтверждённые</option>
+                  <option value="withBusiness">Есть бизнес</option>
+                  <option value="withoutBusiness">Без бизнеса</option>
                 </select>
                 <select
                   name="sort"
                   defaultValue={sort}
                   className="h-11 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
                 >
-                  <option value="newest">Newest first</option>
-                  <option value="oldest">Oldest first</option>
-                  <option value="lastSignInDesc">Last sign-in: newest</option>
-                  <option value="lastSignInAsc">Last sign-in: oldest</option>
-                  <option value="nameAsc">Name A-Z</option>
-                  <option value="nameDesc">Name Z-A</option>
+                  <option value="newest">Сначала новые</option>
+                  <option value="oldest">Сначала старые</option>
+                  <option value="lastSignInDesc">Последний вход: новые</option>
+                  <option value="lastSignInAsc">Последний вход: старые</option>
+                  <option value="nameAsc">Имя А-Я</option>
+                  <option value="nameDesc">Имя Я-А</option>
                 </select>
-                <div className="flex gap-2">
-                  <select
-                    name="perPage"
-                    defaultValue={String(perPage)}
-                    className="h-11 min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
-                  >
-                    {PAGE_SIZE_OPTIONS.map((option) => (
-                      <option key={option} value={option}>
-                        {option} / page
-                      </option>
-                    ))}
-                  </select>
-                  <button
-                    type="submit"
-                    className="h-11 rounded-xl bg-slate-900 px-4 text-sm font-semibold text-white transition hover:bg-slate-800"
-                  >
-                    Apply
-                  </button>
-                </div>
+                <select
+                  name="perPage"
+                  defaultValue={String(perPage)}
+                  className="h-11 min-w-0 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
+                >
+                  {PAGE_SIZE_OPTIONS.map((option) => (
+                    <option key={option} value={option}>
+                      {option} / стр.
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="submit"
+                  className="inline-flex h-11 items-center justify-center rounded-xl bg-[#1d4ed8] px-5 text-sm font-semibold text-white transition hover:bg-[#1e40af]"
+                >
+                  Применить
+                </button>
               </form>
             </div>
 
             <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-sm text-slate-500">
               <div>
-                Showing {visibleRows.length === 0 ? 0 : pageStart + 1}-{pageStart + visibleRows.length} of{" "}
-                {totalFiltered} matched users
+                Показано {visibleRows.length === 0 ? 0 : pageStart + 1}-{pageStart + visibleRows.length} из{" "}
+                {totalFiltered} пользователей
               </div>
               <div>
-                Loaded dataset is capped at 200 auth users for now.
+                Сейчас экран загружает максимум 200 auth-пользователей.
               </div>
             </div>
           </div>
@@ -557,20 +553,20 @@ export default async function AdminUsersPage({
           <div className="mt-4 rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm">
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
-                <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Loaded users</div>
-                <div className="mt-1 text-sm text-slate-600">How many auth users the page loaded from Supabase before filtering.</div>
+                <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Загружено</div>
+                <div className="mt-1 text-sm text-slate-600">Сколько пользователей страница получила из Supabase до фильтрации.</div>
               </div>
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
-                <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Registered</div>
-                <div className="mt-1 text-sm text-slate-600">When the account was created in Supabase Auth.</div>
+                <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Зарегистрирован</div>
+                <div className="mt-1 text-sm text-slate-600">Когда аккаунт был создан в Supabase Auth.</div>
               </div>
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
-                <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Last sign in</div>
-                <div className="mt-1 text-sm text-slate-600">Last successful login time. "Never" means the user has not signed in yet.</div>
+                <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Последний вход</div>
+                <div className="mt-1 text-sm text-slate-600">Время последнего успешного входа. «Никогда» значит, что пользователь ещё не входил.</div>
               </div>
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
-                <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Businesses / Status</div>
-                <div className="mt-1 text-sm text-slate-600">Business memberships plus whether the email has been confirmed.</div>
+                <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Бизнесы / статус</div>
+                <div className="mt-1 text-sm text-slate-600">Привязки к бизнесам и подтверждён ли email.</div>
               </div>
             </div>
           </div>
@@ -580,11 +576,11 @@ export default async function AdminUsersPage({
               <table className="min-w-full divide-y divide-slate-200 text-sm">
                 <thead className="bg-slate-50/80">
                   <tr className="text-left text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-                    <th className="px-4 py-3">User</th>
-                    <th className="px-4 py-3">Registered</th>
-                    <th className="px-4 py-3">Last sign in</th>
-                    <th className="px-4 py-3">Businesses</th>
-                    <th className="px-4 py-3">Status</th>
+                    <th className="px-4 py-3">Пользователь</th>
+                    <th className="px-4 py-3">Зарегистрирован</th>
+                    <th className="px-4 py-3">Последний вход</th>
+                    <th className="px-4 py-3">Бизнесы</th>
+                    <th className="px-4 py-3">Статус</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -592,13 +588,13 @@ export default async function AdminUsersPage({
                     <tr key={row.id} className="align-top">
                       <td className="px-4 py-4">
                         <div className="font-semibold text-slate-900">{row.name}</div>
-                        <div className="mt-1 text-slate-600">{row.email || "No email"}</div>
+                        <div className="mt-1 text-slate-600">{row.email || "Нет email"}</div>
                         <div className="mt-1 font-mono text-[11px] text-slate-400">{row.id}</div>
                       </td>
                       <td className="px-4 py-4 text-slate-700">
                         <div>{formatDate(row.createdAt)}</div>
                         <div className="mt-1 text-xs text-slate-500">
-                          {formatRelativeDays(row.createdAt) || "Unknown"}
+                          {formatRelativeDays(row.createdAt) || "Неизвестно"}
                         </div>
                       </td>
                       <td className="px-4 py-4 text-slate-700">{formatDate(row.lastSignInAt)}</td>
@@ -615,12 +611,12 @@ export default async function AdminUsersPage({
                             ))}
                             {row.businessLabels.length > 4 ? (
                               <span className="text-xs text-slate-500">
-                                +{row.businessLabels.length - 4} more
+                                +ещё {row.businessLabels.length - 4}
                               </span>
                             ) : null}
                           </div>
                         ) : (
-                          <span className="text-slate-400">No memberships yet</span>
+                          <span className="text-slate-400">Пока нет привязок</span>
                         )}
                       </td>
                       <td className="px-4 py-4">
@@ -631,7 +627,7 @@ export default async function AdminUsersPage({
                               : "bg-amber-100 text-amber-700"
                           }`}
                         >
-                          {row.emailConfirmedAt ? "Confirmed" : "Pending confirmation"}
+                          {row.emailConfirmedAt ? "Подтверждён" : "Ждёт подтверждения"}
                         </span>
                       </td>
                     </tr>
@@ -640,7 +636,7 @@ export default async function AdminUsersPage({
                   {visibleRows.length === 0 ? (
                     <tr>
                       <td colSpan={5} className="px-6 py-12 text-center text-sm text-slate-500">
-                        No users matched the current search and filters.
+                        По текущему поиску и фильтрам ничего не найдено.
                       </td>
                     </tr>
                   ) : null}
@@ -652,19 +648,22 @@ export default async function AdminUsersPage({
           {totalPages > 1 ? (
             <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
               <div className="text-sm text-slate-500">
-                Page {currentPage} of {totalPages}
+                Страница {currentPage} из {totalPages}
               </div>
 
               <Pagination className="mx-0 w-auto justify-start">
                 <PaginationContent>
                   <PaginationItem>
-                    <PaginationPrevious
+                    <PaginationLink
                       href={buildQueryString(currentQueryState, {
                         page: Math.max(1, currentPage - 1),
                       })}
                       aria-disabled={currentPage === 1}
-                      className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
-                    />
+                      className={currentPage === 1 ? "pointer-events-none opacity-50 gap-1 px-2.5" : "gap-1 px-2.5"}
+                      size="default"
+                    >
+                      Назад
+                    </PaginationLink>
                   </PaginationItem>
 
                   {pageItems.map((page, index) => {
@@ -691,13 +690,16 @@ export default async function AdminUsersPage({
                   })}
 
                   <PaginationItem>
-                    <PaginationNext
+                    <PaginationLink
                       href={buildQueryString(currentQueryState, {
                         page: Math.min(totalPages, currentPage + 1),
                       })}
                       aria-disabled={currentPage === totalPages}
-                      className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
-                    />
+                      className={currentPage === totalPages ? "pointer-events-none opacity-50 gap-1 px-2.5" : "gap-1 px-2.5"}
+                      size="default"
+                    >
+                      Вперёд
+                    </PaginationLink>
                   </PaginationItem>
                 </PaginationContent>
               </Pagination>
