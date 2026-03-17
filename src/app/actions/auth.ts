@@ -3,6 +3,7 @@
 import { headers } from "next/headers";
 import { supabaseServer } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { getAdminUsersPath, isAdminEmail } from "@/lib/admin-access";
 import { isBusinessSegment } from "@/lib/business-segments";
 
 type State = { ok: boolean; error: string; next: string };
@@ -69,6 +70,10 @@ export async function loginAction(
         error: "",
         next: `/invite?invite_id=${encodeURIComponent(inviteId)}`,
       };
+    }
+
+    if (isAdminEmail(user.email)) {
+      return { ok: true, error: "", next: getAdminUsersPath() };
     }
 
     // 3) load memberships
