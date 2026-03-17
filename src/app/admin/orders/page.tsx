@@ -6,7 +6,7 @@ import { requireAdminUser } from "@/lib/admin/access";
 import { loadAdminDataset } from "@/lib/admin/queries";
 
 export default async function AdminOrdersPage() {
-  await requireAdminUser("/admin/orders");
+  const { workspaceHref } = await requireAdminUser("/admin/orders");
   const dataset = await loadAdminDataset();
 
   const dayMs = 1000 * 60 * 60 * 24;
@@ -22,62 +22,63 @@ export default async function AdminOrdersPage() {
   return (
     <AdminShell
       activeHref="/admin/orders"
-      title="Orders overview"
-      description="Агрегированный обзор заказов по продукту. Это не CRM-интерфейс, а product-owner summary по order adoption."
+      workspaceHref={workspaceHref}
+      title="Заказы"
+      description="Агрегированный обзор заказов по продукту. Это не CRM, а панель понимания реального использования."
     >
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-        <AdminStatCard label="Total orders" value={formatNumber(dataset.orders.length)} hint="Все orders из БД" />
-        <AdminStatCard label="Created today" value={formatNumber(ordersToday)} hint="Новые заказы за 24 часа" />
-        <AdminStatCard label="Created 7d" value={formatNumber(orders7d)} hint="Новые заказы за 7 дней" />
-        <AdminStatCard label="Created 30d" value={formatNumber(orders30d)} hint="Новые заказы за 30 дней" />
-        <AdminStatCard label="Businesses with orders" value={formatNumber(businessesWithOrders)} hint="Уже используют core workflow" />
+        <AdminStatCard label="Всего заказов" value={formatNumber(dataset.orders.length)} hint="Все доступные заказы" />
+        <AdminStatCard label="Создано сегодня" value={formatNumber(ordersToday)} hint="Новые заказы за 24 часа" />
+        <AdminStatCard label="Создано за 7 дней" value={formatNumber(orders7d)} hint="Новые заказы за неделю" />
+        <AdminStatCard label="Создано за 30 дней" value={formatNumber(orders30d)} hint="Новые заказы за месяц" />
+        <AdminStatCard label="Бизнесов с заказами" value={formatNumber(businessesWithOrders)} hint="Уже дошли до основного сценария" />
       </div>
 
       <div className="mt-6 grid gap-4 xl:grid-cols-2">
-        <AdminSectionCard title="Top businesses by orders count">
+        <AdminSectionCard title="Лидеры по числу заказов">
           <SectionList
             items={topBusinesses.map((business) => ({
-              title: `${business.slug || business.name || business.id} • ${business.ordersCount} orders`,
-              meta: `${business.ownerLabel || "owner not assigned"} • last activity: ${formatDateTime(business.lastActivityAt)}`,
+              title: `${business.slug || business.name || business.id} • ${business.ordersCount} заказов`,
+              meta: `${business.ownerLabel || "владелец не назначен"} • последняя активность: ${formatDateTime(business.lastActivityAt)}`,
               href: `/admin/businesses/${business.id}`,
             }))}
-            emptyTitle="Нет order data"
-            emptyDescription="По текущей БД заказы пока не найдены."
+            emptyTitle="Данных по заказам пока нет"
+            emptyDescription="Когда заказы появятся, здесь будут самые активные бизнесы."
           />
         </AdminSectionCard>
 
-        <AdminSectionCard title="Recent orders">
+        <AdminSectionCard title="Последние заказы">
           <SectionList
             items={recentOrders.map((order) => ({
-              title: `#${order.orderNumber ?? order.id} • ${order.status || "UNKNOWN"}`,
+              title: `#${order.orderNumber ?? order.id} • ${order.status || "Не указан"}`,
               meta: `${formatDateTime(order.createdAt)} • ${order.businessLabel} • ${order.clientName || "без клиента"} • ${order.amount ?? 0}`,
             }))}
-            emptyTitle="Нет recent orders"
-            emptyDescription="Orders сейчас отсутствуют."
+            emptyTitle="Заказов пока нет"
+            emptyDescription="Когда заказы появятся, здесь будет виден свежий поток использования."
           />
         </AdminSectionCard>
       </div>
 
       <div className="mt-6">
-        <AdminSectionCard title="Product signals">
+        <AdminSectionCard title="Продуктовые сигналы">
           <div className="grid gap-3 md:grid-cols-3">
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Businesses with zero orders</div>
+              <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Бизнесы без заказов</div>
               <div className="mt-2 text-2xl font-semibold text-slate-900">{formatNumber(businessesZeroOrders)}</div>
               <Link href="/admin/businesses?orders=zero_orders" className="mt-2 inline-block text-sm text-slate-600 hover:text-slate-900">
                 Открыть список
               </Link>
             </div>
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Orders overview scope</div>
+              <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Текущее покрытие раздела</div>
               <div className="mt-2 text-sm text-slate-600">
-                Раздел работает от текущих orders. Если появятся новые order сущности или billing планы, сюда можно будет безопасно расширить агрегации.
+                Раздел работает от реальных orders в базе и уже показывает общую картину adoption без лишней CRM-сложности.
               </div>
             </div>
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">TECH DEBT</div>
+              <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Ограничение</div>
               <div className="mt-2 text-sm text-slate-600">
-                Для revenue-grade аналитики понадобится отдельный metrics слой, а не прямые admin queries по OLTP таблицам.
+                Для revenue-аналитики и более сложной воронки позже понадобится отдельный metrics слой.
               </div>
             </div>
           </div>

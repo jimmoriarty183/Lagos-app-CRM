@@ -1,5 +1,3 @@
-import Link from "next/link";
-import { TableRow } from "@/components/ui/table";
 import { AdminSectionCard, AdminStatCard } from "@/app/admin/_components/AdminCards";
 import { AdminShell } from "@/app/admin/_components/AdminShell";
 import {
@@ -8,13 +6,17 @@ import {
   AdminHeadCell,
   AdminSearchParams,
   AdminTable,
+  AdminTableHeaderRow,
+  AdminTableRow,
   EmptyState,
   PaginationBar,
+  RowPrimaryLink,
   formatDateTime,
   formatNumber,
   getEnumParam,
   getIntParam,
   getSingleParam,
+  translateLabel,
 } from "@/app/admin/_components/AdminShared";
 import { requireAdminUser } from "@/lib/admin/access";
 import { loadAdminDataset } from "@/lib/admin/queries";
@@ -39,7 +41,7 @@ export default async function AdminUsersPage({
 }: {
   searchParams?: Promise<AdminSearchParams>;
 }) {
-  const user = await requireAdminUser("/admin/users");
+  const { user, workspaceHref } = await requireAdminUser("/admin/users");
   const params = (await searchParams) ?? {};
   const dataset = await loadAdminDataset();
 
@@ -95,8 +97,9 @@ export default async function AdminUsersPage({
   return (
     <AdminShell
       activeHref="/admin/users"
-      title="Users"
-      description="Глобальный список зарегистрированных пользователей с фильтрами по подтверждению email, sign in и наличию business."
+      workspaceHref={workspaceHref}
+      title="Пользователи"
+      description="Список зарегистрированных пользователей с акцентом на onboarding, подтверждение почты, первый вход и наличие бизнеса."
       actions={
         <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600">
           Вход как <span className="font-semibold text-slate-900">{user.email}</span>
@@ -104,49 +107,49 @@ export default async function AdminUsersPage({
       }
     >
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
-        <AdminStatCard label="Total users" value={formatNumber(cards.total)} hint="Все auth users" />
-        <AdminStatCard label="Confirmed" value={formatNumber(cards.confirmed)} hint="Email confirmed" />
-        <AdminStatCard label="Pending" value={formatNumber(cards.pending)} hint="Ожидают подтверждения" />
-        <AdminStatCard label="With business" value={formatNumber(cards.withBusiness)} hint="Есть membership" />
-        <AdminStatCard label="Without business" value={formatNumber(cards.withoutBusiness)} hint="Нет business" />
-        <AdminStatCard label="Never signed in" value={formatNumber(cards.neverSignedIn)} hint="Ни одного входа" />
+        <AdminStatCard label="Всего" value={formatNumber(cards.total)} hint="Все пользователи авторизации" />
+        <AdminStatCard label="Подтверждены" value={formatNumber(cards.confirmed)} hint="Почта подтверждена" />
+        <AdminStatCard label="Ожидают подтверждения" value={formatNumber(cards.pending)} hint="Почта не подтверждена" />
+        <AdminStatCard label="С бизнесом" value={formatNumber(cards.withBusiness)} hint="Есть привязка к бизнесу" />
+        <AdminStatCard label="Без бизнеса" value={formatNumber(cards.withoutBusiness)} hint="Нет рабочего пространства" />
+        <AdminStatCard label="Без входа" value={formatNumber(cards.neverSignedIn)} hint="Еще не заходили в продукт" />
       </div>
 
       <div className="mt-6 grid gap-4">
-        <AdminSectionCard title="Фильтры">
+        <AdminSectionCard title="Фильтры и поиск">
           <form action="/admin/users" className="grid gap-3 lg:grid-cols-[minmax(0,1.4fr)_160px_160px_160px_140px_180px_120px]">
             <input
               type="text"
               name="q"
               defaultValue={q}
-              placeholder="Поиск по email, имени, ID, телефону, business..."
+              placeholder="Поиск по имени, email, ID, телефону или бизнесу"
               className="h-11 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
             />
             <select name="status" defaultValue={status} className="h-11 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
-              <option value="all">Все email</option>
-              <option value="confirmed">Confirmed</option>
-              <option value="unconfirmed">Unconfirmed</option>
+              <option value="all">Любая почта</option>
+              <option value="confirmed">Подтверждена</option>
+              <option value="unconfirmed">Не подтверждена</option>
             </select>
             <select name="signIn" defaultValue={signIn} className="h-11 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
-              <option value="all">Все sign in</option>
-              <option value="has">Has sign in</option>
-              <option value="never">Never signed in</option>
+              <option value="all">Любой вход</option>
+              <option value="has">Был вход</option>
+              <option value="never">Без входа</option>
             </select>
             <select name="business" defaultValue={business} className="h-11 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
-              <option value="all">Все business</option>
-              <option value="has">Has business</option>
-              <option value="none">No business</option>
+              <option value="all">Любой бизнес</option>
+              <option value="has">Есть бизнес</option>
+              <option value="none">Нет бизнеса</option>
             </select>
             <select name="window" defaultValue={window} className="h-11 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
               <option value="all">Весь период</option>
-              <option value="24h">24h</option>
-              <option value="7d">7d</option>
-              <option value="30d">30d</option>
+              <option value="24h">24 часа</option>
+              <option value="7d">7 дней</option>
+              <option value="30d">30 дней</option>
             </select>
             <select name="sort" defaultValue={sort} className="h-11 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
-              <option value="created_desc">created_at desc</option>
-              <option value="last_sign_in_desc">last_sign_in_at desc</option>
-              <option value="email_asc">email asc</option>
+              <option value="created_desc">Сначала новые</option>
+              <option value="last_sign_in_desc">Последний вход</option>
+              <option value="email_asc">Email А-Я</option>
             </select>
             <div className="flex gap-3">
               <select name="perPage" defaultValue={String(perPage)} className="h-11 min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
@@ -157,7 +160,7 @@ export default async function AdminUsersPage({
                 ))}
               </select>
               <button type="submit" className="inline-flex h-11 items-center justify-center rounded-xl bg-[#1d4ed8] px-5 text-sm font-semibold text-white transition hover:bg-[#1e40af]">
-                Apply
+                Применить
               </button>
             </div>
           </form>
@@ -170,64 +173,56 @@ export default async function AdminUsersPage({
         {rows.length ? (
           <AdminTable
             head={
-              <>
-                <AdminHeadCell>User</AdminHeadCell>
-                <AdminHeadCell>Created</AdminHeadCell>
-                <AdminHeadCell>Email confirmed</AdminHeadCell>
-                <AdminHeadCell>Last sign in</AdminHeadCell>
-                <AdminHeadCell>Businesses</AdminHeadCell>
-                <AdminHeadCell>Role</AdminHeadCell>
-                <AdminHeadCell>Status</AdminHeadCell>
-              </>
+              <AdminTableHeaderRow>
+                <AdminHeadCell className="w-[32%]">Пользователь</AdminHeadCell>
+                <AdminHeadCell className="w-[18%]">Статус</AdminHeadCell>
+                <AdminHeadCell className="w-[12%]">Бизнес</AdminHeadCell>
+                <AdminHeadCell className="w-[14%]">Дата регистрации</AdminHeadCell>
+                <AdminHeadCell className="w-[14%]">Последний вход</AdminHeadCell>
+                <AdminHeadCell className="w-[10%]">Роль</AdminHeadCell>
+              </AdminTableHeaderRow>
             }
           >
             {rows.map((item) => (
-              <TableRow key={item.id} className="border-slate-100 hover:bg-slate-50/60">
+              <AdminTableRow key={item.id} href={`/admin/users/${item.id}`}>
                 <AdminCell>
-                  <Link href={`/admin/users/${item.id}`} className="font-semibold text-slate-900 hover:text-blue-700">
+                  <RowPrimaryLink
+                    href={`/admin/users/${item.id}`}
+                    meta={
+                      <>
+                        <div>{item.email || "Без email"}</div>
+                        <div className="mt-1 font-mono text-[11px] text-slate-400">{item.id}</div>
+                      </>
+                    }
+                  >
                     {item.fullName || item.email || item.id}
-                  </Link>
-                  <div className="mt-1 text-slate-600">{item.email || "Без email"}</div>
-                  <div className="mt-1 font-mono text-[11px] text-slate-400">{item.id}</div>
-                  {item.phone ? <div className="mt-1 text-xs text-slate-500">{item.phone}</div> : null}
+                  </RowPrimaryLink>
+                </AdminCell>
+                <AdminCell>
+                  <div className="flex flex-wrap gap-2">
+                    <AdminBadge label={item.emailConfirmedAt ? "CONFIRMED" : "UNCONFIRMED"} />
+                    <AdminBadge label={item.hasSignIn ? "HAS_SIGN_IN" : "NEVER_SIGNED_IN"} />
+                  </div>
+                </AdminCell>
+                <AdminCell>
+                  <div className="font-semibold text-slate-900">{item.businessesCount}</div>
+                  <div className="mt-1 text-xs text-slate-500">
+                    {item.businessesCount > 0
+                      ? item.businesses
+                          .slice(0, 2)
+                          .map((businessItem) => businessItem.slug || businessItem.name || businessItem.id)
+                          .join(", ")
+                      : "Без бизнеса"}
+                  </div>
                 </AdminCell>
                 <AdminCell>{formatDateTime(item.createdAt)}</AdminCell>
-                <AdminCell>{formatDateTime(item.emailConfirmedAt)}</AdminCell>
-                <AdminCell>
-                  <div>{formatDateTime(item.lastSignInAt)}</div>
-                  <div className="mt-1 text-xs text-slate-500">sign in count: —</div>
-                </AdminCell>
-                <AdminCell>
-                  <div className="font-medium text-slate-900">{item.businessesCount}</div>
-                  <div className="mt-1 flex flex-wrap gap-1">
-                    {item.businesses.slice(0, 2).map((businessItem) => (
-                      <Link
-                        key={`${item.id}-${businessItem.id}`}
-                        href={`/admin/businesses/${businessItem.id}`}
-                        className="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700"
-                      >
-                        {businessItem.slug || businessItem.name || businessItem.id}
-                      </Link>
-                    ))}
-                    {item.businessesCount > 2 ? (
-                      <span className="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-500">
-                        +{item.businessesCount - 2}
-                      </span>
-                    ) : null}
-                  </div>
-                </AdminCell>
-                <AdminCell>{item.primaryRole}</AdminCell>
-                <AdminCell>
-                  <div className="flex flex-col gap-2">
-                    <AdminBadge label={item.emailConfirmedAt ? "CONFIRMED" : "UNCONFIRMED"} />
-                    {item.hasSignIn ? <AdminBadge label="HAS_SIGN_IN" /> : <AdminBadge label="NEVER_SIGNED_IN" />}
-                  </div>
-                </AdminCell>
-              </TableRow>
+                <AdminCell>{formatDateTime(item.lastSignInAt)}</AdminCell>
+                <AdminCell>{translateLabel(item.primaryRole)}</AdminCell>
+              </AdminTableRow>
             ))}
           </AdminTable>
         ) : (
-          <EmptyState title="Ничего не найдено" description="Измените поисковый запрос или снимите часть фильтров." />
+          <EmptyState title="Пользователи не найдены" description="Измените запрос или снимите часть фильтров, чтобы расширить выборку." />
         )}
 
         <PaginationBar pathname="/admin/users" currentParams={currentParams} currentPage={page} totalPages={Math.max(1, Math.ceil(filtered.length / perPage))} />

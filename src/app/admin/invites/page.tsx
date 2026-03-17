@@ -1,4 +1,3 @@
-import { TableRow } from "@/components/ui/table";
 import { AdminSectionCard, AdminStatCard } from "@/app/admin/_components/AdminCards";
 import { AdminShell } from "@/app/admin/_components/AdminShell";
 import {
@@ -7,6 +6,8 @@ import {
   AdminHeadCell,
   AdminSearchParams,
   AdminTable,
+  AdminTableHeaderRow,
+  AdminTableRow,
   EmptyState,
   PaginationBar,
   formatDateTime,
@@ -14,6 +15,7 @@ import {
   getEnumParam,
   getIntParam,
   getSingleParam,
+  translateLabel,
 } from "@/app/admin/_components/AdminShared";
 import { requireAdminUser } from "@/lib/admin/access";
 import { loadAdminDataset } from "@/lib/admin/queries";
@@ -26,7 +28,7 @@ export default async function AdminInvitesPage({
 }: {
   searchParams?: Promise<AdminSearchParams>;
 }) {
-  await requireAdminUser("/admin/invites");
+  const { workspaceHref } = await requireAdminUser("/admin/invites");
   const params = (await searchParams) ?? {};
   const dataset = await loadAdminDataset();
 
@@ -36,7 +38,7 @@ export default async function AdminInvitesPage({
 
   const filtered = dataset.invites
     .filter((item) => {
-      const blob = [item.email, item.businessLabel, item.id, item.role, item.status].join(" ").toLowerCase();
+      const blob = [item.email, item.businessLabel, item.id, item.role, item.status, item.invitedByLabel].join(" ").toLowerCase();
       if (q && !blob.includes(q)) return false;
       if (status === "pending" && item.status !== "PENDING") return false;
       if (status === "accepted" && item.status !== "ACCEPTED") return false;
@@ -61,32 +63,33 @@ export default async function AdminInvitesPage({
   return (
     <AdminShell
       activeHref="/admin/invites"
-      title="Invites"
-      description="Все приглашения по системе с фильтрацией по статусам и срокам."
+      workspaceHref={workspaceHref}
+      title="Приглашения"
+      description="Приглашения в бизнесы с акцентом на статус, автора приглашения и зависшие pending-инвайты."
     >
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <AdminStatCard label="Total invites" value={formatNumber(dataset.invites.length)} hint="Все приглашения" />
-        <AdminStatCard label="Pending" value={formatNumber(dataset.invites.filter((item) => item.status === "PENDING").length)} hint="Ожидают принятия" />
-        <AdminStatCard label="Accepted" value={formatNumber(dataset.invites.filter((item) => item.status === "ACCEPTED").length)} hint="Приняты" />
-        <AdminStatCard label="Revoked" value={formatNumber(dataset.invites.filter((item) => item.status === "REVOKED").length)} hint="Отозваны" />
+        <AdminStatCard label="Всего приглашений" value={formatNumber(dataset.invites.length)} hint="Все приглашения в системе" />
+        <AdminStatCard label="Ожидают" value={formatNumber(dataset.invites.filter((item) => item.status === "PENDING").length)} hint="Еще не приняты" />
+        <AdminStatCard label="Приняты" value={formatNumber(dataset.invites.filter((item) => item.status === "ACCEPTED").length)} hint="Уже использованы" />
+        <AdminStatCard label="Отозваны" value={formatNumber(dataset.invites.filter((item) => item.status === "REVOKED").length)} hint="Отменены вручную" />
       </div>
 
       <div className="mt-6">
-        <AdminSectionCard title="Фильтры">
+        <AdminSectionCard title="Фильтры и поиск">
           <form action="/admin/invites" className="grid gap-3 lg:grid-cols-[minmax(0,1.4fr)_180px_120px_120px]">
-            <input name="q" defaultValue={q} placeholder="Поиск по email, business, роли, ID..." className="h-11 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100" />
+            <input name="q" defaultValue={q} placeholder="Поиск по email, бизнесу или автору приглашения" className="h-11 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100" />
             <select name="status" defaultValue={status} className="h-11 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
               <option value="all">Все статусы</option>
-              <option value="pending">Pending</option>
-              <option value="accepted">Accepted</option>
-              <option value="revoked">Revoked</option>
-              <option value="expired">Expired</option>
+              <option value="pending">Ожидают</option>
+              <option value="accepted">Приняты</option>
+              <option value="revoked">Отозваны</option>
+              <option value="expired">Истекли</option>
             </select>
             <select name="perPage" defaultValue={String(perPage)} className="h-11 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
               {PER_PAGE_OPTIONS.map((value) => <option key={value} value={value}>{value}</option>)}
             </select>
             <button type="submit" className="inline-flex h-11 items-center justify-center rounded-xl bg-[#1d4ed8] px-5 text-sm font-semibold text-white transition hover:bg-[#1e40af]">
-              Apply
+              Применить
             </button>
           </form>
         </AdminSectionCard>
@@ -96,33 +99,30 @@ export default async function AdminInvitesPage({
         {rows.length ? (
           <AdminTable
             head={
-              <>
-                <AdminHeadCell>Invite ID</AdminHeadCell>
-                <AdminHeadCell>Email</AdminHeadCell>
-                <AdminHeadCell>Business</AdminHeadCell>
-                <AdminHeadCell>Role</AdminHeadCell>
-                <AdminHeadCell>Status</AdminHeadCell>
-                <AdminHeadCell>Created</AdminHeadCell>
-                <AdminHeadCell>Accepted</AdminHeadCell>
-                <AdminHeadCell>Expires</AdminHeadCell>
-              </>
+              <AdminTableHeaderRow>
+                <AdminHeadCell className="w-[26%]">Email</AdminHeadCell>
+                <AdminHeadCell className="w-[24%]">Бизнес</AdminHeadCell>
+                <AdminHeadCell className="w-[20%]">Кто пригласил</AdminHeadCell>
+                <AdminHeadCell className="w-[14%]">Статус</AdminHeadCell>
+                <AdminHeadCell className="w-[16%]">Создано</AdminHeadCell>
+              </AdminTableHeaderRow>
             }
           >
             {rows.map((item) => (
-              <TableRow key={item.id} className="border-slate-100 hover:bg-slate-50/60">
-                <AdminCell><span className="font-mono text-xs">{item.id}</span></AdminCell>
-                <AdminCell>{item.email}</AdminCell>
+              <AdminTableRow key={item.id}>
+                <AdminCell>
+                  <div className="font-semibold text-slate-900">{item.email}</div>
+                  <div className="mt-1 text-xs text-slate-500">{translateLabel(item.role)}</div>
+                </AdminCell>
                 <AdminCell>{item.businessLabel}</AdminCell>
-                <AdminCell>{item.role}</AdminCell>
+                <AdminCell>{item.invitedByLabel || "Неизвестно"}</AdminCell>
                 <AdminCell><AdminBadge label={item.status} /></AdminCell>
                 <AdminCell>{formatDateTime(item.createdAt)}</AdminCell>
-                <AdminCell>{formatDateTime(item.acceptedAt)}</AdminCell>
-                <AdminCell>{formatDateTime(item.expiresAt)}</AdminCell>
-              </TableRow>
+              </AdminTableRow>
             ))}
           </AdminTable>
         ) : (
-          <EmptyState title="Нет приглашений" description="По текущим фильтрам совпадений не найдено." />
+          <EmptyState title="Приглашения не найдены" description="По текущим фильтрам совпадений не найдено." />
         )}
         <PaginationBar pathname="/admin/invites" currentParams={currentParams} currentPage={page} totalPages={Math.max(1, Math.ceil(filtered.length / perPage))} />
       </div>

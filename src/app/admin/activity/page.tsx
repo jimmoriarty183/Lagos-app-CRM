@@ -1,4 +1,3 @@
-import { TableRow } from "@/components/ui/table";
 import { AdminSectionCard } from "@/app/admin/_components/AdminCards";
 import { AdminShell } from "@/app/admin/_components/AdminShell";
 import {
@@ -6,6 +5,8 @@ import {
   AdminHeadCell,
   AdminSearchParams,
   AdminTable,
+  AdminTableHeaderRow,
+  AdminTableRow,
   EmptyState,
   PaginationBar,
   formatDateTime,
@@ -22,7 +23,7 @@ export default async function AdminActivityPage({
 }: {
   searchParams?: Promise<AdminSearchParams>;
 }) {
-  await requireAdminUser("/admin/activity");
+  const { workspaceHref } = await requireAdminUser("/admin/activity");
   const params = (await searchParams) ?? {};
   const dataset = await loadAdminDataset();
   const q = getSingleParam(params.q).trim().toLowerCase();
@@ -30,7 +31,7 @@ export default async function AdminActivityPage({
   const perPage = getIntParam(params.perPage, 20, PER_PAGE_OPTIONS);
 
   const eventTypes = Array.from(new Set(dataset.activities.map((item) => item.kind))).sort();
-
+  const eventLabels = new Map(dataset.activities.map((item) => [item.kind, item.title]));
   const filtered = dataset.activities.filter((item) => {
     const blob = [item.kind, item.title, item.userLabel, item.businessLabel, item.meta].join(" ").toLowerCase();
     if (q && !blob.includes(q)) return false;
@@ -50,17 +51,18 @@ export default async function AdminActivityPage({
   return (
     <AdminShell
       activeHref="/admin/activity"
-      title="Activity"
-      description="Глобальная лента системных событий. Часть событий синтезируется best effort из существующих сущностей, пока нет полноценного event log."
+      workspaceHref={workspaceHref}
+      title="Активность"
+      description="Глобальная лента системных событий. Часть событий пока собирается по доступным данным из существующих сущностей."
     >
-      <AdminSectionCard title="Фильтры">
+      <AdminSectionCard title="Фильтры и поиск">
         <form action="/admin/activity" className="grid gap-3 lg:grid-cols-[minmax(0,1.4fr)_220px_120px_120px]">
-          <input name="q" defaultValue={q} placeholder="Поиск по type, user, business, meta..." className="h-11 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100" />
+          <input name="q" defaultValue={q} placeholder="Поиск по типу события, пользователю или бизнесу" className="h-11 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100" />
           <select name="type" defaultValue={type} className="h-11 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
             <option value="">Все события</option>
             {eventTypes.map((eventType) => (
               <option key={eventType} value={eventType}>
-                {eventType}
+                {eventLabels.get(eventType) || eventType}
               </option>
             ))}
           </select>
@@ -68,7 +70,7 @@ export default async function AdminActivityPage({
             {PER_PAGE_OPTIONS.map((value) => <option key={value} value={value}>{value}</option>)}
           </select>
           <button type="submit" className="inline-flex h-11 items-center justify-center rounded-xl bg-[#1d4ed8] px-5 text-sm font-semibold text-white transition hover:bg-[#1e40af]">
-            Apply
+            Применить
           </button>
         </form>
       </AdminSectionCard>
@@ -77,30 +79,30 @@ export default async function AdminActivityPage({
         {rows.length ? (
           <AdminTable
             head={
-              <>
-                <AdminHeadCell>Time</AdminHeadCell>
-                <AdminHeadCell>Event</AdminHeadCell>
-                <AdminHeadCell>User</AdminHeadCell>
-                <AdminHeadCell>Business</AdminHeadCell>
-                <AdminHeadCell>Meta</AdminHeadCell>
-              </>
+              <AdminTableHeaderRow>
+                <AdminHeadCell className="w-[16%]">Время</AdminHeadCell>
+                <AdminHeadCell className="w-[26%]">Событие</AdminHeadCell>
+                <AdminHeadCell className="w-[20%]">Пользователь</AdminHeadCell>
+                <AdminHeadCell className="w-[20%]">Бизнес</AdminHeadCell>
+                <AdminHeadCell className="w-[18%]">Детали</AdminHeadCell>
+              </AdminTableHeaderRow>
             }
           >
             {rows.map((item) => (
-              <TableRow key={item.id} className="border-slate-100 hover:bg-slate-50/60">
+              <AdminTableRow key={item.id}>
                 <AdminCell>{formatDateTime(item.createdAt)}</AdminCell>
                 <AdminCell>
                   <div className="font-semibold text-slate-900">{item.title}</div>
-                  <div className="mt-1 text-xs text-slate-500">{item.kind}</div>
+                  <div className="mt-1 text-xs text-slate-500">Тип события в журнале активности</div>
                 </AdminCell>
                 <AdminCell>{item.userLabel || "—"}</AdminCell>
                 <AdminCell>{item.businessLabel || "—"}</AdminCell>
                 <AdminCell>{item.meta || "—"}</AdminCell>
-              </TableRow>
+              </AdminTableRow>
             ))}
           </AdminTable>
         ) : (
-          <EmptyState title="Нет activity" description="По текущему фильтру событий не найдено." />
+          <EmptyState title="События не найдены" description="По текущему фильтру нет совпадений." />
         )}
 
         <PaginationBar pathname="/admin/activity" currentParams={currentParams} currentPage={page} totalPages={Math.max(1, Math.ceil(filtered.length / perPage))} />

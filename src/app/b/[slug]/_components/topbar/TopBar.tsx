@@ -5,6 +5,17 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { LogOut, Sparkles } from "lucide-react";
 import { Logo } from "@/components/Logo";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 import BusinessSwitcher, { BusinessOption } from "./BusinessSwitcher";
 import InviteInbox from "./InviteInbox";
@@ -38,6 +49,8 @@ export default function TopBar({
 }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [logoutOpen, setLogoutOpen] = React.useState(false);
+  const [isLoggingOut, setIsLoggingOut] = React.useState(false);
   const dashboardQuery = searchParams.toString();
   const dashboardHref = dashboardQuery
     ? `/b/${businessSlug}?${dashboardQuery}`
@@ -54,10 +67,18 @@ export default function TopBar({
     router.refresh();
   };
 
-  const handleLogout = () => {
-    if (!window.confirm("Log out?")) return;
-    document.cookie = "u=; path=/; max-age=0";
-    router.push("/login");
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+
+    try {
+      document.cookie = "u=; path=/; max-age=0";
+      await fetch("/api/auth/logout", { method: "POST" });
+    } finally {
+      setLogoutOpen(false);
+      setIsLoggingOut(false);
+      router.push("/login");
+      router.refresh();
+    }
   };
 
   const showSwitcher = !!businesses && businesses.length >= 1;
@@ -169,14 +190,43 @@ export default function TopBar({
               </Link>
             ) : null}
 
-            <button
-              onClick={handleLogout}
-              title="Logout"
-              aria-label="Log out"
-              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 shadow-sm"
-            >
-              <LogOut className="h-4 w-4" />
-            </button>
+            <AlertDialog open={logoutOpen} onOpenChange={setLogoutOpen}>
+              <AlertDialogTrigger asChild>
+                <button
+                  type="button"
+                  title="Logout"
+                  aria-label="Log out"
+                  className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 shadow-sm"
+                >
+                  <LogOut className="h-4 w-4" />
+                </button>
+              </AlertDialogTrigger>
+              <AlertDialogContent className="rounded-3xl border-slate-200 bg-white p-6 shadow-[0_24px_80px_rgba(15,23,42,0.18)] sm:max-w-[420px]">
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="text-slate-900">
+                    Log out?
+                  </AlertDialogTitle>
+                  <AlertDialogDescription className="text-sm text-slate-600">
+                    Your current session will end on this device.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel
+                    disabled={isLoggingOut}
+                    className="rounded-2xl border-slate-200"
+                  >
+                    Stay here
+                  </AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleLogout}
+                    disabled={isLoggingOut}
+                    className="rounded-2xl bg-slate-900 text-white hover:bg-slate-800"
+                  >
+                    {isLoggingOut ? "Logging out..." : "Log out"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </div>
       </div>

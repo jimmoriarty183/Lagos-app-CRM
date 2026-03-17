@@ -5,7 +5,7 @@ import { requireAdminUser } from "@/lib/admin/access";
 import { loadAdminDataset } from "@/lib/admin/queries";
 
 export default async function AdminHealthPage() {
-  await requireAdminUser("/admin/health");
+  const { workspaceHref } = await requireAdminUser("/admin/health");
   const dataset = await loadAdminDataset();
 
   const pendingInvitesOlderThan7Days = dataset.invites.filter(
@@ -23,18 +23,19 @@ export default async function AdminHealthPage() {
   return (
     <AdminShell
       activeHref="/admin/health"
-      title="Health"
-      description="Actionable admin view по проблемным зонам: onboarding gaps, ownership issues, stale businesses и зависшие invites."
+      workspaceHref={workspaceHref}
+      title="Контроль"
+      description="Проблемные зоны, которые требуют ручного внимания: проблемы onboarding, владение бизнесами, неактивные бизнесы и старые приглашения."
     >
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <AdminStatCard label="Users without business" value={formatNumber(usersWithoutBusiness.length)} hint="Нужен follow-up по onboarding" href="/admin/users?business=none" />
-        <AdminStatCard label="Never signed in" value={formatNumber(usersNeverSignedIn.length)} hint="Регистрация без первого входа" href="/admin/users?signIn=never" />
-        <AdminStatCard label="Unconfirmed email" value={formatNumber(usersUnconfirmed.length)} hint="Нужно проверить confirmation flow" href="/admin/users?status=unconfirmed" />
-        <AdminStatCard label="Businesses without owner" value={formatNumber(businessesWithoutOwner.length)} hint="Ownership issue" href="/admin/businesses?owner=missing" />
-        <AdminStatCard label="Businesses without memberships" value={formatNumber(businessesWithoutMemberships.length)} hint="Пустые workspace" href="/admin/businesses" />
-        <AdminStatCard label="Businesses with zero orders" value={formatNumber(dataset.businesses.filter((item) => item.ordersCount === 0).length)} hint="Не дошли до core use case" href="/admin/businesses?orders=zero_orders" />
-        <AdminStatCard label="Stale businesses" value={formatNumber(staleBusinesses.length)} hint="Нет activity 30+ дней" href="/admin/businesses?activity=inactive" />
-        <AdminStatCard label="Old pending invites" value={formatNumber(pendingInvitesOlderThan7Days.length)} hint="Pending invite старше 7 дней" href="/admin/invites?status=pending" />
+        <AdminStatCard label="Пользователи без бизнеса" value={formatNumber(usersWithoutBusiness.length)} hint="Нужно вернуть их в onboarding" href="/admin/users?business=none" />
+        <AdminStatCard label="Без первого входа" value={formatNumber(usersNeverSignedIn.length)} hint="Регистрация без входа" href="/admin/users?signIn=never" />
+        <AdminStatCard label="Неподтвержденная почта" value={formatNumber(usersUnconfirmed.length)} hint="Нужно проверить confirmation flow" href="/admin/users?status=unconfirmed" />
+        <AdminStatCard label="Бизнесы без владельца" value={formatNumber(businessesWithoutOwner.length)} hint="Проблема владения" href="/admin/businesses?owner=missing" />
+        <AdminStatCard label="Бизнесы без участников" value={formatNumber(businessesWithoutMemberships.length)} hint="Пустые рабочие пространства" href="/admin/businesses" />
+        <AdminStatCard label="Бизнесы без заказов" value={formatNumber(dataset.businesses.filter((item) => item.ordersCount === 0).length)} hint="Не дошли до основного сценария" href="/admin/businesses?orders=zero_orders" />
+        <AdminStatCard label="Неактивные бизнесы" value={formatNumber(staleBusinesses.length)} hint="Нет активности 30+ дней" href="/admin/businesses?activity=inactive" />
+        <AdminStatCard label="Старые ожидающие приглашения" value={formatNumber(pendingInvitesOlderThan7Days.length)} hint="Приглашение старше 7 дней" href="/admin/invites?status=pending" />
       </div>
 
       <div className="mt-6 grid gap-4 xl:grid-cols-2">
@@ -42,18 +43,18 @@ export default async function AdminHealthPage() {
           <SectionList
             items={[
               ...usersWithoutBusiness.slice(0, 4).map((user) => ({
-                title: `${user.fullName || user.email || user.id} • no business`,
+                title: `${user.fullName || user.email || user.id} • без бизнеса`,
                 meta: `${user.email || "без email"} • ${formatDateTime(user.createdAt)}`,
                 href: `/admin/users/${user.id}`,
               })),
               ...usersNeverSignedIn.slice(0, 4).map((user) => ({
-                title: `${user.fullName || user.email || user.id} • never signed in`,
+                title: `${user.fullName || user.email || user.id} • без входа`,
                 meta: `${user.email || "без email"} • ${formatDateTime(user.createdAt)}`,
                 href: `/admin/users/${user.id}`,
               })),
             ]}
-            emptyTitle="Нет user alerts"
-            emptyDescription="Проблемных user кейсов сейчас не найдено."
+            emptyTitle="Проблемных пользователей не найдено"
+            emptyDescription="В текущем срезе нет явных user-проблем."
           />
         </AdminSectionCard>
 
@@ -61,28 +62,28 @@ export default async function AdminHealthPage() {
           <SectionList
             items={[
               ...businessesWithoutOwner.slice(0, 4).map((business) => ({
-                title: `${business.slug || business.name || business.id} • no owner`,
-                meta: `${formatDateTime(business.createdAt)} • members: ${business.membersCount}`,
+                title: `${business.slug || business.name || business.id} • без владельца`,
+                meta: `${formatDateTime(business.createdAt)} • участников: ${business.membersCount}`,
                 href: `/admin/businesses/${business.id}`,
               })),
               ...staleBusinesses.slice(0, 4).map((business) => ({
-                title: `${business.slug || business.name || business.id} • stale`,
-                meta: `last activity: ${formatDateTime(business.lastActivityAt)}`,
+                title: `${business.slug || business.name || business.id} • неактивен`,
+                meta: `Последняя активность: ${formatDateTime(business.lastActivityAt)}`,
                 href: `/admin/businesses/${business.id}`,
               })),
             ]}
-            emptyTitle="Нет business alerts"
-            emptyDescription="Сейчас явных business проблем не найдено."
+            emptyTitle="Проблемных бизнесов не найдено"
+            emptyDescription="Текущий health-check не показывает критичных проблем по бизнесам."
           />
         </AdminSectionCard>
       </div>
 
       <div className="mt-6">
-        <AdminSectionCard title="Что здесь best effort">
+        <AdminSectionCard title="Что считается приближенной оценкой">
           <div className="space-y-3 text-sm text-slate-600">
-            <p>Active / stale businesses считаются без отдельной аналитической таблицы: по order activity, invite activity, activity_events и updated_at.</p>
-            <p>Users without business и never signed in уже достаточно точны для продуктовой воронки.</p>
-            <p>Если понадобится надёжный health-monitoring, следующим шагом нужна materialized admin metrics view или event log pipeline.</p>
+            <p>Активные и неактивные бизнесы считаются по доступным activity timestamps, а не по отдельной аналитической витрине.</p>
+            <p>Сигналы по пользователям уже достаточно точны для контроля продуктовой воронки.</p>
+            <p>Если понадобятся более строгие health-метрики, следующим шагом нужен materialized metrics слой или полноценный event pipeline.</p>
           </div>
         </AdminSectionCard>
       </div>

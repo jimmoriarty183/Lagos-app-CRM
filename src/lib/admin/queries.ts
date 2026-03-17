@@ -70,6 +70,7 @@ export type AdminInvite = {
   revokedAt: string | null;
   expiresAt: string | null;
   invitedBy: string | null;
+  invitedByLabel: string | null;
   acceptedBy: string | null;
   revokedBy: string | null;
 };
@@ -198,6 +199,25 @@ function getPrimaryRole(roles: string[]) {
   if (normalized.includes("OWNER")) return "OWNER";
   if (normalized.includes("MANAGER")) return "MANAGER";
   return "USER";
+}
+
+function getActivityTitle(kind: string | null | undefined) {
+  const normalized = String(kind ?? "").trim().toLowerCase();
+  const titles: Record<string, string> = {
+    "user.registered": "Новая регистрация",
+    "user.email_confirmed": "Подтверждение почты",
+    "user.signed_in": "Вход в продукт",
+    "business.created": "Создание бизнеса",
+    "invite.sent": "Отправка приглашения",
+    "invite.accepted": "Принятие приглашения",
+    "invite.revoked": "Отзыв приглашения",
+    "order.created": "Создание заказа",
+    "order.updated": "Обновление заказа",
+    "membership.added": "Добавление участника",
+    "membership.removed": "Удаление участника",
+  };
+
+  return titles[normalized] ?? (kind ? String(kind) : "Системное событие");
 }
 
 // TECH DEBT: this reads auth users page-by-page through Admin API. Good enough for MVP,
@@ -434,6 +454,9 @@ export const loadAdminDataset = cache(async () => {
       revokedAt: invite.revoked_at ?? null,
       expiresAt: invite.expires_at ?? null,
       invitedBy: invite.invited_by ?? null,
+      invitedByLabel: authUsersById.get(String(invite.invited_by ?? ""))?.fullName
+        ?? authUsersById.get(String(invite.invited_by ?? ""))?.email
+        ?? null,
       acceptedBy: invite.accepted_by ?? null,
       revokedBy: invite.revoked_by ?? null,
     };
@@ -533,7 +556,7 @@ export const loadAdminDataset = cache(async () => {
       syntheticActivity.push({
         id: `invite-created-${invite.id}`,
         kind: "invite.sent",
-        title: "Invite sent",
+        title: "Отправка приглашения",
         createdAt: invite.createdAt,
         createdAtMs: invite.createdAtMs,
         userId: invite.invitedBy,
@@ -547,7 +570,7 @@ export const loadAdminDataset = cache(async () => {
       syntheticActivity.push({
         id: `invite-accepted-${invite.id}`,
         kind: "invite.accepted",
-        title: "Invite accepted",
+        title: "Принятие приглашения",
         createdAt: invite.acceptedAt,
         createdAtMs: asTimeMs(invite.acceptedAt),
         userId: invite.acceptedBy,
@@ -561,7 +584,7 @@ export const loadAdminDataset = cache(async () => {
       syntheticActivity.push({
         id: `invite-revoked-${invite.id}`,
         kind: "invite.revoked",
-        title: "Invite revoked",
+        title: "Отзыв приглашения",
         createdAt: invite.revokedAt,
         createdAtMs: asTimeMs(invite.revokedAt),
         userId: invite.revokedBy,
@@ -591,7 +614,7 @@ export const loadAdminDataset = cache(async () => {
   const eventActivities: AdminActivity[] = activityEvents.map((event) => ({
     id: String(event.id),
     kind: String(event.event_type ?? "activity.event"),
-    title: String(event.event_type ?? "activity.event"),
+    title: getActivityTitle(event.event_type),
     createdAt: event.created_at ?? null,
     createdAtMs: asTimeMs(event.created_at),
     userId: event.actor_id ?? null,
