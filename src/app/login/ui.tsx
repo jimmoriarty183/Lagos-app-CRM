@@ -176,9 +176,23 @@ function PasswordInput({
   );
 }
 
-export default function LoginUI() {
-  const [mode, setMode] = React.useState<"login" | "register" | "reset">(
+export default function LoginUI({
+  mode: controlledMode,
+  onModeChange,
+}: {
+  mode?: "login" | "register" | "reset";
+  onModeChange?: (mode: "login" | "register" | "reset") => void;
+}) {
+  const [localMode, setLocalMode] = React.useState<"login" | "register" | "reset">(
     "login",
+  );
+  const mode = controlledMode ?? localMode;
+  const setMode = React.useCallback(
+    (nextMode: "login" | "register" | "reset") => {
+      setLocalMode(nextMode);
+      onModeChange?.(nextMode);
+    },
+    [onModeChange],
   );
 
   const [loginState, loginSubmit, loginPending] = useActionState(
@@ -301,7 +315,7 @@ export default function LoginUI() {
 
       <div className="border-b border-slate-100/80 px-6 pb-5 pt-6 sm:px-7">
         <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">
-          ORDERO
+          CORELIX
         </div>
 
         <h1 className="mt-2 text-[1.65rem] font-semibold tracking-tight text-slate-900">
@@ -314,11 +328,11 @@ export default function LoginUI() {
 
         <p className="mt-1.5 text-sm leading-relaxed text-slate-600">
           {mode === "login"
-            ? "Sign in to access your Ordero business workspace."
+            ? "Sign in to access your Corelix workspace."
             : mode === "register"
               ? inviteId
                 ? "Create your account to join your team's workspace."
-                : "Set up your account and create your first business workspace."
+                : "Set up your account and create your first Corelix workspace."
               : "We will email you a secure link to reset your password."}
         </p>
 

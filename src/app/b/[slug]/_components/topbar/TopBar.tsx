@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { LogOut, Sparkles } from "lucide-react";
-import { Logo } from "@/components/Logo";
+import { BrandIcon, BrandWordmark } from "@/components/Brand";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -52,9 +52,7 @@ export default function TopBar({
   const [logoutOpen, setLogoutOpen] = React.useState(false);
   const [isLoggingOut, setIsLoggingOut] = React.useState(false);
   const dashboardQuery = searchParams.toString();
-  const dashboardHref = dashboardQuery
-    ? `/b/${businessSlug}?${dashboardQuery}`
-    : `/b/${businessSlug}`;
+  const dashboardHref = dashboardQuery ? `/app/crm?${dashboardQuery}` : "/app/crm";
 
   const handleSelect = (slug: string) => {
     document.cookie = `active_business_slug=${encodeURIComponent(
@@ -63,7 +61,7 @@ export default function TopBar({
 
     const currentParams = new URLSearchParams(window.location.search);
     const qs = currentParams.toString();
-    router.push(qs ? `/b/${slug}?${qs}` : `/b/${slug}`);
+    router.push(qs ? `/app/crm?${qs}` : "/app/crm");
     router.refresh();
   };
 
@@ -87,21 +85,18 @@ export default function TopBar({
     role === "OWNER" ? "owner" : role === "MANAGER" ? "manager" : "guest";
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50 border-b border-slate-200/70 bg-white/70 backdrop-blur-md">
+    <header className="fixed inset-x-0 top-0 z-50 border-b border-slate-200/70 bg-white/78 backdrop-blur-md">
       <div className="pt-[env(safe-area-inset-top)]">
         <div className="mx-auto flex h-[72px] max-w-[1220px] items-center justify-between gap-4 px-4 sm:px-6">
           <Link
             href={dashboardHref}
             aria-label="Go to dashboard"
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-900 shadow-sm sm:h-auto sm:w-auto sm:justify-start sm:rounded-2xl sm:p-3 sm:gap-3 sm:px-4"
+            className="flex h-11 w-11 shrink-0 items-center justify-center sm:h-auto sm:w-auto sm:justify-start"
           >
-            <Logo size={28} />
-            <div className="hidden leading-none sm:block">
-              <div className="text-[15px] font-semibold tracking-tight text-slate-900">
-                Ordero
-              </div>
-              <div className="pt-1 text-[11px] text-slate-500">Orders. Simple. Fast.</div>
-            </div>
+            <span className="sm:hidden">
+              <BrandIcon size={28} />
+            </span>
+            <BrandWordmark variant="gradient" height={24} className="hidden h-6 w-auto sm:block" />
           </Link>
 
           <MobileTopbarMenu

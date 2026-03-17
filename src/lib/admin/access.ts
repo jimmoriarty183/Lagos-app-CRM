@@ -24,7 +24,7 @@ export const resolveWorkspaceHref = cache(async (userId: string) => {
     .eq("id", businessId)
     .maybeSingle();
 
-  return business?.slug ? `/b/${business.slug}` : "/select-business";
+  return business?.slug ? "/app/crm" : "/select-business";
 });
 
 export async function requireAdminUser(nextPath?: string) {

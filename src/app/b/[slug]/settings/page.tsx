@@ -62,7 +62,7 @@ export default async function SettingsPage({
   return (
     <div className="min-h-[100svh] overflow-x-clip bg-transparent text-slate-900">
       <TeamAccessTopBar
-        ordersHref={`/b/${encodeURIComponent(business.slug)}`}
+        ordersHref="/app/crm"
         userLabel={user.email || user.phone || "User"}
         adminHref={adminHref}
         profileHref={
@@ -89,13 +89,13 @@ export default async function SettingsPage({
             currentUserId={user.id}
             hasActiveFilters={false}
             activeFiltersCount={0}
-            clearHref={`/b/${business.slug}`}
-            businessHref={`/b/${business.slug}/settings`}
-            settingsHref={`/b/${business.slug}/settings/team`}
+            clearHref={`/app/crm`}
+            businessHref={`/app/crm`}
+            settingsHref={`/app/settings`}
             adminHref={adminHref}
             canSeeAnalytics={role === "OWNER"}
             showFilters={false}
-            activeSection="business"
+            activeSection="settings"
           />
 
           <section className="w-full min-w-0 max-w-full rounded-[20px] border border-[#dde3ee] bg-white p-3.5 pb-6 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:rounded-[26px] sm:p-5">

@@ -5,14 +5,18 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import {
   Shield,
   BarChart3,
-  Building2,
+  BriefcaseBusiness,
+  CheckSquare,
   ChevronsLeft,
   ChevronsRight,
+  GraduationCap,
   Settings,
   SlidersHorizontal,
 } from "lucide-react";
 
 import DesktopSidebarFilters from "./DesktopSidebarFilters";
+import { BrandIcon } from "@/components/Brand";
+import { getPlatformSidebarNavigation } from "@/config/navigation";
 import type { StatusFilterValue } from "@/lib/business-statuses";
 import type { DashboardRange } from "@/lib/order-dashboard-summary";
 
@@ -55,7 +59,7 @@ type Props = {
   adminHref?: string;
   canSeeAnalytics: boolean;
   showFilters?: boolean;
-  activeSection?: "business" | "settings" | "admin";
+  activeSection?: "crm" | "settings" | "admin";
   layoutMode?: "list" | "kanban";
 };
 
@@ -83,6 +87,34 @@ function getExpandedSnapshot() {
 
 function getExpandedServerSnapshot() {
   return false;
+}
+
+function SidebarBrand({
+  expanded,
+  href,
+}: {
+  expanded: boolean;
+  href: string;
+}) {
+  return (
+    <a
+      href={href}
+      aria-label="Open Corelix CRM"
+      className={[
+        "group flex items-center text-slate-900 transition",
+        expanded
+          ? "gap-3 rounded-2xl px-3 py-3"
+          : "justify-center rounded-2xl py-3",
+      ].join(" ")}
+    >
+      <BrandIcon size={expanded ? 28 : 30} />
+      {expanded ? (
+        <span className="text-base font-semibold tracking-tight text-slate-900">
+          Corelix
+        </span>
+      ) : null}
+    </a>
+  );
 }
 
 function RailLink({
@@ -319,6 +351,14 @@ export default function DesktopLeftRail({
     }
   }, [isKanban]);
 
+  const platformNavigation = getPlatformSidebarNavigation();
+  const navIconByKey = {
+    crm: <BriefcaseBusiness className="h-5 w-5" />,
+    tasks: <CheckSquare className="h-5 w-5" />,
+    academy: <GraduationCap className="h-5 w-5" />,
+    settings: <Settings className="h-5 w-5" />,
+  } as const;
+
   return (
     <div
       className={[
@@ -358,6 +398,8 @@ export default function DesktopLeftRail({
               ].join(" ")}
             >
               <div className="flex flex-col items-stretch gap-1.5">
+                <SidebarBrand expanded={expanded} href={businessHref} />
+
                 {isKanban && !expanded ? (
                   <button
                     type="button"
@@ -419,23 +461,26 @@ export default function DesktopLeftRail({
                   />
                 ) : null}
 
-                <RailLink
-                  icon={<Building2 className="h-5 w-5" />}
-                  label="Business"
-                  description="Manage access and managers"
-                  expanded={expanded}
-                  href={businessHref}
-                  active={activeSection === "business"}
-                />
+                {platformNavigation.map((item) => {
+                  const href =
+                    item.key === "crm"
+                      ? businessHref
+                      : item.key === "settings"
+                        ? settingsHref
+                        : item.href;
 
-                <RailLink
-                  icon={<Settings className="h-5 w-5" />}
-                  label="Settings"
-                  description="Team and statuses"
-                  expanded={expanded}
-                  href={settingsHref}
-                  active={activeSection === "settings"}
-                />
+                  return (
+                    <RailLink
+                      key={item.key}
+                      icon={navIconByKey[item.key]}
+                      label={item.label}
+                      description={item.description}
+                      expanded={expanded}
+                      href={href}
+                      active={activeSection === item.key}
+                    />
+                  );
+                })}
                 {adminHref ? (
                   <RailLink
                     icon={<Shield className="h-5 w-5" />}

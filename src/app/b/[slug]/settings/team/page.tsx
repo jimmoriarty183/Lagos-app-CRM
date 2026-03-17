@@ -96,7 +96,7 @@ export default async function TeamPage({
   return (
     <div className="min-h-[100svh] overflow-x-clip bg-transparent text-slate-900">
       <TeamAccessTopBar
-        ordersHref={`/b/${encodeURIComponent(business.slug)}`}
+        ordersHref="/app/crm"
         userLabel={user.email || user.phone || "User"}
         adminHref={adminHref}
         profileHref={

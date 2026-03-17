@@ -526,12 +526,12 @@ export default async function Page({ params, searchParams }: PageProps) {
   })();
   const businessHref =
     phoneRaw && phoneRaw.length > 0
-      ? `/b/${slug}/settings?u=${encodeURIComponent(phoneRaw)}`
-      : `/b/${slug}/settings`;
+      ? `/app/crm?u=${encodeURIComponent(phoneRaw)}`
+      : "/app/crm";
   const settingsHref =
     phoneRaw && phoneRaw.length > 0
-      ? `/b/${slug}/settings?u=${encodeURIComponent(phoneRaw)}`
-      : `/b/${slug}/settings`;
+      ? `/app/settings?u=${encodeURIComponent(phoneRaw)}`
+      : "/app/settings";
 
   const makeSummaryHref = (nextSummaryRange: DashboardRange) => {
     const params = new URLSearchParams();
@@ -1222,6 +1222,7 @@ export default async function Page({ params, searchParams }: PageProps) {
               adminHref={adminHref}
               canSeeAnalytics={canSeeAnalyticsNav}
               layoutMode={viewMode}
+              activeSection="crm"
             />
           </div>
 

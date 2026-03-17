@@ -10,7 +10,7 @@ import {
   TrendingUp,
   Users,
 } from "lucide-react";
-import { Logo } from "@/components/Logo";
+import { BrandWordmark } from "@/components/Brand";
 
 export type AdminNavItem = {
   href: string;
@@ -95,10 +95,10 @@ export async function AdminShell({
                 href={workspaceHref}
                 className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-3 shadow-sm transition hover:border-slate-300"
               >
-                <Logo size={32} />
+                <BrandWordmark variant="gradient" height={24} />
                 <div className="min-w-0">
                   <div className="truncate text-[15px] font-semibold tracking-tight text-slate-900">
-                    Ordero Admin
+                    Corelix Admin
                   </div>
                   <div className="text-[11px] text-slate-500">Перейти во внутренний кабинет</div>
                 </div>

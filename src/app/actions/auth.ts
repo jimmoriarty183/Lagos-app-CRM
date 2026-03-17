@@ -102,7 +102,7 @@ export async function loginAction(
     if (!biz?.slug)
       return { ok: true, error: "", next: "/login?no_business=1" };
 
-    return { ok: true, error: "", next: `/b/${biz.slug}` };
+    return { ok: true, error: "", next: "/app/crm" };
   } catch (e) {
     return { ok: false, error: msg(e), next: "" };
   }
@@ -213,7 +213,7 @@ export async function registerOwnerAction(
       }
     }
 
-    return { ok: true, error: "", next: `/b/${slug}` };
+    return { ok: true, error: "", next: "/app/crm" };
   } catch (e) {
     return { ok: false, error: msg(e), next: "" };
   }

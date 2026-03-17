@@ -1,15 +1,22 @@
+"use client";
+
 import React from "react";
 import Link from "next/link";
-import { Logo } from "@/components/Logo";
+import { BrandWordmark } from "@/components/Brand";
 import LoginUI from "./ui";
 
 const benefits = [
-  "Track orders",
-  "Manage team access",
-  "Run your business workspace",
+  "Run Corelix CRM",
+  "Manage workspace access",
+  "Scale into future modules",
 ];
 
 export default function Page() {
+  const [mode, setMode] = React.useState<"login" | "register" | "reset">(
+    "login",
+  );
+  const showPromo = mode !== "register";
+
   return (
     <div className="relative min-h-[100svh] overflow-hidden bg-[#f6f8fb] text-slate-900">
       <div className="pointer-events-none absolute -left-40 top-[-9rem] h-[26rem] w-[26rem] rounded-full bg-[radial-gradient(circle,_rgba(59,130,246,0.22)_0%,_rgba(59,130,246,0)_68%)] blur-2xl" />
@@ -19,11 +26,7 @@ export default function Page() {
       <header className="relative z-10 border-b border-white/50 bg-white/45 backdrop-blur-xl">
         <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4 sm:px-8">
           <div className="flex items-center gap-2.5">
-            <Logo size={28} />
-            <div>
-              <div className="text-[15px] font-semibold tracking-tight text-slate-900">Ordero</div>
-              <div className="text-[11px] text-slate-500">Orders. Simple. Fast.</div>
-            </div>
+            <BrandWordmark variant="gradient" height={24} className="h-6 w-auto" />
           </div>
           <Link
             className="text-sm font-medium text-slate-600 transition hover:text-slate-900"
@@ -35,16 +38,27 @@ export default function Page() {
       </header>
 
       <main className="relative z-10 mx-auto flex min-h-[calc(100svh-64px)] w-full max-w-6xl items-center px-4 py-8 sm:px-8 sm:py-10">
-        <div className="mx-auto grid w-full max-w-5xl items-center gap-8 lg:grid-cols-[1fr_440px] lg:gap-10">
+        <div
+          className={[
+            "mx-auto grid w-full items-center gap-8 lg:gap-10",
+            showPromo
+              ? "max-w-5xl lg:grid-cols-[1fr_440px]"
+              : "max-w-[460px]",
+          ].join(" ")}
+        >
+          {showPromo ? (
           <section className="hidden rounded-[24px] border border-white/60 bg-white/55 p-10 shadow-[0_20px_60px_-35px_rgba(15,23,42,0.35)] backdrop-blur-md lg:block">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-              Order management platform
+              Corelix platform
             </p>
+            <div className="mb-6">
+              <BrandWordmark variant="gradient" height={24} className="h-6 w-auto" />
+            </div>
             <h2 className="mt-3 max-w-md text-3xl font-semibold tracking-tight text-slate-900">
-              Organize operations with a clean, reliable business workspace.
+              One clean platform with CRM live today and more modules ready next.
             </h2>
             <p className="mt-4 max-w-md text-sm leading-relaxed text-slate-600">
-              Built for growing teams that need structure, visibility, and simple collaboration across orders and internal workflows.
+              Built for growing teams that need structured CRM operations now, with Tasks and Academy already prepared in the platform foundation.
             </p>
 
             <ul className="mt-8 space-y-3">
@@ -59,6 +73,7 @@ export default function Page() {
               ))}
             </ul>
           </section>
+          ) : null}
 
           <div className="space-y-4">
             <React.Suspense
@@ -69,13 +84,17 @@ export default function Page() {
               }
             >
               <div className="mx-auto w-full max-w-[460px]">
-                <LoginUI />
+                <LoginUI mode={mode} onModeChange={setMode} />
               </div>
             </React.Suspense>
 
+            {showPromo ? (
             <section className="rounded-2xl border border-white/70 bg-white/70 p-4 shadow-sm backdrop-blur-sm lg:hidden">
+              <div className="mb-3">
+                <BrandWordmark variant="gradient" height={22} className="h-[22px] w-auto" />
+              </div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                Why Ordero
+                Why Corelix
               </p>
               <ul className="mt-2 space-y-2">
                 {benefits.map((benefit) => (
@@ -86,6 +105,7 @@ export default function Page() {
                 ))}
               </ul>
             </section>
+            ) : null}
           </div>
         </div>
       </main>

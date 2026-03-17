@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Logo } from "@/components/Logo";
+import { BrandIcon, BrandWordmark } from "@/components/Brand";
 
 type Props = {
   ordersHref: string;
@@ -50,13 +50,9 @@ export default function TeamAccessTopBar({
             <Link
               href={ordersHref}
               aria-label="Go to orders"
-              className="hidden items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-slate-900 shadow-sm sm:inline-flex"
+              className="hidden items-center gap-3 sm:inline-flex"
             >
-              <Logo size={28} />
-              <div className="leading-none">
-                <div className="text-[15px] font-semibold tracking-tight text-slate-900">Ordero</div>
-                <div className="pt-1 text-[11px] text-slate-500">Orders. Simple. Fast.</div>
-              </div>
+              <BrandWordmark variant="gradient" height={24} className="h-6 w-auto" />
             </Link>
 
             <Link
@@ -64,10 +60,10 @@ export default function TeamAccessTopBar({
               className="inline-flex h-10 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:text-slate-900 sm:h-10 sm:w-auto sm:gap-2 sm:px-3"
             >
               <span className="sm:hidden">
-                <Logo size={18} />
+                <BrandIcon size={18} />
               </span>
               <ChevronLeft className="hidden h-4 w-4 sm:block" />
-              <span className="hidden sm:inline">Orders</span>
+              <span className="hidden sm:inline">CRM</span>
             </Link>
           </div>
 

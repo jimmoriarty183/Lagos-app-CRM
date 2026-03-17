@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 90" fill="none">
+  <defs>
+    <linearGradient id="wordmarkGrad" x1="0" y1="0" x2="320" y2="90" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#7C3AED"/>
+      <stop offset="100%" stop-color="#4F46E5"/>
+    </linearGradient>
+  </defs>
+  <text
+    x="0"
+    y="62"
+    font-family="Inter, Satoshi, Arial, sans-serif"
+    font-size="56"
+    font-weight="600"
+    letter-spacing="-1.2"
+    fill="url(#wordmarkGrad)"
+  >Corelix</text>
+</svg>

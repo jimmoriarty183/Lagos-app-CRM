@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { BrandWordmark } from "@/components/Brand";
 
 type Plan = {
   name: string;
@@ -32,7 +33,7 @@ const faqs = [
   },
   {
     q: "Does it work on phones?",
-    a: "Absolutely. Ordero is mobile-first, so owners and staff can track orders on the go.",
+    a: "Absolutely. Corelix CRM is mobile-first, so owners and staff can track work on the go.",
   },
   {
     q: "Is billing live already?",
@@ -52,7 +53,7 @@ export default function PricingPage() {
       name: "Starter",
       price: "$0",
       period: "/ forever",
-      note: "For trying Ordero",
+      note: "For trying Corelix CRM",
       features: ["Up to 30 orders / month", "Basic statuses", "Mobile-friendly"],
       cta: "Start free",
       action: () => router.push("/login"),
@@ -92,7 +93,9 @@ export default function PricingPage() {
     <main className="page">
       <div className="shell">
         <nav className="topNav">
-          <button className="brand" onClick={() => router.push("/")}>Ordero</button>
+          <button className="brand" onClick={() => router.push("/")} aria-label="Go to Corelix home">
+            <BrandWordmark variant="gradient" height={24} />
+          </button>
           <div className="links">
             <button onClick={() => router.push("/")}>Home</button>
             <button className="active">Pricing</button>
@@ -103,8 +106,8 @@ export default function PricingPage() {
 
         <section className="hero card">
           <p className="eyebrow">Simple plans. No surprises.</p>
-          <h1>Pricing that fits a small business</h1>
-          <p className="heroCopy">Orders. Simple. Fast. Start free. Upgrade when you&apos;re ready. Cancel anytime.</p>
+          <h1>Pricing for the Corelix CRM launch</h1>
+          <p className="heroCopy">Start with CRM now. Expand the platform as new modules come online. Upgrade when you&apos;re ready.</p>
           <div className="heroCtas">
             <button className="primary" onClick={() => router.push("/login")}>Start free</button>
             <button className="secondary" onClick={() => document.getElementById("compare")?.scrollIntoView({ behavior: "smooth" })}>Compare plans</button>

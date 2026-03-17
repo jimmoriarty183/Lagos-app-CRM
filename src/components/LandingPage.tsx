@@ -6,7 +6,7 @@ import {
   ListChecks,
   Smartphone,
 } from "lucide-react";
-import { Logo } from "./Logo";
+import { BrandWordmark } from "./Brand";
 
 const ORDER_STATES = [
   { label: "NEW", tone: "bg-blue-50 text-blue-700 border-blue-100" },
@@ -23,11 +23,7 @@ export function LandingPage() {
       <header className="sticky top-0 z-50 border-b border-slate-200/70 bg-white/85 backdrop-blur">
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-5 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3">
-            <Logo size={34} />
-            <div>
-              <p className="text-base font-semibold leading-none text-slate-900">Ordero</p>
-              <p className="pt-1 text-xs text-slate-500">Orders. Simple. Fast.</p>
-            </div>
+            <BrandWordmark variant="gradient" height={28} className="h-7 w-auto" />
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
@@ -57,18 +53,18 @@ export function LandingPage() {
         <section className="space-y-8 lg:space-y-10">
           <div className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-blue-700 sm:text-sm sm:normal-case sm:tracking-normal">
             <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
-            Built for small business operations
+            Modular operations platform
           </div>
 
           <div className="space-y-5">
             <h1 className="text-4xl font-semibold leading-[1.06] tracking-tight text-slate-900 sm:text-5xl lg:text-6xl">
-              Track every order.
+              Run your workspace on one platform.
               <br />
-              Keep every customer informed.
+              Start with CRM, scale into more.
             </h1>
             <p className="max-w-2xl text-base leading-relaxed text-slate-600 sm:text-lg">
-              One lightweight workspace to create orders, update statuses, and
-              stay on top of due dates and payments from any device.
+              Corelix unifies CRM today and is prepared for Tasks and Academy next,
+              so your product architecture grows without fragmenting the experience.
             </p>
           </div>
 
@@ -77,7 +73,7 @@ export function LandingPage() {
               href="/login"
               className="group inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-3 font-semibold text-white shadow-sm transition hover:bg-slate-800 hover:shadow"
             >
-              Open my orders
+              Open CRM
               <ArrowRight
                 size={16}
                 className="transition-transform group-hover:translate-x-0.5"
@@ -110,14 +106,14 @@ export function LandingPage() {
           </div>
 
           <p className="text-xs text-slate-400">
-            If you were redirected here, sign in to continue to your business dashboard.
+            If you were redirected here, sign in to continue to your Corelix workspace.
           </p>
         </section>
 
         <section className="space-y-4 lg:pt-4">
           <p className="inline-flex items-center gap-2 text-sm font-medium text-slate-600">
             <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
-            Live customer view preview
+            CRM preview
           </p>
 
           <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl shadow-slate-200/60">
@@ -172,7 +168,7 @@ export function LandingPage() {
           </div>
 
           <p className="text-xs leading-relaxed text-slate-500">
-            A clean status-first screen with due date and payment updates that works on mobile and desktop.
+            A clean status-first CRM screen with due date and payment updates that works on mobile and desktop.
           </p>
         </section>
       </main>

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { BrandWordmark } from "@/components/Brand";
 
 export type RightVariant =
   | "none"
@@ -75,26 +76,8 @@ export default function TopBar({
             minWidth: 0,
           }}
         >
-          <div
-            style={{
-              width: 40,
-              height: 40,
-              borderRadius: 14,
-              background: "#111827",
-              color: "white",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontWeight: 900,
-              userSelect: "none",
-              flex: "0 0 auto",
-            }}
-          >
-            O
-          </div>
-
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontWeight: 900, lineHeight: 1 }}>Ordero</div>
+            <BrandWordmark variant="gradient" height={24} />
             {subtitle ? (
               <div style={{ opacity: 0.65, fontSize: 12, marginTop: 2 }}>
                 {subtitle}

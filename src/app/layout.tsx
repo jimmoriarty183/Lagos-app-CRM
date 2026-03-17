@@ -20,8 +20,13 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Ordero",
-  description: "Order management",
+  title: "Corelix",
+  description: "Corelix platform with CRM-ready modular architecture.",
+  icons: {
+    icon: [{ url: "/brand/favicon.svg", type: "image/svg+xml" }],
+    shortcut: [{ url: "/brand/favicon.svg", type: "image/svg+xml" }],
+    apple: [{ url: "/brand/favicon.svg", type: "image/svg+xml" }],
+  },
 };
 
 export default function RootLayout({

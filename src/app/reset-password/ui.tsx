@@ -3,6 +3,7 @@
 import React from "react";
 import { useActionState } from "react";
 import { updatePasswordAction } from "@/app/actions/auth";
+import { LoginBrand } from "@/components/Brand";
 import { createClient } from "@/lib/supabase/client";
 
 type State = { ok: boolean; error: string; next: string };
@@ -150,10 +151,10 @@ export default function ResetPasswordUI() {
   return (
     <div className="w-full overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
       <div className="border-b border-gray-100 p-4">
-        <div className="text-[11px] font-semibold tracking-wider text-gray-500">ORDERO</div>
+        <LoginBrand variant="dark" height={24} />
         <div className="mt-1 text-xl font-bold text-gray-900">Create a new password</div>
         <div className="mt-0.5 text-xs text-gray-600">
-          Set a new password for your account and continue to the dashboard.
+          Set a new password for your account and continue to your Corelix workspace.
         </div>
       </div>
 
