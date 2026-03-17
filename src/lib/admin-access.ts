@@ -1,4 +1,4 @@
-const ADMIN_USERS_PATH = "/admin/users";
+const ADMIN_USERS_PATH = "/admin";
 
 function parseAdminEmails(value: string | undefined) {
   return String(value ?? "")
