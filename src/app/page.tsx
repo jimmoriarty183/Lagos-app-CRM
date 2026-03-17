@@ -1,8 +1,10 @@
 import { LandingPage } from "../components/LandingPage";
+import { RecoveryRedirect } from "../components/RecoveryRedirect";
 
 export default function HomePage() {
   return (
     <div className="relative min-h-screen overflow-hidden bg-white">
+      <RecoveryRedirect />
       {/* BACKGROUND like Figma Make */}
       <div className="pointer-events-none absolute inset-0">
         {/* blue blob */}

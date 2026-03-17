@@ -3,6 +3,7 @@
 import React from "react";
 import { useActionState } from "react";
 import { updatePasswordAction } from "@/app/actions/auth";
+import { createClient } from "@/lib/supabase/client";
 
 type State = { ok: boolean; error: string; next: string };
 const initialState: State = { ok: false, error: "", next: "" };
@@ -41,7 +42,7 @@ function PasswordInput({
   return (
     <label className="block">
       <div className="text-xs font-medium text-gray-700">{label}</div>
-      <div className="mt-1 relative">
+      <div className="relative mt-1">
         <input
           name={name}
           type={show ? "text" : "password"}
@@ -53,7 +54,7 @@ function PasswordInput({
         <button
           type="button"
           onClick={() => setShow((s) => !s)}
-          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg px-2 py-1 text-[11px] font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg px-2 py-1 text-[11px] font-semibold text-gray-600 hover:bg-gray-100 hover:text-gray-900"
         >
           {show ? "Hide" : "Show"}
         </button>
@@ -62,62 +63,116 @@ function PasswordInput({
   );
 }
 
+function parseHashTokens(hash: string) {
+  const params = new URLSearchParams((hash || "").replace(/^#/, ""));
+  return {
+    accessToken: params.get("access_token") || "",
+    refreshToken: params.get("refresh_token") || "",
+    type: params.get("type") || "",
+  };
+}
+
 export default function ResetPasswordUI() {
+  const supabase = React.useMemo(() => createClient(), []);
   const [state, submit, pending] = useActionState(
-    updatePasswordAction as any,
+    updatePasswordAction as never,
     initialState,
   );
 
+  const [booting, setBooting] = React.useState(true);
   const [pass1, setPass1] = React.useState("");
   const [pass2, setPass2] = React.useState("");
   const [localError, setLocalError] = React.useState("");
 
   React.useEffect(() => {
-    if (state?.ok && state.next) window.location.href = state.next;
+    let active = true;
+
+    async function initRecoverySession() {
+      if (typeof window === "undefined") return;
+
+      const { accessToken, refreshToken, type } = parseHashTokens(window.location.hash);
+
+      if (accessToken && refreshToken && type === "recovery") {
+        const { error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+
+        if (error) {
+          if (active) {
+            setLocalError("Recovery link is invalid or expired. Please request a new reset email.");
+            setBooting(false);
+          }
+          return;
+        }
+
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+
+      const { data } = await supabase.auth.getSession();
+      if (!active) return;
+
+      if (!data.session) {
+        setLocalError("Open the password reset link from the email again.");
+      }
+
+      setBooting(false);
+    }
+
+    void initRecoverySession();
+
+    return () => {
+      active = false;
+    };
+  }, [supabase]);
+
+  React.useEffect(() => {
+    if (state?.ok && state.next) {
+      window.location.href = state.next;
+    }
   }, [state]);
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     setLocalError("");
+
     if (!pass1 || pass1.length < 6) {
       e.preventDefault();
-      setLocalError("Пароль должен быть минимум 6 символов");
+      setLocalError("Password must be at least 6 characters.");
       return;
     }
+
     if (pass1 !== pass2) {
       e.preventDefault();
-      setLocalError("Пароли не совпадают");
-      return;
+      setLocalError("Passwords do not match.");
     }
   }
 
   return (
-    <div className="w-full rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-      <div className="p-4 border-b border-gray-100">
-        <div className="text-[11px] font-semibold tracking-wider text-gray-500">
-          ORDERO
-        </div>
-        <div className="mt-1 text-xl font-bold text-gray-900">Новый пароль</div>
+    <div className="w-full overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+      <div className="border-b border-gray-100 p-4">
+        <div className="text-[11px] font-semibold tracking-wider text-gray-500">ORDERO</div>
+        <div className="mt-1 text-xl font-bold text-gray-900">Create a new password</div>
         <div className="mt-0.5 text-xs text-gray-600">
-          Задай новый пароль для аккаунта.
+          Set a new password for your account and continue to the dashboard.
         </div>
       </div>
 
-      <div className="p-4 space-y-3">
+      <div className="space-y-3 p-4">
         <ErrorBox text={localError} />
         <ErrorBox text={state?.error} />
         {state?.ok ? (
-          <SuccessBox text="Пароль обновлён. Сейчас перенаправим..." />
+          <SuccessBox text="Password updated. Redirecting to sign in..." />
         ) : null}
 
         <form action={submit} onSubmit={onSubmit} className="space-y-2.5">
           <PasswordInput
-            label="Новый пароль"
+            label="New password"
             name="password"
             value={pass1}
             onChange={setPass1}
           />
           <PasswordInput
-            label="Повторите пароль"
+            label="Repeat password"
             name="password_confirm"
             value={pass2}
             onChange={setPass2}
@@ -125,10 +180,10 @@ export default function ResetPasswordUI() {
 
           <button
             type="submit"
-            disabled={pending}
+            disabled={pending || booting}
             className="w-full rounded-xl bg-gray-900 px-4 py-2 text-sm font-semibold !text-white hover:bg-black disabled:opacity-60 disabled:!text-white"
           >
-            {pending ? "Сохраняем..." : "Сохранить пароль"}
+            {booting ? "Checking link..." : pending ? "Saving..." : "Save password"}
           </button>
         </form>
       </div>
