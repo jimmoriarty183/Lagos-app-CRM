@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { supabaseServerReadOnly } from "@/lib/supabase/server";
+import { getAdminUsersPath, isAdminEmail } from "@/lib/admin-access";
 import BusinessPeoplePanel from "@/app/b/[slug]/_components/BusinessPeoplePanel";
 import TeamAccessTopBar from "./TeamAccessTopBar";
 import SettingsTabs from "../SettingsTabs";
@@ -69,6 +70,7 @@ export default async function TeamPage({
   if (role === "GUEST") {
     redirect(`/login?next=${encodeURIComponent(nextPath)}`);
   }
+  const adminHref = isAdminEmail(user.email) ? getAdminUsersPath() : undefined;
 
   const { data: ownerManagerMems } = await supabase
     .from("memberships")
@@ -96,6 +98,7 @@ export default async function TeamPage({
       <TeamAccessTopBar
         ordersHref={`/b/${encodeURIComponent(business.slug)}`}
         userLabel={user.email || user.phone || "User"}
+        adminHref={adminHref}
         profileHref={
           user.phone
             ? `/m/${encodeURIComponent(user.phone)}`
@@ -123,6 +126,7 @@ export default async function TeamPage({
             clearHref={`/b/${business.slug}`}
             businessHref={`/b/${business.slug}/settings`}
             settingsHref={`/b/${business.slug}/settings/team`}
+            adminHref={adminHref}
             canSeeAnalytics={role === "OWNER"}
             showFilters={false}
             activeSection="settings"

@@ -34,6 +34,7 @@ import { loadBusinessStatuses } from "@/lib/business-statuses.server";
 import { resolveUserDisplay } from "@/lib/user-display";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { normalizeOrderClient } from "@/lib/order-client";
+import { getAdminUsersPath, isAdminEmail } from "@/lib/admin-access";
 
 function isSameStatusFilterSet(
   actual: readonly StatusFilterValue[],
@@ -407,6 +408,7 @@ export default async function Page({ params, searchParams }: PageProps) {
   const canManage = userRole === "OWNER" || userRole === "MANAGER";
   const canEdit = canManage;
   const canSeeAnalyticsNav = userRole === "OWNER";
+  const adminHref = isAdminEmail(user?.email) ? getAdminUsersPath() : undefined;
   const currentUserId = user?.id ?? null;
   let currentUserName =
     bypassUser && !user
@@ -1178,6 +1180,7 @@ export default async function Page({ params, searchParams }: PageProps) {
         businesses={businessOptions}
         businessHref={businessHref}
         settingsHref={settingsHref}
+        adminHref={adminHref}
         clearHref={clearHref}
         hasActiveFilters={hasActiveFilters}
       />
@@ -1216,6 +1219,7 @@ export default async function Page({ params, searchParams }: PageProps) {
               clearHref={clearHref}
               businessHref={businessHref}
               settingsHref={settingsHref}
+              adminHref={adminHref}
               canSeeAnalytics={canSeeAnalyticsNav}
               layoutMode={viewMode}
             />

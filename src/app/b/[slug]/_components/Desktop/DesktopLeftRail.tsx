@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import {
+  Shield,
   BarChart3,
   Building2,
   ChevronsLeft,
@@ -51,9 +52,10 @@ type Props = {
   clearHref: string;
   businessHref: string;
   settingsHref: string;
+  adminHref?: string;
   canSeeAnalytics: boolean;
   showFilters?: boolean;
-  activeSection?: "business" | "settings";
+  activeSection?: "business" | "settings" | "admin";
   layoutMode?: "list" | "kanban";
 };
 
@@ -240,6 +242,7 @@ export default function DesktopLeftRail({
   clearHref,
   businessHref,
   settingsHref,
+  adminHref,
   canSeeAnalytics,
   showFilters = true,
   activeSection,
@@ -433,6 +436,16 @@ export default function DesktopLeftRail({
                   href={settingsHref}
                   active={activeSection === "settings"}
                 />
+                {adminHref ? (
+                  <RailLink
+                    icon={<Shield className="h-5 w-5" />}
+                    label="Admin"
+                    description="Registered users and access"
+                    expanded={expanded}
+                    href={adminHref}
+                    active={activeSection === "admin"}
+                  />
+                ) : null}
 
               </div>
             </div>

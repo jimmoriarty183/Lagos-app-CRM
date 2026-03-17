@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { supabaseServerReadOnly } from "@/lib/supabase/server";
+import { getAdminUsersPath, isAdminEmail } from "@/lib/admin-access";
 import TeamAccessTopBar from "../team/TeamAccessTopBar";
 import SettingsTabs from "../SettingsTabs";
 import DesktopLeftRail from "@/app/b/[slug]/_components/Desktop/DesktopLeftRail";
@@ -56,6 +57,7 @@ export default async function InvitesPage({
   if (role === "GUEST") {
     redirect(`/login?next=${encodeURIComponent(nextPath)}`);
   }
+  const adminHref = isAdminEmail(user.email) ? getAdminUsersPath() : undefined;
 
   const tabs = [
     { href: `/b/${business.slug}/settings`, label: "Business", active: false },
@@ -69,6 +71,7 @@ export default async function InvitesPage({
       <TeamAccessTopBar
         ordersHref={`/b/${encodeURIComponent(business.slug)}`}
         userLabel={user.email || user.phone || "User"}
+        adminHref={adminHref}
         profileHref={
           user.phone
             ? `/m/${encodeURIComponent(user.phone)}`
@@ -96,6 +99,7 @@ export default async function InvitesPage({
             clearHref={`/b/${business.slug}`}
             businessHref={`/b/${business.slug}/settings`}
             settingsHref={`/b/${business.slug}/settings/team`}
+            adminHref={adminHref}
             canSeeAnalytics={role === "OWNER"}
             showFilters={false}
             activeSection="settings"

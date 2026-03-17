@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { supabaseServerReadOnly } from "@/lib/supabase/server";
+import { getAdminUsersPath, isAdminEmail } from "@/lib/admin-access";
 import TeamAccessTopBar from "../team/TeamAccessTopBar";
 import BusinessStatusesPanel from "../team/BusinessStatusesPanel";
 import SettingsTabs from "../SettingsTabs";
@@ -56,12 +57,14 @@ export default async function StatusesPage({
   if (role === "GUEST") {
     redirect(`/login?next=${encodeURIComponent(nextPath)}`);
   }
+  const adminHref = isAdminEmail(user.email) ? getAdminUsersPath() : undefined;
 
   return (
     <div className="min-h-[100svh] overflow-x-clip bg-transparent text-slate-900">
       <TeamAccessTopBar
         ordersHref={`/b/${encodeURIComponent(business.slug)}`}
         userLabel={user.email || user.phone || "User"}
+        adminHref={adminHref}
         profileHref={
           user.phone
             ? `/m/${encodeURIComponent(user.phone)}`
@@ -89,6 +92,7 @@ export default async function StatusesPage({
             clearHref={`/b/${business.slug}`}
             businessHref={`/b/${business.slug}/settings`}
             settingsHref={`/b/${business.slug}/settings/team`}
+            adminHref={adminHref}
             canSeeAnalytics={role === "OWNER"}
             showFilters={false}
             activeSection="settings"

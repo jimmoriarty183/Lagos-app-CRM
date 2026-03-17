@@ -19,6 +19,7 @@ type Props = {
   businesses?: BusinessOption[];
   businessHref?: string;
   settingsHref?: string;
+  adminHref?: string;
   clearHref?: string;
   hasActiveFilters?: boolean;
 };
@@ -31,6 +32,7 @@ export default function TopBar({
   businesses,
   businessHref,
   settingsHref,
+  adminHref,
   clearHref,
   hasActiveFilters = false,
 }: Props) {
@@ -84,6 +86,7 @@ export default function TopBar({
           <MobileTopbarMenu
             businessHref={businessHref ?? dashboardHref}
             settingsHref={settingsHref ?? `${businessHref ?? dashboardHref}`}
+            adminHref={adminHref}
             clearHref={clearHref ?? dashboardHref}
             hasActiveFilters={hasActiveFilters}
             canSeeAnalytics={role === "OWNER"}
@@ -156,6 +159,15 @@ export default function TopBar({
               <Sparkles className="mr-1 h-3 w-3" />
               {plan || "beta"}
             </span>
+
+            {adminHref ? (
+              <Link
+                href={adminHref}
+                className="inline-flex h-10 items-center rounded-2xl border border-slate-200 bg-white px-3 text-[12px] font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:text-slate-900"
+              >
+                Admin
+              </Link>
+            ) : null}
 
             <button
               onClick={handleLogout}

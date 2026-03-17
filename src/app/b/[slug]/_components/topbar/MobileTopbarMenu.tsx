@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { BarChart3, Building2, Menu, Settings, SlidersHorizontal, X } from "lucide-react";
+import { BarChart3, Building2, Menu, Settings, Shield, SlidersHorizontal, X } from "lucide-react";
 
 type Props = {
   businessHref: string;
   settingsHref: string;
+  adminHref?: string;
   clearHref: string;
   hasActiveFilters: boolean;
   canSeeAnalytics: boolean;
@@ -14,6 +15,7 @@ type Props = {
 export default function MobileTopbarMenu({
   businessHref,
   settingsHref,
+  adminHref,
   clearHref,
   hasActiveFilters,
   canSeeAnalytics,
@@ -90,6 +92,17 @@ export default function MobileTopbarMenu({
             <Settings className="h-4 w-4 text-gray-500" />
             <span>Settings</span>
           </a>
+
+          {adminHref ? (
+            <a
+              href={adminHref}
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-gray-800 transition-colors hover:bg-gray-50"
+            >
+              <Shield className="h-4 w-4 text-gray-500" />
+              <span>Admin</span>
+            </a>
+          ) : null}
 
           {hasActiveFilters ? (
             <a

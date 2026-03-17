@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, ChevronDown, LogOut, UserCircle2 } from "lucide-react";
+import { ChevronLeft, ChevronDown, LogOut, Shield, UserCircle2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,12 +17,14 @@ type Props = {
   ordersHref: string;
   userLabel: string;
   profileHref: string;
+  adminHref?: string;
 };
 
 export default function TeamAccessTopBar({
   ordersHref,
   userLabel,
   profileHref,
+  adminHref,
 }: Props) {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
@@ -91,6 +93,14 @@ export default function TeamAccessTopBar({
                   <DropdownMenuItem asChild className="rounded-lg px-3 py-2 text-sm font-medium">
                     <Link href={profileHref}>Profile</Link>
                   </DropdownMenuItem>
+                  {adminHref ? (
+                    <DropdownMenuItem asChild className="rounded-lg px-3 py-2 text-sm font-medium">
+                      <Link href={adminHref}>
+                        <Shield className="h-4 w-4" />
+                        Admin
+                      </Link>
+                    </DropdownMenuItem>
+                  ) : null}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     className="rounded-lg px-3 py-2 text-sm font-medium text-red-700 focus:text-red-700"
