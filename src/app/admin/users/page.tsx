@@ -1,8 +1,19 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { supabaseServerReadOnly } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { getAdminUsersPath, isAdminEmail } from "@/lib/admin-access";
+
+type SearchParams = Record<string, string | string[] | undefined>;
 
 type AuthUserRow = {
   id: string;
@@ -36,6 +47,72 @@ type CurrentUserMembershipRow = {
   business_id: string | null;
   created_at: string | null;
 };
+
+type AdminUserRow = {
+  id: string;
+  email: string | null;
+  name: string;
+  createdAt: string | null;
+  createdAtMs: number;
+  lastSignInAt: string | null;
+  lastSignInAtMs: number;
+  emailConfirmedAt: string | null;
+  businessLabels: string[];
+  membershipsCount: number;
+  searchBlob: string;
+};
+
+type SortOption =
+  | "newest"
+  | "oldest"
+  | "lastSignInDesc"
+  | "lastSignInAsc"
+  | "nameAsc"
+  | "nameDesc";
+
+type StatusFilter = "all" | "confirmed" | "pending" | "withBusiness" | "withoutBusiness";
+
+const PAGE_SIZE_OPTIONS = [20, 50, 100] as const;
+const SORT_OPTIONS: readonly SortOption[] = [
+  "newest",
+  "oldest",
+  "lastSignInDesc",
+  "lastSignInAsc",
+  "nameAsc",
+  "nameDesc",
+] as const;
+const STATUS_FILTERS: readonly StatusFilter[] = [
+  "all",
+  "confirmed",
+  "pending",
+  "withBusiness",
+  "withoutBusiness",
+] as const;
+
+function normalizeSingle(value: string | string[] | undefined) {
+  if (Array.isArray(value)) return String(value[0] ?? "");
+  return String(value ?? "");
+}
+
+function normalizePageSize(value: string | string[] | undefined) {
+  const parsed = Number.parseInt(normalizeSingle(value), 10);
+  return PAGE_SIZE_OPTIONS.includes(parsed as (typeof PAGE_SIZE_OPTIONS)[number]) ? parsed : 20;
+}
+
+function normalizePageNumber(value: string | string[] | undefined) {
+  const parsed = Number.parseInt(normalizeSingle(value), 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+}
+
+function normalizeSort(value: string | string[] | undefined): SortOption {
+  const normalized = normalizeSingle(value) as SortOption;
+  return SORT_OPTIONS.includes(normalized) ? normalized : "newest";
+}
+
+function normalizeStatusFilter(value: string | string[] | undefined): StatusFilter {
+  const normalized = normalizeSingle(value) as StatusFilter;
+  return STATUS_FILTERS.includes(normalized) ? normalized : "all";
+}
 
 function formatDate(value: string | null) {
   if (!value) return "Never";
@@ -75,6 +152,53 @@ function buildDisplayName(profile: ProfileRow | null, fallbackEmail: string | nu
   return fallbackEmail || "Unnamed user";
 }
 
+function getPaginationItems(currentPage: number, totalPages: number) {
+  if (totalPages <= 1) return [1];
+
+  const pages = new Set<number>([
+    1,
+    totalPages,
+    currentPage,
+    currentPage - 1,
+    currentPage + 1,
+  ]);
+
+  return Array.from(pages)
+    .filter((page) => page >= 1 && page <= totalPages)
+    .sort((a, b) => a - b);
+}
+
+function compareNullableNumber(a: number, b: number, direction: "asc" | "desc") {
+  if (!a && !b) return 0;
+  if (!a) return 1;
+  if (!b) return -1;
+  return direction === "asc" ? a - b : b - a;
+}
+
+function sortRows(rows: AdminUserRow[], sort: SortOption) {
+  const next = [...rows];
+
+  next.sort((a, b) => {
+    switch (sort) {
+      case "oldest":
+        return a.createdAtMs - b.createdAtMs;
+      case "lastSignInDesc":
+        return compareNullableNumber(a.lastSignInAtMs, b.lastSignInAtMs, "desc");
+      case "lastSignInAsc":
+        return compareNullableNumber(a.lastSignInAtMs, b.lastSignInAtMs, "asc");
+      case "nameAsc":
+        return a.name.localeCompare(b.name);
+      case "nameDesc":
+        return b.name.localeCompare(a.name);
+      case "newest":
+      default:
+        return b.createdAtMs - a.createdAtMs;
+    }
+  });
+
+  return next;
+}
+
 async function loadUsers() {
   const admin = supabaseAdmin();
   const { data, error } = await admin.auth.admin.listUsers({
@@ -97,7 +221,7 @@ async function loadUsers() {
   const userIds = authUsers.map((user) => user.id);
   if (!userIds.length) {
     return {
-      rows: [],
+      rows: [] as AdminUserRow[],
       totalUsers: 0,
       last24Hours: 0,
       last7Days: 0,
@@ -139,34 +263,43 @@ async function loadUsers() {
   const now = Date.now();
   const dayMs = 1000 * 60 * 60 * 24;
 
-  const rows = authUsers
-    .map((user) => {
-      const profile = profilesById.get(user.id) ?? null;
-      const userMemberships = membershipsByUserId.get(user.id) ?? [];
-      const businessLabels = userMemberships
-        .map((membership) => {
-          const business = businessesById.get(String(membership.business_id ?? ""));
-          const role = String(membership.role ?? "").trim().toUpperCase() || "USER";
-          const label = business?.slug || business?.name || String(membership.business_id ?? "").trim();
-          return label ? `${label} (${role})` : role;
-        })
-        .filter(Boolean);
+  const rows = authUsers.map((user) => {
+    const profile = profilesById.get(user.id) ?? null;
+    const userMemberships = membershipsByUserId.get(user.id) ?? [];
+    const businessLabels = userMemberships
+      .map((membership) => {
+        const business = businessesById.get(String(membership.business_id ?? ""));
+        const role = String(membership.role ?? "").trim().toUpperCase() || "USER";
+        const label = business?.slug || business?.name || String(membership.business_id ?? "").trim();
+        return label ? `${label} (${role})` : role;
+      })
+      .filter(Boolean);
 
-      const createdAt = user.created_at ? new Date(user.created_at).getTime() : 0;
+    const name = buildDisplayName(profile, user.email || profile?.email || null);
+    const createdAtMs = user.created_at ? new Date(user.created_at).getTime() : 0;
+    const lastSignInAtMs = user.last_sign_in_at ? new Date(user.last_sign_in_at).getTime() : 0;
 
-      return {
-        id: user.id,
-        email: user.email || profile?.email || null,
-        name: buildDisplayName(profile, user.email || profile?.email || null),
-        createdAt: user.created_at,
-        createdAtMs: createdAt,
-        lastSignInAt: user.last_sign_in_at,
-        emailConfirmedAt: user.email_confirmed_at,
-        businessLabels,
-        membershipsCount: userMemberships.length,
-      };
-    })
-    .sort((a, b) => b.createdAtMs - a.createdAtMs);
+    return {
+      id: user.id,
+      email: user.email || profile?.email || null,
+      name,
+      createdAt: user.created_at,
+      createdAtMs,
+      lastSignInAt: user.last_sign_in_at,
+      lastSignInAtMs,
+      emailConfirmedAt: user.email_confirmed_at,
+      businessLabels,
+      membershipsCount: userMemberships.length,
+      searchBlob: [
+        name,
+        user.email || profile?.email || "",
+        user.id,
+        businessLabels.join(" "),
+      ]
+        .join(" ")
+        .toLowerCase(),
+    } satisfies AdminUserRow;
+  });
 
   const last24Hours = rows.filter(
     (row) => row.createdAtMs > 0 && now - row.createdAtMs <= dayMs,
@@ -202,9 +335,7 @@ async function loadBackHref(userId: string) {
 
   const firstMembership = (memberships[0] ?? null) as CurrentUserMembershipRow | null;
   const businessId = String(firstMembership?.business_id ?? "").trim();
-  if (!businessId) {
-    return "/";
-  }
+  if (!businessId) return "/";
 
   const { data: business } = await admin
     .from("businesses")
@@ -235,7 +366,33 @@ function StatCard({
   );
 }
 
-export default async function AdminUsersPage() {
+function buildQueryString(base: SearchParams, updates: Record<string, string | number | null | undefined>) {
+  const params = new URLSearchParams();
+
+  for (const [key, rawValue] of Object.entries(base)) {
+    const value = normalizeSingle(rawValue);
+    if (value) params.set(key, value);
+  }
+
+  for (const [key, rawValue] of Object.entries(updates)) {
+    if (rawValue === null || rawValue === undefined || rawValue === "") {
+      params.delete(key);
+    } else {
+      params.set(key, String(rawValue));
+    }
+  }
+
+  const query = params.toString();
+  return query ? `${getAdminUsersPath()}?${query}` : getAdminUsersPath();
+}
+
+export default async function AdminUsersPage({
+  searchParams,
+}: {
+  searchParams?: Promise<SearchParams>;
+}) {
+  const sp = (await searchParams) ?? {};
+
   const supabase = await supabaseServerReadOnly();
   const {
     data: { user },
@@ -249,8 +406,45 @@ export default async function AdminUsersPage() {
     notFound();
   }
 
+  const query = normalizeSingle(sp.q).trim().toLowerCase();
+  const sort = normalizeSort(sp.sort);
+  const statusFilter = normalizeStatusFilter(sp.status);
+  const perPage = normalizePageSize(sp.perPage);
+  const requestedPage = normalizePageNumber(sp.page);
+
   const { rows, totalUsers, last24Hours, last7Days } = await loadUsers();
   const backHref = await loadBackHref(user.id);
+
+  const filteredRows = sortRows(
+    rows.filter((row) => {
+      if (query && !row.searchBlob.includes(query)) return false;
+
+      if (statusFilter === "confirmed" && !row.emailConfirmedAt) return false;
+      if (statusFilter === "pending" && row.emailConfirmedAt) return false;
+      if (statusFilter === "withBusiness" && row.membershipsCount <= 0) return false;
+      if (statusFilter === "withoutBusiness" && row.membershipsCount > 0) return false;
+
+      return true;
+    }),
+    sort,
+  );
+
+  const totalFiltered = filteredRows.length;
+  const totalPages = Math.max(1, Math.ceil(totalFiltered / perPage));
+  const currentPage = Math.min(requestedPage, totalPages);
+  const pageStart = (currentPage - 1) * perPage;
+  const visibleRows = filteredRows.slice(pageStart, pageStart + perPage);
+  const pageItems = getPaginationItems(currentPage, totalPages);
+
+  const currentQueryState: SearchParams = {
+    q: query || undefined,
+    sort,
+    status: statusFilter,
+    perPage: String(perPage),
+    page: String(currentPage),
+  };
+
+  const refreshHref = buildQueryString(currentQueryState, {});
 
   return (
     <div className="min-h-[100svh] bg-[#f6f8fb] text-slate-900">
@@ -264,14 +458,14 @@ export default async function AdminUsersPage() {
               >
                 Back to workspace
               </Link>
-              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+              <div className="mt-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
                 Admin
               </div>
               <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">
                 Registered users
               </h1>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                Global list of users from Supabase Auth. New registrations are shown first.
+                Supabase Auth users loaded into this screen. You can search by name, email, ID, or business.
               </p>
             </div>
 
@@ -280,7 +474,7 @@ export default async function AdminUsersPage() {
                 Signed in as <span className="font-semibold text-slate-900">{user.email}</span>
               </div>
               <Link
-                href={getAdminUsersPath()}
+                href={refreshHref}
                 className="rounded-xl border border-slate-300 bg-white px-3 py-2 font-medium text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
               >
                 Refresh
@@ -289,9 +483,96 @@ export default async function AdminUsersPage() {
           </div>
 
           <div className="mt-5 grid gap-4 sm:grid-cols-3">
-            <StatCard label="Loaded users" value={totalUsers} hint="First 200 auth users" />
-            <StatCard label="Last 24 hours" value={last24Hours} hint="New registrations" />
-            <StatCard label="Last 7 days" value={last7Days} hint="Recent signups" />
+            <StatCard label="Loaded users" value={totalUsers} hint="First 200 users returned by Supabase Auth" />
+            <StatCard label="Last 24 hours" value={last24Hours} hint="Users registered in the last 24 hours" />
+            <StatCard label="Last 7 days" value={last7Days} hint="Users registered in the last 7 days" />
+          </div>
+
+          <div className="mt-4 rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="grid gap-3 lg:grid-cols-[minmax(0,1.4fr)_180px_200px_130px]">
+              <form action={getAdminUsersPath()} className="lg:col-span-4 grid gap-3 lg:grid-cols-[minmax(0,1.4fr)_180px_200px_130px]">
+                <input
+                  type="text"
+                  name="q"
+                  defaultValue={query}
+                  placeholder="Search by email, name, ID, or business..."
+                  className="h-11 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
+                />
+                <select
+                  name="status"
+                  defaultValue={statusFilter}
+                  className="h-11 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
+                >
+                  <option value="all">All statuses</option>
+                  <option value="confirmed">Confirmed only</option>
+                  <option value="pending">Pending only</option>
+                  <option value="withBusiness">With business</option>
+                  <option value="withoutBusiness">No business</option>
+                </select>
+                <select
+                  name="sort"
+                  defaultValue={sort}
+                  className="h-11 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
+                >
+                  <option value="newest">Newest first</option>
+                  <option value="oldest">Oldest first</option>
+                  <option value="lastSignInDesc">Last sign-in: newest</option>
+                  <option value="lastSignInAsc">Last sign-in: oldest</option>
+                  <option value="nameAsc">Name A-Z</option>
+                  <option value="nameDesc">Name Z-A</option>
+                </select>
+                <div className="flex gap-2">
+                  <select
+                    name="perPage"
+                    defaultValue={String(perPage)}
+                    className="h-11 min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
+                  >
+                    {PAGE_SIZE_OPTIONS.map((option) => (
+                      <option key={option} value={option}>
+                        {option} / page
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="submit"
+                    className="h-11 rounded-xl bg-slate-900 px-4 text-sm font-semibold text-white transition hover:bg-slate-800"
+                  >
+                    Apply
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-sm text-slate-500">
+              <div>
+                Showing {visibleRows.length === 0 ? 0 : pageStart + 1}-{pageStart + visibleRows.length} of{" "}
+                {totalFiltered} matched users
+              </div>
+              <div>
+                Loaded dataset is capped at 200 auth users for now.
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Loaded users</div>
+                <div className="mt-1 text-sm text-slate-600">How many auth users the page loaded from Supabase before filtering.</div>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Registered</div>
+                <div className="mt-1 text-sm text-slate-600">When the account was created in Supabase Auth.</div>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Last sign in</div>
+                <div className="mt-1 text-sm text-slate-600">Last successful login time. "Never" means the user has not signed in yet.</div>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Businesses / Status</div>
+                <div className="mt-1 text-sm text-slate-600">Business memberships plus whether the email has been confirmed.</div>
+              </div>
+            </div>
           </div>
 
           <div className="mt-6 overflow-hidden rounded-[24px] border border-slate-200 bg-white">
@@ -307,7 +588,7 @@ export default async function AdminUsersPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {rows.map((row) => (
+                  {visibleRows.map((row) => (
                     <tr key={row.id} className="align-top">
                       <td className="px-4 py-4">
                         <div className="font-semibold text-slate-900">{row.name}</div>
@@ -355,10 +636,73 @@ export default async function AdminUsersPage() {
                       </td>
                     </tr>
                   ))}
+
+                  {visibleRows.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="px-6 py-12 text-center text-sm text-slate-500">
+                        No users matched the current search and filters.
+                      </td>
+                    </tr>
+                  ) : null}
                 </tbody>
               </table>
             </div>
           </div>
+
+          {totalPages > 1 ? (
+            <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+              <div className="text-sm text-slate-500">
+                Page {currentPage} of {totalPages}
+              </div>
+
+              <Pagination className="mx-0 w-auto justify-start">
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      href={buildQueryString(currentQueryState, {
+                        page: Math.max(1, currentPage - 1),
+                      })}
+                      aria-disabled={currentPage === 1}
+                      className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                    />
+                  </PaginationItem>
+
+                  {pageItems.map((page, index) => {
+                    const prevPage = pageItems[index - 1];
+                    const needsEllipsis = prevPage && page - prevPage > 1;
+
+                    return (
+                      <div key={page} className="flex items-center">
+                        {needsEllipsis ? (
+                          <PaginationItem>
+                            <PaginationEllipsis />
+                          </PaginationItem>
+                        ) : null}
+                        <PaginationItem>
+                          <PaginationLink
+                            href={buildQueryString(currentQueryState, { page })}
+                            isActive={page === currentPage}
+                          >
+                            {page}
+                          </PaginationLink>
+                        </PaginationItem>
+                      </div>
+                    );
+                  })}
+
+                  <PaginationItem>
+                    <PaginationNext
+                      href={buildQueryString(currentQueryState, {
+                        page: Math.min(totalPages, currentPage + 1),
+                      })}
+                      aria-disabled={currentPage === totalPages}
+                      className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          ) : null}
         </div>
       </div>
     </div>
