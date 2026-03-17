@@ -32,6 +32,11 @@ type BusinessRow = {
   name: string | null;
 };
 
+type CurrentUserMembershipRow = {
+  business_id: string | null;
+  created_at: string | null;
+};
+
 function formatDate(value: string | null) {
   if (!value) return "Never";
 
@@ -178,6 +183,38 @@ async function loadUsers() {
   };
 }
 
+async function loadBackHref(userId: string) {
+  const admin = supabaseAdmin();
+
+  const { data: memberships, error } = await admin
+    .from("memberships")
+    .select("business_id, created_at")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: true });
+
+  if (error || !memberships?.length) {
+    return "/";
+  }
+
+  if (memberships.length > 1) {
+    return "/select-business";
+  }
+
+  const firstMembership = (memberships[0] ?? null) as CurrentUserMembershipRow | null;
+  const businessId = String(firstMembership?.business_id ?? "").trim();
+  if (!businessId) {
+    return "/";
+  }
+
+  const { data: business } = await admin
+    .from("businesses")
+    .select("slug")
+    .eq("id", businessId)
+    .maybeSingle();
+
+  return business?.slug ? `/b/${business.slug}` : "/";
+}
+
 function StatCard({
   label,
   value,
@@ -213,6 +250,7 @@ export default async function AdminUsersPage() {
   }
 
   const { rows, totalUsers, last24Hours, last7Days } = await loadUsers();
+  const backHref = await loadBackHref(user.id);
 
   return (
     <div className="min-h-[100svh] bg-[#f6f8fb] text-slate-900">
@@ -220,6 +258,12 @@ export default async function AdminUsersPage() {
         <div className="rounded-[28px] border border-white/70 bg-white/70 p-5 shadow-[0_20px_60px_-35px_rgba(15,23,42,0.35)] backdrop-blur-md sm:p-7">
           <div className="flex flex-col gap-4 border-b border-slate-200 pb-5 sm:flex-row sm:items-end sm:justify-between">
             <div>
+              <Link
+                href={backHref}
+                className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:text-slate-900"
+              >
+                Back to workspace
+              </Link>
               <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
                 Admin
               </div>
