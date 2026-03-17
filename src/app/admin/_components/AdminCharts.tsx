@@ -7,12 +7,9 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import { formatNumber } from "@/app/admin/_components/AdminShared";
 
-type TrendPoint = {
-  date: string;
-  registrations?: number;
-  businesses?: number;
-};
+type TrendPoint = Record<string, string | number | undefined>;
 
 type PiePoint = {
   name: string;
@@ -25,34 +22,45 @@ type StatusPoint = {
   value: number;
 };
 
+type FunnelPoint = {
+  label: string;
+  value: number;
+  rateFromPrevious: number | null;
+  rateFromStart: number | null;
+};
+
 export function AdminTrendChart({
   data,
   dataKey,
   title,
+  subtitle,
+  color = "#2563eb",
 }: {
   data: TrendPoint[];
-  dataKey: "registrations" | "businesses";
+  dataKey: string;
   title: string;
+  subtitle?: string;
+  color?: string;
 }) {
   return (
     <div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
       <div className="mb-3">
         <div className="text-sm font-semibold text-slate-900">{title}</div>
-        <div className="text-xs text-slate-500">Последние 14 дней</div>
+        <div className="text-xs text-slate-500">{subtitle || "Динамика по выбранному периоду"}</div>
       </div>
       <ChartContainer
         className="h-[240px] w-full"
         config={{
           value: {
             label: title,
-            color: dataKey === "registrations" ? "#2563eb" : "#0f766e",
+            color,
           },
         }}
       >
         <AreaChart data={data} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
           <CartesianGrid vertical={false} />
-          <XAxis dataKey="date" tickLine={false} axisLine={false} />
-          <YAxis allowDecimals={false} tickLine={false} axisLine={false} width={28} />
+          <XAxis dataKey="label" tickLine={false} axisLine={false} />
+          <YAxis allowDecimals={false} tickLine={false} axisLine={false} width={32} />
           <ChartTooltip content={<ChartTooltipContent formatter={(value: number) => `${value}`} />} />
           <Area
             type="monotone"
@@ -70,16 +78,18 @@ export function AdminTrendChart({
 
 export function AdminPieChartBlock({
   title,
+  subtitle,
   data,
 }: {
   title: string;
+  subtitle?: string;
   data: PiePoint[];
 }) {
   return (
     <div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
       <div className="mb-3">
         <div className="text-sm font-semibold text-slate-900">{title}</div>
-        <div className="text-xs text-slate-500">Распределение по текущему срезу данных</div>
+        <div className="text-xs text-slate-500">{subtitle || "Распределение по текущему срезу данных"}</div>
       </div>
       <ChartContainer
         className="h-[240px] w-full"
@@ -109,34 +119,91 @@ export function AdminPieChartBlock({
 
 export function AdminStatusBarChart({
   title,
+  subtitle,
   data,
+  color = "#334155",
 }: {
   title: string;
+  subtitle?: string;
   data: StatusPoint[];
+  color?: string;
 }) {
   return (
     <div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
       <div className="mb-3">
         <div className="text-sm font-semibold text-slate-900">{title}</div>
-        <div className="text-xs text-slate-500">Текущий срез по статусам приглашений</div>
+        <div className="text-xs text-slate-500">{subtitle || "Текущий срез по статусам"}</div>
       </div>
       <ChartContainer
         className="h-[240px] w-full"
         config={{
           value: {
             label: title,
-            color: "#334155",
+            color,
           },
         }}
       >
         <BarChart data={data} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
           <CartesianGrid vertical={false} />
           <XAxis dataKey="name" tickLine={false} axisLine={false} />
-          <YAxis allowDecimals={false} tickLine={false} axisLine={false} width={28} />
+          <YAxis allowDecimals={false} tickLine={false} axisLine={false} width={32} />
           <ChartTooltip content={<ChartTooltipContent formatter={(value: number) => `${value}`} />} />
           <Bar dataKey="value" radius={[10, 10, 0, 0]} fill="var(--color-value)" />
         </BarChart>
       </ChartContainer>
+    </div>
+  );
+}
+
+export function AdminFunnelChart({
+  title,
+  subtitle,
+  steps,
+}: {
+  title: string;
+  subtitle?: string;
+  steps: FunnelPoint[];
+}) {
+  const maxValue = Math.max(...steps.map((step) => step.value), 1);
+
+  return (
+    <div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="mb-4">
+        <div className="text-sm font-semibold text-slate-900">{title}</div>
+        <div className="text-xs text-slate-500">{subtitle || "Последовательность ключевых шагов"}</div>
+      </div>
+
+      <div className="space-y-4">
+        {steps.map((step, index) => (
+          <div key={step.key} className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <div className="text-sm font-semibold text-slate-900">
+                  {index + 1}. {step.label}
+                </div>
+                <div className="mt-1 text-xs text-slate-500">
+                  {step.rateFromPrevious === null
+                    ? "Для первого шага конверсия не считается"
+                    : `Конверсия с предыдущего шага: ${step.rateFromPrevious.toFixed(1)}%`}
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-lg font-semibold text-slate-900">{formatNumber(step.value)}</div>
+                <div className="text-xs text-slate-500">
+                  {step.rateFromStart === null ? "Нет базы" : `${step.rateFromStart.toFixed(1)}% от всех`}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-3 h-3 overflow-hidden rounded-full bg-slate-200">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-[#1d4ed8] to-[#0f766e]"
+                style={{ width: `${Math.max(8, (step.value / maxValue) * 100)}%` }}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

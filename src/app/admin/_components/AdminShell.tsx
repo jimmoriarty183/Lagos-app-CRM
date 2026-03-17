@@ -1,5 +1,15 @@
 import Link from "next/link";
-import { ArrowLeftCircle, BarChart3, Building2, HeartPulse, LayoutDashboard, ListChecks, Shield, Users } from "lucide-react";
+import {
+  ArrowLeftCircle,
+  BarChart3,
+  Building2,
+  HeartPulse,
+  LayoutDashboard,
+  ListChecks,
+  Shield,
+  TrendingUp,
+  Users,
+} from "lucide-react";
 import { Logo } from "@/components/Logo";
 
 export type AdminNavItem = {
@@ -13,14 +23,20 @@ export const ADMIN_NAV: AdminNavItem[] = [
   {
     href: "/admin",
     label: "Сводка",
-    description: "Ключевые цифры и визуализация",
+    description: "Ключевые цифры и обзор системы",
     icon: <LayoutDashboard className="h-4 w-4" />,
   },
   {
     href: "/admin/users",
     label: "Пользователи",
-    description: "Регистрации, входы и onboarding",
+    description: "Регистрации, входы и онбординг",
     icon: <Users className="h-4 w-4" />,
+  },
+  {
+    href: "/admin/analytics",
+    label: "Аналитика",
+    description: "Рост, активация, использование и воронка",
+    icon: <TrendingUp className="h-4 w-4" />,
   },
   {
     href: "/admin/businesses",
