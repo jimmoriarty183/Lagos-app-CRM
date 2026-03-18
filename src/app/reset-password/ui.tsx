@@ -154,7 +154,7 @@ export default function ResetPasswordUI() {
         <LoginBrand variant="dark" height={24} />
         <div className="mt-1 text-xl font-bold text-gray-900">Create a new password</div>
         <div className="mt-0.5 text-xs text-gray-600">
-          Set a new password for your account and continue to your Corelix workspace.
+          Set a new password for your account and continue to your Ordo workspace.
         </div>
       </div>
 
@@ -191,3 +191,4 @@ export default function ResetPasswordUI() {
     </div>
   );
 }
+

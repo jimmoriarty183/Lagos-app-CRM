@@ -58,15 +58,15 @@ function ReadonlyCard({
   hint?: string;
 }) {
   return (
-    <div className="rounded-[18px] border border-[#dde3ee] bg-white p-4 shadow-[0_4px_14px_rgba(15,23,42,0.04)]">
-      <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
-        <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-[#e2e8f0] bg-[#f8fafc] text-slate-600">
+    <div className="rounded-[18px] border border-[#E5E7EB] bg-white p-4 shadow-[0_4px_14px_rgba(15,23,42,0.04)]">
+      <div className="product-section-label flex items-center gap-2 text-[#6B7280]">
+        <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] text-[#6B7280]">
           {icon}
         </span>
         {label}
       </div>
-      <div className="mt-3 break-all text-sm font-semibold text-slate-900">{value}</div>
-      {hint ? <div className="mt-1 text-xs leading-5 text-slate-500">{hint}</div> : null}
+      <div className="mt-3 break-all text-sm font-semibold text-[#1F2937]">{value}</div>
+      {hint ? <div className="mt-1 text-xs leading-5 text-[#6B7280]">{hint}</div> : null}
     </div>
   );
 }
@@ -91,10 +91,10 @@ function EditableCard({
   children: ReactNode;
 }) {
   return (
-    <div className="rounded-[18px] border border-[#dde3ee] bg-white p-4 shadow-[0_4px_14px_rgba(15,23,42,0.04)]">
+    <div className="rounded-[18px] border border-[#E5E7EB] bg-white p-4 shadow-[0_4px_14px_rgba(15,23,42,0.04)]">
       <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
-          <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-[#e2e8f0] bg-[#f8fafc] text-slate-600">
+        <div className="product-section-label flex items-center gap-2 text-[#6B7280]">
+          <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] text-[#6B7280]">
             {icon}
           </span>
           {label}
@@ -108,8 +108,8 @@ function EditableCard({
           className={[
             "inline-flex h-9 w-9 items-center justify-center rounded-xl border transition",
             editing
-              ? "border-[#2563eb] bg-[#eff6ff] text-[#2563eb] shadow-[0_0_0_3px_rgba(37,99,235,0.12)]"
-              : "border-[#dde3ee] bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50",
+              ? "border-[#6366F1] bg-[#EEF2FF] text-[#6366F1] shadow-[0_0_0_3px_rgba(99,102,241,0.12)]"
+              : "border-[#E5E7EB] bg-white text-[#4B5563] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]",
           ].join(" ")}
           aria-label={editing ? `Close ${label} editing` : `Edit ${label}`}
         >
@@ -123,8 +123,8 @@ function EditableCard({
         ) : (
           <div
             className={[
-              "min-h-11 rounded-xl border border-slate-200 bg-[#f8fafc] px-3.5 py-3 text-sm",
-              displayValue ? "text-slate-900" : "text-slate-400",
+              "min-h-11 rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] px-3.5 py-3 text-sm",
+              displayValue ? "border-[#E5E7EB] bg-[#F9FAFB] text-[#1F2937]" : "border-[#E5E7EB] bg-[#F9FAFB] text-[#9CA3AF]",
             ].join(" ")}
           >
             {displayValue || placeholder}
@@ -132,13 +132,13 @@ function EditableCard({
         )}
       </div>
 
-      {hint ? <div className="mt-2 text-xs leading-5 text-slate-500">{hint}</div> : null}
+      {hint ? <div className="mt-2 text-xs leading-5 text-[#6B7280]">{hint}</div> : null}
     </div>
   );
 }
 
 const inputClassName =
-  "h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100";
+  "h-11 w-full rounded-xl border border-[#E5E7EB] bg-white px-3.5 text-sm text-[#1F2937] outline-none transition placeholder:text-[#9CA3AF] hover:border-[#C7D2FE] focus:border-[#6366F1] focus:ring-4 focus:ring-[#6366F1]/15";
 
 export default function BusinessInfoPanel({
   businessId,
@@ -295,16 +295,16 @@ export default function BusinessInfoPanel({
   };
 
   return (
-    <section className="mt-5 rounded-[20px] border border-[#dde3ee] bg-[#fbfcfe] p-4 sm:p-5">
+    <section className="mt-5 rounded-[20px] border border-[#E5E7EB] bg-[#F9FAFB] p-4 sm:p-5">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+          <div className="product-section-label text-[#6B7280]">
             Business
           </div>
-          <h2 className="mt-2 text-lg font-semibold tracking-[-0.02em] text-slate-900">
+          <h2 className="product-section-title mt-1.5">
             Business info
           </h2>
-          <p className="mt-2 max-w-[700px] text-sm leading-6 text-slate-500">
+          <p className="product-page-subtitle mt-1.5 max-w-[700px]">
             Keep the business card editable here: contact phone, address, website or shop, and
             segment. User phone stays in the user profile.
           </p>
@@ -316,7 +316,7 @@ export default function BusinessInfoPanel({
               type="button"
               onClick={discardChanges}
               disabled={status === "saving"}
-              className="inline-flex h-11 items-center rounded-full border border-[#dde3ee] bg-white px-5 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex h-11 items-center rounded-full border border-[#E5E7EB] bg-white px-5 text-sm font-semibold text-[#4B5563] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] disabled:cursor-not-allowed disabled:opacity-60"
             >
               Discard changes
             </button>
@@ -328,7 +328,7 @@ export default function BusinessInfoPanel({
                 });
               }}
               disabled={status === "saving"}
-              className="inline-flex h-11 items-center rounded-full bg-slate-900 px-5 text-sm font-semibold !text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:!text-white disabled:opacity-60"
+              className="inline-flex h-11 items-center rounded-full bg-[#6366F1] px-5 text-sm font-semibold !text-white transition hover:bg-[#5558E3] disabled:cursor-not-allowed disabled:!text-white disabled:opacity-60"
             >
               {status === "saving" ? "Saving..." : "Save changes"}
             </button>
@@ -423,15 +423,15 @@ export default function BusinessInfoPanel({
               closeEditor();
             }}
           >
-            <SelectTrigger className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100 data-[placeholder]:text-slate-400">
+            <SelectTrigger className="h-11 w-full rounded-xl border border-[#E5E7EB] bg-white px-3.5 text-sm text-[#1F2937] outline-none transition hover:border-[#C7D2FE] focus:border-[#6366F1] focus:ring-4 focus:ring-[#6366F1]/15 data-[placeholder]:text-[#9CA3AF]">
               <SelectValue placeholder="Select business segment" />
             </SelectTrigger>
-            <SelectContent className="rounded-xl border border-[#dde3ee] bg-white p-1 shadow-[0_12px_30px_rgba(15,23,42,0.12)]">
+            <SelectContent className="rounded-xl border border-[#E5E7EB] bg-white p-1 shadow-[0_12px_30px_rgba(15,23,42,0.12)]">
               {BUSINESS_SEGMENTS.map((option) => (
                 <SelectItem
                   key={option}
                   value={option}
-                  className="rounded-lg px-3 py-2 text-sm text-slate-700 focus:bg-slate-900 focus:text-white"
+                  className="rounded-lg px-3 py-2 text-sm text-[#4B5563] focus:bg-[#6366F1] focus:text-white"
                 >
                   {option}
                 </SelectItem>

@@ -1,4 +1,4 @@
-import {
+﻿import {
   getPlatformModule,
   getVisiblePlatformModules,
   type PlatformModuleKey,
@@ -14,7 +14,7 @@ export type PlatformNavItem = {
 const SETTINGS_ITEM: PlatformNavItem = {
   key: "settings",
   label: "Settings",
-  description: "Workspace configuration and access.",
+  description: "Workspace configuration and team access.",
   href: "/app/settings",
 };
 

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { BrandWordmark } from "@/components/Brand";
+import { BrandLockup } from "@/components/Brand";
 
 export type RightVariant =
   | "none"
@@ -77,7 +77,7 @@ export default function TopBar({
           }}
         >
           <div style={{ minWidth: 0 }}>
-            <BrandWordmark variant="gradient" height={24} />
+            <BrandLockup iconSize={34} textClassName="text-[1.9rem]" />
             {subtitle ? (
               <div style={{ opacity: 0.65, fontSize: 12, marginTop: 2 }}>
                 {subtitle}

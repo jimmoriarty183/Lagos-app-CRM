@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { Check, Loader2, Mail, X } from "lucide-react";
@@ -112,16 +112,16 @@ export default function IncomingInvitesPanel({ currentBusinessSlug }: { currentB
   };
 
   return (
-    <section className="rounded-[18px] border border-[#dde3ee] bg-white p-4 shadow-[0_4px_14px_rgba(15,23,42,0.04)]">
-      <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
-        <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-[#e2e8f0] bg-[#f8fafc] text-slate-600">
+    <section className="rounded-[18px] border border-[#E5E7EB] bg-white p-4 shadow-[0_4px_14px_rgba(15,23,42,0.04)]">
+      <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#6B7280]">
+        <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] text-[#6B7280]">
           <Mail className="h-4 w-4" />
         </span>
         Accept invite
       </div>
 
-      <div className="mt-3 text-sm font-semibold text-slate-900">{title}</div>
-      <div className="mt-1 text-xs leading-5 text-slate-500">
+      <div className="mt-3 text-sm font-semibold text-[#1F2937]">{title}</div>
+      <div className="mt-1 text-xs leading-5 text-[#6B7280]">
         Accept access to another business or decline it here, not only from the bell.
       </div>
 
@@ -133,11 +133,11 @@ export default function IncomingInvitesPanel({ currentBusinessSlug }: { currentB
 
       <div className="mt-3 space-y-3">
         {loading ? (
-          <div className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-4 text-sm text-slate-600">
+          <div className="rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] px-3 py-4 text-sm text-[#6B7280]">
             Loading invites...
           </div>
         ) : items.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-4 text-sm text-slate-500">
+          <div className="rounded-xl border border-dashed border-[#E5E7EB] bg-[#F9FAFB] px-3 py-4 text-sm text-[#6B7280]">
             No pending business invites.
           </div>
         ) : (
@@ -146,13 +146,13 @@ export default function IncomingInvitesPanel({ currentBusinessSlug }: { currentB
             return (
               <div
                 key={invite.id}
-                className="rounded-2xl border border-slate-100 bg-white px-3 py-3"
+                className="rounded-2xl border border-[#E5E7EB] bg-white px-3 py-3"
               >
-                <div className="text-sm font-semibold text-slate-900">
+                <div className="text-sm font-semibold text-[#1F2937]">
                   {invite.business.name || invite.business.slug}
                 </div>
-                <div className="mt-1 text-xs text-slate-500">/{invite.business.slug}</div>
-                <div className="mt-2 text-xs text-slate-400">
+                <div className="mt-1 text-xs text-[#6B7280]">/{invite.business.slug}</div>
+                <div className="mt-2 text-xs text-[#9CA3AF]">
                   Invited: {formatDateTime(invite.created_at)}
                 </div>
 
@@ -161,7 +161,7 @@ export default function IncomingInvitesPanel({ currentBusinessSlug }: { currentB
                     type="button"
                     disabled={busy}
                     onClick={() => void acceptInvite(invite.id)}
-                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#6366F1] px-3 py-2 text-sm font-semibold text-white hover:bg-[#5558E6] disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
                     Accept
@@ -171,7 +171,7 @@ export default function IncomingInvitesPanel({ currentBusinessSlug }: { currentB
                     type="button"
                     disabled={busy}
                     onClick={() => void declineInvite(invite.id)}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#E5E7EB] bg-white px-3 py-2 text-sm font-semibold text-[#4B5563] hover:border-[#C7D2FE] hover:bg-[#F9FAFB] disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <X className="h-4 w-4" />
                     Decline
@@ -185,3 +185,4 @@ export default function IncomingInvitesPanel({ currentBusinessSlug }: { currentB
     </section>
   );
 }
+

@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { LogOut, Sparkles } from "lucide-react";
-import { BrandIcon, BrandWordmark } from "@/components/Brand";
+import { BrandIcon, BrandLockup } from "@/components/Brand";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -85,18 +85,22 @@ export default function TopBar({
     role === "OWNER" ? "owner" : role === "MANAGER" ? "manager" : "guest";
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50 border-b border-slate-200/70 bg-white/78 backdrop-blur-md">
+    <header className="fixed inset-x-0 top-0 z-50 border-b border-[#E5E7EB] bg-white/90 backdrop-blur-md">
       <div className="pt-[env(safe-area-inset-top)]">
         <div className="mx-auto flex h-[72px] max-w-[1220px] items-center justify-between gap-4 px-4 sm:px-6">
           <Link
             href={dashboardHref}
             aria-label="Go to dashboard"
-            className="flex h-11 w-11 shrink-0 items-center justify-center sm:h-auto sm:w-auto sm:justify-start"
+            className="flex shrink-0 items-center justify-center sm:justify-start"
           >
             <span className="sm:hidden">
-              <BrandIcon size={28} />
+              <BrandIcon size={40} />
             </span>
-            <BrandWordmark variant="gradient" height={24} className="hidden h-6 w-auto sm:block" />
+            <BrandLockup
+              iconSize={38}
+              textClassName="text-[2rem]"
+              className="hidden sm:flex"
+            />
           </Link>
 
           <MobileTopbarMenu
@@ -123,11 +127,11 @@ export default function TopBar({
                 variant="toolbar"
               />
             ) : (
-              <div className="flex h-11 min-w-0 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 shadow-sm">
-                <span className="truncate text-sm font-semibold text-slate-900">
+              <div className="flex h-11 min-w-0 items-center gap-2 rounded-lg border border-[#E5E7EB] bg-white px-3 shadow-sm">
+                <span className="truncate text-sm font-semibold text-[#1F2937]">
                   {businessSlug}
                 </span>
-                <span className="rounded-full bg-slate-900 px-2 py-0.5 text-[11px] font-semibold text-white">
+                <span className="rounded-full bg-[#1F2937] px-2 py-0.5 text-[11px] font-semibold text-white">
                   {role === "OWNER"
                     ? "Owner"
                     : role === "MANAGER"
@@ -155,7 +159,7 @@ export default function TopBar({
             )}
 
             <div className="flex min-w-0 max-w-[180px] items-center gap-2">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-900 text-sm font-semibold text-white">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#1F2937] text-sm font-semibold text-white">
                 {userLabel[0]?.toUpperCase() || "U"}
               </div>
               <div className="flex min-w-0 flex-col leading-[1.1]">
@@ -179,7 +183,7 @@ export default function TopBar({
             {adminHref ? (
               <Link
                 href={adminHref}
-                className="inline-flex h-10 items-center rounded-2xl border border-slate-200 bg-white px-3 text-[12px] font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:text-slate-900"
+                  className="inline-flex h-10 items-center rounded-lg border border-[#E5E7EB] bg-white px-3 text-[12px] font-semibold text-[#374151] shadow-sm transition hover:border-[#C7D2FE] hover:text-[#1F2937]"
               >
                 Admin
               </Link>
@@ -191,7 +195,7 @@ export default function TopBar({
                   type="button"
                   title="Logout"
                   aria-label="Log out"
-                  className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 shadow-sm"
+                  className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-[#E5E7EB] bg-white text-[#374151] shadow-sm"
                 >
                   <LogOut className="h-4 w-4" />
                 </button>

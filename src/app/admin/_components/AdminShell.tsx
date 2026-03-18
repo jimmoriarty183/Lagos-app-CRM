@@ -10,7 +10,7 @@ import {
   TrendingUp,
   Users,
 } from "lucide-react";
-import { BrandWordmark } from "@/components/Brand";
+import { BrandLockup } from "@/components/Brand";
 
 export type AdminNavItem = {
   href: string;
@@ -95,10 +95,10 @@ export async function AdminShell({
                 href={workspaceHref}
                 className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-3 shadow-sm transition hover:border-slate-300"
               >
-                <BrandWordmark variant="gradient" height={24} />
+                <BrandLockup iconSize={34} textClassName="text-[1.8rem]" />
                 <div className="min-w-0">
                   <div className="truncate text-[15px] font-semibold tracking-tight text-slate-900">
-                    Corelix Admin
+                    Ordo Admin
                   </div>
                   <div className="text-[11px] text-slate-500">Перейти во внутренний кабинет</div>
                 </div>
@@ -158,11 +158,11 @@ export async function AdminShell({
             <section className="rounded-[28px] border border-white/70 bg-white/80 p-4 shadow-[0_20px_60px_-35px_rgba(15,23,42,0.35)] backdrop-blur-md sm:p-6 xl:p-7">
               <div className="flex flex-col gap-4 border-b border-slate-200 pb-5 lg:flex-row lg:items-end lg:justify-between">
                 <div className="min-w-0">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  <div className="product-page-kicker">
                     Администрирование
                   </div>
-                  <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">{title}</h1>
-                  <p className="mt-2 max-w-4xl text-sm leading-6 text-slate-600">{description}</p>
+                  <h1 className="product-page-title mt-1.5">{title}</h1>
+                  <p className="product-page-subtitle mt-1.5 max-w-4xl">{description}</p>
                 </div>
                 {actions ? <div className="flex flex-wrap items-center gap-3">{actions}</div> : null}
               </div>

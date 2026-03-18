@@ -216,7 +216,7 @@ function ActorAvatar({ label }: { label: string }) {
     .join("") || "?";
 
   return (
-    <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#111827] text-[10px] font-semibold text-white">
+    <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#1F2937] text-[10px] font-semibold text-white">
       {initials}
     </span>
   );
@@ -379,7 +379,7 @@ function DrawerStatusSelect({
             <button
               type="button"
               disabled={!canManage || isPending}
-              className="inline-flex h-[25px] min-w-[116px] items-center justify-between gap-2 rounded-full px-[11px] text-left text-[12px] font-medium leading-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111827]/10 disabled:cursor-default disabled:opacity-60"
+              className="inline-flex h-[25px] min-w-[116px] items-center justify-between gap-2 rounded-full px-[11px] text-left text-[12px] font-medium leading-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6366F1]/15 disabled:cursor-default disabled:opacity-60"
               style={{
                 background: tone.background,
                 color: tone.color,
@@ -399,17 +399,17 @@ function DrawerStatusSelect({
           <DropdownMenuContent
             align="start"
             sideOffset={8}
-            className="z-[120] w-72 rounded-xl border-[#dde3ee] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
+            className="z-[120] w-72 rounded-xl border-[#E5E7EB] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
             onCloseAutoFocus={(event) => event.preventDefault()}
           >
             {reasonTarget === "CANCELED" ? (
               <div className="p-1">
                 <div className="mb-2 flex items-start justify-between gap-3 px-2 py-1">
                   <div>
-                    <div className="text-sm font-semibold text-[#182230]">
+                    <div className="text-sm font-semibold text-[#1F2937]">
                       Why is this order canceled?
                     </div>
-                    <div className="mt-1 text-xs text-[#667085]">
+                    <div className="mt-1 text-xs text-[#6B7280]">
                       Pick a quick reason or write your own.
                     </div>
                   </div>
@@ -419,7 +419,7 @@ function DrawerStatusSelect({
                       setReasonTarget(null);
                       setCustomReason("");
                     }}
-                    className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-[#667085] transition hover:bg-[#f8fafc] hover:text-[#111827]"
+                    className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-[#6B7280] transition hover:bg-[#F9FAFB] hover:text-[#1F2937]"
                   >
                     <ChevronLeft className="h-3.5 w-3.5" />
                     Back
@@ -433,26 +433,26 @@ function DrawerStatusSelect({
                       type="button"
                       disabled={isPending}
                       onClick={() => applyStatusSelection("CANCELED", reason)}
-                      className="w-full rounded-lg border border-[#e4eaf2] bg-white px-3 py-2 text-left text-sm font-medium text-[#182230] transition hover:border-[#cfd8e6] hover:bg-[#f8fafc] disabled:cursor-default disabled:opacity-60"
+                      className="w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-left text-sm font-medium text-[#1F2937] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] disabled:cursor-default disabled:opacity-60"
                     >
                       {reason}
                     </button>
                   ))}
                 </div>
 
-                <div className="mt-3 border-t border-[#eef2f7] px-2 pt-3">
+                <div className="mt-3 border-t border-[#F3F4F6] px-2 pt-3">
                   <textarea
                     value={customReason}
                     onChange={(event) => setCustomReason(event.currentTarget.value)}
                     placeholder="Other reason..."
                     rows={3}
-                    className="w-full resize-none rounded-xl border border-[#dde3ee] px-3 py-2 text-sm outline-none transition placeholder:text-[#98a2b3] focus:border-[#111827]"
+                    className="w-full resize-none rounded-xl border border-[#E5E7EB] px-3 py-2 text-sm outline-none transition placeholder:text-[#9CA3AF] focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15"
                   />
                   <button
                     type="button"
                     disabled={isPending || !customReason.trim()}
                     onClick={() => applyStatusSelection("CANCELED", customReason.trim())}
-                    className="mt-2 inline-flex h-9 w-full items-center justify-center rounded-xl bg-[#111827] px-3 text-sm font-semibold text-white transition hover:bg-[#0b1220] disabled:cursor-default disabled:opacity-50"
+                    className="mt-2 inline-flex h-9 w-full items-center justify-center rounded-xl bg-[#6366F1] px-3 text-sm font-semibold text-white transition hover:bg-[#5558E3] disabled:cursor-default disabled:opacity-50"
                   >
                     Save reason
                   </button>
@@ -466,7 +466,7 @@ function DrawerStatusSelect({
                 return (
                   <DropdownMenuItem
                     key={option.value}
-                    className="rounded-lg px-3 py-2 text-sm font-medium text-[#182230] focus:bg-[#f8fafc] focus:text-[#182230]"
+                    className="rounded-lg px-3 py-2 text-sm font-medium text-[#1F2937] focus:bg-[#F9FAFB] focus:text-[#1F2937]"
                     onSelect={(event) => {
                       event.preventDefault();
                       if (option.value === localStatus) {
@@ -495,7 +495,7 @@ function DrawerStatusSelect({
                         />
                         <span>{option.label}</span>
                       </span>
-                      {selected ? <Check className="h-4 w-4 shrink-0 text-[#667085]" /> : null}
+                      {selected ? <Check className="h-4 w-4 shrink-0 text-[#6B7280]" /> : null}
                     </div>
                   </DropdownMenuItem>
                 );
@@ -511,7 +511,7 @@ function DrawerStatusSelect({
               onClick={() => {
                 router.push(`/b/${businessSlug}/settings/statuses`);
               }}
-              className="inline-flex h-7 items-center rounded-full border border-[#dbe3f0] bg-white px-2.5 text-[12px] font-semibold text-[#344054] transition hover:border-[#bfd0ec] hover:bg-[#f8fafc]"
+              className="inline-flex h-7 items-center rounded-full border border-[#E5E7EB] bg-white px-2.5 text-[12px] font-semibold text-[#374151] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
             >
               Status settings
             </button>
@@ -521,7 +521,7 @@ function DrawerStatusSelect({
                 setIsCreateOpen((prev) => !prev);
                 setCreateError(null);
               }}
-              className="inline-flex h-7 items-center gap-1 rounded-full border border-[#dbe3f0] bg-[#f8fbff] px-2.5 text-[12px] font-semibold text-[#2459d3] transition hover:border-[#bfd0ec] hover:bg-[#eef4ff]"
+              className="inline-flex h-7 items-center gap-1 rounded-full border border-[#E5E7EB] bg-[#EEF2FF] px-2.5 text-[12px] font-semibold text-[#6366F1] transition hover:border-[#C7D2FE] hover:bg-[#EEF2FF]"
             >
               <Plus className="h-3.5 w-3.5" />
               Add status
@@ -531,8 +531,8 @@ function DrawerStatusSelect({
       </div>
 
       {isCreateOpen ? (
-        <div className="rounded-2xl border border-[#dde3ee] bg-[#fcfdff] p-3">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
+        <div className="rounded-2xl border border-[#E5E7EB] bg-[#F9FAFB] p-3">
+          <div className="product-section-label">
             New status
           </div>
           <div className="mt-2 grid gap-2">
@@ -540,7 +540,7 @@ function DrawerStatusSelect({
               value={draftStatusLabel}
               onChange={(event) => setDraftStatusLabel(event.currentTarget.value)}
               placeholder="Ready for pickup"
-              className="h-10 rounded-xl border border-[#dde3ee] bg-white px-3 text-sm outline-none transition focus:border-[#111827]"
+              className="h-10 rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15"
             />
             <div className="flex flex-wrap gap-2">
               {STATUS_COLOR_OPTIONS.map((option) => (
@@ -551,8 +551,8 @@ function DrawerStatusSelect({
                   className={[
                     "inline-flex h-9 items-center gap-2 rounded-xl border px-3 text-xs font-semibold transition",
                     draftStatusColor === option.value
-                      ? "border-[#111827] bg-[#111827] !text-white"
-                      : "border-[#dde3ee] bg-white text-[#344054] hover:border-[#cfd8e6] hover:bg-[#f8fafc]",
+                      ? "border-[#6366F1] bg-[#6366F1] !text-white"
+                      : "border-[#E5E7EB] bg-white text-[#374151] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]",
                   ].join(" ")}
                 >
                   <span
@@ -569,8 +569,8 @@ function DrawerStatusSelect({
                 className={[
                   "inline-flex h-9 items-center gap-2 rounded-xl border px-3 text-xs font-semibold transition",
                   draftStatusColor === "custom"
-                    ? "border-[#111827] bg-[#111827] !text-white"
-                    : "border-[#dde3ee] bg-white text-[#344054] hover:border-[#cfd8e6] hover:bg-[#f8fafc]",
+                    ? "border-[#6366F1] bg-[#6366F1] !text-white"
+                    : "border-[#E5E7EB] bg-white text-[#374151] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]",
                 ].join(" ")}
               >
                 <span
@@ -582,14 +582,14 @@ function DrawerStatusSelect({
               </button>
             </div>
             {draftStatusColor === "custom" ? (
-              <label className="flex items-center gap-3 rounded-xl border border-[#dde3ee] bg-white px-3 py-2">
+              <label className="flex items-center gap-3 rounded-xl border border-[#E5E7EB] bg-white px-3 py-2">
                 <input
                   type="color"
                   value={customStatusColor}
                   onChange={(event) => setCustomStatusColor(event.currentTarget.value.toUpperCase())}
-                  className="h-8 w-10 cursor-pointer rounded-md border border-[#dde3ee] bg-white"
+                  className="h-8 w-10 cursor-pointer rounded-md border border-[#E5E7EB] bg-white"
                 />
-                <span className="text-xs font-medium text-[#667085]">
+                <span className="text-xs font-medium text-[#6B7280]">
                   {customStatusColor.toUpperCase()} keeps the chosen client color with softer badge tones
                 </span>
               </label>
@@ -601,7 +601,7 @@ function DrawerStatusSelect({
               <Button
                 type="button"
                 onClick={() => void handleCreateStatus()}
-                className="h-9 rounded-xl bg-[#111827] px-3 text-xs font-semibold !text-white hover:bg-[#1f2937]"
+                className="h-9 rounded-xl bg-[#6366F1] px-3 text-xs font-semibold !text-white hover:bg-[#5558E3]"
                 disabled={isCreating}
               >
                 {isCreating ? "Saving..." : "Create and assign"}
@@ -627,9 +627,9 @@ function DrawerStatusSelect({
 
 function MetaItem({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="rounded-[18px] border border-[#eef2f7] bg-[#fbfcfe] px-3.5 py-2.5">
-      <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">{label}</div>
-      <div className="mt-1 text-sm font-medium leading-5 text-[#111827]">{value}</div>
+    <div className="rounded-[18px] border border-[#F3F4F6] bg-[#F9FAFB] px-3.5 py-2.5">
+      <div className="product-section-label">{label}</div>
+      <div className="mt-1 text-sm font-medium leading-5 text-[#1F2937]">{value}</div>
     </div>
   );
 }
@@ -650,21 +650,21 @@ function FilesSection({
   onAddFiles: () => void;
 }) {
   return (
-    <div className="rounded-[20px] border border-[#eef2f7] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+    <div className="rounded-[20px] border border-[#F3F4F6] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <div className="flex items-center gap-2 text-sm font-semibold text-[#111827]">
-            <Paperclip className="h-4 w-4 text-[#98a2b3]" />
+          <div className="flex items-center gap-2 text-sm font-semibold text-[#1F2937]">
+            <Paperclip className="h-4 w-4 text-[#9CA3AF]" />
             Files
           </div>
-          <p className="mt-1 text-xs text-[#667085]">Contracts, photos, invoices, and any order-related documents.</p>
+          <p className="mt-1 text-xs text-[#6B7280]">Contracts, photos, invoices, and any order-related documents.</p>
         </div>
         {canUpload ? (
           <button
             type="button"
             onClick={onAddFiles}
             disabled={uploading}
-            className="inline-flex h-10 items-center gap-2 rounded-xl border border-[#dde3ee] bg-white px-4 text-sm font-semibold text-[#344054] transition hover:bg-[#f8fafc] disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex h-10 items-center gap-2 rounded-xl border border-[#E5E7EB] bg-white px-4 text-sm font-semibold text-[#374151] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] disabled:cursor-not-allowed disabled:opacity-60"
           >
             <Plus className="h-4 w-4" />
             {uploading ? "Uploading..." : "Add file"}
@@ -680,7 +680,7 @@ function FilesSection({
 
       <div className="mt-3 space-y-2">
         {loading ? (
-          <div className="rounded-[18px] border border-dashed border-[#dbe2ea] bg-[#fbfcfe] px-4 py-5 text-sm text-[#667085]">
+          <div className="rounded-[18px] border border-dashed border-[#E5E7EB] bg-[#F9FAFB] px-4 py-5 text-sm text-[#6B7280]">
             Loading files...
           </div>
         ) : files.length > 0 ? (
@@ -690,24 +690,24 @@ function FilesSection({
               href={`/api/activity-attachments/${file.id}`}
               target="_blank"
               rel="noreferrer"
-              className="flex items-center justify-between gap-3 rounded-[18px] border border-[#eef2f7] bg-[#fbfcfe] px-3.5 py-3 transition hover:border-[#d5dde7] hover:bg-white"
+              className="flex items-center justify-between gap-3 rounded-[18px] border border-[#F3F4F6] bg-[#F9FAFB] px-3.5 py-3 transition hover:border-[#C7D2FE] hover:bg-white"
             >
               <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2 text-sm font-semibold text-[#111827]">
-                  <FileText className="h-4 w-4 shrink-0 text-[#98a2b3]" />
+                <div className="flex items-center gap-2 text-sm font-semibold text-[#1F2937]">
+                  <FileText className="h-4 w-4 shrink-0 text-[#9CA3AF]" />
                   <span className="truncate">{file.file_name}</span>
                 </div>
-                <div className="mt-1 text-xs text-[#667085]">
+                <div className="mt-1 text-xs text-[#6B7280]">
                   {[formatFileSize(file.file_size), file.created_at ? formatDateTime(file.created_at) : null].filter(Boolean).join(" • ")}
                 </div>
               </div>
-              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[#dde3ee] bg-white text-[#344054]">
+              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[#E5E7EB] bg-white text-[#374151]">
                 <Download className="h-4 w-4" />
               </span>
             </a>
           ))
         ) : (
-          <div className="rounded-[18px] border border-dashed border-[#dbe2ea] bg-[#fbfcfe] px-4 py-5 text-sm text-[#667085]">
+          <div className="rounded-[18px] border border-dashed border-[#E5E7EB] bg-[#F9FAFB] px-4 py-5 text-sm text-[#6B7280]">
             No files attached yet.
           </div>
         )}
@@ -802,9 +802,9 @@ function LabelsSection({
   };
 
   return (
-    <div className="rounded-[20px] border border-[#eef2f7] bg-white p-3.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
-      <div className="flex items-center gap-2 text-sm font-semibold text-[#111827]">
-        <Tag className="h-4 w-4 text-[#98a2b3]" />
+    <div className="rounded-[20px] border border-[#F3F4F6] bg-white p-3.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+      <div className="flex items-center gap-2 text-sm font-semibold text-[#1F2937]">
+        <Tag className="h-4 w-4 text-[#9CA3AF]" />
         Labels
       </div>
 
@@ -815,13 +815,13 @@ function LabelsSection({
               key={label}
               type="button"
               onClick={() => removeLabel(label)}
-              className="inline-flex items-center rounded-full border border-[#dbe2ea] bg-[#fbfcfe] px-2.5 py-1 text-[11px] font-semibold text-[#667085] transition hover:border-[#cbd5e1] hover:bg-white"
+              className="inline-flex items-center rounded-full border border-[#E5E7EB] bg-[#F9FAFB] px-2.5 py-1 text-[11px] font-semibold text-[#6B7280] transition hover:border-[#C7D2FE] hover:bg-white"
             >
               {label}
             </button>
           ))
         ) : (
-          <span className="text-xs text-[#98a2b3]">No labels yet.</span>
+          <span className="text-xs text-[#9CA3AF]">No labels yet.</span>
         )}
       </div>
 
@@ -831,7 +831,7 @@ function LabelsSection({
             key={label}
             type="button"
             onClick={() => addLabel(label)}
-            className="inline-flex items-center rounded-full border border-dashed border-[#d0d5dd] bg-white px-2.5 py-1 text-[11px] font-semibold text-[#667085] transition hover:border-[#98a2b3] hover:text-[#111827]"
+            className="inline-flex items-center rounded-full border border-dashed border-[#E5E7EB] bg-white px-2.5 py-1 text-[11px] font-semibold text-[#6B7280] transition hover:border-[#C7D2FE] hover:text-[#1F2937]"
           >
             + {label}
           </button>
@@ -849,19 +849,19 @@ function LabelsSection({
             }
           }}
           placeholder="Add label"
-          className="h-10 flex-1 rounded-xl border border-[#dde3ee] bg-[#fbfcfe] px-3 text-sm outline-none transition focus:border-[#111827] focus:bg-white"
+          className="h-10 flex-1 rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] px-3 text-sm outline-none transition focus:border-[#6366F1] focus:bg-white focus:ring-2 focus:ring-[#6366F1]/15"
         />
         <button
           type="button"
           onClick={() => addLabel(draft)}
           disabled={!draft.trim()}
-          className="rounded-xl border border-[#dde3ee] bg-white px-4 text-sm font-semibold text-[#344054] transition hover:bg-[#f8fafc]"
+          className="rounded-xl border border-[#E5E7EB] bg-white px-4 text-sm font-semibold text-[#374151] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
         >
           {draft.trim() ? `Add "${draft.trim()}"` : "+ Add label"}
         </button>
       </div>
 
-      <p className="mt-2.5 text-xs leading-5 text-[#98a2b3]">
+      <p className="mt-2.5 text-xs leading-5 text-[#9CA3AF]">
         Labels are currently session-only UI until backend storage is connected.
       </p>
     </div>
@@ -987,7 +987,9 @@ export function OrderPreview({
     dueISO < todayISO &&
     (currentOrder.status === "NEW" || currentOrder.status === "IN_PROGRESS");
   const isWideLayout = layoutMode === "wide";
-  const isCompactTop = activeTab !== "overview";
+  const isCompactPreview = true;
+  const isCompactTop = isCompactPreview || activeTab !== "overview";
+  const isUltraCompactTop = isCompactPreview;
   const currentNotes = currentOrder ? notesByOrderId[currentOrder.id] ?? [] : [];
   const canUploadFiles = userRole === "OWNER" || userRole === "MANAGER";
 
@@ -1183,7 +1185,7 @@ export function OrderPreview({
         side="right"
         showClose={false}
         className={[
-          "top-3 right-3 bottom-3 h-auto w-[calc(100vw-24px)] overflow-hidden border border-[#e4e7ec] bg-[#f8fafc] p-0 transition-[max-width] duration-200 sm:left-auto sm:w-full sm:rounded-[28px] sm:shadow-[0_20px_60px_rgba(15,23,42,0.18)]",
+          "top-3 right-3 bottom-3 h-auto w-[calc(100vw-24px)] overflow-hidden border border-[#E5E7EB] bg-[#F9FAFB] p-0 transition-[max-width] duration-200 sm:left-auto sm:w-full sm:rounded-[28px] sm:shadow-[0_20px_60px_rgba(15,23,42,0.18)]",
           isWideLayout ? "sm:max-w-[calc(100vw-32px)]" : "sm:max-w-[680px]",
         ].join(" ")}
       >
@@ -1202,15 +1204,15 @@ export function OrderPreview({
 
         {isCreateMode ? (
           <div className="flex h-full min-h-0 flex-col">
-            <div className="sticky top-0 z-20 border-b border-[#e4e7ec] bg-white/95 backdrop-blur">
+            <div className="sticky top-0 z-20 border-b border-[#E5E7EB] bg-white/95 backdrop-blur">
               <div className="px-5 py-4 sm:px-6">
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0 flex-1">
-                    <div className="text-lg font-semibold text-[#111827]">Create order</div>
-                    <div className="mt-3 text-lg font-semibold text-[#111827]">
+                    <div className="text-lg font-semibold text-[#1F2937]">Create order</div>
+                    <div className="mt-3 text-lg font-semibold text-[#1F2937]">
                       {[draft.firstName.trim(), draft.lastName.trim()].filter(Boolean).join(" ") || "New order"}
                     </div>
-                    <div className="mt-1 text-sm text-[#667085]">
+                    <div className="mt-1 text-sm text-[#6B7280]">
                       {draft.phone.trim() || "No phone number yet"}
                     </div>
                   </div>
@@ -1219,8 +1221,7 @@ export function OrderPreview({
                     <button
                       type="button"
                       onClick={() => setLayoutMode((current) => (current === "wide" ? "default" : "wide"))}
-                      className="hidden h-10 items-center gap-2 rounded-2xl border border-[#d7dee8] bg-white px-4 text-sm font-semibold text-[#1f2937] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#c3ccd8] hover:bg-[#f8fafc] hover:text-[#111827] sm:inline-flex"
-                      style={{ color: "#1f2937" }}
+                      className="hidden h-10 items-center gap-2 rounded-[18px] border border-[#E5E7EB] bg-white px-4 text-sm font-semibold text-[#1F2937] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] sm:inline-flex"
                       aria-label={isWideLayout ? "Use default order preview width" : "Use wide order preview width"}
                     >
                       {isWideLayout ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
@@ -1229,8 +1230,7 @@ export function OrderPreview({
                     <button
                       type="button"
                       onClick={onClose}
-                      className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-[#d7dee8] bg-white text-[#344054] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#c3ccd8] hover:bg-[#f8fafc] hover:text-[#111827]"
-                      style={{ color: "#344054" }}
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-[18px] border border-[#E5E7EB] bg-white text-[#374151] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]"
                       aria-label="Close order preview"
                     >
                       <X className="h-4 w-4" />
@@ -1242,10 +1242,10 @@ export function OrderPreview({
 
             <ScrollArea className="min-h-0 flex-1">
               <div className="space-y-4 px-5 py-5 sm:px-6">
-                <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#eef2f7] bg-white px-4 py-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#F3F4F6] bg-white px-4 py-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
                   <div>
-                    <div className="text-sm font-semibold text-[#111827]">Overview</div>
-                    <p className="text-xs text-[#667085]">
+                    <div className="text-sm font-semibold text-[#1F2937]">Overview</div>
+                    <p className="text-xs text-[#6B7280]">
                       Fill customer, manager, amount, due date, and description before saving.
                     </p>
                   </div>
@@ -1253,7 +1253,7 @@ export function OrderPreview({
                     <Button
                       type="button"
                       variant="outline"
-                      className="rounded-xl border-[#dde3ee] bg-white text-[#344054] hover:bg-[#f8fafc]"
+                      className="rounded-xl border-[#E5E7EB] bg-white text-[#374151] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
                       onClick={onClose}
                     >
                       Cancel
@@ -1261,7 +1261,7 @@ export function OrderPreview({
                     <button
                       type="button"
                       disabled={isSavingOverview}
-                      className="inline-flex h-9 min-w-28 items-center justify-center rounded-xl border border-[#111827] bg-[#111827] px-4 text-sm font-semibold shadow-[0_1px_2px_rgba(16,24,40,0.12)] transition hover:bg-[#1f2937] disabled:opacity-60"
+                      className="inline-flex h-9 min-w-28 items-center justify-center rounded-xl border border-[#6366F1] bg-[#6366F1] px-4 text-sm font-semibold shadow-[0_1px_2px_rgba(16,24,40,0.12)] transition hover:bg-[#5558E3] disabled:opacity-60"
                       style={{ color: "#ffffff" }}
                       onClick={() => {
                         const nextFirstName = draft.firstName.trim();
@@ -1316,7 +1316,7 @@ export function OrderPreview({
                           const nextValue = event.currentTarget.value;
                           setDraft((prev) => ({ ...prev, firstName: nextValue }));
                         }}
-                        className="h-10 w-full rounded-xl border border-[#dde3ee] bg-white px-3 text-sm outline-none transition focus:border-[#111827]"
+                        className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15"
                       />
                     }
                   />
@@ -1329,7 +1329,7 @@ export function OrderPreview({
                           const nextValue = event.currentTarget.value;
                           setDraft((prev) => ({ ...prev, lastName: nextValue }));
                         }}
-                        className="h-10 w-full rounded-xl border border-[#dde3ee] bg-white px-3 text-sm outline-none transition focus:border-[#111827]"
+                        className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15"
                       />
                     }
                   />
@@ -1342,7 +1342,7 @@ export function OrderPreview({
                           const nextValue = event.currentTarget.value;
                           setDraft((prev) => ({ ...prev, phone: nextValue }));
                         }}
-                        className="h-10 w-full rounded-xl border border-[#dde3ee] bg-white px-3 text-sm outline-none transition focus:border-[#111827]"
+                        className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15"
                       />
                     }
                   />
@@ -1358,10 +1358,10 @@ export function OrderPreview({
                           }))
                         }
                       >
-                        <SelectTrigger className="h-10 w-full rounded-xl border-[#dde3ee] bg-white text-sm shadow-none">
+                        <SelectTrigger className="h-10 w-full rounded-xl border-[#E5E7EB] bg-white text-sm shadow-none focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent className="z-[120] rounded-2xl border-[#dde3ee] bg-white shadow-[0_16px_40px_rgba(15,23,42,0.18)]">
+                        <SelectContent className="z-[120] rounded-2xl border-[#E5E7EB] bg-white shadow-[0_16px_40px_rgba(15,23,42,0.18)]">
                           <SelectItem value="__unassigned__">Unassigned</SelectItem>
                           {managerOptions.map((actor) => (
                             <SelectItem key={actor.id} value={actor.id}>
@@ -1383,7 +1383,7 @@ export function OrderPreview({
                           const nextValue = event.currentTarget.value;
                           setDraft((prev) => ({ ...prev, dueDate: nextValue }));
                         }}
-                        className="h-10 w-full rounded-xl border border-[#dde3ee] bg-white px-3 text-sm outline-none transition focus:border-[#111827]"
+                        className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15"
                       />
                     }
                   />
@@ -1397,22 +1397,22 @@ export function OrderPreview({
                           const nextValue = event.currentTarget.value;
                           setDraft((prev) => ({ ...prev, amount: nextValue }));
                         }}
-                        className="h-10 w-full rounded-xl border border-[#dde3ee] bg-white px-3 text-sm outline-none transition focus:border-[#111827]"
+                        className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15"
                       />
                     }
                   />
                   <MetaItem label="Status" value="New" />
                 </div>
 
-                <div className="rounded-2xl border border-[#eef2f7] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
-                  <div className="text-sm font-semibold text-[#111827]">Description</div>
+                <div className="rounded-2xl border border-[#F3F4F6] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                  <div className="text-sm font-semibold text-[#1F2937]">Description</div>
                   <textarea
                     value={draft.description}
                     onChange={(event) => {
                       const nextValue = event.currentTarget.value;
                       setDraft((prev) => ({ ...prev, description: nextValue }));
                     }}
-                    className="mt-2 min-h-28 w-full rounded-2xl border border-[#dde3ee] bg-white px-4 py-3 text-sm leading-6 text-[#111827] outline-none transition focus:border-[#111827]"
+                    className="mt-2 min-h-28 w-full rounded-2xl border border-[#E5E7EB] bg-white px-4 py-3 text-sm leading-6 text-[#1F2937] outline-none transition focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15"
                   />
                 </div>
               </div>
@@ -1420,26 +1420,26 @@ export function OrderPreview({
           </div>
         ) : currentOrder ? (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="flex h-full min-h-0 flex-col">
-            <div className="border-b border-[#e4e7ec] bg-white">
-              <div className={["px-5 sm:px-6 transition-all", isCompactTop ? "py-3" : "py-5"].join(" ")}>
+            <div className="border-b border-[#E5E7EB] bg-white">
+              <div className={["px-4 sm:px-5 transition-all", isUltraCompactTop ? "py-2" : isCompactTop ? "py-3" : "py-5"].join(" ")}>
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-3">
-                      <div className={["font-semibold text-[#111827] transition-all", isCompactTop ? "text-[14px] sm:text-[15px]" : "text-[15px] sm:text-[16px]"].join(" ")}>
+                    <div className="flex flex-wrap items-center gap-2">
+                    <div className={["font-semibold text-[#1F2937] transition-all", isUltraCompactTop ? "text-xs sm:text-[13px]" : isCompactTop ? "text-[14px] sm:text-[15px]" : "text-[15px] sm:text-[16px]"].join(" ")}>
                         Order #{currentOrder.order_number ?? currentOrder.id}
                       </div>
                     </div>
 
-                    <div className={["font-semibold leading-none text-[#111827] transition-all", isCompactTop ? "mt-1 text-[22px]" : "mt-2 text-[28px]"].join(" ")}>{displayName}</div>
-                    <div className={["text-sm text-[#667085] transition-all", isCompactTop ? "mt-0.5" : "mt-1"].join(" ")}>{currentOrder.client_phone?.trim() || "No phone number"}</div>
+                    <div className={["font-semibold leading-none text-[#1F2937] transition-all", isUltraCompactTop ? "mt-0.5 text-lg" : isCompactTop ? "mt-1 text-[19px]" : "mt-2 text-[22px] sm:text-[23px]"].join(" ")}>{displayName}</div>
+                    {!isUltraCompactTop ? <div className={["text-sm text-[#6B7280] transition-all", isCompactTop ? "mt-0.5" : "mt-1"].join(" ")}>{currentOrder.client_phone?.trim() || "No phone number"}</div> : null}
 
-                    <div className={["flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-[#475467] transition-all", isCompactTop ? "mt-2" : "mt-3"].join(" ")}>
+                    <div className={["flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-[#4B5563] transition-all", isUltraCompactTop ? "mt-1 text-xs" : isCompactTop ? "mt-2" : "mt-3"].join(" ")}>
                       <span>${fmtAmount(currentOrder.amount)}</span>
                       <span className={isOverdue ? "font-semibold text-[#d92d20]" : ""}>Due {formatDate(currentOrder.due_date)}</span>
-                      <span className="inline-flex items-center gap-1.5">
+                      {!isUltraCompactTop ? <span className="inline-flex items-center gap-1.5">
                         <ActorAvatar label={currentOrder.manager_name?.trim() || "Unassigned"} />
                         Manager: {currentOrder.manager_name?.trim() || "Unassigned"}
-                      </span>
+                      </span> : null}
                     </div>
 
                     {!isCompactTop && currentOrder.status === "CANCELED" && currentOrder.status_reason?.trim() ? (
@@ -1456,13 +1456,13 @@ export function OrderPreview({
                         labels.map((label) => (
                           <span
                             key={label}
-                            className="inline-flex items-center rounded-full border border-[#dbe2ea] bg-[#fbfcfe] px-2.5 py-1 text-[11px] font-semibold text-[#667085]"
+                            className="inline-flex items-center rounded-full border border-[#E5E7EB] bg-[#F9FAFB] px-2.5 py-1 text-[11px] font-semibold text-[#6B7280]"
                           >
                             {label}
                           </span>
                         ))
                       ) : (
-                        <span className="text-xs text-[#98a2b3]">No labels yet</span>
+                        <span className="text-xs text-[#9CA3AF]">No labels yet</span>
                       )}
                     </div> : null}
                   </div>
@@ -1471,16 +1471,16 @@ export function OrderPreview({
                     <button
                       type="button"
                       onClick={() => setLayoutMode((current) => (current === "wide" ? "default" : "wide"))}
-                      className="hidden h-9 items-center gap-2 rounded-2xl border border-[#dde3ee] bg-white px-3 text-sm font-semibold text-[#475467] transition hover:bg-[#f8fafc] hover:text-[#111827] sm:inline-flex"
+                      className={["hidden items-center gap-1.5 rounded-[16px] border border-[#E5E7EB] bg-white font-semibold text-[#1F2937] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] sm:inline-flex", isUltraCompactTop ? "h-8 px-3 text-[13px]" : "h-11 px-5"].join(" ")}
                       aria-label={isWideLayout ? "Use default order preview width" : "Use wide order preview width"}
                     >
-                      {isWideLayout ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                      {isWideLayout ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
                       {isWideLayout ? "Default width" : "Expand"}
                     </button>
                     <button
                       type="button"
                       onClick={onClose}
-                      className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-[#dde3ee] bg-white text-[#667085] transition hover:bg-[#f8fafc] hover:text-[#111827]"
+                      className={["inline-flex items-center justify-center rounded-[16px] border border-[#E5E7EB] bg-white text-[#6B7280] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]", isUltraCompactTop ? "h-8 w-8" : "h-11 w-11"].join(" ")}
                       aria-label="Close order preview"
                     >
                       <X className="h-4 w-4" />
@@ -1491,8 +1491,8 @@ export function OrderPreview({
             </div>
 
             <div className="sticky top-0 z-30 bg-white shadow-[0_8px_18px_rgba(15,23,42,0.06)]">
-              <div className={["px-5 sm:px-6 transition-all", isCompactTop ? "py-2" : "py-2.5"].join(" ")}>
-                <TabsList className="grid h-auto w-full grid-cols-4 gap-1.5 rounded-[20px] border border-[#e4e7ec] bg-[linear-gradient(180deg,#f8fafc_0%,#f2f5f9_100%)] p-1">
+              <div className={["px-4 sm:px-5 transition-all", isUltraCompactTop ? "py-0.5" : isCompactTop ? "py-2" : "py-2.5"].join(" ")}>
+                <TabsList className={["grid h-auto w-full grid-cols-4 border border-[#E5E7EB] bg-[linear-gradient(180deg,#F9FAFB_0%,#EEF2FF_100%)] shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)]", isUltraCompactTop ? "gap-0.5 rounded-[16px] p-0.5" : "gap-1 rounded-[26px] p-1.5"].join(" ")}>
                   {[
                     ["overview", "Overview"],
                     ["checklist", "Checklist"],
@@ -1502,26 +1502,26 @@ export function OrderPreview({
                     <TabsTrigger
                       key={value}
                       value={value}
-                      className="min-w-0 rounded-[16px] border border-transparent px-3 py-2 text-sm font-semibold text-[#667085] shadow-none transition data-[state=active]:border-[#cbd5e1] data-[state=active]:bg-white data-[state=active]:text-[#111827] data-[state=active]:shadow-[0_6px_16px_rgba(15,23,42,0.10)]"
-                      style={{ color: "#667085" }}
+                      className={["min-w-0 border border-transparent font-semibold text-[#6B7280] shadow-none transition data-[state=active]:border-[#C7D2FE] data-[state=active]:bg-white data-[state=active]:text-[#1F2937] data-[state=active]:shadow-[0_6px_16px_rgba(15,23,42,0.08)]", isUltraCompactTop ? "rounded-[12px] px-2 py-1 text-xs" : "rounded-[20px] px-3 py-3 text-base"].join(" ")}
+                      style={{ color: "#6B7280" }}
                     >
                       {label}
                     </TabsTrigger>
                   ))}
                 </TabsList>
               </div>
-              <div className="h-2 border-t border-[#eef2f7] bg-white" />
+              <div className={isUltraCompactTop ? "h-1 border-t border-[#F3F4F6] bg-white" : "h-2 border-t border-[#F3F4F6] bg-white"} />
             </div>
 
             <ScrollArea className="min-h-0 flex-1">
-              <div className="space-y-3 px-5 pb-5 pt-1 sm:px-6">
+              <div className={["space-y-3 px-4 pb-4 sm:px-5", isUltraCompactTop ? "pt-0.5" : "pt-1"].join(" ")}>
                   <TabsContent value="overview" className="mt-0">
                     <div className="space-y-3">
                       {canManage ? (
-                        <div className="flex flex-wrap items-center justify-between gap-3 rounded-[20px] border border-[#eef2f7] bg-white px-4 py-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                        <div className="flex flex-wrap items-center justify-between gap-3 rounded-[20px] border border-[#F3F4F6] bg-white px-4 py-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
                           <div>
-                            <div className="text-sm font-semibold text-[#111827]">Overview</div>
-                            <p className="text-xs text-[#667085]">{isEditingOverview ? "Editing order details." : "Customer, manager, amount, due date, and description."}</p>
+                            <div className="text-sm font-semibold text-[#1F2937]">Overview</div>
+                            <p className="text-xs text-[#6B7280]">{isEditingOverview ? "Editing order details." : "Customer, manager, amount, due date, and description."}</p>
                             {overviewUploadSuccess ? (
                               <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-[#b7ebc6] bg-[#ecfdf3] px-3 py-1 text-xs font-semibold text-[#067647]">
                                 <Check className="h-3.5 w-3.5" />
@@ -1535,7 +1535,7 @@ export function OrderPreview({
                                 <Button
                                   type="button"
                                   variant="outline"
-                                  className="rounded-xl border-[#dde3ee] bg-white text-[#344054] hover:bg-[#f8fafc]"
+                                  className="rounded-xl border-[#E5E7EB] bg-white text-[#374151] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
                                   onClick={() => {
                                     setIsEditingOverview(false);
                                     setDraft({
@@ -1554,7 +1554,7 @@ export function OrderPreview({
                                 <button
                                   type="button"
                                   disabled={isSavingOverview}
-                                  className="inline-flex h-9 min-w-24 items-center justify-center rounded-xl border border-[#111827] bg-[#111827] px-4 text-sm font-semibold shadow-[0_1px_2px_rgba(16,24,40,0.12)] transition hover:bg-[#1f2937] disabled:opacity-60"
+                                  className="inline-flex h-9 min-w-24 items-center justify-center rounded-xl border border-[#6366F1] bg-[#6366F1] px-4 text-sm font-semibold shadow-[0_1px_2px_rgba(16,24,40,0.12)] transition hover:bg-[#5558E3] disabled:opacity-60"
                                   style={{ color: "#ffffff" }}
                                   onClick={() => {
                                     if (!draft.firstName.trim()) {
@@ -1744,7 +1744,7 @@ export function OrderPreview({
                                   <Button
                                     type="button"
                                     variant="outline"
-                                    className="rounded-xl border-[#dde3ee] bg-white text-[#344054] hover:bg-[#f8fafc]"
+                                    className="h-11 rounded-[18px] border-[#E5E7EB] bg-white px-5 text-[#374151] shadow-[0_1px_2px_rgba(16,24,40,0.04)] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
                                     onClick={openOverviewFilePicker}
                                     disabled={isUploadingOverviewFiles}
                                   >
@@ -1754,7 +1754,7 @@ export function OrderPreview({
                                 <Button
                                   type="button"
                                   variant="outline"
-                                  className="rounded-xl border-[#dde3ee] bg-white text-[#344054] hover:bg-[#f8fafc]"
+                                  className="h-11 rounded-[18px] border-[#E5E7EB] bg-white px-5 text-[#374151] shadow-[0_1px_2px_rgba(16,24,40,0.04)] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
                                   onClick={() => setIsEditingOverview(true)}
                                 >
                                   Edit overview
@@ -1776,7 +1776,7 @@ export function OrderPreview({
                                   const nextValue = event.currentTarget.value;
                                   setDraft((prev) => ({ ...prev, firstName: nextValue }));
                                 }}
-                                className="h-10 w-full rounded-xl border border-[#dde3ee] bg-white px-3 text-sm outline-none transition focus:border-[#111827]"
+                                className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15"
                               />
                             ) : (
                               currentOrder.client_first_name?.trim() || client.firstName || "Unknown"
@@ -1793,7 +1793,7 @@ export function OrderPreview({
                                   const nextValue = event.currentTarget.value;
                                   setDraft((prev) => ({ ...prev, lastName: nextValue }));
                                 }}
-                                className="h-10 w-full rounded-xl border border-[#dde3ee] bg-white px-3 text-sm outline-none transition focus:border-[#111827]"
+                                className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15"
                               />
                             ) : (
                               currentOrder.client_last_name?.trim() || client.lastName || "Not provided"
@@ -1810,7 +1810,7 @@ export function OrderPreview({
                                   const nextValue = event.currentTarget.value;
                                   setDraft((prev) => ({ ...prev, phone: nextValue }));
                                 }}
-                                className="h-10 w-full rounded-xl border border-[#dde3ee] bg-white px-3 text-sm outline-none transition focus:border-[#111827]"
+                                className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15"
                               />
                             ) : (
                               currentOrder.client_phone?.trim() || "No phone number"
@@ -1830,10 +1830,10 @@ export function OrderPreview({
                                   }))
                                 }
                               >
-                                <SelectTrigger className="h-10 w-full rounded-xl border-[#dde3ee] bg-white text-sm shadow-none">
+                                <SelectTrigger className="h-10 w-full rounded-xl border-[#E5E7EB] bg-white text-sm shadow-none focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15">
                                   <SelectValue />
                                 </SelectTrigger>
-                                <SelectContent className="z-[120] rounded-2xl border-[#dde3ee] bg-white shadow-[0_16px_40px_rgba(15,23,42,0.18)]">
+                                <SelectContent className="z-[120] rounded-2xl border-[#E5E7EB] bg-white shadow-[0_16px_40px_rgba(15,23,42,0.18)]">
                                   <SelectItem value="__unassigned__">Unassigned</SelectItem>
                                   {managerOptions.map((actor) => (
                                     <SelectItem key={actor.id} value={actor.id}>
@@ -1862,7 +1862,7 @@ export function OrderPreview({
                                   const nextValue = event.currentTarget.value;
                                   setDraft((prev) => ({ ...prev, dueDate: nextValue }));
                                 }}
-                                className="h-10 w-full rounded-xl border border-[#dde3ee] bg-white px-3 text-sm outline-none transition focus:border-[#111827]"
+                                className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15"
                               />
                             ) : (
                               formatDate(currentOrder.due_date)
@@ -1880,7 +1880,7 @@ export function OrderPreview({
                                   const nextValue = event.currentTarget.value;
                                   setDraft((prev) => ({ ...prev, amount: nextValue }));
                                 }}
-                                className="h-10 w-full rounded-xl border border-[#dde3ee] bg-white px-3 text-sm outline-none transition focus:border-[#111827]"
+                                className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15"
                               />
                             ) : (
                               `$${fmtAmount(currentOrder.amount)}`
@@ -1923,8 +1923,8 @@ export function OrderPreview({
                         ) : null}
                       </div>
 
-                      <div className="rounded-[20px] border border-[#eef2f7] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
-                        <div className="text-sm font-semibold text-[#111827]">Description</div>
+                      <div className="rounded-[20px] border border-[#F3F4F6] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                        <div className="text-sm font-semibold text-[#1F2937]">Description</div>
                         {isEditingOverview ? (
                           <textarea
                             value={draft.description}
@@ -1932,10 +1932,10 @@ export function OrderPreview({
                               const nextValue = event.currentTarget.value;
                               setDraft((prev) => ({ ...prev, description: nextValue }));
                             }}
-                            className="mt-2 min-h-24 w-full rounded-[18px] border border-[#dde3ee] bg-white px-4 py-3 text-sm leading-6 text-[#111827] outline-none transition focus:border-[#111827]"
+                            className="mt-2 min-h-24 w-full rounded-[18px] border border-[#E5E7EB] bg-white px-4 py-3 text-sm leading-6 text-[#1F2937] outline-none transition focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15"
                           />
                         ) : (
-                          <p className="mt-2 whitespace-pre-wrap text-sm leading-5 text-[#475467]">
+                          <p className="mt-2 whitespace-pre-wrap text-sm leading-5 text-[#4B5563]">
                             {currentOrder.description?.trim() || "No description provided yet."}
                           </p>
                         )}
@@ -1977,6 +1977,7 @@ export function OrderPreview({
                       actors={actors}
                       ownerName={actors.find((actor) => actor.kind === "OWNER")?.label ?? null}
                       managerName={currentOrder.manager_name?.trim() || actors.find((actor) => actor.kind === "MANAGER")?.label || null}
+                      compact
                     />
                   </TabsContent>
 

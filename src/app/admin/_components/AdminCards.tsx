@@ -13,11 +13,11 @@ export function AdminStatCard({
 }) {
   const body = (
     <>
-      <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+      <div className="product-section-label">
         {label}
       </div>
-      <div className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">{value}</div>
-      <div className="mt-1 text-sm text-slate-500">{hint}</div>
+      <div className="product-stat-value mt-1.5">{value}</div>
+      <div className="product-body-xs mt-1">{hint}</div>
     </>
   );
 
@@ -45,7 +45,7 @@ export function AdminSectionCard({
   return (
     <section className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-lg font-semibold tracking-tight text-slate-900">{title}</h2>
+        <h2 className="product-section-title">{title}</h2>
         {actions}
       </div>
       {children}

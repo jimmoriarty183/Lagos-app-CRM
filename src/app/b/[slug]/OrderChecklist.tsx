@@ -311,22 +311,22 @@ export function OrderChecklist({
   };
 
   return (
-    <div className="rounded-[20px] border border-[#e6ebf2] bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] p-4 shadow-[0_10px_30px_rgba(15,23,42,0.06)]">
+    <div className="rounded-[20px] border border-[#E5E7EB] bg-[linear-gradient(180deg,#ffffff_0%,#F9FAFB_100%)] p-4 shadow-[0_10px_30px_rgba(15,23,42,0.06)]">
       <div className="space-y-2.5">
         <div>
-          <div className="text-sm font-semibold tracking-[0.01em] text-[#111827]">
-            Checklist <span className="text-xs font-semibold text-[#98a2b3]">({items.length})</span>
+          <div className="product-section-title">
+            Checklist <span className="text-xs font-semibold text-[#9CA3AF]">({items.length})</span>
           </div>
-          <p className="mt-1 text-sm text-[#667085]">Track the next action and deadline for this order.</p>
+          <p className="mt-1 text-sm text-[#6B7280]">Track the next action and deadline for this order.</p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#eef2ff] px-3 py-1 text-[#344054]">
-            <CheckCircle2 className="h-3.5 w-3.5 text-[#111827]" />
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#EEF2FF] px-3 py-1 text-[#374151]">
+            <CheckCircle2 className="h-3.5 w-3.5 text-[#1F2937]" />
             {completedCount} done
           </span>
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#f4f6f8] px-3 py-1 text-[#667085]">
-            <Clock3 className="h-3.5 w-3.5 text-[#667085]" />
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#F9FAFB] px-3 py-1 text-[#6B7280]">
+            <Clock3 className="h-3.5 w-3.5 text-[#6B7280]" />
             {pendingCount} open
           </span>
           {loading ? (
@@ -338,11 +338,11 @@ export function OrderChecklist({
       </div>
 
       <div className="sticky top-0 z-20 -mx-1 rounded-[24px] bg-[linear-gradient(180deg,rgba(248,250,252,1)_0%,rgba(248,250,252,0.96)_78%,rgba(248,250,252,0)_100%)] px-1 pb-3 pt-3">
-        <div className="rounded-[18px] border border-[#e4e7ec] bg-white/95 px-4 py-3 shadow-[0_10px_24px_rgba(15,23,42,0.06)] backdrop-blur">
+        <div className="rounded-[18px] border border-[#E5E7EB] bg-white/95 px-4 py-3 shadow-[0_10px_24px_rgba(15,23,42,0.06)] backdrop-blur">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <div className="text-xs font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">Checklist progress</div>
-              <p className="mt-1 text-sm text-[#667085]">
+              <div className="product-section-label">Checklist progress</div>
+              <p className="mt-1 text-sm text-[#6B7280]">
                 {items.length === 0
                   ? "Start with the first follow-up or delivery step."
                   : completedCount === items.length
@@ -351,12 +351,12 @@ export function OrderChecklist({
               </p>
             </div>
             <div className="text-right">
-              <div className="text-lg font-semibold text-[#111827]">{progress}%</div>
-              <div className="text-xs text-[#98a2b3]">{completedCount}/{items.length || 0} done</div>
+              <div className="text-base font-semibold text-[#1F2937]">{progress}%</div>
+              <div className="text-xs text-[#9CA3AF]">{completedCount}/{items.length || 0} done</div>
             </div>
           </div>
           <div className="mt-3 h-2 overflow-hidden rounded-full bg-[#eef2f6]">
-            <div className="h-full rounded-full bg-[#111827] transition-[width] duration-300" style={{ width: `${progress}%` }} />
+            <div className="h-full rounded-full bg-[#6366F1] transition-[width] duration-300" style={{ width: `${progress}%` }} />
           </div>
         </div>
       </div>
@@ -382,23 +382,23 @@ export function OrderChecklist({
                   : "border-[#e8edf3] bg-white hover:border-[#d5dce6] hover:bg-[#fcfdff]",
               ].join(" ")}
             >
-              <label className="flex min-w-0 flex-1 items-start gap-3 text-[#111827]">
+              <label className="flex min-w-0 flex-1 items-start gap-3 text-[#1F2937]">
                 <input
                   type="checkbox"
                   checked={!!item.is_done}
                   onChange={() => toggle(item)}
-                  className="mt-1 h-4 w-4 rounded border-[#cfd8e6] text-[#111827] focus:ring-0"
+                  className="mt-1 h-4 w-4 rounded border-[#C7D2FE] text-[#6366F1] focus:ring-0"
                 />
                 <span className="min-w-0 flex-1">
                   <span
                     className={[
                       "block text-[15px] font-medium",
-                      item.is_done ? "text-[#98a2b3] line-through" : "text-[#344054]",
+                      item.is_done ? "text-[#9CA3AF] line-through" : "text-[#374151]",
                     ].join(" ")}
                   >
                     {item.title}
                   </span>
-                  <span className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#98a2b3]">
+                  <span className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#9CA3AF]">
                     <span className="inline-flex items-center gap-1.5">
                       <CalendarDays className="h-3.5 w-3.5" />
                       Added {formatShortDate(item.created_at)}
@@ -408,10 +408,10 @@ export function OrderChecklist({
                         className={[
                           "inline-flex items-center gap-1.5",
                           item.is_done
-                            ? "text-[#98a2b3]"
+                            ? "text-[#9CA3AF]"
                             : isOverdue
                               ? "text-[#d92d20]"
-                              : "text-[#344054]",
+                              : "text-[#374151]",
                         ].join(" ")}
                       >
                         <Clock3 className="h-3.5 w-3.5" />
@@ -431,7 +431,7 @@ export function OrderChecklist({
               <button
                 type="button"
                 onClick={() => remove(item)}
-                className="inline-flex h-9 w-9 shrink-0 items-center justify-center self-end rounded-full border border-transparent text-[#98a2b3] transition hover:border-[#f3d1cd] hover:bg-[#fff1f3] hover:text-[#d92d20] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111827]/15 sm:self-auto"
+                className="inline-flex h-9 w-9 shrink-0 items-center justify-center self-end rounded-full border border-transparent text-[#9CA3AF] transition hover:border-[#f3d1cd] hover:bg-[#fff1f3] hover:text-[#d92d20] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6366F1]/15 sm:self-auto"
                 title="Delete"
                 aria-label="Delete checklist item"
               >
@@ -443,24 +443,24 @@ export function OrderChecklist({
 
         {items.length === 0 ? (
           <div className="rounded-[20px] border border-dashed border-[#d8dee8] bg-white px-5 py-7 text-center">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#f4f6f8] text-[#667085]">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F9FAFB] text-[#6B7280]">
               <CirclePlus className="h-5 w-5" />
             </div>
-            <div className="mt-3 text-sm font-semibold text-[#111827]">No checklist items yet</div>
-            <p className="mt-1 text-xs leading-5 text-[#98a2b3]">
-              Add a next step, follow-up, or deadline so this order has a clear path forward.
+            <div className="mt-3 text-sm font-semibold text-[#1F2937]">No checklist yet</div>
+            <p className="mt-1 text-xs leading-5 text-[#9CA3AF]">
+              Add the first step, follow-up, or deadline so the workflow stays structured.
             </p>
           </div>
         ) : null}
       </div>
 
-      <div className="mt-4 rounded-[20px] border border-[#e4e7ec] bg-white p-3 shadow-[0_1px_2px_rgba(16,24,40,0.03)]">
+      <div className="mt-4 rounded-[20px] border border-[#E5E7EB] bg-white p-3 shadow-[0_1px_2px_rgba(16,24,40,0.03)]">
         <div className="flex flex-col gap-3 sm:flex-row">
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Add checklist item..."
-            className="h-11 min-w-0 flex-1 rounded-2xl border border-[#dde3ee] bg-[#fbfcfe] px-4 text-sm text-[#111827] outline-none transition placeholder:text-[#98a2b3] focus:border-[#111827] focus:bg-white"
+            className="h-11 min-w-0 flex-1 rounded-2xl border border-[#E5E7EB] bg-[#F9FAFB] px-4 text-sm text-[#1F2937] outline-none transition placeholder:text-[#9CA3AF] focus:border-[#6366F1] focus:bg-white focus:ring-2 focus:ring-[#6366F1]/15"
             onKeyDown={(e) => {
               if (e.key === "Enter") add();
             }}
@@ -470,7 +470,7 @@ export function OrderChecklist({
             type="date"
             value={dueDate}
             onChange={(e) => setDueDate(e.target.value)}
-            className="h-11 min-w-0 rounded-2xl border border-[#dde3ee] bg-[#fbfcfe] px-4 text-sm text-[#111827] outline-none transition focus:border-[#111827] focus:bg-white sm:w-[160px]"
+            className="h-11 min-w-0 rounded-2xl border border-[#E5E7EB] bg-[#F9FAFB] px-4 text-sm text-[#1F2937] outline-none transition focus:border-[#6366F1] focus:bg-white focus:ring-2 focus:ring-[#6366F1]/15 sm:w-[160px]"
             aria-label="Checklist due date"
           />
 
@@ -480,17 +480,17 @@ export function OrderChecklist({
             disabled={loading || !title.trim()}
             aria-disabled={loading || !title.trim()}
             className={[
-              "inline-flex h-11 w-full min-w-0 shrink-0 items-center justify-center gap-2 rounded-2xl border px-4 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111827]/15 sm:w-auto sm:min-w-[132px]",
+              "inline-flex h-11 w-full min-w-0 shrink-0 items-center justify-center gap-2 rounded-[18px] border px-4 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6366F1]/15 sm:w-auto sm:min-w-[132px]",
               !title.trim() || loading
-                ? "cursor-not-allowed border-[#e4e7ec] bg-[#f2f4f7] text-[#98a2b3]"
-                : "border-[#cbd5e1] bg-[linear-gradient(180deg,#ffffff_0%,#eef4ff_100%)] text-[#111827] shadow-[0_6px_18px_rgba(148,163,184,0.2)] hover:border-[#b8c4d8] hover:bg-[linear-gradient(180deg,#ffffff_0%,#e7f0ff_100%)]",
+                ? "cursor-not-allowed border-[#E5E7EB] bg-[#F3F4F6] text-[#9CA3AF]"
+                : "border-[#E5E7EB] bg-white text-[#1F2937] shadow-[0_1px_2px_rgba(16,24,40,0.04)] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]",
             ].join(" ")}
           >
             <CirclePlus className="h-4 w-4" />
             {loading ? "Saving..." : "Add item"}
           </button>
         </div>
-        <p className="mt-1.5 px-1 text-xs text-[#98a2b3]">
+        <p className="mt-1.5 px-1 text-xs text-[#9CA3AF]">
           Set a deadline in the date field. Older items can still show a date if it was written in the text.
         </p>
         {errorMessage ? (
@@ -502,3 +502,4 @@ export function OrderChecklist({
     </div>
   );
 }
+

@@ -1,8 +1,9 @@
 type BrandImageProps = {
+  src: string;
+  alt: string;
   className?: string;
   height?: number;
   width?: number;
-  alt?: string;
 };
 
 function BrandImage({
@@ -11,7 +12,7 @@ function BrandImage({
   className,
   height,
   width,
-}: BrandImageProps & { src: string }) {
+}: BrandImageProps) {
   return (
     <img
       src={src}
@@ -22,15 +23,16 @@ function BrandImage({
       style={{
         height: height ? `${height}px` : undefined,
         width: width ? `${width}px` : undefined,
+        objectFit: "contain",
       }}
     />
   );
 }
 
 export function BrandIcon({
-  size = 28,
+  size = 32,
   className,
-  alt = "Corelix",
+  alt = "Ordo",
 }: {
   size?: number;
   className?: string;
@@ -38,7 +40,7 @@ export function BrandIcon({
 }) {
   return (
     <BrandImage
-      src="/brand/icon.svg"
+      src="/brand/ordo_symbol.svg"
       alt={alt}
       className={className}
       height={size}
@@ -47,26 +49,65 @@ export function BrandIcon({
   );
 }
 
+export function BrandLockup({
+  iconSize = 48,
+  textClassName = "text-4xl",
+  className,
+  href,
+  ariaLabel = "Open Ordo CRM",
+}: {
+  iconSize?: number;
+  textClassName?: string;
+  className?: string;
+  href?: string;
+  ariaLabel?: string;
+}) {
+  const content = (
+    <>
+      <BrandIcon size={iconSize} />
+      <span
+        className={[
+          "text-[#1F2937] font-bold leading-none tracking-[-0.04em]",
+          textClassName,
+        ].join(" ")}
+      >
+        Ordo
+      </span>
+    </>
+  );
+
+  if (href) {
+    return (
+      <a
+        href={href}
+        aria-label={ariaLabel}
+        className={["flex items-center gap-3", className].filter(Boolean).join(" ")}
+      >
+        {content}
+      </a>
+    );
+  }
+
+  return (
+    <div className={["flex items-center gap-3", className].filter(Boolean).join(" ")}>
+      {content}
+    </div>
+  );
+}
+
 export function BrandWordmark({
-  variant = "gradient",
   height = 24,
   className,
-  alt = "Corelix",
+  alt = "Ordo",
 }: {
   variant?: "gradient" | "dark" | "light";
   height?: number;
   className?: string;
   alt?: string;
 }) {
-  const srcMap = {
-    gradient: "/brand/wordmark-gradient.svg",
-    dark: "/brand/wordmark-dark.svg",
-    light: "/brand/wordmark-light.svg",
-  } as const;
-
   return (
     <BrandImage
-      src={srcMap[variant]}
+      src="/brand/ordo_horizontal.svg"
       alt={alt}
       className={className}
       height={height}
@@ -75,7 +116,6 @@ export function BrandWordmark({
 }
 
 export function LoginBrand({
-  variant = "dark",
   height = 34,
   className,
 }: {
@@ -83,15 +123,10 @@ export function LoginBrand({
   height?: number;
   className?: string;
 }) {
-  const src =
-    variant === "light"
-      ? "/brand/login-brand-light.svg"
-      : "/brand/login-brand-dark.svg";
-
   return (
     <BrandImage
-      src={src}
-      alt="Corelix"
+      src="/brand/ordo_horizontal.svg"
+      alt="Ordo"
       className={className}
       height={height}
     />
@@ -101,7 +136,7 @@ export function LoginBrand({
 export function BrandLogoDarkBg({
   height = 46,
   className,
-  alt = "Corelix",
+  alt = "Ordo",
 }: {
   height?: number;
   className?: string;
@@ -109,7 +144,7 @@ export function BrandLogoDarkBg({
 }) {
   return (
     <BrandImage
-      src="/brand/wordmark-gradient.svg"
+      src="/brand/ordo_horizontal.svg"
       alt={alt}
       className={className}
       height={height}
@@ -120,7 +155,7 @@ export function BrandLogoDarkBg({
 export function BrandIconDarkBg({
   size = 40,
   className,
-  alt = "Corelix",
+  alt = "Ordo",
 }: {
   size?: number;
   className?: string;
@@ -128,7 +163,7 @@ export function BrandIconDarkBg({
 }) {
   return (
     <BrandImage
-      src="/brand/icon.svg"
+      src="/brand/ordo_symbol.svg"
       alt={alt}
       className={className}
       height={size}

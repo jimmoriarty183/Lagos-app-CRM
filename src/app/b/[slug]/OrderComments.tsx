@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -343,7 +343,7 @@ export function OrderComments({ order, supabase, author, ownerName, managerName 
             </div>
             <div className="mt-3 text-sm font-semibold text-[#111827]">No comments yet</div>
             <p className="mt-1 text-xs leading-5 text-[#98a2b3]">
-              Add delivery notes, client decisions, or internal context so the next teammate sees the full picture.
+              Add context, client decisions, or handoff notes so the next teammate sees the full picture.
             </p>
           </div>
         ) : (
@@ -443,3 +443,4 @@ export function OrderComments({ order, supabase, author, ownerName, managerName 
     </div>
   );
 }
+

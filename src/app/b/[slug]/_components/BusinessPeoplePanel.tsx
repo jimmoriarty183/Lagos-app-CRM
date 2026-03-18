@@ -98,7 +98,7 @@ function Pill({
 
   return (
     <span
-      className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold ${cls}`}
+      className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-semibold ${cls}`}
     >
       {children}
     </span>
@@ -115,9 +115,9 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="min-w-0 max-w-full space-y-3 sm:space-y-2.5">
+    <section className="min-w-0 max-w-full space-y-2.5 sm:space-y-2">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-sm font-semibold text-slate-900">
+        <h2 className="product-section-title text-slate-700">
           {title}
           {typeof count === "number" ? ` (${count})` : ""}
         </h2>
@@ -145,7 +145,7 @@ function RowShell({
   return (
     <div
       className={[
-        "flex w-full min-w-0 max-w-full flex-col gap-2.5 rounded-xl border p-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)] sm:flex-row sm:items-center sm:justify-between sm:px-4 sm:py-2.5",
+        "flex w-full min-w-0 max-w-full flex-col gap-2 rounded-xl border p-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)] sm:flex-row sm:items-center sm:justify-between sm:px-4 sm:py-2.5",
         tone === "owner"
           ? "border-blue-100 bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_100%)]"
           : "border-slate-200 bg-white",
@@ -165,13 +165,13 @@ function RowShell({
 
         <div className="min-w-0 max-w-full flex-1">
           <div className="flex min-w-0 flex-col items-start gap-1.5 sm:flex-row sm:flex-wrap sm:items-center sm:gap-1.5">
-            <div className="min-w-0 break-words text-[15px] font-semibold leading-5 text-slate-900 sm:text-[15px]">
+            <div className="min-w-0 break-words text-[14px] font-semibold leading-5 text-slate-900 sm:text-[14px]">
               {primary}
             </div>
             {meta ? <div className="flex flex-wrap items-center gap-2">{meta}</div> : null}
           </div>
           {secondary ? (
-            <div className="mt-1 min-w-0 break-words text-xs leading-5 text-slate-500">
+            <div className="mt-0.5 min-w-0 break-words text-[12px] leading-5 text-slate-500">
               {secondary}
             </div>
           ) : null}
@@ -185,7 +185,7 @@ function RowShell({
 
 function EmptyState({ text }: { text: string }) {
   return (
-    <div className="rounded-2xl border border-dashed border-slate-200 bg-white px-4 py-4 text-sm text-slate-500">
+    <div className="rounded-2xl border border-dashed border-slate-200 bg-white px-4 py-4 text-[13px] text-slate-500">
       {text}
     </div>
   );
@@ -646,7 +646,7 @@ export default function BusinessPeoplePanel({
       >
         <AlertDialogContent className="rounded-[24px] border-slate-200 bg-white p-6 shadow-[0_24px_64px_rgba(15,23,42,0.18)] sm:max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-xl tracking-[-0.02em] text-slate-900">
+            <AlertDialogTitle className="product-page-title text-slate-900">
               Remove manager?
             </AlertDialogTitle>
             <AlertDialogDescription className="text-sm leading-6 text-slate-500">
@@ -692,7 +692,7 @@ export default function BusinessPeoplePanel({
       >
         <AlertDialogContent className="rounded-[24px] border-slate-200 bg-white p-6 shadow-[0_24px_64px_rgba(15,23,42,0.18)] sm:max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-xl tracking-[-0.02em] text-slate-900">
+            <AlertDialogTitle className="product-page-title text-slate-900">
               Revoke invite?
             </AlertDialogTitle>
             <AlertDialogDescription className="text-sm leading-6 text-slate-500">

@@ -22,9 +22,9 @@ export default function InviteAccessPanel({
     <div className="grid gap-4 xl:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
       <div className="space-y-4">
         {canManage ? (
-          <section className="rounded-[18px] border border-[#dde3ee] bg-white p-4 shadow-[0_4px_14px_rgba(15,23,42,0.04)]">
-            <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
-              <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-[#e2e8f0] bg-[#f8fafc] text-slate-600">
+          <section className="rounded-[18px] border border-[#E5E7EB] bg-white p-4 shadow-[0_4px_14px_rgba(15,23,42,0.04)]">
+            <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#6B7280]">
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] text-[#6B7280]">
                 <Send className="h-4 w-4" />
               </span>
               Invite manager

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -264,7 +264,7 @@ export default function InviteClient() {
             </div>
           ) : isExistingAccount ? (
             <div className="mt-6 space-y-4">
-              <div className="rounded-xl border border-blue-100 bg-blue-50 p-4">
+              <div className="rounded-xl border border-[#c7d2fe] bg-[#eef2ff] p-4">
                 <div className="text-sm font-semibold text-gray-900">
                   Existing account detected
                 </div>
@@ -289,7 +289,7 @@ export default function InviteClient() {
                   "w-full rounded-xl py-3 text-sm font-semibold transition-all shadow-sm",
                   !canAcceptExisting
                     ? "bg-gray-200 text-gray-700 cursor-not-allowed"
-                    : "bg-blue-600 text-white hover:bg-blue-700 active:scale-[0.99]",
+                    : "bg-[#6366F1] text-white hover:bg-[#5558E6] active:scale-[0.99]",
                 ].join(" ")}
               >
                 Accept invite and open business
@@ -311,7 +311,7 @@ export default function InviteClient() {
                     onChange={(e) => setFirstName(e.target.value)}
                     placeholder="John"
                     autoComplete="given-name"
-                    className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none placeholder:text-gray-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                    className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none placeholder:text-gray-400 focus:border-[#6366F1] focus:ring-2 focus:ring-[rgba(99,102,241,0.14)]"
                   />
                 </div>
 
@@ -324,7 +324,7 @@ export default function InviteClient() {
                     onChange={(e) => setLastName(e.target.value)}
                     placeholder="Doe"
                     autoComplete="family-name"
-                    className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none placeholder:text-gray-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                    className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none placeholder:text-gray-400 focus:border-[#6366F1] focus:ring-2 focus:ring-[rgba(99,102,241,0.14)]"
                   />
                 </div>
               </div>
@@ -337,7 +337,7 @@ export default function InviteClient() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Min 8 characters"
                   autoComplete="new-password"
-                  className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none placeholder:text-gray-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                  className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none placeholder:text-gray-400 focus:border-[#6366F1] focus:ring-2 focus:ring-[rgba(99,102,241,0.14)]"
                 />
               </div>
 
@@ -351,7 +351,7 @@ export default function InviteClient() {
                   onChange={(e) => setPassword2(e.target.value)}
                   placeholder="Repeat password"
                   autoComplete="new-password"
-                  className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none placeholder:text-gray-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                  className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none placeholder:text-gray-400 focus:border-[#6366F1] focus:ring-2 focus:ring-[rgba(99,102,241,0.14)]"
                 />
                 {password && password2 && password !== password2 && (
                   <div className="mt-2 text-xs text-red-600">Passwords do not match</div>
@@ -386,7 +386,7 @@ export default function InviteClient() {
                   "w-full rounded-xl py-3 text-sm font-semibold transition-all shadow-sm",
                   !canSubmitSetup
                     ? "bg-gray-200 text-gray-700 cursor-not-allowed"
-                    : "bg-blue-600 text-white hover:bg-blue-700 active:scale-[0.99]",
+                    : "bg-[#6366F1] text-white hover:bg-[#5558E6] active:scale-[0.99]",
                 ].join(" ")}
               >
                 Continue
@@ -409,3 +409,5 @@ export default function InviteClient() {
     </main>
   );
 }
+
+

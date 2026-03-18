@@ -67,7 +67,7 @@ export default async function InvitesPage({
   ];
 
   return (
-    <div className="min-h-[100svh] overflow-x-clip bg-transparent text-slate-900">
+    <div className="min-h-[100svh] overflow-x-clip bg-transparent text-[#1F2937]">
       <TeamAccessTopBar
         ordersHref="/app/crm"
         userLabel={user.email || user.phone || "User"}
@@ -105,15 +105,15 @@ export default async function InvitesPage({
             activeSection="settings"
           />
 
-          <section className="w-full min-w-0 max-w-full rounded-[20px] border border-[#dde3ee] bg-white p-3.5 pb-5 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:rounded-[26px] sm:p-5">
+          <section className="w-full min-w-0 max-w-full rounded-[20px] border border-[#E5E7EB] bg-white p-3.5 pb-5 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:rounded-[26px] sm:p-5">
             <div className="mb-4">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+              <div className="product-page-kicker">
                 Settings
               </div>
-              <h1 className="mt-2 text-[24px] font-semibold tracking-[-0.03em] text-slate-900 sm:text-[24px]">
+              <h1 className="product-page-title mt-1.5">
                 Invites
               </h1>
-              <p className="mt-2 text-sm leading-6 text-slate-500 sm:leading-5">
+              <p className="product-page-subtitle mt-1.5">
                 Manage sent invites and incoming access requests for <span className="font-semibold">{business.slug}</span>
               </p>
             </div>
@@ -128,15 +128,15 @@ export default async function InvitesPage({
         </div>
 
         <div className="mx-auto w-full max-w-[920px] min-w-0 lg:hidden">
-          <section className="w-full min-w-0 max-w-full rounded-[20px] border border-[#dde3ee] bg-white p-3.5 pb-5 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:rounded-[26px] sm:p-5">
+          <section className="w-full min-w-0 max-w-full rounded-[20px] border border-[#E5E7EB] bg-white p-3.5 pb-5 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:rounded-[26px] sm:p-5">
             <div className="mb-4">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+              <div className="product-page-kicker">
                 Settings
               </div>
-              <h1 className="mt-2 text-[24px] font-semibold tracking-[-0.03em] text-slate-900 sm:text-[24px]">
+              <h1 className="product-page-title mt-1.5">
                 Invites
               </h1>
-              <p className="mt-2 text-sm leading-6 text-slate-500 sm:leading-5">
+              <p className="product-page-subtitle mt-1.5">
                 Manage sent invites and incoming access requests for <span className="font-semibold">{business.slug}</span>
               </p>
             </div>

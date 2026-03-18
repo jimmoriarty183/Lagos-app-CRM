@@ -1,5 +1,29 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
-  "buildCommand": "next build --webpack"
+  "buildCommand": "next build --webpack",
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.ordero.website"
+        }
+      ],
+      "destination": "https://www.ordo.uno/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "ordero.website"
+        }
+      ],
+      "destination": "https://www.ordo.uno/:path*",
+      "permanent": true
+    }
+  ]
 }

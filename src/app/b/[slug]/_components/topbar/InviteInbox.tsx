@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { Bell, BellRing, Check, Loader2, X } from "lucide-react";
@@ -147,12 +147,12 @@ export default function InviteInbox({ currentBusinessSlug }: Props) {
         }`}
       >
         {open ? (
-          <BellRing className="h-4 w-4 text-blue-700 transition" />
+          <BellRing className="h-4 w-4 text-[#6366F1] transition" />
         ) : (
           <Bell className="h-4 w-4 text-slate-700 transition" />
         )}
         {count > 0 ? (
-          <span className="absolute -right-1 -top-1 inline-flex min-w-5 items-center justify-center rounded-full bg-blue-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
+          <span className="absolute -right-1 -top-1 inline-flex min-w-5 items-center justify-center rounded-full bg-[#6366F1] px-1.5 py-0.5 text-[10px] font-bold text-white">
             {count > 9 ? "9+" : count}
           </span>
         ) : null}
@@ -214,7 +214,7 @@ export default function InviteInbox({ currentBusinessSlug }: Props) {
                             type="button"
                             disabled={busy}
                             onClick={() => void acceptInvite(invite.id)}
-                            className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                            className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#6366F1] px-3 py-2 text-sm font-semibold text-white hover:bg-[#5558E6] disabled:cursor-not-allowed disabled:opacity-60"
                           >
                             {busy ? (
                               <Loader2 className="h-4 w-4 animate-spin" />
@@ -246,3 +246,5 @@ export default function InviteInbox({ currentBusinessSlug }: Props) {
     </div>
   );
 }
+
+

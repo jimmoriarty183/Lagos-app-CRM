@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { BrandIcon, BrandWordmark } from "@/components/Brand";
@@ -7,8 +7,8 @@ import { supabaseServerReadOnly } from "@/lib/supabase/server";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Select Workspace | Corelix",
-  description: "Choose a Corelix workspace.",
+  title: "Select Workspace | Ordo",
+  description: "Choose an Ordo workspace.",
   robots: {
     index: false,
     follow: false,
@@ -85,21 +85,21 @@ export default async function SelectBusinessPage() {
     <main className="min-h-screen bg-[#f6f8fb] px-4 py-8 text-slate-900 sm:px-6">
       <div className="mx-auto max-w-3xl">
         <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_20px_60px_-42px_rgba(15,23,42,0.35)]">
-          <div className="border-b border-slate-900/80 bg-[#0b1120] px-6 py-8 sm:px-8">
+          <div className="border-b border-slate-200 bg-white px-6 py-8 sm:px-8">
             <div className="flex items-center gap-3">
               <BrandIcon size={24} />
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
-                  Corelix access
+                  Ordo access
                 </p>
-                <BrandWordmark variant="light" height={22} className="mt-1 h-[22px] w-auto" />
-                <h1 className="mt-1 text-3xl font-semibold tracking-tight text-white">
+                <BrandWordmark variant="gradient" height={22} className="mt-1 h-[22px] w-auto" />
+                <h1 className="mt-1 text-[1.85rem] font-semibold tracking-tight text-slate-900 sm:text-[2rem]">
                   Select a workspace
                 </h1>
               </div>
             </div>
-            <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-300 sm:text-base">
-              Your account is connected to more than one workspace. Choose the one you want to open in Corelix CRM.
+            <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
+              You have access to multiple workspaces. Choose where you want to continue working in Ordo.
             </p>
           </div>
 
@@ -118,7 +118,7 @@ export default async function SelectBusinessPage() {
                     /b/{option.slug}
                   </div>
                 </div>
-                <span className="shrink-0 rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white">
+                <span className="shrink-0 rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-900">
                   {option.roleLabel}
                 </span>
               </Link>
@@ -129,3 +129,4 @@ export default async function SelectBusinessPage() {
     </main>
   );
 }
+

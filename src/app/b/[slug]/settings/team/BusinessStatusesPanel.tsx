@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, Check, GripVertical, PencilLine, Plus, Save, Trash2, X } from "lucide-react";
@@ -45,7 +45,7 @@ function colorButtonClass(selected: boolean) {
     "inline-flex h-11 items-center gap-2 rounded-xl border px-3 text-sm font-medium transition",
     selected
       ? "border-slate-900 bg-slate-50 text-slate-900 shadow-[0_0_0_2px_rgba(15,23,42,0.08)]"
-      : "border-[#dde3ee] bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50",
+      : "border-[#E5E7EB] bg-white text-[#4B5563] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]",
   ].join(" ");
 }
 
@@ -557,16 +557,16 @@ export default function BusinessStatusesPanel({ businessId, canManageStatuses }:
   };
 
   return (
-    <section className="mt-5 rounded-[20px] border border-[#dde3ee] bg-[#fbfcfe] p-4 sm:p-5">
+    <section className="mt-5 rounded-[20px] border border-[#E5E7EB] bg-[#F9FAFB] p-4 sm:p-5">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+          <div className="product-section-label text-[#6B7280]">
             Statuses
           </div>
-          <h2 className="mt-2 text-lg font-semibold tracking-[-0.02em] text-slate-900">
+          <h2 className="product-section-title mt-1.5">
             Workflow statuses
           </h2>
-          <p className="mt-2 max-w-[700px] text-sm leading-6 text-slate-500">
+          <p className="product-page-subtitle mt-1.5 max-w-[700px]">
             Edit the workflow locally first. Nothing is published until you save changes.
           </p>
         </div>
@@ -584,7 +584,7 @@ export default function BusinessStatusesPanel({ businessId, canManageStatuses }:
             type="button"
             onClick={handleReset}
             disabled={isSaving || !isDirty}
-            className="inline-flex h-10 items-center rounded-full border border-[#dde3ee] bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-45"
+            className="inline-flex h-10 items-center rounded-full border border-[#E5E7EB] bg-white px-4 text-sm font-semibold text-[#4B5563] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937] disabled:cursor-not-allowed disabled:opacity-45"
           >
             Reset
           </button>
@@ -600,7 +600,7 @@ export default function BusinessStatusesPanel({ businessId, canManageStatuses }:
         </div>
       </div>
 
-      <div className="mt-4 grid gap-3 rounded-[18px] border border-[#dde3ee] bg-white p-3.5 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
+      <div className="mt-4 grid gap-3 rounded-[18px] border border-[#E5E7EB] bg-white p-3.5 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
         <div className="grid gap-3">
           <label className="grid gap-1">
             <span className="text-xs font-semibold text-slate-600">
@@ -617,7 +617,7 @@ export default function BusinessStatusesPanel({ businessId, canManageStatuses }:
                 "h-11 rounded-xl border px-3 text-sm outline-none transition",
                 isEditing
                   ? "border-[#f4c77d] bg-[#fff8ec] text-slate-900 shadow-[0_0_0_3px_rgba(245,158,11,0.12)] focus:border-[#d97706] focus:ring-2 focus:ring-[#f59e0b]/20"
-                  : "border-[#dde3ee] bg-white focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10",
+                  : "border-[#E5E7EB] bg-white focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15",
               ].join(" ")}
             />
             <span className="text-[11px] text-slate-400">
@@ -671,12 +671,12 @@ export default function BusinessStatusesPanel({ businessId, canManageStatuses }:
           </div>
 
           {draftColor === "custom" ? (
-            <label className="flex items-center gap-3 rounded-xl border border-[#dde3ee] bg-white px-3 py-2">
+            <label className="flex items-center gap-3 rounded-xl border border-[#E5E7EB] bg-white px-3 py-2">
               <input
                 type="color"
                 value={customColor}
                 onChange={(event) => setCustomColor(event.currentTarget.value.toUpperCase())}
-                className="h-8 w-10 cursor-pointer rounded-md border border-[#dde3ee] bg-white"
+                className="h-8 w-10 cursor-pointer rounded-md border border-[#E5E7EB] bg-white"
               />
               <span className="text-xs font-medium text-slate-500">
                 {customColor.toUpperCase()} will be softened for badges while preserving the chosen color.
@@ -704,7 +704,7 @@ export default function BusinessStatusesPanel({ businessId, canManageStatuses }:
               <button
                 type="button"
                 onClick={resetEditor}
-                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-[#dde3ee] bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-[#E5E7EB] bg-white px-4 text-sm font-semibold text-[#4B5563] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
               >
                 <X className="h-4 w-4" />
                 Cancel
@@ -714,7 +714,7 @@ export default function BusinessStatusesPanel({ businessId, canManageStatuses }:
         </div>
       </div>
 
-      <div className="mt-4 rounded-[18px] border border-[#dde3ee] bg-white p-3.5">
+      <div className="mt-4 rounded-[18px] border border-[#E5E7EB] bg-white p-3.5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
             Active workflow
@@ -724,7 +724,7 @@ export default function BusinessStatusesPanel({ businessId, canManageStatuses }:
               type="button"
               onClick={() => moveWorkflowStatus(-1)}
               disabled={selectedWorkflowIndex <= 0}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#dde3ee] bg-white text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-35"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#E5E7EB] bg-white text-[#6B7280] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] disabled:cursor-not-allowed disabled:opacity-35"
               aria-label="Move selected status left"
             >
               <ArrowLeft className="h-4 w-4" />
@@ -733,7 +733,7 @@ export default function BusinessStatusesPanel({ businessId, canManageStatuses }:
               type="button"
               onClick={() => moveWorkflowStatus(1)}
               disabled={selectedWorkflowIndex < 0 || selectedWorkflowIndex >= workflowStatuses.length - 1}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#dde3ee] bg-white text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-35"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#E5E7EB] bg-white text-[#6B7280] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] disabled:cursor-not-allowed disabled:opacity-35"
               aria-label="Move selected status right"
             >
               <ArrowRight className="h-4 w-4" />
@@ -849,7 +849,7 @@ export default function BusinessStatusesPanel({ businessId, canManageStatuses }:
                     style={{
                       background: color.background,
                       color: color.color,
-                      borderColor: inWorkflow ? color.selectedBackground : "#dde3ee",
+                      borderColor: inWorkflow ? color.selectedBackground : "#E5E7EB",
                       opacity: inWorkflow ? 1 : 0.55,
                     }}
                   >
@@ -878,8 +878,8 @@ export default function BusinessStatusesPanel({ businessId, canManageStatuses }:
             Custom statuses
           </div>
           {customStatuses.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-[#d8dee9] bg-white px-4 py-5 text-sm text-slate-500">
-              No custom statuses yet.
+            <div className="rounded-2xl border border-dashed border-[#E5E7EB] bg-white px-4 py-5 text-sm text-[#6B7280]">
+              No custom statuses yet. Add your first one to keep the workflow clear for the team.
             </div>
           ) : (
             <div className="grid gap-2">
@@ -891,7 +891,7 @@ export default function BusinessStatusesPanel({ businessId, canManageStatuses }:
                 return (
                   <div
                     key={status.value}
-                    className="flex items-center justify-between gap-3 rounded-2xl border border-[#dde3ee] bg-white px-4 py-3"
+                    className="flex items-center justify-between gap-3 rounded-2xl border border-[#E5E7EB] bg-white px-4 py-3"
                   >
                     <button
                       type="button"
@@ -912,7 +912,7 @@ export default function BusinessStatusesPanel({ businessId, canManageStatuses }:
                         {status.label}
                       </div>
                       <div className="mt-1 text-xs uppercase tracking-[0.08em] text-slate-400">
-                        {inWorkflow ? "In workflow" : "Inactive"} · {status.value}
+                        {inWorkflow ? "In workflow" : "Inactive"} В· {status.value}
                       </div>
                     </button>
 
@@ -924,7 +924,7 @@ export default function BusinessStatusesPanel({ businessId, canManageStatuses }:
                           "inline-flex h-9 items-center gap-2 rounded-xl border px-3 text-xs font-semibold transition",
                           editing
                             ? "border-slate-900 bg-slate-50 text-slate-900"
-                            : "border-[#dde3ee] bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50",
+                            : "border-[#E5E7EB] bg-white text-[#4B5563] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]",
                         ].join(" ")}
                       >
                         <PencilLine className="h-3.5 w-3.5" />
@@ -938,7 +938,7 @@ export default function BusinessStatusesPanel({ businessId, canManageStatuses }:
                           "inline-flex h-9 items-center gap-2 rounded-xl px-3 text-xs font-semibold transition",
                           inWorkflow
                             ? "border border-[#f3d5d8] bg-[#fff5f5] text-red-600 hover:border-[#efb8bf] hover:bg-[#ffe8e8]"
-                            : "border border-[#dde3ee] bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50",
+                            : "border border-[#E5E7EB] bg-white text-[#4B5563] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]",
                         ].join(" ")}
                       >
                         {inWorkflow ? "Remove from workflow" : "Add to workflow"}
@@ -1008,3 +1008,4 @@ export default function BusinessStatusesPanel({ businessId, canManageStatuses }:
     </section>
   );
 }
+

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React from "react";
 import { useActionState } from "react";
@@ -36,7 +36,7 @@ function OverlayLoader({ text }: { text: string }) {
   return (
     <div className="absolute inset-0 z-50 flex items-center justify-center rounded-[20px] bg-white/70 backdrop-blur-sm">
       <div className="flex flex-col items-center gap-3 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-lg shadow-slate-900/5">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-300 border-t-blue-700" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-300 border-t-[#6366F1]" />
         <div className="text-sm font-semibold text-slate-800">{text}</div>
       </div>
     </div>
@@ -77,7 +77,7 @@ function Input({
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange?.(e.target.value)}
-        className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
+        className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-[#6366F1] focus:ring-4 focus:ring-[rgba(99,102,241,0.14)]"
       />
     </label>
   );
@@ -108,7 +108,7 @@ function Select({
         required={required}
         value={value}
         onChange={(e) => onChange?.(e.target.value)}
-        className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
+        className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition hover:border-slate-300 focus:border-[#6366F1] focus:ring-4 focus:ring-[rgba(99,102,241,0.14)]"
       >
         <option value="">{placeholder}</option>
         {options.map((option) => (
@@ -159,7 +159,7 @@ function PasswordInput({
           placeholder={placeholder}
           value={value}
           onChange={(e) => onChange?.(e.target.value)}
-          className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-3.5 pr-[4.75rem] text-sm text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
+          className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-3.5 pr-[4.75rem] text-sm text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-[#6366F1] focus:ring-4 focus:ring-[rgba(99,102,241,0.14)]"
         />
         <button
           type="button"
@@ -307,18 +307,18 @@ export default function LoginUI({
     <div className="relative overflow-hidden rounded-[20px] border border-white/70 bg-white/95 shadow-[0_28px_80px_-36px_rgba(15,23,42,0.38),0_10px_24px_-18px_rgba(15,23,42,0.26)] backdrop-blur-sm">
       {regPending && (
         <OverlayLoader
-          text={inviteId ? "Joining business…" : "Creating your account…"}
+          text={inviteId ? "Joining workspace..." : "Creating your account..."}
         />
       )}
-      {loginPending && <OverlayLoader text="Signing in…" />}
-      {resetPending && <OverlayLoader text="Sending reset link…" />}
+      {loginPending && <OverlayLoader text="Signing in..." />}
+      {resetPending && <OverlayLoader text="Sending reset link..." />}
 
       <div className="border-b border-slate-100/80 px-6 pb-5 pt-6 sm:px-7">
         <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">
-          CORELIX
+          ORDO
         </div>
 
-        <h1 className="mt-2 text-[1.65rem] font-semibold tracking-tight text-slate-900">
+        <h1 className="mt-2 text-[1.45rem] font-semibold tracking-tight text-slate-900 sm:text-[1.55rem]">
           {mode === "login"
             ? "Sign in"
             : mode === "register"
@@ -328,11 +328,11 @@ export default function LoginUI({
 
         <p className="mt-1.5 text-sm leading-relaxed text-slate-600">
           {mode === "login"
-            ? "Sign in to access your Corelix workspace."
+            ? "Sign in to continue working in Ordo."
             : mode === "register"
               ? inviteId
-                ? "Create your account to join your team's workspace."
-                : "Set up your account and create your first Corelix workspace."
+                ? "Create your account to join the team workspace."
+                : "Create your Ordo workspace and start building a structured workflow."
               : "We will email you a secure link to reset your password."}
         </p>
 
@@ -381,7 +381,7 @@ export default function LoginUI({
               }}
               className="text-xs font-semibold text-slate-600 transition hover:text-slate-900"
             >
-              ← Back to sign in
+              Back to sign in
             </button>
           </div>
         )}
@@ -428,7 +428,7 @@ export default function LoginUI({
                   setLocalError("");
                   setEmailReset(emailLogin);
                 }}
-                className="text-xs font-semibold text-slate-600 transition hover:text-blue-700"
+                className="text-xs font-semibold text-slate-600 transition hover:text-[#6366F1]"
               >
                 Forgot password?
               </button>
@@ -437,7 +437,7 @@ export default function LoginUI({
             <button
               type="submit"
               disabled={loginPending}
-              className="h-11 w-full rounded-xl bg-blue-700 px-4 text-sm font-semibold !text-white shadow-[0_10px_20px_-12px_rgba(29,78,216,0.9)] transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60 disabled:!text-white"
+              className="brand-primary-btn h-11 w-full rounded-xl border px-4 text-sm font-semibold !text-white transition disabled:cursor-not-allowed disabled:opacity-60 disabled:!text-white"
             >
               Sign in
             </button>
@@ -531,15 +531,15 @@ export default function LoginUI({
                 type="checkbox"
                 checked={agree}
                 onChange={(e) => setAgree(e.target.checked)}
-                className="mt-0.5 h-4 w-4 rounded border-slate-300 text-blue-700 focus:ring-blue-200"
+                className="mt-0.5 h-4 w-4 rounded border-slate-300 text-[#6366F1] focus:ring-[rgba(99,102,241,0.18)]"
               />
               <div className="text-xs leading-snug text-slate-700">
                 I agree to the{" "}
-                <a href="/terms" className="font-semibold text-blue-700 hover:underline">
+                <a href="/terms" className="font-semibold text-[#6366F1] hover:underline">
                   Terms of Service
                 </a>{" "}
                 and{" "}
-                <a href="/privacy" className="font-semibold text-blue-700 hover:underline">
+                <a href="/privacy" className="font-semibold text-[#6366F1] hover:underline">
                   Privacy Policy
                 </a>
                 .
@@ -549,7 +549,7 @@ export default function LoginUI({
             <button
               type="submit"
               disabled={regPending || !agree}
-              className="h-11 w-full rounded-xl bg-blue-700 px-4 text-sm font-semibold !text-white shadow-[0_10px_20px_-12px_rgba(29,78,216,0.9)] transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60 disabled:!text-white"
+              className="brand-primary-btn h-11 w-full rounded-xl border px-4 text-sm font-semibold !text-white transition disabled:cursor-not-allowed disabled:opacity-60 disabled:!text-white"
             >
               {inviteId ? "Create account & join" : "Create account"}
             </button>
@@ -574,7 +574,7 @@ export default function LoginUI({
             <button
               type="submit"
               disabled={resetPending}
-              className="h-11 w-full rounded-xl bg-blue-700 px-4 text-sm font-semibold !text-white shadow-[0_10px_20px_-12px_rgba(29,78,216,0.9)] transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60 disabled:!text-white"
+              className="brand-primary-btn h-11 w-full rounded-xl border px-4 text-sm font-semibold !text-white transition disabled:cursor-not-allowed disabled:opacity-60 disabled:!text-white"
             >
               Send reset link
             </button>
@@ -584,3 +584,5 @@ export default function LoginUI({
     </div>
   );
 }
+
+

@@ -106,6 +106,7 @@ type Props = {
   actors: TeamActor[];
   ownerName?: string | null;
   managerName?: string | null;
+  compact?: boolean;
 };
 
 type FilterValue = "all" | "comments" | "updates" | "files";
@@ -207,9 +208,9 @@ function getDateKey(value: string) {
 }
 
 function getRoleBadge(role: "OWNER" | "MANAGER" | "GUEST") {
-  if (role === "OWNER") return { label: "Owner", className: "border-[#cfe0ff] bg-[#eef4ff] text-[#1f4eb8]" };
-  if (role === "MANAGER") return { label: "Manager", className: "border-[#d9e2ec] bg-[#f8fafc] text-[#475467]" };
-  return { label: "Guest", className: "border-[#eaecf0] bg-[#f8fafc] text-[#667085]" };
+  if (role === "OWNER") return { label: "Owner", className: "border-[#C7D2FE] bg-[#EEF2FF] text-[#6366F1]" };
+  if (role === "MANAGER") return { label: "Manager", className: "border-[#E5E7EB] bg-[#F9FAFB] text-[#4B5563]" };
+  return { label: "Guest", className: "border-[#E5E7EB] bg-[#F9FAFB] text-[#6B7280]" };
 }
 
 function resolveAuthorName(comment: CommentRow, currentPhone: string, currentUserName: string, ownerName?: string | null, managerName?: string | null) {
@@ -244,7 +245,7 @@ function renderRichText(text: string) {
   return text.split(/(@\[[^\]]+\])/g).map((part, index) => {
     const match = part.match(/^@\[(.+)\]$/);
     if (!match) return <React.Fragment key={`${part}-${index}`}>{part}</React.Fragment>;
-    return <span key={`${part}-${index}`} className="inline-flex rounded-md bg-[#eef4ff] px-1.5 py-0.5 text-[0.95em] font-medium text-[#1f4eb8]">@{match[1]}</span>;
+    return <span key={`${part}-${index}`} className="inline-flex rounded-md bg-[#EEF2FF] px-1.5 py-0.5 text-[0.95em] font-medium text-[#6366F1]">@{match[1]}</span>;
   });
 }
 
@@ -431,10 +432,11 @@ function formatFieldLabel(field?: string) {
 }
 
 function ActivityHeader({
-  totalCount, commentCount, updateCount, fileCount, filter, setFilter, sort, setSort,
+  totalCount, commentCount, updateCount, fileCount, filter, setFilter, sort, setSort, compact = false,
 }: {
   totalCount: number; commentCount: number; updateCount: number; fileCount: number;
   filter: FilterValue; setFilter: (value: FilterValue) => void; sort: SortValue; setSort: (value: SortValue) => void;
+  compact?: boolean;
 }) {
   const filters: Array<{ value: FilterValue; label: string; count: number }> = [
     { value: "all", label: "All", count: totalCount },
@@ -444,20 +446,18 @@ function ActivityHeader({
   ];
 
   return (
-    <div className="rounded-[24px] border border-[#e6ebf2] bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] px-4 py-3 shadow-[0_14px_34px_rgba(15,23,42,0.06)]">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+    <div className={cn("border border-[#E5E7EB] bg-[linear-gradient(180deg,#ffffff_0%,#F9FAFB_100%)] shadow-[0_8px_20px_rgba(15,23,42,0.05)]", compact ? "rounded-[18px] px-3 py-2" : "rounded-[20px] px-3 py-2.5")}>
+      <div className={cn("flex flex-col lg:flex-row lg:items-center lg:justify-between", compact ? "gap-1.5" : "gap-2")}>
         <div className="min-w-0">
-          <div className="flex items-center gap-2 text-sm font-semibold text-[#101828]"><CalendarClock className="h-4 w-4 text-[#667085]" />Activity</div>
-          <p className="mt-1 max-w-xl text-xs leading-5 text-[#667085]">Comments, assignments, checklist changes, tags, and files in one timeline.</p>
+          <div className={cn("flex items-center gap-2 font-semibold text-[#1F2937]", compact ? "text-[13px]" : "text-sm")}><CalendarClock className="h-4 w-4 text-[#6B7280]" />Activity</div>
         </div>
-        <button type="button" onClick={() => setSort(sort === "conversation" ? "newest" : "conversation")} className="inline-flex items-center gap-2 self-start rounded-full border border-[#d9e2ec] bg-white px-3 py-1 text-xs font-semibold text-[#344054] transition hover:border-[#c7d1dd] hover:bg-[#fcfdff]"><Clock3 className="h-3.5 w-3.5 text-[#667085]" />{sort === "conversation" ? "Newest first" : "Conversation view"}</button>
+        <button type="button" onClick={() => setSort(sort === "conversation" ? "newest" : "conversation")} className={cn("inline-flex items-center gap-1.5 self-start rounded-full border border-[#E5E7EB] bg-white font-semibold text-[#374151] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB]", compact ? "px-2.5 py-1 text-[11px]" : "px-3 py-1 text-xs")}><Clock3 className="h-3.5 w-3.5 text-[#6B7280]" />{sort === "conversation" ? "Newest first" : "Conversation view"}</button>
       </div>
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        <span className="inline-flex items-center gap-2 rounded-full border border-[#e4e7ec] bg-white px-3 py-1 text-xs font-medium text-[#667085]"><Filter className="h-3.5 w-3.5" />Scannable timeline</span>
+      <div className={cn("mt-1.5 flex flex-wrap items-center", compact ? "gap-1" : "gap-1.5")}>
         {filters.map((item) => (
-          <button key={item.value} type="button" onClick={() => setFilter(item.value)} className={cn("inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold transition", filter === item.value ? "border-[#c7d7f8] bg-[#eef4ff] text-[#1f4eb8]" : "border-[#e4e7ec] bg-white text-[#667085] hover:border-[#d9e2ec] hover:text-[#344054]")}>
+          <button key={item.value} type="button" onClick={() => setFilter(item.value)} className={cn("inline-flex items-center rounded-full border font-semibold transition", compact ? "gap-1 px-2 py-0.5 text-[10px]" : "gap-1.5 px-2.5 py-1 text-[11px]", filter === item.value ? "border-[#C7D2FE] bg-[#EEF2FF] text-[#6366F1]" : "border-[#E5E7EB] bg-white text-[#6B7280] hover:border-[#C7D2FE] hover:text-[#374151]")}>
             <span>{item.label}</span>
-            <span className={cn("rounded-full px-1.5 py-0.5 text-[11px]", filter === item.value ? "bg-white/80 text-[#1f4eb8]" : "bg-[#f2f4f7] text-[#667085]")}>{item.count}</span>
+            <span className={cn(compact ? "rounded-full px-1.5 py-0.5 text-[10px]" : "rounded-full px-1.5 py-0.5 text-[11px]", filter === item.value ? "bg-white/80 text-[#6366F1]" : "bg-[#F3F4F6] text-[#6B7280]")}>{item.count}</span>
           </button>
         ))}
       </div>
@@ -466,11 +466,12 @@ function ActivityHeader({
 }
 
 function CommentComposer({
-  value, onChange, onSubmit, isSubmitting, currentUserName, canWrite, attachments, onAttachFiles, onRemoveAttachment, mentionSuggestions, replyTarget, onClearReply,
+  value, onChange, onSubmit, isSubmitting, currentUserName, canWrite, attachments, onAttachFiles, onRemoveAttachment, mentionSuggestions, replyTarget, onClearReply, compact = false,
 }: {
   value: string; onChange: (value: string) => void; onSubmit: () => void; isSubmitting: boolean; currentUserName: string; canWrite: boolean;
   attachments: ComposerAttachment[]; onAttachFiles: (files: FileList | null) => void; onRemoveAttachment: (id: string) => void; mentionSuggestions: TeamActor[];
   replyTarget: ReplyTarget | null; onClearReply: () => void;
+  compact?: boolean;
 }) {
   const textareaRef = React.useRef<HTMLTextAreaElement | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
@@ -513,46 +514,46 @@ function CommentComposer({
   }
 
   return (
-    <div className="rounded-[24px] border border-[#e6ebf2] bg-white/96 p-3 shadow-[0_12px_30px_rgba(15,23,42,0.08)] backdrop-blur">
-      <div className="flex gap-3">
-        <Avatar className="h-10 w-10 rounded-2xl">
+    <div className={cn("rounded-[22px] border border-[#e6ebf2] bg-white/96 shadow-[0_10px_24px_rgba(15,23,42,0.08)] backdrop-blur", compact ? "p-2" : "p-2.5")}>
+      <div className={cn("flex", compact ? "gap-2" : "gap-2.5")}>
+        <Avatar className={cn("rounded-2xl", compact ? "h-8 w-8" : "h-9 w-9")}>
           <AvatarFallback className="rounded-2xl bg-[#111827] text-xs font-semibold text-white">
             {getInitials(currentUserName)}
           </AvatarFallback>
         </Avatar>
         <div className="min-w-0 flex-1">
           {replyTarget ? (
-            <div className="mb-2 rounded-[18px] border border-[#dbe4ef] bg-[#f8fafc] px-3.5 py-3">
+            <div className="mb-2 rounded-[18px] border border-[#E5E7EB] bg-[#F9FAFB] px-3.5 py-3">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
+                  <div className="product-section-label flex items-center gap-2 text-[#9CA3AF]">
                     <CornerUpLeft className="h-3.5 w-3.5" />
                     Replying to {replyTarget.kind}
                   </div>
-                  <div className="mt-1 text-sm font-semibold text-[#101828]">{replyTarget.label}</div>
-                  <div className="mt-1 text-xs leading-5 text-[#667085]">{replyTarget.preview}</div>
+                  <div className="mt-1 text-sm font-semibold text-[#1F2937]">{replyTarget.label}</div>
+                  <div className="mt-1 text-xs leading-5 text-[#6B7280]">{replyTarget.preview}</div>
                 </div>
-                <button type="button" onClick={onClearReply} className="text-xs font-semibold text-[#667085] transition hover:text-[#101828]">
+                <button type="button" onClick={onClearReply} className="text-xs font-semibold text-[#6B7280] transition hover:text-[#1F2937]">
                   Clear
                 </button>
               </div>
             </div>
           ) : null}
-          <div className="relative rounded-[20px] border border-[#d8e1ec] bg-[linear-gradient(180deg,#fcfdff_0%,#f8fafc_100%)] px-4 py-3 transition focus-within:border-[#b9c8da] focus-within:bg-white">
-            <textarea ref={textareaRef} value={value} onFocus={() => setExpanded(true)} onChange={(event) => { onChange(event.target.value); setMentionQuery(getMentionQuery(event.target.value, event.target.selectionStart ?? event.target.value.length)); }} disabled={!canWrite} rows={expanded ? 3 : 1} placeholder={canWrite ? "Write a comment..." : "Only Owner / Manager can add comments."} className={cn("w-full resize-none bg-transparent text-sm leading-6 text-[#101828] outline-none placeholder:text-[#98a2b3]", expanded ? "min-h-[88px]" : "min-h-[28px] overflow-hidden")} onKeyDown={(event) => { if ((event.ctrlKey || event.metaKey) && event.key === "Enter") { event.preventDefault(); if (!submitDisabled) onSubmit(); } }} />
-            {filteredMentions.length > 0 ? <div className="absolute left-4 right-4 top-full z-10 mt-2 rounded-2xl border border-[#d9e2ec] bg-white p-2 shadow-[0_20px_40px_rgba(15,23,42,0.12)]">
-              {filteredMentions.map((actor) => <button key={actor.id} type="button" onClick={() => applyMention(actor.label)} className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-[#f8fafc]"><span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-[#f2f4f7] text-[11px] font-semibold text-[#475467]">{getInitials(actor.label)}</span><span className="min-w-0 flex-1"><span className="block truncate text-sm font-semibold text-[#101828]">{actor.label}</span><span className="block text-xs text-[#667085]">{actor.kind}</span></span><AtSign className="h-4 w-4 text-[#98a2b3]" /></button>)}
+          <div className={cn("relative rounded-[18px] border border-[#E5E7EB] bg-[linear-gradient(180deg,#FFFFFF_0%,#F9FAFB_100%)] transition focus-within:border-[#6366F1] focus-within:bg-white", compact ? "px-3 py-2" : "px-3.5 py-2.5")}>
+            <textarea ref={textareaRef} value={value} onFocus={() => setExpanded(true)} onChange={(event) => { onChange(event.target.value); setMentionQuery(getMentionQuery(event.target.value, event.target.selectionStart ?? event.target.value.length)); }} disabled={!canWrite} rows={expanded ? 3 : 1} placeholder={canWrite ? "Write a comment..." : "Only Owner / Manager can add comments."} className={cn("w-full resize-none bg-transparent text-sm text-[#1F2937] outline-none placeholder:text-[#9CA3AF]", compact ? "leading-5" : "leading-5", expanded ? compact ? "min-h-[64px]" : "min-h-[78px]" : compact ? "min-h-[20px] overflow-hidden" : "min-h-[24px] overflow-hidden")} onKeyDown={(event) => { if ((event.ctrlKey || event.metaKey) && event.key === "Enter") { event.preventDefault(); if (!submitDisabled) onSubmit(); } }} />
+            {filteredMentions.length > 0 ? <div className="absolute left-4 right-4 top-full z-10 mt-2 rounded-2xl border border-[#E5E7EB] bg-white p-2 shadow-[0_20px_40px_rgba(15,23,42,0.12)]">
+              {filteredMentions.map((actor) => <button key={actor.id} type="button" onClick={() => applyMention(actor.label)} className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-[#F9FAFB]"><span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-[#F3F4F6] text-[11px] font-semibold text-[#4B5563]">{getInitials(actor.label)}</span><span className="min-w-0 flex-1"><span className="block truncate text-sm font-semibold text-[#1F2937]">{actor.label}</span><span className="block text-xs text-[#6B7280]">{actor.kind}</span></span><AtSign className="h-4 w-4 text-[#9CA3AF]" /></button>)}
             </div> : null}
           </div>
-          {attachments.length > 0 ? <div className="mt-2 flex flex-wrap gap-2">{attachments.map((attachment) => <span key={attachment.id} className="inline-flex items-center gap-2 rounded-full border border-[#d9e2ec] bg-[#f8fafc] px-3 py-1.5 text-xs font-medium text-[#475467]"><Paperclip className="h-3.5 w-3.5 text-[#667085]" /><span className="max-w-[180px] truncate">{attachment.file.name}</span><button type="button" onClick={() => onRemoveAttachment(attachment.id)} className="rounded-full p-0.5 text-[#98a2b3] transition hover:bg-white hover:text-[#344054]" aria-label={`Remove ${attachment.file.name}`}><Trash2 className="h-3.5 w-3.5" /></button></span>)}</div> : null}
-          <div className={cn("mt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between", expanded && "border-t border-[#eef2f7] pt-3")}>
-            <div className="flex flex-wrap items-center gap-2 text-xs text-[#667085]">
-              <button type="button" onClick={openFilePicker} disabled={!canWrite} className="inline-flex items-center gap-2 rounded-full border border-[#d9e2ec] bg-white px-3 py-1.5 font-semibold text-[#344054] transition hover:border-[#c7d1dd] hover:bg-[#fcfdff] disabled:cursor-not-allowed disabled:opacity-50"><Paperclip className="h-3.5 w-3.5" />Attach file</button>
-              {expanded ? <span>Type `@` to mention a teammate. Ctrl/Cmd + Enter sends.</span> : <button type="button" onClick={() => { setExpanded(true); textareaRef.current?.focus(); }} className="font-medium text-[#667085] transition hover:text-[#101828]">Expand composer</button>}
+          {attachments.length > 0 ? <div className="mt-2 flex flex-wrap gap-2">{attachments.map((attachment) => <span key={attachment.id} className="inline-flex items-center gap-2 rounded-full border border-[#E5E7EB] bg-[#F9FAFB] px-3 py-1.5 text-xs font-medium text-[#4B5563]"><Paperclip className="h-3.5 w-3.5 text-[#6B7280]" /><span className="max-w-[180px] truncate">{attachment.file.name}</span><button type="button" onClick={() => onRemoveAttachment(attachment.id)} className="rounded-full p-0.5 text-[#9CA3AF] transition hover:bg-white hover:text-[#374151]" aria-label={`Remove ${attachment.file.name}`}><Trash2 className="h-3.5 w-3.5" /></button></span>)}</div> : null}
+          <div className={cn("mt-2 flex flex-col sm:flex-row sm:items-center sm:justify-between", compact ? "gap-1.5" : "gap-2", expanded && (compact ? "border-t border-[#EEF2FF] pt-2" : "border-t border-[#EEF2FF] pt-2.5"))}>
+            <div className="flex flex-wrap items-center gap-2 text-xs text-[#6B7280]">
+              <button type="button" onClick={openFilePicker} disabled={!canWrite} className={cn("inline-flex items-center gap-2 border border-[#E5E7EB] bg-white font-semibold text-[#4B5563] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937] disabled:cursor-not-allowed disabled:opacity-50", compact ? "h-8 rounded-[14px] px-3 text-[13px]" : "h-10 rounded-[16px] px-3.5 text-sm")}><Paperclip className="h-3.5 w-3.5" />Attach file</button>
+              {expanded ? <span>Type `@` to mention a teammate. Ctrl/Cmd + Enter sends.</span> : <button type="button" onClick={() => { setExpanded(true); textareaRef.current?.focus(); }} className="font-medium text-[#6B7280] transition hover:text-[#1F2937]">Expand composer</button>}
             </div>
             <div className="flex items-center justify-end gap-2">
-              {expanded && !value.trim() && attachments.length === 0 ? <button type="button" onClick={() => setExpanded(false)} className="inline-flex h-10 items-center justify-center rounded-2xl border border-[#d9e2ec] px-3 text-sm font-semibold text-[#475467] transition hover:border-[#c7d1dd] hover:bg-[#f8fafc]">Collapse</button> : null}
-              <button type="button" onClick={onSubmit} disabled={submitDisabled} className={cn("inline-flex h-10 items-center justify-center gap-2 rounded-2xl border px-4 text-sm font-semibold transition", submitDisabled ? "cursor-not-allowed border-[#e4e7ec] bg-[#f2f4f7] text-[#98a2b3]" : "border-[#c7d7f8] bg-[linear-gradient(180deg,#ffffff_0%,#eef4ff_100%)] text-[#111827] shadow-[0_10px_24px_rgba(31,78,184,0.12)] hover:border-[#b6caef] hover:bg-[linear-gradient(180deg,#ffffff_0%,#e9f2ff_100%)]")}><Send className="h-4 w-4" />{isSubmitting ? "Posting..." : expanded ? "Send comment" : "Comment"}</button>
+              {expanded && !value.trim() && attachments.length === 0 ? <button type="button" onClick={() => setExpanded(false)} className={cn("inline-flex items-center justify-center border border-[#E5E7EB] bg-white font-semibold text-[#4B5563] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]", compact ? "h-8 rounded-[14px] px-3 text-[13px]" : "h-10 rounded-[16px] px-3.5 text-sm")}>Collapse</button> : null}
+              <button type="button" onClick={onSubmit} disabled={submitDisabled} className={cn("inline-flex items-center justify-center gap-2 border font-semibold transition", compact ? "h-8 rounded-[14px] px-3.5 text-[13px]" : "h-10 rounded-[16px] px-4 text-sm", submitDisabled ? "cursor-not-allowed border-[#E5E7EB] bg-[#F3F4F6] text-[#9CA3AF]" : "border-[#E5E7EB] bg-white text-[#1F2937] shadow-[0_1px_2px_rgba(16,24,40,0.04)] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]")}><Send className="h-4 w-4" />{isSubmitting ? "Posting..." : "Comment"}</button>
             </div>
           </div>
           <input ref={fileInputRef} type="file" multiple className="hidden" onChange={(event) => { handleAttachFiles(event.target.files); event.currentTarget.value = ""; }} />
@@ -563,14 +564,14 @@ function CommentComposer({
 }
 
 function DateSeparator({ label }: { label: string }) {
-  return <div className="flex items-center gap-3 py-2"><div className="h-px flex-1 bg-[#eef2f7]" /><span className="rounded-full border border-[#e9eef5] bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">{label}</span><div className="h-px flex-1 bg-[#eef2f7]" /></div>;
+  return <div className="flex items-center gap-3 py-2"><div className="h-px flex-1 bg-[#EEF2FF]" /><span className="product-section-label rounded-full border border-[#E5E7EB] bg-white px-3 py-1">{label}</span><div className="h-px flex-1 bg-[#EEF2FF]" /></div>;
 }
 
 function AuditValue({ label, value, tone = "neutral" }: { label: string; value: string; tone?: "neutral" | "new" | "old" }) {
   return (
-    <div className={cn("rounded-2xl border px-3 py-2.5", tone === "old" && "border-[#f0d5dd] bg-[#fff1f3]", tone === "new" && "border-[#d1fadf] bg-[#f0fdf4]", tone === "neutral" && "border-[#e4e7ec] bg-[#f8fafc]")}>
-      <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">{label}</div>
-      <div className="mt-1 text-sm font-semibold text-[#101828]">{value}</div>
+    <div className={cn("rounded-2xl border px-3 py-2.5", tone === "old" && "border-[#FECACA] bg-[#FFF1F2]", tone === "new" && "border-[#A7F3D0] bg-[#ECFDF3]", tone === "neutral" && "border-[#E5E7EB] bg-[#F9FAFB]")}>
+      <div className="product-section-label">{label}</div>
+      <div className="mt-1 text-sm font-semibold text-[#1F2937]">{value}</div>
     </div>
   );
 }
@@ -599,7 +600,7 @@ function EventDelta({ payload }: { payload?: LocalActivityEventPayload }) {
     return (
       <div className="mt-3 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-center">
         <AuditValue label="Before" value={formatAuditValue(payload.from, payload.fromLabel, payload.field)} tone="old" />
-        <div className="hidden text-center text-sm font-semibold text-[#98a2b3] sm:block">-&gt;</div>
+        <div className="hidden text-center text-sm font-semibold text-[#9CA3AF] sm:block">-&gt;</div>
         <AuditValue label="After" value={formatAuditValue(payload.to, payload.toLabel, payload.field)} tone="new" />
       </div>
     );
@@ -613,7 +614,7 @@ function EventDelta({ payload }: { payload?: LocalActivityEventPayload }) {
 }
 
 function EventGlyph({ eventType, tone }: { eventType: TimelineEvent["eventType"]; tone: TimelineEvent["tone"] }) {
-  const classes = cn("flex h-9 w-9 items-center justify-center rounded-2xl border", tone === "success" && "border-[#cdebd9] bg-[#f0fbf5] text-[#067647]", tone === "warning" && "border-[#f5d7a6] bg-[#fff7ed] text-[#b54708]", tone === "muted" && "border-[#eaecf0] bg-[#f8fafc] text-[#667085]", tone === "default" && "border-[#d7e3fb] bg-[#eef4ff] text-[#1f4eb8]");
+  const classes = cn("flex h-9 w-9 items-center justify-center rounded-2xl border", tone === "success" && "border-[#A7F3D0] bg-[#ECFDF3] text-[#059669]", tone === "warning" && "border-[#FDE68A] bg-[#FFFBEB] text-[#D97706]", tone === "muted" && "border-[#E5E7EB] bg-[#F9FAFB] text-[#6B7280]", tone === "default" && "border-[#C7D2FE] bg-[#EEF2FF] text-[#6366F1]");
   if (eventType === "status_changed") return <span className={classes}><CalendarClock className="h-4 w-4" /></span>;
   if (eventType === "manager_changed" || eventType === "manager_assigned") return <span className={classes}><UserRound className="h-4 w-4" /></span>;
   if (eventType === "label_added" || eventType === "label_removed") return <span className={classes}><Tag className="h-4 w-4" /></span>;
@@ -624,7 +625,7 @@ function EventGlyph({ eventType, tone }: { eventType: TimelineEvent["eventType"]
   return <span className={classes}><Clock3 className="h-4 w-4" /></span>;
 }
 
-function AttachmentCard({ payload }: { payload?: LocalActivityEventPayload }) {
+function AttachmentCard({ payload, compact = false }: { payload?: LocalActivityEventPayload; compact?: boolean }) {
   if (!payload?.fileName) return null;
 
   const previewUrl = payload.previewUrl || payload.downloadUrl || null;
@@ -637,17 +638,17 @@ function AttachmentCard({ payload }: { payload?: LocalActivityEventPayload }) {
     fileName.endsWith(".webp") ||
     fileName.endsWith(".gif");
   const isImage = Boolean(previewUrl && (payload.fileType?.startsWith("image/") || hasImageExtension));
-  const fileMeta = [payload.fileType, formatFileSize(payload.fileSize)].filter(Boolean).join(" • ");
+  const fileMeta = [payload.fileType, formatFileSize(payload.fileSize)].filter(Boolean).join(" | ");
 
   return (
-    <div className="mt-3 rounded-[18px] border border-[#dde5ee] bg-[#fbfcfe] p-3.5">
+    <div className={cn("rounded-[18px] border border-[#E5E7EB] bg-[#F9FAFB]", compact ? "mt-2 p-2.5" : "mt-3 p-3.5")}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="flex items-center gap-2 text-sm font-semibold text-[#101828]">
+          <div className={cn("flex items-center gap-2 font-semibold text-[#101828]", compact ? "text-[13px]" : "text-sm")}>
             <Paperclip className="h-4 w-4 text-[#667085]" />
             <span className="truncate">{payload.fileName}</span>
           </div>
-          <div className="mt-1 text-xs text-[#667085]">{fileMeta || "Attachment"}</div>
+          <div className={cn("mt-1 text-[#667085]", compact ? "text-[11px]" : "text-xs")}>{fileMeta || "Attachment"}</div>
         </div>
         <div className="flex items-center gap-2">
           {isImage && previewUrl ? (
@@ -655,25 +656,25 @@ function AttachmentCard({ payload }: { payload?: LocalActivityEventPayload }) {
               fileName={payload.fileName}
               src={previewUrl}
             />
-          ) : previewUrl ? <a href={previewUrl} target="_blank" rel="noreferrer" className="inline-flex h-8 items-center gap-1 rounded-full border border-[#d9e2ec] bg-white px-3 text-xs font-semibold text-[#344054] transition hover:border-[#c7d1dd] hover:bg-[#f8fafc]"><Eye className="h-3.5 w-3.5" />Open</a> : null}
-          {downloadUrl ? <a href={downloadUrl} download={payload.fileName} className="inline-flex h-8 items-center gap-1 rounded-full border border-[#d9e2ec] bg-white px-3 text-xs font-semibold text-[#344054] transition hover:border-[#c7d1dd] hover:bg-[#f8fafc]"><Download className="h-3.5 w-3.5" />Download</a> : null}
+          ) : previewUrl ? <a href={previewUrl} target="_blank" rel="noreferrer" className={cn("inline-flex items-center gap-2 rounded-[16px] border border-[#E5E7EB] bg-white font-semibold text-[#4B5563] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]", compact ? "h-8 px-3 text-[13px]" : "h-10 px-4 text-sm")}><Eye className="h-4 w-4" />Open</a> : null}
+          {downloadUrl ? <a href={downloadUrl} download={payload.fileName} className={cn("inline-flex items-center gap-2 rounded-[16px] border border-[#E5E7EB] bg-white font-semibold text-[#4B5563] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]", compact ? "h-8 px-3 text-[13px]" : "h-10 px-4 text-sm")}><Download className="h-4 w-4" />Download</a> : null}
         </div>
       </div>
     </div>
   );
 }
 
-function SystemEventItem({ item, onReply }: { item: TimelineEvent; onReply: (target: ReplyTarget) => void }) {
+function SystemEventItem({ item, onReply, compact = false }: { item: TimelineEvent; onReply: (target: ReplyTarget) => void; compact?: boolean }) {
   const badge = getRoleBadge(normalizeRole(item.actorRole));
   const canReplyToFile = item.eventType === "file_uploaded" && !!item.payload?.fileName;
   return (
-    <div className="flex gap-3 rounded-[22px] border border-[#edf1f5] bg-[linear-gradient(180deg,#ffffff_0%,#fbfcfe_100%)] px-4 py-3 transition hover:border-[#dde5ee] hover:shadow-[0_10px_24px_rgba(15,23,42,0.05)]">
-      <div className="flex w-12 flex-col items-center"><EventGlyph eventType={item.eventType} tone={item.tone} /><div className="mt-2 h-full w-px bg-[#edf1f5]" /></div>
-      <div className="min-w-0 flex-1 pb-2">
-        <div className="flex flex-wrap items-center gap-2"><span className="text-sm font-semibold text-[#101828]">{item.title}</span>{item.payload?.field ? <span className="text-xs font-medium text-[#98a2b3]">{formatFieldLabel(item.payload.field)}</span> : null}</div>
-        {item.detail ? <div className="mt-1 text-sm leading-6 text-[#475467]">{item.detail}</div> : null}
-        {item.eventType === "file_uploaded" || item.eventType === "file_deleted" ? <AttachmentCard payload={item.payload} /> : <EventDelta payload={item.payload} />}
-        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#98a2b3]"><span className="font-medium text-[#667085]">{item.actorName}</span><span className={cn("inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em]", badge.className)}>{badge.label}</span><span>{formatDateTime(item.createdAt)}</span>{canReplyToFile ? <button type="button" onClick={() => onReply({ id: item.id, kind: "file", label: item.payload?.fileName || "Attachment", preview: item.payload?.fileName || item.detail || "Attachment" })} className="inline-flex items-center gap-1 font-semibold text-[#667085] transition hover:text-[#101828]"><CornerUpLeft className="h-3.5 w-3.5" />Reply</button> : null}</div>
+    <div className={cn("flex rounded-[20px] border border-[#E5E7EB] bg-[linear-gradient(180deg,#FFFFFF_0%,#F9FAFB_100%)] transition hover:border-[#C7D2FE] hover:shadow-[0_10px_24px_rgba(15,23,42,0.05)]", compact ? "gap-2.5 px-3 py-2.5" : "gap-3 px-4 py-3")}>
+      <div className={cn("flex flex-col items-center", compact ? "w-9" : "w-12")}><EventGlyph eventType={item.eventType} tone={item.tone} /><div className={cn("h-full w-px bg-[#edf1f5]", compact ? "mt-1.5" : "mt-2")} /></div>
+      <div className={cn("min-w-0 flex-1", compact ? "pb-1" : "pb-2")}>
+        <div className="flex flex-wrap items-center gap-2"><span className={cn("text-[#101828]", compact ? "text-sm font-medium" : "text-sm font-semibold")}>{item.title}</span>{item.payload?.field ? <span className={cn("font-medium text-[#98a2b3]", compact ? "text-[11px]" : "text-xs")}>{formatFieldLabel(item.payload.field)}</span> : null}</div>
+        {item.detail ? <div className={cn("text-sm text-[#475467]", compact ? "mt-0.5 line-clamp-2 leading-5" : "mt-1 leading-6")}>{item.detail}</div> : null}
+        {item.eventType === "file_uploaded" || item.eventType === "file_deleted" ? <AttachmentCard payload={item.payload} compact={compact} /> : <EventDelta payload={item.payload} />}
+        <div className={cn("flex flex-wrap items-center gap-y-1 text-[#98a2b3]", compact ? "mt-2 gap-x-2 text-[11px]" : "mt-3 gap-x-3 text-xs")}><span className="font-medium text-[#667085]">{item.actorName}</span><span className={cn("inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em]", badge.className)}>{badge.label}</span><span>{formatDateTime(item.createdAt)}</span>{canReplyToFile ? <button type="button" onClick={() => onReply({ id: item.id, kind: "file", label: item.payload?.fileName || "Attachment", preview: item.payload?.fileName || item.detail || "Attachment" })} className="inline-flex items-center gap-1 font-semibold text-[#667085] transition hover:text-[#101828]"><CornerUpLeft className="h-3.5 w-3.5" />Reply</button> : null}</div>
       </div>
     </div>
   );
@@ -685,7 +686,7 @@ function ReplyPreview({ snapshot }: { snapshot?: ReplySnapshot | null }) {
 
   return (
     <div className="mb-3 rounded-[18px] border border-[#e5edf8] bg-[#f8fbff] px-3 py-2.5">
-      <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.06em] text-[#7c8aa5]">
+      <div className="product-section-label flex items-center gap-2 text-[#7c8aa5]">
         <CornerUpLeft className="h-3.5 w-3.5" />
         <span>{reply.label}</span>
       </div>
@@ -695,11 +696,12 @@ function ReplyPreview({ snapshot }: { snapshot?: ReplySnapshot | null }) {
 }
 
 function CommentItem({
-  item, canWrite, editingId, editingValue, setEditingValue, onStartEdit, onCancelEdit, onSaveEdit, onDelete, expandedComments, toggleExpanded, onReply,
+  item, canWrite, editingId, editingValue, setEditingValue, onStartEdit, onCancelEdit, onSaveEdit, onDelete, expandedComments, toggleExpanded, onReply, compact = false,
 }: {
   item: TimelineComment; canWrite: boolean; editingId: string | null; editingValue: string; setEditingValue: (value: string) => void;
   onStartEdit: (item: TimelineComment) => void; onCancelEdit: () => void; onSaveEdit: (item: TimelineComment) => void; onDelete: (item: TimelineComment) => void;
   expandedComments: Set<string>; toggleExpanded: (id: string) => void; onReply: (target: ReplyTarget) => void;
+  compact?: boolean;
 }) {
   const badge = getRoleBadge(normalizeRole(item.actorRole));
   const isEditing = editingId === item.id;
@@ -714,11 +716,12 @@ function CommentItem({
   return (
     <div
       className={cn(
-        "group flex gap-3 rounded-[24px] border border-[#e6ebf2] bg-white px-4 py-4 shadow-[0_8px_24px_rgba(15,23,42,0.04)] transition hover:border-[#d9e2ec] hover:shadow-[0_14px_30px_rgba(15,23,42,0.06)]",
+        "group flex rounded-[20px] border border-[#E5E7EB] bg-white shadow-[0_8px_20px_rgba(15,23,42,0.04)] transition hover:border-[#C7D2FE] hover:shadow-[0_12px_24px_rgba(15,23,42,0.06)]",
+        compact ? "gap-2.5 px-3 py-2.5" : "gap-3 px-4 py-3",
         item.replyToCommentId && "ml-4 border-[#e5edf8] bg-[#fcfdff]",
       )}
     >
-      <Avatar className="h-10 w-10 rounded-2xl">
+      <Avatar className={cn("rounded-2xl", compact ? "h-8 w-8" : "h-10 w-10")}>
         <AvatarFallback className="rounded-2xl bg-[#111827] text-xs font-semibold text-white">
           {getInitials(item.actorName)}
         </AvatarFallback>
@@ -727,49 +730,50 @@ function CommentItem({
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-sm font-semibold text-[#101828]">{item.actorName}</span>
+              <span className={cn("text-[#101828]", compact ? "text-sm font-medium" : "text-sm font-semibold")}>{item.actorName}</span>
               <span className={cn("inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em]", badge.className)}>{badge.label}</span>
               {item.replyToCommentId ? <span className="inline-flex rounded-full border border-[#e5edf8] bg-[#f8fbff] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#52607a]">Reply</span> : null}
-              {item.edited ? <span className="inline-flex rounded-full border border-[#d7e3fb] bg-[#eef4ff] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#1f4eb8]">Edited</span> : null}
-              <span className="text-xs text-[#98a2b3]">{formatDateTime(item.createdAt)}</span>
+              {item.edited ? <span className="inline-flex rounded-full border border-[#C7D2FE] bg-[#EEF2FF] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#6366F1]">Edited</span> : null}
+              <span className={cn("text-[#98a2b3]", compact ? "text-[11px]" : "text-xs")}>{formatDateTime(item.createdAt)}</span>
             </div>
           </div>
           {(canReply || canManageItem) ? (
             <div className="flex items-center gap-1 opacity-0 transition group-hover:opacity-100">
               {canReply ? (
-                <button type="button" onClick={() => onReply({ id: item.id, kind: "comment", label: item.actorName, preview: getCompactPreview(item.body) })} className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-transparent bg-[#f8fafc] text-[#667085] transition hover:border-[#d9e2ec] hover:bg-white hover:text-[#101828]" aria-label="Reply to comment"><CornerUpLeft className="h-4 w-4" /></button>
+                <button type="button" onClick={() => onReply({ id: item.id, kind: "comment", label: item.actorName, preview: getCompactPreview(item.body) })} className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-transparent bg-[#F9FAFB] text-[#6B7280] transition hover:border-[#E5E7EB] hover:bg-white hover:text-[#1F2937]" aria-label="Reply to comment"><CornerUpLeft className="h-4 w-4" /></button>
               ) : null}
-              {canManageItem ? <button type="button" onClick={() => onStartEdit(item)} className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-transparent bg-[#f8fafc] text-[#667085] transition hover:border-[#d9e2ec] hover:bg-white hover:text-[#101828]" aria-label="Edit comment"><Pencil className="h-4 w-4" /></button> : null}
+              {canManageItem ? <button type="button" onClick={() => onStartEdit(item)} className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-transparent bg-[#F9FAFB] text-[#6B7280] transition hover:border-[#E5E7EB] hover:bg-white hover:text-[#1F2937]" aria-label="Edit comment"><Pencil className="h-4 w-4" /></button> : null}
               {canManageItem ? <button type="button" onClick={() => onDelete(item)} className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-transparent bg-[#fef3f2] text-[#b42318] transition hover:border-[#fecdca] hover:bg-white" aria-label="Delete comment"><Trash2 className="h-4 w-4" /></button> : null}
             </div>
           ) : null}
         </div>
-        {isEditing ? <div className="mt-3"><textarea value={editingValue} onChange={(event) => setEditingValue(event.target.value)} rows={4} className="min-h-[120px] w-full resize-none rounded-[18px] border border-[#d8e1ec] bg-[#fbfcfe] px-4 py-3 text-sm leading-6 text-[#101828] outline-none transition focus:border-[#b9c8da] focus:bg-white" /><div className="mt-3 flex items-center justify-end gap-2"><button type="button" onClick={onCancelEdit} className="inline-flex h-10 items-center justify-center rounded-2xl border border-[#d9e2ec] px-4 text-sm font-semibold text-[#475467] transition hover:border-[#c7d1dd] hover:bg-[#f8fafc]">Cancel</button><button type="button" onClick={() => onSaveEdit(item)} disabled={!editingValue.trim()} className="inline-flex h-10 items-center justify-center rounded-2xl border border-[#c7d7f8] bg-[#eef4ff] px-4 text-sm font-semibold text-[#1f4eb8] transition disabled:cursor-not-allowed disabled:opacity-50">Save</button></div></div> : <div className="mt-3"><ReplyPreview snapshot={item.replySnapshot} /><div className={cn("whitespace-pre-wrap text-sm leading-6 text-[#101828]", shouldCollapse && !isExpanded && "line-clamp-5")}>{renderRichText(item.body)}</div>{shouldCollapse ? <button type="button" onClick={() => toggleExpanded(item.id)} className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-[#667085] transition hover:text-[#101828]">{isExpanded ? "Show less" : "Show more"}<ChevronDown className={cn("h-3.5 w-3.5 transition", isExpanded && "rotate-180")} /></button> : null}{hasChangeDetails ? <div className="mt-2"><button type="button" onClick={() => setShowChanges((prev) => !prev)} className="inline-flex items-center gap-1 text-xs font-semibold text-[#667085] transition hover:text-[#101828]">{showChanges ? "Hide changes" : "Show changes"}<ChevronDown className={cn("h-3.5 w-3.5 transition", showChanges && "rotate-180")} /></button>{showChanges ? <EventDelta payload={item.editPayload} /> : null}</div> : null}</div>}
+        {isEditing ? <div className={cn(compact ? "mt-2" : "mt-2.5")}><textarea value={editingValue} onChange={(event) => setEditingValue(event.target.value)} rows={4} className="min-h-[120px] w-full resize-none rounded-[18px] border border-[#E5E7EB] bg-[#F9FAFB] px-4 py-3 text-sm leading-6 text-[#1F2937] outline-none transition focus:border-[#6366F1] focus:bg-white" /><div className={cn("flex items-center justify-end gap-2", compact ? "mt-2" : "mt-2.5")}><button type="button" onClick={onCancelEdit} className="inline-flex h-10 items-center justify-center rounded-2xl border border-[#E5E7EB] px-4 text-sm font-semibold text-[#4B5563] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB]">Cancel</button><button type="button" onClick={() => onSaveEdit(item)} disabled={!editingValue.trim()} className="inline-flex h-10 items-center justify-center rounded-2xl border border-[#C7D2FE] bg-[#EEF2FF] px-4 text-sm font-semibold text-[#6366F1] transition disabled:cursor-not-allowed disabled:opacity-50">Save</button></div></div> : <div className={cn(compact ? "mt-2" : "mt-2.5")}><ReplyPreview snapshot={item.replySnapshot} /><div className={cn("whitespace-pre-wrap text-sm text-[#1F2937]", compact ? "leading-5" : "leading-6", shouldCollapse && !isExpanded && (compact ? "line-clamp-3" : "line-clamp-5"))}>{renderRichText(item.body)}</div>{shouldCollapse ? <button type="button" onClick={() => toggleExpanded(item.id)} className="mt-1.5 inline-flex items-center gap-1 text-xs font-semibold text-[#6B7280] transition hover:text-[#1F2937]">{isExpanded ? "Show less" : "Show more"}<ChevronDown className={cn("h-3.5 w-3.5 transition", isExpanded && "rotate-180")} /></button> : null}{hasChangeDetails ? <div className="mt-1.5"><button type="button" onClick={() => setShowChanges((prev) => !prev)} className="inline-flex items-center gap-1 text-xs font-semibold text-[#6B7280] transition hover:text-[#1F2937]">{showChanges ? "Hide changes" : "Show changes"}<ChevronDown className={cn("h-3.5 w-3.5 transition", showChanges && "rotate-180")} /></button>{showChanges ? <EventDelta payload={item.editPayload} /> : null}</div> : null}</div>}
       </div>
     </div>
   );
 }
 
 function ActivityTimeline({
-  items, hiddenCount, onLoadMore, canWrite, editingId, editingValue, setEditingValue, onStartEdit, onCancelEdit, onSaveEdit, onDelete, expandedComments, toggleExpanded, onReply,
+  items, hiddenCount, onLoadMore, canWrite, editingId, editingValue, setEditingValue, onStartEdit, onCancelEdit, onSaveEdit, onDelete, expandedComments, toggleExpanded, onReply, compact = false,
 }: {
   items: TimelineItem[]; hiddenCount: number; onLoadMore: () => void; canWrite: boolean; editingId: string | null; editingValue: string; setEditingValue: (value: string) => void;
   onStartEdit: (item: TimelineComment) => void; onCancelEdit: () => void; onSaveEdit: (item: TimelineComment) => void; onDelete: (item: TimelineComment) => void;
   expandedComments: Set<string>; toggleExpanded: (id: string) => void; onReply: (target: ReplyTarget) => void;
+  compact?: boolean;
 }) {
   return (
-    <div className="rounded-[24px] border border-[#e6ebf2] bg-[linear-gradient(180deg,#ffffff_0%,#fbfcfe_100%)] p-4 shadow-[0_12px_30px_rgba(15,23,42,0.05)]">
-      {items.length === 0 ? <div className="rounded-[22px] border border-dashed border-[#d9e2ec] bg-white px-5 py-10 text-center"><div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#f4f6f8] text-[#667085]"><MessageSquareText className="h-5 w-5" /></div><div className="mt-4 text-sm font-semibold text-[#101828]">No activity yet</div><p className="mt-1 text-sm leading-6 text-[#667085]">Comments, assignments, checklist progress, and order changes will appear here as a single timeline.</p></div> : <div className="space-y-3">{items.map((item, index) => {
+    <div className={cn("rounded-[22px] border border-[#E5E7EB] bg-[linear-gradient(180deg,#FFFFFF_0%,#F9FAFB_100%)] shadow-[0_10px_24px_rgba(15,23,42,0.05)]", compact ? "p-2.5" : "p-3")}>
+      {items.length === 0 ? <div className="rounded-[22px] border border-dashed border-[#E5E7EB] bg-white px-5 py-10 text-center"><div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F3F4F6] text-[#6B7280]"><MessageSquareText className="h-5 w-5" /></div><div className="mt-4 text-sm font-semibold text-[#1F2937]">No activity yet</div><p className="mt-1 text-sm leading-6 text-[#6B7280]">Comments, assignments, checklist progress, and deal updates will appear here as one structured timeline.</p></div> : <div className="space-y-2.5">{items.map((item, index) => {
         const previous = index > 0 ? items[index - 1] : null;
         const showSeparator = !previous || getDateKey(previous.createdAt) !== getDateKey(item.createdAt);
-        return <React.Fragment key={item.id}>{showSeparator ? <DateSeparator label={formatDateSeparator(item.createdAt)} /> : null}{item.kind === "comment" ? <CommentItem item={item} canWrite={canWrite} editingId={editingId} editingValue={editingValue} setEditingValue={setEditingValue} onStartEdit={onStartEdit} onCancelEdit={onCancelEdit} onSaveEdit={onSaveEdit} onDelete={onDelete} expandedComments={expandedComments} toggleExpanded={toggleExpanded} onReply={onReply} /> : <SystemEventItem item={item} onReply={onReply} />}</React.Fragment>;
+        return <React.Fragment key={item.id}>{showSeparator ? <DateSeparator label={formatDateSeparator(item.createdAt)} /> : null}{item.kind === "comment" ? <CommentItem item={item} canWrite={canWrite} editingId={editingId} editingValue={editingValue} setEditingValue={setEditingValue} onStartEdit={onStartEdit} onCancelEdit={onCancelEdit} onSaveEdit={onSaveEdit} onDelete={onDelete} expandedComments={expandedComments} toggleExpanded={toggleExpanded} onReply={onReply} compact={compact} /> : <SystemEventItem item={item} onReply={onReply} compact={compact} />}</React.Fragment>;
       })}</div>}
-      {hiddenCount > 0 ? <div className="mt-4 flex justify-center"><button type="button" onClick={onLoadMore} className="inline-flex items-center gap-2 rounded-full border border-[#d9e2ec] bg-white px-4 py-2 text-sm font-semibold text-[#344054] transition hover:border-[#c7d1dd] hover:bg-[#fcfdff]">Load {Math.min(20, hiddenCount)} older activities</button></div> : null}
+      {hiddenCount > 0 ? <div className="mt-4 flex justify-center"><button type="button" onClick={onLoadMore} className="inline-flex items-center gap-2 rounded-full border border-[#E5E7EB] bg-white px-4 py-2 text-sm font-semibold text-[#374151] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB]">Load {Math.min(20, hiddenCount)} older activities</button></div> : null}
     </div>
   );
 }
 
-export function OrderActivitySection({ order, businessId, supabase, phoneRaw, currentUserId, currentUserName, userRole, actors, ownerName, managerName }: Props) {
+export function OrderActivitySection({ order, businessId, supabase, phoneRaw, currentUserId, currentUserName, userRole, actors, ownerName, managerName, compact = false }: Props) {
   const [comments, setComments] = React.useState<CommentRow[]>([]);
   const [items, setItems] = React.useState<TimelineItem[]>([]);
   const [composerValue, setComposerValue] = React.useState("");
@@ -1102,12 +1106,13 @@ export function OrderActivitySection({ order, businessId, supabase, phoneRaw, cu
   }
 
   return (
-    <div className="space-y-4">
-      <ActivityHeader totalCount={items.length} commentCount={commentCount} updateCount={updateCount} fileCount={fileCount} filter={filter} setFilter={setFilter} sort={sort} setSort={setSort} />
-      {loading ? <div className="rounded-[24px] border border-[#e6ebf2] bg-white px-4 py-10 text-sm text-[#667085] shadow-[0_12px_30px_rgba(15,23,42,0.05)]">Loading activity...</div> : <ActivityTimeline items={visibleItems} hiddenCount={hiddenCount} onLoadMore={() => setVisibleCount((prev) => prev + 20)} canWrite={canWrite} editingId={editingId} editingValue={editingValue} setEditingValue={setEditingValue} onStartEdit={(item) => { setEditingId(item.id); setEditingValue(item.body); }} onCancelEdit={() => { setEditingId(null); setEditingValue(""); }} onSaveEdit={saveCommentEdit} onDelete={deleteComment} expandedComments={expandedComments} toggleExpanded={(id) => setExpandedComments((prev) => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; })} onReply={setReplyTarget} />}
-      <div className="sticky bottom-0 z-20 -mx-1 rounded-[28px] bg-[linear-gradient(180deg,rgba(248,250,252,0)_0%,rgba(248,250,252,0.94)_22%,rgba(248,250,252,1)_100%)] px-1 pt-6">
-        <CommentComposer value={composerValue} onChange={setComposerValue} onSubmit={submitComment} isSubmitting={isSubmitting} currentUserName={currentUserName} canWrite={canWrite} attachments={attachments} onAttachFiles={(files) => { if (!files?.length) return; setAttachments((prev) => [...prev, ...Array.from(files).map((file) => ({ id: makeLocalActivityEventId("attachment"), file }))]); }} onRemoveAttachment={(id) => setAttachments((prev) => prev.filter((item) => item.id !== id))} mentionSuggestions={actors} replyTarget={replyTarget} onClearReply={() => setReplyTarget(null)} />
+    <div className="space-y-3">
+      <ActivityHeader totalCount={items.length} commentCount={commentCount} updateCount={updateCount} fileCount={fileCount} filter={filter} setFilter={setFilter} sort={sort} setSort={setSort} compact={compact} />
+      {loading ? <div className="rounded-[24px] border border-[#E5E7EB] bg-white px-4 py-10 text-sm text-[#6B7280] shadow-[0_12px_30px_rgba(15,23,42,0.05)]">Loading activity...</div> : <ActivityTimeline items={visibleItems} hiddenCount={hiddenCount} onLoadMore={() => setVisibleCount((prev) => prev + 20)} canWrite={canWrite} editingId={editingId} editingValue={editingValue} setEditingValue={setEditingValue} onStartEdit={(item) => { setEditingId(item.id); setEditingValue(item.body); }} onCancelEdit={() => { setEditingId(null); setEditingValue(""); }} onSaveEdit={saveCommentEdit} onDelete={deleteComment} expandedComments={expandedComments} toggleExpanded={(id) => setExpandedComments((prev) => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; })} onReply={setReplyTarget} compact={compact} />}
+      <div className={cn("sticky bottom-0 z-20 -mx-1 rounded-[28px] bg-[linear-gradient(180deg,rgba(248,250,252,0)_0%,rgba(248,250,252,0.94)_22%,rgba(248,250,252,1)_100%)] px-1", compact ? "pt-2" : "pt-2.5")}>
+        <CommentComposer value={composerValue} onChange={setComposerValue} onSubmit={submitComment} isSubmitting={isSubmitting} currentUserName={currentUserName} canWrite={canWrite} attachments={attachments} onAttachFiles={(files) => { if (!files?.length) return; setAttachments((prev) => [...prev, ...Array.from(files).map((file) => ({ id: makeLocalActivityEventId("attachment"), file }))]); }} onRemoveAttachment={(id) => setAttachments((prev) => prev.filter((item) => item.id !== id))} mentionSuggestions={actors} replyTarget={replyTarget} onClearReply={() => setReplyTarget(null)} compact={compact} />
       </div>
     </div>
   );
 }
+

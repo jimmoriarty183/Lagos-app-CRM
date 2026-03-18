@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -412,7 +412,7 @@ function SortableHeader({
       onClick={() => onClick(column)}
       className={[
         "inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.08em] transition",
-        state ? "text-[#667085]" : "text-[#98a2b3] hover:text-[#667085]",
+        state ? "text-[#6B7280]" : "text-[#9CA3AF] hover:text-[#6B7280]",
         align === "right" ? "ml-auto" : "",
       ].join(" ")}
     >
@@ -445,12 +445,12 @@ function TableSortHeader({
       type="button"
       onClick={() => onClick(column)}
       className={[
-        "inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3] transition hover:text-[#667085]",
+        "inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF] transition hover:text-[#6B7280]",
         align === "right" ? "ml-auto" : "",
       ].join(" ")}
     >
       <span>{label}</span>
-      <span className="text-[10px] leading-none text-[#98a2b3]">
+      <span className="text-[10px] leading-none text-[#9CA3AF]">
         {indicator}
       </span>
     </button>
@@ -484,7 +484,7 @@ function ActiveTableSortHeader({
       <span
         className={[
           "text-[10px] font-semibold uppercase leading-none tracking-[0.08em]",
-          state ? "text-[#344054]" : "text-[#98a2b3]",
+          state ? "text-[#374151]" : "text-[#9CA3AF]",
         ].join(" ")}
       >
         {label}
@@ -493,13 +493,13 @@ function ActiveTableSortHeader({
         <ChevronUp
           className={[
             "h-2 w-2",
-            state === "asc" ? "text-[#344054]" : "text-[#b8c1d1]",
+            state === "asc" ? "text-[#374151]" : "text-[#C7D2FE]",
           ].join(" ")}
         />
         <ChevronDown
           className={[
             "-mt-1 h-2 w-2",
-            state === "desc" ? "text-[#344054]" : "text-[#b8c1d1]",
+            state === "desc" ? "text-[#374151]" : "text-[#C7D2FE]",
           ].join(" ")}
         />
       </span>
@@ -594,12 +594,12 @@ function ManagerAssignmentCell({
         "inline-flex h-8 w-8 items-center justify-center rounded-full border transition",
         canManage ? "cursor-pointer" : "cursor-default",
         isUnassigned
-          ? "border-[#dbe2ea] bg-[#f8fafc] text-[#667085]"
-          : "border-white bg-transparent shadow-[0_0_0_1px_rgba(221,227,238,0.95)] hover:shadow-[0_0_0_1px_rgba(17,24,39,0.18)]",
+          ? "border-[#E5E7EB] bg-[#F9FAFB] text-[#6B7280]"
+          : "border-white bg-transparent shadow-[0_0_0_1px_rgba(229,231,235,0.95)] hover:shadow-[0_0_0_1px_rgba(99,102,241,0.18)]",
       ].join(" ")}
     >
       {isUnassigned ? (
-        <UserRound className="h-3.5 w-3.5 text-[#98a2b3]" />
+        <UserRound className="h-3.5 w-3.5 text-[#9CA3AF]" />
       ) : (
         <ActorAvatar label={label} />
       )}
@@ -613,12 +613,12 @@ function ManagerAssignmentCell({
         "inline-flex h-8 max-w-full items-center gap-2 rounded-full border px-2.5 text-xs font-medium transition",
         canManage ? "cursor-pointer" : "cursor-default",
         isUnassigned
-          ? "border-[#dbe2ea] bg-[#f8fafc] text-[#667085]"
-          : "border-transparent bg-transparent px-0 text-[#344054] hover:text-[#111827]",
+          ? "border-[#E5E7EB] bg-[#F9FAFB] text-[#6B7280]"
+          : "border-transparent bg-transparent px-0 text-[#374151] hover:text-[#1F2937]",
       ].join(" ")}
     >
       {isUnassigned ? (
-        <UserRound className="h-3.5 w-3.5 text-[#98a2b3]" />
+        <UserRound className="h-3.5 w-3.5 text-[#9CA3AF]" />
       ) : (
         <ActorAvatar label={label} />
       )}
@@ -626,7 +626,7 @@ function ManagerAssignmentCell({
         {compactLabel}
       </span>
       {canManage ? (
-        <ChevronDown className="h-3.5 w-3.5 text-[#98a2b3]" />
+        <ChevronDown className="h-3.5 w-3.5 text-[#9CA3AF]" />
       ) : null}
     </button>
   );
@@ -641,10 +641,10 @@ function ManagerAssignmentCell({
       <DropdownMenuContent
         align="start"
         sideOffset={8}
-        className="w-[236px] rounded-xl border-[#dde3ee] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
+        className="w-[236px] rounded-xl border-[#E5E7EB] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="px-3 pb-1.5 pt-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
+        <div className="px-3 pb-1.5 pt-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
           Assign manager
         </div>
         <div className="max-h-80 space-y-1 overflow-y-auto pr-1">
@@ -653,8 +653,8 @@ function ManagerAssignmentCell({
             className={[
               "flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm transition",
               !localManagerId
-                ? "bg-[#eef4ff] text-[#2459d3]"
-                : "text-[#475467] hover:bg-[#f8fafc]",
+                ? "bg-[#EEF2FF] text-[#6366F1]"
+                : "text-[#4B5563] hover:bg-[#F9FAFB]",
             ].join(" ")}
             onClick={() => {
               const prevId = localManagerId;
@@ -681,7 +681,7 @@ function ManagerAssignmentCell({
               });
             }}
           >
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[#dbe2ea] bg-white text-[11px] font-semibold text-[#667085]">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[#E5E7EB] bg-white text-[11px] font-semibold text-[#6B7280]">
               U
             </div>
             <div className="min-w-0 flex-1">
@@ -696,8 +696,8 @@ function ManagerAssignmentCell({
               className={[
                 "flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm transition",
                 localManagerId === actor.id
-                  ? "bg-[#eef4ff] text-[#2459d3]"
-                  : "text-[#344054] hover:bg-[#f8fafc]",
+                  ? "bg-[#EEF2FF] text-[#6366F1]"
+                  : "text-[#374151] hover:bg-[#F9FAFB]",
               ].join(" ")}
               onClick={() => {
                 if (localManagerId === actor.id) return;
@@ -728,7 +728,7 @@ function ManagerAssignmentCell({
               <ActorAvatar label={actor.label} />
               <div className="min-w-0 flex-1">
                 <div className="truncate font-medium">{actor.label}</div>
-                <div className="text-[11px] uppercase tracking-[0.08em] text-[#98a2b3]">
+                <div className="text-[11px] uppercase tracking-[0.08em] text-[#9CA3AF]">
                   {actor.kind}
                 </div>
               </div>
@@ -1579,7 +1579,7 @@ export default function DesktopOrdersTable({
   return (
     <section
       className={[
-        "w-full min-w-0 rounded-[28px] border border-[#dde3ee] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)]",
+        "w-full min-w-0 rounded-[28px] border border-[#E5E7EB] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)]",
         viewMode === "kanban"
           ? "mx-0 flex h-[calc(100vh-132px)] flex-col overflow-hidden"
           : "mx-auto overflow-visible",
@@ -1588,8 +1588,8 @@ export default function DesktopOrdersTable({
       <div
         className={
           viewMode === "kanban"
-            ? "border-b border-[#eef2f7] px-5 py-3"
-            : "border-b border-[#eef2f7] px-5 py-5"
+            ? "border-b border-[#F3F4F6] px-5 py-3"
+            : "border-b border-[#F3F4F6] px-5 py-5"
         }
       >
         <div
@@ -1604,11 +1604,11 @@ export default function DesktopOrdersTable({
                 : ""
             }
           >
-            <div className="text-[13px] font-semibold text-[#111827]">
+            <div className="text-[13px] font-semibold text-[#1F2937]">
               Orders
             </div>
             <div
-              className={`text-[12px] font-medium text-[#98a2b3] ${
+              className={`text-[12px] font-medium text-[#9CA3AF] ${
                 viewMode === "kanban" ? "" : "mt-1"
               }`}
             >
@@ -1616,7 +1616,7 @@ export default function DesktopOrdersTable({
               {false ? (
                 <>
                   {" "}
-                  · Page {currentPage} of {totalPages}
+                  В· Page {currentPage} of {totalPages}
                 </>
               ) : null}
             </div>
@@ -1633,23 +1633,23 @@ export default function DesktopOrdersTable({
                   setOpenId(null);
                   setCreatePreviewOpen(true);
                 }}
-                className="inline-flex h-8 shrink-0 items-center gap-2 whitespace-nowrap rounded-xl bg-[#111827] px-3 text-[13px] font-semibold text-white transition hover:bg-[#0b1220]"
+                className="inline-flex h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-lg border border-[#6366F1] bg-[#6366F1] px-4 text-[15px] font-medium text-white transition hover:bg-[#5558E3] hover:border-[#5558E3]"
               >
-                <Plus className="h-3.5 w-3.5 text-white" />
-                <span className="text-white">New Order</span>
+                <Plus className="h-4 w-4 text-white" />
+                <span className="text-white">Add deal</span>
               </button>
             ) : null}
             <button
               type="button"
               onClick={openKanbanFilters}
-              className="relative inline-flex h-8 items-center justify-center gap-1.5 rounded-xl border border-[#dde3ee] bg-white px-2.5 text-sm font-semibold text-[#344054] transition hover:border-[#cfd8e6] hover:bg-[#f8fafc]"
+              className="relative inline-flex h-10 items-center justify-center gap-2 rounded-lg border-2 border-[#6366F1] bg-white px-4 text-sm font-medium text-[#6366F1] transition hover:bg-[#6366F1] hover:text-white"
               aria-label="Open search and filters"
               title="Search and filters"
             >
               <Search className="h-[14px] w-[14px]" />
               <SlidersHorizontal className="h-[15px] w-[15px]" />
               {hasActiveFilters ? (
-                <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[#eef4ff] px-1 text-[9px] font-bold text-[#2459d3]">
+                <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[#EEF2FF] px-1 text-[9px] font-bold text-[#6366F1]">
                   1
                 </span>
               ) : null}
@@ -1657,13 +1657,13 @@ export default function DesktopOrdersTable({
             {hasActiveFilters ? (
               <a
                 href={clearHref}
-                className="inline-flex h-8 items-center justify-center rounded-xl border border-[#dde3ee] bg-white px-2.5 text-[13px] font-semibold text-[#667085] transition hover:border-[#cfd8e6] hover:bg-[#f8fafc] hover:text-[#111827]"
+                className="inline-flex h-10 items-center justify-center rounded-lg border border-[#E5E7EB] bg-white px-4 text-[14px] font-medium text-[#4B5563] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]"
               >
                 Reset
               </a>
             ) : null}
 
-            <div className="inline-flex items-center rounded-xl border border-[#d8e1ee] bg-[#f8fafc] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]">
+            <div className="inline-flex items-center rounded-xl border border-[#C7D2FE] bg-[#EEF2FF] p-1">
               <button
                 type="button"
                 onClick={() => {
@@ -1672,10 +1672,10 @@ export default function DesktopOrdersTable({
                   navigateWithFallback(viewHref("list"));
                 }}
                 className={[
-                  "inline-flex h-8 items-center gap-2 rounded-[10px] px-3 text-[15px] font-semibold transition",
+                  "inline-flex h-9 items-center gap-2 rounded-lg px-3.5 text-[15px] font-medium transition",
                   viewMode === "list"
-                    ? "border border-[#e2e8f0] bg-white text-[#111827] shadow-[0_6px_16px_rgba(15,23,42,0.08)]"
-                    : "border border-transparent text-[#667085] hover:text-[#111827]",
+                    ? "border border-[#C7D2FE] bg-white text-[#1F2937] shadow-[0_8px_18px_rgba(99,102,241,0.12)]"
+                    : "border border-transparent text-[#6B7280] hover:text-[#1F2937]",
                 ].join(" ")}
               >
                 <List className="h-[15px] w-[15px]" />
@@ -1689,10 +1689,10 @@ export default function DesktopOrdersTable({
                   navigateWithFallback(viewHref("kanban"));
                 }}
                 className={[
-                  "inline-flex h-8 items-center gap-2 rounded-[10px] px-3 text-[15px] font-semibold transition",
+                  "inline-flex h-9 items-center gap-2 rounded-lg px-3.5 text-[15px] font-medium transition",
                   viewMode === "kanban"
-                    ? "border border-[#e2e8f0] bg-white text-[#111827] shadow-[0_6px_16px_rgba(15,23,42,0.08)]"
-                    : "border border-transparent text-[#667085] hover:text-[#111827]",
+                    ? "border border-[#C7D2FE] bg-white text-[#1F2937] shadow-[0_8px_18px_rgba(99,102,241,0.12)]"
+                    : "border border-transparent text-[#6B7280] hover:text-[#1F2937]",
                 ].join(" ")}
               >
                 <Columns3 className="h-[15px] w-[15px]" />
@@ -1722,7 +1722,7 @@ export default function DesktopOrdersTable({
         >
           <div className="min-w-[220px] flex-[1.15]">
             <label className="relative block">
-              <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#98a2b3]" />
+              <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9CA3AF]" />
               <input
                 value={searchDraft}
                 onChange={(event) => setSearchDraft(event.currentTarget.value)}
@@ -1732,7 +1732,7 @@ export default function DesktopOrdersTable({
                   }
                 }}
                 placeholder="Search by client, phone, manager, status, amount..."
-                className="h-11 w-full rounded-2xl border border-[#dde3ee] bg-[#fbfcfe] pl-11 pr-4 text-sm outline-none transition placeholder:text-[#98a2b3] focus:border-[#111827] focus:bg-white focus:ring-2 focus:ring-[#111827]/10"
+                className="h-11 w-full rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] pl-11 pr-4 text-sm text-[#374151] outline-none transition placeholder:text-[#9CA3AF] focus:border-[#6366F1] focus:bg-white focus:ring-2 focus:ring-[#6366F1]/15"
               />
             </label>
           </div>
@@ -1746,19 +1746,19 @@ export default function DesktopOrdersTable({
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
-                  className="inline-flex h-11 min-w-[150px] flex-1 items-center justify-between rounded-2xl border border-[#dde3ee] bg-white px-4 text-sm font-medium text-[#344054] outline-none transition hover:border-[#cfd8e6] focus:border-[#111827] focus:ring-2 focus:ring-[#111827]/10"
+                  className="inline-flex h-11 min-w-[150px] flex-1 items-center justify-between rounded-xl border border-[#E5E7EB] bg-white px-4 text-sm font-medium text-[#374151] outline-none transition hover:border-[#C7D2FE] focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15"
                 >
                   <span className="truncate">
                     {getPeriodTriggerLabel(rangeValue)}
                   </span>
-                  <ChevronDown className="ml-3 h-4 w-4 shrink-0 text-[#98a2b3]" />
+                  <ChevronDown className="ml-3 h-4 w-4 shrink-0 text-[#9CA3AF]" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 align="start"
                 side="top"
                 sideOffset={8}
-                className="w-56 rounded-xl border-[#dde3ee] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
+                className="w-56 rounded-xl border-[#E5E7EB] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
                 onClick={(event) => event.stopPropagation()}
                 onCloseAutoFocus={(event) => event.preventDefault()}
               >
@@ -1767,7 +1767,7 @@ export default function DesktopOrdersTable({
                     <DropdownMenuRadioItem
                       key={option.value}
                       value={option.value}
-                      className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#344054] data-[state=checked]:bg-[#eef4ff] data-[state=checked]:font-semibold data-[state=checked]:text-[#2459d3]"
+                      className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#374151] data-[state=checked]:bg-[#EEF2FF] data-[state=checked]:font-semibold data-[state=checked]:text-[#6366F1]"
                       onSelect={() => {
                         setRangeValue(option.value);
                         setRangeTouched(true);
@@ -1792,7 +1792,7 @@ export default function DesktopOrdersTable({
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
-                  className="inline-flex h-11 min-w-[150px] flex-1 items-center justify-between rounded-2xl border border-[#dde3ee] bg-white px-4 text-sm font-medium text-[#344054] outline-none transition hover:border-[#cfd8e6] focus:border-[#111827] focus:ring-2 focus:ring-[#111827]/10"
+                  className="inline-flex h-11 min-w-[150px] flex-1 items-center justify-between rounded-xl border border-[#E5E7EB] bg-white px-4 text-sm font-medium text-[#374151] outline-none transition hover:border-[#C7D2FE] focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15"
                 >
                   <span className="truncate">
                     {getStatusTriggerLabel(
@@ -1801,13 +1801,13 @@ export default function DesktopOrdersTable({
                       inactiveStatusOptions,
                     )}
                   </span>
-                  <ChevronDown className="ml-3 h-4 w-4 shrink-0 text-[#98a2b3]" />
+                  <ChevronDown className="ml-3 h-4 w-4 shrink-0 text-[#9CA3AF]" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 align="start"
                 sideOffset={8}
-                className="w-56 rounded-xl border-[#dde3ee] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
+                className="w-56 rounded-xl border-[#E5E7EB] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
                 onClick={(event) => event.stopPropagation()}
                 onCloseAutoFocus={(event) => event.preventDefault()}
               >
@@ -1815,20 +1815,20 @@ export default function DesktopOrdersTable({
                   <button
                     type="button"
                     onClick={selectAllStatuses}
-                    className="text-[11px] font-semibold text-[#344054] transition hover:text-[#111827]"
+                    className="text-[11px] font-semibold text-[#374151] transition hover:text-[#1F2937]"
                   >
                     Select all
                   </button>
                   <button
                     type="button"
                     onClick={clearAllStatuses}
-                    className="text-[11px] font-semibold text-[#667085] transition hover:text-[#111827]"
+                    className="text-[11px] font-semibold text-[#6B7280] transition hover:text-[#1F2937]"
                   >
                     Clear all
                   </button>
                 </div>
                 <DropdownMenuSeparator />
-                <div className="px-2 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
+                <div className="px-2 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
                   Active
                 </div>
                 {activeStatusOptions.map((statusValue) => {
@@ -1850,7 +1850,7 @@ export default function DesktopOrdersTable({
                     <DropdownMenuCheckboxItem
                       key={option.value}
                       checked={isChecked}
-                      className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#344054]"
+                      className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#374151]"
                       onSelect={(event) => event.preventDefault()}
                       onCheckedChange={() => toggleStatus(option.value)}
                       style={
@@ -1874,7 +1874,7 @@ export default function DesktopOrdersTable({
                   );
                 })}
                 <DropdownMenuSeparator />
-                <div className="px-2 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
+                <div className="px-2 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
                   Inactive
                 </div>
                 {inactiveStatusOptions.map((statusValue) => {
@@ -1896,7 +1896,7 @@ export default function DesktopOrdersTable({
                     <DropdownMenuCheckboxItem
                       key={option.value}
                       checked={isChecked}
-                      className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#344054]"
+                      className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#374151]"
                       onSelect={(event) => event.preventDefault()}
                       onCheckedChange={() => toggleStatus(option.value)}
                       style={
@@ -1930,7 +1930,7 @@ export default function DesktopOrdersTable({
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
-                  className="inline-flex h-11 min-w-[170px] flex-1 items-center justify-between rounded-2xl border border-[#dde3ee] bg-white px-4 text-sm font-medium text-[#344054] outline-none transition hover:border-[#cfd8e6] focus:border-[#111827] focus:ring-2 focus:ring-[#111827]/10"
+                  className="inline-flex h-11 min-w-[170px] flex-1 items-center justify-between rounded-xl border border-[#E5E7EB] bg-white px-4 text-sm font-medium text-[#374151] outline-none transition hover:border-[#C7D2FE] focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15"
                 >
                   <span className="truncate">
                     {getManagerTriggerLabel(
@@ -1939,20 +1939,20 @@ export default function DesktopOrdersTable({
                       managerOptions,
                     )}
                   </span>
-                  <ChevronDown className="ml-3 h-4 w-4 shrink-0 text-[#98a2b3]" />
+                  <ChevronDown className="ml-3 h-4 w-4 shrink-0 text-[#9CA3AF]" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 align="start"
                 sideOffset={8}
-                className="w-56 rounded-xl border-[#dde3ee] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
+                className="w-56 rounded-xl border-[#E5E7EB] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
                 onClick={(event) => event.stopPropagation()}
                 onCloseAutoFocus={(event) => event.preventDefault()}
               >
                 <DropdownMenuRadioGroup value={managerValue}>
                   <DropdownMenuRadioItem
                     value="ALL"
-                    className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#344054] data-[state=checked]:bg-[#eef4ff] data-[state=checked]:font-semibold data-[state=checked]:text-[#2459d3]"
+                    className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#374151] data-[state=checked]:bg-[#EEF2FF] data-[state=checked]:font-semibold data-[state=checked]:text-[#6366F1]"
                     onSelect={() => {
                       setManagerValue("ALL");
                       setManagerTouched(true);
@@ -1963,7 +1963,7 @@ export default function DesktopOrdersTable({
                   {currentUserId ? (
                     <DropdownMenuRadioItem
                       value="ME"
-                      className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#344054] data-[state=checked]:bg-[#eef4ff] data-[state=checked]:font-semibold data-[state=checked]:text-[#2459d3]"
+                      className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#374151] data-[state=checked]:bg-[#EEF2FF] data-[state=checked]:font-semibold data-[state=checked]:text-[#6366F1]"
                       onSelect={() => {
                         setManagerValue("ME");
                         setManagerTouched(true);
@@ -1974,7 +1974,7 @@ export default function DesktopOrdersTable({
                   ) : null}
                   <DropdownMenuRadioItem
                     value="UNASSIGNED"
-                    className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#344054] data-[state=checked]:bg-[#eef4ff] data-[state=checked]:font-semibold data-[state=checked]:text-[#2459d3]"
+                    className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#374151] data-[state=checked]:bg-[#EEF2FF] data-[state=checked]:font-semibold data-[state=checked]:text-[#6366F1]"
                     onSelect={() => {
                       setManagerValue("UNASSIGNED");
                       setManagerTouched(true);
@@ -1986,7 +1986,7 @@ export default function DesktopOrdersTable({
                     <DropdownMenuRadioItem
                       key={option.value}
                       value={option.value}
-                      className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#344054] data-[state=checked]:bg-[#eef4ff] data-[state=checked]:font-semibold data-[state=checked]:text-[#2459d3]"
+                      className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#374151] data-[state=checked]:bg-[#EEF2FF] data-[state=checked]:font-semibold data-[state=checked]:text-[#6366F1]"
                       onSelect={() => {
                         setManagerValue(option.value);
                         setManagerTouched(true);
@@ -2012,7 +2012,7 @@ export default function DesktopOrdersTable({
                   setCustomStart(event.currentTarget.value);
                   setRangeTouched(true);
                 }}
-                className="h-11 min-w-[170px] flex-1 rounded-2xl border border-[#dde3ee] bg-white px-4 text-sm font-medium text-[#344054] outline-none transition focus:border-[#111827] focus:ring-2 focus:ring-[#111827]/10"
+                className="h-11 min-w-[170px] flex-1 rounded-xl border border-[#E5E7EB] bg-white px-4 text-sm font-medium text-[#374151] outline-none transition focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15"
               />
               <input
                 type="date"
@@ -2021,7 +2021,7 @@ export default function DesktopOrdersTable({
                   setCustomEnd(event.currentTarget.value);
                   setRangeTouched(true);
                 }}
-                className="h-11 min-w-[170px] flex-1 rounded-2xl border border-[#dde3ee] bg-white px-4 text-sm font-medium text-[#344054] outline-none transition focus:border-[#111827] focus:ring-2 focus:ring-[#111827]/10"
+                className="h-11 min-w-[170px] flex-1 rounded-xl border border-[#E5E7EB] bg-white px-4 text-sm font-medium text-[#374151] outline-none transition focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15"
               />
             </div>
           ) : null}
@@ -2037,7 +2037,7 @@ export default function DesktopOrdersTable({
               tabIndex={hasActiveFilters ? 0 : -1}
               className={`inline-flex h-11 min-w-[84px] shrink-0 items-center justify-center whitespace-nowrap rounded-2xl border px-3 text-sm font-semibold transition ${
                 hasActiveFilters
-                  ? "border-[#dde3ee] bg-white text-[#344054] hover:border-[#cfd8e6] hover:bg-[#f8fafc]"
+                  ? "border-[#E5E7EB] bg-white text-[#374151] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
                   : "pointer-events-none border-transparent bg-transparent text-transparent"
               }`}
             >
@@ -2046,7 +2046,7 @@ export default function DesktopOrdersTable({
             <button
               type="submit"
               disabled={statusValues.length === 0 || !customRangeReady}
-              className="inline-flex h-11 min-w-[112px] shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-2xl bg-[#111827] px-4 text-sm font-semibold transition hover:bg-[#0b1220] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:bg-[#111827]"
+              className="inline-flex h-11 min-w-[112px] shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-[#6366F1] px-4 text-sm font-semibold transition hover:bg-[#5558E3] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:bg-[#6366F1]"
               style={{ color: "#ffffff" }}
             >
               <span className="leading-none text-white">Apply</span>
@@ -2055,7 +2055,7 @@ export default function DesktopOrdersTable({
         </form>
 
         {navigationMessage ? (
-          <div className="mt-3 rounded-2xl border border-[#dbe2ea] bg-[#f8fafc] px-4 py-3 text-sm text-[#475467]">
+          <div className="mt-3 rounded-2xl border border-[#E5E7EB] bg-[#F9FAFB] px-4 py-3 text-sm text-[#4B5563]">
             {navigationMessage}
           </div>
         ) : null}
@@ -2065,7 +2065,7 @@ export default function DesktopOrdersTable({
         <div className="overflow-x-auto overflow-y-visible">
           <table className="min-w-[1040px] w-full border-collapse">
             <thead>
-              <tr className="border-b border-[#eef2f7] text-left">
+              <tr className="border-b border-[#F3F4F6] text-left">
                 <th className="px-5 py-2.5">
                   <ActiveTableSortHeader
                     label="Order"
@@ -2074,10 +2074,10 @@ export default function DesktopOrdersTable({
                     onClick={handleSortChange}
                   />
                 </th>
-                <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
+                <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
                   Client
                 </th>
-                <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
+                <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
                   Manager
                 </th>
                 <th className="px-5 py-2.5 text-right">
@@ -2105,7 +2105,7 @@ export default function DesktopOrdersTable({
                     onClick={handleSortChange}
                   />
                 </th>
-                <th className="px-5 py-3 text-right text-[10px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
+                <th className="px-5 py-3 text-right text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
                   Actions
                 </th>
               </tr>
@@ -2123,25 +2123,25 @@ export default function DesktopOrdersTable({
                 return (
                   <React.Fragment key={order.id}>
                     <tr
-                      className="cursor-pointer border-b border-[#f2f4f7] transition-colors hover:bg-[#f8fafc]"
+                      className="cursor-pointer border-b border-[#F3F4F6] transition-colors hover:bg-[#F9FAFB]"
                       onClick={() => toggleOrderPreview(order.id)}
                     >
                       <td className="px-5 py-3 align-middle">
-                        <div className="text-sm font-semibold leading-5 text-[#111827]">
-                          #{order.order_number ?? "—"}
+                        <div className="text-sm font-semibold leading-5 text-[#1F2937]">
+                          #{order.order_number ?? "-"}
                         </div>
-                        <div className="mt-0.5 text-xs font-medium leading-4 text-[#98a2b3]">
+                        <div className="mt-0.5 text-xs font-medium leading-4 text-[#9CA3AF]">
                           {formatCreatedAt(order.created_at)}
                         </div>
                       </td>
 
                       <td className="px-5 py-3 align-middle">
-                        <div className="text-sm font-semibold leading-5 text-[#111827]">
+                        <div className="text-sm font-semibold leading-5 text-[#1F2937]">
                           {order.client_full_name?.trim() ||
                             order.client_name?.trim() ||
                             "Unknown"}
                         </div>
-                        <div className="mt-0.5 text-xs leading-4 text-[#98a2b3]">
+                        <div className="mt-0.5 text-xs leading-4 text-[#9CA3AF]">
                           {order.client_phone?.trim() || "No phone number"}
                         </div>
                       </td>
@@ -2158,7 +2158,7 @@ export default function DesktopOrdersTable({
                         />
                       </td>
 
-                      <td className="px-5 py-3 text-right align-middle text-sm font-semibold tabular-nums text-[#111827]">
+                      <td className="px-5 py-3 text-right align-middle text-sm font-semibold tabular-nums text-[#1F2937]">
                         {fmtAmount(Number(order.amount))}
                       </td>
 
@@ -2166,7 +2166,7 @@ export default function DesktopOrdersTable({
                         <div
                           className={[
                             "inline-flex items-center gap-2 text-sm font-medium",
-                            isOverdue ? "text-[#d92d20]" : "text-[#475467]",
+                            isOverdue ? "text-[#d92d20]" : "text-[#4B5563]",
                           ].join(" ")}
                         >
                           <span>{formatDueDate(order.due_date)}</span>
@@ -2199,7 +2199,7 @@ export default function DesktopOrdersTable({
                           <DropdownMenuTrigger asChild>
                             <button
                               type="button"
-                              className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#dde3ee] bg-white text-[#667085] transition hover:border-[#cfd8e6] hover:bg-[#f8fafc] hover:text-[#111827]"
+                              className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#E5E7EB] bg-white text-[#6B7280] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]"
                               aria-label="Open order actions"
                             >
                               <Ellipsis className="h-4 w-4" />
@@ -2207,7 +2207,7 @@ export default function DesktopOrdersTable({
                           </DropdownMenuTrigger>
                           <DropdownMenuContent
                             align="end"
-                            className="w-48 rounded-xl border-[#dde3ee] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
+                            className="w-48 rounded-xl border-[#E5E7EB] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
                           >
                             <DropdownMenuItem
                               className="rounded-lg px-3 py-2 text-sm font-medium"
@@ -2267,9 +2267,9 @@ export default function DesktopOrdersTable({
                 <tr>
                   <td
                     colSpan={7}
-                    className="px-6 py-12 text-center text-sm text-[#98a2b3]"
+                    className="px-6 py-12 text-center text-sm text-[#9CA3AF]"
                   >
-                    {isPending ? "Updating orders..." : "No orders found"}
+                    {isPending ? "Updating orders..." : "No deals yet. Add your first one to start building the workflow."}
                   </td>
                 </tr>
               ) : null}
@@ -2285,7 +2285,7 @@ export default function DesktopOrdersTable({
                   type="button"
                   onClick={() => scrollKanban("left")}
                   aria-label="Scroll kanban left"
-                  className="absolute top-1/2 left-2 z-10 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-[#d8e1ee] bg-white/96 text-[#344054] shadow-[0_12px_28px_rgba(15,23,42,0.14)] backdrop-blur transition hover:border-[#c2cfdf] hover:bg-white hover:text-[#111827]"
+                  className="absolute top-1/2 left-2 z-10 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-[#E5E7EB] bg-white/96 text-[#374151] shadow-[0_12px_28px_rgba(15,23,42,0.14)] backdrop-blur transition hover:border-[#C7D2FE] hover:bg-white hover:text-[#1F2937]"
                 >
                   <ChevronLeft className="h-5 w-5" />
                 </button>
@@ -2296,7 +2296,7 @@ export default function DesktopOrdersTable({
                   type="button"
                   onClick={() => scrollKanban("right")}
                   aria-label="Scroll kanban right"
-                  className="absolute top-1/2 right-2 z-10 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-[#d8e1ee] bg-white/96 text-[#344054] shadow-[0_12px_28px_rgba(15,23,42,0.14)] backdrop-blur transition hover:border-[#c2cfdf] hover:bg-white hover:text-[#111827]"
+                  className="absolute top-1/2 right-2 z-10 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-[#E5E7EB] bg-white/96 text-[#374151] shadow-[0_12px_28px_rgba(15,23,42,0.14)] backdrop-blur transition hover:border-[#C7D2FE] hover:bg-white hover:text-[#1F2937]"
                 >
                   <ChevronRight className="h-5 w-5" />
                 </button>
@@ -2379,13 +2379,13 @@ export default function DesktopOrdersTable({
                         "flex h-full min-h-0 flex-col rounded-[24px] border p-2.5 transition",
                         isCollapsedColumn ? "px-2.5" : "",
                         dropStatusValue === column.value
-                          ? "border-[#111827] shadow-[0_18px_40px_rgba(15,23,42,0.08)]"
+                          ? "border-[#6366F1] shadow-[0_18px_40px_rgba(99,102,241,0.12)]"
                           : "border-[#e2e8f0]",
                       ].join(" ")}
                       style={{
                         background: dropStatusValue === column.value
-                          ? `linear-gradient(180deg, ${tone.selectedBackground} 0%, #f8fbff 28%, #ffffff 100%)`
-                          : `linear-gradient(180deg, ${tone.background} 0%, #fbfcfe 22%, #ffffff 100%)`,
+                          ? `linear-gradient(180deg, ${tone.selectedBackground} 0%, #EEF2FF 28%, #ffffff 100%)`
+                          : `linear-gradient(180deg, ${tone.background} 0%, #F9FAFB 22%, #ffffff 100%)`,
                       }}
                       onDragOver={(event) => {
                         if (!canManage) return;
@@ -2414,7 +2414,7 @@ export default function DesktopOrdersTable({
                     >
                       <div
                         className={[
-                          "sticky top-0 z-[1] flex items-center justify-between gap-3 rounded-[18px] border border-transparent bg-[#fbfcfe]/95 pb-2.5 backdrop-blur",
+                          "sticky top-0 z-[1] flex items-center justify-between gap-3 rounded-[18px] border border-transparent bg-[#F9FAFB]/95 pb-2.5 backdrop-blur",
                           isCollapsedColumn ? "px-0" : "px-1.5",
                         ].join(" ")}
                         style={{
@@ -2438,7 +2438,7 @@ export default function DesktopOrdersTable({
                           <div className="min-w-0">
                             <div
                               className={[
-                                "font-semibold text-[#111827]",
+                                "font-semibold text-[#1F2937]",
                                 isCollapsedColumn
                                   ? "text-[13px] leading-4 whitespace-normal"
                                   : "truncate text-[15px]",
@@ -2448,7 +2448,7 @@ export default function DesktopOrdersTable({
                             </div>
                             <div
                               className={[
-                                "font-medium text-[#98a2b3]",
+                                "font-medium text-[#9CA3AF]",
                                 isCollapsedColumn
                                   ? "text-[11px] leading-4"
                                   : "text-xs",
@@ -2510,7 +2510,7 @@ export default function DesktopOrdersTable({
                                   ? isCollapsedColumn
                                     ? "h-6 min-w-[42px] px-1.5 text-[10px] font-semibold"
                                     : "h-7 min-w-[48px] px-2 text-[11px] font-semibold"
-                                  : "h-7 w-7 border border-[#dde3ee] bg-white text-[#667085] hover:border-[#cfd8e6] hover:bg-[#f8fafc] hover:text-[#111827]",
+                                  : "h-7 w-7 border border-[#E5E7EB] bg-white text-[#6B7280] hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]",
                               ].join(" ")}
                               style={
                                 hiddenByFilter || hiddenByPreference
@@ -2553,7 +2553,7 @@ export default function DesktopOrdersTable({
                             }}
                           >
                             <div
-                              className={`font-semibold text-[#344054] ${
+                              className={`font-semibold text-[#374151] ${
                                 isCollapsedColumn
                                   ? "text-[13px] leading-5"
                                   : "text-sm"
@@ -2562,7 +2562,7 @@ export default function DesktopOrdersTable({
                               {hiddenTitle}
                             </div>
                             <div
-                              className={`mt-1 text-[#98a2b3] ${
+                              className={`mt-1 text-[#9CA3AF] ${
                                 isCollapsedColumn
                                   ? "text-[12px] leading-5"
                                   : "text-sm"
@@ -2607,10 +2607,10 @@ export default function DesktopOrdersTable({
                                   setDropStatusValue(null);
                                 }}
                                 className={[
-                                  "group rounded-[16px] border border-[#e2e8f0] bg-white px-2.5 py-2 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition",
+                                  "group rounded-[16px] border border-[#E5E7EB] bg-white px-2.5 py-2 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition",
                                   isDragging
-                                    ? "scale-[0.99] border-[#cfd8e6] bg-[#fcfdff] opacity-90 shadow-[0_18px_36px_rgba(15,23,42,0.14)]"
-                                    : "hover:-translate-y-0.5 hover:border-[#d6dee9] hover:shadow-[0_16px_32px_rgba(15,23,42,0.08)]",
+                                    ? "scale-[0.99] border-[#C7D2FE] bg-[#F9FAFB] opacity-90 shadow-[0_18px_36px_rgba(15,23,42,0.14)]"
+                                    : "hover:-translate-y-0.5 hover:border-[#C7D2FE] hover:shadow-[0_16px_32px_rgba(15,23,42,0.08)]",
                                   canManage && !isSavingCard
                                     ? "cursor-grab active:cursor-grabbing"
                                     : "",
@@ -2638,10 +2638,10 @@ export default function DesktopOrdersTable({
                                           : undefined,
                                     }}
                                   >
-                                    <div className="text-[15px] font-semibold leading-5 text-[#111827]">
-                                      #{order.order_number ?? "—"}
+                                    <div className="text-[15px] font-semibold leading-5 text-[#1F2937]">
+                                      #{order.order_number ?? "-"}
                                     </div>
-                                    <div className="mt-0.5 text-[12px] font-medium text-[#98a2b3]">
+                                    <div className="mt-0.5 text-[12px] font-medium text-[#9CA3AF]">
                                       {formatCreatedAt(order.created_at)}
                                     </div>
                                   </button>
@@ -2653,7 +2653,7 @@ export default function DesktopOrdersTable({
                                       <DropdownMenuTrigger asChild>
                                         <button
                                           type="button"
-                                          className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-[#dde3ee] bg-white text-[#667085] transition hover:border-[#cfd8e6] hover:bg-[#f8fafc] hover:text-[#111827]"
+                                          className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-[#E5E7EB] bg-white text-[#6B7280] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]"
                                           aria-label="Open order actions"
                                           style={{
                                             cursor:
@@ -2669,7 +2669,7 @@ export default function DesktopOrdersTable({
                                       </DropdownMenuTrigger>
                                       <DropdownMenuContent
                                         align="end"
-                                        className="w-48 rounded-xl border-[#dde3ee] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
+                                        className="w-48 rounded-xl border-[#E5E7EB] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
                                       >
                                         <DropdownMenuItem
                                           className="rounded-lg px-3 py-2 text-sm font-medium"
@@ -2737,12 +2737,12 @@ export default function DesktopOrdersTable({
                                         : undefined,
                                   }}
                                 >
-                                  <div className="truncate text-[14px] font-semibold leading-5 text-[#111827]">
+                                  <div className="truncate text-[14px] font-semibold leading-5 text-[#1F2937]">
                                     {order.client_full_name?.trim() ||
                                       order.client_name?.trim() ||
                                       "Unknown"}
                                   </div>
-                                  <div className="mt-0.5 flex items-center justify-between gap-2 text-[12px] text-[#98a2b3]">
+                                  <div className="mt-0.5 flex items-center justify-between gap-2 text-[12px] text-[#9CA3AF]">
                                     <span className="truncate">
                                       {fmtAmount(Number(order.amount))}
                                     </span>
@@ -2751,7 +2751,7 @@ export default function DesktopOrdersTable({
                                         "inline-flex items-center gap-1 truncate font-medium",
                                         isOverdue
                                           ? "text-[#d92d20]"
-                                          : "text-[#667085]",
+                                          : "text-[#6B7280]",
                                       ].join(" ")}
                                     >
                                       {isOverdue ? (
@@ -2787,7 +2787,7 @@ export default function DesktopOrdersTable({
                                       avatarOnly
                                       onAssigned={() => router.refresh()}
                                     />
-                                    <span className="truncate text-[12px] font-medium text-[#667085]">
+                                    <span className="truncate text-[12px] font-medium text-[#6B7280]">
                                       {order.manager_name?.trim() || "Unassigned"}
                                     </span>
                                   </div>
@@ -2816,10 +2816,10 @@ export default function DesktopOrdersTable({
                           })}
 
                           {column.orders.length === 0 ? (
-                            <div className="flex min-h-[160px] items-center justify-center rounded-[20px] border border-dashed border-[#dbe2ea] bg-white/70 px-4 text-center text-sm text-[#98a2b3]">
+                            <div className="flex min-h-[160px] items-center justify-center rounded-[20px] border border-dashed border-[#E5E7EB] bg-white/70 px-4 text-center text-sm text-[#9CA3AF]">
                               {dropStatusValue === column.value
                                 ? "Drop order here"
-                                : "No orders in this status"}
+                                : "No deals in this status yet"}
                             </div>
                           ) : null}
                           </div>
@@ -2832,12 +2832,12 @@ export default function DesktopOrdersTable({
               </div>
 
               {canManage && draggingOrder ? (
-                <div className="pointer-events-none absolute top-6 right-6 z-20 flex w-[220px] flex-col gap-2 rounded-[24px] border border-[#d8e1ee] bg-white/96 p-3 shadow-[0_20px_48px_rgba(15,23,42,0.16)] backdrop-blur">
-                  <div className="px-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
+                <div className="pointer-events-none absolute top-6 right-6 z-20 flex w-[220px] flex-col gap-2 rounded-[24px] border border-[#E5E7EB] bg-white/96 p-3 shadow-[0_20px_48px_rgba(15,23,42,0.16)] backdrop-blur">
+                  <div className="px-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
                     Move order
                   </div>
-                  <div className="px-1 text-sm font-semibold text-[#111827]">
-                    #{draggingOrder.order_number ?? "—"}
+                  <div className="px-1 text-sm font-semibold text-[#1F2937]">
+                    #{draggingOrder.order_number ?? "-"}
                   </div>
                   <div className="space-y-2">
                     {visibleKanbanColumns.map((statusColumn) => {
@@ -2876,10 +2876,10 @@ export default function DesktopOrdersTable({
                           className={[
                             "pointer-events-auto flex min-h-11 items-center justify-between rounded-[16px] border px-3 py-2 transition",
                             isCurrentStatus
-                              ? "border-transparent bg-[#f4f7fb] text-[#98a2b3]"
+                              ? "border-transparent bg-[#F9FAFB] text-[#9CA3AF]"
                               : isActiveTarget
-                                ? "border-[#111827] bg-[#f8fbff] text-[#111827]"
-                                : "border-[#e4eaf2] bg-white text-[#344054]",
+                                ? "border-[#6366F1] bg-[#EEF2FF] text-[#1F2937]"
+                                : "border-[#E5E7EB] bg-white text-[#374151]",
                           ].join(" ")}
                         >
                           <div className="flex min-w-0 items-center gap-2">
@@ -2902,7 +2902,7 @@ export default function DesktopOrdersTable({
               ) : null}
             </>
           ) : (
-            <div className="rounded-[24px] border border-[#dde3ee] bg-white px-6 py-12 text-center text-sm text-[#98a2b3]">
+            <div className="rounded-[24px] border border-[#E5E7EB] bg-white px-6 py-12 text-center text-sm text-[#9CA3AF]">
               No workflow statuses available
             </div>
           )}
@@ -2910,9 +2910,9 @@ export default function DesktopOrdersTable({
       )}
 
       {viewMode === "list" ? (
-        <div className="border-t border-[#eef2f7] px-5 py-4">
+        <div className="border-t border-[#F3F4F6] px-5 py-4">
           <div className="flex flex-wrap items-center justify-end gap-3">
-            <div className="flex items-center gap-2 text-xs font-medium text-[#667085]">
+            <div className="flex items-center gap-2 text-xs font-medium text-[#6B7280]">
               <span>Per page</span>
               <DropdownMenu
                 modal={false}
@@ -2922,16 +2922,16 @@ export default function DesktopOrdersTable({
                 <DropdownMenuTrigger asChild>
                   <button
                     type="button"
-                    className="inline-flex h-9 min-w-[74px] items-center justify-between rounded-xl border border-[#dde3ee] bg-white px-3 text-sm font-medium text-[#344054] outline-none transition hover:border-[#cfd8e6] focus:border-[#111827] focus:ring-2 focus:ring-[#111827]/10"
+                    className="inline-flex h-9 min-w-[74px] items-center justify-between rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm font-medium text-[#374151] outline-none transition hover:border-[#C7D2FE] focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15"
                   >
                     <span>{perPage}</span>
-                    <ChevronDown className="ml-3 h-4 w-4 shrink-0 text-[#98a2b3]" />
+                    <ChevronDown className="ml-3 h-4 w-4 shrink-0 text-[#9CA3AF]" />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   align="end"
                   sideOffset={8}
-                  className="z-[70] w-24 rounded-xl border-[#dde3ee] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
+                  className="z-[70] w-24 rounded-xl border-[#E5E7EB] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
                   onCloseAutoFocus={(event) => event.preventDefault()}
                 >
                   <DropdownMenuRadioGroup value={String(perPage)}>
@@ -2939,7 +2939,7 @@ export default function DesktopOrdersTable({
                       <DropdownMenuRadioItem
                         key={option}
                         value={String(option)}
-                        className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#344054] data-[state=checked]:bg-[#eef4ff] data-[state=checked]:font-semibold data-[state=checked]:text-[#2459d3]"
+                        className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#374151] data-[state=checked]:bg-[#EEF2FF] data-[state=checked]:font-semibold data-[state=checked]:text-[#6366F1]"
                         onSelect={() =>
                           navigateWithFallback(paginationHref(1, option))
                         }
@@ -3044,7 +3044,7 @@ export default function DesktopOrdersTable({
       >
         <AlertDialogContent className="rounded-[24px] border-slate-200 bg-white p-6 shadow-[0_24px_64px_rgba(15,23,42,0.18)] sm:max-w-lg">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-xl tracking-[-0.02em] text-slate-900">
+            <AlertDialogTitle className="product-page-title text-slate-900">
               Why is this order canceled?
             </AlertDialogTitle>
             <AlertDialogDescription className="text-sm leading-6 text-slate-500">
@@ -3058,7 +3058,7 @@ export default function DesktopOrdersTable({
                 key={reason}
                 type="button"
                 onClick={() => closeCanceledReasonDialog(reason)}
-                className="w-full rounded-xl border border-[#e4eaf2] bg-white px-3 py-2.5 text-left text-sm font-medium text-[#182230] transition hover:border-[#cfd8e6] hover:bg-[#f8fafc]"
+                className="w-full rounded-xl border border-[#E5E7EB] bg-white px-3 py-2.5 text-left text-sm font-medium text-[#1F2937] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
               >
                 {reason}
               </button>
@@ -3066,14 +3066,14 @@ export default function DesktopOrdersTable({
           </div>
 
           <div className="mt-2">
-            <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
+            <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
               Custom reason
             </label>
             <textarea
               value={cancelReasonDraft}
               onChange={(event) => setCancelReasonDraft(event.currentTarget.value)}
               placeholder="Write the cancel reason..."
-              className="min-h-24 w-full resize-none rounded-2xl border border-[#dde3ee] bg-white px-4 py-3 text-sm text-[#182230] outline-none transition placeholder:text-[#98a2b3] focus:border-[#111827] focus:ring-2 focus:ring-[#111827]/10"
+              className="min-h-24 w-full resize-none rounded-2xl border border-[#E5E7EB] bg-white px-4 py-3 text-sm text-[#1F2937] outline-none transition placeholder:text-[#9CA3AF] focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15"
             />
           </div>
 
@@ -3110,7 +3110,7 @@ export default function DesktopOrdersTable({
       >
         <AlertDialogContent className="rounded-[24px] border-slate-200 bg-white p-6 shadow-[0_24px_64px_rgba(15,23,42,0.18)] sm:max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-xl tracking-[-0.02em] text-slate-900">
+            <AlertDialogTitle className="product-page-title text-slate-900">
               Delete order permanently?
             </AlertDialogTitle>
             <AlertDialogDescription className="text-sm leading-6 text-slate-500">
@@ -3143,3 +3143,4 @@ export default function DesktopOrdersTable({
     </section>
   );
 }
+

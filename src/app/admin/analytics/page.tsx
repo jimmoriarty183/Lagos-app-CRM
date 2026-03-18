@@ -228,7 +228,7 @@ export default async function AdminAnalyticsPage({
           <div className="grid gap-4 lg:grid-cols-3">
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
               <div className="text-sm font-semibold text-slate-900">Регистрация {"->"} первый вход</div>
-              <div className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">
+              <div className="product-stat-value mt-1.5">
                 {formatPercent(analytics.activation.signedInRate)}
               </div>
               <div className="mt-2 text-sm text-slate-600">
@@ -239,7 +239,7 @@ export default async function AdminAnalyticsPage({
 
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
               <div className="text-sm font-semibold text-slate-900">Регистрация {"->"} создание бизнеса</div>
-              <div className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">
+              <div className="product-stat-value mt-1.5">
                 {formatPercent(analytics.activation.usersWithBusinessRate)}
               </div>
               <div className="mt-2 text-sm text-slate-600">{analytics.activation.businessDefinition}</div>
@@ -247,7 +247,7 @@ export default async function AdminAnalyticsPage({
 
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
               <div className="text-sm font-semibold text-slate-900">Регистрация {"->"} первый заказ</div>
-              <div className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">
+              <div className="product-stat-value mt-1.5">
                 {formatPercent(analytics.activation.usersWithFirstOrderRate)}
               </div>
               <div className="mt-2 text-sm text-slate-600">{analytics.activation.orderDefinition}</div>
@@ -261,15 +261,15 @@ export default async function AdminAnalyticsPage({
               <div className="text-sm font-semibold text-slate-900">DAU / WAU / MAU</div>
               <div className="mt-2 grid gap-3 sm:grid-cols-3">
                 <div>
-                  <div className="text-2xl font-semibold text-slate-900">{formatNumber(analytics.engagement.dau)}</div>
+                  <div className="text-xl font-semibold text-slate-900">{formatNumber(analytics.engagement.dau)}</div>
                   <div className="text-sm text-slate-500">За 1 день</div>
                 </div>
                 <div>
-                  <div className="text-2xl font-semibold text-slate-900">{formatNumber(analytics.engagement.wau)}</div>
+                  <div className="text-xl font-semibold text-slate-900">{formatNumber(analytics.engagement.wau)}</div>
                   <div className="text-sm text-slate-500">За 7 дней</div>
                 </div>
                 <div>
-                  <div className="text-2xl font-semibold text-slate-900">{formatNumber(analytics.engagement.mau)}</div>
+                  <div className="text-xl font-semibold text-slate-900">{formatNumber(analytics.engagement.mau)}</div>
                   <div className="text-sm text-slate-500">За 30 дней</div>
                 </div>
               </div>
@@ -277,7 +277,7 @@ export default async function AdminAnalyticsPage({
 
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
               <div className="text-sm font-semibold text-slate-900">Возвращаемость</div>
-              <div className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">
+              <div className="product-stat-value mt-1.5">
                 {formatPercent(analytics.engagement.stickiness)}
               </div>
               <div className="mt-2 text-sm text-slate-600">

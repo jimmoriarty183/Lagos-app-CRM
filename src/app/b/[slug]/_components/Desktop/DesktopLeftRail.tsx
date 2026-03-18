@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 
 import DesktopSidebarFilters from "./DesktopSidebarFilters";
-import { BrandIcon } from "@/components/Brand";
+import { BrandIcon, BrandLockup } from "@/components/Brand";
 import { getPlatformSidebarNavigation } from "@/config/navigation";
 import type { StatusFilterValue } from "@/lib/business-statuses";
 import type { DashboardRange } from "@/lib/order-dashboard-summary";
@@ -97,23 +97,22 @@ function SidebarBrand({
   href: string;
 }) {
   return (
-    <a
-      href={href}
-      aria-label="Open Corelix CRM"
-      className={[
-        "group flex items-center text-slate-900 transition",
-        expanded
-          ? "gap-3 rounded-2xl px-3 py-3"
-          : "justify-center rounded-2xl py-3",
-      ].join(" ")}
-    >
-      <BrandIcon size={expanded ? 28 : 30} />
-      {expanded ? (
-        <span className="text-base font-semibold tracking-tight text-slate-900">
-          Corelix
-        </span>
-      ) : null}
-    </a>
+    expanded ? (
+      <BrandLockup
+        href={href}
+        iconSize={40}
+        textClassName="text-[1.95rem]"
+        className="rounded-2xl px-3 py-3"
+      />
+    ) : (
+      <a
+        href={href}
+        aria-label="Open Ordo CRM"
+        className="group flex justify-center rounded-2xl py-3 text-slate-900 transition"
+      >
+        <BrandIcon size={40} />
+      </a>
+    )
   );
 }
 
@@ -145,10 +144,10 @@ function RailLink({
       ? "min-h-14 w-full items-start justify-start gap-3 rounded-2xl px-4 py-3"
       : "h-12 w-full items-center justify-center rounded-2xl",
     active
-      ? "border-[#b7c8e6] bg-[#eaf2ff] text-[#0f172a] shadow-[0_10px_24px_rgba(59,130,246,0.12)] ring-1 ring-[#d7e5ff]"
+      ? "border-[#C7D2FE] bg-[#EEF2FF] text-[#1F2937] shadow-[0_10px_24px_rgba(99,102,241,0.12)] ring-1 ring-[#E0E7FF]"
       : disabled
-        ? "cursor-not-allowed border-[#e3e7ef] bg-[#f8fafc] text-[#b1b9c8] opacity-90"
-        : "cursor-pointer border-[#dde3ee] bg-white text-[#667085] hover:-translate-y-[1px] hover:border-[#bfd0ea] hover:bg-[#f4f8ff] hover:text-[#0f172a] hover:shadow-[0_10px_24px_rgba(15,23,42,0.08)]",
+        ? "cursor-not-allowed border-[#E5E7EB] bg-[#F9FAFB] text-[#9CA3AF] opacity-90"
+        : "cursor-pointer border-[#E5E7EB] bg-white text-[#6B7280] hover:-translate-y-[1px] hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937] hover:shadow-[0_10px_24px_rgba(15,23,42,0.08)]",
   ].join(" ");
 
   const body = (
@@ -157,17 +156,17 @@ function RailLink({
         className={[
           "relative shrink-0 rounded-xl transition-colors duration-150",
           active
-            ? "bg-white/80 p-2 text-[#1d4ed8]"
+            ? "bg-[#6366F1] p-2 text-white shadow-[0_8px_18px_rgba(99,102,241,0.28)]"
             : disabled
-              ? "bg-white/70 p-2 text-[#b1b9c8]"
-              : "p-2 text-current group-hover:bg-white",
+              ? "bg-white/70 p-2 text-[#9CA3AF]"
+              : "bg-[#EEF2FF] p-2 text-[#6366F1] group-hover:bg-[#E0E7FF] group-hover:text-[#5558E3]",
         ].join(" ")}
       >
         {icon}
         {badgeCount > 0 ? (
           <span
             className={[
-              "absolute -right-2 -top-2 inline-flex min-w-5 items-center justify-center rounded-full border border-white bg-[#2f6fed] px-1 text-[10px] font-bold leading-5 text-white shadow-[0_6px_12px_rgba(47,111,237,0.28)]",
+              "absolute -right-2 -top-2 inline-flex min-w-5 items-center justify-center rounded-full border border-white bg-[#6366F1] px-1 text-[10px] font-bold leading-5 text-white shadow-[0_6px_12px_rgba(99,102,241,0.28)]",
               expanded ? "h-5" : "h-5",
             ].join(" ")}
           >
@@ -182,17 +181,17 @@ function RailLink({
               {label}
             </span>
             {badgeCount > 0 ? (
-              <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#eef4ff] px-1.5 text-[10px] font-bold text-[#2459d3]">
+              <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#EEF2FF] px-1.5 text-[10px] font-bold text-[#6366F1]">
                 {badgeCount}
               </span>
             ) : null}
             {active ? (
-              <span className="inline-flex items-center rounded-full border border-[#cfe0ff] bg-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[#2459d3]">
+              <span className="inline-flex items-center rounded-full border border-[#C7D2FE] bg-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[#6366F1]">
                 Active
               </span>
             ) : null}
             {disabled ? (
-              <span className="inline-flex items-center rounded-full border border-[#e3e7ef] bg-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[#98a2b3]">
+              <span className="inline-flex items-center rounded-full border border-[#E5E7EB] bg-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[#9CA3AF]">
                 Soon
               </span>
             ) : null}
@@ -202,10 +201,10 @@ function RailLink({
               className={[
                 "mt-0.5 block text-xs font-medium leading-4",
                 active
-                  ? "text-[#49627f]"
+                  ? "text-[#4B5563]"
                   : disabled
-                    ? "text-[#a5afbe]"
-                    : "text-[#98a2b3]",
+                    ? "text-[#9CA3AF]"
+                    : "text-[#9CA3AF]",
               ].join(" ")}
             >
               {description}
@@ -220,10 +219,10 @@ function RailLink({
               "pointer-events-none absolute left-[calc(100%+10px)] top-1/2 z-20 hidden -translate-y-1/2 whitespace-nowrap rounded-xl border bg-white px-2.5 py-1.5 text-xs font-medium shadow-sm",
               hoverable ? "group-hover:block group-focus-visible:block" : "",
               active
-                ? "border-[#cfe0ff] text-[#2459d3]"
+                ? "border-[#C7D2FE] text-[#6366F1]"
                 : disabled
-                  ? "border-[#e3e7ef] text-[#98a2b3]"
-                  : "border-[#dde3ee] text-[#475467]",
+                  ? "border-[#E5E7EB] text-[#9CA3AF]"
+                  : "border-[#E5E7EB] text-[#374151]",
             ].join(" ")}
           >
             {label}
@@ -351,6 +350,21 @@ export default function DesktopLeftRail({
     }
   }, [isKanban]);
 
+  useEffect(() => {
+    if (!filtersOpen) return;
+    const previous = document.body.style.overflow;
+    const previousPaddingRight = document.body.style.paddingRight;
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    document.body.style.overflow = "hidden";
+    if (scrollbarWidth > 0) {
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
+    }
+    return () => {
+      document.body.style.overflow = previous;
+      document.body.style.paddingRight = previousPaddingRight;
+    };
+  }, [filtersOpen]);
+
   const platformNavigation = getPlatformSidebarNavigation();
   const navIconByKey = {
     crm: <BriefcaseBusiness className="h-5 w-5" />,
@@ -379,7 +393,7 @@ export default function DesktopLeftRail({
               type="button"
               onClick={openCollapsedRail}
               aria-label="Open rail menu"
-              className="fixed left-0 z-50 inline-flex h-[84px] w-7 flex-col items-center justify-center gap-1 rounded-r-xl border border-[#dde3ee] border-l-0 bg-white/96 text-[#475467] shadow-[0_10px_28px_rgba(15,23,42,0.10)] backdrop-blur transition hover:bg-white hover:text-[#111827]"
+              className="fixed left-0 z-50 inline-flex h-[84px] w-7 flex-col items-center justify-center gap-1 rounded-r-xl border border-[#E5E7EB] border-l-0 bg-white/96 text-[#374151] shadow-[0_10px_28px_rgba(15,23,42,0.10)] backdrop-blur transition hover:bg-white hover:text-[#1F2937]"
               style={{ top: topOffset }}
             >
               <ChevronsRight className="h-3.5 w-3.5 shrink-0" />
@@ -393,7 +407,7 @@ export default function DesktopLeftRail({
           ) : (
             <div
               className={[
-                "rounded-[26px] border border-[#dde3ee] bg-[#f8fafc]/96 p-1.5 shadow-[0_10px_34px_rgba(15,23,42,0.06)] backdrop-blur transition-all",
+                "rounded-[26px] border border-[#E5E7EB] bg-[#F9FAFB]/96 p-1.5 shadow-[0_10px_34px_rgba(15,23,42,0.06)] backdrop-blur transition-all",
                 expanded ? expandedPanelWidth : collapsedPanelWidth,
               ].join(" ")}
             >
@@ -404,7 +418,7 @@ export default function DesktopLeftRail({
                   <button
                     type="button"
                     onClick={closeCollapsedRail}
-                    className="inline-flex h-12 w-full items-center justify-center rounded-2xl border border-[#dde3ee] bg-white text-[#667085] transition hover:border-[#cfd8e6] hover:bg-[#f8fafc] hover:text-[#111827]"
+                    className="inline-flex h-12 w-full items-center justify-center rounded-2xl border border-[#E5E7EB] bg-white text-[#6B7280] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]"
                     aria-label="Hide rail menu"
                     title="Hide menu"
                   >
@@ -416,7 +430,7 @@ export default function DesktopLeftRail({
                   <button
                     type="button"
                     onClick={toggleExpanded}
-                    className="inline-flex h-12 w-full items-center justify-center rounded-2xl border border-[#dde3ee] bg-white text-[#667085] transition hover:border-[#cfd8e6] hover:bg-[#f8fafc] hover:text-[#111827]"
+                    className="inline-flex h-12 w-full items-center justify-center rounded-2xl border border-[#E5E7EB] bg-white text-[#6B7280] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]"
                     aria-label="Open full menu"
                     title="Open full menu"
                   >
@@ -499,7 +513,7 @@ export default function DesktopLeftRail({
           {showFilters && filtersOpen ? (
             <div
               className={[
-                "absolute top-0 z-20 w-[312px]",
+                "absolute z-40 w-[312px]",
                 expanded
                   ? isKanban
                     ? "left-[204px]"
@@ -508,6 +522,7 @@ export default function DesktopLeftRail({
                     ? "left-[72px]"
                     : "left-[84px]",
               ].join(" ")}
+              style={{ top: 0, maxHeight: "calc(100vh - 136px)" }}
             >
               <DesktopSidebarFilters
                 businessId={businessId}
@@ -534,3 +549,4 @@ export default function DesktopLeftRail({
     </div>
   );
 }
+

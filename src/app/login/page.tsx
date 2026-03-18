@@ -1,14 +1,14 @@
-"use client";
+﻿"use client";
 
 import React from "react";
 import Link from "next/link";
-import { BrandWordmark } from "@/components/Brand";
+import { BrandLockup } from "@/components/Brand";
 import LoginUI from "./ui";
 
 const benefits = [
-  "Run Corelix CRM",
-  "Manage workspace access",
-  "Scale into future modules",
+  "Run clients and deals without chaos",
+  "Keep team access and workflow in one workspace",
+  "Stay ready for Tasks and Academy without rebuilding the product",
 ];
 
 export default function Page() {
@@ -26,7 +26,7 @@ export default function Page() {
       <header className="relative z-10 border-b border-white/50 bg-white/45 backdrop-blur-xl">
         <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4 sm:px-8">
           <div className="flex items-center gap-2.5">
-            <BrandWordmark variant="gradient" height={24} className="h-6 w-auto" />
+            <BrandLockup iconSize={34} textClassName="text-[1.9rem]" />
           </div>
           <Link
             className="text-sm font-medium text-slate-600 transition hover:text-slate-900"
@@ -47,32 +47,34 @@ export default function Page() {
           ].join(" ")}
         >
           {showPromo ? (
-          <section className="hidden rounded-[24px] border border-white/60 bg-white/55 p-10 shadow-[0_20px_60px_-35px_rgba(15,23,42,0.35)] backdrop-blur-md lg:block">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-              Corelix platform
-            </p>
-            <div className="mb-6">
-              <BrandWordmark variant="gradient" height={24} className="h-6 w-auto" />
-            </div>
-            <h2 className="mt-3 max-w-md text-3xl font-semibold tracking-tight text-slate-900">
-              One clean platform with CRM live today and more modules ready next.
-            </h2>
-            <p className="mt-4 max-w-md text-sm leading-relaxed text-slate-600">
-              Built for growing teams that need structured CRM operations now, with Tasks and Academy already prepared in the platform foundation.
-            </p>
+            <section className="hidden rounded-[24px] border border-white/60 bg-white/55 p-10 shadow-[0_20px_60px_-35px_rgba(15,23,42,0.35)] backdrop-blur-md lg:block">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                Ordo
+              </p>
+              <div className="mb-6">
+                <BrandLockup iconSize={36} textClassName="text-[2rem]" />
+              </div>
+              <h2 className="mt-3 max-w-md text-[2rem] font-semibold tracking-tight text-slate-900 sm:text-[2.15rem]">
+                Bring your business into order.
+              </h2>
+              <p className="mt-4 max-w-md text-sm leading-relaxed text-slate-600">
+                Ordo is a business management system that keeps clients, tasks,
+                and team workflows in one place. Start with CRM and scale the
+                system without process chaos.
+              </p>
 
-            <ul className="mt-8 space-y-3">
-              {benefits.map((benefit) => (
-                <li
-                  key={benefit}
-                  className="flex items-center gap-3 rounded-xl border border-slate-200/90 bg-white/80 px-4 py-3 text-sm font-medium text-slate-700"
-                >
-                  <span className="h-2 w-2 rounded-full bg-blue-600" />
-                  {benefit}
-                </li>
-              ))}
-            </ul>
-          </section>
+              <ul className="mt-8 space-y-3">
+                {benefits.map((benefit) => (
+                  <li
+                    key={benefit}
+                    className="flex items-center gap-3 rounded-xl border border-slate-200/90 bg-white/80 px-4 py-3 text-sm font-medium text-slate-700"
+                  >
+                    <span className="h-2 w-2 rounded-full bg-[#315efb]" />
+                    {benefit}
+                  </li>
+                ))}
+              </ul>
+            </section>
           ) : null}
 
           <div className="space-y-4">
@@ -89,22 +91,22 @@ export default function Page() {
             </React.Suspense>
 
             {showPromo ? (
-            <section className="rounded-2xl border border-white/70 bg-white/70 p-4 shadow-sm backdrop-blur-sm lg:hidden">
-              <div className="mb-3">
-                <BrandWordmark variant="gradient" height={22} className="h-[22px] w-auto" />
-              </div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                Why Corelix
-              </p>
-              <ul className="mt-2 space-y-2">
-                {benefits.map((benefit) => (
-                  <li key={benefit} className="flex items-center gap-2.5 text-sm text-slate-700">
-                    <span className="h-1.5 w-1.5 rounded-full bg-blue-600" />
-                    {benefit}
-                  </li>
-                ))}
-              </ul>
-            </section>
+              <section className="rounded-2xl border border-white/70 bg-white/70 p-4 shadow-sm backdrop-blur-sm lg:hidden">
+                <div className="mb-3">
+                  <BrandLockup iconSize={30} textClassName="text-[1.65rem]" />
+                </div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  Why Ordo
+                </p>
+                <ul className="mt-2 space-y-2">
+                  {benefits.map((benefit) => (
+                    <li key={benefit} className="flex items-center gap-2.5 text-sm text-slate-700">
+                      <span className="h-1.5 w-1.5 rounded-full bg-[#315efb]" />
+                      {benefit}
+                    </li>
+                  ))}
+                </ul>
+              </section>
             ) : null}
           </div>
         </div>

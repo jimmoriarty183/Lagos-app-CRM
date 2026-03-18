@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import {
   ArrowRight,
   CheckCircle2,
@@ -6,7 +6,7 @@ import {
   ListChecks,
   Smartphone,
 } from "lucide-react";
-import { BrandWordmark } from "./Brand";
+import { BrandLockup } from "./Brand";
 
 const ORDER_STATES = [
   { label: "NEW", tone: "bg-blue-50 text-blue-700 border-blue-100" },
@@ -23,7 +23,7 @@ export function LandingPage() {
       <header className="sticky top-0 z-50 border-b border-slate-200/70 bg-white/85 backdrop-blur">
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-5 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3">
-            <BrandWordmark variant="gradient" height={28} className="h-7 w-auto" />
+            <BrandLockup iconSize={36} textClassName="text-[2rem]" />
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
@@ -41,7 +41,7 @@ export function LandingPage() {
             </Link>
             <Link
               href="/login"
-              className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
+              className="brand-primary-btn inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold text-white transition"
             >
               Open app <ArrowRight size={15} aria-hidden="true" />
             </Link>
@@ -51,27 +51,28 @@ export function LandingPage() {
 
       <main className="mx-auto grid w-full max-w-7xl gap-12 px-5 py-10 sm:px-6 sm:py-14 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16 lg:px-8 lg:py-20">
         <section className="space-y-8 lg:space-y-10">
-          <div className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-blue-700 sm:text-sm sm:normal-case sm:tracking-normal">
-            <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
-            Modular operations platform
+          <div className="brand-soft-chip inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-wide sm:text-sm sm:normal-case sm:tracking-normal">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#6366f1]" />
+            Bring your business into order
           </div>
 
           <div className="space-y-5">
-            <h1 className="text-4xl font-semibold leading-[1.06] tracking-tight text-slate-900 sm:text-5xl lg:text-6xl">
-              Run your workspace on one platform.
+            <h1 className="text-[2.4rem] font-semibold leading-[1.08] tracking-tight text-slate-900 sm:text-[2.8rem] lg:text-[3.15rem]">
+              Clients, tasks, and team
               <br />
-              Start with CRM, scale into more.
+              in one business system.
             </h1>
             <p className="max-w-2xl text-base leading-relaxed text-slate-600 sm:text-lg">
-              Corelix unifies CRM today and is prepared for Tasks and Academy next,
-              so your product architecture grows without fragmenting the experience.
+              Ordo is a business management system that keeps clients, tasks,
+              and team workflows in one place. Start with CRM and expand the
+              system without fragmented tools or process chaos.
             </p>
           </div>
 
           <div className="flex flex-wrap gap-3">
             <Link
               href="/login"
-              className="group inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-3 font-semibold text-white shadow-sm transition hover:bg-slate-800 hover:shadow"
+              className="brand-primary-btn group inline-flex items-center gap-2 rounded-xl border px-5 py-3 font-semibold transition hover:shadow"
             >
               Open CRM
               <ArrowRight
@@ -81,7 +82,7 @@ export function LandingPage() {
             </Link>
             <Link
               href="/pricing"
-              className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-5 py-3 font-semibold text-slate-700 transition hover:bg-slate-50"
+              className="brand-secondary-btn inline-flex items-center rounded-xl border px-5 py-3 font-semibold transition"
             >
               See pricing
             </Link>
@@ -91,29 +92,29 @@ export function LandingPage() {
             <FeatureCard
               icon={<Clock3 size={18} />}
               title="Fast setup"
-              description="Get started in minutes"
+              description="Launch the system in a few minutes"
             />
             <FeatureCard
               icon={<Smartphone size={18} />}
-              title="Mobile-first"
-              description="Built for work on the go"
+              title="Team coordination"
+              description="Clients, tasks, and access in one workspace"
             />
             <FeatureCard
               icon={<ListChecks size={18} />}
-              title="Clear workflow"
-              description="Track every order state"
+              title="Structured workflow"
+              description="Every stage stays visible to the team"
             />
           </div>
 
           <p className="text-xs text-slate-400">
-            If you were redirected here, sign in to continue to your Corelix workspace.
+            If you were redirected here, sign in to continue your work in Ordo.
           </p>
         </section>
 
         <section className="space-y-4 lg:pt-4">
           <p className="inline-flex items-center gap-2 text-sm font-medium text-slate-600">
             <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
-            CRM preview
+            CRM module
           </p>
 
           <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl shadow-slate-200/60">
@@ -121,7 +122,7 @@ export function LandingPage() {
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                    Order #123
+                    Deal #123
                   </p>
                   <p className="pt-1 text-sm font-semibold text-slate-700">
                     Amal Cakes & Bakery
@@ -157,10 +158,10 @@ export function LandingPage() {
 
               <Link
                 href="/login"
-                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 py-3 font-semibold !text-white transition hover:bg-slate-800"
+                className="brand-primary-btn inline-flex w-full items-center justify-center gap-2 rounded-xl border px-5 py-3 font-semibold !text-white transition"
               >
                 <CheckCircle2 size={16} aria-hidden="true" />
-                Contact store
+                Open system
               </Link>
 
               <p className="text-center text-xs text-slate-400">Redirect target: /login</p>
@@ -168,7 +169,8 @@ export function LandingPage() {
           </div>
 
           <p className="text-xs leading-relaxed text-slate-500">
-            A clean status-first CRM screen with due date and payment updates that works on mobile and desktop.
+            A clean SaaS workspace with structured CRM states, payment context,
+            and team visibility across desktop and mobile.
           </p>
         </section>
       </main>
@@ -210,3 +212,4 @@ function InfoCard({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
+

@@ -1,4 +1,4 @@
-export type PlatformModuleKey = "crm" | "tasks" | "academy";
+﻿export type PlatformModuleKey = "crm" | "tasks" | "academy";
 
 export type PlatformModule = {
   key: PlatformModuleKey;
@@ -13,7 +13,7 @@ export const PLATFORM_MODULES: Record<PlatformModuleKey, PlatformModule> = {
   crm: {
     key: "crm",
     name: "CRM",
-    description: "Customer operations and business workflows.",
+    description: "Run clients and deals without chaos.",
     href: "/app/crm",
     enabled: true,
     visible: true,
@@ -21,7 +21,7 @@ export const PLATFORM_MODULES: Record<PlatformModuleKey, PlatformModule> = {
   tasks: {
     key: "tasks",
     name: "Tasks",
-    description: "Internal execution workflows for teams.",
+    description: "Coordinate team tasks and execution workflows.",
     href: "/app/tasks",
     enabled: false,
     visible: false,
@@ -29,7 +29,7 @@ export const PLATFORM_MODULES: Record<PlatformModuleKey, PlatformModule> = {
   academy: {
     key: "academy",
     name: "Academy",
-    description: "Training and knowledge delivery.",
+    description: "Train the team inside the same system.",
     href: "/app/academy",
     enabled: false,
     visible: false,

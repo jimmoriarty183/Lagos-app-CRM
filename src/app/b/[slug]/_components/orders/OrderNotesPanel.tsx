@@ -98,10 +98,10 @@ export function OrderNoteComposer({
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <div className="text-sm font-semibold text-[#111827]">
+            <div className="text-sm font-semibold text-[#1F2937]">
               {mode === "create" ? "New internal note" : "Edit note"}
             </div>
-            <p className="mt-1 text-xs leading-5 text-[#667085]">
+            <p className="mt-1 text-xs leading-5 text-[#6B7280]">
               Capture internal context, blockers, or next steps for the order team.
             </p>
           </div>
@@ -112,7 +112,7 @@ export function OrderNoteComposer({
               "inline-flex h-9 items-center gap-2 rounded-full border px-3 text-xs font-semibold transition",
               isPinned
                 ? "border-[#d5ddf6] bg-[#eef2ff] text-[#3645a0]"
-                : "border-[#e4e7ec] bg-[#f8fafc] text-[#667085] hover:border-[#d0d5dd] hover:bg-white hover:text-[#344054]",
+                : "border-[#E5E7EB] bg-[#F9FAFB] text-[#6B7280] hover:border-[#C7D2FE] hover:bg-white hover:text-[#374151]",
             )}
             aria-pressed={isPinned}
           >
@@ -125,15 +125,14 @@ export function OrderNoteComposer({
           value={body}
           onChange={(event) => setBody(event.currentTarget.value)}
           placeholder="Add private notes for this order"
-          className="min-h-[112px] rounded-[20px] border-[#dbe3ef] bg-[#fbfcfe] px-4 py-3 text-sm leading-6 text-[#111827] placeholder:text-[#98a2b3] focus-visible:border-[#b8c4d8] focus-visible:ring-[#dce7f6]"
+          className="min-h-[112px] rounded-[20px] border-[#E5E7EB] bg-[#F9FAFB] px-4 py-3 text-sm leading-6 text-[#1F2937] placeholder:text-[#9CA3AF] focus-visible:border-[#6366F1] focus-visible:ring-[#6366F1]/15"
         />
 
         <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end">
           <button
             type="button"
             onClick={onCancel}
-            className="inline-flex h-11 items-center justify-center rounded-xl border border-[#dbe3ef] bg-white px-5 text-base font-semibold transition hover:bg-[#f8fafc]"
-            style={{ color: "#344054" }}
+            className="inline-flex h-11 items-center justify-center rounded-xl border border-[#E5E7EB] bg-white px-5 text-base font-semibold text-[#374151] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
           >
             Cancel
           </button>
@@ -141,7 +140,7 @@ export function OrderNoteComposer({
             type="button"
             onClick={() => onSubmit({ body: trimmedBody, isPinned })}
             disabled={!trimmedBody}
-            className="inline-flex h-11 min-w-32 items-center justify-center rounded-xl border border-[#111827] bg-[#111827] px-5 text-base font-semibold transition hover:bg-[#1f2937] disabled:cursor-not-allowed disabled:border-[#9ca3af] disabled:bg-[#9ca3af]"
+            className="inline-flex h-11 min-w-32 items-center justify-center rounded-xl border border-[#6366F1] bg-[#6366F1] px-5 text-base font-semibold transition hover:bg-[#5558E3] disabled:cursor-not-allowed disabled:border-[#9CA3AF] disabled:bg-[#9CA3AF]"
             style={{ color: "#ffffff" }}
           >
             {submitLabel}
@@ -198,7 +197,7 @@ export function OrderNoteItem({
     >
       <div className="flex items-start gap-3">
         <Avatar className="mt-0.5 h-10 w-10 rounded-2xl">
-          <AvatarFallback className="rounded-2xl bg-[#111827] text-xs font-semibold text-white">
+          <AvatarFallback className="rounded-2xl bg-[#1F2937] text-xs font-semibold text-white">
             {note.authorInitials || getInitials(note.authorName)}
           </AvatarFallback>
         </Avatar>
@@ -207,7 +206,7 @@ export function OrderNoteItem({
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="space-y-1">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-sm font-semibold text-[#111827]">{note.authorName}</span>
+                <span className="text-sm font-semibold text-[#1F2937]">{note.authorName}</span>
                 {note.isPinned ? (
                   <span className="inline-flex items-center gap-1 rounded-full border border-[#d5ddf6] bg-[#eef2ff] px-2.5 py-1 text-[11px] font-semibold text-[#3645a0]">
                     <Pin className="h-3 w-3 fill-current" />
@@ -215,7 +214,7 @@ export function OrderNoteItem({
                   </span>
                 ) : null}
               </div>
-              <div className="flex flex-wrap items-center gap-2 text-xs text-[#98a2b3]">
+              <div className="flex flex-wrap items-center gap-2 text-xs text-[#9CA3AF]">
                 <span>{formatDateTime(note.createdAt)}</span>
                 {wasEdited ? <span>Edited {formatDateTime(updatedAt!)}</span> : null}
               </div>
@@ -226,13 +225,13 @@ export function OrderNoteItem({
                 <DropdownMenuTrigger asChild>
                   <button
                     type="button"
-                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-transparent bg-[#f8fafc] text-[#667085] transition hover:border-[#dbe3ef] hover:bg-white hover:text-[#111827]"
+                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-transparent bg-[#F9FAFB] text-[#6B7280] transition hover:border-[#E5E7EB] hover:bg-white hover:text-[#1F2937]"
                     aria-label={`Manage note from ${note.authorName}`}
                   >
                     <Ellipsis className="h-4 w-4" />
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-40 rounded-xl border-[#e4e7ec]">
+                <DropdownMenuContent align="end" className="w-40 rounded-xl border-[#E5E7EB]">
                   <DropdownMenuItem onSelect={onEdit}>
                     <PencilLine className="h-4 w-4" />
                     Edit
@@ -250,7 +249,7 @@ export function OrderNoteItem({
             ) : null}
           </div>
 
-          <div className="mt-3 whitespace-pre-wrap text-sm leading-6 text-[#344054]">{note.body}</div>
+          <div className="mt-3 whitespace-pre-wrap text-sm leading-6 text-[#374151]">{note.body}</div>
         </div>
       </div>
     </article>
@@ -265,19 +264,19 @@ export function OrderNotesEmptyState({
   onAddFirstNote: () => void;
 }) {
   return (
-    <div className="rounded-[24px] border border-dashed border-[#d7dee8] bg-white/80 px-5 py-8 text-center">
-      <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#f4f6f8] text-[#667085]">
+    <div className="rounded-[24px] border border-dashed border-[#E5E7EB] bg-white/80 px-5 py-8 text-center">
+      <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F9FAFB] text-[#6B7280]">
         <MessageSquareText className="h-5 w-5" />
       </div>
-      <div className="mt-3 text-sm font-semibold text-[#111827]">No notes yet</div>
-      <p className="mt-1 text-sm leading-6 text-[#667085]">
-        Add private notes for this order. Notes are visible only to managers.
+      <div className="mt-3 text-sm font-semibold text-[#1F2937]">No notes yet</div>
+      <p className="mt-1 text-sm leading-6 text-[#6B7280]">
+        Add internal notes so the team keeps context, decisions, and handoffs in one place.
       </p>
       {canManage ? (
         <button
           type="button"
           onClick={onAddFirstNote}
-          className="mt-4 inline-flex h-11 min-w-40 items-center justify-center rounded-xl border border-[#111827] bg-[#111827] px-5 text-base font-semibold transition hover:bg-[#1f2937]"
+          className="mt-4 inline-flex h-11 min-w-40 items-center justify-center rounded-[18px] border border-[#6366F1] bg-[#6366F1] px-5 text-base font-semibold shadow-[0_8px_18px_rgba(99,102,241,0.18)] transition hover:bg-[#5558E3]"
           style={{ color: "#ffffff" }}
         >
           Add first note
@@ -346,7 +345,7 @@ export function OrderNotesPanel({
   return (
     <section
       className={cn(
-        "rounded-[28px] border border-[#e6ebf2] bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] p-4 shadow-[0_10px_30px_rgba(15,23,42,0.06)] sm:p-5",
+        "rounded-[28px] border border-[#E5E7EB] bg-[linear-gradient(180deg,#ffffff_0%,#F9FAFB_100%)] p-4 shadow-[0_10px_30px_rgba(15,23,42,0.06)] sm:p-5",
         className,
       )}
     >
@@ -354,20 +353,20 @@ export function OrderNotesPanel({
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-2">
             <div>
-              <div className="flex items-center gap-2 text-sm font-semibold tracking-[0.01em] text-[#111827]">
-                <MessageSquareText className="h-4 w-4 text-[#667085]" />
+              <div className="product-section-title flex items-center gap-2">
+                <MessageSquareText className="h-4 w-4 text-[#6B7280]" />
                 <span>Internal notes</span>
               </div>
-              <p className="mt-1 text-sm text-[#667085]">Private notes visible only to managers</p>
+              <p className="mt-1 text-sm text-[#6B7280]">Private notes visible only to managers</p>
             </div>
 
             <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
-              <span className="inline-flex items-center rounded-full bg-[#eef2ff] px-3 py-1 text-[#344054]">
+              <span className="inline-flex items-center rounded-full bg-[#EEF2FF] px-3 py-1 text-[#374151]">
                 {noteCountLabel}
               </span>
               {pinnedNotes.length > 0 ? (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-[#f8faff] px-3 py-1 text-[#52607a]">
-                  <Pin className="h-3.5 w-3.5 fill-current text-[#3645a0]" />
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-[#F9FAFB] px-3 py-1 text-[#4B5563]">
+                  <Pin className="h-3.5 w-3.5 fill-current text-[#6366F1]" />
                   {pinnedNotes.length} pinned
                 </span>
               ) : null}
@@ -378,8 +377,7 @@ export function OrderNotesPanel({
             <button
               type="button"
               onClick={openCreateComposer}
-              className="inline-flex h-11 items-center justify-center rounded-xl border border-[#dbe3ef] bg-white px-5 text-base font-semibold transition hover:bg-[#f8fafc]"
-              style={{ color: "#344054" }}
+              className="inline-flex h-11 items-center justify-center rounded-[18px] border border-[#E5E7EB] bg-white px-5 text-base font-semibold text-[#374151] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
             >
               Add note
             </button>
@@ -396,7 +394,7 @@ export function OrderNotesPanel({
         ) : null}
 
         {!canManage ? (
-          <div className="rounded-[24px] border border-[#e4e7ec] bg-white/85 px-5 py-6 text-sm leading-6 text-[#667085]">
+          <div className="rounded-[24px] border border-[#E5E7EB] bg-white/85 px-5 py-6 text-sm leading-6 text-[#6B7280]">
             Only managers can view and add internal notes for this order.
           </div>
         ) : notes.length === 0 ? (
@@ -405,8 +403,8 @@ export function OrderNotesPanel({
           <div className="space-y-3">
             {pinnedNotes.length > 0 ? (
               <div className="space-y-3">
-                <div className="flex items-center gap-2 px-1 text-xs font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
-                  <Pin className="h-3.5 w-3.5 text-[#667085]" />
+                <div className="product-section-label flex items-center gap-2 px-1">
+                  <Pin className="h-3.5 w-3.5 text-[#6B7280]" />
                   Pinned notes
                 </div>
                 {pinnedNotes.map((note) => (
@@ -433,7 +431,7 @@ export function OrderNotesPanel({
             {regularNotes.length > 0 ? (
               <div className="space-y-3">
                 {pinnedNotes.length > 0 ? (
-                  <div className="flex items-center gap-2 px-1 pt-1 text-xs font-semibold uppercase tracking-[0.08em] text-[#98a2b3]">
+                  <div className="product-section-label flex items-center gap-2 px-1 pt-1">
                     Recent notes
                   </div>
                 ) : null}
@@ -464,3 +462,4 @@ export function OrderNotesPanel({
     </section>
   );
 }
+

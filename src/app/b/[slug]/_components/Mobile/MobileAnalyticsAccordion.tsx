@@ -53,7 +53,7 @@ function KpiCard({
           {icon}
         </div>
       </div>
-      <div className={`mt-4 text-2xl font-bold tabular-nums tracking-[-0.03em] ${valueCls}`}>
+      <div className={`mt-3 text-[22px] font-semibold tabular-nums ${valueCls}`}>
         {value}
       </div>
       <div className={`mt-2 text-xs font-medium ${subCls}`}>{sub}</div>

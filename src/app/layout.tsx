@@ -20,12 +20,26 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Corelix",
-  description: "Corelix platform with CRM-ready modular architecture.",
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
+  ),
+  title: {
+    default: "Ordo",
+    template: "%s | Ordo",
+  },
+  description: "Ordo is a business management system that keeps clients, tasks, and team workflows in one place.",
+  applicationName: "Ordo",
   icons: {
-    icon: [{ url: "/brand/favicon.svg", type: "image/svg+xml" }],
+    icon: [
+      { url: "/brand/favicon.svg", type: "image/svg+xml" },
+    ],
     shortcut: [{ url: "/brand/favicon.svg", type: "image/svg+xml" }],
-    apple: [{ url: "/brand/favicon.svg", type: "image/svg+xml" }],
+    apple: [{ url: "/brand/app_icon.svg", type: "image/svg+xml" }],
+  },
+  openGraph: {
+    title: "Ordo",
+    description: "Bring your business into order with clients, tasks, and team workflows connected in one system.",
+    images: [{ url: "/brand/app_icon.svg", width: 512, height: 512, alt: "Ordo app icon" }],
   },
 };
 

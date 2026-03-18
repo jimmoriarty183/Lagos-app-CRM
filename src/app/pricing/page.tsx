@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useRouter } from "next/navigation";
 import { BrandWordmark } from "@/components/Brand";
@@ -17,13 +17,13 @@ type Plan = {
 const comparisonRows = [
   { feature: "Orders per month", starter: "Up to 30", business: "Unlimited", pro: "Unlimited" },
   { feature: "Status tracking", starter: "Basic", business: "Advanced", pro: "Advanced" },
-  { feature: "Due dates", starter: "—", business: "✓", pro: "✓" },
-  { feature: "Payment tracking", starter: "—", business: "✓", pro: "✓" },
-  { feature: "Manager access", starter: "—", business: "✓", pro: "✓" },
-  { feature: "Search and filters", starter: "—", business: "✓", pro: "✓" },
-  { feature: "Analytics", starter: "—", business: "—", pro: "Simple analytics" },
-  { feature: "Priority support", starter: "—", business: "—", pro: "✓" },
-  { feature: "Branding", starter: "—", business: "—", pro: "Custom (soon)" },
+  { feature: "Due dates", starter: "-", business: "Yes", pro: "Yes" },
+  { feature: "Payment tracking", starter: "-", business: "Yes", pro: "Yes" },
+  { feature: "Manager access", starter: "-", business: "Yes", pro: "Yes" },
+  { feature: "Search and filters", starter: "-", business: "Yes", pro: "Yes" },
+  { feature: "Analytics", starter: "-", business: "-", pro: "Simple analytics" },
+  { feature: "Priority support", starter: "-", business: "-", pro: "Yes" },
+  { feature: "Branding", starter: "-", business: "-", pro: "Custom (soon)" },
 ];
 
 const faqs = [
@@ -33,7 +33,7 @@ const faqs = [
   },
   {
     q: "Does it work on phones?",
-    a: "Absolutely. Corelix CRM is mobile-first, so owners and staff can track work on the go.",
+    a: "Absolutely. Ordo works well on phones, so owners and teams can stay on top of clients and tasks on the go.",
   },
   {
     q: "Is billing live already?",
@@ -53,7 +53,7 @@ export default function PricingPage() {
       name: "Starter",
       price: "$0",
       period: "/ forever",
-      note: "For trying Corelix CRM",
+      note: "To launch your first workspace in Ordo",
       features: ["Up to 30 orders / month", "Basic statuses", "Mobile-friendly"],
       cta: "Start free",
       action: () => router.push("/login"),
@@ -93,7 +93,7 @@ export default function PricingPage() {
     <main className="page">
       <div className="shell">
         <nav className="topNav">
-          <button className="brand" onClick={() => router.push("/")} aria-label="Go to Corelix home">
+          <button className="brand" onClick={() => router.push("/")} aria-label="Go to Ordo home">
             <BrandWordmark variant="gradient" height={24} />
           </button>
           <div className="links">
@@ -101,15 +101,15 @@ export default function PricingPage() {
             <button className="active">Pricing</button>
             <button onClick={() => router.push("/login")}>Log in</button>
           </div>
-          <button className="primary" onClick={() => router.push("/login?next=%2Fb%2Ftest")}>Open app</button>
+          <button className="primary" onClick={() => router.push("/login?next=%2Fb%2Ftest")}>Open system</button>
         </nav>
 
         <section className="hero card">
-          <p className="eyebrow">Simple plans. No surprises.</p>
-          <h1>Pricing for the Corelix CRM launch</h1>
-          <p className="heroCopy">Start with CRM now. Expand the platform as new modules come online. Upgrade when you&apos;re ready.</p>
+          <p className="eyebrow">Bring your business into order</p>
+          <h1>Pricing for Ordo</h1>
+          <p className="heroCopy">Start with CRM now, keep team operations structured, and unlock more capability as Tasks and Academy come online.</p>
           <div className="heroCtas">
-            <button className="primary" onClick={() => router.push("/login")}>Start free</button>
+            <button className="primary" onClick={() => router.push("/login")}>Get started</button>
             <button className="secondary" onClick={() => document.getElementById("compare")?.scrollIntoView({ behavior: "smooth" })}>Compare plans</button>
           </div>
         </section>
@@ -173,18 +173,18 @@ export default function PricingPage() {
           <div className="steps">
             <article>
               <span>1</span>
-              <h4>Create workspace</h4>
-              <p>Set up your shop profile and invite a manager if needed.</p>
+              <h4>Create a workspace</h4>
+              <p>Create your workspace, invite the team, and set the base for a structured operating flow.</p>
             </article>
             <article>
               <span>2</span>
-              <h4>Add your first order</h4>
-              <p>Capture customer details, due date, and payment status in seconds.</p>
+              <h4>Add the first client or deal</h4>
+              <p>Capture the client, next step, and business context in one system instead of scattered chats.</p>
             </article>
             <article>
               <span>3</span>
-              <h4>Share updates with customers</h4>
-              <p>Keep everyone aligned with clear status changes and timelines.</p>
+              <h4>Keep the workflow in order</h4>
+              <p>The team sees the current stage, ownership, and context without losing control in messages and ad hoc notes.</p>
             </article>
           </div>
         </section>
@@ -202,9 +202,9 @@ export default function PricingPage() {
         </section>
 
         <section className="card bottomCta">
-          <h3>Start simple, upgrade when your business grows</h3>
+          <h3>Start with CRM and scale inside one system</h3>
           <div className="heroCtas">
-            <button className="primary" onClick={() => router.push("/login")}>Start free</button>
+            <button className="primary" onClick={() => router.push("/login")}>Get started</button>
             <button className="secondary" onClick={() => router.push("/")}>Back to home</button>
           </div>
         </section>
@@ -267,7 +267,7 @@ export default function PricingPage() {
         }
         .links .active {
           background: #eff6ff;
-          color: #1d4ed8;
+          color: #6366F1;
         }
         button.primary,
         button.secondary {
@@ -278,8 +278,9 @@ export default function PricingPage() {
           cursor: pointer;
         }
         button.primary {
-          border: 1px solid #1d4ed8;
-          background: #1d4ed8;
+          box-shadow: 0 10px 20px -12px rgba(99, 102, 241, 0.72);
+          border: 1px solid #6366F1;
+          background: #6366F1;
           color: white;
         }
         button.secondary {
@@ -294,9 +295,9 @@ export default function PricingPage() {
         .eyebrow {
           margin: 0;
           display: inline-block;
-          border: 1px solid #cfe0f5;
-          background: #f4f8ff;
-          color: #1d4ed8;
+          border: 1px solid #C7D2FE;
+          background: #EEF2FF;
+          color: #6366F1;
           font-size: 12px;
           font-weight: 700;
           border-radius: 999px;
@@ -330,16 +331,16 @@ export default function PricingPage() {
           position: relative;
         }
         .plan.highlight {
-          border: 2px solid #3b82f6;
+          border: 2px solid #6366F1;
           box-shadow: 0 8px 26px rgba(29, 78, 216, 0.12);
         }
         .pill {
           position: absolute;
           top: 14px;
           right: 14px;
-          background: #dbeafe;
-          color: #1e40af;
-          border: 1px solid #bfdbfe;
+          background: #EEF2FF;
+          color: #4F46E5;
+          border: 1px solid #C7D2FE;
           border-radius: 999px;
           font-size: 12px;
           font-weight: 700;
@@ -432,8 +433,8 @@ export default function PricingPage() {
           display: inline-grid;
           place-items: center;
           border-radius: 999px;
-          background: #dbeafe;
-          color: #1e40af;
+          background: #EEF2FF;
+          color: #4F46E5;
           font-weight: 700;
           font-size: 14px;
         }
@@ -518,3 +519,4 @@ export default function PricingPage() {
     </main>
   );
 }
+

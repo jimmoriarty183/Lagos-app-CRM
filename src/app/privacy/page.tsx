@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import LegalDocumentPage from "@/components/LegalDocumentPage";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | Corelix",
-  description: "Corelix privacy policy.",
+  title: "Privacy Policy | Ordo",
+  description: "Ordo privacy policy.",
 };
 
 export default function PrivacyPage() {
@@ -11,13 +11,13 @@ export default function PrivacyPage() {
     <LegalDocumentPage
       eyebrow="Legal"
       title="Privacy Policy"
-      intro="This policy explains the basic categories of information Corelix handles and why that information is used when you access the product."
+      intro="This policy explains what information Ordo handles and why that information is used when you work inside the product."
       updatedAt="March 17, 2026"
       sections={[
         {
           title: "Information we collect",
           paragraphs: [
-            "Corelix may collect account details, workspace information, customer and CRM records entered by your team, device and browser data, and operational logs needed to run the service.",
+            "Ordo may collect account details, workspace information, CRM records, task data, team activity, device and browser data, and operational logs needed to run the service.",
             "Some information is provided directly by you, while other data is generated automatically as part of authentication, security monitoring, and product usage.",
           ],
         },
@@ -45,10 +45,11 @@ export default function PrivacyPage() {
         {
           title: "Questions",
           paragraphs: [
-            "If you need privacy-related help, contact the Corelix team through the support channel associated with your account or launch materials.",
+            "If you need privacy-related help, contact the Ordo team through the support channel associated with your account or launch materials.",
           ],
         },
       ]}
     />
   );
 }
+

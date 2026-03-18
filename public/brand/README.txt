@@ -1,16 +1,10 @@
-Corelix brand pack
+﻿Ordo brand asset slots
 
-Files:
-- icon.svg — master icon
-- favicon.svg — simplified favicon
-- wordmark-gradient.svg — primary wordmark for brand use
-- wordmark-dark.svg — wordmark for light backgrounds
-- wordmark-light.svg — wordmark for dark backgrounds
-- login-brand-light.svg — vertical lockup for light backgrounds
-- login-brand-dark.svg — vertical lockup for dark backgrounds
+Expected files:
+- ordo_full.png
+- favicon_16.png
+- favicon_32.png
+- app_icon_128.png
+- app_icon_256.png
 
-Recommended use:
-- Header / navbar: wordmark-gradient.svg or wordmark-dark.svg depending on style
-- Favicon: favicon.svg
-- Login screen: login-brand-light.svg or login-brand-dark.svg
-- Sidebar compact mode: icon.svg
+The codebase references these filenames in metadata and manifest.
