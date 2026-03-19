@@ -13,6 +13,7 @@ import {
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { supabaseServer } from "@/lib/supabase/server";
 import type { WorkDayStatus } from "@/lib/work-day";
+import { ensureWorkspaceForBusiness } from "@/lib/workspaces";
 
 function isMissingColumnError(error: unknown, column: string) {
   const message = String((error as { message?: string } | null)?.message ?? "").toLowerCase();
@@ -144,9 +145,13 @@ async function insertActivityEvent(input: {
   createdAt?: string | null;
 }) {
   const admin = supabaseAdmin();
+  const workspaceId = await ensureWorkspaceForBusiness(
+    admin,
+    input.workspaceId ?? input.businessId,
+  );
   const { error } = await admin.from("activity_events").insert({
     business_id: input.businessId,
-    workspace_id: input.workspaceId ?? input.businessId,
+    workspace_id: workspaceId,
     entity_type: input.entityType,
     entity_id: input.entityId,
     order_id: input.orderId ?? null,
@@ -479,13 +484,14 @@ export async function createFollowUp(input: {
   source?: FollowUpSource | string | null;
 }) {
   const { admin, userId } = await requireBusinessManagerAccess(input.businessId);
+  const workspaceId = await ensureWorkspaceForBusiness(admin, input.businessId);
   const title = cleanText(input.title);
   if (!title) throw new Error("Follow-up title is required");
 
   const dueDate = normalizeFollowUpDueDate(input.dueDate);
   const payload = {
     business_id: input.businessId,
-    workspace_id: input.businessId,
+    workspace_id: workspaceId,
     order_id: trimNullableText(input.orderId),
     title,
     due_date: dueDate,
@@ -788,11 +794,12 @@ export async function createTomorrowFollowUps(input: {
   source?: FollowUpSource | string | null;
 }) {
   const { admin, userId } = await requireBusinessManagerAccess(input.businessId);
+  const workspaceId = await ensureWorkspaceForBusiness(admin, input.businessId);
   const dueDate = getTomorrowDateOnly();
   const rows = input.items
     .map((item) => ({
       business_id: input.businessId,
-      workspace_id: input.businessId,
+      workspace_id: workspaceId,
       order_id: trimNullableText(item.orderId),
       title: cleanText(item.title),
       due_date: dueDate,
@@ -849,6 +856,7 @@ async function upsertWorkDayRecord(input: {
   finishedAt?: string | null;
 }) {
   const admin = supabaseAdmin();
+  const workspaceId = await ensureWorkspaceForBusiness(admin, input.businessId);
   const workDate = input.workDate ?? getTodayDateOnly();
   const dailySummary = trimNullableText(input.dailySummary);
 
@@ -892,7 +900,7 @@ async function upsertWorkDayRecord(input: {
 
   const payload = {
     business_id: input.businessId,
-    workspace_id: input.businessId,
+    workspace_id: workspaceId,
     user_id: input.userId,
     work_date: workDate,
     status: normalizeWorkDayStatus(input.status),

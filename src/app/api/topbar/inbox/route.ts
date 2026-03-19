@@ -3,39 +3,113 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { supabaseServer } from "@/lib/supabase/server";
 
-type InviteBusiness = {
-  id: string;
-  slug: string;
-  name: string | null;
-};
+export type NotificationType =
+  | "mention"
+  | "mention_received"
+  | "order_assigned"
+  | "order_reassigned"
+  | "important_comment_received"
+  | "invitation_received";
 
-type InboxInvite = {
+export type NotificationRow = {
   id: string;
-  business_id: string;
-  created_at: string | null;
-  business: InviteBusiness;
-};
-
-type InboxFollowUp = {
-  id: string;
-  title: string;
-  due_date: string;
+  recipient_user_id: string | null;
+  actor_user_id: string | null;
+  type: string;
+  entity_type: string;
+  entity_id: string;
   order_id: string | null;
-  created_at: string | null;
+  metadata: Record<string, unknown>;
+  is_read: boolean;
+  read_at: string | null;
+  created_at: string;
 };
+
+type RawNotificationRow = Record<string, unknown>;
+
+export type InboxNotification = {
+  id: string;
+  type: string;
+  entity_type: string;
+  entity_id: string;
+  order_id: string | null;
+  order_number: string | null;
+  title: string;
+  preview: string | null;
+  actor_label: string | null;
+  is_read: boolean;
+  created_at: string;
+  metadata: Record<string, unknown>;
+};
+
+function isMissingRelationError(error: unknown, relation: string) {
+  const message = String((error as { message?: string } | null)?.message ?? "").toLowerCase();
+  return (
+    message.includes(`could not find the table 'public.${relation.toLowerCase()}'`) &&
+    message.includes("schema cache")
+  );
+}
+
+function getStringField(record: RawNotificationRow, keys: string[]) {
+  for (const key of keys) {
+    const value = record[key];
+    if (typeof value === "string" && value.trim()) return value.trim();
+  }
+  return null;
+}
+
+function getBooleanField(record: RawNotificationRow, keys: string[], fallback = false) {
+  for (const key of keys) {
+    const value = record[key];
+    if (typeof value === "boolean") return value;
+  }
+  return fallback;
+}
+
+function getObjectField(record: RawNotificationRow, keys: string[]) {
+  for (const key of keys) {
+    const value = record[key];
+    if (value && typeof value === "object" && !Array.isArray(value)) {
+      return value as Record<string, unknown>;
+    }
+  }
+  return {};
+}
+
+function normalizeNotificationRow(record: RawNotificationRow): NotificationRow | null {
+  const id = getStringField(record, ["id"]);
+  if (!id) return null;
+  const metadata = getObjectField(record, ["metadata", "payload", "data"]);
+  const metadataOrderId =
+    typeof metadata.order_id === "string" && metadata.order_id.trim()
+      ? metadata.order_id.trim()
+      : null;
+  const readAt = getStringField(record, ["read_at"]);
+
+  return {
+    id,
+    recipient_user_id: getStringField(record, ["recipient_user_id", "recipient_id", "user_id"]),
+    actor_user_id: getStringField(record, ["actor_user_id", "actor_id", "created_by"]),
+    type: getStringField(record, ["type", "notification_type"]) ?? "notification",
+    entity_type: getStringField(record, ["entity_type", "entity"]) ?? "unknown",
+    entity_id: getStringField(record, ["entity_id"]) ?? id,
+    order_id: getStringField(record, ["order_id"]) ?? metadataOrderId,
+    metadata,
+    is_read: getBooleanField(record, ["is_read", "read"], Boolean(readAt)),
+    read_at: readAt,
+    created_at:
+      getStringField(record, ["created_at", "inserted_at", "ts"]) ??
+      new Date().toISOString(),
+  };
+}
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const businessId = String(searchParams.get("businessId") ?? "").trim();
-    const today = String(searchParams.get("today") ?? "").trim();
 
     if (!businessId) {
       return NextResponse.json({ ok: false, error: "businessId required" }, { status: 400 });
-    }
-
-    if (!today) {
-      return NextResponse.json({ ok: false, error: "today required" }, { status: 400 });
     }
 
     const supabase = await supabaseServer();
@@ -48,89 +122,217 @@ export async function GET(request: Request) {
       return NextResponse.json({ ok: false, error: "Not authenticated" }, { status: 401 });
     }
 
-    const email = String(user.email).trim().toLowerCase();
+    const userId = user.id;
 
-    const [invitesResult, followUpsResult] = await Promise.all([
-      admin
-        .from("business_invites")
-        .select("id,business_id,email,role,status,created_at")
-        .ilike("email", email)
-        .eq("role", "MANAGER")
-        .eq("status", "PENDING")
-        .order("created_at", { ascending: false }),
-      admin
-        .from("follow_ups")
-        .select("id,title,due_date,order_id,created_at")
-        .eq("business_id", businessId)
-        .eq("status", "open")
-        .lte("due_date", today)
-        .order("due_date", { ascending: true })
-        .order("created_at", { ascending: false }),
-    ]);
+    let notifications: NotificationRow[] = [];
+    const notificationsResult = await admin
+      .from("notifications")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(200);
 
-    if (invitesResult.error) {
-      return NextResponse.json({ ok: false, error: invitesResult.error.message }, { status: 500 });
-    }
-
-    if (followUpsResult.error) {
-      return NextResponse.json({ ok: false, error: followUpsResult.error.message }, { status: 500 });
-    }
-
-    const businessIds = Array.from(
-      new Set((invitesResult.data ?? []).map((invite) => String(invite.business_id ?? "")).filter(Boolean)),
-    );
-
-    let businessesById = new Map<string, InviteBusiness>();
-    if (businessIds.length > 0) {
-      const { data: businesses, error: businessesError } = await admin
-        .from("businesses")
-        .select("id,slug,name")
-        .in("id", businessIds);
-
-      if (businessesError) {
-        return NextResponse.json({ ok: false, error: businessesError.message }, { status: 500 });
-      }
-
-      businessesById = new Map(
-        (businesses ?? [])
-          .filter((business) => business?.id && business?.slug)
-          .map((business) => [
-            String(business.id),
-            {
-              id: String(business.id),
-              slug: String(business.slug),
-              name: business.name ? String(business.name) : null,
-            },
-          ]),
+    if (notificationsResult.error && !isMissingRelationError(notificationsResult.error, "notifications")) {
+      return NextResponse.json(
+        { ok: false, error: notificationsResult.error.message },
+        { status: 500 },
       );
     }
 
-    const invites: InboxInvite[] = (invitesResult.data ?? [])
-      .map((invite) => {
-        const business = businessesById.get(String(invite.business_id ?? ""));
-        if (!business) return null;
+    notifications = ((notificationsResult.data ?? []) as RawNotificationRow[])
+      .map(normalizeNotificationRow)
+      .filter((row): row is NotificationRow => Boolean(row))
+      .filter((row) => {
+        if (!row.recipient_user_id) return true;
+        return row.recipient_user_id === userId;
+      });
+
+    const { data: invites, error: invitesError } = await admin
+      .from("business_invites")
+      .select("id, business_id, role, created_at, invited_by")
+      .eq("email", user.email)
+      .eq("status", "PENDING")
+      .eq("business_id", businessId)
+      .order("created_at", { ascending: false })
+      .limit(20);
+
+    if (invitesError && !isMissingRelationError(invitesError, "business_invites")) {
+      return NextResponse.json({ ok: false, error: invitesError.message }, { status: 500 });
+    }
+
+    // Build actor labels map
+    const actorIds = Array.from(
+      new Set(
+        [
+          ...notifications.map((n) => String(n.actor_user_id ?? "")),
+          ...((invites ?? []) as Array<{ invited_by?: string | null }>).map((invite) =>
+            String(invite.invited_by ?? ""),
+          ),
+        ]
+          .filter(Boolean),
+      ),
+    );
+
+    let actorLabelsById = new Map<string, string>();
+    if (actorIds.length > 0) {
+      const { data: actors } = await admin
+        .from("profiles")
+        .select("id,first_name,last_name,email")
+        .in("id", actorIds);
+
+      if (actors) {
+        actorLabelsById = new Map(
+          actors.map((actor) => [
+            String(actor.id),
+            [actor.first_name, actor.last_name]
+              .filter(Boolean)
+              .join(" ") || String(actor.email ?? ""),
+          ]),
+        );
+      }
+    }
+
+    // Build order numbers map
+    const orderIds = Array.from(
+      new Set(
+        notifications
+          .map((n) => String(n.order_id ?? ""))
+          .filter(Boolean),
+      ),
+    );
+
+    let orderNumbersById = new Map<string, string>();
+    let orderBusinessIdsById = new Map<string, string>();
+    if (orderIds.length > 0) {
+      const { data: orders } = await admin
+        .from("orders")
+        .select("id,order_number,business_id")
+        .in("id", orderIds);
+
+      if (orders) {
+        orderNumbersById = new Map(
+          orders.map((order) => [
+            String(order.id),
+            String(order.order_number ?? ""),
+          ]),
+        );
+        orderBusinessIdsById = new Map(
+          orders.map((order) => [
+            String(order.id),
+            String(order.business_id ?? ""),
+          ]),
+        );
+      }
+    }
+
+    // Transform notifications into inbox items
+    const inboxNotifications: InboxNotification[] = notifications
+      .filter((notification) => {
+        const metadata = (notification.metadata as Record<string, unknown>) ?? {};
+        const metadataBusinessId = String(
+          metadata.business_id ??
+          metadata.workspace_id ??
+          "",
+        ).trim();
+        const orderBusinessId = orderBusinessIdsById.get(String(notification.order_id ?? "")) ?? "";
+
+        if (metadataBusinessId) return metadataBusinessId === businessId;
+        if (orderBusinessId) return orderBusinessId === businessId;
+        return true;
+      })
+      .map(
+      (notification) => {
+        const metadata = (notification.metadata as Record<string, unknown>) ?? {};
+        const orderNumber =
+          orderNumbersById.get(String(notification.order_id ?? "")) ||
+          String(metadata.order_number ?? "");
+        const actorLabel = actorLabelsById.get(String(notification.actor_user_id ?? "")) || null;
+
+        let title = "";
+        let preview: string | null = null;
+
+        switch (notification.type) {
+          case "mention":
+          case "mention_received":
+            title = `You were mentioned in Order #${orderNumber}`;
+            preview = String(
+              metadata.comment_body ??
+              metadata.body_preview ??
+              "",
+            );
+            break;
+          case "order_assigned":
+            title = `Order #${orderNumber} was assigned to you`;
+            preview = actorLabel ? `Assigned by ${actorLabel}` : null;
+            break;
+          case "order_reassigned":
+            title = `Order #${orderNumber} was reassigned to you`;
+            preview = actorLabel ? `Reassigned by ${actorLabel}` : null;
+            break;
+          case "important_comment_received":
+            title = `New comment on Order #${orderNumber}`;
+            preview = String(metadata.comment_body ?? "");
+            break;
+          case "invitation_received":
+            title = `You were invited to a workspace`;
+            preview = String(metadata.role ?? "MANAGER");
+            break;
+          default:
+            title =
+              notification.entity_type === "order_comment"
+                ? `New update on Order #${orderNumber || ""}`.trim()
+                : `${notification.type} notification`;
+        }
 
         return {
-          id: String(invite.id),
-          business_id: String(invite.business_id),
-          created_at: invite.created_at ? String(invite.created_at) : null,
-          business,
+          id: String(notification.id),
+          type: notification.type as NotificationType,
+          entity_type: String(notification.entity_type),
+          entity_id: String(notification.entity_id),
+          order_id: notification.order_id ? String(notification.order_id) : null,
+          order_number: orderNumber || null,
+          title,
+          preview: preview || null,
+          actor_label: actorLabel,
+          is_read: Boolean(notification.is_read),
+          created_at: String(notification.created_at),
+          metadata,
         };
-      })
-      .filter((invite): invite is InboxInvite => Boolean(invite));
+      },
+    );
 
-    const followUps: InboxFollowUp[] = (followUpsResult.data ?? []).map((followUp) => ({
-      id: String(followUp.id),
-      title: String(followUp.title ?? ""),
-      due_date: String(followUp.due_date ?? ""),
-      order_id: followUp.order_id ? String(followUp.order_id) : null,
-      created_at: followUp.created_at ? String(followUp.created_at) : null,
+    const inviteNotifications: InboxNotification[] = ((invites ?? []) as Array<{
+      id: string;
+      business_id: string | null;
+      role: string | null;
+      created_at: string | null;
+      invited_by: string | null;
+    }>).map((invite) => ({
+      id: `invite:${String(invite.id)}`,
+      type: "invitation_received",
+      entity_type: "invitation",
+      entity_id: String(invite.id),
+      order_id: null,
+      order_number: null,
+      title: "You were invited to a workspace",
+      preview: String(invite.role ?? "MANAGER"),
+      actor_label: actorLabelsById.get(String(invite.invited_by ?? "")) ?? null,
+      is_read: false,
+      created_at: String(invite.created_at ?? new Date().toISOString()),
+      metadata: {
+        invite_id: invite.id,
+        business_id: invite.business_id,
+        role: invite.role,
+        invited_by: invite.invited_by,
+      },
     }));
+
+    const mergedNotifications = [...inboxNotifications, ...inviteNotifications].sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+    );
 
     return NextResponse.json({
       ok: true,
-      invites,
-      followUps,
+      notifications: mergedNotifications,
     });
   } catch (error: unknown) {
     return NextResponse.json(

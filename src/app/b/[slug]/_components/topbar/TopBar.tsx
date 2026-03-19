@@ -25,6 +25,7 @@ type Props = {
   adminHref?: string;
   clearHref?: string;
   hasActiveFilters?: boolean;
+  todoCount?: number;
 };
 
 export default function TopBar({
@@ -39,6 +40,7 @@ export default function TopBar({
   adminHref,
   clearHref,
   hasActiveFilters = false,
+  todoCount = 0,
 }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -132,6 +134,11 @@ export default function TopBar({
               >
                 <CheckSquare className="h-4 w-4 text-[#3645A0]" />
                 <span className="ml-2">To do</span>
+                {todoCount > 0 ? (
+                  <span className="ml-2 inline-flex min-w-5 items-center justify-center rounded-full border border-[#A5B4FC] bg-white px-1.5 py-0.5 text-[10px] font-bold text-[#3645A0]">
+                    {todoCount > 99 ? "99+" : todoCount}
+                  </span>
+                ) : null}
               </Link>
             ) : null}
             {businessId ? (
@@ -143,7 +150,7 @@ export default function TopBar({
             ) : null}
 
             <div className="flex items-center gap-2">
-              <InviteInbox businessId={businessId} currentBusinessSlug={businessSlug} todayHref={todayHref} />
+              <InviteInbox businessId={businessId} currentBusinessSlug={businessSlug} />
               <UserMenu
                 userLabel={userLabel}
                 roleLabel={roleLabel}
@@ -155,7 +162,7 @@ export default function TopBar({
           </div>
 
           <div className="flex shrink-0 items-center gap-2 sm:hidden">
-            <InviteInbox businessId={businessId} currentBusinessSlug={businessSlug} todayHref={todayHref} />
+            <InviteInbox businessId={businessId} currentBusinessSlug={businessSlug} />
             <UserMenu
               compact
               userLabel={userLabel}

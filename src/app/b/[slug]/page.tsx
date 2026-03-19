@@ -35,6 +35,8 @@ import { resolveUserDisplay } from "@/lib/user-display";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { normalizeOrderClient } from "@/lib/order-client";
 import { getAdminUsersPath, isAdminEmail } from "@/lib/admin-access";
+import { ensureWorkspaceForBusiness } from "@/lib/workspaces";
+import { getTodayDateOnly } from "@/lib/follow-ups";
 
 function isSameStatusFilterSet(
   actual: readonly StatusFilterValue[],
@@ -378,6 +380,12 @@ export default async function Page({ params, searchParams }: PageProps) {
     }
   }
 
+  if (admin) {
+    await ensureWorkspaceForBusiness(admin, String(currentBusiness.id));
+  } else {
+    await ensureWorkspaceForBusiness(supabaseAdmin(), String(currentBusiness.id));
+  }
+
   const customStatuses = await loadBusinessStatuses(
     statusClient,
     String(currentBusiness.id),
@@ -537,6 +545,13 @@ export default async function Page({ params, searchParams }: PageProps) {
     phoneRaw && phoneRaw.length > 0
       ? `/b/${slug}/today?u=${encodeURIComponent(phoneRaw)}`
       : `/b/${slug}/today`;
+  const { count: todoCountRaw } = await dataClient
+    .from("follow_ups")
+    .select("id", { count: "exact", head: true })
+    .eq("business_id", String(currentBusiness.id))
+    .eq("status", "open")
+    .lte("due_date", getTodayDateOnly());
+  const todoCount = Number(todoCountRaw ?? 0);
   const initialOpenOrderId = cleanText(sp.focusOrder);
 
   const makeSummaryHref = (nextSummaryRange: DashboardRange) => {
@@ -1191,6 +1206,7 @@ export default async function Page({ params, searchParams }: PageProps) {
         adminHref={adminHref}
         clearHref={clearHref}
         hasActiveFilters={hasActiveFilters}
+        todoCount={todoCount}
       />
 
       <main

@@ -2,14 +2,24 @@ import { redirect } from "next/navigation";
 
 import DesktopLeftRail from "@/app/b/[slug]/_components/Desktop/DesktopLeftRail";
 import type { BusinessOption } from "@/app/b/[slug]/_components/topbar/BusinessSwitcher";
+import { StartDayNudge } from "@/app/b/[slug]/_components/topbar/StartDayNudge";
 import TopBar from "@/app/b/[slug]/_components/topbar/TopBar";
-import { TodayFollowUpsView, type TodayFollowUpItem } from "@/app/b/[slug]/today/TodayFollowUpsView";
+import {
+  TodayFollowUpsView,
+  type TodayFollowUpItem,
+} from "@/app/b/[slug]/today/TodayFollowUpsView";
 import { getAdminUsersPath, isAdminEmail } from "@/lib/admin-access";
 import type { StatusFilterValue } from "@/lib/business-statuses";
 import { resolveUserDisplay } from "@/lib/user-display";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { supabaseServerReadOnly } from "@/lib/supabase/server";
-import { getTomorrowDateOnly, type FollowUpRow } from "@/lib/follow-ups";
+import {
+  compareDateOnly,
+  getTodayDateOnly,
+  getTomorrowDateOnly,
+  type FollowUpRow,
+} from "@/lib/follow-ups";
+import { ensureWorkspaceForBusiness } from "@/lib/workspaces";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -43,8 +53,16 @@ type OrderLookupRow = {
   client_name: string | null;
 };
 
-function upperRole(value: string | null | undefined): "OWNER" | "MANAGER" | "GUEST" {
-  const normalized = String(value ?? "").trim().toUpperCase();
+type WorkDayLookupRow = {
+  status: string | null;
+};
+
+function upperRole(
+  value: string | null | undefined,
+): "OWNER" | "MANAGER" | "GUEST" {
+  const normalized = String(value ?? "")
+    .trim()
+    .toUpperCase();
   if (normalized === "OWNER") return "OWNER";
   if (normalized === "MANAGER") return "MANAGER";
   return "GUEST";
@@ -58,15 +76,25 @@ function buildScopedHref(path: string, phoneRaw: string) {
   return phoneRaw ? `${path}?u=${encodeURIComponent(phoneRaw)}` : path;
 }
 
-function buildOrderHref(businessSlug: string, orderId: string, phoneRaw: string) {
+function buildOrderHref(
+  businessSlug: string,
+  orderId: string,
+  phoneRaw: string,
+) {
   const params = new URLSearchParams();
   params.set("focusOrder", orderId);
   if (phoneRaw) params.set("u", phoneRaw);
   return `/b/${businessSlug}?${params.toString()}`;
 }
 
-export default async function TodayFollowUpsPage({ params, searchParams }: PageProps) {
-  const [{ slug }, rawSearchParams] = await Promise.all([params, searchParams ?? Promise.resolve({})]);
+export default async function TodayFollowUpsPage({
+  params,
+  searchParams,
+}: PageProps) {
+  const [{ slug }, rawSearchParams] = await Promise.all([
+    params,
+    searchParams ?? Promise.resolve({}),
+  ]);
   const phoneRaw = cleanText(rawSearchParams?.u);
   const supabase = await supabaseServerReadOnly();
   const admin = supabaseAdmin();
@@ -75,7 +103,9 @@ export default async function TodayFollowUpsPage({ params, searchParams }: PageP
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect(`/login?next=${encodeURIComponent(buildScopedHref(`/b/${slug}/today`, phoneRaw))}`);
+    redirect(
+      `/login?next=${encodeURIComponent(buildScopedHref(`/b/${slug}/today`, phoneRaw))}`,
+    );
   }
 
   const { data: memberships, error: membershipsError } = await supabase
@@ -97,14 +127,18 @@ export default async function TodayFollowUpsPage({ params, searchParams }: PageP
   if (businessesError) throw businessesError;
 
   const businessRows = (businesses ?? []) as BusinessRow[];
-  const currentBusiness = businessRows.find((entry) => entry.slug === slug) ?? null;
+  const currentBusiness =
+    businessRows.find((entry) => entry.slug === slug) ?? null;
 
   if (!currentBusiness) {
     redirect(buildScopedHref("/app/crm", phoneRaw));
   }
 
+  await ensureWorkspaceForBusiness(admin, String(currentBusiness.id));
+
   const role = upperRole(
-    membershipRows.find((entry) => entry.business_id === currentBusiness.id)?.role,
+    membershipRows.find((entry) => entry.business_id === currentBusiness.id)
+      ?.role,
   );
   const canManage = role === "OWNER" || role === "MANAGER";
 
@@ -116,7 +150,9 @@ export default async function TodayFollowUpsPage({ params, searchParams }: PageP
   const profile = (profileRaw ?? null) as ProfileRow | null;
 
   const currentUserName =
-    resolveUserDisplay(profile ?? null).primary || cleanText(user.email) || "User";
+    resolveUserDisplay(profile ?? null).primary ||
+    cleanText(user.email) ||
+    "User";
 
   const businessOptions: BusinessOption[] = businessRows
     .filter((entry) => cleanText(entry.slug))
@@ -125,7 +161,8 @@ export default async function TodayFollowUpsPage({ params, searchParams }: PageP
       slug: entry.slug,
       name: cleanText(entry.name) || entry.slug,
       role: upperRole(
-        membershipRows.find((membership) => membership.business_id === entry.id)?.role,
+        membershipRows.find((membership) => membership.business_id === entry.id)
+          ?.role,
       ),
       isAdmin: isAdminEmail(user.email),
     }));
@@ -142,7 +179,11 @@ export default async function TodayFollowUpsPage({ params, searchParams }: PageP
   if (followUpsError) throw followUpsError;
 
   const followUpRows = (followUps ?? []) as FollowUpRow[];
-  const orderIds = [...new Set(followUpRows.map((entry) => cleanText(entry.order_id)).filter(Boolean))];
+  const orderIds = [
+    ...new Set(
+      followUpRows.map((entry) => cleanText(entry.order_id)).filter(Boolean),
+    ),
+  ];
 
   const orderLookup = new Map<string, OrderLookupRow>();
   if (orderIds.length > 0) {
@@ -158,17 +199,20 @@ export default async function TodayFollowUpsPage({ params, searchParams }: PageP
   }
 
   const items: TodayFollowUpItem[] = followUpRows.map((entry) => {
-    const linkedOrder = entry.order_id ? orderLookup.get(entry.order_id) ?? null : null;
+    const linkedOrder = entry.order_id
+      ? (orderLookup.get(entry.order_id) ?? null)
+      : null;
     const orderClient = cleanText(linkedOrder?.client_name) || "Order";
-    const orderLabel =
-      linkedOrder?.id
-        ? `Open order${linkedOrder.order_number ? ` #${linkedOrder.order_number}` : ""}${orderClient ? ` - ${orderClient}` : ""}`
-        : null;
+    const orderLabel = linkedOrder?.id
+      ? `Open order${linkedOrder.order_number ? ` #${linkedOrder.order_number}` : ""}${orderClient ? ` - ${orderClient}` : ""}`
+      : null;
 
     return {
       ...entry,
       orderLabel,
-      orderHref: linkedOrder?.id ? buildOrderHref(currentBusiness.slug, linkedOrder.id, phoneRaw) : null,
+      orderHref: linkedOrder?.id
+        ? buildOrderHref(currentBusiness.slug, linkedOrder.id, phoneRaw)
+        : null,
     };
   });
 
@@ -176,6 +220,20 @@ export default async function TodayFollowUpsPage({ params, searchParams }: PageP
   const settingsHref = buildScopedHref("/app/settings", phoneRaw);
   const todayHref = buildScopedHref(`/b/${slug}/today`, phoneRaw);
   const adminHref = isAdminEmail(user.email) ? getAdminUsersPath() : undefined;
+  const todoCount = items.filter((item) => compareDateOnly(item.due_date, getTodayDateOnly()) <= 0).length;
+  let hasStartedDay = false;
+
+  const { data: workDayRow } = await supabase
+    .from("work_days")
+    .select("status")
+    .eq("business_id", currentBusiness.id)
+    .eq("user_id", user.id)
+    .eq("work_date", getTodayDateOnly())
+    .maybeSingle();
+
+  hasStartedDay = ["running", "paused", "finished"].includes(
+    String((workDayRow as WorkDayLookupRow | null)?.status ?? "").trim().toLowerCase(),
+  );
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-transparent text-slate-900">
@@ -191,6 +249,7 @@ export default async function TodayFollowUpsPage({ params, searchParams }: PageP
         adminHref={adminHref}
         clearHref={todayHref}
         hasActiveFilters={false}
+        todoCount={todoCount}
       />
 
       <main className="mx-auto max-w-[1220px] overflow-x-hidden px-4 pb-8 pt-20 sm:px-6">
@@ -224,14 +283,29 @@ export default async function TodayFollowUpsPage({ params, searchParams }: PageP
           </div>
 
           <div className="min-w-0 space-y-4 pl-2">
-            <TodayFollowUpsView businessSlug={currentBusiness.slug} canManage={canManage} initialItems={items} />
+            <TodayFollowUpsView
+              businessSlug={currentBusiness.slug}
+              canManage={canManage}
+              initialItems={items}
+            />
           </div>
         </div>
 
         <div className="space-y-4 lg:hidden">
-          <TodayFollowUpsView businessSlug={currentBusiness.slug} canManage={canManage} initialItems={items} />
+          <TodayFollowUpsView
+            businessSlug={currentBusiness.slug}
+            canManage={canManage}
+            initialItems={items}
+          />
         </div>
       </main>
+
+      <StartDayNudge
+        todoCount={todoCount}
+        businessSlug={currentBusiness.slug}
+        enabled={hasStartedDay}
+        dayKey={getTodayDateOnly()}
+      />
     </div>
   );
 }
