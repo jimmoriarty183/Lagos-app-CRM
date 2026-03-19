@@ -12,7 +12,6 @@ import {
   Download,
   Eye,
   FileText,
-  Filter,
   MessageSquareText,
   Paperclip,
   Pencil,
@@ -25,6 +24,7 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { OrderAttachmentLightbox } from "@/app/b/[slug]/_components/orders/OrderAttachmentLightbox";
 import { cn } from "@/components/ui/utils";
+import { formatFollowUpDate } from "@/lib/follow-ups";
 import {
   appendLocalActivityEvent,
   ORDER_ACTIVITY_REFRESH_EVENT,
@@ -75,7 +75,19 @@ type ChecklistActivityRow = {
 };
 type ActivityEventRow = {
   id: string;
-  event_type: "checklist.created" | "checklist.completed" | "checklist.deleted";
+  event_type:
+    | "checklist.created"
+    | "checklist.created_again"
+    | "checklist.completed"
+    | "checklist.reopened"
+    | "checklist.deleted"
+    | "follow_up.created"
+    | "follow_up.rescheduled"
+    | "follow_up.completed"
+    | "follow_up.completed_with_note"
+    | "follow_up.completed_and_next_created"
+    | "follow_up.reopened"
+    | "follow_up.cancelled";
   actor_id: string | null;
   actor_type: "user" | "system";
   payload: LocalActivityEventPayload | null;
@@ -109,7 +121,7 @@ type Props = {
   compact?: boolean;
 };
 
-type FilterValue = "all" | "comments" | "updates" | "files";
+type FilterValue = "all" | "comments" | "updates" | "files" | "followups";
 type SortValue = "conversation" | "newest";
 type ComposerAttachment = { id: string; file: File };
 type ReplyTarget = {
@@ -308,9 +320,37 @@ function createEvent(
   return { id, kind: "event", createdAt, actorName, actorRole, eventType, title, detail, tone, payload };
 }
 
+function isFileEvent(item: TimelineItem) {
+  return item.kind === "event" && (item.eventType === "file_uploaded" || item.eventType === "file_deleted");
+}
+
+function isFollowUpEvent(item: TimelineItem) {
+  return (
+    item.kind === "event" &&
+    (
+      item.eventType === "follow_up_created" ||
+      item.eventType === "follow_up_completed" ||
+      item.eventType === "follow_up_completed_with_note" ||
+      item.eventType === "follow_up_completed_and_next_created" ||
+      item.eventType === "follow_up_rescheduled" ||
+      item.eventType === "follow_up_reopened" ||
+      item.eventType === "follow_up_cancelled"
+    )
+  );
+}
+
 function mapAuditEventType(eventType: ActivityEventRow["event_type"]): LocalActivityEventType {
   if (eventType === "checklist.created") return "checklist_created";
+  if (eventType === "checklist.created_again") return "checklist_created_again";
   if (eventType === "checklist.completed") return "checklist_completed";
+  if (eventType === "checklist.reopened") return "checklist_reopened";
+  if (eventType === "follow_up.created") return "follow_up_created";
+  if (eventType === "follow_up.rescheduled") return "follow_up_rescheduled";
+  if (eventType === "follow_up.completed") return "follow_up_completed";
+  if (eventType === "follow_up.completed_with_note") return "follow_up_completed_with_note";
+  if (eventType === "follow_up.completed_and_next_created") return "follow_up_completed_and_next_created";
+  if (eventType === "follow_up.reopened") return "follow_up_reopened";
+  if (eventType === "follow_up.cancelled") return "follow_up_cancelled";
   return "checklist_deleted";
 }
 
@@ -319,21 +359,110 @@ function mapServerActivityEvent(event: ActivityEventRow, actorById: Map<string, 
   const itemTitle =
     typeof payload.itemTitle === "string" && payload.itemTitle.trim()
       ? payload.itemTitle.trim()
+      : typeof (payload as Record<string, unknown>).title === "string" && String((payload as Record<string, unknown>).title).trim()
+        ? String((payload as Record<string, unknown>).title).trim()
       : undefined;
+  const followUpTitle =
+    typeof payload.followUpTitle === "string" && payload.followUpTitle.trim()
+      ? payload.followUpTitle.trim()
+      : typeof (payload as Record<string, unknown>).title === "string" && String((payload as Record<string, unknown>).title).trim()
+        ? String((payload as Record<string, unknown>).title).trim()
+        : itemTitle;
   const actor = event.actor_id ? actorById.get(event.actor_id) : null;
   const actorName = event.actor_type === "system" ? "System" : actor?.label ?? "Team member";
   const actorRole = event.actor_type === "system" ? null : actor?.kind ?? null;
   const mappedType = mapAuditEventType(event.event_type);
 
+  if (mappedType === "follow_up_rescheduled") {
+    return createEvent(
+      event.id,
+      event.created_at,
+      actorName,
+      actorRole,
+      mappedType,
+      "Follow-up rescheduled",
+      `${formatFollowUpDate(String((payload as Record<string, unknown>).previous_due_date ?? payload.previousDueDate ?? ""))} -> ${formatFollowUpDate(String((payload as Record<string, unknown>).new_due_date ?? payload.newDueDate ?? ""))}`,
+      "warning",
+      payload,
+    );
+  }
+
+  if (mappedType === "follow_up_completed_with_note") {
+    return createEvent(
+      event.id,
+      event.created_at,
+      actorName,
+      actorRole,
+      mappedType,
+      "Follow-up completed with note",
+      String((payload as Record<string, unknown>).completion_note ?? "").trim() || followUpTitle,
+      "success",
+      payload,
+    );
+  }
+
+  if (mappedType === "follow_up_completed_and_next_created") {
+    return createEvent(
+      event.id,
+      event.created_at,
+      actorName,
+      actorRole,
+      mappedType,
+      "Follow-up completed and next created",
+      String((payload as Record<string, unknown>).next_follow_up_title ?? followUpTitle ?? ""),
+      "success",
+      payload,
+    );
+  }
+
+  if (
+    mappedType === "follow_up_created" ||
+    mappedType === "follow_up_completed" ||
+    mappedType === "follow_up_reopened" ||
+    mappedType === "follow_up_cancelled"
+  ) {
+    return createEvent(
+      event.id,
+      event.created_at,
+      actorName,
+      actorRole,
+      mappedType,
+      mappedType === "follow_up_created"
+        ? "Follow-up created"
+        : mappedType === "follow_up_completed"
+          ? "Follow-up completed"
+          : mappedType === "follow_up_reopened"
+            ? "Follow-up reopened"
+            : "Follow-up cancelled",
+      followUpTitle,
+      mappedType === "follow_up_completed" ? "success" : mappedType === "follow_up_cancelled" ? "muted" : "warning",
+      payload,
+    );
+  }
+
   if (mappedType === "checklist_completed") {
-    return createEvent(event.id, event.created_at, actorName, actorRole, mappedType, "Checklist completed", itemTitle, "success", payload);
+    return createEvent(event.id, event.created_at, actorName, actorRole, mappedType, "Completed checklist item", itemTitle, "success", payload);
+  }
+
+  if (mappedType === "checklist_reopened") {
+    return createEvent(event.id, event.created_at, actorName, actorRole, mappedType, "Reopened checklist item", itemTitle, "warning", payload);
   }
 
   if (mappedType === "checklist_deleted") {
-    return createEvent(event.id, event.created_at, actorName, actorRole, mappedType, "Checklist item deleted", itemTitle, "muted", payload);
+    return createEvent(event.id, event.created_at, actorName, actorRole, mappedType, "Deleted checklist item", itemTitle, "muted", payload);
   }
 
-  return createEvent(event.id, event.created_at, actorName, actorRole, mappedType, "Checklist item created", itemTitle, "muted", payload);
+  return createEvent(
+    event.id,
+    event.created_at,
+    actorName,
+    actorRole,
+    mappedType,
+    "Added checklist item",
+    itemTitle,
+    "muted",
+    payload,
+  );
 }
 
 function resolveChecklistActor(actorId: string | null | undefined, actorById: Map<string, TeamActor>) {
@@ -378,9 +507,70 @@ function mapLocalEvent(event: LocalActivityEvent): TimelineEvent {
   if (event.type === "comment_edited" || event.type === "comment_deleted") {
     return createEvent(event.id, event.ts, event.actorName, event.actorRole, event.type, event.type === "comment_edited" ? "Comment edited" : "Comment deleted", event.description, "muted", event.payload);
   }
-  if (event.type === "checklist_created" || event.type === "checklist_completed" || event.type === "checklist_deleted") {
-    const title = event.type === "checklist_completed" ? "Checklist completed" : event.type === "checklist_created" ? "Checklist item created" : "Checklist item deleted";
-    return createEvent(event.id, event.ts, event.actorName, event.actorRole, event.type, title, event.description, event.type === "checklist_completed" ? "success" : "muted", event.payload);
+  if (
+    event.type === "checklist_created" ||
+    event.type === "checklist_created_again" ||
+    event.type === "checklist_completed" ||
+    event.type === "checklist_reopened" ||
+    event.type === "checklist_deleted"
+  ) {
+    const title =
+      event.type === "checklist_completed"
+        ? "Completed checklist item"
+        : event.type === "checklist_reopened"
+          ? "Reopened checklist item"
+          : event.type === "checklist_deleted"
+            ? "Deleted checklist item"
+            : "Added checklist item";
+    return createEvent(
+      event.id,
+      event.ts,
+      event.actorName,
+      event.actorRole,
+      event.type,
+      title,
+      event.description,
+      event.type === "checklist_completed" ? "success" : event.type === "checklist_reopened" ? "warning" : "muted",
+      event.payload,
+    );
+  }
+  if (
+    event.type === "follow_up_created" ||
+    event.type === "follow_up_completed" ||
+    event.type === "follow_up_completed_with_note" ||
+    event.type === "follow_up_completed_and_next_created" ||
+    event.type === "follow_up_rescheduled" ||
+    event.type === "follow_up_reopened" ||
+    event.type === "follow_up_cancelled"
+  ) {
+    const followUpTitle =
+      event.payload?.followUpTitle ||
+      event.payload?.itemTitle ||
+      event.description.replace(/^(created|completed|reopened|cancelled) follow-up /i, "").replace(/^"|"$/g, "");
+    const title =
+      event.type === "follow_up_created"
+        ? "Follow-up created"
+        : event.type === "follow_up_completed"
+          ? "Follow-up completed"
+          : event.type === "follow_up_completed_with_note"
+            ? "Follow-up completed with note"
+            : event.type === "follow_up_completed_and_next_created"
+              ? "Follow-up completed and next created"
+              : event.type === "follow_up_rescheduled"
+                ? "Follow-up rescheduled"
+          : event.type === "follow_up_reopened"
+            ? "Follow-up reopened"
+            : "Follow-up cancelled";
+    const tone =
+      event.type === "follow_up_completed" ||
+      event.type === "follow_up_completed_with_note" ||
+      event.type === "follow_up_completed_and_next_created"
+        ? "success"
+        : event.type === "follow_up_cancelled"
+          ? "muted"
+          : "warning";
+
+    return createEvent(event.id, event.ts, event.actorName, event.actorRole, event.type, title, followUpTitle, tone, event.payload);
   }
   const match = event.description.match(/^changed (.+?) from (.+) to (.+)$/i);
   return createEvent(event.id, event.ts, event.actorName, event.actorRole, event.type, match ? `${match[1].replace(/(^|\s)\w/g, (letter) => letter.toUpperCase())} changed` : "Order updated", match ? `${match[2]} -> ${match[3]}` : event.description, "default", event.payload ?? {
@@ -422,6 +612,7 @@ function formatFieldLabel(field?: string) {
     tags: "Tags",
     completed: "Checklist status",
     checklist_item: "Checklist item",
+    follow_up: "Follow-up",
   };
   if (aliases[field]) return aliases[field];
   return field
@@ -432,9 +623,9 @@ function formatFieldLabel(field?: string) {
 }
 
 function ActivityHeader({
-  totalCount, commentCount, updateCount, fileCount, filter, setFilter, sort, setSort, compact = false,
+  totalCount, commentCount, updateCount, fileCount, followUpCount, filter, setFilter, sort, setSort, compact = false,
 }: {
-  totalCount: number; commentCount: number; updateCount: number; fileCount: number;
+  totalCount: number; commentCount: number; updateCount: number; fileCount: number; followUpCount: number;
   filter: FilterValue; setFilter: (value: FilterValue) => void; sort: SortValue; setSort: (value: SortValue) => void;
   compact?: boolean;
 }) {
@@ -442,6 +633,7 @@ function ActivityHeader({
     { value: "all", label: "All", count: totalCount },
     { value: "comments", label: "Comments", count: commentCount },
     { value: "updates", label: "Updates", count: updateCount },
+    { value: "followups", label: "Follow-ups", count: followUpCount },
     { value: "files", label: "Files", count: fileCount },
   ];
 
@@ -563,32 +755,32 @@ function CommentComposer({
   );
 }
 
-function DateSeparator({ label }: { label: string }) {
-  return <div className="flex items-center gap-3 py-2"><div className="h-px flex-1 bg-[#EEF2FF]" /><span className="product-section-label rounded-full border border-[#E5E7EB] bg-white px-3 py-1">{label}</span><div className="h-px flex-1 bg-[#EEF2FF]" /></div>;
+function DateSeparator({ label, compact = false }: { label: string; compact?: boolean }) {
+  return <div className={cn("flex items-center", compact ? "gap-2 py-1" : "gap-3 py-2")}><div className="h-px flex-1 bg-[#EEF2FF]" /><span className={cn("product-section-label rounded-full border border-[#E5E7EB] bg-white", compact ? "px-2.5 py-0.5 text-[10px]" : "px-3 py-1")}>{label}</span><div className="h-px flex-1 bg-[#EEF2FF]" /></div>;
 }
 
-function AuditValue({ label, value, tone = "neutral" }: { label: string; value: string; tone?: "neutral" | "new" | "old" }) {
+function AuditValue({ label, value, tone = "neutral", compact = false }: { label: string; value: string; tone?: "neutral" | "new" | "old"; compact?: boolean }) {
   return (
-    <div className={cn("rounded-2xl border px-3 py-2.5", tone === "old" && "border-[#FECACA] bg-[#FFF1F2]", tone === "new" && "border-[#A7F3D0] bg-[#ECFDF3]", tone === "neutral" && "border-[#E5E7EB] bg-[#F9FAFB]")}>
-      <div className="product-section-label">{label}</div>
-      <div className="mt-1 text-sm font-semibold text-[#1F2937]">{value}</div>
+    <div className={cn(compact ? "rounded-[14px] border px-2.5 py-2" : "rounded-2xl border px-3 py-2.5", tone === "old" && "border-[#FECACA] bg-[#FFF1F2]", tone === "new" && "border-[#A7F3D0] bg-[#ECFDF3]", tone === "neutral" && "border-[#E5E7EB] bg-[#F9FAFB]")}>
+      <div className={cn("product-section-label", compact && "text-[10px] tracking-[0.06em]")}>{label}</div>
+      <div className={cn("font-semibold text-[#1F2937]", compact ? "mt-0.5 text-sm leading-5" : "mt-1 text-sm")}>{value}</div>
     </div>
   );
 }
 
-function EventDelta({ payload }: { payload?: LocalActivityEventPayload }) {
+function EventDelta({ payload, compact = false }: { payload?: LocalActivityEventPayload; compact?: boolean }) {
   if (!payload) return null;
 
   if ((payload.added?.length ?? 0) > 0 || (payload.removed?.length ?? 0) > 0) {
     return (
-      <div className="mt-3 flex flex-wrap gap-2">
+      <div className={cn("flex flex-wrap", compact ? "mt-2 gap-1.5" : "mt-3 gap-2")}>
         {(payload.removed ?? []).map((value) => (
-          <span key={`removed-${value}`} className="inline-flex rounded-full border border-[#f0d5dd] bg-[#fff1f3] px-3 py-1 text-xs font-semibold text-[#b42318]">
+          <span key={`removed-${value}`} className={cn("inline-flex rounded-full border border-[#f0d5dd] bg-[#fff1f3] font-semibold text-[#b42318]", compact ? "px-2.5 py-0.5 text-[11px]" : "px-3 py-1 text-xs")}>
             {value} removed
           </span>
         ))}
         {(payload.added ?? []).map((value) => (
-          <span key={`added-${value}`} className="inline-flex rounded-full border border-[#d1fadf] bg-[#f0fdf4] px-3 py-1 text-xs font-semibold text-[#067647]">
+          <span key={`added-${value}`} className={cn("inline-flex rounded-full border border-[#d1fadf] bg-[#f0fdf4] font-semibold text-[#067647]", compact ? "px-2.5 py-0.5 text-[11px]" : "px-3 py-1 text-xs")}>
             {value} added
           </span>
         ))}
@@ -598,29 +790,38 @@ function EventDelta({ payload }: { payload?: LocalActivityEventPayload }) {
 
   if (payload.from !== undefined || payload.to !== undefined || payload.fromLabel || payload.toLabel) {
     return (
-      <div className="mt-3 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-center">
-        <AuditValue label="Before" value={formatAuditValue(payload.from, payload.fromLabel, payload.field)} tone="old" />
-        <div className="hidden text-center text-sm font-semibold text-[#9CA3AF] sm:block">-&gt;</div>
-        <AuditValue label="After" value={formatAuditValue(payload.to, payload.toLabel, payload.field)} tone="new" />
+      <div className={cn("grid sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-center", compact ? "mt-2 gap-1.5" : "mt-3 gap-2")}>
+        <AuditValue label="Before" value={formatAuditValue(payload.from, payload.fromLabel, payload.field)} tone="old" compact={compact} />
+        <div className={cn("hidden text-center font-semibold text-[#9CA3AF] sm:block", compact ? "text-xs" : "text-sm")}>-&gt;</div>
+        <AuditValue label="After" value={formatAuditValue(payload.to, payload.toLabel, payload.field)} tone="new" compact={compact} />
       </div>
     );
   }
 
   if (payload.fileName) {
-    return <div className="mt-3"><AuditValue label="File" value={payload.fileName} /></div>;
+    return <div className={compact ? "mt-2" : "mt-3"}><AuditValue label="File" value={payload.fileName} compact={compact} /></div>;
   }
 
   return null;
 }
 
-function EventGlyph({ eventType, tone }: { eventType: TimelineEvent["eventType"]; tone: TimelineEvent["tone"] }) {
-  const classes = cn("flex h-9 w-9 items-center justify-center rounded-2xl border", tone === "success" && "border-[#A7F3D0] bg-[#ECFDF3] text-[#059669]", tone === "warning" && "border-[#FDE68A] bg-[#FFFBEB] text-[#D97706]", tone === "muted" && "border-[#E5E7EB] bg-[#F9FAFB] text-[#6B7280]", tone === "default" && "border-[#C7D2FE] bg-[#EEF2FF] text-[#6366F1]");
+function EventGlyph({ eventType, tone, compact = false }: { eventType: TimelineEvent["eventType"]; tone: TimelineEvent["tone"]; compact?: boolean }) {
+  const classes = cn(compact ? "flex h-8 w-8 items-center justify-center rounded-[14px] border" : "flex h-9 w-9 items-center justify-center rounded-2xl border", tone === "success" && "border-[#A7F3D0] bg-[#ECFDF3] text-[#059669]", tone === "warning" && "border-[#FDE68A] bg-[#FFFBEB] text-[#D97706]", tone === "muted" && "border-[#E5E7EB] bg-[#F9FAFB] text-[#6B7280]", tone === "default" && "border-[#C7D2FE] bg-[#EEF2FF] text-[#6366F1]");
   if (eventType === "status_changed") return <span className={classes}><CalendarClock className="h-4 w-4" /></span>;
   if (eventType === "manager_changed" || eventType === "manager_assigned") return <span className={classes}><UserRound className="h-4 w-4" /></span>;
   if (eventType === "label_added" || eventType === "label_removed") return <span className={classes}><Tag className="h-4 w-4" /></span>;
+  if (
+    eventType === "follow_up_created" ||
+    eventType === "follow_up_completed" ||
+    eventType === "follow_up_completed_with_note" ||
+    eventType === "follow_up_completed_and_next_created" ||
+    eventType === "follow_up_rescheduled" ||
+    eventType === "follow_up_reopened" ||
+    eventType === "follow_up_cancelled"
+  ) return <span className={classes}><CalendarClock className="h-4 w-4" /></span>;
   if (eventType === "file_uploaded" || eventType === "file_deleted") return <span className={classes}><Paperclip className="h-4 w-4" /></span>;
   if (eventType === "comment_edited" || eventType === "comment_deleted") return <span className={classes}><MessageSquareText className="h-4 w-4" /></span>;
-  if (eventType === "checklist_created" || eventType === "checklist_completed" || eventType === "checklist_deleted") return <span className={classes}><CheckCircle2 className="h-4 w-4" /></span>;
+  if (eventType === "checklist_created" || eventType === "checklist_completed" || eventType === "checklist_reopened" || eventType === "checklist_deleted") return <span className={classes}><CheckCircle2 className="h-4 w-4" /></span>;
   if (eventType === "order_created") return <span className={classes}><FileText className="h-4 w-4" /></span>;
   return <span className={classes}><Clock3 className="h-4 w-4" /></span>;
 }
@@ -669,12 +870,12 @@ function SystemEventItem({ item, onReply, compact = false }: { item: TimelineEve
   const canReplyToFile = item.eventType === "file_uploaded" && !!item.payload?.fileName;
   return (
     <div className={cn("flex rounded-[20px] border border-[#E5E7EB] bg-[linear-gradient(180deg,#FFFFFF_0%,#F9FAFB_100%)] transition hover:border-[#C7D2FE] hover:shadow-[0_10px_24px_rgba(15,23,42,0.05)]", compact ? "gap-2.5 px-3 py-2.5" : "gap-3 px-4 py-3")}>
-      <div className={cn("flex flex-col items-center", compact ? "w-9" : "w-12")}><EventGlyph eventType={item.eventType} tone={item.tone} /><div className={cn("h-full w-px bg-[#edf1f5]", compact ? "mt-1.5" : "mt-2")} /></div>
+      <div className={cn("flex flex-col items-center", compact ? "w-8" : "w-12")}><EventGlyph eventType={item.eventType} tone={item.tone} compact={compact} /><div className={cn("h-full w-px bg-[#edf1f5]", compact ? "mt-1" : "mt-2")} /></div>
       <div className={cn("min-w-0 flex-1", compact ? "pb-1" : "pb-2")}>
         <div className="flex flex-wrap items-center gap-2"><span className={cn("text-[#101828]", compact ? "text-sm font-medium" : "text-sm font-semibold")}>{item.title}</span>{item.payload?.field ? <span className={cn("font-medium text-[#98a2b3]", compact ? "text-[11px]" : "text-xs")}>{formatFieldLabel(item.payload.field)}</span> : null}</div>
         {item.detail ? <div className={cn("text-sm text-[#475467]", compact ? "mt-0.5 line-clamp-2 leading-5" : "mt-1 leading-6")}>{item.detail}</div> : null}
-        {item.eventType === "file_uploaded" || item.eventType === "file_deleted" ? <AttachmentCard payload={item.payload} compact={compact} /> : <EventDelta payload={item.payload} />}
-        <div className={cn("flex flex-wrap items-center gap-y-1 text-[#98a2b3]", compact ? "mt-2 gap-x-2 text-[11px]" : "mt-3 gap-x-3 text-xs")}><span className="font-medium text-[#667085]">{item.actorName}</span><span className={cn("inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em]", badge.className)}>{badge.label}</span><span>{formatDateTime(item.createdAt)}</span>{canReplyToFile ? <button type="button" onClick={() => onReply({ id: item.id, kind: "file", label: item.payload?.fileName || "Attachment", preview: item.payload?.fileName || item.detail || "Attachment" })} className="inline-flex items-center gap-1 font-semibold text-[#667085] transition hover:text-[#101828]"><CornerUpLeft className="h-3.5 w-3.5" />Reply</button> : null}</div>
+        {item.eventType === "file_uploaded" || item.eventType === "file_deleted" ? <AttachmentCard payload={item.payload} compact={compact} /> : <EventDelta payload={item.payload} compact={compact} />}
+        <div className={cn("flex flex-wrap items-center gap-y-1 text-[#98a2b3]", compact ? "mt-1.5 gap-x-2 text-[11px]" : "mt-3 gap-x-3 text-xs")}><span className="font-medium text-[#667085]">{item.actorName}</span><span className={cn("inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em]", badge.className)}>{badge.label}</span><span>{formatDateTime(item.createdAt)}</span>{canReplyToFile ? <button type="button" onClick={() => onReply({ id: item.id, kind: "file", label: item.payload?.fileName || "Attachment", preview: item.payload?.fileName || item.detail || "Attachment" })} className="inline-flex items-center gap-1 font-semibold text-[#667085] transition hover:text-[#101828]"><CornerUpLeft className="h-3.5 w-3.5" />Reply</button> : null}</div>
       </div>
     </div>
   );
@@ -763,17 +964,17 @@ function ActivityTimeline({
 }) {
   return (
     <div className={cn("rounded-[22px] border border-[#E5E7EB] bg-[linear-gradient(180deg,#FFFFFF_0%,#F9FAFB_100%)] shadow-[0_10px_24px_rgba(15,23,42,0.05)]", compact ? "p-2.5" : "p-3")}>
-      {items.length === 0 ? <div className="rounded-[22px] border border-dashed border-[#E5E7EB] bg-white px-5 py-10 text-center"><div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F3F4F6] text-[#6B7280]"><MessageSquareText className="h-5 w-5" /></div><div className="mt-4 text-sm font-semibold text-[#1F2937]">No activity yet</div><p className="mt-1 text-sm leading-6 text-[#6B7280]">Comments, assignments, checklist progress, and deal updates will appear here as one structured timeline.</p></div> : <div className="space-y-2.5">{items.map((item, index) => {
+      {items.length === 0 ? <div className="rounded-[22px] border border-dashed border-[#E5E7EB] bg-white px-5 py-10 text-center"><div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F3F4F6] text-[#6B7280]"><MessageSquareText className="h-5 w-5" /></div><div className="mt-4 text-sm font-semibold text-[#1F2937]">No activity yet</div><p className="mt-1 text-sm leading-6 text-[#6B7280]">Comments, assignments, checklist progress, and deal updates will appear here as one structured timeline.</p></div> : <div className={compact ? "space-y-1.5" : "space-y-2.5"}>{items.map((item, index) => {
         const previous = index > 0 ? items[index - 1] : null;
         const showSeparator = !previous || getDateKey(previous.createdAt) !== getDateKey(item.createdAt);
-        return <React.Fragment key={item.id}>{showSeparator ? <DateSeparator label={formatDateSeparator(item.createdAt)} /> : null}{item.kind === "comment" ? <CommentItem item={item} canWrite={canWrite} editingId={editingId} editingValue={editingValue} setEditingValue={setEditingValue} onStartEdit={onStartEdit} onCancelEdit={onCancelEdit} onSaveEdit={onSaveEdit} onDelete={onDelete} expandedComments={expandedComments} toggleExpanded={toggleExpanded} onReply={onReply} compact={compact} /> : <SystemEventItem item={item} onReply={onReply} compact={compact} />}</React.Fragment>;
+        return <React.Fragment key={item.id}>{showSeparator ? <DateSeparator label={formatDateSeparator(item.createdAt)} compact={compact} /> : null}{item.kind === "comment" ? <CommentItem item={item} canWrite={canWrite} editingId={editingId} editingValue={editingValue} setEditingValue={setEditingValue} onStartEdit={onStartEdit} onCancelEdit={onCancelEdit} onSaveEdit={onSaveEdit} onDelete={onDelete} expandedComments={expandedComments} toggleExpanded={toggleExpanded} onReply={onReply} compact={compact} /> : <SystemEventItem item={item} onReply={onReply} compact={compact} />}</React.Fragment>;
       })}</div>}
       {hiddenCount > 0 ? <div className="mt-4 flex justify-center"><button type="button" onClick={onLoadMore} className="inline-flex items-center gap-2 rounded-full border border-[#E5E7EB] bg-white px-4 py-2 text-sm font-semibold text-[#374151] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB]">Load {Math.min(20, hiddenCount)} older activities</button></div> : null}
     </div>
   );
 }
 
-export function OrderActivitySection({ order, businessId, supabase, phoneRaw, currentUserId, currentUserName, userRole, actors, ownerName, managerName, compact = false }: Props) {
+export function OrderActivitySection({ order, businessId, supabase, phoneRaw, currentUserName, userRole, actors, ownerName, managerName, compact = false }: Props) {
   const [comments, setComments] = React.useState<CommentRow[]>([]);
   const [items, setItems] = React.useState<TimelineItem[]>([]);
   const [composerValue, setComposerValue] = React.useState("");
@@ -838,14 +1039,22 @@ export function OrderActivitySection({ order, businessId, supabase, phoneRaw, cu
     });
     for (const event of auditEvents) {
       const payload = (event.payload ?? {}) as LocalActivityEventPayload;
-      const itemId = typeof payload.itemId === "string" ? payload.itemId : "";
-      checklistAuditKeys.add(`${event.event_type}:${itemId}`);
+      const itemId =
+        typeof payload.itemId === "string"
+          ? payload.itemId
+          : typeof payload.checklistItemId === "string"
+            ? payload.checklistItemId
+            : typeof (payload as Record<string, unknown>).checklist_item_id === "string"
+              ? String((payload as Record<string, unknown>).checklist_item_id)
+              : "";
+      const dedupeEventType = event.event_type === "checklist.created_again" ? "checklist.created" : event.event_type;
+      checklistAuditKeys.add(`${dedupeEventType}:${itemId}`);
       nextItems.push(mapServerActivityEvent(event, actorById));
     }
     for (const row of checklistRows) {
       if (!checklistAuditKeys.has(`checklist.created:${row.id}`)) {
         const { actorName, actorRole } = resolveChecklistActor(row.created_by, actorById);
-        nextItems.push(createEvent(`checklist-created-${row.id}`, row.created_at, actorName, actorRole, "checklist_created", "Checklist item created", row.title, "muted", {
+        nextItems.push(createEvent(`checklist-created-${row.id}`, row.created_at, actorName, actorRole, "checklist_created", "Added checklist item", row.title, "muted", {
           field: "checklist_item",
           itemId: row.id,
           itemTitle: row.title,
@@ -853,7 +1062,7 @@ export function OrderActivitySection({ order, businessId, supabase, phoneRaw, cu
       }
       if (row.is_done && row.done_at && !checklistAuditKeys.has(`checklist.completed:${row.id}`)) {
         const { actorName, actorRole } = resolveChecklistActor(row.completed_by, actorById);
-        nextItems.push(createEvent(`checklist-done-${row.id}`, row.done_at, actorName, actorRole, "checklist_completed", "Checklist completed", row.title, "success", {
+        nextItems.push(createEvent(`checklist-done-${row.id}`, row.done_at, actorName, actorRole, "checklist_completed", "Completed checklist item", row.title, "success", {
           field: "completed",
           itemId: row.id,
           itemTitle: row.title,
@@ -865,14 +1074,22 @@ export function OrderActivitySection({ order, businessId, supabase, phoneRaw, cu
     for (const event of localEvents) {
       if (event.type === "comment_edited") continue;
       if (
-        (event.type === "checklist_created" || event.type === "checklist_completed" || event.type === "checklist_deleted") &&
+        (
+          event.type === "checklist_created" ||
+          event.type === "checklist_created_again" ||
+          event.type === "checklist_completed" ||
+          event.type === "checklist_reopened" ||
+          event.type === "checklist_deleted"
+        ) &&
         typeof event.payload?.itemId === "string"
       ) {
         const auditEventType =
-          event.type === "checklist_created"
+          event.type === "checklist_created" || event.type === "checklist_created_again"
             ? "checklist.created"
             : event.type === "checklist_completed"
               ? "checklist.completed"
+              : event.type === "checklist_reopened"
+                ? "checklist.reopened"
               : "checklist.deleted";
         if (checklistAuditKeys.has(`${auditEventType}:${event.payload.itemId}`)) continue;
       }
@@ -902,7 +1119,20 @@ export function OrderActivitySection({ order, businessId, supabase, phoneRaw, cu
         .from("activity_events")
         .select("id, event_type, actor_id, actor_type, payload, created_at")
         .eq("order_id", order.id)
-        .in("event_type", ["checklist.created", "checklist.completed", "checklist.deleted"])
+        .in("event_type", [
+          "checklist.created",
+          "checklist.created_again",
+          "checklist.completed",
+          "checklist.reopened",
+          "checklist.deleted",
+          "follow_up.created",
+          "follow_up.rescheduled",
+          "follow_up.completed",
+          "follow_up.completed_with_note",
+          "follow_up.completed_and_next_created",
+          "follow_up.reopened",
+          "follow_up.cancelled",
+        ])
         .order("created_at", { ascending: true }),
     ]);
     const localEvents = readLocalActivityEvents(businessId, order.id);
@@ -933,7 +1163,20 @@ export function OrderActivitySection({ order, businessId, supabase, phoneRaw, cu
           .from("activity_events")
           .select("id, event_type, actor_id, actor_type, payload, created_at")
           .eq("order_id", order.id)
-          .in("event_type", ["checklist.created", "checklist.completed", "checklist.deleted"])
+          .in("event_type", [
+            "checklist.created",
+            "checklist.created_again",
+            "checklist.completed",
+            "checklist.reopened",
+            "checklist.deleted",
+            "follow_up.created",
+            "follow_up.rescheduled",
+            "follow_up.completed",
+            "follow_up.completed_with_note",
+            "follow_up.completed_and_next_created",
+            "follow_up.reopened",
+            "follow_up.cancelled",
+          ])
           .order("created_at", { ascending: true }),
         attachmentIds.length > 0
           ? supabase.from("activity_attachments").select("id, file_name, storage_path, mime_type, file_size, created_at").in("id", attachmentIds)
@@ -970,15 +1213,17 @@ export function OrderActivitySection({ order, businessId, supabase, phoneRaw, cu
     return sorted.filter((item) => {
       if (filter === "all") return true;
       if (filter === "comments") return item.kind === "comment";
-      if (filter === "files") return item.kind === "event" && (item.eventType === "file_uploaded" || item.eventType === "file_deleted");
-      return item.kind === "event";
+      if (filter === "files") return isFileEvent(item);
+      if (filter === "followups") return isFollowUpEvent(item);
+      return item.kind === "event" && !isFileEvent(item) && !isFollowUpEvent(item);
     });
   }, [filter, items, sort]);
   const visibleItems = React.useMemo(() => filteredItems.length <= visibleCount ? filteredItems : sort === "conversation" ? filteredItems.slice(-visibleCount) : filteredItems.slice(0, visibleCount), [filteredItems, sort, visibleCount]);
   const hiddenCount = Math.max(0, filteredItems.length - visibleItems.length);
   const commentCount = items.filter((item) => item.kind === "comment").length;
-  const fileCount = items.filter((item) => item.kind === "event" && (item.eventType === "file_uploaded" || item.eventType === "file_deleted")).length;
-  const updateCount = items.length - commentCount;
+  const fileCount = items.filter(isFileEvent).length;
+  const followUpCount = items.filter(isFollowUpEvent).length;
+  const updateCount = items.filter((item) => item.kind === "event" && !isFileEvent(item) && !isFollowUpEvent(item)).length;
 
   async function uploadAttachment(file: File) {
     const formData = new FormData();
@@ -1107,7 +1352,7 @@ export function OrderActivitySection({ order, businessId, supabase, phoneRaw, cu
 
   return (
     <div className="space-y-3">
-      <ActivityHeader totalCount={items.length} commentCount={commentCount} updateCount={updateCount} fileCount={fileCount} filter={filter} setFilter={setFilter} sort={sort} setSort={setSort} compact={compact} />
+      <ActivityHeader totalCount={items.length} commentCount={commentCount} updateCount={updateCount} fileCount={fileCount} followUpCount={followUpCount} filter={filter} setFilter={setFilter} sort={sort} setSort={setSort} compact={compact} />
       {loading ? <div className="rounded-[24px] border border-[#E5E7EB] bg-white px-4 py-10 text-sm text-[#6B7280] shadow-[0_12px_30px_rgba(15,23,42,0.05)]">Loading activity...</div> : <ActivityTimeline items={visibleItems} hiddenCount={hiddenCount} onLoadMore={() => setVisibleCount((prev) => prev + 20)} canWrite={canWrite} editingId={editingId} editingValue={editingValue} setEditingValue={setEditingValue} onStartEdit={(item) => { setEditingId(item.id); setEditingValue(item.body); }} onCancelEdit={() => { setEditingId(null); setEditingValue(""); }} onSaveEdit={saveCommentEdit} onDelete={deleteComment} expandedComments={expandedComments} toggleExpanded={(id) => setExpandedComments((prev) => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; })} onReply={setReplyTarget} compact={compact} />}
       <div className={cn("sticky bottom-0 z-20 -mx-1 rounded-[28px] bg-[linear-gradient(180deg,rgba(248,250,252,0)_0%,rgba(248,250,252,0.94)_22%,rgba(248,250,252,1)_100%)] px-1", compact ? "pt-2" : "pt-2.5")}>
         <CommentComposer value={composerValue} onChange={setComposerValue} onSubmit={submitComment} isSubmitting={isSubmitting} currentUserName={currentUserName} canWrite={canWrite} attachments={attachments} onAttachFiles={(files) => { if (!files?.length) return; setAttachments((prev) => [...prev, ...Array.from(files).map((file) => ({ id: makeLocalActivityEventId("attachment"), file }))]); }} onRemoveAttachment={(id) => setAttachments((prev) => prev.filter((item) => item.id !== id))} mentionSuggestions={actors} replyTarget={replyTarget} onClearReply={() => setReplyTarget(null)} compact={compact} />

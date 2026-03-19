@@ -1,11 +1,12 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import {
   Shield,
   BarChart3,
   BriefcaseBusiness,
+  CalendarDays,
   CheckSquare,
   ChevronsLeft,
   ChevronsRight,
@@ -55,11 +56,12 @@ type Props = {
   activeFiltersCount: number;
   clearHref: string;
   businessHref: string;
+  todayHref?: string;
   settingsHref: string;
   adminHref?: string;
   canSeeAnalytics: boolean;
   showFilters?: boolean;
-  activeSection?: "crm" | "settings" | "admin";
+  activeSection?: "crm" | "today" | "settings" | "admin";
   layoutMode?: "list" | "kanban";
 };
 
@@ -272,6 +274,7 @@ export default function DesktopLeftRail({
   activeFiltersCount,
   clearHref,
   businessHref,
+  todayHref,
   settingsHref,
   adminHref,
   canSeeAnalytics,
@@ -287,8 +290,9 @@ export default function DesktopLeftRail({
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [kanbanPeekOpen, setKanbanPeekOpen] = useState(false);
   const isKanban = layoutMode === "kanban";
+  const effectiveKanbanPeekOpen = isKanban ? kanbanPeekOpen : false;
   const collapsedRailWidth =
-    isKanban && !kanbanPeekOpen && !expanded && !filtersOpen
+    isKanban && !effectiveKanbanPeekOpen && !expanded && !filtersOpen
       ? "w-0"
       : isKanban
         ? "w-[60px]"
@@ -318,7 +322,7 @@ export default function DesktopLeftRail({
     }
   };
 
-  const toggleFiltersPanel = () => {
+  const toggleFiltersPanel = useCallback(() => {
     setFiltersOpen((prev) => {
       const next = !prev;
       if (isKanban && !expanded) {
@@ -326,7 +330,7 @@ export default function DesktopLeftRail({
       }
       return next;
     });
-  };
+  }, [expanded, isKanban]);
 
   const toggleExpanded = () => {
     const next = !expanded;
@@ -342,13 +346,7 @@ export default function DesktopLeftRail({
     window.addEventListener(TOGGLE_FILTERS_EVENT, handleToggleFilters);
     return () =>
       window.removeEventListener(TOGGLE_FILTERS_EVENT, handleToggleFilters);
-  }, [expanded, isKanban]);
-
-  useEffect(() => {
-    if (!isKanban) {
-      setKanbanPeekOpen(false);
-    }
-  }, [isKanban]);
+  }, [toggleFiltersPanel]);
 
   useEffect(() => {
     if (!filtersOpen) return;
@@ -388,7 +386,7 @@ export default function DesktopLeftRail({
         }}
       >
         <div className="relative">
-          {isKanban && !expanded && !kanbanPeekOpen && !filtersOpen ? (
+          {isKanban && !expanded && !effectiveKanbanPeekOpen && !filtersOpen ? (
             <button
               type="button"
               onClick={openCollapsedRail}
@@ -472,6 +470,17 @@ export default function DesktopLeftRail({
                     description="Dashboard insights are not live yet"
                     expanded={expanded}
                     disabled
+                  />
+                ) : null}
+
+                {todayHref ? (
+                  <RailLink
+                    icon={<CalendarDays className="h-5 w-5" />}
+                    label="Today"
+                    description="Overdue and due-today follow-ups"
+                    expanded={expanded}
+                    href={todayHref}
+                    active={activeSection === "today"}
                   />
                 ) : null}
 

@@ -1,0 +1,33 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { buildClientFullName, splitLegacyClientName } from "@/lib/order-client";
+import {
+  formatDateOnlyForStorage,
+  getTodayDateOnly,
+  getTomorrowDateOnly,
+  normalizeDateOnly,
+  type FollowUpSource,
+  type FollowUpStatus,
+} from "@/lib/follow-ups";
+import { supabaseAdmin } from "@/lib/supabase/admin";
+import { supabaseServer } from "@/lib/supabase/server";
+import type { WorkDayStatus } from "@/lib/work-day";
+
+function isMissingColumnError(error: unknown, column: string) {
+  const message = String((error as { message?: string } | null)?.message ?? "").toLowerCase();
+  return (
+    message.includes(`could not find the '${column.toLowerCase()}' column`) &&
+    message.includes("schema cache")
+  );
+}
+
+function cleanText(value: unknown) {
+  return String(value ?? "").trim();
+}
+
+function upperRole(value: unknown) {
+  return cleanText(value).toUpperCase();
+}
+
+type OrdersPayload = Record<string, string | number | boolean | null>

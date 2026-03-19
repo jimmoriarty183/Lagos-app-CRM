@@ -127,6 +127,7 @@ type PageProps = {
     actor?: string;
     statusMode?: string;
     sort?: string;
+    focusOrder?: string;
   };
 };
 
@@ -532,6 +533,11 @@ export default async function Page({ params, searchParams }: PageProps) {
     phoneRaw && phoneRaw.length > 0
       ? `/app/settings?u=${encodeURIComponent(phoneRaw)}`
       : "/app/settings";
+  const todayHref =
+    phoneRaw && phoneRaw.length > 0
+      ? `/b/${slug}/today?u=${encodeURIComponent(phoneRaw)}`
+      : `/b/${slug}/today`;
+  const initialOpenOrderId = cleanText(sp.focusOrder);
 
   const makeSummaryHref = (nextSummaryRange: DashboardRange) => {
     const params = new URLSearchParams();
@@ -770,6 +776,7 @@ export default async function Page({ params, searchParams }: PageProps) {
         slug: String(b.slug),
         name: String(b.name ?? b.slug),
         role: upperRole(roleForBiz),
+        isAdmin: isAdminEmail(user?.email),
       };
     })
     .sort((a: any, b: any) => a.name.localeCompare(b.name));
@@ -1174,11 +1181,12 @@ export default async function Page({ params, searchParams }: PageProps) {
     <div className="min-h-screen overflow-x-hidden bg-transparent text-slate-900">
       <TopBar
         businessSlug={slug}
-        plan={currentBusiness.plan || "beta"}
         role={userRole}
         currentUserName={currentUserName}
         businesses={businessOptions}
+        businessId={String(currentBusiness.id)}
         businessHref={businessHref}
+        todayHref={todayHref}
         settingsHref={settingsHref}
         adminHref={adminHref}
         clearHref={clearHref}
@@ -1218,6 +1226,7 @@ export default async function Page({ params, searchParams }: PageProps) {
               activeFiltersCount={activeFiltersCount}
               clearHref={clearHref}
               businessHref={businessHref}
+              todayHref={todayHref}
               settingsHref={settingsHref}
               adminHref={adminHref}
               canSeeAnalytics={canSeeAnalyticsNav}
@@ -1240,6 +1249,7 @@ export default async function Page({ params, searchParams }: PageProps) {
                 hasOrdersEver={listRaw.length > 0}
                 periodOptions={summaryPeriodOptions}
                 extendedOptions={summaryExtendedOptions}
+                storageKey={`orders-desktop-summary-hidden:${String(currentBusiness.id)}`}
                 customRange={{
                   active: summaryRange === "custom",
                   startDate: summaryCustomStartDate,
@@ -1292,6 +1302,7 @@ export default async function Page({ params, searchParams }: PageProps) {
               actors={teamActors}
               currentUserId={currentUserId}
               currentUserName={currentUserName}
+              initialOpenOrderId={initialOpenOrderId || null}
             />
           </div>
         </div>
@@ -1353,6 +1364,7 @@ export default async function Page({ params, searchParams }: PageProps) {
             actors={teamActors}
             currentUserId={currentUserId}
             currentUserName={currentUserName}
+            initialOpenOrderId={initialOpenOrderId || null}
             searchQuery={filters.q}
             sort={sort}
             initialViewMode={viewMode}

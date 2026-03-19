@@ -158,6 +158,7 @@ type Props = {
   actors: TeamActor[];
   currentUserId: string | null;
   currentUserName: string;
+  initialOpenOrderId?: string | null;
 };
 
 function fmtAmount(n: number) {
@@ -797,6 +798,7 @@ export default function DesktopOrdersTable({
   actors,
   currentUserId,
   currentUserName,
+  initialOpenOrderId = null,
 }: Props) {
   const router = useRouter();
   const { customStatuses, statuses } = useBusinessStatuses(businessId);
@@ -925,6 +927,24 @@ export default function DesktopOrdersTable({
     () => boardRows.find((order) => order.id === openId) ?? null,
     [boardRows, openId],
   );
+  const clearFocusOrderParam = React.useCallback(() => {
+    if (typeof window === "undefined") return;
+
+    const url = new URL(window.location.href);
+    if (!url.searchParams.has("focusOrder")) return;
+
+    url.searchParams.delete("focusOrder");
+    const nextSearch = url.searchParams.toString();
+    const nextHref = `${url.pathname}${nextSearch ? `?${nextSearch}` : ""}`;
+    router.replace(nextHref, { scroll: false });
+  }, [router]);
+
+  React.useEffect(() => {
+    if (!initialOpenOrderId) return;
+    if (!boardRows.some((order) => order.id === initialOpenOrderId)) return;
+    setOpenId(initialOpenOrderId);
+    clearFocusOrderParam();
+  }, [boardRows, clearFocusOrderParam, initialOpenOrderId]);
   const statusOptions = useMemo(
     () => [
       ...statuses.map((status) => ({
@@ -3034,6 +3054,7 @@ export default function DesktopOrdersTable({
         onClose={() => {
           setOpenId(null);
           setCreatePreviewOpen(false);
+          clearFocusOrderParam();
         }}
       />
       <AlertDialog

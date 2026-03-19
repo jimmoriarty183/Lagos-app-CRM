@@ -7,8 +7,17 @@ export type LocalActivityEventType =
   | "comment_edited"
   | "comment_deleted"
   | "checklist_created"
+  | "checklist_created_again"
   | "checklist_completed"
+  | "checklist_reopened"
   | "checklist_deleted"
+  | "follow_up_created"
+  | "follow_up_completed"
+  | "follow_up_completed_with_note"
+  | "follow_up_completed_and_next_created"
+  | "follow_up_rescheduled"
+  | "follow_up_reopened"
+  | "follow_up_cancelled"
   | "file_uploaded"
   | "file_deleted";
 
@@ -22,6 +31,17 @@ export type LocalActivityEventPayload = {
   toLabel?: string | null;
   itemId?: string;
   itemTitle?: string;
+  checklistItemId?: string;
+  followUpId?: string;
+  followUpTitle?: string;
+  dueDate?: string | null;
+  previousDueDate?: string | null;
+  newDueDate?: string | null;
+  completionNote?: string | null;
+  nextFollowUpId?: string | null;
+  nextFollowUpTitle?: string | null;
+  nextFollowUpDueDate?: string | null;
+  createdAgain?: boolean;
   commentId?: string;
   edited?: boolean;
   fileName?: string;

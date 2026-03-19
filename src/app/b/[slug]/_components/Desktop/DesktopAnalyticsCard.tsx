@@ -1,8 +1,11 @@
-import type { ReactNode } from "react";
+"use client";
+
+import { useSyncExternalStore, type ReactNode } from "react";
 import {
   AlertTriangle,
   BarChart3,
   ChevronDown,
+  ChevronUp,
   CircleDollarSign,
   Package2,
   PlayCircle,
@@ -57,6 +60,7 @@ type Props = {
       actor: string;
     };
   };
+  storageKey?: string;
 };
 
 type MetricTone = "neutral" | "blue" | "green" | "red";
@@ -182,7 +186,37 @@ export default function DesktopAnalyticsCard({
   periodOptions,
   extendedOptions = [],
   customRange,
+  storageKey = "orders-desktop-summary-hidden",
 }: Props) {
+  const hidden = useSyncExternalStore(
+    (onStoreChange) => {
+      if (typeof window === "undefined") return () => {};
+      const eventName = `summary-visibility:${storageKey}`;
+      const listener = () => onStoreChange();
+      window.addEventListener(eventName, listener);
+      return () => window.removeEventListener(eventName, listener);
+    },
+    () => {
+      if (typeof window === "undefined") return false;
+      try {
+        return window.localStorage.getItem(storageKey) === "1";
+      } catch {
+        return false;
+      }
+    },
+    () => false,
+  );
+
+  const setHidden = (nextHidden: boolean) => {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(storageKey, nextHidden ? "1" : "0");
+      window.dispatchEvent(new CustomEvent(`summary-visibility:${storageKey}`));
+    } catch {
+      // Ignore storage write failures.
+    }
+  };
+
   const cardIcons: Record<string, ReactNode> = {
     "Total Orders": <Package2 className="h-5 w-5" />,
     "Total Revenue": <CircleDollarSign className="h-5 w-5" />,
@@ -198,6 +232,15 @@ export default function DesktopAnalyticsCard({
           Summary
         </div>
         <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setHidden(!hidden)}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[#E5E7EB] bg-white text-[#6B7280] transition hover:border-[#C7D2FE] hover:text-[#1F2937]"
+            aria-label={hidden ? "Show summary" : "Hide summary"}
+            title={hidden ? "Show summary" : "Hide summary"}
+          >
+            {hidden ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+          </button>
           <div className="inline-flex rounded-full border border-[#E5E7EB] bg-white p-1">
             {periodOptions.map((option) => (
               <a
@@ -243,6 +286,9 @@ export default function DesktopAnalyticsCard({
           </div>
         </div>
       </div>
+
+      {hidden ? null : (
+        <>
 
       {customRange?.active ? (
         <form method="get" className="space-y-3 rounded-2xl border border-[#E5E7EB] bg-white px-3 py-3">
@@ -320,6 +366,8 @@ export default function DesktopAnalyticsCard({
           />
         ))}
       </div>
+        </>
+      )}
     </section>
   );
 }

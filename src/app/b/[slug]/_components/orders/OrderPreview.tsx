@@ -19,6 +19,7 @@ import {
 
 import { OrderChecklist } from "@/app/b/[slug]/OrderChecklist";
 import { OrderActivitySection } from "@/app/b/[slug]/_components/orders/OrderActivitySection";
+import { OrderFollowUpsCard } from "@/app/b/[slug]/_components/orders/OrderFollowUpsCard";
 import { OrderNotesPanel, type OrderNote } from "@/app/b/[slug]/_components/orders/OrderNotesPanel";
 import { createOrder, setOrderManager, setOrderStatus, updateOrder } from "@/app/b/[slug]/actions";
 import { CANCELED_REASONS } from "@/app/b/[slug]/order-status-reasons";
@@ -1492,12 +1493,14 @@ export function OrderPreview({
 
             <div className="sticky top-0 z-30 bg-white shadow-[0_8px_18px_rgba(15,23,42,0.06)]">
               <div className={["px-4 sm:px-5 transition-all", isUltraCompactTop ? "py-0.5" : isCompactTop ? "py-2" : "py-2.5"].join(" ")}>
-                <TabsList className={["grid h-auto w-full grid-cols-4 border border-[#E5E7EB] bg-[linear-gradient(180deg,#F9FAFB_0%,#EEF2FF_100%)] shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)]", isUltraCompactTop ? "gap-0.5 rounded-[16px] p-0.5" : "gap-1 rounded-[26px] p-1.5"].join(" ")}>
+                <TabsList className={["grid h-auto w-full grid-cols-6 border border-[#E5E7EB] bg-[linear-gradient(180deg,#F9FAFB_0%,#EEF2FF_100%)] shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)]", isUltraCompactTop ? "gap-0.5 rounded-[16px] p-0.5" : "gap-1 rounded-[26px] p-1.5"].join(" ")}>
                   {[
                     ["overview", "Overview"],
+                    ["followups", "Follow-up"],
                     ["checklist", "Checklist"],
                     ["activity", "Activity"],
                     ["notes", "Notes"],
+                    ["files", "Files"],
                   ].map(([value, label]) => (
                     <TabsTrigger
                       key={value}
@@ -1940,16 +1943,6 @@ export function OrderPreview({
                           </p>
                         )}
                       </div>
-
-                      <FilesSection
-                        files={overviewFiles}
-                        loading={isLoadingOverviewFiles}
-                        uploading={isUploadingOverviewFiles}
-                        canUpload={canUploadFiles}
-                        successMessage={overviewUploadSuccess}
-                        onAddFiles={openOverviewFilePicker}
-                      />
-
                       <LabelsSection
                         businessId={businessId}
                         orderId={currentOrder.id}
@@ -1959,6 +1952,18 @@ export function OrderPreview({
                         onChange={setLabels}
                       />
                     </div>
+                  </TabsContent>
+
+                  <TabsContent value="followups" className="mt-0">
+                    <OrderFollowUpsCard
+                      businessId={businessId}
+                      businessSlug={businessSlug}
+                      orderId={currentOrder.id}
+                      canManage={canManage}
+                      supabase={supabase}
+                      currentUserName={currentUserName}
+                      userRole={userRole}
+                    />
                   </TabsContent>
 
                   <TabsContent value="checklist" className="mt-0">
@@ -1989,6 +1994,17 @@ export function OrderPreview({
                       onCreateNote={handleCreateNote}
                       onUpdateNote={handleUpdateNote}
                       onDeleteNote={handleDeleteNote}
+                    />
+                  </TabsContent>
+
+                  <TabsContent value="files" className="mt-0">
+                    <FilesSection
+                      files={overviewFiles}
+                      loading={isLoadingOverviewFiles}
+                      uploading={isUploadingOverviewFiles}
+                      canUpload={canUploadFiles}
+                      successMessage={overviewUploadSuccess}
+                      onAddFiles={openOverviewFilePicker}
                     />
                   </TabsContent>
                   <input

@@ -1,24 +1,33 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { BarChart3, BriefcaseBusiness, Menu, Settings, Shield, SlidersHorizontal, X } from "lucide-react";
+import { BarChart3, BriefcaseBusiness, CalendarDays, Menu, SlidersHorizontal, X } from "lucide-react";
+import { WorkDayControls } from "./WorkDayControls";
 
 type Props = {
+  businessId?: string;
+  businessSlug: string;
+  canManage: boolean;
   businessHref: string;
-  settingsHref: string;
-  adminHref?: string;
+  todayHref: string;
   clearHref: string;
   hasActiveFilters: boolean;
   canSeeAnalytics: boolean;
+  userLabel: string;
+  roleLabel: string;
 };
 
 export default function MobileTopbarMenu({
+  businessId,
+  businessSlug,
+  canManage,
   businessHref,
-  settingsHref,
-  adminHref,
+  todayHref,
   clearHref,
   hasActiveFilters,
   canSeeAnalytics,
+  userLabel,
+  roleLabel,
 }: Props) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -52,9 +61,14 @@ export default function MobileTopbarMenu({
       </button>
 
       {open ? (
-        <div className="absolute left-0 top-[calc(100%+10px)] z-50 w-56 rounded-2xl border border-gray-200 bg-white p-2 shadow-xl">
+        <div className="absolute left-0 top-[calc(100%+10px)] z-50 w-60 rounded-2xl border border-gray-200 bg-white p-2 shadow-xl">
+          <div className="rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] px-3 py-3">
+            <div className="truncate text-sm font-semibold text-[#111827]">{userLabel}</div>
+            <div className="pt-0.5 text-[11px] font-medium capitalize text-[#9CA3AF]">{roleLabel}</div>
+          </div>
+
           {canSeeAnalytics ? (
-            <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm font-semibold text-slate-500">
+            <div className="mt-2 flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm font-semibold text-slate-500">
               <BarChart3 className="h-4 w-4 text-slate-400" />
               <div className="min-w-0 flex-1">
                 <div>Analytics</div>
@@ -80,28 +94,29 @@ export default function MobileTopbarMenu({
             onClick={() => setOpen(false)}
             className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-gray-800 transition-colors hover:bg-gray-50"
           >
-              <BriefcaseBusiness className="h-4 w-4 text-gray-500" />
-              <span>CRM</span>
+            <BriefcaseBusiness className="h-4 w-4 text-gray-500" />
+            <span>CRM</span>
           </a>
 
           <a
-            href={settingsHref}
+            href={todayHref}
             onClick={() => setOpen(false)}
             className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-gray-800 transition-colors hover:bg-gray-50"
           >
-            <Settings className="h-4 w-4 text-gray-500" />
-            <span>Settings</span>
+            <CalendarDays className="h-4 w-4 text-gray-500" />
+            <span>Today</span>
           </a>
 
-          {adminHref ? (
-            <a
-              href={adminHref}
-              onClick={() => setOpen(false)}
-              className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-gray-800 transition-colors hover:bg-gray-50"
-            >
-              <Shield className="h-4 w-4 text-gray-500" />
-              <span>Admin</span>
-            </a>
+          {businessId && canManage ? (
+            <>
+              <WorkDayControls
+                businessId={businessId}
+                businessSlug={businessSlug}
+                canManage={canManage}
+                compact
+                onActionComplete={() => setOpen(false)}
+              />
+            </>
           ) : null}
 
           {hasActiveFilters ? (

@@ -1,8 +1,10 @@
 ﻿"use client";
 
-import React, { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { Bell, BellRing, Check, Loader2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
+
+import { formatFollowUpDate, getTodayDateOnly } from "@/lib/follow-ups";
 
 type PendingInvite = {
   id: string;
@@ -16,7 +18,17 @@ type PendingInvite = {
 };
 
 type Props = {
+  businessId?: string;
   currentBusinessSlug: string;
+  todayHref?: string;
+};
+
+type InboxFollowUp = {
+  id: string;
+  title: string;
+  due_date: string;
+  order_id: string | null;
+  created_at: string | null;
 };
 
 function formatDateTime(value?: string | null) {
@@ -26,49 +38,62 @@ function formatDateTime(value?: string | null) {
   return d.toLocaleString();
 }
 
-export default function InviteInbox({ currentBusinessSlug }: Props) {
+export default function InviteInbox({ businessId, currentBusinessSlug, todayHref }: Props) {
   const router = useRouter();
   const ref = useRef<HTMLDivElement | null>(null);
 
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<PendingInvite[]>([]);
+  const [followUps, setFollowUps] = useState<InboxFollowUp[]>([]);
   const [error, setError] = useState("");
   const [activeId, setActiveId] = useState("");
   const [isPending, startTransition] = useTransition();
 
-  const count = items.length;
+  const count = items.length + followUps.length;
 
   const title = useMemo(() => {
-    if (count === 0) return "No pending invites";
-    if (count === 1) return "1 business invite";
-    return `${count} business invites`;
+    if (count === 0) return "Inbox is clear";
+    if (count === 1) return "1 inbox item";
+    return `${count} inbox items`;
   }, [count]);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     setError("");
 
     try {
-      const res = await fetch("/api/invite/my-pending", { cache: "no-store" });
+      const params = new URLSearchParams();
+      params.set("today", getTodayDateOnly());
+      if (businessId) params.set("businessId", businessId);
+
+      const res = await fetch(`/api/topbar/inbox?${params.toString()}`, { cache: "no-store" });
       const json = await res.json().catch(() => ({}));
 
       if (!res.ok || !json?.ok) {
-        throw new Error(json?.error || "Failed to load invites");
+        throw new Error(json?.error || "Failed to load inbox");
       }
 
       setItems(Array.isArray(json.invites) ? json.invites : []);
-    } catch (e: any) {
+      setFollowUps(Array.isArray(json.followUps) ? json.followUps : []);
+    } catch (error: unknown) {
       setItems([]);
-      setError(e?.message || "Failed to load invites");
+      setFollowUps([]);
+      setError(error instanceof Error ? error.message : "Failed to load inbox");
     } finally {
       setLoading(false);
     }
-  };
+  }, [businessId]);
 
   useEffect(() => {
+    if (!businessId) {
+      setLoading(false);
+      setItems([]);
+      setFollowUps([]);
+      return;
+    }
     load();
-  }, []);
+  }, [businessId, load]);
 
   useEffect(() => {
     const onDown = (e: MouseEvent) => {
@@ -105,8 +130,8 @@ export default function InviteInbox({ currentBusinessSlug }: Props) {
       if (invite && onSuccess) {
         onSuccess(invite);
       }
-    } catch (e: any) {
-      setError(e?.message || "Invite action failed");
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : "Invite action failed");
     } finally {
       setActiveId("");
     }
@@ -130,6 +155,14 @@ export default function InviteInbox({ currentBusinessSlug }: Props) {
     await runAction(inviteId, "/api/invite/decline");
   };
 
+  const openToday = () => {
+    startTransition(() => {
+      setOpen(false);
+      router.push(todayHref || `/b/${currentBusinessSlug}/today`);
+      router.refresh();
+    });
+  };
+
   return (
     <div className="relative" ref={ref}>
       <button
@@ -140,13 +173,13 @@ export default function InviteInbox({ currentBusinessSlug }: Props) {
         }}
         aria-label="Business invites"
         title={title}
-        className={`relative flex h-11 w-11 items-center justify-center rounded-xl border bg-white shadow-sm transition ${
+        className={`relative flex h-9 w-9 items-center justify-center rounded-xl border bg-white/90 shadow-sm transition ${
           open
             ? "border-blue-300 bg-blue-50/80"
-            : "border-slate-200 text-slate-700"
+            : "border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-[#FCFCFD]"
         }`}
       >
-        {open ? (
+        {open || count > 0 ? (
           <BellRing className="h-4 w-4 text-[#6366F1] transition" />
         ) : (
           <Bell className="h-4 w-4 text-slate-700 transition" />
@@ -169,9 +202,9 @@ export default function InviteInbox({ currentBusinessSlug }: Props) {
 
           <div className="fixed left-4 right-4 top-[calc(env(safe-area-inset-top)+5rem)] z-50 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg sm:absolute sm:left-auto sm:right-0 sm:top-[calc(100%+0.5rem)] sm:mt-0 sm:w-[340px] sm:max-w-[calc(100vw-1.5rem)]">
             <div className="border-b border-slate-100 px-4 py-3">
-              <div className="text-sm font-semibold text-slate-900">Business invites</div>
+              <div className="text-sm font-semibold text-slate-900">Inbox</div>
               <div className="mt-1 text-xs text-slate-500">
-                Accept access to another business without opening email.
+                Business invites and overdue or due-today follow-ups.
               </div>
             </div>
 
@@ -184,14 +217,60 @@ export default function InviteInbox({ currentBusinessSlug }: Props) {
             <div className="max-h-[360px] overflow-auto p-3">
               {loading ? (
                 <div className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-4 text-sm text-slate-600">
-                  Loading invites...
+                  Loading inbox...
                 </div>
-              ) : items.length === 0 ? (
+              ) : items.length === 0 && followUps.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-4 text-sm text-slate-500">
-                  No pending business invites.
+                  Inbox is clear.
                 </div>
               ) : (
                 <div className="space-y-3">
+                  {followUps.length > 0 ? (
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between gap-2 px-1">
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-slate-400">
+                          Follow-ups
+                        </div>
+                        <button
+                          type="button"
+                          onClick={openToday}
+                          className="text-[11px] font-semibold text-[#6366F1] transition hover:text-[#5558E6]"
+                        >
+                          Open all
+                        </button>
+                      </div>
+                      {followUps.map((followUp) => (
+                        <div
+                          key={followUp.id}
+                          className="rounded-xl border border-slate-100 bg-white px-3 py-2.5"
+                        >
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="min-w-0">
+                              <div className="truncate text-[13px] font-semibold text-slate-900">
+                                {followUp.title}
+                              </div>
+                              <div className="mt-0.5 text-[11px] text-slate-500">
+                                Due: {formatFollowUpDate(followUp.due_date)}
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={openToday}
+                              className="shrink-0 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-50"
+                            >
+                              Open
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+
+                  {items.length > 0 ? (
+                    <div className="space-y-2">
+                      <div className="px-1 text-[11px] font-semibold uppercase tracking-[0.06em] text-slate-400">
+                        Invites
+                      </div>
                   {items.map((invite) => {
                     const busy = activeId === invite.id || isPending;
                     return (
@@ -237,6 +316,8 @@ export default function InviteInbox({ currentBusinessSlug }: Props) {
                       </div>
                     );
                   })}
+                    </div>
+                  ) : null}
                 </div>
               )}
             </div>

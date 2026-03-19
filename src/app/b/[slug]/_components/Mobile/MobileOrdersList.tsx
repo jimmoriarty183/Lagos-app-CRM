@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { Fragment, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
@@ -228,6 +228,7 @@ export default function MobileOrdersList({
   actors,
   currentUserId,
   currentUserName,
+  initialOpenOrderId = null,
   searchQuery,
   sort,
   initialViewMode,
@@ -255,6 +256,7 @@ export default function MobileOrdersList({
   actors: TeamActor[];
   currentUserId: string | null;
   currentUserName: string;
+  initialOpenOrderId?: string | null;
   searchQuery: string;
   sort: OrderSort;
   initialViewMode: ViewMode;
@@ -367,6 +369,23 @@ export default function MobileOrdersList({
     () => rows.find((order) => order.id === openId) ?? null,
     [openId, rows],
   );
+  const clearFocusOrderParam = useCallback(() => {
+    if (typeof window === "undefined") return;
+
+    const url = new URL(window.location.href);
+    if (!url.searchParams.has("focusOrder")) return;
+
+    url.searchParams.delete("focusOrder");
+    const nextSearch = url.searchParams.toString();
+    const nextHref = `${url.pathname}${nextSearch ? `?${nextSearch}` : ""}`;
+    router.replace(nextHref, { scroll: false });
+  }, [router]);
+  useEffect(() => {
+    if (!initialOpenOrderId) return;
+    if (!rows.some((order) => order.id === initialOpenOrderId)) return;
+    setOpenId(initialOpenOrderId);
+    clearFocusOrderParam();
+  }, [clearFocusOrderParam, initialOpenOrderId, rows]);
   const managerOptions = useMemo(
     () =>
       effectiveActors
@@ -1391,6 +1410,7 @@ export default function MobileOrdersList({
         onClose={() => {
           setOpenId(null);
           setCreatePreviewOpen(false);
+          clearFocusOrderParam();
         }}
       />
     </section>
