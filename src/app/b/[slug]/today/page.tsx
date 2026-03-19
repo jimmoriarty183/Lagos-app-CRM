@@ -4,12 +4,12 @@ import DesktopLeftRail from "@/app/b/[slug]/_components/Desktop/DesktopLeftRail"
 import type { BusinessOption } from "@/app/b/[slug]/_components/topbar/BusinessSwitcher";
 import { StartDayNudge } from "@/app/b/[slug]/_components/topbar/StartDayNudge";
 import TopBar from "@/app/b/[slug]/_components/topbar/TopBar";
-import {
-  TodayFollowUpsView,
-  type TodayFollowUpItem,
-} from "@/app/b/[slug]/today/TodayFollowUpsView";
+import { TodoWorkspaceView } from "@/app/b/[slug]/today/TodoWorkspaceView";
+import type { TodayFollowUpItem } from "@/app/b/[slug]/today/TodayFollowUpsView";
+import type { TodoCalendarItem } from "@/app/b/[slug]/today/todo-calendar/types";
+import { inferFollowUpSubtype } from "@/app/b/[slug]/today/todo-calendar/utils";
 import { getAdminUsersPath, isAdminEmail } from "@/lib/admin-access";
-import type { StatusFilterValue } from "@/lib/business-statuses";
+import { getStatusLabel, isTerminalStatus, type StatusFilterValue } from "@/lib/business-statuses";
 import { resolveUserDisplay } from "@/lib/user-display";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { supabaseServerReadOnly } from "@/lib/supabase/server";
@@ -51,10 +51,22 @@ type OrderLookupRow = {
   id: string;
   order_number: number | null;
   client_name: string | null;
+  due_date?: string | null;
+  status?: string | null;
+  created_at?: string;
 };
 
 type WorkDayLookupRow = {
   status: string | null;
+};
+
+type ChecklistCalendarRow = {
+  id: string;
+  order_id: string;
+  title: string;
+  due_date: string | null;
+  is_done: boolean;
+  created_at: string;
 };
 
 function upperRole(
@@ -87,13 +99,19 @@ function buildOrderHref(
   return `/b/${businessSlug}?${params.toString()}`;
 }
 
+function buildOrderReferenceLabel(order: OrderLookupRow | null | undefined) {
+  if (!order?.id) return null;
+  const clientName = cleanText(order.client_name) || "Order";
+  return `Order${order.order_number ? ` #${order.order_number}` : ""}${clientName ? ` - ${clientName}` : ""}`;
+}
+
 export default async function TodayFollowUpsPage({
   params,
   searchParams,
 }: PageProps) {
   const [{ slug }, rawSearchParams] = await Promise.all([
     params,
-    searchParams ?? Promise.resolve({}),
+    searchParams ?? Promise.resolve({} as { u?: string }),
   ]);
   const phoneRaw = cleanText(rawSearchParams?.u);
   const supabase = await supabaseServerReadOnly();
@@ -150,7 +168,7 @@ export default async function TodayFollowUpsPage({
   const profile = (profileRaw ?? null) as ProfileRow | null;
 
   const currentUserName =
-    resolveUserDisplay(profile ?? null).primary ||
+    resolveUserDisplay(profile ?? {}).primary ||
     cleanText(user.email) ||
     "User";
 
@@ -167,21 +185,62 @@ export default async function TodayFollowUpsPage({
       isAdmin: isAdminEmail(user.email),
     }));
 
-  const { data: followUps, error: followUpsError } = await supabase
-    .from("follow_ups")
-    .select("*")
-    .eq("business_id", currentBusiness.id)
-    .eq("status", "open")
-    .lte("due_date", getTomorrowDateOnly())
-    .order("due_date", { ascending: true })
-    .order("created_at", { ascending: false });
+  const [
+    followUpsResult,
+    calendarFollowUpsResult,
+    ordersResult,
+    checklistResult,
+  ] = await Promise.all([
+    supabase
+      .from("follow_ups")
+      .select("*")
+      .eq("business_id", currentBusiness.id)
+      .eq("status", "open")
+      .lte("due_date", getTomorrowDateOnly())
+      .order("due_date", { ascending: true })
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("follow_ups")
+      .select("*")
+      .eq("business_id", currentBusiness.id)
+      .eq("status", "open")
+      .order("due_date", { ascending: true })
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("orders")
+      .select("id, order_number, client_name, due_date, status, created_at")
+      .eq("business_id", currentBusiness.id)
+      .not("due_date", "is", null)
+      .order("due_date", { ascending: true }),
+    supabase
+      .from("order_checklist_items")
+      .select("id, order_id, title, due_date, is_done, created_at")
+      .eq("business_id", currentBusiness.id)
+      .not("due_date", "is", null)
+      .eq("is_done", false)
+      .order("due_date", { ascending: true }),
+  ]);
 
-  if (followUpsError) throw followUpsError;
+  if (followUpsResult.error) throw followUpsResult.error;
+  if (calendarFollowUpsResult.error) throw calendarFollowUpsResult.error;
+  if (ordersResult.error) throw ordersResult.error;
+  if (checklistResult.error) throw checklistResult.error;
 
-  const followUpRows = (followUps ?? []) as FollowUpRow[];
+  const followUpRows = (followUpsResult.data ?? []) as FollowUpRow[];
+  const calendarFollowUpRows = (calendarFollowUpsResult.data ?? []) as FollowUpRow[];
+  const calendarOrderRows = ((ordersResult.data ?? []) as OrderLookupRow[]).filter(
+    (row) => !isTerminalStatus(String(row.status ?? "")),
+  );
+  const checklistRows = (checklistResult.data ?? []) as ChecklistCalendarRow[];
+
   const orderIds = [
     ...new Set(
-      followUpRows.map((entry) => cleanText(entry.order_id)).filter(Boolean),
+      [
+        ...followUpRows.map((entry) => cleanText(entry.order_id)),
+        ...calendarFollowUpRows.map((entry) => cleanText(entry.order_id)),
+        ...checklistRows.map((entry) => cleanText(entry.order_id)),
+        ...calendarOrderRows.map((entry) => cleanText(entry.id)),
+      ].filter(Boolean),
     ),
   ];
 
@@ -198,23 +257,88 @@ export default async function TodayFollowUpsPage({
     }
   }
 
+  for (const order of calendarOrderRows) {
+    orderLookup.set(order.id, order);
+  }
+
   const items: TodayFollowUpItem[] = followUpRows.map((entry) => {
     const linkedOrder = entry.order_id
       ? (orderLookup.get(entry.order_id) ?? null)
       : null;
-    const orderClient = cleanText(linkedOrder?.client_name) || "Order";
-    const orderLabel = linkedOrder?.id
-      ? `Open order${linkedOrder.order_number ? ` #${linkedOrder.order_number}` : ""}${orderClient ? ` - ${orderClient}` : ""}`
-      : null;
+    const orderLabel = buildOrderReferenceLabel(linkedOrder);
 
     return {
       ...entry,
-      orderLabel,
+      orderLabel: orderLabel ? `Open ${orderLabel.toLowerCase()}` : null,
       orderHref: linkedOrder?.id
         ? buildOrderHref(currentBusiness.slug, linkedOrder.id, phoneRaw)
         : null,
     };
   });
+
+  const calendarItems: TodoCalendarItem[] = [
+    ...calendarFollowUpRows
+      .filter((entry) => cleanText(entry.due_date))
+      .map((entry) => {
+        const linkedOrder = entry.order_id ? (orderLookup.get(entry.order_id) ?? null) : null;
+        const status: TodoCalendarItem["status"] =
+          entry.due_date < getTodayDateOnly()
+            ? "overdue"
+            : "open";
+
+        return {
+          id: `follow-up:${entry.id}`,
+          type: "follow_up" as const,
+          subtype: inferFollowUpSubtype(entry.title),
+          title: entry.title,
+          date: entry.due_date,
+          allDay: true,
+          status,
+          orderId: entry.order_id ?? undefined,
+          orderLabel: buildOrderReferenceLabel(linkedOrder) ?? undefined,
+          orderHref: linkedOrder?.id ? buildOrderHref(currentBusiness.slug, linkedOrder.id, phoneRaw) : undefined,
+          sourceLabel: "Follow-up",
+          statusLabel: status === "overdue" ? "Overdue" : "Open",
+          createdAt: entry.created_at,
+        };
+      }),
+    ...calendarOrderRows
+      .filter((entry) => cleanText(entry.due_date))
+      .map((entry) => ({
+        id: `order:${entry.id}`,
+        type: "order" as const,
+        title: buildOrderReferenceLabel(entry) ?? "Order",
+        date: String(entry.due_date).slice(0, 10),
+        allDay: true,
+        status: entry.due_date && String(entry.due_date).slice(0, 10) < getTodayDateOnly() ? "overdue" as const : "open" as const,
+        orderId: entry.id,
+        orderLabel: buildOrderReferenceLabel(entry) ?? undefined,
+        orderHref: buildOrderHref(currentBusiness.slug, entry.id, phoneRaw),
+        sourceLabel: "Order due date",
+        statusLabel: getStatusLabel(String(entry.status ?? "")),
+        createdAt: entry.created_at,
+      })),
+    ...checklistRows
+      .filter((entry) => cleanText(entry.due_date))
+      .map((entry) => {
+        const linkedOrder = orderLookup.get(entry.order_id) ?? null;
+        const date = String(entry.due_date).slice(0, 10);
+        return {
+          id: `checklist:${entry.id}`,
+          type: "checklist" as const,
+          title: entry.title,
+          date,
+          allDay: true,
+          status: date < getTodayDateOnly() ? "overdue" as const : "open" as const,
+          orderId: entry.order_id,
+          orderLabel: buildOrderReferenceLabel(linkedOrder) ?? undefined,
+          orderHref: linkedOrder?.id ? buildOrderHref(currentBusiness.slug, linkedOrder.id, phoneRaw) : undefined,
+          sourceLabel: "Checklist due date",
+          statusLabel: "Open",
+          createdAt: entry.created_at,
+        };
+      }),
+  ];
 
   const businessHref = buildScopedHref("/app/crm", phoneRaw);
   const settingsHref = buildScopedHref("/app/settings", phoneRaw);
@@ -283,19 +407,21 @@ export default async function TodayFollowUpsPage({
           </div>
 
           <div className="min-w-0 space-y-4 pl-2">
-            <TodayFollowUpsView
+            <TodoWorkspaceView
               businessSlug={currentBusiness.slug}
               canManage={canManage}
               initialItems={items}
+              calendarItems={calendarItems}
             />
           </div>
         </div>
 
         <div className="space-y-4 lg:hidden">
-          <TodayFollowUpsView
+          <TodoWorkspaceView
             businessSlug={currentBusiness.slug}
             canManage={canManage}
             initialItems={items}
+            calendarItems={calendarItems}
           />
         </div>
       </main>

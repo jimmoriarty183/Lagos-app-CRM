@@ -253,10 +253,12 @@ export function TodayFollowUpsView({
   businessSlug,
   canManage,
   initialItems,
+  headerAction,
 }: {
   businessSlug: string;
   canManage: boolean;
   initialItems: TodayFollowUpItem[];
+  headerAction?: React.ReactNode;
 }) {
   const router = useRouter();
   const [items, setItems] = React.useState(initialItems);
@@ -346,6 +348,7 @@ export function TodayFollowUpsView({
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            {headerAction}
             <span className="inline-flex items-center rounded-full border border-[#FECACA] bg-[#FEF2F2] px-2.5 py-1 text-[11px] font-semibold text-[#B42318]">
               Overdue {overdue.length}
             </span>
