@@ -32,28 +32,28 @@ function formatWorkDayError(error: unknown) {
 
 function compactActionClass(tone: "default" | "warning" | "success" | "neutral") {
   if (tone === "warning") {
-    return "h-9 justify-start rounded-lg border border-[#FDE68A] bg-[#FFFBEB] px-3 text-sm font-semibold text-[#B54708] shadow-none hover:border-[#FCD34D] hover:bg-[#FEF3C7]";
+    return "h-9 justify-start rounded-lg border border-[#FDE68A] bg-[#FFFBEB] px-3 text-sm font-semibold text-[#B54708] shadow-none hover:border-[#FCD34D] hover:bg-[#FEF3C7] disabled:opacity-100";
   }
   if (tone === "success") {
-    return "h-9 justify-start rounded-lg border border-[#D1FADF] bg-[#ECFDF3] px-3 text-sm font-semibold text-[#067647] shadow-none hover:border-[#A6F4C5] hover:bg-[#DCFCE7]";
+    return "h-9 justify-start rounded-lg border border-[#D1FADF] bg-[#ECFDF3] px-3 text-sm font-semibold text-[#067647] shadow-none hover:border-[#A6F4C5] hover:bg-[#DCFCE7] disabled:opacity-100";
   }
   if (tone === "neutral") {
-    return "h-9 justify-start rounded-lg border border-[#E5E7EB] bg-white px-3 text-sm font-semibold text-[#374151] shadow-none hover:border-[#D6DAE1] hover:bg-[#FCFCFD]";
+    return "h-9 justify-start rounded-lg border border-[#E5E7EB] bg-white px-3 text-sm font-semibold text-[#374151] shadow-none hover:border-[#D6DAE1] hover:bg-[#FCFCFD] disabled:opacity-100";
   }
-  return "h-9 justify-start rounded-lg bg-[#111827] px-3 text-sm font-semibold text-white shadow-none hover:bg-[#1F2937]";
+  return "h-9 justify-start rounded-lg border border-[#6366F1] bg-[#6366F1] px-3 text-sm font-semibold text-white shadow-[0_1px_2px_rgba(16,24,40,0.10)] hover:border-[#5558E3] hover:bg-[#5558E3] disabled:opacity-100";
 }
 
 function desktopActionClass(tone: "primary" | "warning" | "success" | "neutral") {
   if (tone === "primary") {
-    return "inline-flex h-8 items-center rounded-lg border border-[#111827] bg-[#111827] px-3 text-[12px] font-semibold text-white shadow-sm transition hover:bg-[#1F2937]";
+    return "inline-flex h-8 items-center rounded-lg border border-[#6366F1] bg-[#6366F1] px-3 text-[12px] font-semibold text-white shadow-[0_1px_2px_rgba(16,24,40,0.10)] transition hover:border-[#5558E3] hover:bg-[#5558E3] disabled:opacity-100";
   }
   if (tone === "warning") {
-    return "inline-flex h-8 items-center rounded-lg border border-[#FDE68A] bg-[#FFFBEB] px-3 text-[12px] font-semibold text-[#B54708] shadow-sm transition hover:border-[#FCD34D] hover:bg-[#FEF3C7]";
+    return "inline-flex h-8 items-center rounded-lg border border-[#FDE68A] bg-[#FFFBEB] px-3 text-[12px] font-semibold text-[#B54708] shadow-sm transition hover:border-[#FCD34D] hover:bg-[#FEF3C7] disabled:opacity-100";
   }
   if (tone === "success") {
-    return "inline-flex h-8 items-center rounded-lg border border-[#D1FADF] bg-[#ECFDF3] px-3 text-[12px] font-semibold text-[#067647] shadow-sm transition hover:border-[#A6F4C5] hover:bg-[#D1FADF]";
+    return "inline-flex h-8 items-center rounded-lg border border-[#D1FADF] bg-[#ECFDF3] px-3 text-[12px] font-semibold text-[#067647] shadow-sm transition hover:border-[#A6F4C5] hover:bg-[#D1FADF] disabled:opacity-100";
   }
-  return "inline-flex h-8 items-center rounded-lg border border-[#E5E7EB] bg-white px-3 text-[12px] font-semibold text-[#374151] shadow-sm transition hover:border-[#D6DAE1] hover:bg-[#FCFCFD]";
+  return "inline-flex h-8 items-center rounded-lg border border-[#E5E7EB] bg-white px-3 text-[12px] font-semibold text-[#374151] shadow-sm transition hover:border-[#D6DAE1] hover:bg-[#FCFCFD] disabled:opacity-100";
 }
 
 function formatElapsedTime(totalSeconds: number) {
@@ -183,7 +183,7 @@ export function WorkDayControls({
   if (!canManage) return null;
 
   const status = normalizeStatus(workDay?.status);
-  const buttonIcon = isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null;
+  const buttonIcon = isLoading || isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null;
   const isActive = status === "running";
   const isPaused = status === "paused";
   const showEndDay = isActive || isPaused;
