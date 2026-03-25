@@ -7,6 +7,45 @@ function clean(v: any) {
   return String(v ?? "").trim();
 }
 
+function getBaseUrl(req: Request) {
+  const site = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (site) return site.replace(/\/$/, "");
+
+  const origin = req.headers.get("origin")?.trim();
+  if (origin) return origin.replace(/\/$/, "");
+
+  const app = process.env.NEXT_PUBLIC_APP_URL?.trim();
+  if (app) return app.replace(/\/$/, "");
+
+  return "http://localhost:3000";
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function renderEmailLayout(input: {
+  baseUrl: string;
+  title: string;
+  body: string;
+}) {
+  const logoUrl = `${input.baseUrl}/brand/email-logo.png`;
+  return `
+    <div style="margin:0;padding:24px;background:#f3f4f6;font-family:Arial,sans-serif;color:#111827;">
+      <div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:14px;padding:24px;">
+        <img src="${escapeHtml(logoUrl)}" alt="Ordo" width="72" height="72" style="display:block;border:0;outline:none;text-decoration:none;" />
+        <h1 style="font-size:22px;line-height:1.3;margin:18px 0 10px 0;">${escapeHtml(input.title)}</h1>
+        <div style="font-size:15px;line-height:1.6;color:#374151;">${input.body}</div>
+      </div>
+    </div>
+  `;
+}
+
 function buildFullName(firstName: string, lastName: string, fullName: string) {
   const fn = clean(firstName);
   const ln = clean(lastName);
@@ -20,6 +59,7 @@ function buildFullName(firstName: string, lastName: string, fullName: string) {
 async function sendManagerAcceptedEmail(input: {
   to: string;
   businessSlug: string;
+  baseUrl: string;
 }) {
   const resendKey = process.env.RESEND_API_KEY;
   const fromEmail = process.env.INVITE_FROM_EMAIL || process.env.RESEND_FROM_EMAIL;
@@ -32,7 +72,11 @@ async function sendManagerAcceptedEmail(input: {
     from: fromEmail,
     to: input.to,
     subject: `Access confirmed for ${input.businessSlug}`,
-    html: `<p>Your manager access for <strong>${input.businessSlug}</strong> is active.</p><p>You can now sign in and manage orders.</p>`,
+    html: renderEmailLayout({
+      baseUrl: input.baseUrl,
+      title: "Access confirmed",
+      body: `<p style="margin:0;">Your manager access for <strong>${escapeHtml(input.businessSlug)}</strong> is active.</p><p style="margin:12px 0 0 0;">You can now sign in and manage orders.</p>`,
+    }),
   });
 }
 
@@ -41,6 +85,7 @@ export async function POST(req: Request) {
   const admin = supabaseAdmin();
 
   const body = await req.json().catch(() => ({}));
+  const baseUrl = getBaseUrl(req);
   const invite_id = clean(body?.inviteId || body?.invite_id);
 
   const firstName = clean(body?.firstName);
@@ -175,7 +220,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    await sendManagerAcceptedEmail({ to: userEmail, businessSlug: biz.slug });
+    await sendManagerAcceptedEmail({ to: userEmail, businessSlug: biz.slug, baseUrl });
   } catch {
     // non-blocking email notification
   }

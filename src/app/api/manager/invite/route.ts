@@ -25,10 +25,45 @@ function isAlreadyRegisteredError(message: string) {
   return m.includes("already been registered") || m.includes("already registered");
 }
 
+function escapeHtml(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function renderEmailLayout(input: {
+  baseUrl: string;
+  title: string;
+  body: string;
+  ctaHref?: string;
+  ctaLabel?: string;
+}) {
+  const logoUrl = `${input.baseUrl}/brand/email-logo.png`;
+  const ctaBlock =
+    input.ctaHref && input.ctaLabel
+      ? `<p style="margin:20px 0 0 0;"><a href="${escapeHtml(input.ctaHref)}" style="display:inline-block;background:#6366F1;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:10px;font-weight:600;">${escapeHtml(input.ctaLabel)}</a></p>`
+      : "";
+
+  return `
+    <div style="margin:0;padding:24px;background:#f3f4f6;font-family:Arial,sans-serif;color:#111827;">
+      <div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:14px;padding:24px;">
+        <img src="${escapeHtml(logoUrl)}" alt="Ordo" width="72" height="72" style="display:block;border:0;outline:none;text-decoration:none;" />
+        <h1 style="font-size:22px;line-height:1.3;margin:18px 0 10px 0;">${escapeHtml(input.title)}</h1>
+        <div style="font-size:15px;line-height:1.6;color:#374151;">${input.body}</div>
+        ${ctaBlock}
+      </div>
+    </div>
+  `;
+}
+
 async function sendExistingUserAccessEmail(input: {
   to: string;
   actionLink: string;
   businessSlug: string;
+  baseUrl: string;
 }) {
   const resendKey = process.env.RESEND_API_KEY;
   const fromEmail = process.env.INVITE_FROM_EMAIL || process.env.RESEND_FROM_EMAIL;
@@ -41,7 +76,13 @@ async function sendExistingUserAccessEmail(input: {
     from: fromEmail,
     to: input.to,
     subject: `You've been granted manager access to ${input.businessSlug}`,
-    html: `<p>You already have an account.</p><p>Click to confirm access to <strong>${input.businessSlug}</strong>:</p><p><a href="${input.actionLink}">Open business access</a></p>`,
+    html: renderEmailLayout({
+      baseUrl: input.baseUrl,
+      title: "Manager access granted",
+      body: `<p style="margin:0;">You already have an account.</p><p style="margin:12px 0 0 0;">Click below to confirm access to <strong>${escapeHtml(input.businessSlug)}</strong>.</p>`,
+      ctaHref: input.actionLink,
+      ctaLabel: "Open business access",
+    }),
   });
 
   return true;
@@ -146,6 +187,7 @@ export async function POST(req: Request) {
         to: email,
         actionLink: linkData.properties.action_link,
         businessSlug,
+        baseUrl,
       });
 
       return json(200, {
