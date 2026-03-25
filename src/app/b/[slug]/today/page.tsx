@@ -84,6 +84,10 @@ function isSchemaMissingError(error: { message?: string } | null | undefined) {
   );
 }
 
+function logTodayPageError(scope: string, error: unknown) {
+  console.error(`[today/page] ${scope}`, error);
+}
+
 function upperRole(
   value: string | null | undefined,
 ): "OWNER" | "MANAGER" | "GUEST" {
@@ -150,7 +154,10 @@ export default async function TodayFollowUpsPage({
     .select("business_id, role")
     .eq("user_id", user.id);
 
-  if (membershipsError) throw membershipsError;
+  if (membershipsError) {
+    logTodayPageError("memberships query failed", membershipsError);
+    redirect(buildScopedHref("/app/crm", phoneRaw));
+  }
 
   const membershipRows = (memberships ?? []) as MembershipRow[];
   if (membershipRows.length === 0) redirect("/app/crm");
@@ -161,7 +168,10 @@ export default async function TodayFollowUpsPage({
     .select("id, slug, name, plan")
     .in("id", businessIds);
 
-  if (businessesError) throw businessesError;
+  if (businessesError) {
+    logTodayPageError("businesses query failed", businessesError);
+    redirect(buildScopedHref("/app/crm", phoneRaw));
+  }
 
   const businessRows = (businesses ?? []) as BusinessRow[];
   const currentBusiness =
@@ -265,7 +275,8 @@ export default async function TodayFollowUpsPage({
       if (isSchemaMissingError(error)) {
         return { data: [], error: null as null };
       }
-      throw new Error(error.message);
+      logTodayPageError("follow_ups query failed", error);
+      return { data: [], error: null as null };
     }
 
     return { data, error: null as null };
@@ -298,12 +309,19 @@ export default async function TodayFollowUpsPage({
       .order("due_date", { ascending: true }),
   ]);
 
-  if (ordersResult.error) throw ordersResult.error;
+  const calendarOrderRows = ordersResult.error
+    ? []
+    : ((ordersResult.data ?? []) as OrderLookupRow[]).filter(
+        (row) => !isTerminalStatus(String(row.status ?? "")),
+      );
+  if (ordersResult.error) {
+    logTodayPageError("orders calendar query failed", ordersResult.error);
+  }
   const checklistRows = isSchemaMissingError(checklistResult.error)
     ? []
     : ((checklistResult.data ?? []) as ChecklistCalendarRow[]);
   if (checklistResult.error && !isSchemaMissingError(checklistResult.error)) {
-    throw checklistResult.error;
+    logTodayPageError("checklist query failed", checklistResult.error);
   }
 
   const followUpRows = ((followUpsResultSafe.data ?? []) as FollowUpRow[]).map(
@@ -319,9 +337,6 @@ export default async function TodayFollowUpsPage({
     ...row,
     due_at: ((row as Record<string, unknown>).due_at as string | null) ?? null,
   }));
-  const calendarOrderRows = (
-    (ordersResult.data ?? []) as OrderLookupRow[]
-  ).filter((row) => !isTerminalStatus(String(row.status ?? "")));
   const orderIds = [
     ...new Set(
       [
@@ -340,9 +355,12 @@ export default async function TodayFollowUpsPage({
       .select("id, order_number, client_name")
       .in("id", orderIds);
 
-    if (ordersError) throw ordersError;
-    for (const row of (orders ?? []) as OrderLookupRow[]) {
-      orderLookup.set(row.id, row);
+    if (ordersError) {
+      logTodayPageError("orders lookup query failed", ordersError);
+    } else {
+      for (const row of (orders ?? []) as OrderLookupRow[]) {
+        orderLookup.set(row.id, row);
+      }
     }
   }
 
@@ -461,10 +479,11 @@ export default async function TodayFollowUpsPage({
     .eq("work_date", getTodayDateOnly())
     .maybeSingle();
 
-  if (workDayError && !isSchemaMissingError(workDayError)) {
-    throw workDayError;
-  }
-  if (!workDayError) {
+  if (workDayError) {
+    if (!isSchemaMissingError(workDayError)) {
+      logTodayPageError("work_days query failed", workDayError);
+    }
+  } else {
     hasStartedDay = ["running", "paused", "finished"].includes(
       String((workDayRow as WorkDayLookupRow | null)?.status ?? "")
         .trim()
