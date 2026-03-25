@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { supabaseServer } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 
@@ -142,10 +143,12 @@ export async function PATCH(
       return NextResponse.json({ ok: false, error: "Nothing to update" }, { status: 400 });
     }
 
+    const adminClient = supabaseAdmin();
     const basePatch: Record<string, unknown> = {};
     if (status) basePatch.status = status;
     // Keep priority fixed after creation; ignore priority updates from UI/API.
 
+    let updatedRequestRow: Record<string, unknown> | null = null;
     const assignmentColumns = ["assigned_to_user_id", "assignee_user_id", "assigned_user_id"];
     if (body.assignedToUserId !== undefined) {
       let updated = false;
@@ -154,32 +157,64 @@ export async function PATCH(
           ...basePatch,
           [column]: assignedToUserId || null,
         };
-        const { error } = await supabase.from("support_requests").update(patchWithAssignment).eq("id", requestId);
-        if (!error) {
+        const { data, error } = await adminClient
+          .from("support_requests")
+          .update(patchWithAssignment)
+          .eq("id", requestId)
+          .select("id, status, updated_at")
+          .maybeSingle();
+        if (!error && data) {
           updated = true;
+          updatedRequestRow = data as Record<string, unknown>;
           break;
         }
         if (isMissingColumnError(error, column)) {
           continue;
         }
+        if (!error && !data) {
+          return NextResponse.json({ ok: false, error: "Support request not found" }, { status: 404 });
+        }
         return NextResponse.json({ ok: false, error: getErrorMessage(error) }, { status: 500 });
       }
 
       if (!updated && Object.keys(basePatch).length > 0) {
-        const { error } = await supabase.from("support_requests").update(basePatch).eq("id", requestId);
+        const { data, error } = await adminClient
+          .from("support_requests")
+          .update(basePatch)
+          .eq("id", requestId)
+          .select("id, status, updated_at")
+          .maybeSingle();
         if (error) {
           return NextResponse.json({ ok: false, error: getErrorMessage(error) }, { status: 500 });
         }
+        if (!data) {
+          return NextResponse.json({ ok: false, error: "Support request not found" }, { status: 404 });
+        }
+        updatedRequestRow = data as Record<string, unknown>;
+      } else if (!updated && Object.keys(basePatch).length === 0) {
+        return NextResponse.json(
+          { ok: false, error: "No supported assignment column found on support_requests" },
+          { status: 500 },
+        );
       }
     } else {
-      const { error } = await supabase.from("support_requests").update(basePatch).eq("id", requestId);
+      const { data, error } = await adminClient
+        .from("support_requests")
+        .update(basePatch)
+        .eq("id", requestId)
+        .select("id, status, updated_at")
+        .maybeSingle();
       if (error) {
         return NextResponse.json({ ok: false, error: getErrorMessage(error) }, { status: 500 });
       }
+      if (!data) {
+        return NextResponse.json({ ok: false, error: "Support request not found" }, { status: 404 });
+      }
+      updatedRequestRow = data as Record<string, unknown>;
     }
 
     if (customerReply) {
-      const { data: currentRow, error: currentError } = await supabase
+      const { data: currentRow, error: currentError } = await adminClient
         .from("support_requests")
         .select("message, description")
         .eq("id", requestId)
@@ -199,15 +234,20 @@ export async function PATCH(
       const messageColumns = ["message", "description"];
       let messageUpdated = false;
       for (const column of messageColumns) {
-        const { error } = await supabase
+        const { data, error } = await adminClient
           .from("support_requests")
           .update({ [column]: nextMessage })
-          .eq("id", requestId);
-        if (!error) {
+          .eq("id", requestId)
+          .select("id")
+          .maybeSingle();
+        if (!error && data) {
           messageUpdated = true;
           break;
         }
         if (isMissingColumnError(error, column)) continue;
+        if (!error && !data) {
+          return NextResponse.json({ ok: false, error: "Support request not found" }, { status: 404 });
+        }
         return NextResponse.json({ ok: false, error: getErrorMessage(error) }, { status: 500 });
       }
       if (!messageUpdated) {
@@ -226,7 +266,30 @@ export async function PATCH(
       subject: access.subject,
     });
 
-    return NextResponse.json({ ok: true });
+    revalidatePath("/admin/support");
+    revalidatePath(`/admin/support/${requestId}`);
+
+    const businessId = access.requestBusinessId;
+    if (businessId) {
+      const { data: businessRow } = await adminClient
+        .from("businesses")
+        .select("slug")
+        .eq("id", businessId)
+        .maybeSingle();
+      const businessSlug = cleanText((businessRow as Record<string, unknown> | null)?.slug);
+      if (businessSlug) {
+        revalidatePath(`/b/${businessSlug}/support`);
+        revalidatePath(`/b/${businessSlug}/support/${requestId}`);
+      }
+    }
+
+    return NextResponse.json({
+      ok: true,
+      request: {
+        id: cleanText(updatedRequestRow?.id) || requestId,
+        status: cleanText(updatedRequestRow?.status) || status || access.currentStatus || null,
+      },
+    });
   } catch (error) {
     const message = getErrorMessage(error);
     const status = message === "Unauthorized" ? 401 : message === "Forbidden" ? 403 : 500;
