@@ -149,17 +149,32 @@ async function fetchByRequestId(
   orderAscending = false,
 ) {
   const requestColumns = ["request_id", "support_request_id"];
-  for (const column of requestColumns) {
+  const orderColumns = ["created_at", "changed_at", "updated_at", "assigned_at"];
+
+  async function runQuery(requestColumn: string, orderColumn: string | null) {
     let query = client
       .from(table)
       .select("*")
-      .eq(column, requestId);
-    query = query.order("created_at", { ascending: orderAscending });
+      .eq(requestColumn, requestId);
 
-    const { data, error } = await query;
-    if (!error) return (data ?? []) as AnyRow[];
-    if (isMissingColumnError(error, column)) continue;
-    throw new Error(getErrorMessage(error) || `Failed to load ${table}`);
+    if (orderColumn) {
+      query = query.order(orderColumn, { ascending: orderAscending });
+    }
+    return await query;
+  }
+
+  for (const column of requestColumns) {
+    for (const orderColumn of [...orderColumns, null]) {
+      const { data, error } = await runQuery(column, orderColumn);
+      if (!error) return (data ?? []) as AnyRow[];
+      if (isMissingColumnError(error, column)) {
+        break;
+      }
+      if (orderColumn && isMissingColumnError(error, orderColumn)) {
+        continue;
+      }
+      throw new Error(getErrorMessage(error) || `Failed to load ${table}`);
+    }
   }
   return [] as AnyRow[];
 }
