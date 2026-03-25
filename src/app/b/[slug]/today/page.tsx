@@ -75,6 +75,15 @@ type ChecklistCalendarRow = {
   created_at: string;
 };
 
+function isSchemaMissingError(error: { message?: string } | null | undefined) {
+  const msg = String(error?.message ?? "").toLowerCase();
+  return (
+    (msg.includes("schema cache") && msg.includes("could not find")) ||
+    (msg.includes("column") && msg.includes("does not exist")) ||
+    (msg.includes("relation") && msg.includes("does not exist"))
+  );
+}
+
 function upperRole(
   value: string | null | undefined,
 ): "OWNER" | "MANAGER" | "GUEST" {
@@ -248,6 +257,9 @@ export default async function TodayFollowUpsPage({
 
         return fallbackQuery;
       }
+      if (isSchemaMissingError(error)) {
+        return { data: [], error: null as null };
+      }
       throw new Error(error.message);
     }
 
@@ -282,7 +294,12 @@ export default async function TodayFollowUpsPage({
   ]);
 
   if (ordersResult.error) throw ordersResult.error;
-  if (checklistResult.error) throw checklistResult.error;
+  const checklistRows = isSchemaMissingError(checklistResult.error)
+    ? []
+    : ((checklistResult.data ?? []) as ChecklistCalendarRow[]);
+  if (checklistResult.error && !isSchemaMissingError(checklistResult.error)) {
+    throw checklistResult.error;
+  }
 
   const followUpRows = ((followUpsResultSafe.data ?? []) as FollowUpRow[]).map(
     (row) => ({
@@ -300,8 +317,6 @@ export default async function TodayFollowUpsPage({
   const calendarOrderRows = (
     (ordersResult.data ?? []) as OrderLookupRow[]
   ).filter((row) => !isTerminalStatus(String(row.status ?? "")));
-  const checklistRows = (checklistResult.data ?? []) as ChecklistCalendarRow[];
-
   const orderIds = [
     ...new Set(
       [
@@ -433,7 +448,7 @@ export default async function TodayFollowUpsPage({
   ).length;
   let hasStartedDay = false;
 
-  const { data: workDayRow } = await supabase
+  const { data: workDayRow, error: workDayError } = await supabase
     .from("work_days")
     .select("status")
     .eq("business_id", currentBusiness.id)
@@ -441,11 +456,16 @@ export default async function TodayFollowUpsPage({
     .eq("work_date", getTodayDateOnly())
     .maybeSingle();
 
-  hasStartedDay = ["running", "paused", "finished"].includes(
-    String((workDayRow as WorkDayLookupRow | null)?.status ?? "")
-      .trim()
-      .toLowerCase(),
-  );
+  if (workDayError && !isSchemaMissingError(workDayError)) {
+    throw workDayError;
+  }
+  if (!workDayError) {
+    hasStartedDay = ["running", "paused", "finished"].includes(
+      String((workDayRow as WorkDayLookupRow | null)?.status ?? "")
+        .trim()
+        .toLowerCase(),
+    );
+  }
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-transparent text-slate-900">
