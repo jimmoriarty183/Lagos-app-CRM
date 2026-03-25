@@ -171,7 +171,12 @@ export default async function TodayFollowUpsPage({
     redirect(buildScopedHref("/app/crm", phoneRaw));
   }
 
-  await ensureWorkspaceForBusiness(admin, String(currentBusiness.id));
+  try {
+    await ensureWorkspaceForBusiness(admin, String(currentBusiness.id));
+  } catch (error) {
+    // Do not crash Today page if workspace bootstrap fails on legacy/prod data.
+    console.error("[today/page] ensureWorkspaceForBusiness failed", error);
+  }
 
   const role = upperRole(
     membershipRows.find((entry) => entry.business_id === currentBusiness.id)
