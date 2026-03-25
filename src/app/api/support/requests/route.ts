@@ -32,59 +32,17 @@ function isCreatedByForeignKeyError(error: unknown) {
   );
 }
 
-async function ensureActorRows(
-  admin: ReturnType<typeof supabaseAdmin>,
-  user: { id: string; email?: string | null; user_metadata?: Record<string, unknown> | null },
-) {
-  const firstName = cleanText(user.user_metadata?.first_name);
-  const lastName = cleanText(user.user_metadata?.last_name);
-  const fullName = cleanText(user.user_metadata?.full_name || `${firstName} ${lastName}`.trim());
-
-  const profilePayloads: Record<string, unknown>[] = [
-    { id: user.id, email: cleanText(user.email) || null, first_name: firstName || null, last_name: lastName || null, full_name: fullName || null },
-    { id: user.id, email: cleanText(user.email) || null, full_name: fullName || null },
-    { id: user.id, email: cleanText(user.email) || null },
-    { id: user.id },
-  ];
-
-  for (const payload of profilePayloads) {
-    const { error } = await admin.from("profiles").upsert(payload, { onConflict: "id" });
-    if (!error) break;
-    const message = getErrorMessage(error).toLowerCase();
-    if (!(message.includes("column") && (message.includes("does not exist") || message.includes("schema cache")))) {
-      break;
-    }
-  }
-
-  const usersPayloads: Record<string, unknown>[] = [
-    { id: user.id, email: cleanText(user.email) || null, full_name: fullName || null, first_name: firstName || null, last_name: lastName || null },
-    { id: user.id, email: cleanText(user.email) || null, full_name: fullName || null },
-    { id: user.id, email: cleanText(user.email) || null },
-    { id: user.id },
-  ];
-
-  for (const payload of usersPayloads) {
-    const { error } = await admin.from("users").upsert(payload, { onConflict: "id" });
-    if (!error) break;
-    const message = getErrorMessage(error).toLowerCase();
-    if (
-      message.includes("relation") && message.includes("does not exist")
-    ) {
-      break;
-    }
-    if (!(message.includes("column") && (message.includes("does not exist") || message.includes("schema cache")))) {
-      break;
-    }
-  }
-}
-
 async function resolveSupportActorId(
   admin: ReturnType<typeof supabaseAdmin>,
   user: { id: string; email?: string | null },
 ) {
   const normalizedEmail = cleanText(user.email).toLowerCase();
 
-  const byId = await admin.from("users").select("id").eq("id", user.id).maybeSingle();
+  const byId = await admin
+    .from("users")
+    .select("id")
+    .eq("id", user.id)
+    .maybeSingle();
   if (!byId.error && byId.data?.id != null) return String(byId.data.id);
 
   if (normalizedEmail) {
@@ -96,22 +54,8 @@ async function resolveSupportActorId(
     if (!byEmail.error && byEmail.data?.id != null) return String(byEmail.data.id);
   }
 
-  await ensureActorRows(admin, { id: user.id, email: user.email });
-
-  const byIdAfterSync = await admin.from("users").select("id").eq("id", user.id).maybeSingle();
-  if (!byIdAfterSync.error && byIdAfterSync.data?.id != null) return String(byIdAfterSync.data.id);
-
-  if (normalizedEmail) {
-    const byEmailAfterSync = await admin
-      .from("users")
-      .select("id, email")
-      .ilike("email", normalizedEmail)
-      .maybeSingle();
-    if (!byEmailAfterSync.error && byEmailAfterSync.data?.id != null) return String(byEmailAfterSync.data.id);
-  }
-
   throw new Error(
-    "No matching actor in public.users for current auth user. Add/sync a row in public.users and retry.",
+    "No matching actor in public.users for current auth user and business.",
   );
 }
 
@@ -131,7 +75,20 @@ function buildTypeCandidates(value: unknown) {
   const raw = cleanText(value);
   const upper = raw.toUpperCase();
   const snake = upper.replaceAll(" ", "_");
-  return Array.from(new Set([raw, upper, raw.toLowerCase(), snake, snake.toLowerCase()].filter(Boolean)));
+  const normalized = snake.toLowerCase();
+  const aliasesByType: Record<string, string[]> = {
+    integration: ["integration", "feature_request", "feature", "bug"],
+    account_access: ["account_access", "account", "access", "bug"],
+    feature_request: ["feature_request", "feature", "improvement", "bug"],
+    billing: ["billing", "payment", "invoice", "bug"],
+    bug: ["bug", "issue", "defect"],
+  };
+  const aliases = aliasesByType[normalized] ?? [];
+  return Array.from(
+    new Set(
+      [raw, upper, raw.toLowerCase(), snake, snake.toLowerCase(), ...aliases, "bug", "BUG"].filter(Boolean),
+    ),
+  );
 }
 
 function buildSourceCandidates(value: unknown) {

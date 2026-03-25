@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { SupportRequestRecord } from "@/lib/support/types";
-import { formatSupportDate } from "@/lib/support/utils";
+import { formatSupportDate, normalizeEnumLabel } from "@/lib/support/utils";
 import { SupportPriorityBadge, SupportStatusBadge } from "@/components/support/SupportBadges";
 
 export function SupportRequestsListView({
@@ -54,11 +54,11 @@ export function SupportRequestsListView({
                 </td>
                 {showBusiness ? (
                   <td className="px-4 py-4 align-top text-sm text-slate-700">
-                    <div className="truncate">{item.businessLabel || item.businessId || "—"}</div>
+                    <div className="truncate">{item.businessLabel || item.businessId || "-"}</div>
                   </td>
                 ) : null}
                 <td className="px-4 py-4 align-top text-sm text-slate-700">
-                  <div className="truncate">{item.type?.replaceAll("_", " ") || "—"}</div>
+                  <div className="truncate">{item.type ? normalizeEnumLabel(item.type).replaceAll("_", " ") : "-"}</div>
                 </td>
                 <td className="px-4 py-4 align-top text-sm text-slate-700">
                   <div className="truncate font-medium text-slate-900">{item.subject || "No subject"}</div>
@@ -71,7 +71,7 @@ export function SupportRequestsListView({
                 </td>
                 {showSubmitter ? (
                   <td className="px-4 py-4 align-top text-sm text-slate-700">
-                    <div className="truncate">{item.submitterLabel || item.submitterUserId || "—"}</div>
+                    <div className="truncate">{item.submitterLabel || item.submitterUserId || "-"}</div>
                   </td>
                 ) : null}
                 <td className="px-4 py-4 align-top text-sm text-slate-700">{formatSupportDate(item.createdAt)}</td>
@@ -84,4 +84,3 @@ export function SupportRequestsListView({
     </div>
   );
 }
-
