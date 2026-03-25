@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase/server";
-import { SUPPORT_ATTACHMENT_BUCKET } from "@/lib/support/utils";
+import { SUPPORT_ATTACHMENT_BUCKET, sanitizeFileName } from "@/lib/support/utils";
 
 function cleanText(value: unknown) {
   return String(value ?? "").trim();
@@ -18,11 +18,22 @@ function parseStorage(input: Record<string, unknown>) {
   }
   const [pathBucket, ...rest] = storagePath.split("/");
   if (!pathBucket || rest.length === 0) return null;
+  // If storage_path is already in canonical object form (<business_id>/<request_id>/<filename>),
+  // do not treat the first folder as bucket.
+  if (/^[0-9a-f-]{36}$/i.test(pathBucket) && rest.length >= 2) {
+    return { bucket, objectPath: storagePath };
+  }
   return { bucket: pathBucket, objectPath: rest.join("/") };
 }
 
 function getErrorMessage(error: unknown) {
   return cleanText((error as { message?: string } | null)?.message) || "Unknown error";
+}
+
+function uniqueNonEmpty(values: Array<string | null | undefined>) {
+  return Array.from(
+    new Set(values.map((v) => cleanText(v)).filter(Boolean)),
+  );
 }
 
 export async function GET(
@@ -66,17 +77,66 @@ export async function GET(
       cleanText((attachment as Record<string, unknown>).file_name) ||
       cleanText((attachment as Record<string, unknown>).filename) ||
       "attachment";
-    const { data: signed, error: signError } = await supabase.storage
-      .from(parsed.bucket)
-      .createSignedUrl(parsed.objectPath, 60, shouldDownload ? { download: fileName } : undefined);
 
-    if (signError || !signed?.signedUrl) {
-      return NextResponse.json({ ok: false, error: getErrorMessage(signError) }, { status: 500 });
+    const requestId =
+      cleanText((attachment as Record<string, unknown>).request_id) ||
+      cleanText((attachment as Record<string, unknown>).support_request_id);
+    const attachmentBusinessId = cleanText((attachment as Record<string, unknown>).business_id);
+
+    let businessId = attachmentBusinessId;
+    if (!businessId && requestId) {
+      const { data: requestRow } = await supabase
+        .from("support_requests")
+        .select("business_id")
+        .eq("id", requestId)
+        .maybeSingle();
+      businessId = cleanText((requestRow as Record<string, unknown> | null)?.business_id);
     }
 
-    return NextResponse.redirect(signed.signedUrl, { status: 302 });
+    const storagePath = cleanText((attachment as Record<string, unknown>).storage_path) || cleanText((attachment as Record<string, unknown>).path);
+    const canonicalPath =
+      businessId && requestId
+        ? `${businessId}/${requestId}/${sanitizeFileName(fileName)}`
+        : "";
+
+    const objectPathCandidates = uniqueNonEmpty([
+      parsed.objectPath,
+      storagePath,
+      storagePath.startsWith(`${SUPPORT_ATTACHMENT_BUCKET}/`) ? storagePath.slice(SUPPORT_ATTACHMENT_BUCKET.length + 1) : "",
+      canonicalPath,
+      sanitizeFileName(fileName),
+    ]);
+
+    const bucketCandidates = uniqueNonEmpty([
+      parsed.bucket,
+      cleanText((attachment as Record<string, unknown>).storage_bucket),
+      SUPPORT_ATTACHMENT_BUCKET,
+    ]);
+
+    let signedUrl: string | null = null;
+    let lastSignError = "Object not found";
+
+    for (const bucket of bucketCandidates) {
+      for (const objectPath of objectPathCandidates) {
+        const { data: signed, error: signError } = await supabase.storage
+          .from(bucket)
+          .createSignedUrl(objectPath, 60, shouldDownload ? { download: fileName } : undefined);
+
+        if (!signError && signed?.signedUrl) {
+          signedUrl = signed.signedUrl;
+          break;
+        }
+        lastSignError = getErrorMessage(signError) || lastSignError;
+      }
+      if (signedUrl) break;
+    }
+
+    if (!signedUrl) {
+      return NextResponse.json({ ok: false, error: lastSignError }, { status: 500 });
+    }
+
+    return NextResponse.redirect(signedUrl, { status: 302 });
   } catch (error) {
     return NextResponse.json({ ok: false, error: getErrorMessage(error) }, { status: 500 });
   }
 }
-

@@ -2,7 +2,7 @@ import type { SupportAttachmentRecord } from "@/lib/support/types";
 import { formatSupportDate } from "@/lib/support/utils";
 
 function formatFileSize(size: number | null) {
-  if (!size || size <= 0) return "—";
+  if (!size || size <= 0) return "-";
   if (size < 1024) return `${size} B`;
   if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
   return `${(size / (1024 * 1024)).toFixed(1)} MB`;
@@ -31,7 +31,7 @@ export function SupportAttachmentsPanel({
               <div className="min-w-0">
                 <div className="truncate font-medium text-slate-900">{item.fileName}</div>
                 <div className="mt-0.5 text-xs text-slate-500">
-                  {item.mimeType || "file"} • {formatFileSize(item.fileSize)} • {formatSupportDate(item.createdAt)}
+                  {item.mimeType || "file"} - {formatFileSize(item.fileSize)} - {formatSupportDate(item.createdAt)}
                 </div>
               </div>
               <span className="ml-3 text-xs font-semibold text-slate-600">Download</span>
@@ -42,4 +42,3 @@ export function SupportAttachmentsPanel({
     </section>
   );
 }
-
