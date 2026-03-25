@@ -7,10 +7,6 @@ type Props = {
   requestId: string;
   initialStatus: string;
   initialPriority: string;
-  initialAssignedUserId: string;
-  assignees?: Array<{ id: string; label: string }>;
-  requesterEmail?: string | null;
-  requesterUserId?: string | null;
 };
 
 const STATUS_OPTIONS = [
@@ -25,10 +21,6 @@ export function SupportAdminActionsPanel({
   requestId,
   initialStatus,
   initialPriority,
-  initialAssignedUserId,
-  assignees = [],
-  requesterEmail,
-  requesterUserId,
 }: Props) {
   const router = useRouter();
   const [status, setStatus] = useState(
@@ -36,7 +28,6 @@ export function SupportAdminActionsPanel({
       ? String(initialStatus).toLowerCase()
       : STATUS_OPTIONS[0].value,
   );
-  const [assignedUserId, setAssignedUserId] = useState(initialAssignedUserId);
   const [customerReply, setCustomerReply] = useState("");
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
@@ -53,7 +44,6 @@ export function SupportAdminActionsPanel({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           status: status.trim(),
-          assignedToUserId: assignedUserId.trim() || null,
           customerReply: customerReply.trim() || null,
         }),
       });
@@ -99,11 +89,6 @@ export function SupportAdminActionsPanel({
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
       <h3 className="text-sm font-semibold text-slate-900">Actions</h3>
-      <div className="mt-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
-        <div>
-          Reply target: <span className="font-semibold text-slate-800">{requesterEmail || requesterUserId || "-"}</span>
-        </div>
-      </div>
 
       <div className="mt-3 space-y-3">
         <label className="space-y-1.5 text-sm">
@@ -127,21 +112,6 @@ export function SupportAdminActionsPanel({
             readOnly
             className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-600 outline-none"
           />
-        </label>
-        <label className="space-y-1.5 text-sm">
-          <span className="font-medium text-slate-700">Assign to team member</span>
-          <select
-            value={assignedUserId}
-            onChange={(event) => setAssignedUserId(event.target.value)}
-            className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
-          >
-            <option value="">Unassigned</option>
-            {assignees.map((person) => (
-              <option key={person.id} value={person.id}>
-                {person.label}
-              </option>
-            ))}
-          </select>
         </label>
         <label className="space-y-1.5 text-sm">
           <span className="font-medium text-slate-700">Customer reply (visible to requester)</span>
