@@ -17,6 +17,25 @@ import { SupportNotesPanel } from "@/components/support/SupportNotesPanel";
 import { SupportAssignmentsPanel } from "@/components/support/SupportAssignmentsPanel";
 import { SupportAdminActionsPanel } from "@/components/support/SupportAdminActionsPanel";
 
+type JoinedProfile = {
+  id?: string | null;
+  full_name?: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
+  email?: string | null;
+} | null;
+
+function cleanText(value: unknown) {
+  return String(value ?? "").trim();
+}
+
+function toRoleLabel(value: string) {
+  const normalized = cleanText(value).toUpperCase();
+  if (normalized === "OWNER") return "Owner";
+  if (normalized === "MANAGER") return "Manager";
+  return "Member";
+}
+
 export default async function AdminSupportRequestDetailsPage({
   params,
 }: {
@@ -35,6 +54,33 @@ export default async function AdminSupportRequestDetailsPage({
     fetchSupportInternalNotes(supabase, requestId),
     fetchSupportAssignments(supabase, requestId),
   ]);
+
+  const { data: assigneeRows } = await supabase
+    .from("memberships")
+    .select("user_id, role, profiles:profiles(id, full_name, first_name, last_name, email)")
+    .eq("business_id", request.businessId ?? "")
+    .order("created_at", { ascending: true });
+
+  const assignees = ((assigneeRows ?? []) as Array<{
+    user_id?: string | null;
+    role?: string | null;
+    profiles?: JoinedProfile | JoinedProfile[];
+  }>)
+    .map((row) => {
+      const profile = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles;
+      const id = cleanText(row.user_id ?? profile?.id);
+      if (!id) return null;
+      const name =
+        cleanText(profile?.full_name) ||
+        `${cleanText(profile?.first_name)} ${cleanText(profile?.last_name)}`.trim() ||
+        cleanText(profile?.email) ||
+        id;
+      return {
+        id,
+        label: `${name} (${toRoleLabel(cleanText(row.role))})`,
+      };
+    })
+    .filter((entry): entry is { id: string; label: string } => Boolean(entry));
 
   return (
     <AdminShell
@@ -73,10 +119,12 @@ export default async function AdminSupportRequestDetailsPage({
             initialStatus={request.status || ""}
             initialPriority={request.priority || ""}
             initialAssignedUserId={request.assignedUserId || ""}
+            assignees={assignees}
+            requesterEmail={request.contactEmail}
+            requesterUserId={request.submitterUserId}
           />
         </div>
       </div>
     </AdminShell>
   );
 }
-

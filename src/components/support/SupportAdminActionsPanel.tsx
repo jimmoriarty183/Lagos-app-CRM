@@ -8,18 +8,36 @@ type Props = {
   initialStatus: string;
   initialPriority: string;
   initialAssignedUserId: string;
+  assignees?: Array<{ id: string; label: string }>;
+  requesterEmail?: string | null;
+  requesterUserId?: string | null;
 };
+
+const STATUS_OPTIONS = [
+  { value: "new", label: "New" },
+  { value: "in_progress", label: "In progress" },
+  { value: "waiting_for_customer", label: "Waiting for customer" },
+  { value: "resolved", label: "Resolved" },
+  { value: "closed", label: "Closed" },
+] as const;
 
 export function SupportAdminActionsPanel({
   requestId,
   initialStatus,
   initialPriority,
   initialAssignedUserId,
+  assignees = [],
+  requesterEmail,
+  requesterUserId,
 }: Props) {
   const router = useRouter();
-  const [status, setStatus] = useState(initialStatus);
-  const [priority, setPriority] = useState(initialPriority);
+  const [status, setStatus] = useState(
+    STATUS_OPTIONS.some((entry) => entry.value === String(initialStatus).toLowerCase())
+      ? String(initialStatus).toLowerCase()
+      : STATUS_OPTIONS[0].value,
+  );
   const [assignedUserId, setAssignedUserId] = useState(initialAssignedUserId);
+  const [customerReply, setCustomerReply] = useState("");
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -35,14 +53,15 @@ export function SupportAdminActionsPanel({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           status: status.trim(),
-          priority: priority.trim(),
           assignedToUserId: assignedUserId.trim() || null,
+          customerReply: customerReply.trim() || null,
         }),
       });
       const data = (await response.json()) as { ok?: boolean; error?: string };
       if (!response.ok || !data.ok) {
         throw new Error(data.error || "Failed to update request");
       }
+      setCustomerReply("");
       setSuccess("Request updated.");
       router.refresh();
     } catch (actionError) {
@@ -80,31 +99,57 @@ export function SupportAdminActionsPanel({
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
       <h3 className="text-sm font-semibold text-slate-900">Actions</h3>
+      <div className="mt-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+        <div>
+          Reply target: <span className="font-semibold text-slate-800">{requesterEmail || requesterUserId || "-"}</span>
+        </div>
+      </div>
 
       <div className="mt-3 space-y-3">
         <label className="space-y-1.5 text-sm">
           <span className="font-medium text-slate-700">Status</span>
-          <input
+          <select
             value={status}
             onChange={(event) => setStatus(event.target.value)}
-            className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
+            className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
+          >
+            {STATUS_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="space-y-1.5 text-sm">
+          <span className="font-medium text-slate-700">Priority (fixed after creation)</span>
+          <input
+            value={initialPriority || "-"}
+            readOnly
+            className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-600 outline-none"
           />
         </label>
         <label className="space-y-1.5 text-sm">
-          <span className="font-medium text-slate-700">Priority</span>
-          <input
-            value={priority}
-            onChange={(event) => setPriority(event.target.value)}
-            className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
-          />
-        </label>
-        <label className="space-y-1.5 text-sm">
-          <span className="font-medium text-slate-700">Assign to user id</span>
-          <input
+          <span className="font-medium text-slate-700">Assign to team member</span>
+          <select
             value={assignedUserId}
             onChange={(event) => setAssignedUserId(event.target.value)}
-            placeholder="UUID or empty for unassigned"
-            className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
+            className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
+          >
+            <option value="">Unassigned</option>
+            {assignees.map((person) => (
+              <option key={person.id} value={person.id}>
+                {person.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="space-y-1.5 text-sm">
+          <span className="font-medium text-slate-700">Customer reply (visible to requester)</span>
+          <textarea
+            value={customerReply}
+            onChange={(event) => setCustomerReply(event.target.value)}
+            placeholder="Type reply that requester should see..."
+            className="min-h-[84px] w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
           />
         </label>
 
@@ -120,7 +165,7 @@ export function SupportAdminActionsPanel({
 
       <div className="mt-4 border-t border-slate-200 pt-4">
         <label className="space-y-1.5 text-sm">
-          <span className="font-medium text-slate-700">Add internal note</span>
+          <span className="font-medium text-slate-700">Add internal note (team only)</span>
           <textarea
             value={note}
             onChange={(event) => setNote(event.target.value)}
@@ -142,4 +187,3 @@ export function SupportAdminActionsPanel({
     </section>
   );
 }
-
