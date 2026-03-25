@@ -9,6 +9,7 @@ export type NotificationType =
   | "order_assigned"
   | "order_reassigned"
   | "important_comment_received"
+  | "support_request_updated"
   | "invitation_received";
 
 export type NotificationRow = {
@@ -276,6 +277,19 @@ export async function GET(request: Request) {
             title = `You were invited to a workspace`;
             preview = String(metadata.role ?? "MANAGER");
             break;
+          case "support_request_updated": {
+            const supportRequestId = String(
+              metadata.support_request_id ?? notification.entity_id ?? "",
+            ).trim();
+            const status = String(metadata.status ?? "").trim();
+            title = supportRequestId
+              ? `Support request #${supportRequestId} updated`
+              : "Support request updated";
+            preview = status
+              ? `Status: ${status.replaceAll("_", " ")}`
+              : String(metadata.customer_reply ?? "").trim() || null;
+            break;
+          }
           default:
             title =
               notification.entity_type === "order_comment"

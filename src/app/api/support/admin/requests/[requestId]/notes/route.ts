@@ -17,16 +17,38 @@ function isMissingColumnError(error: unknown, column: string) {
   );
 }
 
-async function requirePlatformAdmin(supabase: Awaited<ReturnType<typeof supabaseServer>>) {
+async function requireSupportOperator(
+  supabase: Awaited<ReturnType<typeof supabaseServer>>,
+  requestId: string,
+) {
   const {
     data: { user },
     error,
   } = await supabase.auth.getUser();
   if (error || !user) throw new Error("Unauthorized");
 
-  const { data: isAdmin, error: adminError } = await supabase.rpc("is_platform_admin");
-  if (adminError) throw new Error(getErrorMessage(adminError));
-  if (!isAdmin) throw new Error("Forbidden");
+  const { data: isAdmin } = await supabase.rpc("is_platform_admin");
+  if (isAdmin) return user.id;
+
+  const { data: requestRow, error: requestError } = await supabase
+    .from("support_requests")
+    .select("business_id")
+    .eq("id", requestId)
+    .maybeSingle();
+  if (requestError || !requestRow) throw new Error("Support request not found");
+
+  const businessId = cleanText((requestRow as Record<string, unknown>).business_id);
+  if (!businessId) throw new Error("Support request business is missing");
+
+  const { data: membership } = await supabase
+    .from("memberships")
+    .select("role")
+    .eq("business_id", businessId)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  const role = cleanText((membership as Record<string, unknown> | null)?.role).toUpperCase();
+  if (!["OWNER", "MANAGER"].includes(role)) throw new Error("Forbidden");
 
   return user.id;
 }
@@ -48,7 +70,7 @@ export async function POST(
     }
 
     const supabase = await supabaseServer();
-    const userId = await requirePlatformAdmin(supabase);
+    const userId = await requireSupportOperator(supabase, requestId);
 
     const payloads = [
       { request_id: requestId, note, created_by_user_id: userId },
@@ -62,7 +84,7 @@ export async function POST(
     let lastError = "Failed to insert internal note";
 
     for (const payload of payloads) {
-      let nextPayload: Record<string, unknown> = { ...payload };
+      const nextPayload: Record<string, unknown> = { ...payload };
       const optionalColumns = ["created_by_user_id"];
 
       while (true) {
@@ -90,4 +112,3 @@ export async function POST(
     return NextResponse.json({ ok: false, error: message }, { status });
   }
 }
-

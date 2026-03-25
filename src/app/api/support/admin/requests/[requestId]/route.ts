@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase/server";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 
 function cleanText(value: unknown) {
   return String(value ?? "").trim();
@@ -17,19 +18,98 @@ function isMissingColumnError(error: unknown, column: string) {
   );
 }
 
-async function requirePlatformAdmin(supabase: Awaited<ReturnType<typeof supabaseServer>>) {
+async function canManageSupportRequest(
+  supabase: Awaited<ReturnType<typeof supabaseServer>>,
+  requestId: string,
+) {
   const {
     data: { user },
     error,
   } = await supabase.auth.getUser();
   if (error || !user) throw new Error("Unauthorized");
 
-  const { data: isAdmin, error: adminError } = await supabase.rpc("is_platform_admin");
-  if (adminError) {
-    throw new Error(getErrorMessage(adminError));
+  const { data: isAdmin } = await supabase.rpc("is_platform_admin");
+  if (isAdmin) {
+    return { userId: user.id, requestBusinessId: null as string | null, requesterUserId: null as string | null, currentStatus: null as string | null, subject: null as string | null };
   }
-  if (!isAdmin) {
+
+  const { data: requestRow, error: requestError } = await supabase
+    .from("support_requests")
+    .select("id, business_id, created_by_user_id, status, subject")
+    .eq("id", requestId)
+    .maybeSingle();
+
+  if (requestError || !requestRow) throw new Error("Support request not found");
+
+  const businessId = cleanText((requestRow as Record<string, unknown>).business_id);
+  if (!businessId) throw new Error("Support request business is missing");
+
+  const { data: membership } = await supabase
+    .from("memberships")
+    .select("role")
+    .eq("business_id", businessId)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  const role = cleanText((membership as Record<string, unknown> | null)?.role).toUpperCase();
+  if (!["OWNER", "MANAGER"].includes(role)) {
     throw new Error("Forbidden");
+  }
+
+  return {
+    userId: user.id,
+    requestBusinessId: businessId,
+    requesterUserId: cleanText((requestRow as Record<string, unknown>).created_by_user_id) || null,
+    currentStatus: cleanText((requestRow as Record<string, unknown>).status) || null,
+    subject: cleanText((requestRow as Record<string, unknown>).subject) || null,
+  };
+}
+
+async function notifyRequesterBestEffort(input: {
+  recipientUserId: string | null;
+  actorUserId: string;
+  requestId: string;
+  businessId: string | null;
+  status: string | null;
+  previousStatus: string | null;
+  customerReply: string | null;
+  subject: string | null;
+}) {
+  if (!input.recipientUserId) return;
+
+  const admin = supabaseAdmin();
+  const metadata = {
+    business_id: input.businessId,
+    support_request_id: input.requestId,
+    previous_status: input.previousStatus,
+    status: input.status,
+    customer_reply: input.customerReply,
+    subject: input.subject,
+  };
+
+  const payloads: Record<string, unknown>[] = [
+    {
+      recipient_user_id: input.recipientUserId,
+      actor_user_id: input.actorUserId,
+      type: "support_request_updated",
+      entity_type: "support_request",
+      entity_id: input.requestId,
+      metadata,
+    },
+    {
+      workspace_id: input.businessId,
+      recipient_user_id: input.recipientUserId,
+      actor_user_id: input.actorUserId,
+      type: "support_request_updated",
+      entity_type: "support_request",
+      entity_id: input.requestId,
+      metadata,
+    },
+  ];
+
+  for (const payload of payloads) {
+    const { error } = await admin.from("notifications").insert(payload);
+    if (!error) return;
   }
 }
 
@@ -56,7 +136,7 @@ export async function PATCH(
     const customerReply = cleanText(body.customerReply);
 
     const supabase = await supabaseServer();
-    await requirePlatformAdmin(supabase);
+    const access = await canManageSupportRequest(supabase, requestId);
 
     if (!status && !priority && body.assignedToUserId === undefined && !customerReply) {
       return NextResponse.json({ ok: false, error: "Nothing to update" }, { status: 400 });
@@ -134,6 +214,17 @@ export async function PATCH(
         return NextResponse.json({ ok: false, error: "Failed to save customer reply" }, { status: 500 });
       }
     }
+
+    await notifyRequesterBestEffort({
+      recipientUserId: access.requesterUserId,
+      actorUserId: access.userId,
+      requestId,
+      businessId: access.requestBusinessId,
+      status: status || access.currentStatus,
+      previousStatus: access.currentStatus,
+      customerReply: customerReply || null,
+      subject: access.subject,
+    });
 
     return NextResponse.json({ ok: true });
   } catch (error) {

@@ -77,16 +77,16 @@ function buildTypeCandidates(value: unknown) {
   const snake = upper.replaceAll(" ", "_");
   const normalized = snake.toLowerCase();
   const aliasesByType: Record<string, string[]> = {
-    integration: ["integration", "feature_request", "feature", "bug"],
-    account_access: ["account_access", "account", "access", "bug"],
-    feature_request: ["feature_request", "feature", "improvement", "bug"],
-    billing: ["billing", "payment", "invoice", "bug"],
-    bug: ["bug", "issue", "defect"],
+    integration: ["integration"],
+    account_access: ["account_access"],
+    feature_request: ["feature_request"],
+    billing: ["billing"],
+    bug: ["bug"],
   };
-  const aliases = aliasesByType[normalized] ?? [];
+  const aliases = aliasesByType[normalized] ?? [normalized];
   return Array.from(
     new Set(
-      [raw, upper, raw.toLowerCase(), snake, snake.toLowerCase(), ...aliases, "bug", "BUG"].filter(Boolean),
+      [raw, upper, raw.toLowerCase(), snake, snake.toLowerCase(), ...aliases].filter(Boolean),
     ),
   );
 }

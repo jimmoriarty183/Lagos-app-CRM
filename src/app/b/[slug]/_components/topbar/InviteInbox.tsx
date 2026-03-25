@@ -50,6 +50,8 @@ function getNotificationIcon(type: NotificationType) {
       return "→";
     case "important_comment_received":
       return "💬";
+    case "support_request_updated":
+      return "🛠";
     case "invitation_received":
       return "✉️";
     default:
@@ -200,8 +202,13 @@ export default function InviteInbox({
       // Navigate based on notification type
       startTransition(() => {
         setOpen(false);
+        const supportRequestId = String(
+          notification.metadata?.support_request_id ?? notification.entity_id ?? "",
+        ).trim();
 
-        if (notification.order_id) {
+        if (notification.entity_type === "support_request" && supportRequestId) {
+          router.push(`/b/${currentBusinessSlug}/support/${encodeURIComponent(supportRequestId)}`);
+        } else if (notification.order_id) {
           router.push(
             `/b/${currentBusinessSlug}?focusOrder=${encodeURIComponent(notification.order_id)}`,
           );
