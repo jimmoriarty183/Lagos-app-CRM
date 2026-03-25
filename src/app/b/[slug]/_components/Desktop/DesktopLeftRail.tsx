@@ -11,6 +11,7 @@ import {
   ChevronsLeft,
   ChevronsRight,
   GraduationCap,
+  LifeBuoy,
   Settings,
   SlidersHorizontal,
 } from "lucide-react";
@@ -49,7 +50,7 @@ type Props = {
   startDate: string | null;
   endDate: string | null;
   actor: string;
-  sort: OrderSort;
+  sort?: OrderSort;
   actors: TeamActor[];
   currentUserId: string | null;
   hasActiveFilters: boolean;
@@ -59,10 +60,11 @@ type Props = {
   analyticsHref?: string;
   todayHref?: string;
   settingsHref: string;
+  supportHref?: string;
   adminHref?: string;
   canSeeAnalytics: boolean;
   showFilters?: boolean;
-  activeSection?: "crm" | "analytics" | "today" | "settings" | "admin";
+  activeSection?: "crm" | "analytics" | "today" | "support" | "settings" | "admin";
   layoutMode?: "list" | "kanban";
 };
 
@@ -268,7 +270,7 @@ export default function DesktopLeftRail({
   startDate,
   endDate,
   actor,
-  sort,
+  sort = "default",
   actors,
   currentUserId,
   hasActiveFilters,
@@ -278,6 +280,7 @@ export default function DesktopLeftRail({
   analyticsHref,
   todayHref,
   settingsHref,
+  supportHref,
   adminHref,
   canSeeAnalytics,
   showFilters = true,
@@ -510,6 +513,16 @@ export default function DesktopLeftRail({
                     />
                   );
                 })}
+                {supportHref ? (
+                  <RailLink
+                    icon={<LifeBuoy className="h-5 w-5" />}
+                    label="Support"
+                    description="Requests and ticket history"
+                    expanded={expanded}
+                    href={supportHref}
+                    active={activeSection === "support"}
+                  />
+                ) : null}
                 {adminHref ? (
                   <RailLink
                     icon={<Shield className="h-5 w-5" />}

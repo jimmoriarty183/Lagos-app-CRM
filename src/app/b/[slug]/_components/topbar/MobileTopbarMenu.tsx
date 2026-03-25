@@ -5,6 +5,7 @@ import {
   BarChart3,
   BriefcaseBusiness,
   CalendarDays,
+  LifeBuoy,
   Menu,
   SlidersHorizontal,
   X,
@@ -17,6 +18,7 @@ type Props = {
   canManage: boolean;
   businessHref: string;
   todayHref: string;
+  supportHref: string;
   clearHref: string;
   hasActiveFilters: boolean;
   canSeeAnalytics: boolean;
@@ -30,6 +32,7 @@ export default function MobileTopbarMenu({
   canManage,
   businessHref,
   todayHref,
+  supportHref,
   clearHref,
   hasActiveFilters,
   canSeeAnalytics,
@@ -118,6 +121,15 @@ export default function MobileTopbarMenu({
           >
             <CalendarDays className="h-4 w-4 text-gray-500" />
             <span>Today</span>
+          </a>
+
+          <a
+            href={supportHref}
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-gray-800 transition-colors hover:bg-gray-50"
+          >
+            <LifeBuoy className="h-4 w-4 text-gray-500" />
+            <span>Support</span>
           </a>
 
           {businessId && canManage ? (

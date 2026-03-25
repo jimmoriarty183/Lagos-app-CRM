@@ -127,27 +127,38 @@ export function WorkDayControls({
   const [endDayOpen, setEndDayOpen] = React.useState(false);
 
   const loadWorkDay = React.useCallback(async () => {
-    if (!canManage) return;
-
-    setIsLoading(true);
-    setErrorMessage(null);
-
-    const { data, error } = await supabase
-      .from("work_days")
-      .select("*")
-      .eq("business_id", businessId)
-      .eq("work_date", getTodayDateOnly())
-      .maybeSingle();
-
-    if (error) {
-      setErrorMessage(formatWorkDayError(error));
-      setWorkDay(null);
+    if (!canManage) {
       setIsLoading(false);
       return;
     }
 
-    setWorkDay((data ?? null) as WorkDayRow | null);
-    setIsLoading(false);
+    setIsLoading(true);
+    setErrorMessage(null);
+    try {
+      const controller = new AbortController();
+      const timeoutId = window.setTimeout(() => controller.abort(), 8000);
+      const { data, error } = await supabase
+        .from("work_days")
+        .select("*")
+        .eq("business_id", businessId)
+        .eq("work_date", getTodayDateOnly())
+        .abortSignal(controller.signal)
+        .maybeSingle();
+      window.clearTimeout(timeoutId);
+
+      if (error) {
+        setErrorMessage(formatWorkDayError(error));
+        setWorkDay(null);
+        return;
+      }
+
+      setWorkDay((data ?? null) as WorkDayRow | null);
+    } catch (error) {
+      setErrorMessage(formatWorkDayError(error));
+      setWorkDay(null);
+    } finally {
+      setIsLoading(false);
+    }
   }, [businessId, canManage, supabase]);
 
   React.useEffect(() => {
@@ -176,19 +187,7 @@ export function WorkDayControls({
   }, [workDay?.status]);
 
   async function handleAction(action: "start" | "pause" | "resume") {
-    // Debug log for mobile
-    console.log("[WorkDayControls] handleAction called:", {
-      action,
-      isSubmitting,
-      isLoading,
-      status,
-      canManage,
-      businessId,
-      userAgent: typeof navigator !== "undefined" ? navigator.userAgent : "ssr",
-    });
-
     if (isSubmitting) {
-      console.log("[WorkDayControls] Already submitting, returning");
       return;
     }
 
@@ -196,7 +195,6 @@ export function WorkDayControls({
     setErrorMessage(null);
 
     try {
-      console.log("[WorkDayControls] Executing action:", action);
       if (action === "start") {
         await startWorkDay({ businessId, businessSlug });
       } else if (action === "pause") {
@@ -205,12 +203,10 @@ export function WorkDayControls({
         await resumeWorkDay({ businessId, businessSlug });
       }
 
-      console.log("[WorkDayControls] Action completed, reloading");
       await loadWorkDay();
       emitWorkDayUpdated();
       onActionComplete?.();
     } catch (error) {
-      console.error("[WorkDayControls] Action failed:", error);
       setErrorMessage(formatWorkDayError(error) || "Failed to update work day");
     } finally {
       setIsSubmitting(false);

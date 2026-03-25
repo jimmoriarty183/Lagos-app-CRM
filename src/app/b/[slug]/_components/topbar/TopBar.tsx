@@ -22,6 +22,7 @@ type Props = {
   businessId?: string;
   businessHref?: string;
   todayHref?: string;
+  supportHref?: string;
   settingsHref?: string;
   adminHref?: string;
   clearHref?: string;
@@ -38,6 +39,7 @@ export default function TopBar({
   businessId,
   businessHref,
   todayHref,
+  supportHref,
   settingsHref,
   adminHref,
   clearHref,
@@ -75,6 +77,7 @@ export default function TopBar({
               canManage={canManage}
               businessHref={businessHref ?? dashboardHref}
               todayHref={todayHref ?? businessHref ?? dashboardHref}
+              supportHref={supportHref ?? `/b/${businessSlug}/support`}
               clearHref={clearHref ?? dashboardHref}
               hasActiveFilters={hasActiveFilters}
               canSeeAnalytics={role === "OWNER"}

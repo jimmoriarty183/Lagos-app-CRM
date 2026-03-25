@@ -550,6 +550,10 @@ export default async function Page({ params, searchParams }: PageProps) {
     phoneRaw && phoneRaw.length > 0
       ? `/b/${slug}/today?u=${encodeURIComponent(phoneRaw)}`
       : `/b/${slug}/today`;
+  const supportHref =
+    phoneRaw && phoneRaw.length > 0
+      ? `/b/${slug}/support?u=${encodeURIComponent(phoneRaw)}`
+      : `/b/${slug}/support`;
   const { count: todoCountRaw } = await dataClient
     .from("follow_ups")
     .select("id", { count: "exact", head: true })
@@ -1213,6 +1217,7 @@ export default async function Page({ params, searchParams }: PageProps) {
         businessId={String(currentBusiness.id)}
         businessHref={businessHref}
         todayHref={todayHref}
+        supportHref={supportHref}
         settingsHref={settingsHref}
         adminHref={adminHref}
         clearHref={clearHref}
@@ -1255,6 +1260,7 @@ export default async function Page({ params, searchParams }: PageProps) {
               businessHref={businessHref}
               analyticsHref={analyticsHref}
               todayHref={todayHref}
+              supportHref={supportHref}
               settingsHref={settingsHref}
               adminHref={adminHref}
               canSeeAnalytics={canSeeAnalyticsNav}

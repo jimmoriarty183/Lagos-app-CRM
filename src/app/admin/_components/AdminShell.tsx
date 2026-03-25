@@ -5,6 +5,7 @@ import {
   Building2,
   HeartPulse,
   LayoutDashboard,
+  LifeBuoy,
   ListChecks,
   Shield,
   TrendingUp,
@@ -67,6 +68,12 @@ export const ADMIN_NAV: AdminNavItem[] = [
     label: "Заказы",
     description: "Агрегированный обзор использования",
     icon: <BarChart3 className="h-4 w-4" />,
+  },
+  {
+    href: "/admin/support",
+    label: "Support",
+    description: "Support requests and admin workflows",
+    icon: <LifeBuoy className="h-4 w-4" />,
   },
 ];
 

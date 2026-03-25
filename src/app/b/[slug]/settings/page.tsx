@@ -92,6 +92,7 @@ export default async function SettingsPage({
             clearHref={`/app/crm`}
             businessHref={`/app/crm`}
             analyticsHref={`/b/${business.slug}/analytics`}
+            supportHref={`/b/${business.slug}/support`}
             settingsHref={`/app/settings`}
             adminHref={adminHref}
             canSeeAnalytics={role === "OWNER"}

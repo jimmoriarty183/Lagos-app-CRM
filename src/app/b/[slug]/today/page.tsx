@@ -466,6 +466,7 @@ export default async function TodayFollowUpsPage({
   const businessHref = buildScopedHref("/app/crm", phoneRaw);
   const settingsHref = buildScopedHref("/app/settings", phoneRaw);
   const todayHref = buildScopedHref(`/b/${slug}/today`, phoneRaw);
+  const supportHref = buildScopedHref(`/b/${slug}/support`, phoneRaw);
   const analyticsHref = buildScopedHref(`/b/${slug}/analytics`, phoneRaw);
   const adminHref = isAdminEmail(user.email) ? getAdminUsersPath() : undefined;
   const todoCount = items.filter(
@@ -504,6 +505,7 @@ export default async function TodayFollowUpsPage({
         businessId={currentBusiness.id}
         businessHref={businessHref}
         todayHref={todayHref}
+        supportHref={supportHref}
         settingsHref={settingsHref}
         adminHref={adminHref}
         clearHref={todayHref}
@@ -534,6 +536,7 @@ export default async function TodayFollowUpsPage({
               businessHref={businessHref}
               analyticsHref={analyticsHref}
               todayHref={todayHref}
+              supportHref={supportHref}
               settingsHref={settingsHref}
               adminHref={adminHref}
               canSeeAnalytics={role === "OWNER"}
