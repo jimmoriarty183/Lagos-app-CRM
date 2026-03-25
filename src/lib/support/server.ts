@@ -39,6 +39,25 @@ function getErrorMessage(error: unknown) {
   return cleanText((error as { message?: string } | null)?.message);
 }
 
+function isFetchFailedError(error: unknown) {
+  const message = getErrorMessage(error).toLowerCase();
+  return message.includes("fetch failed") || message.includes("network");
+}
+
+async function withOneRetry<T>(operation: () => Promise<T>, fallbackMessage: string) {
+  try {
+    return await operation();
+  } catch (error) {
+    if (!isFetchFailedError(error)) throw error;
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    try {
+      return await operation();
+    } catch (retryError) {
+      throw new Error(getErrorMessage(retryError) || fallbackMessage);
+    }
+  }
+}
+
 function isMissingColumnError(error: unknown, column: string) {
   const message = getErrorMessage(error).toLowerCase();
   return (
@@ -204,7 +223,7 @@ export async function fetchBusinessSupportRequests(
     query = query.or(`subject.ilike.%${escaped}%,message.ilike.%${escaped}%`);
   }
 
-  const { data, error } = await query;
+  const { data, error } = await withOneRetry(() => query, "Failed to load support requests");
   if (error) throw new Error(getErrorMessage(error) || "Failed to load support requests");
   return ((data ?? []) as AnyRow[]).map(mapSupportRequest).filter((row) => row.id);
 }
@@ -213,11 +232,15 @@ export async function fetchBusinessSupportRequestById(
   client: SupabaseClient,
   requestId: string,
 ) {
-  const { data, error } = await client
-    .from("support_requests")
-    .select("*")
-    .eq("id", requestId)
-    .maybeSingle();
+  const { data, error } = await withOneRetry(
+    () =>
+      client
+        .from("support_requests")
+        .select("*")
+        .eq("id", requestId)
+        .maybeSingle(),
+    "Failed to load support request",
+  );
 
   if (error) throw new Error(getErrorMessage(error) || "Failed to load support request");
   if (!data) return null;
@@ -302,10 +325,14 @@ export async function fetchAdminSupportList(
     limit?: number;
   },
 ) {
-  const { data, error } = await client
-    .from("v_support_requests_admin")
-    .select("*")
-    .limit(filters?.limit ?? 1000);
+  const { data, error } = await withOneRetry(
+    () =>
+      client
+        .from("v_support_requests_admin")
+        .select("*")
+        .limit(filters?.limit ?? 1000),
+    "Failed to load support admin view",
+  );
 
   if (error) throw new Error(getErrorMessage(error) || "Failed to load support admin view");
   const rows = (data ?? []) as AnyRow[];
@@ -369,7 +396,10 @@ export async function fetchAdminSupportSummary(
   client: SupabaseClient,
   fallbackList?: SupportRequestRecord[],
 ) {
-  const { data, error } = await client.from("v_support_requests_summary").select("*");
+  const { data, error } = await withOneRetry(
+    () => client.from("v_support_requests_summary").select("*"),
+    "Failed to load support summary",
+  );
   if (!error && (data ?? []).length > 0) {
     const rows = (data ?? []) as AnyRow[];
     if (rows.length === 1) {

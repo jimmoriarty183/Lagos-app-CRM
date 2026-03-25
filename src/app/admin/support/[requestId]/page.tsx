@@ -44,43 +44,53 @@ export default async function AdminSupportRequestDetailsPage({
   const { workspaceHref } = await requireAdminUser("/admin/support");
   const { requestId } = await params;
   const supabase = await supabaseServerReadOnly();
-
   const request = await fetchBusinessSupportRequestById(supabase, requestId);
   if (!request) notFound();
 
-  const [attachments, history, notes, assignments] = await Promise.all([
-    fetchSupportAttachments(supabase, requestId),
-    fetchSupportStatusHistory(supabase, requestId),
-    fetchSupportInternalNotes(supabase, requestId),
-    fetchSupportAssignments(supabase, requestId),
-  ]);
+  let loadError: string | null = null;
+  let attachments: Awaited<ReturnType<typeof fetchSupportAttachments>> = [];
+  let history: Awaited<ReturnType<typeof fetchSupportStatusHistory>> = [];
+  let notes: Awaited<ReturnType<typeof fetchSupportInternalNotes>> = [];
+  let assignments: Awaited<ReturnType<typeof fetchSupportAssignments>> = [];
+  let assignees: Array<{ id: string; label: string }> = [];
 
-  const { data: assigneeRows } = await supabase
-    .from("memberships")
-    .select("user_id, role, profiles:profiles(id, full_name, first_name, last_name, email)")
-    .eq("business_id", request.businessId ?? "")
-    .order("created_at", { ascending: true });
+  try {
+    [attachments, history, notes, assignments] = await Promise.all([
+      fetchSupportAttachments(supabase, requestId),
+      fetchSupportStatusHistory(supabase, requestId),
+      fetchSupportInternalNotes(supabase, requestId),
+      fetchSupportAssignments(supabase, requestId),
+    ]);
 
-  const assignees = ((assigneeRows ?? []) as Array<{
-    user_id?: string | null;
-    role?: string | null;
-    profiles?: JoinedProfile | JoinedProfile[];
-  }>)
-    .map((row) => {
-      const profile = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles;
-      const id = cleanText(row.user_id ?? profile?.id);
-      if (!id) return null;
-      const name =
-        cleanText(profile?.full_name) ||
-        `${cleanText(profile?.first_name)} ${cleanText(profile?.last_name)}`.trim() ||
-        cleanText(profile?.email) ||
-        id;
-      return {
-        id,
-        label: `${name} (${toRoleLabel(cleanText(row.role))})`,
-      };
-    })
-    .filter((entry): entry is { id: string; label: string } => Boolean(entry));
+    const { data: assigneeRows } = await supabase
+      .from("memberships")
+      .select("user_id, role, profiles:profiles(id, full_name, first_name, last_name, email)")
+      .eq("business_id", request.businessId ?? "")
+      .order("created_at", { ascending: true });
+
+    assignees = ((assigneeRows ?? []) as Array<{
+      user_id?: string | null;
+      role?: string | null;
+      profiles?: JoinedProfile | JoinedProfile[];
+    }>)
+      .map((row) => {
+        const profile = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles;
+        const id = cleanText(row.user_id ?? profile?.id);
+        if (!id) return null;
+        const name =
+          cleanText(profile?.full_name) ||
+          `${cleanText(profile?.first_name)} ${cleanText(profile?.last_name)}`.trim() ||
+          cleanText(profile?.email) ||
+          id;
+        return {
+          id,
+          label: `${name} (${toRoleLabel(cleanText(row.role))})`,
+        };
+      })
+      .filter((entry): entry is { id: string; label: string } => Boolean(entry));
+  } catch (error) {
+    loadError = cleanText((error as { message?: string } | null)?.message) || "Failed to load request details.";
+  }
 
   return (
     <AdminShell
@@ -100,6 +110,11 @@ export default async function AdminSupportRequestDetailsPage({
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
         <div className="space-y-4">
           <SupportRequestDetailsCard request={request} showBusiness showSubmitter />
+          {loadError ? (
+            <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+              {loadError}
+            </div>
+          ) : null}
           <div className="grid gap-4 xl:grid-cols-2">
             <SupportTimeline items={history} />
             <SupportAttachmentsPanel
