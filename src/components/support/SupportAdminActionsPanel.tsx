@@ -30,14 +30,17 @@ export function SupportAdminActionsPanel({
   );
   const [customerReply, setCustomerReply] = useState("");
   const [note, setNote] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [isAddingNote, setIsAddingNote] = useState(false);
+  const [updateError, setUpdateError] = useState<string | null>(null);
+  const [noteError, setNoteError] = useState<string | null>(null);
+  const [updateSuccess, setUpdateSuccess] = useState<string | null>(null);
+  const [noteSuccess, setNoteSuccess] = useState<string | null>(null);
 
   async function updateRequest() {
-    setSaving(true);
-    setError(null);
-    setSuccess(null);
+    setIsUpdating(true);
+    setUpdateError(null);
+    setUpdateSuccess(null);
     try {
       const response = await fetch(`/api/support/admin/requests/${requestId}`, {
         method: "PATCH",
@@ -52,20 +55,20 @@ export function SupportAdminActionsPanel({
         throw new Error(data.error || "Failed to update request");
       }
       setCustomerReply("");
-      setSuccess("Request updated.");
+      setUpdateSuccess("Request updated.");
       router.refresh();
     } catch (actionError) {
-      setError(actionError instanceof Error ? actionError.message : "Unknown error");
+      setUpdateError(actionError instanceof Error ? actionError.message : "Unknown error");
     } finally {
-      setSaving(false);
+      setIsUpdating(false);
     }
   }
 
   async function addInternalNote() {
     if (!note.trim()) return;
-    setSaving(true);
-    setError(null);
-    setSuccess(null);
+    setIsAddingNote(true);
+    setNoteError(null);
+    setNoteSuccess(null);
     try {
       const response = await fetch(`/api/support/admin/requests/${requestId}/notes`, {
         method: "POST",
@@ -77,12 +80,12 @@ export function SupportAdminActionsPanel({
         throw new Error(data.error || "Failed to add note");
       }
       setNote("");
-      setSuccess("Internal note added.");
+      setNoteSuccess("Internal note added.");
       router.refresh();
     } catch (noteError) {
-      setError(noteError instanceof Error ? noteError.message : "Unknown error");
+      setNoteError(noteError instanceof Error ? noteError.message : "Unknown error");
     } finally {
-      setSaving(false);
+      setIsAddingNote(false);
     }
   }
 
@@ -126,11 +129,13 @@ export function SupportAdminActionsPanel({
         <button
           type="button"
           onClick={updateRequest}
-          disabled={saving}
+          disabled={isUpdating}
           className="inline-flex h-10 items-center rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
         >
-          {saving ? "Saving..." : "Update request"}
+          {isUpdating ? "Saving..." : "Update request"}
         </button>
+        {updateError ? <div className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{updateError}</div> : null}
+        {updateSuccess ? <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{updateSuccess}</div> : null}
       </div>
 
       <div className="mt-4 border-t border-slate-200 pt-4">
@@ -145,15 +150,14 @@ export function SupportAdminActionsPanel({
         <button
           type="button"
           onClick={addInternalNote}
-          disabled={saving || !note.trim()}
+          disabled={isAddingNote || !note.trim()}
           className="mt-3 inline-flex h-10 items-center rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          Add note
+          {isAddingNote ? "Adding..." : "Add note"}
         </button>
+        {noteError ? <div className="mt-3 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{noteError}</div> : null}
+        {noteSuccess ? <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{noteSuccess}</div> : null}
       </div>
-
-      {error ? <div className="mt-3 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</div> : null}
-      {success ? <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{success}</div> : null}
     </section>
   );
 }

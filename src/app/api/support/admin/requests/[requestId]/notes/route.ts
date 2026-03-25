@@ -72,40 +72,45 @@ export async function POST(
     const supabase = await supabaseServer();
     const userId = await requireSupportOperator(supabase, requestId);
 
-    const payloads = [
-      { request_id: requestId, note, created_by_user_id: userId },
-      { support_request_id: requestId, note, created_by_user_id: userId },
-      { request_id: requestId, message: note, created_by_user_id: userId },
-      { support_request_id: requestId, message: note, created_by_user_id: userId },
-      { request_id: requestId, body: note, created_by_user_id: userId },
-      { support_request_id: requestId, body: note, created_by_user_id: userId },
-    ];
+    const requestIdColumns = ["request_id", "support_request_id", "ticket_id", "support_ticket_id"];
+    const noteColumns = ["note", "message", "internal_note", "content", "text", "body"];
+    const authorColumns = ["created_by_user_id", "created_by", "user_id", "author_user_id"];
 
     let lastError = "Failed to insert internal note";
 
-    for (const payload of payloads) {
-      const nextPayload: Record<string, unknown> = { ...payload };
-      const optionalColumns = ["created_by_user_id"];
+    for (const reqCol of requestIdColumns) {
+      for (const noteCol of noteColumns) {
+        for (const authorCol of [...authorColumns, ""]) {
+          const payload: Record<string, unknown> = {
+            [reqCol]: requestId,
+            [noteCol]: note,
+          };
+          if (authorCol) payload[authorCol] = userId;
 
-      while (true) {
-        const { error } = await supabase.from("support_request_internal_notes").insert(nextPayload);
-        if (!error) {
-          return NextResponse.json({ ok: true });
-        }
+          const { error } = await supabase.from("support_request_internal_notes").insert(payload);
+          if (!error) {
+            return NextResponse.json({ ok: true });
+          }
 
-        lastError = getErrorMessage(error);
-        const missingOptional = optionalColumns.find(
-          (column) => Object.prototype.hasOwnProperty.call(nextPayload, column) && isMissingColumnError(error, column),
-        );
-        if (missingOptional) {
-          delete nextPayload[missingOptional];
-          continue;
+          lastError = getErrorMessage(error);
+          const missingReq = isMissingColumnError(error, reqCol);
+          const missingNote = isMissingColumnError(error, noteCol);
+          const missingAuthor = authorCol ? isMissingColumnError(error, authorCol) : false;
+
+          // If the attempt failed because current column combination does not exist, keep trying other combinations.
+          if (missingReq || missingNote || missingAuthor) {
+            continue;
+          }
+          // Any other error (RLS, FK, validation, etc.) is terminal and should be returned immediately.
+          return NextResponse.json({ ok: false, error: lastError }, { status: 500 });
         }
-        break;
       }
     }
 
-    return NextResponse.json({ ok: false, error: lastError }, { status: 500 });
+    return NextResponse.json(
+      { ok: false, error: lastError || "Could not match internal notes table columns." },
+      { status: 500 },
+    );
   } catch (error) {
     const message = getErrorMessage(error);
     const status = message === "Unauthorized" ? 401 : message === "Forbidden" ? 403 : 500;
