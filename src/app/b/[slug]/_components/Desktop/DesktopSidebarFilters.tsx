@@ -99,6 +99,15 @@ function getStatusTriggerLabel(
   inactiveStatusOptions: readonly SidebarStatus[],
 ) {
   if (statuses.length === 0) return "All statuses";
+  const allStatusOptions = Array.from(
+    new Set([...activeStatusOptions, ...inactiveStatusOptions]),
+  );
+  if (
+    statuses.length === allStatusOptions.length &&
+    allStatusOptions.every((status) => statuses.includes(status))
+  ) {
+    return "All statuses";
+  }
   if (
     statuses.length === activeStatusOptions.length &&
     activeStatusOptions.every((status) => statuses.includes(status))
@@ -177,6 +186,7 @@ export default function DesktopSidebarFilters({
   const [customStart, setCustomStart] = useState(startDate ?? "");
   const [customEnd, setCustomEnd] = useState(endDate ?? "");
   const [statusValues, setStatusValues] = useState<SidebarStatus[]>(statuses);
+  const [statusTouched, setStatusTouched] = useState(false);
   const [actorValue, setActorValue] = useState(actor || "ALL");
   const [sortValue, setSortValue] = useState<OrderSort>(sort);
   const [rangeMenuOpen, setRangeMenuOpen] = useState(false);
@@ -206,11 +216,17 @@ export default function DesktopSidebarFilters({
         .map((status) => status.value as SidebarStatus),
     [businessStatuses],
   );
+  const baseStatusValues = useMemo(() => {
+    if (statusMode === "all") return statusOptions.map((option) => option.value);
+    if (statuses.length > 0) return statuses;
+    return activeStatusOptions.slice();
+  }, [activeStatusOptions, statusMode, statusOptions, statuses]);
+  const selectedStatusValues = statusTouched ? statusValues : baseStatusValues;
   const shouldKeepAllStatuses =
-    statusMode === "all" || statusValues.length === 0 || statusValues.length === statusOptions.length;
+    statusMode === "all" || selectedStatusValues.length === 0 || selectedStatusValues.length === statusOptions.length;
   const shouldKeepDefaultStatuses =
-    statusValues.length === activeStatusOptions.length &&
-    activeStatusOptions.every((status) => statusValues.includes(status));
+    selectedStatusValues.length === activeStatusOptions.length &&
+    activeStatusOptions.every((status) => selectedStatusValues.includes(status));
 
   const effectiveActors = useMemo(() => mergeActors(actors, loadedActors), [actors, loadedActors]);
   const actorOptions = useMemo(
@@ -236,10 +252,12 @@ export default function DesktopSidebarFilters({
     "h-11 w-full rounded-lg border border-[#E5E7EB] bg-white px-4 text-sm font-medium text-[#374151] outline-none transition placeholder:text-[#9CA3AF] focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15";
 
   const toggleStatus = (status: SidebarStatus) => {
+    if (!statusTouched) setStatusValues(baseStatusValues);
+    setStatusTouched(true);
     setStatusValues((current) =>
-      current.includes(status)
-        ? current.filter((value) => value !== status)
-        : [...current, status],
+      (statusTouched ? current : baseStatusValues).includes(status)
+        ? (statusTouched ? current : baseStatusValues).filter((value) => value !== status)
+        : [...(statusTouched ? current : baseStatusValues), status],
     );
   };
 
@@ -337,7 +355,7 @@ export default function DesktopSidebarFilters({
         {showCustomRange && customStart ? <input type="hidden" name="start" value={customStart} /> : null}
         {showCustomRange && customEnd ? <input type="hidden" name="end" value={customEnd} /> : null}
         {normalizedActorValue !== "ALL" ? <input type="hidden" name="actor" value={normalizedActorValue} /> : null}
-        {!shouldKeepAllStatuses && !shouldKeepDefaultStatuses && statusValues.map((status) => (
+        {!shouldKeepAllStatuses && !shouldKeepDefaultStatuses && selectedStatusValues.map((status) => (
           <input key={status} type="hidden" name="status" value={status} />
         ))}
 
@@ -376,7 +394,7 @@ export default function DesktopSidebarFilters({
               className="inline-flex h-11 w-full items-center justify-between rounded-lg border border-[#E5E7EB] bg-white px-4 text-sm font-medium text-[#374151] outline-none transition hover:border-[#C7D2FE] focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15"
             >
               <span className="truncate">
-                {getStatusTriggerLabel(statusValues, activeStatusOptions, inactiveStatusOptions)}
+                {getStatusTriggerLabel(selectedStatusValues, activeStatusOptions, inactiveStatusOptions)}
               </span>
               <ChevronDown className="ml-3 h-4 w-4 shrink-0 text-[#9CA3AF]" />
             </button>
@@ -392,14 +410,20 @@ export default function DesktopSidebarFilters({
               <div className="flex items-center justify-between gap-2 px-2 pb-1 pt-1">
                 <button
                   type="button"
-                  onClick={() => setStatusValues(statusOptions.map((option) => option.value))}
+                  onClick={() => {
+                    setStatusTouched(true);
+                    setStatusValues(statusOptions.map((option) => option.value));
+                  }}
                   className="text-[11px] font-semibold text-[#374151] transition hover:text-[#1F2937]"
                 >
                   Select all
                 </button>
                 <button
                   type="button"
-                  onClick={() => setStatusValues([])}
+                  onClick={() => {
+                    setStatusTouched(true);
+                    setStatusValues([]);
+                  }}
                   className="text-[11px] font-semibold text-[#6B7280] transition hover:text-[#1F2937]"
                 >
                   Clear all
@@ -420,12 +444,12 @@ export default function DesktopSidebarFilters({
                 return (
                   <DropdownMenuCheckboxItem
                     key={option.value}
-                    checked={statusValues.includes(option.value)}
+                    checked={selectedStatusValues.includes(option.value)}
                     className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#374151]"
                     onSelect={(event) => event.preventDefault()}
                     onCheckedChange={() => toggleStatus(option.value)}
                     style={
-                      statusValues.includes(option.value)
+                      selectedStatusValues.includes(option.value)
                         ? { background: tone.selectedBackground, color: tone.color }
                         : undefined
                     }
@@ -456,12 +480,12 @@ export default function DesktopSidebarFilters({
                 return (
                   <DropdownMenuCheckboxItem
                     key={option.value}
-                    checked={statusValues.includes(option.value)}
+                    checked={selectedStatusValues.includes(option.value)}
                     className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#374151]"
                     onSelect={(event) => event.preventDefault()}
                     onCheckedChange={() => toggleStatus(option.value)}
                     style={
-                      statusValues.includes(option.value)
+                      selectedStatusValues.includes(option.value)
                         ? { background: tone.selectedBackground, color: tone.color }
                         : undefined
                     }

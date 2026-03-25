@@ -20,6 +20,7 @@ export function UserMenu({
   profileHref,
   settingsHref,
   adminHref,
+  userAvatarUrl,
   compact = false,
 }: {
   userLabel: string;
@@ -27,6 +28,7 @@ export function UserMenu({
   profileHref: string;
   settingsHref: string;
   adminHref?: string;
+  userAvatarUrl?: string;
   compact?: boolean;
 }) {
   const router = useRouter();
@@ -59,9 +61,17 @@ export function UserMenu({
             : "inline-flex h-9 items-center gap-2 rounded-xl border border-[#E5E7EB] bg-white/90 pl-1.5 pr-2.5 text-[#374151] shadow-sm"
         }
       >
-        <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#111827] text-xs font-semibold text-white">
-          {userLabel[0]?.toUpperCase() || "U"}
-        </span>
+        {userAvatarUrl ? (
+          <img
+            src={userAvatarUrl}
+            alt="User avatar"
+            className="h-7 w-7 rounded-full border border-[#E5E7EB] object-cover"
+          />
+        ) : (
+          <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#111827] text-xs font-semibold text-white">
+            {userLabel[0]?.toUpperCase() || "U"}
+          </span>
+        )}
         {compact ? null : <ChevronDown className="h-4 w-4 text-[#9CA3AF]" />}
       </div>
     );
@@ -79,9 +89,17 @@ export function UserMenu({
               : "inline-flex h-9 items-center gap-2 rounded-xl border border-[#E5E7EB] bg-white/90 pl-1.5 pr-2.5 text-[#374151] shadow-sm transition hover:border-[#D6DAE1] hover:bg-[#FCFCFD]"
           }
         >
-          <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#111827] text-xs font-semibold text-white">
-            {userLabel[0]?.toUpperCase() || "U"}
-          </span>
+          {userAvatarUrl ? (
+            <img
+              src={userAvatarUrl}
+              alt="User avatar"
+              className="h-7 w-7 rounded-full border border-[#E5E7EB] object-cover"
+            />
+          ) : (
+            <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#111827] text-xs font-semibold text-white">
+              {userLabel[0]?.toUpperCase() || "U"}
+            </span>
+          )}
           {compact ? null : (
             <>
               <span className="hidden max-w-[132px] truncate text-[13px] font-semibold text-[#111827] lg:inline">

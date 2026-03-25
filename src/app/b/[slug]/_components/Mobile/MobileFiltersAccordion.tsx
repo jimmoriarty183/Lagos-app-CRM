@@ -412,7 +412,12 @@ export default function MobileFiltersAccordion({
                     type="checkbox"
                     name="status"
                     value={option.value}
-                    defaultChecked={shouldKeepAllStatuses || filters.statuses.includes(option.value)}
+                    defaultChecked={
+                      shouldKeepAllStatuses ||
+                      (shouldKeepDefaultStatuses
+                        ? defaultVisibleStatuses.includes(option.value)
+                        : filters.statuses.includes(option.value))
+                    }
                     className="peer sr-only"
                   />
                   <span className="inline-flex min-h-9 items-center rounded-full border border-[#E5E7EB] bg-white px-3 py-2 text-[12px] font-medium leading-4 text-[#374151] transition peer-checked:border-[#6366F1] peer-checked:bg-[#6366F1] peer-checked:text-white">
@@ -423,7 +428,7 @@ export default function MobileFiltersAccordion({
             </div>
             <div className="text-[11px] text-[#9CA3AF]">
               {shouldKeepDefaultStatuses
-                ? "Default view shows active statuses."
+                ? "Default view shows all statuses."
                 : "Choose one or several statuses."}
             </div>
           </div>

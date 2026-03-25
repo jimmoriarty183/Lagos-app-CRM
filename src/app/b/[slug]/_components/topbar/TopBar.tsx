@@ -16,6 +16,7 @@ type Props = {
   businessSlug: string;
   role: "OWNER" | "MANAGER" | "GUEST";
   currentUserName?: string;
+  currentUserAvatarUrl?: string;
   pill?: React.CSSProperties;
   businesses?: BusinessOption[];
   businessId?: string;
@@ -32,6 +33,7 @@ export default function TopBar({
   businessSlug,
   role,
   currentUserName,
+  currentUserAvatarUrl,
   businesses,
   businessId,
   businessHref,
@@ -157,6 +159,7 @@ export default function TopBar({
                 profileHref={profileHref}
                 settingsHref={resolvedSettingsHref}
                 adminHref={adminHref}
+                userAvatarUrl={currentUserAvatarUrl}
               />
             </div>
           </div>
@@ -170,6 +173,7 @@ export default function TopBar({
               profileHref={profileHref}
               settingsHref={resolvedSettingsHref}
               adminHref={adminHref}
+              userAvatarUrl={currentUserAvatarUrl}
             />
           </div>
         </div>

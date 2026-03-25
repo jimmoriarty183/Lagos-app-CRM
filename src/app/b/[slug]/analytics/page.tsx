@@ -13,7 +13,7 @@ import { resolveUserDisplay } from "@/lib/user-display";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
-  searchParams?: Promise<{ u?: string }>;
+  searchParams?: Promise<{ u?: string; tab?: string; period?: string }>;
 };
 
 type MembershipRow = {
@@ -47,6 +47,14 @@ export default async function OwnerAnalyticsPage({ params, searchParams }: PageP
     searchParams ?? Promise.resolve({}),
   ]);
   const phoneRaw = cleanText(sp?.u);
+  const tabRaw = cleanText(sp?.tab).toLowerCase();
+  const periodRaw = cleanText(sp?.period).toLowerCase();
+  const analyticsView: "overview" | "managers" | "alerts" | "reports" | "productivity" =
+    tabRaw === "managers" || tabRaw === "alerts" || tabRaw === "reports" || tabRaw === "productivity"
+      ? (tabRaw as "managers" | "alerts" | "reports" | "productivity")
+      : "overview";
+  const productivityPeriod: "day" | "week" | "month" =
+    periodRaw === "day" || periodRaw === "month" ? (periodRaw as "day" | "month") : "week";
 
   const supabase = await supabaseServerReadOnly();
   const admin = supabaseAdmin();
@@ -88,11 +96,12 @@ export default async function OwnerAnalyticsPage({ params, searchParams }: PageP
 
   const { data: profileRaw } = await admin
     .from("profiles")
-    .select("full_name, first_name, last_name, email")
+    .select("full_name, first_name, last_name, email, avatar_url")
     .eq("id", user.id)
     .maybeSingle();
 
   const currentUserName = resolveUserDisplay(profileRaw ?? {}).primary || cleanText(user.email) || "User";
+  const currentUserAvatarUrl = cleanText((profileRaw as { avatar_url?: string | null } | null)?.avatar_url);
   const adminHref = isAdminEmail(user.email) ? getAdminUsersPath() : undefined;
 
   const businessOptions: BusinessOption[] = businesses
@@ -123,6 +132,22 @@ export default async function OwnerAnalyticsPage({ params, searchParams }: PageP
     phoneRaw && phoneRaw.length > 0
       ? `/b/${slug}/analytics?u=${encodeURIComponent(phoneRaw)}`
       : `/b/${slug}/analytics`;
+  const makeTabHref = (tab: "overview" | "managers" | "alerts" | "reports" | "productivity") => {
+    const params = new URLSearchParams();
+    if (phoneRaw) params.set("u", phoneRaw);
+    if (tab !== "overview") params.set("tab", tab);
+    if (tab === "productivity") params.set("period", productivityPeriod);
+    const qs = params.toString();
+    return qs ? `/b/${slug}/analytics?${qs}` : `/b/${slug}/analytics`;
+  };
+  const makeProductivityHref = (period: "day" | "week" | "month") => {
+    const params = new URLSearchParams();
+    if (phoneRaw) params.set("u", phoneRaw);
+    params.set("tab", "productivity");
+    params.set("period", period);
+    return `/b/${slug}/analytics?${params.toString()}`;
+  };
+  const managerBaseHref = makeTabHref("managers");
   const clearHref = analyticsHref;
 
   const { count: todoCountRaw } = await admin
@@ -140,6 +165,7 @@ export default async function OwnerAnalyticsPage({ params, searchParams }: PageP
     asOfDate: getTodayDateOnly(),
     capacityPointsPerDay: 8,
     limitAlerts: 50,
+    productivityPeriod,
   });
 
   return (
@@ -148,6 +174,7 @@ export default async function OwnerAnalyticsPage({ params, searchParams }: PageP
         businessSlug={slug}
         role={role}
         currentUserName={currentUserName}
+        currentUserAvatarUrl={currentUserAvatarUrl || undefined}
         businesses={businessOptions}
         businessId={String(currentBusiness.id)}
         businessHref={businessHref}
@@ -191,12 +218,78 @@ export default async function OwnerAnalyticsPage({ params, searchParams }: PageP
           </div>
 
           <div className="min-w-0 space-y-4 pl-2">
-            <OwnerAnalyticsPanel data={analyticsData} />
+            <div className="inline-flex rounded-lg border border-[#E5E7EB] bg-white p-1">
+              {([
+                { key: "overview", label: "Overview" },
+                { key: "managers", label: "Managers" },
+                { key: "alerts", label: "Alerts" },
+                { key: "reports", label: "Reports" },
+                { key: "productivity", label: "Productivity" },
+              ] as const).map((tab) => (
+                <a
+                  key={tab.key}
+                  href={makeTabHref(tab.key)}
+                  className={[
+                    "rounded-md px-3 py-1.5 text-[12px] font-semibold transition",
+                    analyticsView === tab.key
+                      ? "bg-[#6366F1] text-white"
+                      : "text-[#6B7280] hover:bg-[#F9FAFB] hover:text-[#1F2937]",
+                  ].join(" ")}
+                >
+                  {tab.label}
+                </a>
+              ))}
+            </div>
+            <OwnerAnalyticsPanel
+              data={analyticsData}
+              businessSlug={slug}
+              phoneRaw={phoneRaw}
+              view={analyticsView}
+              managerBaseHref={managerBaseHref}
+              productivityHrefs={{
+                day: makeProductivityHref("day"),
+                week: makeProductivityHref("week"),
+                month: makeProductivityHref("month"),
+              }}
+            />
           </div>
         </div>
 
         <div className="space-y-4 lg:hidden">
-          <OwnerAnalyticsPanel data={analyticsData} />
+          <div className="inline-flex rounded-lg border border-[#E5E7EB] bg-white p-1">
+            {([
+              { key: "overview", label: "Overview" },
+              { key: "managers", label: "Managers" },
+              { key: "alerts", label: "Alerts" },
+              { key: "reports", label: "Reports" },
+              { key: "productivity", label: "Productivity" },
+            ] as const).map((tab) => (
+              <a
+                key={tab.key}
+                href={makeTabHref(tab.key)}
+                className={[
+                  "rounded-md px-3 py-1.5 text-[12px] font-semibold transition",
+                  analyticsView === tab.key
+                    ? "bg-[#6366F1] text-white"
+                    : "text-[#6B7280] hover:bg-[#F9FAFB] hover:text-[#1F2937]",
+                ].join(" ")}
+              >
+                {tab.label}
+              </a>
+            ))}
+          </div>
+          <OwnerAnalyticsPanel
+            data={analyticsData}
+            businessSlug={slug}
+            phoneRaw={phoneRaw}
+            view={analyticsView}
+            managerBaseHref={managerBaseHref}
+            productivityHrefs={{
+              day: makeProductivityHref("day"),
+              week: makeProductivityHref("week"),
+              month: makeProductivityHref("month"),
+            }}
+          />
         </div>
       </main>
     </div>

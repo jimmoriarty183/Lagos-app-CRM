@@ -29,14 +29,19 @@ export function TodoCalendarFilters({
             type="button"
             onClick={() => onChange(filter.value)}
             className={cn(
-              "inline-flex h-8 items-center gap-2 rounded-full border px-3 text-[12px] font-semibold transition",
+              "inline-flex h-8 items-center gap-2 rounded-full border px-3 text-[12px] font-semibold transition shadow-[0_2px_8px_rgba(15,23,42,0.04)]",
               active
-                ? "border-[#C7D2FE] bg-[#EEF2FF] text-[#3645A0]"
-                : "border-[#E5E7EB] bg-white text-[#667085] hover:border-[#D0D5DD] hover:text-[#344054]",
+                ? "border-[#BFC9FF] bg-[#E8EDFF] text-[#2F3E9E]"
+                : "border-[#DDE3EA] bg-white text-[#667085] hover:border-[#C9D2E0] hover:text-[#334155]",
             )}
           >
             <span>{filter.label}</span>
-            <span className={cn("rounded-full px-1.5 py-0.5 text-[10px]", active ? "bg-white/80" : "bg-[#F3F4F6]")}>
+            <span
+              className={cn(
+                "rounded-full px-1.5 py-0.5 text-[10px]",
+                active ? "bg-white/85 text-[#2F3E9E]" : "bg-[#F3F4F6] text-[#64748B]",
+              )}
+            >
               {counts[filter.value] ?? 0}
             </span>
           </button>

@@ -51,6 +51,7 @@ type ProfileRow = {
   first_name: string | null;
   last_name: string | null;
   email: string | null;
+  avatar_url?: string | null;
 };
 
 type OrderLookupRow = {
@@ -196,7 +197,7 @@ export default async function TodayFollowUpsPage({
 
   const { data: profileRaw } = await admin
     .from("profiles")
-    .select("full_name, first_name, last_name, email")
+    .select("full_name, first_name, last_name, email, avatar_url")
     .eq("id", user.id)
     .maybeSingle();
   const profile = (profileRaw ?? null) as ProfileRow | null;
@@ -205,6 +206,7 @@ export default async function TodayFollowUpsPage({
     resolveUserDisplay(profile ?? {}).primary ||
     cleanText(user.email) ||
     "User";
+  const currentUserAvatarUrl = cleanText(profile?.avatar_url);
 
   const businessOptions: BusinessOption[] = businessRows
     .filter((entry) => cleanText(entry.slug))
@@ -497,6 +499,7 @@ export default async function TodayFollowUpsPage({
         businessSlug={slug}
         role={role}
         currentUserName={currentUserName}
+        currentUserAvatarUrl={currentUserAvatarUrl || undefined}
         businesses={businessOptions}
         businessId={currentBusiness.id}
         businessHref={businessHref}

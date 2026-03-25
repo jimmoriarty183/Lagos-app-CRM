@@ -27,10 +27,11 @@ import type {
   TodoCalendarView,
 } from "@/app/b/[slug]/today/todo-calendar/types";
 
-export const CALENDAR_HOUR_START = 6;
-export const CALENDAR_HOUR_END = 22;
+export const CALENDAR_HOUR_START = 0;
+export const CALENDAR_HOUR_END = 24;
 export const CALENDAR_HOUR_COUNT = CALENDAR_HOUR_END - CALENDAR_HOUR_START;
-export const CALENDAR_TIMELINE_HEIGHT = CALENDAR_HOUR_COUNT * 64;
+export const CALENDAR_HOUR_HEIGHT = 40;
+export const CALENDAR_TIMELINE_HEIGHT = CALENDAR_HOUR_COUNT * CALENDAR_HOUR_HEIGHT;
 
 export function parseDateOnly(value: string) {
   return parseISO(`${value}T00:00:00`);
@@ -219,8 +220,8 @@ export function buildTimedLanes(items: TodoCalendarItem[]) {
       item,
       lane: laneIndex,
       laneCount: 1,
-      top: Math.max(0, (minutesFromTop / 60) * 64),
-      height: Math.max(42, (duration / 60) * 64),
+      top: Math.max(0, (minutesFromTop / 60) * CALENDAR_HOUR_HEIGHT),
+      height: Math.max(32, (duration / 60) * CALENDAR_HOUR_HEIGHT),
     });
   }
 
@@ -248,7 +249,7 @@ export function isCurrentHourVisible() {
 export function getNowIndicatorTop() {
   const now = new Date();
   const minutesFromTop = (now.getHours() - CALENDAR_HOUR_START) * 60 + now.getMinutes();
-  return (minutesFromTop / 60) * 64;
+  return (minutesFromTop / 60) * CALENDAR_HOUR_HEIGHT;
 }
 
 export function isTodayDateKey(value: string) {

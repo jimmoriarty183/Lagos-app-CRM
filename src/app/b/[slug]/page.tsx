@@ -137,6 +137,7 @@ type TeamActor = {
   id: string;
   label: string;
   kind: "OWNER" | "MANAGER";
+  avatar_url?: string | null;
 };
 
 type ActorProfileRow = {
@@ -145,6 +146,7 @@ type ActorProfileRow = {
   first_name: string | null;
   last_name: string | null;
   email: string | null;
+  avatar_url?: string | null;
 };
 
 type ActorMembershipRow = {
@@ -423,12 +425,13 @@ export default async function Page({ params, searchParams }: PageProps) {
     bypassUser && !user
       ? bypassUser
       : (user?.email ?? (userRole === "OWNER" ? "Owner" : "User"));
+  let currentUserAvatarUrl = "";
 
   if (user?.id) {
     try {
       const { data: currentProfile } = await dataClient
         .from("profiles")
-        .select("full_name, first_name, last_name, email")
+        .select("full_name, first_name, last_name, email, avatar_url")
         .eq("id", user.id)
         .maybeSingle();
 
@@ -447,6 +450,7 @@ export default async function Page({ params, searchParams }: PageProps) {
       });
 
       currentUserName = currentUserDisplay.primary;
+      currentUserAvatarUrl = cleanText((currentProfile as { avatar_url?: string | null } | null)?.avatar_url);
     } catch {
       currentUserName =
         user.email ??
@@ -455,6 +459,7 @@ export default async function Page({ params, searchParams }: PageProps) {
           : userRole === "MANAGER"
             ? "Manager"
             : "Guest");
+      currentUserAvatarUrl = "";
     }
   }
 
@@ -681,7 +686,7 @@ export default async function Page({ params, searchParams }: PageProps) {
       await adminClient
         .from("memberships")
         .select(
-          "user_id, role, profiles:profiles(id, full_name, first_name, last_name, email)",
+          "user_id, role, profiles:profiles(id, full_name, first_name, last_name, email, avatar_url)",
         )
         .eq("business_id", currentBusiness.id)
         .or("role.eq.OWNER,role.eq.owner,role.eq.MANAGER,role.eq.manager");
@@ -721,7 +726,7 @@ export default async function Page({ params, searchParams }: PageProps) {
     const { data: actorProfiles } = actorIds.length
       ? await adminClient
           .from("profiles")
-          .select("id, full_name, first_name, last_name, email")
+          .select("id, full_name, first_name, last_name, email, avatar_url")
           .in("id", actorIds)
       : { data: [] };
 
@@ -766,6 +771,7 @@ export default async function Page({ params, searchParams }: PageProps) {
         id,
         label,
         kind: roleUpper === "OWNER" ? "OWNER" : "MANAGER",
+        avatar_url: profile?.avatar_url ?? null,
       });
     }
 
@@ -1202,6 +1208,7 @@ export default async function Page({ params, searchParams }: PageProps) {
         businessSlug={slug}
         role={userRole}
         currentUserName={currentUserName}
+        currentUserAvatarUrl={currentUserAvatarUrl || undefined}
         businesses={businessOptions}
         businessId={String(currentBusiness.id)}
         businessHref={businessHref}

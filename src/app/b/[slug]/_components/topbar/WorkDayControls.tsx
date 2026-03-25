@@ -1,9 +1,20 @@
 "use client";
 
 import * as React from "react";
-import { ChevronDown, Clock3, Loader2, MoonStar, Pause, Play } from "lucide-react";
+import {
+  ChevronDown,
+  Clock3,
+  Loader2,
+  MoonStar,
+  Pause,
+  Play,
+} from "lucide-react";
 
-import { pauseWorkDay, resumeWorkDay, startWorkDay } from "@/app/b/[slug]/actions";
+import {
+  pauseWorkDay,
+  resumeWorkDay,
+  startWorkDay,
+} from "@/app/b/[slug]/actions";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -18,7 +29,8 @@ import { EndOfDayDialog } from "./EndOfDayDialog";
 import { emitWorkDayUpdated, WORK_DAY_UPDATED_EVENT } from "./work-day-events";
 
 function normalizeStatus(value: string | null | undefined): WorkDayStatus {
-  if (value === "running" || value === "paused" || value === "finished") return value;
+  if (value === "running" || value === "paused" || value === "finished")
+    return value;
   return "draft";
 }
 
@@ -30,7 +42,9 @@ function formatWorkDayError(error: unknown) {
   return message;
 }
 
-function compactActionClass(tone: "default" | "warning" | "success" | "neutral") {
+function compactActionClass(
+  tone: "default" | "warning" | "success" | "neutral",
+) {
   if (tone === "warning") {
     return "h-9 justify-start rounded-lg border border-[#FDE68A] bg-[#FFFBEB] px-3 text-sm font-semibold text-[#B54708] shadow-none hover:border-[#FCD34D] hover:bg-[#FEF3C7] disabled:opacity-100";
   }
@@ -43,7 +57,9 @@ function compactActionClass(tone: "default" | "warning" | "success" | "neutral")
   return "h-9 justify-start rounded-lg border border-[#6366F1] bg-[#6366F1] px-3 text-sm font-semibold text-white shadow-[0_1px_2px_rgba(16,24,40,0.10)] hover:border-[#5558E3] hover:bg-[#5558E3] disabled:opacity-100";
 }
 
-function desktopActionClass(tone: "primary" | "warning" | "success" | "neutral") {
+function desktopActionClass(
+  tone: "primary" | "warning" | "success" | "neutral",
+) {
   if (tone === "primary") {
     return "inline-flex h-8 items-center rounded-lg border border-[#6366F1] bg-[#6366F1] px-3 text-[12px] font-semibold text-white shadow-[0_1px_2px_rgba(16,24,40,0.10)] transition hover:border-[#5558E3] hover:bg-[#5558E3] disabled:opacity-100";
   }
@@ -62,7 +78,9 @@ function formatElapsedTime(totalSeconds: number) {
   const minutes = Math.floor((safeSeconds % 3600) / 60);
   const seconds = safeSeconds % 60;
 
-  return [hours, minutes, seconds].map((value) => String(value).padStart(2, "0")).join(":");
+  return [hours, minutes, seconds]
+    .map((value) => String(value).padStart(2, "0"))
+    .join(":");
 }
 
 function getElapsedWorkSeconds(workDay: WorkDayRow | null, nowMs: number) {
@@ -82,7 +100,8 @@ function getElapsedWorkSeconds(workDay: WorkDayRow | null, nowMs: number) {
 
   return Math.max(
     0,
-    Math.floor((boundaryMs - startedAtMs) / 1000) - Math.max(0, Number(workDay.total_pause_seconds ?? 0)),
+    Math.floor((boundaryMs - startedAtMs) / 1000) -
+      Math.max(0, Number(workDay.total_pause_seconds ?? 0)),
   );
 }
 
@@ -141,7 +160,8 @@ export function WorkDayControls({
     };
 
     window.addEventListener(WORK_DAY_UPDATED_EVENT, handleWorkDayUpdated);
-    return () => window.removeEventListener(WORK_DAY_UPDATED_EVENT, handleWorkDayUpdated);
+    return () =>
+      window.removeEventListener(WORK_DAY_UPDATED_EVENT, handleWorkDayUpdated);
   }, [loadWorkDay]);
 
   React.useEffect(() => {
@@ -156,12 +176,27 @@ export function WorkDayControls({
   }, [workDay?.status]);
 
   async function handleAction(action: "start" | "pause" | "resume") {
-    if (isSubmitting) return;
+    // Debug log for mobile
+    console.log("[WorkDayControls] handleAction called:", {
+      action,
+      isSubmitting,
+      isLoading,
+      status,
+      canManage,
+      businessId,
+      userAgent: typeof navigator !== "undefined" ? navigator.userAgent : "ssr",
+    });
+
+    if (isSubmitting) {
+      console.log("[WorkDayControls] Already submitting, returning");
+      return;
+    }
 
     setIsSubmitting(true);
     setErrorMessage(null);
 
     try {
+      console.log("[WorkDayControls] Executing action:", action);
       if (action === "start") {
         await startWorkDay({ businessId, businessSlug });
       } else if (action === "pause") {
@@ -170,10 +205,12 @@ export function WorkDayControls({
         await resumeWorkDay({ businessId, businessSlug });
       }
 
+      console.log("[WorkDayControls] Action completed, reloading");
       await loadWorkDay();
       emitWorkDayUpdated();
       onActionComplete?.();
     } catch (error) {
+      console.error("[WorkDayControls] Action failed:", error);
       setErrorMessage(formatWorkDayError(error) || "Failed to update work day");
     } finally {
       setIsSubmitting(false);
@@ -183,7 +220,10 @@ export function WorkDayControls({
   if (!canManage) return null;
 
   const status = normalizeStatus(workDay?.status);
-  const buttonIcon = isLoading || isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null;
+  const buttonIcon =
+    isLoading || isSubmitting ? (
+      <Loader2 className="h-4 w-4 animate-spin" />
+    ) : null;
   const isActive = status === "running";
   const isPaused = status === "paused";
   const showEndDay = isActive || isPaused;
@@ -197,7 +237,9 @@ export function WorkDayControls({
         {showTimer ? (
           <div className="inline-flex h-9 items-center rounded-lg border border-[#E5E7EB] bg-white px-3 text-sm font-semibold text-[#374151] shadow-none">
             <Clock3 className="h-4 w-4" />
-            <span className="ml-2 font-semibold tabular-nums">{elapsedLabel}</span>
+            <span className="ml-2 font-semibold tabular-nums">
+              {elapsedLabel}
+            </span>
           </div>
         ) : null}
         {showStart ? (
@@ -207,10 +249,19 @@ export function WorkDayControls({
             size="sm"
             disabled={isLoading || isSubmitting}
             onClick={() => void handleAction("start")}
+            onTouchEnd={(e) => {
+              // Prevent ghost clicks and ensure touch devices respond
+              e.preventDefault();
+              if (!isLoading && !isSubmitting) {
+                void handleAction("start");
+              }
+            }}
             className={compactActionClass("default")}
           >
             {buttonIcon ?? <Play className="h-4 w-4" />}
-            <span className="ml-2">{isLoading ? "Loading day..." : "Start day"}</span>
+            <span className="ml-2">
+              {isLoading ? "Loading day..." : "Start day"}
+            </span>
           </Button>
         ) : null}
         {isActive ? (
@@ -330,10 +381,19 @@ export function WorkDayControls({
           size="default"
           disabled={isLoading || isSubmitting}
           onClick={() => void handleAction("start")}
+          onTouchEnd={(e) => {
+            // Prevent ghost clicks and ensure touch devices respond
+            e.preventDefault();
+            if (!isLoading && !isSubmitting) {
+              void handleAction("start");
+            }
+          }}
           className={desktopActionClass("primary")}
         >
           {buttonIcon ?? <Play className="h-4 w-4" />}
-          <span className="ml-2">{isLoading ? "Loading day..." : "Start day"}</span>
+          <span className="ml-2">
+            {isLoading ? "Loading day..." : "Start day"}
+          </span>
         </Button>
       ) : null}
       {errorMessage ? (

@@ -4,6 +4,10 @@ import * as React from "react";
 
 import type { FollowUpRow } from "@/lib/follow-ups";
 import { getTomorrowDateOnly } from "@/lib/follow-ups";
+import {
+  formatDateTimeLocalInput,
+  parseDateTimeLocalInput,
+} from "@/lib/follow-ups";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -23,6 +27,7 @@ export type FollowUpCompletionValue = {
   nextFollowUp: {
     title: string;
     dueDate: string;
+    dueAt?: string | null;
     note?: string | null;
   } | null;
 };
@@ -46,6 +51,7 @@ export function FollowUpCompleteDialog({
   const [createNext, setCreateNext] = React.useState(false);
   const [nextTitle, setNextTitle] = React.useState("");
   const [nextDueDate, setNextDueDate] = React.useState(getTomorrowDateOnly());
+  const [nextDueAt, setNextDueAt] = React.useState<string | null>(null);
   const [nextNote, setNextNote] = React.useState("");
 
   React.useEffect(() => {
@@ -53,7 +59,12 @@ export function FollowUpCompleteDialog({
     setCompletionNote("");
     setCreateNext(false);
     setNextTitle("");
-    setNextDueDate(item.due_date >= getTomorrowDateOnly() ? item.due_date : getTomorrowDateOnly());
+    setNextDueDate(
+      item.due_date >= getTomorrowDateOnly()
+        ? item.due_date
+        : getTomorrowDateOnly(),
+    );
+    setNextDueAt(item.due_at || null);
     setNextNote("");
   }, [item, open]);
 
@@ -68,6 +79,7 @@ export function FollowUpCompleteDialog({
           ? {
               title: nextTitle.trim(),
               dueDate: nextDueDate,
+              dueAt: nextDueAt,
               note: nextNote.trim() || null,
             }
           : null,
@@ -79,14 +91,23 @@ export function FollowUpCompleteDialog({
       <DialogContent className="max-w-[560px] rounded-[24px] border border-[#E5E7EB] bg-white p-0 shadow-[0_24px_64px_rgba(15,23,42,0.18)]">
         <div className="space-y-5 px-5 py-5 sm:px-6 sm:py-6">
           <DialogHeader className="space-y-1 text-left">
-            <DialogTitle className="text-[18px] font-semibold text-[#111827]">Complete follow-up</DialogTitle>
+            <DialogTitle className="text-[18px] font-semibold text-[#111827]">
+              Complete follow-up
+            </DialogTitle>
             <DialogDescription className="text-sm leading-6 text-[#6B7280]">
-              Close <span className="font-medium text-[#374151]">{item?.title ?? "this follow-up"}</span> or turn it into the next scheduled step.
+              Close{" "}
+              <span className="font-medium text-[#374151]">
+                {item?.title ?? "this follow-up"}
+              </span>{" "}
+              or turn it into the next scheduled step.
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-2">
-            <Label htmlFor="follow-up-completion-note" className="text-xs font-semibold uppercase tracking-[0.06em] text-[#9CA3AF]">
+            <Label
+              htmlFor="follow-up-completion-note"
+              className="text-xs font-semibold uppercase tracking-[0.06em] text-[#9CA3AF]"
+            >
               Completion note
             </Label>
             <Textarea
@@ -100,43 +121,97 @@ export function FollowUpCompleteDialog({
 
           <div className="rounded-[20px] border border-[#E5E7EB] bg-[#FBFCFE] p-4">
             <label className="flex items-start gap-3">
-              <Checkbox checked={createNext} onCheckedChange={(checked) => setCreateNext(Boolean(checked))} className="mt-0.5" />
+              <Checkbox
+                checked={createNext}
+                onCheckedChange={(checked) => setCreateNext(Boolean(checked))}
+                className="mt-0.5"
+              />
               <span className="space-y-1">
-                <span className="block text-sm font-semibold text-[#1F2937]">Create next follow-up</span>
-                <span className="block text-xs leading-5 text-[#6B7280]">Use this when the current task is done but the workflow needs another scheduled step.</span>
+                <span className="block text-sm font-semibold text-[#1F2937]">
+                  Create next follow-up
+                </span>
+                <span className="block text-xs leading-5 text-[#6B7280]">
+                  Use this when the current task is done but the workflow needs
+                  another scheduled step.
+                </span>
               </span>
             </label>
 
             {createNext ? (
               <div className="mt-4 grid gap-3 sm:grid-cols-[minmax(0,1fr)_168px]">
                 <div className="space-y-2 sm:col-span-2">
-                  <Label htmlFor="next-follow-up-title" className="text-xs font-semibold uppercase tracking-[0.06em] text-[#9CA3AF]">
+                  <Label
+                    htmlFor="next-follow-up-title"
+                    className="text-xs font-semibold uppercase tracking-[0.06em] text-[#9CA3AF]"
+                  >
                     Next follow-up title
                   </Label>
                   <Input
                     id="next-follow-up-title"
                     value={nextTitle}
-                    onChange={(event) => setNextTitle(event.currentTarget.value)}
+                    onChange={(event) =>
+                      setNextTitle(event.currentTarget.value)
+                    }
                     placeholder="For example: send proposal"
                     className="h-11 rounded-[16px] border-[#E5E7EB] bg-white text-sm shadow-none focus-visible:border-[#6366F1] focus-visible:ring-[#6366F1]/15"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="next-follow-up-date" className="text-xs font-semibold uppercase tracking-[0.06em] text-[#9CA3AF]">
+                  <Label
+                    htmlFor="next-follow-up-date"
+                    className="text-xs font-semibold uppercase tracking-[0.06em] text-[#9CA3AF]"
+                  >
                     Due date
                   </Label>
                   <Input
                     id="next-follow-up-date"
                     type="date"
                     value={nextDueDate}
-                    onChange={(event) => setNextDueDate(event.currentTarget.value)}
+                    onChange={(event) =>
+                      setNextDueDate(event.currentTarget.value)
+                    }
+                    className="h-11 rounded-[16px] border-[#E5E7EB] bg-white text-sm shadow-none focus-visible:border-[#6366F1] focus-visible:ring-[#6366F1]/15"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="next-follow-up-time"
+                    className="text-xs font-semibold uppercase tracking-[0.06em] text-[#9CA3AF]"
+                  >
+                    Time (optional)
+                  </Label>
+                  <Input
+                    id="next-follow-up-time"
+                    type="time"
+                    value={
+                      nextDueAt
+                        ? formatDateTimeLocalInput(new Date(nextDueAt)).slice(
+                            11,
+                            16,
+                          )
+                        : ""
+                    }
+                    onChange={(event) => {
+                      const timeValue = event.currentTarget.value;
+                      if (!timeValue) {
+                        setNextDueAt(null);
+                      } else {
+                        const dateValue = nextDueDate || getTomorrowDateOnly();
+                        const combined = `${dateValue}T${timeValue}`;
+                        setNextDueAt(parseDateTimeLocalInput(combined));
+                      }
+                    }}
                     className="h-11 rounded-[16px] border-[#E5E7EB] bg-white text-sm shadow-none focus-visible:border-[#6366F1] focus-visible:ring-[#6366F1]/15"
                   />
                 </div>
 
                 <div className="space-y-2 sm:col-span-2">
-                  <Label htmlFor="next-follow-up-note" className="text-xs font-semibold uppercase tracking-[0.06em] text-[#9CA3AF]">
+                  <Label
+                    htmlFor="next-follow-up-note"
+                    className="text-xs font-semibold uppercase tracking-[0.06em] text-[#9CA3AF]"
+                  >
                     Next follow-up note
                   </Label>
                   <Textarea
@@ -151,14 +226,22 @@ export function FollowUpCompleteDialog({
             ) : null}
           </div>
 
-          {(nextTitleMissing || nextDateMissing) ? (
+          {nextTitleMissing || nextDateMissing ? (
             <div className="rounded-[16px] border border-[#FDE68A] bg-[#FFFBEB] px-3 py-2.5 text-sm text-[#92400E]">
-              {nextTitleMissing ? "Next follow-up title is required." : "Next follow-up due date is required."}
+              {nextTitleMissing
+                ? "Next follow-up title is required."
+                : "Next follow-up due date is required."}
             </div>
           ) : null}
 
           <DialogFooter className="gap-2 border-t border-[#F3F4F6] pt-4 sm:justify-between">
-            <Button type="button" variant="outline" className="h-10 rounded-[16px] px-4" onClick={() => onOpenChange(false)} disabled={submitting}>
+            <Button
+              type="button"
+              variant="outline"
+              className="h-10 rounded-[16px] px-4"
+              onClick={() => onOpenChange(false)}
+              disabled={submitting}
+            >
               Cancel
             </Button>
             <div className="flex flex-col-reverse gap-2 sm:flex-row">

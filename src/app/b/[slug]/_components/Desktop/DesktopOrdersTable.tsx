@@ -86,6 +86,7 @@ type TeamActor = {
   id: string;
   label: string;
   kind: "OWNER" | "MANAGER";
+  avatar_url?: string | null;
 };
 
 type ManagerStatusResponse = {
@@ -95,6 +96,7 @@ type ManagerStatusResponse = {
     first_name?: string | null;
     last_name?: string | null;
     email?: string | null;
+    avatar_url?: string | null;
   } | null;
   managers_active?: Array<{
     user_id: string;
@@ -102,6 +104,7 @@ type ManagerStatusResponse = {
     first_name?: string | null;
     last_name?: string | null;
     email?: string | null;
+    avatar_url?: string | null;
   }>;
 };
 
@@ -278,6 +281,15 @@ function getStatusTriggerLabel(
   inactiveStatusOptions: readonly StatusFilterValue[],
 ) {
   if (statuses.length === 0) return "All statuses";
+  const allStatusOptions = Array.from(
+    new Set([...activeStatusOptions, ...inactiveStatusOptions]),
+  );
+  if (
+    statuses.length === allStatusOptions.length &&
+    allStatusOptions.every((status) => statuses.includes(status))
+  ) {
+    return "All statuses";
+  }
   if (
     statuses.length === activeStatusOptions.length &&
     activeStatusOptions.every((status) => statuses.includes(status))
@@ -381,7 +393,23 @@ function moveOrderToStatus(
   ];
 }
 
-function ActorAvatar({ label }: { label: string }) {
+function ActorAvatar({
+  label,
+  avatarUrl,
+}: {
+  label: string;
+  avatarUrl?: string | null;
+}) {
+  const src = String(avatarUrl ?? "").trim();
+  if (src) {
+    return (
+      <img
+        src={src}
+        alt={label || "Manager avatar"}
+        className="h-7 w-7 rounded-full border border-[#E5E7EB] object-cover"
+      />
+    );
+  }
   return (
     <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-900 text-[11px] font-semibold text-white">
       {getInitials(label)}
@@ -576,10 +604,11 @@ function ManagerAssignmentCell({
     [actors],
   );
 
-  const resolvedManagerName =
-    localManagerName?.trim() ||
-    options.find((actor) => actor.id === localManagerId)?.label ||
-    "";
+  const resolvedActor = localManagerId
+    ? options.find((actor) => actor.id === localManagerId) || null
+    : null;
+  const resolvedManagerName = resolvedActor?.label || localManagerName?.trim() || "";
+  const resolvedManagerAvatarUrl = resolvedActor?.avatar_url ?? null;
   const label = resolvedManagerName || "Unassigned";
   const isUnassigned = !localManagerId;
   const compactLabel = isUnassigned ? label : getCompactManagerLabel(label);
@@ -602,7 +631,7 @@ function ManagerAssignmentCell({
       {isUnassigned ? (
         <UserRound className="h-3.5 w-3.5 text-[#9CA3AF]" />
       ) : (
-        <ActorAvatar label={label} />
+        <ActorAvatar label={label} avatarUrl={resolvedManagerAvatarUrl} />
       )}
     </button>
   ) : (
@@ -621,7 +650,7 @@ function ManagerAssignmentCell({
       {isUnassigned ? (
         <UserRound className="h-3.5 w-3.5 text-[#9CA3AF]" />
       ) : (
-        <ActorAvatar label={label} />
+        <ActorAvatar label={label} avatarUrl={resolvedManagerAvatarUrl} />
       )}
       <span className="truncate" title={label}>
         {compactLabel}
@@ -726,7 +755,7 @@ function ManagerAssignmentCell({
                 });
               }}
             >
-              <ActorAvatar label={actor.label} />
+              <ActorAvatar label={actor.label} avatarUrl={actor.avatar_url} />
               <div className="min-w-0 flex-1">
                 <div className="truncate font-medium">{actor.label}</div>
                 <div className="text-[11px] uppercase tracking-[0.08em] text-[#9CA3AF]">
@@ -834,7 +863,9 @@ export default function DesktopOrdersTable({
     null,
   );
   const [loadedActors, setLoadedActors] = useState<TeamActor[]>(actors);
+  const [isKanbanSwitching, setIsKanbanSwitching] = useState(false);
   const isMountedRef = React.useRef(false);
+  const kanbanSwitchTimeoutRef = React.useRef<number | null>(null);
   const kanbanScrollRef = React.useRef<HTMLDivElement | null>(null);
   const [kanbanCanScrollLeft, setKanbanCanScrollLeft] = useState(false);
   const [kanbanCanScrollRight, setKanbanCanScrollRight] = useState(false);
@@ -853,6 +884,9 @@ export default function DesktopOrdersTable({
     isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
+      if (kanbanSwitchTimeoutRef.current !== null) {
+        window.clearTimeout(kanbanSwitchTimeoutRef.current);
+      }
     };
   }, []);
 
@@ -1115,6 +1149,7 @@ export default function DesktopOrdersTable({
             id: String(data.owner.id),
             label: ownerDisplay.primary,
             kind: "OWNER",
+            avatar_url: data.owner.avatar_url ?? null,
           });
         }
 
@@ -1130,6 +1165,7 @@ export default function DesktopOrdersTable({
             id: String(manager.user_id),
             label: managerDisplay.primary,
             kind: "MANAGER",
+            avatar_url: manager.avatar_url ?? null,
           });
         }
 
@@ -1254,6 +1290,26 @@ export default function DesktopOrdersTable({
       page: 1,
       viewMode: nextViewMode,
     });
+  const navigateToKanbanWithBanner = () => {
+    if (viewMode === "kanban") return;
+    setViewMode("kanban");
+    setIsKanbanSwitching(true);
+    setNavigationMessage("Preparing board...");
+    const href = viewHref("kanban");
+
+    if (kanbanSwitchTimeoutRef.current !== null) {
+      window.clearTimeout(kanbanSwitchTimeoutRef.current);
+    }
+
+    kanbanSwitchTimeoutRef.current = window.setTimeout(() => {
+      const currentHref = `${window.location.pathname}${window.location.search}`;
+      if (href === currentHref) {
+        window.location.reload();
+        return;
+      }
+      window.location.assign(href);
+    }, 350);
+  };
   const revealStatusInBoard = (status: StatusFilterValue) => {
     const baseStatuses =
       statusMode === "all"
@@ -1599,12 +1655,26 @@ export default function DesktopOrdersTable({
   return (
     <section
       className={[
-        "w-full min-w-0 rounded-[28px] border border-[#E5E7EB] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)]",
+        "relative w-full min-w-0 rounded-[28px] border border-[#E5E7EB] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)]",
         viewMode === "kanban"
           ? "mx-0 flex h-[calc(100vh-132px)] flex-col overflow-hidden"
           : "mx-auto overflow-visible",
       ].join(" ")}
     >
+      {isKanbanSwitching ? (
+        <div className="absolute inset-0 z-30 flex items-center justify-center bg-white/50 backdrop-blur-[1px]">
+          <div className="relative overflow-hidden rounded-2xl border border-[#D9E2FF] bg-white px-5 py-4 shadow-[0_18px_44px_rgba(99,102,241,0.18)]">
+            <div className="pointer-events-none absolute inset-0 -translate-x-full animate-[shimmer_1.4s_ease-in-out_infinite] bg-gradient-to-r from-transparent via-[#EEF2FF]/70 to-transparent" />
+            <div className="relative flex items-center gap-3">
+              <span className="inline-flex h-2.5 w-2.5 animate-pulse rounded-full bg-[#6366F1]" />
+              <div>
+                <div className="text-sm font-semibold text-[#1F2937]">Preparing Kanban board...</div>
+                <div className="mt-1 text-xs text-[#6B7280]">Organizing your orders by status</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
       <div
         className={
           viewMode === "kanban"
@@ -1704,9 +1774,7 @@ export default function DesktopOrdersTable({
               <button
                 type="button"
                 onClick={() => {
-                  if (viewMode === "kanban") return;
-                  setViewMode("kanban");
-                  navigateWithFallback(viewHref("kanban"));
+                  navigateToKanbanWithBanner();
                 }}
                 className={[
                   "inline-flex h-9 items-center gap-2 rounded-lg px-3.5 text-[15px] font-medium transition",
@@ -2013,7 +2081,7 @@ export default function DesktopOrdersTable({
                       }}
                     >
                       <div className="flex items-center gap-2">
-                        <ActorAvatar label={option.label} />
+                        <ActorAvatar label={option.label} avatarUrl={option.avatar_url} />
                         <span className="truncate">{option.label}</span>
                       </div>
                     </DropdownMenuRadioItem>
@@ -2530,7 +2598,9 @@ export default function DesktopOrdersTable({
                                   ? isCollapsedColumn
                                     ? "h-6 min-w-[42px] px-1.5 text-[10px] font-semibold"
                                     : "h-7 min-w-[48px] px-2 text-[11px] font-semibold"
-                                  : "h-7 w-7 border border-[#E5E7EB] bg-white text-[#6B7280] hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]",
+                                  : isCollapsedColumn
+                                    ? "h-6 min-w-[42px] border border-[#E5E7EB] bg-white px-1.5 text-[10px] font-semibold text-[#6B7280] hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]"
+                                    : "h-7 min-w-[48px] border border-[#E5E7EB] bg-white px-2 text-[11px] font-semibold text-[#6B7280] hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]",
                               ].join(" ")}
                               style={
                                 hiddenByFilter || hiddenByPreference
@@ -2544,7 +2614,7 @@ export default function DesktopOrdersTable({
                               {hiddenByFilter || hiddenByPreference ? (
                                 "Show"
                               ) : (
-                                <Eye className="h-3.5 w-3.5" />
+                                "Hide"
                               )}
                             </button>
                           ) : null}

@@ -27,10 +27,10 @@ export function TodoMonthView({
   const days = getMonthDays(anchorDate);
 
   return (
-    <div className="overflow-hidden rounded-[22px] border border-[#E5E7EB] bg-white shadow-[0_12px_30px_rgba(15,23,42,0.05)]">
-      <div className="grid grid-cols-7 border-b border-[#F2F4F7] bg-[#FCFCFD]">
+    <div className="overflow-hidden rounded-[24px] border border-[#DDE3EA] bg-white shadow-[0_16px_34px_rgba(15,23,42,0.08)]">
+      <div className="grid grid-cols-7 border-b border-[#EDEFF4] bg-[linear-gradient(180deg,#FCFDFE_0%,#F8FAFC_100%)]">
         {WEEKDAY_LABELS.map((label) => (
-          <div key={label} className="px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.06em] text-[#98A2B3]">
+          <div key={label} className="px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.06em] text-[#667085]">
             {label}
           </div>
         ))}
@@ -58,9 +58,11 @@ export function TodoMonthView({
                 }
               }}
               className={cn(
-                "min-h-[158px] border-b border-r border-[#F2F4F7] px-3 py-3 text-left align-top transition hover:bg-[#FCFCFD]",
-                outside && "bg-[#FBFCFE]",
-                selected && "bg-[#F9FAFF]",
+                "min-h-[166px] border-b border-r border-[#EDF0F5] px-3 py-3 text-left align-top transition",
+                outside && "bg-[#FAFBFE]",
+                selected
+                  ? "bg-[#EEF3FF] shadow-[inset_0_0_0_1px_#C7D2FE]"
+                  : "hover:bg-[#F8FAFD]",
               )}
             >
               <div className="mb-3 flex items-center justify-between">
@@ -68,17 +70,17 @@ export function TodoMonthView({
                   className={cn(
                     "inline-flex h-8 w-8 items-center justify-center rounded-full text-[13px] font-semibold",
                     today
-                      ? "border border-[#C7D2FE] bg-[#EEF2FF] text-[#3645A0]"
+                      ? "border border-[#C7D2FE] bg-[#E9EDFF] text-[#3645A0]"
                       : selected
-                        ? "border border-[#D0D5DD] bg-white text-[#111827]"
+                        ? "border border-[#BFC9D6] bg-white text-[#0F172A]"
                         : outside
                           ? "text-[#98A2B3]"
-                          : "text-[#475467]",
+                          : "text-[#344054]",
                   )}
                 >
                   {format(day, "d")}
                 </span>
-                {dayItems.length > 0 ? <span className="text-[11px] font-medium text-[#98A2B3]">{dayItems.length}</span> : null}
+                {dayItems.length > 0 ? <span className="text-[11px] font-semibold text-[#98A2B3]">{dayItems.length}</span> : null}
               </div>
 
               <div className="space-y-1.5">
@@ -93,7 +95,7 @@ export function TodoMonthView({
                 ))}
 
                 {hiddenCount > 0 ? (
-                  <div className="px-1 pt-0.5 text-[11px] font-semibold text-[#667085]">+{hiddenCount} more</div>
+                  <div className="px-1 pt-0.5 text-[11px] font-semibold text-[#475467]">+{hiddenCount} more</div>
                 ) : null}
               </div>
             </div>

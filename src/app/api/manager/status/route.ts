@@ -25,6 +25,7 @@ type ProfileRow = {
   first_name: string | null;
   last_name: string | null;
   email: string | null;
+  avatar_url: string | null;
 };
 
 type AuthUserIdentity = {
@@ -74,7 +75,7 @@ async function loadProfilesMap(admin: SupabaseClient, ids: string[]) {
 
   const { data: profiles, error } = await admin
     .from("profiles")
-    .select("id, full_name, first_name, last_name, email")
+    .select("id, full_name, first_name, last_name, email, avatar_url")
     .in("id", uniqIds);
 
   if (error) throw error;
@@ -277,6 +278,7 @@ export async function GET(req: Request) {
       last_name: profile?.last_name ?? null,
       email: normalized.email || null,
       phone: normalized.phone || null,
+      avatar_url: profile?.avatar_url ?? null,
       profile_missing: !profile,
       safe_fallback: !profile ? buildSafeUserFallback(userId) : null,
     };
@@ -295,6 +297,7 @@ export async function GET(req: Request) {
         last_name: ownerProfile?.last_name ?? null,
         email: ownerNormalized?.email || null,
         phone: ownerNormalized?.phone || null,
+        avatar_url: ownerProfile?.avatar_url ?? null,
         profile_missing: !ownerProfile,
         safe_fallback: !ownerProfile ? buildSafeUserFallback(ownerId) : null,
       }

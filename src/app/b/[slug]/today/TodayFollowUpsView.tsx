@@ -2,7 +2,13 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { CalendarDays, Check, ChevronDown, ExternalLink, Loader2 } from "lucide-react";
+import {
+  CalendarDays,
+  Check,
+  ChevronDown,
+  ExternalLink,
+  Loader2,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { completeFollowUp, rescheduleFollowUp } from "@/app/b/[slug]/actions";
@@ -11,12 +17,20 @@ import {
   type FollowUpCompletionValue,
 } from "@/app/b/[slug]/_components/orders/FollowUpCompleteDialog";
 import { Button } from "@/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { cn } from "@/components/ui/utils";
+import { TimeChip } from "@/components/TimeChip";
+import { TaskGroupSection } from "@/components/TaskGroupSection";
 import {
   formatFollowUpDate,
+  formatFollowUpDateTime,
   getTodayDateOnly,
   getTomorrowDateOnly,
+  isOverdueDateOnly,
   normalizeDateOnly,
   type FollowUpRow,
 } from "@/lib/follow-ups";
@@ -25,6 +39,27 @@ export type TodayFollowUpItem = FollowUpRow & {
   orderLabel: string | null;
   orderHref: string | null;
 };
+
+function getTimeChipStatus(
+  item: TodayFollowUpItem,
+): "normal" | "upcoming" | "overdue" {
+  const today = getTodayDateOnly();
+  if (isOverdueDateOnly(item.due_date, today)) {
+    return "overdue";
+  }
+
+  if (item.due_at) {
+    const now = new Date();
+    const dueTime = new Date(item.due_at);
+    const twoHoursFromNow = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+
+    if (dueTime > now && dueTime <= twoHoursFromNow) {
+      return "upcoming";
+    }
+  }
+
+  return "normal";
+}
 
 function DueBadge({ dueDate }: { dueDate: string }) {
   const today = getTodayDateOnly();
@@ -95,7 +130,9 @@ function RescheduleMenu({
             className="flex h-8.5 w-full items-center justify-between rounded-[12px] px-3 text-[13px] font-medium text-[#374151] transition hover:bg-[#F9FAFB]"
           >
             <span>Today</span>
-            {item.due_date === getTodayDateOnly() ? <Check className="h-4 w-4 text-[#5558E3]" /> : null}
+            {item.due_date === getTodayDateOnly() ? (
+              <Check className="h-4 w-4 text-[#5558E3]" />
+            ) : null}
           </button>
           <button
             type="button"
@@ -106,7 +143,9 @@ function RescheduleMenu({
             className="flex h-8.5 w-full items-center justify-between rounded-[12px] px-3 text-[13px] font-medium text-[#374151] transition hover:bg-[#F9FAFB]"
           >
             <span>Tomorrow</span>
-            {item.due_date === getTomorrowDateOnly() ? <Check className="h-4 w-4 text-[#5558E3]" /> : null}
+            {item.due_date === getTomorrowDateOnly() ? (
+              <Check className="h-4 w-4 text-[#5558E3]" />
+            ) : null}
           </button>
           <div className="rounded-[14px] border border-[#F3F4F6] bg-[#FBFCFE] p-3">
             <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.06em] text-[#9CA3AF]">
@@ -147,6 +186,7 @@ function FollowUpTodayRow({
   onReschedule: (item: TodayFollowUpItem, nextDate: string) => void;
 }) {
   const hasOrderLink = Boolean(item.orderLabel && item.orderHref);
+  const timeLabel = item.due_at ? formatFollowUpDateTime(item.due_at) : null;
 
   return (
     <article className="rounded-[16px] border border-[#E8ECF3] bg-white px-3 py-2 transition-colors hover:bg-[#FBFCFE]">
@@ -161,13 +201,23 @@ function FollowUpTodayRow({
             <Check className="h-3.5 w-3.5" />
           </button>
         ) : (
-          <span className="mt-0.5 inline-flex h-7.5 w-7.5 shrink-0 rounded-full border border-[#E5E7EB] bg-[#F9FAFB]" aria-hidden="true" />
+          <span
+            className="mt-0.5 inline-flex h-7.5 w-7.5 shrink-0 rounded-full border border-[#E5E7EB] bg-[#F9FAFB]"
+            aria-hidden="true"
+          />
         )}
 
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 flex-1 pt-0.5 pr-2">
-              <div className="truncate text-[13px] font-medium leading-5 text-[#1F2937]">{item.title}</div>
+              <div className="flex items-center gap-2">
+                <div className="truncate text-[13px] font-medium leading-5 text-[#1F2937]">
+                  {item.title}
+                </div>
+                {timeLabel ? (
+                  <TimeChip time={timeLabel} status={getTimeChipStatus(item)} />
+                ) : null}
+              </div>
               {hasOrderLink ? (
                 <Link
                   href={item.orderHref!}
@@ -180,7 +230,11 @@ function FollowUpTodayRow({
             </div>
 
             <div className="flex shrink-0 items-center gap-1.5">
-              {canManage ? <RescheduleMenu item={item} onReschedule={onReschedule} /> : <DueBadge dueDate={item.due_date} />}
+              {canManage ? (
+                <RescheduleMenu item={item} onReschedule={onReschedule} />
+              ) : (
+                <DueBadge dueDate={item.due_date} />
+              )}
               {canManage ? (
                 <Button
                   type="button"
@@ -217,16 +271,24 @@ function SectionHeader({
   onToggle?: () => void;
 }) {
   const textClass =
-    tone === "danger" ? "text-[#B42318]" : tone === "primary" ? "text-[#3645A0]" : "text-[#475467]";
+    tone === "danger"
+      ? "text-[#B42318]"
+      : tone === "primary"
+        ? "text-[#3645A0]"
+        : "text-[#475467]";
 
   const content = (
     <>
-      <div className={`text-[12px] font-medium leading-4 ${textClass}`}>{label} ({count})</div>
+      <div className={`text-[12px] font-medium leading-4 ${textClass}`}>
+        {label} ({count})
+      </div>
       <div className="flex items-center gap-2">
         <span className="text-[11px] font-medium text-[#9CA3AF]">{hint}</span>
         {collapsible ? (
           <span className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-[#E5E7EB] bg-white text-[#98A2B3]">
-            <ChevronDown className={`h-3.5 w-3.5 transition ${open ? "rotate-180" : ""}`} />
+            <ChevronDown
+              className={`h-3.5 w-3.5 transition ${open ? "rotate-180" : ""}`}
+            />
           </span>
         ) : null}
       </div>
@@ -234,7 +296,11 @@ function SectionHeader({
   );
 
   if (!collapsible) {
-    return <div className="flex items-center justify-between gap-3 px-1">{content}</div>;
+    return (
+      <div className="flex items-center justify-between gap-3 px-1">
+        {content}
+      </div>
+    );
   }
 
   return (
@@ -264,12 +330,38 @@ export function TodayFollowUpsView({
   const [items, setItems] = React.useState(initialItems);
   const [savingId, setSavingId] = React.useState<string | null>(null);
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
-  const [tomorrowOpen, setTomorrowOpen] = React.useState(false);
-  const [completeDialogItem, setCompleteDialogItem] = React.useState<TodayFollowUpItem | null>(null);
+  const [completeDialogItem, setCompleteDialogItem] =
+    React.useState<TodayFollowUpItem | null>(null);
 
-  const overdue = items.filter((item) => item.due_date < getTodayDateOnly());
-  const today = items.filter((item) => item.due_date === getTodayDateOnly());
-  const tomorrow = items.filter((item) => item.due_date === getTomorrowDateOnly());
+  // Sort items: with time first (ascending by time), then without time
+  const sortItemsByTime = React.useCallback((itemList: TodayFollowUpItem[]) => {
+    return [...itemList].sort((a, b) => {
+      const aHasTime = Boolean(a.due_at);
+      const bHasTime = Boolean(b.due_at);
+
+      // Items with time come first
+      if (aHasTime && !bHasTime) return -1;
+      if (!aHasTime && bHasTime) return 1;
+
+      // Both have time: sort by time ascending
+      if (aHasTime && bHasTime && a.due_at && b.due_at) {
+        return new Date(a.due_at).getTime() - new Date(b.due_at).getTime();
+      }
+
+      // Both without time: sort by created_at descending (newer first)
+      return b.created_at.localeCompare(a.created_at);
+    });
+  }, []);
+
+  const overdue = sortItemsByTime(
+    items.filter((item) => item.due_date < getTodayDateOnly()),
+  );
+  const today = sortItemsByTime(
+    items.filter((item) => item.due_date === getTodayDateOnly()),
+  );
+  const tomorrow = sortItemsByTime(
+    items.filter((item) => item.due_date === getTomorrowDateOnly()),
+  );
 
   async function handleDone(value: FollowUpCompletionValue) {
     if (!completeDialogItem) return;
@@ -295,8 +387,10 @@ export function TodayFollowUpsView({
           orderHref: item.orderHref,
         };
         setItems((current) =>
-          [...current, nextItem].sort((a, b) =>
-            a.due_date.localeCompare(b.due_date) || b.created_at.localeCompare(a.created_at),
+          [...current, nextItem].sort(
+            (a, b) =>
+              a.due_date.localeCompare(b.due_date) ||
+              b.created_at.localeCompare(a.created_at),
           ),
         );
       }
@@ -305,7 +399,9 @@ export function TodayFollowUpsView({
       router.refresh();
     } catch (error) {
       setItems(previous);
-      setErrorMessage(error instanceof Error ? error.message : "Failed to complete follow-up");
+      setErrorMessage(
+        error instanceof Error ? error.message : "Failed to complete follow-up",
+      );
     } finally {
       setSavingId(null);
     }
@@ -318,7 +414,9 @@ export function TodayFollowUpsView({
     const shouldKeep = nextDate <= getTodayDateOnly();
     setItems((current) =>
       shouldKeep
-        ? current.map((entry) => (entry.id === item.id ? { ...entry, due_date: nextDate } : entry))
+        ? current.map((entry) =>
+            entry.id === item.id ? { ...entry, due_date: nextDate } : entry,
+          )
         : current.filter((entry) => entry.id !== item.id),
     );
 
@@ -331,7 +429,11 @@ export function TodayFollowUpsView({
       router.refresh();
     } catch (error) {
       setItems(previous);
-      setErrorMessage(error instanceof Error ? error.message : "Failed to reschedule follow-up");
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Failed to reschedule follow-up",
+      );
     } finally {
       setSavingId(null);
     }
@@ -374,8 +476,13 @@ export function TodayFollowUpsView({
         </div>
       ) : null}
 
-      <section className="space-y-1.5">
-        <SectionHeader label="Overdue" count={overdue.length} hint="Needs attention" tone="danger" />
+      <TaskGroupSection
+        title="Overdue"
+        count={overdue.length}
+        hint="Needs attention"
+        tone="danger"
+        defaultOpen={true}
+      >
         {overdue.length === 0 ? (
           <div className="rounded-[16px] border border-dashed border-[#E5E7EB] bg-white/70 px-4 py-5 text-sm text-[#6B7280]">
             No overdue follow-ups right now.
@@ -388,15 +495,22 @@ export function TodayFollowUpsView({
                 item={item}
                 canManage={canManage}
                 onDone={(entry) => setCompleteDialogItem(entry)}
-                onReschedule={(entry, nextDate) => void handleReschedule(entry, nextDate)}
+                onReschedule={(entry, nextDate) =>
+                  void handleReschedule(entry, nextDate)
+                }
               />
             ))}
           </div>
         )}
-      </section>
+      </TaskGroupSection>
 
-      <section className="space-y-1.5">
-        <SectionHeader label="Today" count={today.length} hint="Scheduled now" tone="primary" />
+      <TaskGroupSection
+        title="Today"
+        count={today.length}
+        hint="Scheduled now"
+        tone="primary"
+        defaultOpen={true}
+      >
         {today.length === 0 ? (
           <div className="rounded-[16px] border border-dashed border-[#E5E7EB] bg-white/70 px-4 py-5 text-sm text-[#6B7280]">
             No follow-ups scheduled for today.
@@ -409,43 +523,42 @@ export function TodayFollowUpsView({
                 item={item}
                 canManage={canManage}
                 onDone={(entry) => setCompleteDialogItem(entry)}
-                onReschedule={(entry, nextDate) => void handleReschedule(entry, nextDate)}
+                onReschedule={(entry, nextDate) =>
+                  void handleReschedule(entry, nextDate)
+                }
               />
             ))}
           </div>
         )}
-      </section>
+      </TaskGroupSection>
 
-      <section className="space-y-1.5">
-        <SectionHeader
-          label="Tomorrow"
-          count={tomorrow.length}
-          hint={tomorrowOpen ? "Planned next" : "Collapsed by default"}
-          tone="neutral"
-          collapsible
-          open={tomorrowOpen}
-          onToggle={() => setTomorrowOpen((current) => !current)}
-        />
-        {tomorrowOpen ? (
-          tomorrow.length === 0 ? (
-            <div className="rounded-[16px] border border-dashed border-[#E5E7EB] bg-white/70 px-4 py-5 text-sm text-[#6B7280]">
-              No follow-ups scheduled for tomorrow.
-            </div>
-          ) : (
-            <div className="space-y-1.5">
-              {tomorrow.map((item) => (
-                <FollowUpTodayRow
-                  key={item.id}
-                  item={item}
-                  canManage={canManage}
-                  onDone={(entry) => setCompleteDialogItem(entry)}
-                  onReschedule={(entry, nextDate) => void handleReschedule(entry, nextDate)}
-                />
-              ))}
-            </div>
-          )
-        ) : null}
-      </section>
+      <TaskGroupSection
+        title="Tomorrow"
+        count={tomorrow.length}
+        hint="Planned for next day"
+        tone="neutral"
+        defaultOpen={false}
+      >
+        {tomorrow.length === 0 ? (
+          <div className="rounded-[16px] border border-dashed border-[#E5E7EB] bg-white/70 px-4 py-5 text-sm text-[#6B7280]">
+            No follow-ups scheduled for tomorrow.
+          </div>
+        ) : (
+          <div className="space-y-1.5">
+            {tomorrow.map((item) => (
+              <FollowUpTodayRow
+                key={item.id}
+                item={item}
+                canManage={canManage}
+                onDone={(entry) => setCompleteDialogItem(entry)}
+                onReschedule={(entry, nextDate) =>
+                  void handleReschedule(entry, nextDate)
+                }
+              />
+            ))}
+          </div>
+        )}
+      </TaskGroupSection>
 
       <FollowUpCompleteDialog
         item={completeDialogItem}

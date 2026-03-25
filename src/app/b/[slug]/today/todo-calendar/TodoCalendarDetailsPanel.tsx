@@ -49,8 +49,8 @@ export function TodoCalendarDetailsPanel({
   const tone = selectedItem ? getItemTypeClasses(selectedItem.type, selectedItem.status) : null;
 
   return (
-    <aside className="rounded-[22px] border border-[#E5E7EB] bg-white shadow-[0_12px_30px_rgba(15,23,42,0.06)]">
-      <div className="flex items-start justify-between gap-3 border-b border-[#F2F4F7] px-4 py-4">
+    <aside className="rounded-[24px] border border-[#DDE3EA] bg-[linear-gradient(180deg,#FFFFFF_0%,#F8FAFC_100%)] shadow-[0_16px_34px_rgba(15,23,42,0.09)]">
+      <div className="flex items-start justify-between gap-3 border-b border-[#EDEFF4] px-4 py-4">
         <div>
           <div className="product-section-label">Selected day</div>
           <div className="mt-1 text-[18px] font-semibold text-[#111827]">{format(selectedDate, "EEEE, MMMM d")}</div>
@@ -61,7 +61,7 @@ export function TodoCalendarDetailsPanel({
         <button
           type="button"
           onClick={onToggleCollapsed}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-[12px] border border-[#E5E7EB] text-[#667085] transition hover:bg-[#F9FAFB] hover:text-[#111827]"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-[12px] border border-[#D8DFEA] bg-white text-[#667085] transition hover:bg-[#EEF2FF] hover:text-[#3645A0]"
           aria-label="Collapse details panel"
         >
           <PanelRightClose className="h-4 w-4" />
@@ -86,7 +86,7 @@ export function TodoCalendarDetailsPanel({
           )}
         </div>
 
-        <div className="rounded-[18px] border border-[#F2F4F7] bg-[#FCFCFD] p-4">
+        <div className="rounded-[18px] border border-[#E8EDF4] bg-white p-4 shadow-[0_8px_20px_rgba(15,23,42,0.04)]">
           {selectedItem ? (
             <div className="space-y-3">
               <div className="flex items-center gap-2">

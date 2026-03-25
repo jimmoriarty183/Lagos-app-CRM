@@ -1,7 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { BarChart3, BriefcaseBusiness, CalendarDays, Menu, SlidersHorizontal, X } from "lucide-react";
+import {
+  BarChart3,
+  BriefcaseBusiness,
+  CalendarDays,
+  Menu,
+  SlidersHorizontal,
+  X,
+} from "lucide-react";
 import { WorkDayControls } from "./WorkDayControls";
 
 type Props = {
@@ -61,10 +68,14 @@ export default function MobileTopbarMenu({
       </button>
 
       {open ? (
-        <div className="absolute left-0 top-[calc(100%+10px)] z-50 w-60 rounded-2xl border border-gray-200 bg-white p-2 shadow-xl">
+        <div className="absolute left-0 top-[calc(100%+10px)] z-[60] w-60 rounded-2xl border border-gray-200 bg-white p-2 shadow-xl">
           <div className="rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] px-3 py-3">
-            <div className="truncate text-sm font-semibold text-[#111827]">{userLabel}</div>
-            <div className="pt-0.5 text-[11px] font-medium capitalize text-[#9CA3AF]">{roleLabel}</div>
+            <div className="truncate text-sm font-semibold text-[#111827]">
+              {userLabel}
+            </div>
+            <div className="pt-0.5 text-[11px] font-medium capitalize text-[#9CA3AF]">
+              {roleLabel}
+            </div>
           </div>
 
           {canSeeAnalytics ? (
@@ -72,7 +83,9 @@ export default function MobileTopbarMenu({
               <BarChart3 className="h-4 w-4 text-slate-400" />
               <div className="min-w-0 flex-1">
                 <div>Analytics</div>
-                <div className="text-[11px] font-medium text-slate-400">Coming soon</div>
+                <div className="text-[11px] font-medium text-slate-400">
+                  Coming soon
+                </div>
               </div>
               <span className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">
                 Soon
@@ -109,13 +122,15 @@ export default function MobileTopbarMenu({
 
           {businessId && canManage ? (
             <>
-              <WorkDayControls
-                businessId={businessId}
-                businessSlug={businessSlug}
-                canManage={canManage}
-                compact
-                onActionComplete={() => setOpen(false)}
-              />
+              <div className="mt-2">
+                <WorkDayControls
+                  businessId={businessId}
+                  businessSlug={businessSlug}
+                  canManage={canManage}
+                  compact
+                  onActionComplete={() => setOpen(false)}
+                />
+              </div>
             </>
           ) : null}
 

@@ -8,3 +8,5 @@ gcm-diagnose.log
 .codex-browser/
 
 __backups/
+
+.vercel

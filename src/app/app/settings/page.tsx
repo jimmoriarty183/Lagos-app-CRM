@@ -4,6 +4,7 @@ import { ChevronRight, Settings, Shield, UserCircle2 } from "lucide-react";
 
 import { resolveCurrentWorkspace } from "@/lib/platform/workspace";
 import { getAdminUsersPath, isAdminEmail } from "@/lib/admin-access";
+import TeamAccessTopBar from "@/app/b/[slug]/settings/team/TeamAccessTopBar";
 
 export default async function PlatformSettingsPage() {
   const { user, workspace } = await resolveCurrentWorkspace();
@@ -21,7 +22,14 @@ export default async function PlatformSettingsPage() {
 
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#F8FAFC_0%,#EEF2FF_100%)] text-[#111827]">
-      <div className="mx-auto max-w-[920px] px-4 pb-10 pt-10 sm:px-6">
+      <TeamAccessTopBar
+        ordersHref="/app/crm"
+        userLabel={accountLabel}
+        profileHref="/app/profile"
+        adminHref={adminHref}
+      />
+
+      <div className="mx-auto max-w-[920px] px-4 pb-10 pt-[88px] sm:px-6 sm:pt-[88px]">
         <div className="rounded-[28px] border border-[#E5E7EB] bg-white/92 p-6 shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur">
           <div className="inline-flex items-center rounded-full border border-[#E5E7EB] bg-[#F9FAFB] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#6B7280]">
             Account settings

@@ -120,6 +120,18 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: profErr.message }, { status: 500 });
   }
 
+  const { error: metadataErr } = await supabase.auth.updateUser({
+    data: {
+      first_name: safeFirstName,
+      last_name: safeLastName,
+      full_name: normalizedFullName || null,
+    },
+  });
+
+  if (metadataErr) {
+    return NextResponse.json({ ok: false, error: metadataErr.message }, { status: 500 });
+  }
+
   // 5) membership
   const { error: memErr } = await admin
     .from("memberships")

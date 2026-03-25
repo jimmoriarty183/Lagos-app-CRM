@@ -58,6 +58,25 @@ body {
   -webkit-text-size-adjust: 100%;
 }
 
+/* Mobile touch improvements */
+@media (hover: none) and (pointer: coarse) {
+  /* Ensure buttons are easily tappable on mobile */
+  button,
+  [role="button"],
+  [type="button"],
+  [type="submit"] {
+    min-height: 44px;
+    min-width: 44px;
+    touch-action: manipulation;
+  }
+
+  /* Remove hover-based styles on touch devices */
+  button:hover,
+  [role="button"]:hover {
+    background: initial;
+  }
+}
+
 input,
 select,
 textarea,

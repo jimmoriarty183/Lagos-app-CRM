@@ -45,17 +45,18 @@ export function TodoCalendarItem({
       type="button"
       onClick={onClick}
       className={cn(
-        "group flex w-full items-start gap-2 rounded-[14px] border text-left transition",
+        "group relative flex w-full items-start gap-2 overflow-hidden rounded-[14px] border text-left transition",
         compact ? "px-2 py-1.5" : "px-3 py-2.5",
         tone.tint,
-        selected ? "ring-2 ring-[#D6DAFF] ring-offset-1" : "hover:shadow-[0_8px_18px_rgba(15,23,42,0.08)]",
+        selected ? "ring-2 ring-[#C7D2FE] ring-offset-1" : "hover:-translate-y-[1px] hover:shadow-[0_10px_20px_rgba(15,23,42,0.1)]",
       )}
       title={`${getItemTypeLabel(item.type)}: ${item.title}`}
     >
-      <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/80">
+      <span className={cn("absolute bottom-0 left-0 top-0 w-1.5", tone.dot)} />
+      <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/85 shadow-[0_2px_6px_rgba(15,23,42,0.08)]">
         <ItemIcon item={item} />
       </span>
-      <span className="min-w-0 flex-1">
+      <span className="min-w-0 flex-1 pl-1">
         <span className="flex items-center gap-2">
           {!item.allDay ? <span className="text-[10px] font-semibold uppercase tracking-[0.06em] opacity-70">{getShortTimeLabel(item)}</span> : null}
           {item.status === "overdue" ? <span className="text-[10px] font-semibold uppercase tracking-[0.06em] opacity-70">Overdue</span> : null}

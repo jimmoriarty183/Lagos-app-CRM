@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import {
   type TodayFollowUpItem,
@@ -35,13 +36,18 @@ export function TodoWorkspaceView({
   canManage,
   initialItems,
   calendarItems,
+  initialMode,
 }: {
   businessSlug: string;
   canManage: boolean;
   initialItems: TodayFollowUpItem[];
   calendarItems: TodoCalendarItem[];
+  initialMode: TodoDisplayMode;
 }) {
-  const [mode, setMode] = React.useState<TodoDisplayMode>("list");
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [mode, setMode] = React.useState<TodoDisplayMode>(initialMode);
   const [calendarView, setCalendarView] = React.useState<TodoCalendarView>("month");
   const [calendarFilter, setCalendarFilter] = React.useState<TodoCalendarFilter>("all");
   const [anchorDate, setAnchorDate] = React.useState(() => new Date());
@@ -58,6 +64,27 @@ export function TodoWorkspaceView({
   const [selectedItemId, setSelectedItemId] = React.useState<string | null>(null);
 
   React.useEffect(() => {
+    const modeParam = String(searchParams.get("mode") ?? "")
+      .trim()
+      .toLowerCase();
+    const nextMode: TodoDisplayMode = modeParam === "calendar" ? "calendar" : "list";
+    setMode((current) => (current === nextMode ? current : nextMode));
+  }, [searchParams]);
+
+  const handleModeChange = React.useCallback(
+    (nextMode: TodoDisplayMode) => {
+      setMode(nextMode);
+      const params = new URLSearchParams(searchParams.toString());
+      if (nextMode === "calendar") params.set("mode", "calendar");
+      else params.delete("mode");
+      const nextSearch = params.toString();
+      const nextHref = `${pathname}${nextSearch ? `?${nextSearch}` : ""}`;
+      router.replace(nextHref, { scroll: false });
+    },
+    [pathname, router, searchParams],
+  );
+
+  React.useEffect(() => {
     if (filteredItems.length === 0) {
       setSelectedItemId(null);
       setSelectedDateKey(toDateKey(new Date()));
@@ -68,12 +95,7 @@ export function TodoWorkspaceView({
       ? filteredItems.some((item) => item.id === selectedItemId)
       : false;
     if (!stillVisible) setSelectedItemId(filteredItems[0]?.id ?? null);
-
-    const hasSelectedDay = filteredItems.some((item) => item.date === selectedDateKey);
-    if (!hasSelectedDay) {
-      setSelectedDateKey(getSelectedDateFallback(filteredItems, anchorDate));
-    }
-  }, [anchorDate, filteredItems, selectedDateKey, selectedItemId]);
+  }, [filteredItems, selectedItemId]);
 
   const counts = React.useMemo(
     () => ({
@@ -105,8 +127,31 @@ export function TodoWorkspaceView({
     setDetailsCollapsed(false);
   }, []);
 
+  const handleViewChange = React.useCallback((nextView: TodoCalendarView) => {
+    setCalendarView(nextView);
+    if (nextView === "day") {
+      handleSelectDate(anchorDate);
+    }
+  }, [anchorDate, handleSelectDate]);
+
+  const handleMovePeriod = React.useCallback((direction: -1 | 1) => {
+    const nextAnchor = moveAnchorDate(anchorDate, calendarView, direction);
+    setAnchorDate(nextAnchor);
+    if (calendarView === "day") {
+      handleSelectDate(nextAnchor);
+    }
+  }, [anchorDate, calendarView, handleSelectDate]);
+
   return (
-    <div className="space-y-4">
+    <div className="relative space-y-5">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -left-20 -top-14 h-56 w-56 rounded-full bg-[#E0E7FF]/70 blur-3xl"
+      />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -right-24 top-1/4 h-72 w-72 rounded-full bg-[#DBEAFE]/55 blur-3xl"
+      />
       {mode === "list" ? (
         <TodayFollowUpsView
           businessSlug={businessSlug}
@@ -115,7 +160,7 @@ export function TodoWorkspaceView({
           headerAction={
             <TodoViewModeSwitch
               value={mode}
-              onChange={setMode}
+              onChange={handleModeChange}
               options={[
                 { value: "list", label: "List" },
                 { value: "calendar", label: "Calendar" },
@@ -124,18 +169,18 @@ export function TodoWorkspaceView({
           }
         />
       ) : (
-        <div className="space-y-4">
-          <div className="rounded-[22px] border border-[#E5E7EB] bg-[linear-gradient(180deg,#ffffff_0%,#F9FAFB_100%)] px-4 py-4 shadow-[0_10px_30px_rgba(15,23,42,0.05)]">
+        <div className="relative space-y-5">
+          <div className="rounded-[24px] border border-[#D9E2FF] bg-[linear-gradient(135deg,#FFFFFF_0%,#F8FAFF_62%,#EEF2FF_100%)] px-5 py-4.5 shadow-[0_16px_38px_rgba(15,23,42,0.08)]">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <div className="product-page-title text-[#111827]">Today</div>
-                <p className="mt-1 product-body-sm text-[#6B7280]">
+                <div className="product-page-title text-[#0F172A]">Today</div>
+                <p className="mt-1 product-body-sm text-[#475467]">
                   Calendar mode is the planning surface for dated work. List mode stays compact and execution-focused.
                 </p>
               </div>
               <TodoViewModeSwitch
                 value={mode}
-                onChange={setMode}
+                onChange={handleModeChange}
                 options={[
                   { value: "list", label: "List" },
                   { value: "calendar", label: "Calendar" },
@@ -147,21 +192,21 @@ export function TodoWorkspaceView({
           <TodoCalendarToolbar
             periodLabel={getPeriodLabel(calendarView, anchorDate)}
             view={calendarView}
-            onViewChange={setCalendarView}
+            onViewChange={handleViewChange}
             onToday={() => {
               const now = new Date();
               setAnchorDate(now);
               handleSelectDate(now);
             }}
-            onPrevious={() => setAnchorDate((current) => moveAnchorDate(current, calendarView, -1))}
-            onNext={() => setAnchorDate((current) => moveAnchorDate(current, calendarView, 1))}
+            onPrevious={() => handleMovePeriod(-1)}
+            onNext={() => handleMovePeriod(1)}
           />
 
-          <div className="rounded-[22px] border border-[#E5E7EB] bg-white px-4 py-4 shadow-[0_10px_30px_rgba(15,23,42,0.05)]">
+          <div className="rounded-[24px] border border-[#E4E7EC] bg-[linear-gradient(180deg,#FFFFFF_0%,#F8FAFC_100%)] px-5 py-4 shadow-[0_14px_32px_rgba(15,23,42,0.06)]">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <div>
                 <div className="product-section-title">Planning calendar</div>
-                <p className="mt-1 text-[13px] text-[#667085]">
+                <p className="mt-1 text-[13px] text-[#475467]">
                   Dated follow-ups, order deadlines, and checklist due dates stay on their original dates.
                 </p>
               </div>
@@ -170,14 +215,14 @@ export function TodoWorkspaceView({
           </div>
 
           {filteredItems.length === 0 ? (
-            <div className="rounded-[22px] border border-dashed border-[#D0D5DD] bg-white px-6 py-12 text-center shadow-[0_10px_30px_rgba(15,23,42,0.03)]">
+            <div className="rounded-[24px] border border-dashed border-[#D0D5DD] bg-white px-6 py-12 text-center shadow-[0_10px_30px_rgba(15,23,42,0.05)]">
               <div className="product-page-title text-[#111827]">No scheduled items yet</div>
               <p className="mt-2 text-[14px] text-[#667085]">
                 Add due dates or follow-ups to see them on the calendar.
               </p>
             </div>
           ) : (
-            <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
+            <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
               <div className="min-w-0">
                 {calendarView === "month" ? (
                   <TodoMonthView

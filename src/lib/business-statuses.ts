@@ -454,9 +454,7 @@ export function getStatusColorOption(color: StatusColorValue) {
 export function getDefaultVisibleStatuses(
   customStatuses: readonly BusinessStatusDefinition[] = [],
 ) {
-  return mergeBusinessStatuses(customStatuses)
-    .filter((status) => !isTerminalStatus(status.value))
-    .map((status) => status.value);
+  return mergeBusinessStatuses(customStatuses).map((status) => status.value);
 }
 
 export function getDefaultVisibleStatusFilters(

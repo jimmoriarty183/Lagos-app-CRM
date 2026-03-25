@@ -7,6 +7,8 @@ import {
   getTodayDateOnly,
   getTomorrowDateOnly,
   normalizeDateOnly,
+  normalizeDateTime,
+  type FollowUpActionType,
   type FollowUpSource,
   type FollowUpStatus,
 } from "@/lib/follow-ups";
@@ -23,8 +25,98 @@ function isMissingColumnError(error: unknown, column: string) {
   );
 }
 
+function isDueAtColumnError(error: unknown) {
+  if (!error) return false;
+  const message = String((error as { message?: string } | null)?.message ?? "").toLowerCase();
+  // Schema cache error (Supabase client hasn't refreshed schema)
+  if (message.includes("could not find the 'due_at' column") && message.includes("schema cache")) {
+    return true;
+  }
+  // Actual column does not exist error (migration not applied)
+  if (message.includes("column") && message.includes("does not exist")) {
+    return true;
+  }
+  return false;
+}
+
+async function runFollowUpsMutation<T>(
+  payload: Record<string, unknown>,
+  action: (
+    p: Record<string, unknown>,
+  ) => PromiseLike<{ data?: T | null; error: { message?: string } | null }>,
+) {
+  let nextPayload = { ...payload };
+
+  // First attempt with full payload (including due_at if present)
+  const result = await action(nextPayload);
+  if (!result.error) return result;
+
+  // If error is about due_at column, retry without it
+  if (isDueAtColumnError(result.error)) {
+    const { due_at, ...payloadWithoutDueAt } = nextPayload;
+    const retryResult = await action(payloadWithoutDueAt);
+    return retryResult;
+  }
+
+  if (isMissingColumnError(result.error, "action_type") || isMissingColumnError(result.error, "action_payload")) {
+    const { action_type, action_payload, ...payloadWithoutActionFields } = nextPayload;
+    const retryResult = await action(payloadWithoutActionFields);
+    return retryResult;
+  }
+
+  return result;
+}
+
+async function runFollowUpsSelect<T>(
+  columns: string,
+  action: (cols: string) => PromiseLike<{ data?: T | null; error: { message?: string } | null }>,
+) {
+  // First attempt with due_at column
+  const result = await action(columns);
+  if (!result.error) return result;
+  
+  // If error is about due_at column, retry without it
+  if (isDueAtColumnError(result.error)) {
+    const columnsWithoutDueAt = columns.replace(/,\s*due_at/g, "");
+    const retryResult = await action(columnsWithoutDueAt);
+    return retryResult;
+  }
+
+  if (isMissingColumnError(result.error, "action_type") || isMissingColumnError(result.error, "action_payload")) {
+    const columnsWithoutActionFields = columns
+      .replace(/,\s*action_type/g, "")
+      .replace(/,\s*action_payload/g, "");
+    const retryResult = await action(columnsWithoutActionFields);
+    return retryResult;
+  }
+  
+  return result;
+}
+
 function cleanText(value: unknown) {
   return String(value ?? "").trim();
+}
+
+const followUpActionTypes: FollowUpActionType[] = [
+  "meeting",
+  "reminder",
+  "task",
+  "message",
+  "manual",
+];
+
+function normalizeFollowUpActionType(value: unknown): FollowUpActionType {
+  const normalized = cleanText(value).toLowerCase();
+  return followUpActionTypes.includes(normalized as FollowUpActionType)
+    ? (normalized as FollowUpActionType)
+    : "manual";
+}
+
+function normalizeFollowUpActionPayload(value: unknown): Record<string, unknown> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return {};
+  }
+  return value as Record<string, unknown>;
 }
 
 function upperRole(value: unknown) {
@@ -480,8 +572,11 @@ export async function createFollowUp(input: {
   orderId?: string | null;
   title: string;
   dueDate: string;
+  dueAt?: string | null;
   note?: string | null;
   source?: FollowUpSource | string | null;
+  actionType?: FollowUpActionType | string | null;
+  actionPayload?: Record<string, unknown> | null;
 }) {
   const { admin, userId } = await requireBusinessManagerAccess(input.businessId);
   const workspaceId = await ensureWorkspaceForBusiness(admin, input.businessId);
@@ -489,7 +584,10 @@ export async function createFollowUp(input: {
   if (!title) throw new Error("Follow-up title is required");
 
   const dueDate = normalizeFollowUpDueDate(input.dueDate);
-  const payload = {
+  const dueAt = input.dueAt ? normalizeDateTime(input.dueAt) : null;
+  const actionType = normalizeFollowUpActionType(input.actionType);
+  const actionPayload = normalizeFollowUpActionPayload(input.actionPayload);
+  const payload: Record<string, unknown> = {
     business_id: input.businessId,
     workspace_id: workspaceId,
     order_id: trimNullableText(input.orderId),
@@ -497,15 +595,21 @@ export async function createFollowUp(input: {
     due_date: dueDate,
     note: trimNullableText(input.note),
     source: trimNullableText(input.source) ?? (input.orderId ? "order" : "manual"),
+    action_type: actionType,
+    action_payload: actionPayload,
     status: "open" as FollowUpStatus,
     created_by: userId,
   };
 
-  const { data, error } = await admin
-    .from("follow_ups")
-    .insert(payload)
-    .select("*")
-    .single();
+  // Add due_at only if provided (safe fallback if column doesn't exist yet)
+  if (dueAt) {
+    payload.due_at = dueAt;
+  }
+
+  const { data, error } = await runFollowUpsMutation(
+    payload,
+    (p) => admin.from("follow_ups").insert(p).select("*").single(),
+  );
 
   if (error) throw new Error(error.message);
 
@@ -521,9 +625,12 @@ export async function createFollowUp(input: {
     payload: {
       title,
       due_date: dueDate,
+      due_at: dueAt,
       status: "open",
       source: payload.source,
       note: payload.note,
+      action_type: actionType,
+      action_payload: actionPayload,
     },
     createdAt: data.created_at ?? undefined,
   });
@@ -541,6 +648,7 @@ export async function completeFollowUp(input: {
   nextFollowUp?: {
     title: string;
     dueDate: string;
+    dueAt?: string | null;
     note?: string | null;
   } | null;
 }) {
@@ -556,10 +664,13 @@ export async function completeFollowUp(input: {
   const nextDueDate = shouldCreateNext
     ? normalizeFollowUpDueDate(String(input.nextFollowUp?.dueDate ?? ""))
     : null;
+  const nextDueAt = shouldCreateNext && input.nextFollowUp?.dueAt
+    ? normalizeDateTime(input.nextFollowUp.dueAt)
+    : null;
 
   const { data: existing, error: existingError } = await admin
     .from("follow_ups")
-    .select("id, business_id, workspace_id, order_id, title, due_date, status, source")
+    .select("id, business_id, workspace_id, order_id, title, due_date, due_at, status, source, action_type, action_payload")
     .eq("id", input.followUpId)
     .maybeSingle();
 
@@ -572,39 +683,45 @@ export async function completeFollowUp(input: {
   let nextCreated: Record<string, unknown> | null = null;
 
   if (shouldCreateNext) {
-    const { data: nextData, error: nextError } = await admin
-      .from("follow_ups")
-      .insert({
-        business_id: existing.business_id,
-        workspace_id: existing.workspace_id ?? existing.business_id,
-        order_id: existing.order_id,
-        title: nextTitle,
-        due_date: nextDueDate,
-        note: trimNullableText(input.nextFollowUp?.note),
-        source: trimNullableText(existing.source) ?? "manual",
-        status: "open",
-        created_by: userId,
-      })
-      .select("*")
-      .single();
+    const nextPayload: Record<string, unknown> = {
+      business_id: existing.business_id,
+      workspace_id: existing.workspace_id ?? existing.business_id,
+      order_id: existing.order_id,
+      title: nextTitle,
+      due_date: nextDueDate,
+      note: trimNullableText(input.nextFollowUp?.note),
+      source: trimNullableText(existing.source) ?? "manual",
+      action_type: "manual" satisfies FollowUpActionType,
+      action_payload: {},
+      status: "open",
+      created_by: userId,
+    };
+
+    // Add due_at only if provided (safe fallback if column doesn't exist yet)
+    if (nextDueAt) {
+      nextPayload.due_at = nextDueAt;
+    }
+
+    const { data: nextData, error: nextError } = await runFollowUpsMutation(
+      nextPayload,
+      (p) => admin.from("follow_ups").insert(p).select("*").single(),
+    );
 
     if (nextError) throw new Error(nextError.message);
     nextCreated = nextData as Record<string, unknown>;
   }
 
   const completedAt = new Date().toISOString();
-  const { data, error } = await admin
-    .from("follow_ups")
-    .update({
+  const { data, error } = await runFollowUpsMutation(
+    {
       status: "done",
       completed_at: completedAt,
       completed_by: userId,
       completion_note: completionNote,
       next_follow_up_id: nextCreated?.id ?? null,
-    })
-    .eq("id", input.followUpId)
-    .select("*")
-    .single();
+    },
+    (p) => admin.from("follow_ups").update(p).eq("id", input.followUpId).select("*").single(),
+  );
 
   if (error) throw new Error(error.message);
 
@@ -624,10 +741,14 @@ export async function completeFollowUp(input: {
     payload: {
       title: data.title,
       due_date: data.due_date,
+      due_at: data.due_at,
       completion_note: completionNote,
+      action_type: data.action_type ?? null,
+      action_payload: data.action_payload ?? {},
       next_follow_up_id: nextCreated?.id ?? null,
       next_follow_up_title: nextCreated?.title ?? null,
       next_follow_up_due_date: nextCreated?.due_date ?? null,
+      next_follow_up_due_at: nextCreated?.due_at ?? null,
     },
     createdAt: data.completed_at ?? data.updated_at ?? completedAt,
   });
@@ -645,9 +766,12 @@ export async function completeFollowUp(input: {
       payload: {
         title: String(nextCreated.title ?? nextTitle),
         due_date: String(nextCreated.due_date ?? nextDueDate ?? ""),
+        due_at: String(nextCreated.due_at ?? nextDueAt ?? ""),
         status: "open",
         source: String(nextCreated.source ?? existing.source ?? "manual"),
         note: nextCreated.note ?? null,
+        action_type: String(nextCreated.action_type ?? "manual"),
+        action_payload: nextCreated.action_payload ?? {},
         created_from_follow_up_id: data.id,
       },
       createdAt: String(nextCreated.created_at ?? completedAt),
@@ -684,19 +808,17 @@ export async function updateFollowUpStatus(input: {
   };
   const { data: existing, error: existingError } = await admin
     .from("follow_ups")
-    .select("id, business_id, order_id, title, due_date, status, completion_note, next_follow_up_id")
+    .select("id, business_id, order_id, title, due_date, status, completion_note, next_follow_up_id, action_type, action_payload")
     .eq("id", input.followUpId)
     .maybeSingle();
 
   if (existingError) throw new Error(existingError.message);
   if (!existing) throw new Error("Follow-up not found");
 
-  const { data, error } = await admin
-    .from("follow_ups")
-    .update(patch)
-    .eq("id", input.followUpId)
-    .select("*")
-    .single();
+  const { data, error } = await runFollowUpsMutation(
+    patch,
+    (p) => admin.from("follow_ups").update(p).eq("id", input.followUpId).select("*").single(),
+  );
 
   if (error) throw new Error(error.message);
 
@@ -721,6 +843,8 @@ export async function updateFollowUpStatus(input: {
       due_date: data.due_date,
       completion_note: data.completion_note,
       next_follow_up_id: data.next_follow_up_id,
+      action_type: data.action_type ?? null,
+      action_payload: data.action_payload ?? {},
     },
     createdAt: data.updated_at ?? data.completed_at ?? undefined,
   });
@@ -735,31 +859,39 @@ export async function rescheduleFollowUp(input: {
   followUpId: string;
   businessSlug: string;
   dueDate: string;
+  dueAt?: string | null;
 }) {
   const { admin, userId } = await requireFollowUpManagerAccess(input.followUpId);
   const dueDate = normalizeFollowUpDueDate(input.dueDate);
-  const { data: existing, error: existingError } = await admin
-    .from("follow_ups")
-    .select("id, business_id, workspace_id, order_id, title, due_date")
-    .eq("id", input.followUpId)
-    .maybeSingle();
+  const dueAt = input.dueAt ? normalizeDateTime(input.dueAt) : null;
+
+  // Safe select with retry for due_at column
+  const { data: existing, error: existingError } = await runFollowUpsSelect(
+    "id, business_id, workspace_id, order_id, title, due_date, due_at, action_type, action_payload",
+    (cols) => admin.from("follow_ups").select(cols).eq("id", input.followUpId).maybeSingle(),
+  );
 
   if (existingError) throw new Error(existingError.message);
   if (!existing) throw new Error("Follow-up not found");
 
-  const { data, error } = await admin
-    .from("follow_ups")
-    .update({
-      due_date: dueDate,
-      status: "open",
-      completed_at: null,
-      completed_by: null,
-      completion_note: null,
-      next_follow_up_id: null,
-    })
-    .eq("id", input.followUpId)
-    .select("*")
-    .single();
+  // Safe update: only include due_at if provided
+  const updatePayload: Record<string, unknown> = {
+    due_date: dueDate,
+    status: "open",
+    completed_at: null,
+    completed_by: null,
+    completion_note: null,
+    next_follow_up_id: null,
+  };
+
+  if (dueAt) {
+    updatePayload.due_at = dueAt;
+  }
+
+  const { data, error } = await runFollowUpsMutation(
+    updatePayload,
+    (p) => admin.from("follow_ups").update(p).eq("id", input.followUpId).select("*").single(),
+  );
 
   if (error) throw new Error(error.message);
 
@@ -775,7 +907,11 @@ export async function rescheduleFollowUp(input: {
     payload: {
       title: data.title,
       previous_due_date: existing.due_date,
+      previous_due_at: existing.due_at,
       new_due_date: data.due_date,
+      new_due_at: data.due_at,
+      action_type: data.action_type ?? existing.action_type ?? null,
+      action_payload: data.action_payload ?? existing.action_payload ?? {},
     },
     createdAt: data.updated_at ?? undefined,
   });
@@ -806,6 +942,8 @@ export async function createTomorrowFollowUps(input: {
       status: "open" as FollowUpStatus,
       note: trimNullableText(item.note),
       source: trimNullableText(input.source) ?? "end_of_day",
+      action_type: "manual" satisfies FollowUpActionType,
+      action_payload: {},
       created_by: userId,
     }))
     .filter((item) => item.title.length > 0);

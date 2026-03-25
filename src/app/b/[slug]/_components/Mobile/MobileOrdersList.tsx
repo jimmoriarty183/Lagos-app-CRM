@@ -120,8 +120,6 @@ type HiddenKanbanCounts = {
   canceled: number;
 };
 
-const MOBILE_KANBAN_TERMINAL_VISIBILITY_KEY = "orders-mobile-kanban-terminal-visibility";
-
 function fmtAmount(n: number) {
   return new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(Number(n || 0));
 }
@@ -212,6 +210,26 @@ function isOrderOverdue(
   );
 }
 
+function KanbanTransitionPlaceholder() {
+  return (
+    <div className="grid gap-3">
+      <section className="overflow-hidden rounded-[24px] border border-[#E5E7EB] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+        <div className="rounded-2xl border border-[#E5E7EB] bg-[#F9FAFB] px-4 py-3">
+          <div className="text-sm font-semibold text-[#1F2937]">Подготавливаю контент</div>
+          <div className="mt-1 text-xs text-[#6B7280]">
+            Формируем канбан-колонки из уже загруженных данных
+          </div>
+        </div>
+        <div className="mt-3 grid gap-2">
+          <div className="h-10 w-full animate-pulse rounded-full bg-[#EEF2FF]" />
+          <div className="h-28 w-full animate-pulse rounded-[20px] bg-[#F3F4F6]" />
+          <div className="h-28 w-full animate-pulse rounded-[20px] bg-[#F3F4F6]" />
+        </div>
+      </section>
+    </div>
+  );
+}
+
 export default function MobileOrdersList({
   list = [],
   todayISO,
@@ -294,60 +312,37 @@ export default function MobileOrdersList({
   const searchDraft = searchQuery;
   const sortValue = sort;
   const [viewMode, setViewMode] = useState<ViewMode>(initialViewMode);
-  const [statusValues, setStatusValues] = useState<StatusFilterValue[]>(statusFilter);
+  const [statusValues] = useState<StatusFilterValue[]>(statusFilter);
   const managerValue = normalizeQuickActor(actorFilter, actors, currentUserId);
-  const [statusTouched, setStatusTouched] = useState(false);
+  const [statusTouched] = useState(false);
   const managerTouched = false;
+  void hiddenKanbanCounts;
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [selectedKanbanStatus, setSelectedKanbanStatus] = useState<string | null>(null);
   const [kanbanCanScrollLeft, setKanbanCanScrollLeft] = useState(false);
   const [kanbanCanScrollRight, setKanbanCanScrollRight] = useState(false);
-  const [terminalColumnHidden, setTerminalColumnHidden] = useState({
-    DONE: false,
-    CANCELED: false,
-  });
-  const [terminalVisibilityReady, setTerminalVisibilityReady] = useState(false);
   const [isPending] = useTransition();
   const kanbanTabsRef = useRef<HTMLDivElement | null>(null);
   const [navigationMessage, setNavigationMessage] = useState<string | null>(null);
   const [loadedActors, setLoadedActors] = useState<TeamActor[]>(actors);
+  const [isPreparingKanban, setIsPreparingKanban] = useState(false);
   const isMountedRef = useRef(false);
+  const switchToKanbanFrameRef = useRef<number | null>(null);
+  const switchToKanbanDoneFrameRef = useRef<number | null>(null);
 
   useEffect(() => {
     isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
+      if (switchToKanbanFrameRef.current !== null) {
+        window.cancelAnimationFrame(switchToKanbanFrameRef.current);
+      }
+      if (switchToKanbanDoneFrameRef.current !== null) {
+        window.cancelAnimationFrame(switchToKanbanDoneFrameRef.current);
+      }
     };
   }, []);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    try {
-      const stored = window.localStorage.getItem(MOBILE_KANBAN_TERMINAL_VISIBILITY_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored) as Partial<Record<"DONE" | "CANCELED", boolean>>;
-        setTerminalColumnHidden({
-          DONE: Boolean(parsed.DONE),
-          CANCELED: Boolean(parsed.CANCELED),
-        });
-      }
-    } catch {
-      // Ignore malformed local storage payloads.
-    } finally {
-      setTerminalVisibilityReady(true);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === "undefined" || !terminalVisibilityReady) return;
-
-    window.localStorage.setItem(
-      MOBILE_KANBAN_TERMINAL_VISIBILITY_KEY,
-      JSON.stringify(terminalColumnHidden),
-    );
-  }, [terminalColumnHidden, terminalVisibilityReady]);
 
   const supabase = useMemo(() => createClient(), []);
 
@@ -409,14 +404,6 @@ export default function MobileOrdersList({
         : normalizeQuickStatus(statusFilter) === "ALL"
           ? activeStatusOptions
           : statusFilter;
-  const doneVisibleInFilter =
-    statusMode === "all" ||
-    appliedStatuses.includes("DONE") ||
-    (!statusTouched && statusFilter.includes("DONE"));
-  const canceledVisibleInFilter =
-    statusMode === "all" ||
-    appliedStatuses.includes("CANCELED") ||
-    (!statusTouched && statusFilter.includes("CANCELED"));
   const visibleKanbanColumns = useMemo(
     () =>
       workflowStatuses.map((status) => ({
@@ -591,51 +578,6 @@ export default function MobileOrdersList({
     window.dispatchEvent(new Event("orders-mobile-open-filters"));
   };
 
-  const hideTerminalColumn = (status: "DONE" | "CANCELED") => {
-    setTerminalColumnHidden((current) => ({
-      ...current,
-      [status]: true,
-    }));
-  };
-
-  const revealTerminalColumn = (status: "DONE" | "CANCELED") => {
-    setTerminalColumnHidden((current) => ({
-      ...current,
-      [status]: false,
-    }));
-  };
-
-  const revealStatusInBoard = (status: StatusFilterValue) => {
-    const nextStatuses = Array.from(new Set([...appliedStatuses, status]));
-    setStatusValues(nextStatuses);
-    setStatusTouched(true);
-    navigateWithFallback(
-      buildHref({
-        q: searchDraft,
-        sortValue,
-        statusValues: nextStatuses,
-        statusTouched: true,
-        managerValue,
-        managerTouched,
-        page: 1,
-        viewMode: "kanban",
-      }),
-    );
-  };
-
-  const handleRevealTerminalStatus = (status: "DONE" | "CANCELED") => {
-    revealTerminalColumn(status);
-
-    const statusVisibleInFilter =
-      statusMode === "all" ||
-      appliedStatuses.includes(status) ||
-      (!statusTouched && statusFilter.includes(status));
-
-    if (!statusVisibleInFilter) {
-      revealStatusInBoard(status);
-    }
-  };
-
   const handleCancelOrder = async (orderId: string, status: StatusValue) => {
     if (!canEdit || deletingId) return;
     if (status === "CANCELED" || status === "DONE") return;
@@ -710,6 +652,44 @@ export default function MobileOrdersList({
       page: 1,
       viewMode: nextViewMode,
     });
+  const replaceUrlWithoutReload = (href: string) => {
+    if (typeof window === "undefined") return;
+    window.history.replaceState(window.history.state, "", href);
+  };
+  const handleViewModeChange = (nextViewMode: ViewMode) => {
+    if (viewMode === nextViewMode) return;
+
+    const href = viewHref(nextViewMode);
+    replaceUrlWithoutReload(href);
+
+    if (nextViewMode === "kanban") {
+      setNavigationMessage("Подготавливаю контент...");
+      setIsPreparingKanban(true);
+
+      if (switchToKanbanFrameRef.current !== null) {
+        window.cancelAnimationFrame(switchToKanbanFrameRef.current);
+      }
+      if (switchToKanbanDoneFrameRef.current !== null) {
+        window.cancelAnimationFrame(switchToKanbanDoneFrameRef.current);
+      }
+
+      switchToKanbanFrameRef.current = window.requestAnimationFrame(() => {
+        if (!isMountedRef.current) return;
+        setViewMode("kanban");
+
+        switchToKanbanDoneFrameRef.current = window.requestAnimationFrame(() => {
+          if (!isMountedRef.current) return;
+          setIsPreparingKanban(false);
+          setNavigationMessage(null);
+        });
+      });
+      return;
+    }
+
+    setIsPreparingKanban(false);
+    setNavigationMessage(null);
+    setViewMode(nextViewMode);
+  };
   const openCreateOrder = () => {
     setOpenId(null);
     setCreatePreviewOpen(true);
@@ -741,9 +721,7 @@ export default function MobileOrdersList({
               <button
                 type="button"
                 onClick={() => {
-                  if (viewMode === "list") return;
-                  setViewMode("list");
-                  navigateWithFallback(viewHref("list"));
+                  handleViewModeChange("list");
                 }}
                 className={[
                   "inline-flex h-9 flex-1 items-center justify-center gap-2 rounded-lg text-sm font-medium transition",
@@ -758,9 +736,7 @@ export default function MobileOrdersList({
               <button
                 type="button"
                 onClick={() => {
-                  if (viewMode === "kanban") return;
-                  setViewMode("kanban");
-                  navigateWithFallback(viewHref("kanban"));
+                  handleViewModeChange("kanban");
                 }}
                 className={[
                   "inline-flex h-9 flex-1 items-center justify-center gap-2 rounded-lg text-sm font-medium transition",
@@ -850,7 +826,9 @@ export default function MobileOrdersList({
         ) : null}
       </div>
 
-      {viewMode === "list"
+      {isPreparingKanban ? (
+        <KanbanTransitionPlaceholder />
+      ) : viewMode === "list"
         ? rows.map((order) => {
         const isOverdue =
           isOrderOverdue(order, todayISO);
@@ -989,27 +967,6 @@ export default function MobileOrdersList({
         : selectedKanbanColumn ? (() => {
         const column = selectedKanbanColumn;
         const tone = getStatusTone(column.value, customStatuses);
-        const isBuiltInTerminal =
-          Boolean(column.builtIn) &&
-          (column.value === "DONE" || column.value === "CANCELED");
-        const hiddenByFilter =
-          isBuiltInTerminal &&
-          statusMode === "custom" &&
-          ((column.value === "DONE" && !doneVisibleInFilter && hiddenKanbanCounts.done > 0) ||
-            (column.value === "CANCELED" &&
-              !canceledVisibleInFilter &&
-              hiddenKanbanCounts.canceled > 0));
-        const hiddenByPreference = isBuiltInTerminal
-          ? column.value === "DONE"
-            ? terminalColumnHidden.DONE
-            : terminalColumnHidden.CANCELED
-          : false;
-        const hiddenCardCount = isBuiltInTerminal
-          ? column.value === "DONE"
-            ? hiddenKanbanCounts.done
-            : hiddenKanbanCounts.canceled
-          : column.orders.length;
-
         return (
           <div className="grid gap-3">
             <section className="overflow-hidden rounded-[24px] border border-[#E5E7EB] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
@@ -1041,31 +998,7 @@ export default function MobileOrdersList({
                     {visibleKanbanColumns.map((statusColumn) => {
                       const tabTone = getStatusTone(statusColumn.value, customStatuses);
                       const isSelected = statusColumn.value === column.value;
-                      const isBuiltInTerminal =
-                        Boolean(statusColumn.builtIn) &&
-                        (statusColumn.value === "DONE" || statusColumn.value === "CANCELED");
-                      const hiddenByPreference = isBuiltInTerminal
-                        ? statusColumn.value === "DONE"
-                          ? terminalColumnHidden.DONE
-                          : terminalColumnHidden.CANCELED
-                        : false;
-                      const hiddenByFilter = isBuiltInTerminal
-                        ? statusMode === "custom" &&
-                          ((statusColumn.value === "DONE" &&
-                            !doneVisibleInFilter &&
-                            hiddenKanbanCounts.done > 0) ||
-                            (statusColumn.value === "CANCELED" &&
-                              !canceledVisibleInFilter &&
-                              hiddenKanbanCounts.canceled > 0))
-                        : false;
-                      const visibleCount =
-                        hiddenByFilter || hiddenByPreference
-                          ? statusColumn.value === "DONE"
-                            ? hiddenKanbanCounts.done
-                            : statusColumn.value === "CANCELED"
-                              ? hiddenKanbanCounts.canceled
-                              : statusColumn.orders.length
-                          : statusColumn.orders.length;
+                      const visibleCount = statusColumn.orders.length;
                       return (
                         <button
                           key={statusColumn.value}
@@ -1074,7 +1007,6 @@ export default function MobileOrdersList({
                           className={[
                             "inline-flex min-h-10 items-center gap-2 rounded-full border px-3 py-2 text-sm font-semibold transition",
                             isSelected ? "border-transparent text-[#1F2937]" : "border-[#E5E7EB] bg-white text-[#6B7280]",
-                            hiddenByFilter || hiddenByPreference ? "opacity-80" : "",
                           ].join(" ")}
                           style={isSelected ? { background: tabTone.background } : undefined}
                         >
@@ -1104,11 +1036,7 @@ export default function MobileOrdersList({
                       <div className="truncate text-sm font-semibold text-[#1F2937]">{column.label}</div>
                     </div>
                     <div className="mt-1 text-xs font-medium text-[#6B7280]">
-                      {hiddenByFilter || hiddenByPreference
-                        ? hiddenByPreference
-                          ? `${hiddenCardCount} hidden manually`
-                          : `${hiddenCardCount} hidden by filters`
-                        : `${column.orders.length} ${column.orders.length === 1 ? "order" : "orders"}`}
+                      {column.orders.length} {column.orders.length === 1 ? "order" : "orders"}
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -1116,46 +1044,13 @@ export default function MobileOrdersList({
                       className="inline-flex h-8 min-w-8 items-center justify-center rounded-full px-2 text-xs font-semibold"
                       style={{ background: tone.background, color: tone.color }}
                     >
-                      {hiddenByFilter || hiddenByPreference ? hiddenCardCount : column.orders.length}
+                      {column.orders.length}
                     </div>
-                    {isBuiltInTerminal ? (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          hiddenByPreference
-                            ? handleRevealTerminalStatus(column.value as "DONE" | "CANCELED")
-                            : hideTerminalColumn(column.value as "DONE" | "CANCELED")
-                        }
-                        className="inline-flex h-8 items-center justify-center rounded-full border border-[#E5E7EB] bg-white px-3 text-[11px] font-semibold text-[#4B5563]"
-                      >
-                        {hiddenByPreference ? "Show" : "Hide"}
-                      </button>
-                    ) : null}
                   </div>
                 </div>
               </div>
 
-              {hiddenByFilter || hiddenByPreference ? (
-                <div className="p-4">
-                  <div className="rounded-[20px] border border-dashed border-[#E5E7EB] bg-[#F9FAFB] px-4 py-5 text-center">
-                    <div className="text-sm font-semibold text-[#1F2937]">{column.label} hidden</div>
-                    <div className="mt-1 text-xs text-[#6B7280]">
-                      {hiddenByPreference
-                        ? "This status is manually hidden on mobile."
-                        : "Status is excluded by the current filter set."}
-                    </div>
-                    {hiddenByPreference ? null : (
-                      <button
-                        type="button"
-                        onClick={() => revealStatusInBoard(column.value as StatusFilterValue)}
-                        className="mt-3 inline-flex h-9 items-center justify-center rounded-xl bg-[#6366F1] px-3.5 text-sm font-semibold text-white transition hover:bg-[#5558E3]"
-                      >
-                        Show status
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ) : column.orders.length > 0 ? (
+              {column.orders.length > 0 ? (
                 <div className="grid gap-3 p-3">
                   {column.orders.map((order) => {
                     const isOverdue = isOrderOverdue(order, todayISO);
