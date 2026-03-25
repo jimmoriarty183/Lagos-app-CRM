@@ -34,7 +34,7 @@ function renderEmailLayout(input: {
   title: string;
   body: string;
 }) {
-  const logoUrl = `${input.baseUrl}/brand/email-logo.png`;
+  const logoUrl = `${input.baseUrl}/email-logo.png`;
   return `
     <div style="margin:0;padding:24px;background:#f3f4f6;font-family:Arial,sans-serif;color:#111827;">
       <div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:14px;padding:24px;">

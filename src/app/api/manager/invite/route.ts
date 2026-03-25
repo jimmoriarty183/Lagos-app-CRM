@@ -41,7 +41,7 @@ function renderEmailLayout(input: {
   ctaHref?: string;
   ctaLabel?: string;
 }) {
-  const logoUrl = `${input.baseUrl}/brand/email-logo.png`;
+  const logoUrl = `${input.baseUrl}/email-logo.png`;
   const ctaBlock =
     input.ctaHref && input.ctaLabel
       ? `<p style="margin:20px 0 0 0;"><a href="${escapeHtml(input.ctaHref)}" style="display:inline-block;background:#6366F1;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:10px;font-weight:600;">${escapeHtml(input.ctaLabel)}</a></p>`
