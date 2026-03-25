@@ -9,7 +9,11 @@ import type { TodayFollowUpItem } from "@/app/b/[slug]/today/TodayFollowUpsView"
 import type { TodoCalendarItem } from "@/app/b/[slug]/today/todo-calendar/types";
 import { inferFollowUpSubtype } from "@/app/b/[slug]/today/todo-calendar/utils";
 import { getAdminUsersPath, isAdminEmail } from "@/lib/admin-access";
-import { getStatusLabel, isTerminalStatus, type StatusFilterValue } from "@/lib/business-statuses";
+import {
+  getStatusLabel,
+  isTerminalStatus,
+  type StatusFilterValue,
+} from "@/lib/business-statuses";
 import { resolveUserDisplay } from "@/lib/user-display";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { supabaseServerReadOnly } from "@/lib/supabase/server";
@@ -19,12 +23,14 @@ import {
   getTomorrowDateOnly,
   type FollowUpRow,
 } from "@/lib/follow-ups";
+import { isFollowUpAllDay, getFollowUpStartsAt } from "@/lib/follow-ups";
 import { ensureWorkspaceForBusiness } from "@/lib/workspaces";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
   searchParams?: Promise<{
     u?: string;
+    mode?: string;
   }>;
 };
 
@@ -111,9 +117,13 @@ export default async function TodayFollowUpsPage({
 }: PageProps) {
   const [{ slug }, rawSearchParams] = await Promise.all([
     params,
-    searchParams ?? Promise.resolve({} as { u?: string }),
+    searchParams ?? Promise.resolve({} as { u?: string; mode?: string }),
   ]);
   const phoneRaw = cleanText(rawSearchParams?.u);
+  const initialMode =
+    cleanText(rawSearchParams?.mode).toLowerCase() === "calendar"
+      ? "calendar"
+      : "list";
   const supabase = await supabaseServerReadOnly();
   const admin = supabaseAdmin();
   const {
@@ -185,27 +195,77 @@ export default async function TodayFollowUpsPage({
       isAdmin: isAdminEmail(user.email),
     }));
 
-  const [
-    followUpsResult,
-    calendarFollowUpsResult,
-    ordersResult,
-    checklistResult,
-  ] = await Promise.all([
-    supabase
+  // Safe select: explicitly list columns to avoid schema cache issues
+  // due_at may not be in schema cache immediately after migration
+  // Retry without due_at if schema cache is stale
+  async function fetchFollowUpsSafe(
+    businessId: string,
+    status: string,
+    lteDate?: string,
+  ) {
+    // Try with due_at first
+    let query = supabase
       .from("follow_ups")
-      .select("*")
-      .eq("business_id", currentBusiness.id)
-      .eq("status", "open")
-      .lte("due_date", getTomorrowDateOnly())
+      .select(
+        "id, business_id, workspace_id, order_id, title, due_date, due_at, status, completed_at, created_at, updated_at, created_by, completed_by, next_follow_up_id, note, completion_note, source",
+      )
+      .eq("business_id", businessId)
+      .eq("status", status);
+
+    if (lteDate) {
+      query = query.lte("due_date", lteDate);
+    }
+
+    query = query
       .order("due_date", { ascending: true })
-      .order("created_at", { ascending: false }),
-    supabase
-      .from("follow_ups")
-      .select("*")
-      .eq("business_id", currentBusiness.id)
-      .eq("status", "open")
-      .order("due_date", { ascending: true })
-      .order("created_at", { ascending: false }),
+      .order("created_at", { ascending: false });
+
+    const { data, error } = await query;
+
+    if (error) {
+      const msg = String(error.message ?? "").toLowerCase();
+      // Fallback if due_at column doesn't exist or schema cache is stale
+      if (
+        (msg.includes("due_at") && msg.includes("schema cache")) ||
+        (msg.includes("column") && msg.includes("does not exist"))
+      ) {
+        // Fallback: select without due_at
+        let fallbackQuery = supabase
+          .from("follow_ups")
+          .select(
+            "id, business_id, workspace_id, order_id, title, due_date, status, completed_at, created_at, updated_at, created_by, completed_by, next_follow_up_id, note, completion_note, source",
+          )
+          .eq("business_id", businessId)
+          .eq("status", status);
+
+        if (lteDate) {
+          fallbackQuery = fallbackQuery.lte("due_date", lteDate);
+        }
+
+        fallbackQuery = fallbackQuery
+          .order("due_date", { ascending: true })
+          .order("created_at", { ascending: false });
+
+        return fallbackQuery;
+      }
+      throw new Error(error.message);
+    }
+
+    return { data, error: null as null };
+  }
+
+  const followUpsResultSafe = await fetchFollowUpsSafe(
+    String(currentBusiness.id),
+    "open",
+    getTomorrowDateOnly(),
+  );
+  const calendarFollowUpsResultSafe = await fetchFollowUpsSafe(
+    String(currentBusiness.id),
+    "open",
+  );
+
+  // Fetch orders and checklist items (these don't have due_at)
+  const [ordersResult, checklistResult] = await Promise.all([
     supabase
       .from("orders")
       .select("id, order_number, client_name, due_date, status, created_at")
@@ -221,16 +281,25 @@ export default async function TodayFollowUpsPage({
       .order("due_date", { ascending: true }),
   ]);
 
-  if (followUpsResult.error) throw followUpsResult.error;
-  if (calendarFollowUpsResult.error) throw calendarFollowUpsResult.error;
   if (ordersResult.error) throw ordersResult.error;
   if (checklistResult.error) throw checklistResult.error;
 
-  const followUpRows = (followUpsResult.data ?? []) as FollowUpRow[];
-  const calendarFollowUpRows = (calendarFollowUpsResult.data ?? []) as FollowUpRow[];
-  const calendarOrderRows = ((ordersResult.data ?? []) as OrderLookupRow[]).filter(
-    (row) => !isTerminalStatus(String(row.status ?? "")),
+  const followUpRows = ((followUpsResultSafe.data ?? []) as FollowUpRow[]).map(
+    (row) => ({
+      ...row,
+      due_at:
+        ((row as Record<string, unknown>).due_at as string | null) ?? null,
+    }),
   );
+  const calendarFollowUpRows = (
+    (calendarFollowUpsResultSafe.data ?? []) as FollowUpRow[]
+  ).map((row) => ({
+    ...row,
+    due_at: ((row as Record<string, unknown>).due_at as string | null) ?? null,
+  }));
+  const calendarOrderRows = (
+    (ordersResult.data ?? []) as OrderLookupRow[]
+  ).filter((row) => !isTerminalStatus(String(row.status ?? "")));
   const checklistRows = (checklistResult.data ?? []) as ChecklistCalendarRow[];
 
   const orderIds = [
@@ -280,23 +349,28 @@ export default async function TodayFollowUpsPage({
     ...calendarFollowUpRows
       .filter((entry) => cleanText(entry.due_date))
       .map((entry) => {
-        const linkedOrder = entry.order_id ? (orderLookup.get(entry.order_id) ?? null) : null;
+        const linkedOrder = entry.order_id
+          ? (orderLookup.get(entry.order_id) ?? null)
+          : null;
         const status: TodoCalendarItem["status"] =
-          entry.due_date < getTodayDateOnly()
-            ? "overdue"
-            : "open";
+          entry.due_date < getTodayDateOnly() ? "overdue" : "open";
+        const allDay = isFollowUpAllDay(entry);
+        const startsAt = getFollowUpStartsAt(entry);
 
         return {
           id: `follow-up:${entry.id}`,
           type: "follow_up" as const,
           subtype: inferFollowUpSubtype(entry.title),
           title: entry.title,
+          startsAt,
           date: entry.due_date,
-          allDay: true,
+          allDay,
           status,
           orderId: entry.order_id ?? undefined,
           orderLabel: buildOrderReferenceLabel(linkedOrder) ?? undefined,
-          orderHref: linkedOrder?.id ? buildOrderHref(currentBusiness.slug, linkedOrder.id, phoneRaw) : undefined,
+          orderHref: linkedOrder?.id
+            ? buildOrderHref(currentBusiness.slug, linkedOrder.id, phoneRaw)
+            : undefined,
           sourceLabel: "Follow-up",
           statusLabel: status === "overdue" ? "Overdue" : "Open",
           createdAt: entry.created_at,
@@ -310,7 +384,11 @@ export default async function TodayFollowUpsPage({
         title: buildOrderReferenceLabel(entry) ?? "Order",
         date: String(entry.due_date).slice(0, 10),
         allDay: true,
-        status: entry.due_date && String(entry.due_date).slice(0, 10) < getTodayDateOnly() ? "overdue" as const : "open" as const,
+        status:
+          entry.due_date &&
+          String(entry.due_date).slice(0, 10) < getTodayDateOnly()
+            ? ("overdue" as const)
+            : ("open" as const),
         orderId: entry.id,
         orderLabel: buildOrderReferenceLabel(entry) ?? undefined,
         orderHref: buildOrderHref(currentBusiness.slug, entry.id, phoneRaw),
@@ -329,10 +407,15 @@ export default async function TodayFollowUpsPage({
           title: entry.title,
           date,
           allDay: true,
-          status: date < getTodayDateOnly() ? "overdue" as const : "open" as const,
+          status:
+            date < getTodayDateOnly()
+              ? ("overdue" as const)
+              : ("open" as const),
           orderId: entry.order_id,
           orderLabel: buildOrderReferenceLabel(linkedOrder) ?? undefined,
-          orderHref: linkedOrder?.id ? buildOrderHref(currentBusiness.slug, linkedOrder.id, phoneRaw) : undefined,
+          orderHref: linkedOrder?.id
+            ? buildOrderHref(currentBusiness.slug, linkedOrder.id, phoneRaw)
+            : undefined,
           sourceLabel: "Checklist due date",
           statusLabel: "Open",
           createdAt: entry.created_at,
@@ -343,8 +426,11 @@ export default async function TodayFollowUpsPage({
   const businessHref = buildScopedHref("/app/crm", phoneRaw);
   const settingsHref = buildScopedHref("/app/settings", phoneRaw);
   const todayHref = buildScopedHref(`/b/${slug}/today`, phoneRaw);
+  const analyticsHref = buildScopedHref(`/b/${slug}/analytics`, phoneRaw);
   const adminHref = isAdminEmail(user.email) ? getAdminUsersPath() : undefined;
-  const todoCount = items.filter((item) => compareDateOnly(item.due_date, getTodayDateOnly()) <= 0).length;
+  const todoCount = items.filter(
+    (item) => compareDateOnly(item.due_date, getTodayDateOnly()) <= 0,
+  ).length;
   let hasStartedDay = false;
 
   const { data: workDayRow } = await supabase
@@ -356,7 +442,9 @@ export default async function TodayFollowUpsPage({
     .maybeSingle();
 
   hasStartedDay = ["running", "paused", "finished"].includes(
-    String((workDayRow as WorkDayLookupRow | null)?.status ?? "").trim().toLowerCase(),
+    String((workDayRow as WorkDayLookupRow | null)?.status ?? "")
+      .trim()
+      .toLowerCase(),
   );
 
   return (
@@ -376,7 +464,7 @@ export default async function TodayFollowUpsPage({
         todoCount={todoCount}
       />
 
-      <main className="mx-auto max-w-[1220px] overflow-x-hidden px-4 pb-8 pt-20 sm:px-6">
+      <main className="mx-auto max-w-[1520px] overflow-x-hidden px-4 pb-8 pt-20 sm:px-6">
         <div className="hidden items-start gap-5 lg:grid lg:grid-cols-[auto_minmax(0,1fr)]">
           <div className="relative shrink-0">
             <DesktopLeftRail
@@ -397,6 +485,7 @@ export default async function TodayFollowUpsPage({
               activeFiltersCount={0}
               clearHref={todayHref}
               businessHref={businessHref}
+              analyticsHref={analyticsHref}
               todayHref={todayHref}
               settingsHref={settingsHref}
               adminHref={adminHref}
@@ -412,6 +501,7 @@ export default async function TodayFollowUpsPage({
               canManage={canManage}
               initialItems={items}
               calendarItems={calendarItems}
+              initialMode={initialMode}
             />
           </div>
         </div>
@@ -422,6 +512,7 @@ export default async function TodayFollowUpsPage({
             canManage={canManage}
             initialItems={items}
             calendarItems={calendarItems}
+            initialMode={initialMode}
           />
         </div>
       </main>

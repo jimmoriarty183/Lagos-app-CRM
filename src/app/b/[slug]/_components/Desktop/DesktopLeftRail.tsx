@@ -56,12 +56,13 @@ type Props = {
   activeFiltersCount: number;
   clearHref: string;
   businessHref: string;
+  analyticsHref?: string;
   todayHref?: string;
   settingsHref: string;
   adminHref?: string;
   canSeeAnalytics: boolean;
   showFilters?: boolean;
-  activeSection?: "crm" | "today" | "settings" | "admin";
+  activeSection?: "crm" | "analytics" | "today" | "settings" | "admin";
   layoutMode?: "list" | "kanban";
 };
 
@@ -274,6 +275,7 @@ export default function DesktopLeftRail({
   activeFiltersCount,
   clearHref,
   businessHref,
+  analyticsHref,
   todayHref,
   settingsHref,
   adminHref,
@@ -306,7 +308,9 @@ export default function DesktopLeftRail({
       : "calc(env(safe-area-inset-top) + 112px)";
   const leftOffset =
     layoutMode === "list"
-      ? "max(1.5rem, calc((100vw - 1220px) / 2 + 1.5rem))"
+      ? activeSection === "today"
+        ? "max(1.5rem, calc((100vw - 1520px) / 2 + 1.5rem))"
+        : "max(1.5rem, calc((100vw - 1220px) / 2 + 1.5rem))"
       : undefined;
 
   const openCollapsedRail = () => {
@@ -370,6 +374,7 @@ export default function DesktopLeftRail({
     academy: <GraduationCap className="h-5 w-5" />,
     settings: <Settings className="h-5 w-5" />,
   } as const;
+  const analyticsTarget = analyticsHref ?? `${businessHref}${businessHref.includes("?") ? "&" : "?"}section=analytics#owner-analytics`;
 
   return (
     <div
@@ -467,9 +472,10 @@ export default function DesktopLeftRail({
                   <RailLink
                     icon={<BarChart3 className="h-5 w-5" />}
                     label="Analytics"
-                    description="Dashboard insights are not live yet"
+                    description="Owner workload and deadline control"
                     expanded={expanded}
-                    disabled
+                    href={analyticsTarget}
+                    active={activeSection === "analytics"}
                   />
                 ) : null}
 

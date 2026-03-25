@@ -91,6 +91,7 @@ export default async function StatusesPage({
             activeFiltersCount={0}
             clearHref={`/b/${business.slug}`}
             businessHref={`/b/${business.slug}/settings`}
+            analyticsHref={`/b/${business.slug}/analytics`}
             settingsHref={`/b/${business.slug}/settings/team`}
             adminHref={adminHref}
             canSeeAnalytics={role === "OWNER"}

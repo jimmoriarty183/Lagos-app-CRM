@@ -1025,6 +1025,10 @@ export default async function Page({ params, searchParams }: PageProps) {
   }
 
   const filteredRows = [...applyStatusFilter(currentPeriodRows)];
+  const analyticsHref =
+    phoneRaw && phoneRaw.length > 0
+      ? `/b/${slug}/analytics?u=${encodeURIComponent(phoneRaw)}`
+      : `/b/${slug}/analytics`;
   console.log("[orders-page] filtered rows", {
     filteredRowsCount: filteredRows.length,
     filteredDELCount: filteredRows.filter(
@@ -1242,6 +1246,7 @@ export default async function Page({ params, searchParams }: PageProps) {
               activeFiltersCount={activeFiltersCount}
               clearHref={clearHref}
               businessHref={businessHref}
+              analyticsHref={analyticsHref}
               todayHref={todayHref}
               settingsHref={settingsHref}
               adminHref={adminHref}
@@ -1285,7 +1290,6 @@ export default async function Page({ params, searchParams }: PageProps) {
                 }}
               />
             ) : null}
-
             <DesktopOrdersTable
               key={`desktop-orders-${viewMode}-${filters.q}-${filters.statuses.join(",")}-${filters.actor}-${filters.range}-${filters.startDate ?? ""}-${filters.endDate ?? ""}-${sort}`}
               list={paginatedList}
@@ -1348,7 +1352,6 @@ export default async function Page({ params, searchParams }: PageProps) {
               },
             }}
           />
-
           <MobileFiltersAccordion
             key={`mobile-filters-${filters.range}-${filters.startDate ?? ""}-${filters.endDate ?? ""}`}
             businessId={String(currentBusiness.id)}
