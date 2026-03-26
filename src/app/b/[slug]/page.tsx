@@ -2,6 +2,7 @@ import React from "react";
 import { redirect } from "next/navigation";
 
 import TopBar from "./_components/topbar/TopBar";
+import { RightCampaignPopup } from "@/components/campaigns/RightCampaignPopup";
 import DesktopAnalyticsCard from "./_components/Desktop/DesktopAnalyticsCard";
 import DesktopLeftRail from "./_components/Desktop/DesktopLeftRail";
 import DesktopOrdersTable from "./_components/Desktop/DesktopOrdersTable";
@@ -1224,6 +1225,7 @@ export default async function Page({ params, searchParams }: PageProps) {
         hasActiveFilters={hasActiveFilters}
         todoCount={todoCount}
       />
+      <RightCampaignPopup />
 
       <main
         className={[

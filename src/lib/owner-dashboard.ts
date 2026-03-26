@@ -126,6 +126,8 @@ export type ManagerDailyReport = {
   manager_name: string;
   work_date: string;
   status: string;
+  started_at: string | null;
+  finished_at: string | null;
   tracked_hours: number | null;
   in_work_hours: number | null;
   paused_hours: number | null;
@@ -335,6 +337,9 @@ export async function loadOwnerDashboardData(
     capacityPointsPerDay?: number;
     limitAlerts?: number;
     productivityPeriod?: ProductivityPeriod;
+    reportFromDate?: string | null;
+    reportToDate?: string | null;
+    reportManagerId?: string | null;
   },
 ): Promise<OwnerDashboardData> {
   const now = new Date();
@@ -351,6 +356,19 @@ export async function loadOwnerDashboardData(
   const capacityPointsPerDay = Number.isFinite(input.capacityPointsPerDay)
     ? Math.max(0, Number(input.capacityPointsPerDay))
     : 8;
+
+  const reportFromDate = String(input.reportFromDate ?? "").trim();
+  const reportToDate = String(input.reportToDate ?? "").trim();
+  const reportManagerId = String(input.reportManagerId ?? "").trim();
+  const hasReportFromDate = /^\d{4}-\d{2}-\d{2}$/.test(reportFromDate);
+  const hasReportToDate = /^\d{4}-\d{2}-\d{2}$/.test(reportToDate);
+  const reportsQuery = admin
+    .from("work_days")
+    .select("id,business_id,user_id,work_date,status,started_at,finished_at,total_pause_seconds,daily_summary")
+    .eq("business_id", input.businessId);
+  if (hasReportFromDate) reportsQuery.gte("work_date", reportFromDate);
+  if (hasReportToDate) reportsQuery.lte("work_date", reportToDate);
+  if (reportManagerId) reportsQuery.eq("user_id", reportManagerId);
 
   const [tasksRes, followupsRes, rosterRes, capacityRes, reportsRes] = await Promise.all([
     admin
@@ -369,12 +387,9 @@ export async function loadOwnerDashboardData(
       .from("mv_owner_manager_capacity_baseline")
       .select("business_id,manager_id,daily_capacity_hours")
       .eq("business_id", input.businessId),
-    admin
-      .from("work_days")
-      .select("id,business_id,user_id,work_date,status,started_at,finished_at,total_pause_seconds,daily_summary")
-      .eq("business_id", input.businessId)
+    reportsQuery
       .order("work_date", { ascending: false })
-      .limit(60),
+      .limit(120),
   ]);
 
   if (tasksRes.error) throw tasksRes.error;
@@ -722,6 +737,8 @@ export async function loadOwnerDashboardData(
         manager_name: managerNameById.get(managerId) ?? managerId,
         work_date: row.work_date,
         status: String(row.status ?? "unknown"),
+        started_at: row.started_at,
+        finished_at: row.finished_at,
         tracked_hours: trackedHours,
         in_work_hours: inWorkHours,
         paused_hours: pausedHours,

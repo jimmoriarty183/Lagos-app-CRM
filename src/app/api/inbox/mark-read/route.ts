@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+import { getBellItems, markCampaignRead } from "@/lib/campaigns/service";
+import { getUserCampaignClient } from "@/lib/campaigns/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { supabaseServer } from "@/lib/supabase/server";
 
@@ -94,9 +96,19 @@ export async function POST(request: Request) {
 
       if (updateError) {
         if (isMissingRelationError(updateError, "notifications")) {
-          return NextResponse.json({ ok: true });
+          // Keep going: campaign inbox items are stored in campaign states.
+        } else {
+          return NextResponse.json({ ok: false, error: updateError.message }, { status: 500 });
         }
-        return NextResponse.json({ ok: false, error: updateError.message }, { status: 500 });
+      }
+
+      const campaignClient = await getUserCampaignClient();
+      try {
+        const campaignItems = await getBellItems(campaignClient, userId);
+        const unread = campaignItems.filter((item) => !item.isRead);
+        await Promise.all(unread.map((item) => markCampaignRead(campaignClient, userId, item.id)));
+      } catch {
+        // Do not fail mark-all if campaign tables are unavailable.
       }
 
       return NextResponse.json({ ok: true });
@@ -110,6 +122,16 @@ export async function POST(request: Request) {
     }
 
     if (notificationId.startsWith("invite:")) {
+      return NextResponse.json({ ok: true });
+    }
+
+    if (notificationId.startsWith("campaign:")) {
+      const campaignId = notificationId.slice("campaign:".length).trim();
+      if (!campaignId) {
+        return NextResponse.json({ ok: false, error: "campaignId is required" }, { status: 400 });
+      }
+      const campaignClient = await getUserCampaignClient();
+      await markCampaignRead(campaignClient, userId, campaignId);
       return NextResponse.json({ ok: true });
     }
 

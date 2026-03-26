@@ -13,7 +13,14 @@ import { resolveUserDisplay } from "@/lib/user-display";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
-  searchParams?: Promise<{ u?: string; tab?: string; period?: string }>;
+  searchParams?: Promise<{
+    u?: string;
+    tab?: string;
+    period?: string;
+    rfrom?: string;
+    rto?: string;
+    rmanager?: string;
+  }>;
 };
 
 type MembershipRow = {
@@ -42,13 +49,20 @@ function cleanText(value: unknown) {
 }
 
 export default async function OwnerAnalyticsPage({ params, searchParams }: PageProps) {
+  const emptySearchParams: Awaited<NonNullable<PageProps["searchParams"]>> = {};
   const [{ slug }, sp] = await Promise.all([
     params,
-    searchParams ?? Promise.resolve({}),
+    searchParams ?? Promise.resolve(emptySearchParams),
   ]);
   const phoneRaw = cleanText(sp?.u);
   const tabRaw = cleanText(sp?.tab).toLowerCase();
   const periodRaw = cleanText(sp?.period).toLowerCase();
+  const reportFromRaw = cleanText(sp?.rfrom);
+  const reportToRaw = cleanText(sp?.rto);
+  const reportManagerRaw = cleanText(sp?.rmanager);
+  const reportFromDate = /^\d{4}-\d{2}-\d{2}$/.test(reportFromRaw) ? reportFromRaw : "";
+  const reportToDate = /^\d{4}-\d{2}-\d{2}$/.test(reportToRaw) ? reportToRaw : "";
+  const reportManagerId = reportManagerRaw;
   const analyticsView: "overview" | "managers" | "alerts" | "reports" | "productivity" =
     tabRaw === "managers" || tabRaw === "alerts" || tabRaw === "reports" || tabRaw === "productivity"
       ? (tabRaw as "managers" | "alerts" | "reports" | "productivity")
@@ -137,6 +151,9 @@ export default async function OwnerAnalyticsPage({ params, searchParams }: PageP
     if (phoneRaw) params.set("u", phoneRaw);
     if (tab !== "overview") params.set("tab", tab);
     if (tab === "productivity") params.set("period", productivityPeriod);
+    if (reportFromDate) params.set("rfrom", reportFromDate);
+    if (reportToDate) params.set("rto", reportToDate);
+    if (reportManagerId) params.set("rmanager", reportManagerId);
     const qs = params.toString();
     return qs ? `/b/${slug}/analytics?${qs}` : `/b/${slug}/analytics`;
   };
@@ -166,6 +183,9 @@ export default async function OwnerAnalyticsPage({ params, searchParams }: PageP
     capacityPointsPerDay: 8,
     limitAlerts: 50,
     productivityPeriod,
+    reportFromDate: reportFromDate || null,
+    reportToDate: reportToDate || null,
+    reportManagerId: reportManagerId || null,
   });
 
   return (
@@ -246,6 +266,11 @@ export default async function OwnerAnalyticsPage({ params, searchParams }: PageP
               phoneRaw={phoneRaw}
               view={analyticsView}
               managerBaseHref={managerBaseHref}
+              reportFilter={{
+                fromDate: reportFromDate,
+                toDate: reportToDate,
+                managerId: reportManagerId,
+              }}
               productivityHrefs={{
                 day: makeProductivityHref("day"),
                 week: makeProductivityHref("week"),
@@ -284,6 +309,11 @@ export default async function OwnerAnalyticsPage({ params, searchParams }: PageP
             phoneRaw={phoneRaw}
             view={analyticsView}
             managerBaseHref={managerBaseHref}
+            reportFilter={{
+              fromDate: reportFromDate,
+              toDate: reportToDate,
+              managerId: reportManagerId,
+            }}
             productivityHrefs={{
               day: makeProductivityHref("day"),
               week: makeProductivityHref("week"),

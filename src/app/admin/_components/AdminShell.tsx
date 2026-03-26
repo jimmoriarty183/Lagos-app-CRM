@@ -7,6 +7,8 @@ import {
   LayoutDashboard,
   LifeBuoy,
   ListChecks,
+  Megaphone,
+  MessageSquareQuote,
   Shield,
   TrendingUp,
   Users,
@@ -52,6 +54,12 @@ export const ADMIN_NAV: AdminNavItem[] = [
     icon: <Shield className="h-4 w-4" />,
   },
   {
+    href: "/admin/campaigns",
+    label: "Рассылки и опросы",
+    description: "Уведомления, опросы и статистика",
+    icon: <Megaphone className="h-4 w-4" />,
+  },
+  {
     href: "/admin/health",
     label: "Контроль",
     description: "Проблемы и ручное внимание",
@@ -74,6 +82,12 @@ export const ADMIN_NAV: AdminNavItem[] = [
     label: "Support",
     description: "Support requests and admin workflows",
     icon: <LifeBuoy className="h-4 w-4" />,
+  },
+  {
+    href: "/admin/sales",
+    label: "Sales requests",
+    description: "Inbound enterprise and pricing-contact leads",
+    icon: <MessageSquareQuote className="h-4 w-4" />,
   },
 ];
 

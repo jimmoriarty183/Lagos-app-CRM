@@ -6,6 +6,11 @@ type Props = {
   phoneRaw?: string;
   view?: "overview" | "managers" | "alerts" | "reports" | "productivity";
   managerBaseHref?: string;
+  reportFilter?: {
+    fromDate?: string;
+    toDate?: string;
+    managerId?: string;
+  };
   productivityHrefs?: {
     day: string;
     week: string;
@@ -51,7 +56,7 @@ const VIEW_META: Record<
     helpTitle: "How to read Reports",
     helpPoints: [
       "Reports summarize manager end-of-day execution.",
-      "Tracked = In Work - Paused.",
+      "In Work = from Start Day to End Day; Tracked = In Work - Paused.",
       "Use Done Today and Tomorrow Plan to verify planning quality.",
     ],
   },
@@ -77,6 +82,47 @@ function formatHours(value: number | null) {
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
   return `${hours}h ${minutes}m`;
+}
+
+function formatDayTime(value: string | null) {
+  if (!value) return "N/A";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return "N/A";
+  return parsed.toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+type ReportTimeFlag = {
+  label: string;
+  toneClass: string;
+};
+
+function getReportTimeFlag(input: {
+  trackedHours: number | null;
+  inWorkHours: number | null;
+  pausedHours: number | null;
+}): ReportTimeFlag | null {
+  const inWork = input.inWorkHours ?? 0;
+  const paused = input.pausedHours ?? 0;
+  const tracked = input.trackedHours ?? 0;
+  if (inWork <= 0) return null;
+
+  const pauseRatio = paused / inWork;
+  if (tracked <= 0.01) {
+    return {
+      label: "Zero tracked with in-work time",
+      toneClass: "border-[#FECACA] bg-[#FEF2F2] text-[#B42318]",
+    };
+  }
+  if (pauseRatio >= 0.8) {
+    return {
+      label: "High pause (>=80%)",
+      toneClass: "border-[#FEDF89] bg-[#FFFAEB] text-[#B54708]",
+    };
+  }
+  return null;
 }
 
 function toneClass(value: number, highThreshold: number, mediumThreshold: number) {
@@ -110,6 +156,7 @@ export default function OwnerAnalyticsPanel({
   phoneRaw,
   view = "overview",
   managerBaseHref,
+  reportFilter,
   productivityHrefs,
 }: Props) {
   const totalTraffic = Math.max(
@@ -130,6 +177,24 @@ export default function OwnerAnalyticsPanel({
   const showProductivity = view === "productivity";
   const currentViewMeta = VIEW_META[view];
   const managerNameById = new Map(data.managers.map((item) => [item.manager_id, item.manager_name]));
+  const reportManagerOptions = data.managers
+    .slice()
+    .sort((a, b) => managerLabel(a.manager_name).localeCompare(managerLabel(b.manager_name)))
+    .map((manager) => ({
+      id: manager.manager_id,
+      name: managerLabel(manager.manager_name),
+    }));
+  const hasReportFilter =
+    Boolean(String(reportFilter?.fromDate ?? "").trim()) ||
+    Boolean(String(reportFilter?.toDate ?? "").trim()) ||
+    Boolean(String(reportFilter?.managerId ?? "").trim());
+  const resetReportsHref = businessSlug
+    ? (
+      phoneRaw
+        ? `/b/${businessSlug}/analytics?u=${encodeURIComponent(phoneRaw)}&tab=reports`
+        : `/b/${businessSlug}/analytics?tab=reports`
+    )
+    : "#";
   const buildManagerHref = (managerId: string) => {
     if (!managerBaseHref) return null;
     return `${managerBaseHref}#manager-${encodeURIComponent(managerId)}`;
@@ -399,6 +464,59 @@ export default function OwnerAnalyticsPanel({
         <p className="mb-2 text-xs text-[#6B7280]">
           End-of-day reports submitted when managers close their work day.
         </p>
+        <form method="get" className="mb-3 grid grid-cols-1 gap-2 rounded-lg border border-[#E5E7EB] p-2 sm:grid-cols-5">
+          <input type="hidden" name="tab" value="reports" />
+          {phoneRaw ? <input type="hidden" name="u" value={phoneRaw} /> : null}
+          <label className="flex flex-col gap-1 text-[11px] text-[#4B5563]">
+            <span>From</span>
+            <input
+              type="date"
+              name="rfrom"
+              defaultValue={String(reportFilter?.fromDate ?? "")}
+              className="h-8 rounded-md border border-[#D0D5DD] px-2 text-xs text-[#111827]"
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-[11px] text-[#4B5563]">
+            <span>To</span>
+            <input
+              type="date"
+              name="rto"
+              defaultValue={String(reportFilter?.toDate ?? "")}
+              className="h-8 rounded-md border border-[#D0D5DD] px-2 text-xs text-[#111827]"
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-[11px] text-[#4B5563] sm:col-span-2">
+            <span>Manager</span>
+            <select
+              name="rmanager"
+              defaultValue={String(reportFilter?.managerId ?? "")}
+              className="h-8 rounded-md border border-[#D0D5DD] bg-white px-2 text-xs text-[#111827]"
+            >
+              <option value="">All managers</option>
+              {reportManagerOptions.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <div className="flex items-end gap-2">
+            <button
+              type="submit"
+              className="h-8 rounded-md border border-[#6366F1] bg-[#6366F1] px-3 text-[11px] font-semibold text-white hover:border-[#5558E3] hover:bg-[#5558E3]"
+            >
+              Apply
+            </button>
+            {hasReportFilter ? (
+              <a
+                href={resetReportsHref}
+                className="inline-flex h-8 items-center rounded-md border border-[#D0D5DD] px-3 text-[11px] font-semibold text-[#344054] hover:border-[#98A2B3] hover:text-[#111827]"
+              >
+                Reset
+              </a>
+            ) : null}
+          </div>
+        </form>
         {data.reports.length === 0 ? (
           <div className="rounded-lg border border-dashed border-[#D0D5DD] p-3 text-xs text-[#6B7280]">
             No daily reports yet.
@@ -413,6 +531,9 @@ export default function OwnerAnalyticsPanel({
                   <th className="px-2 py-2">Tracked</th>
                   <th className="px-2 py-2">In Work</th>
                   <th className="px-2 py-2">Paused</th>
+                  <th className="px-2 py-2">Start Day</th>
+                  <th className="px-2 py-2">End Day</th>
+                  <th className="px-2 py-2">Flag</th>
                   <th className="px-2 py-2">Status</th>
                   <th className="px-2 py-2">Done Today</th>
                   <th className="px-2 py-2">Tomorrow Plan</th>
@@ -420,13 +541,31 @@ export default function OwnerAnalyticsPanel({
                 </tr>
               </thead>
               <tbody>
-                {data.reports.map((report) => (
+                {data.reports.map((report) => {
+                  const timeFlag = getReportTimeFlag({
+                    trackedHours: report.tracked_hours,
+                    inWorkHours: report.in_work_hours,
+                    pausedHours: report.paused_hours,
+                  });
+
+                  return (
                   <tr key={report.report_id} className="border-t border-[#E5E7EB]">
                     <td className="px-2 py-2 text-[#111827]">{report.work_date}</td>
                     <td className="px-2 py-2 text-[#111827]">{managerLabel(report.manager_name)}</td>
                     <td className="px-2 py-2">{formatHours(report.tracked_hours)}</td>
                     <td className="px-2 py-2">{formatHours(report.in_work_hours)}</td>
                     <td className="px-2 py-2">{formatHours(report.paused_hours)}</td>
+                    <td className="px-2 py-2">{formatDayTime(report.started_at)}</td>
+                    <td className="px-2 py-2">{formatDayTime(report.finished_at)}</td>
+                    <td className="px-2 py-2">
+                      {timeFlag ? (
+                        <span className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${timeFlag.toneClass}`}>
+                          {timeFlag.label}
+                        </span>
+                      ) : (
+                        "-"
+                      )}
+                    </td>
                     <td className="px-2 py-2">{report.status}</td>
                     <td className="px-2 py-2">
                       <details>
@@ -486,7 +625,8 @@ export default function OwnerAnalyticsPanel({
                       {String(report.daily_summary ?? "").trim() || "No summary provided"}
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>

@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+import { getBellItems } from "@/lib/campaigns/service";
+import { getUserCampaignReadClient } from "@/lib/campaigns/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { supabaseServer } from "@/lib/supabase/server";
 
@@ -10,7 +12,9 @@ export type NotificationType =
   | "order_reassigned"
   | "important_comment_received"
   | "support_request_updated"
-  | "invitation_received";
+  | "invitation_received"
+  | "campaign_announcement"
+  | "campaign_survey";
 
 export type NotificationRow = {
   id: string;
@@ -124,6 +128,7 @@ export async function GET(request: Request) {
     }
 
     const userId = user.id;
+    const campaignClient = await getUserCampaignReadClient();
 
     let notifications: NotificationRow[] = [];
     const notificationsResult = await admin
@@ -344,9 +349,43 @@ export async function GET(request: Request) {
       (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
     );
 
+    let campaignItems = [] as Awaited<ReturnType<typeof getBellItems>>;
+    try {
+      campaignItems = await getBellItems(campaignClient, userId);
+    } catch {
+      campaignItems = [];
+    }
+    const campaignNotifications: InboxNotification[] = campaignItems
+      .filter((item) => String(item.id ?? "").trim().length > 0)
+      .map((item) => ({
+        id: `campaign:${item.id}`,
+        type: item.type === "survey" ? "campaign_survey" : "campaign_announcement",
+        entity_type: "campaign",
+        entity_id: item.id,
+        order_id: null,
+        order_number: null,
+        title: item.title,
+        preview: item.body ?? null,
+        actor_label: null,
+        is_read: item.isRead,
+        created_at: item.createdAt ?? new Date().toISOString(),
+        metadata: {
+          campaign_id: item.id,
+          campaign_type: item.type,
+          source: "campaigns",
+        },
+      }));
+
+    const mergedWithCampaigns = [...mergedNotifications, ...campaignNotifications].sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+    );
+    const dedupedById = Array.from(
+      new Map(mergedWithCampaigns.map((item) => [item.id, item])).values(),
+    );
+
     return NextResponse.json({
       ok: true,
-      notifications: mergedNotifications,
+      notifications: dedupedById,
     });
   } catch (error: unknown) {
     return NextResponse.json(

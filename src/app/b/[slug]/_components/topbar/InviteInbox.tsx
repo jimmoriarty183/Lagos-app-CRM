@@ -40,7 +40,7 @@ function formatNotificationTime(value: string) {
   });
 }
 
-function getNotificationIcon(type: NotificationType) {
+function getNotificationIcon(type: NotificationType | string) {
   switch (type) {
     case "mention":
     case "mention_received":
@@ -54,6 +54,10 @@ function getNotificationIcon(type: NotificationType) {
       return "🛠";
     case "invitation_received":
       return "✉️";
+    case "campaign_announcement":
+      return "📢";
+    case "campaign_survey":
+      return "🗳";
     default:
       return "•";
   }
@@ -194,8 +198,11 @@ export default function InviteInbox({
 
   const handleNotificationClick = useCallback(
     (notification: InboxNotification) => {
-      // Mark as read
-      if (!notification.is_read && notification.type !== "invitation_received") {
+      const isCampaignItem =
+        notification.type === "campaign_announcement" || notification.type === "campaign_survey";
+
+      // Mark as read only for non-campaign items.
+      if (!notification.is_read && notification.type !== "invitation_received" && !isCampaignItem) {
         void markAsRead(notification.id);
       }
 
@@ -205,8 +212,13 @@ export default function InviteInbox({
         const supportRequestId = String(
           notification.metadata?.support_request_id ?? notification.entity_id ?? "",
         ).trim();
+        const campaignId = String(
+          notification.metadata?.campaign_id ?? notification.entity_id ?? "",
+        ).trim();
 
-        if (notification.entity_type === "support_request" && supportRequestId) {
+        if (isCampaignItem && campaignId) {
+          router.push(`/b/${currentBusinessSlug}?campaign=${encodeURIComponent(campaignId)}`);
+        } else if (notification.entity_type === "support_request" && supportRequestId) {
           router.push(`/b/${currentBusinessSlug}/support/${encodeURIComponent(supportRequestId)}`);
         } else if (notification.order_id) {
           router.push(
@@ -279,12 +291,12 @@ export default function InviteInbox({
                         : "All caught up"}
                   </div>
                 </div>
-                {unreadCount > 0 ? (
+                {items.length > 0 ? (
                   <button
                     type="button"
                     onClick={markAllAsRead}
-                    disabled={isPending}
-                    className="text-[11px] font-semibold text-[#6366F1] transition hover:text-[#5558E6] disabled:cursor-not-allowed disabled:opacity-60"
+                    disabled={isPending || unreadCount === 0}
+                    className="inline-flex h-8 items-center rounded-lg border border-[#C7D2FE] bg-[#EEF2FF] px-3 text-[11px] font-semibold text-[#3645A0] transition hover:border-[#A5B4FC] hover:bg-[#E0E7FF] hover:text-[#2F3EA8] disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     Mark all as read
                   </button>
@@ -323,9 +335,9 @@ export default function InviteInbox({
                       <div className="bg-slate-50/50 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.06em] text-slate-400">
                         New
                       </div>
-                      {newNotifications.map((notification) => (
+                      {newNotifications.map((notification, index) => (
                         <NotificationItem
-                          key={notification.id}
+                          key={`${notification.id || "notification"}-${index}`}
                           notification={notification}
                           activeId={activeId}
                           onClick={handleNotificationClick}
@@ -339,9 +351,9 @@ export default function InviteInbox({
                       <div className="bg-slate-50/50 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.06em] text-slate-400">
                         Earlier
                       </div>
-                      {earlierNotifications.map((notification) => (
+                      {earlierNotifications.map((notification, index) => (
                         <NotificationItem
-                          key={notification.id}
+                          key={`${notification.id || "notification"}-${index}`}
                           notification={notification}
                           activeId={activeId}
                           onClick={handleNotificationClick}

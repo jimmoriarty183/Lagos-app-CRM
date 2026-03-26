@@ -1,5 +1,6 @@
 ﻿"use client";
 
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BrandWordmark } from "@/components/Brand";
 import { PublicFooter } from "@/components/PublicFooter";
@@ -7,8 +8,9 @@ import { PublicFooter } from "@/components/PublicFooter";
 type Plan = {
   name: string;
   price: string;
-  period: string;
-  note: string;
+  amount: string;
+  priceNote: string;
+  description: string;
   features: string[];
   cta: string;
   highlight?: boolean;
@@ -16,77 +18,251 @@ type Plan = {
 };
 
 const comparisonRows = [
-  { feature: "Orders per month", starter: "Up to 30", business: "Unlimited", pro: "Unlimited" },
-  { feature: "Status tracking", starter: "Basic", business: "Advanced", pro: "Advanced" },
-  { feature: "Due dates", starter: "-", business: "Yes", pro: "Yes" },
-  { feature: "Payment tracking", starter: "-", business: "Yes", pro: "Yes" },
-  { feature: "Manager access", starter: "-", business: "Yes", pro: "Yes" },
-  { feature: "Search and filters", starter: "-", business: "Yes", pro: "Yes" },
-  { feature: "Analytics", starter: "-", business: "-", pro: "Simple analytics" },
-  { feature: "Priority support", starter: "-", business: "-", pro: "Yes" },
-  { feature: "Branding", starter: "-", business: "-", pro: "Custom (soon)" },
+  { feature: "CRM (orders + kanban)", solo: "Yes", starter: "Yes", business: "Yes", pro: "Yes" },
+  { feature: "Filters / search", solo: "Yes", starter: "Yes", business: "Yes", pro: "Yes" },
+  { feature: "Custom statuses", solo: "Yes", starter: "Yes", business: "Yes", pro: "Yes" },
+  { feature: "Inbox", solo: "Basic", starter: "Yes", business: "Yes", pro: "Yes" },
+  { feature: "Today / follow-ups", solo: "Yes", starter: "Yes", business: "Yes", pro: "Yes" },
+  { feature: "Team management", solo: "Limited", starter: "Yes", business: "Yes", pro: "Yes" },
+  { feature: "Manager dashboards", solo: "No", starter: "No", business: "Yes", pro: "Yes" },
+  { feature: "KPI tracking", solo: "No", starter: "No", business: "Yes", pro: "Yes" },
+  { feature: "Productivity analytics", solo: "No", starter: "No", business: "Yes", pro: "Yes" },
+  { feature: "Alerts", solo: "No", starter: "No", business: "Yes", pro: "Yes" },
+  { feature: "Risk score", solo: "No", starter: "No", business: "No", pro: "Yes" },
+  { feature: "Support workflow", solo: "No", starter: "Basic", business: "Basic", pro: "Full" },
+  { feature: "Priority support", solo: "No", starter: "No", business: "No", pro: "Yes" },
+];
+
+const whoIsThisFor = [
+  {
+    name: "Solo",
+    text: "For individuals who want to organize orders and never miss a follow-up.",
+  },
+  {
+    name: "Starter",
+    text: "For small teams that need shared visibility and basic coordination.",
+  },
+  {
+    name: "Business",
+    text: "For growing teams that need control, performance tracking, and execution discipline.",
+  },
+  {
+    name: "Pro",
+    text: "For teams that operate at scale and need full visibility, alerts, and risk control.",
+  },
 ];
 
 const faqs = [
   {
-    q: "Can I cancel anytime?",
-    a: "Yes. Every paid plan is month-to-month and you can cancel any time from your settings.",
+    q: "How many users are included?",
+    a: "Starter includes up to 5 users, Business up to 10 users, and Pro up to 20 users.",
   },
   {
-    q: "Does it work on phones?",
-    a: "Absolutely. Ordo works well on phones, so owners and teams can stay on top of clients and tasks on the go.",
-  },
-  {
-    q: "Is billing live already?",
-    a: "Billing is in rollout. You can start with Starter now and switch to paid plans as billing opens.",
+    q: "How does extra user work in Solo?",
+    a: "Solo starts at £8/month for one user. You can add additional users for £5/month each.",
   },
   {
     q: "Can I upgrade later?",
-    a: "Yes. You can upgrade from Starter to Business or Pro whenever your workflow grows.",
+    a: "Yes, you can upgrade your plan at any time as your team grows.",
+  },
+  {
+    q: "Is this launch pricing?",
+    a: "Yes. Current prices are part of the launch offer.",
   },
 ];
 
 export default function PricingPage() {
   const router = useRouter();
+  const [showSalesForm, setShowSalesForm] = useState(false);
+  const [salesLoading, setSalesLoading] = useState(false);
+  const [salesError, setSalesError] = useState<string | null>(null);
+  const [salesSuccess, setSalesSuccess] = useState<string | null>(null);
+  const [salesForm, setSalesForm] = useState({
+    fullName: "",
+    workEmail: "",
+    companyName: "",
+    teamSize: "",
+    currentTool: "",
+    mainGoal: "",
+    timeline: "",
+    notes: "",
+    website: "",
+  });
+  const [salesTouched, setSalesTouched] = useState({
+    fullName: false,
+    workEmail: false,
+    companyName: false,
+    mainGoal: false,
+  });
+
+  const salesFieldErrors = useMemo(() => {
+    const email = salesForm.workEmail.trim();
+    return {
+      fullName:
+        salesForm.fullName.trim().length >= 2 ? "" : "Enter at least 2 characters.",
+      workEmail:
+        /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? "" : "Enter a valid email (example@company.com).",
+      companyName:
+        salesForm.companyName.trim().length >= 2 ? "" : "Enter your company name.",
+      mainGoal:
+        salesForm.mainGoal.trim().length >= 10 ? "" : "Describe your goal in at least 10 characters.",
+    };
+  }, [salesForm]);
+
+  const hasSalesFieldErrors = useMemo(() => {
+    return Object.values(salesFieldErrors).some(Boolean);
+  }, [salesFieldErrors]);
+
+  async function onSubmitSalesForm(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (salesLoading) return;
+
+    setSalesTouched({
+      fullName: true,
+      workEmail: true,
+      companyName: true,
+      mainGoal: true,
+    });
+
+    if (hasSalesFieldErrors) {
+      setSalesError("Please fix highlighted fields and try again.");
+      return;
+    }
+
+    setSalesLoading(true);
+    setSalesError(null);
+    setSalesSuccess(null);
+
+    try {
+      const payload = new FormData();
+      payload.set("full_name", salesForm.fullName.trim());
+      payload.set("work_email", salesForm.workEmail.trim());
+      payload.set("company_name", salesForm.companyName.trim());
+      payload.set("team_size", salesForm.teamSize.trim());
+      payload.set("current_tool", salesForm.currentTool.trim());
+      payload.set("main_goal", salesForm.mainGoal.trim());
+      payload.set("timeline", salesForm.timeline.trim());
+      payload.set("notes", salesForm.notes.trim());
+      payload.set("website", salesForm.website.trim());
+
+      const response = await fetch("/api/sales/requests", {
+        method: "POST",
+        body: payload,
+      });
+
+      const data = (await response.json()) as { ok?: boolean; requestId?: string; error?: string };
+      if (!response.ok || !data.ok) {
+        throw new Error(data.error || "Failed to submit sales request");
+      }
+
+      setSalesSuccess("Thanks. We received your request and will contact you shortly.");
+      setSalesTouched({
+        fullName: false,
+        workEmail: false,
+        companyName: false,
+        mainGoal: false,
+      });
+      setSalesForm({
+        fullName: "",
+        workEmail: "",
+        companyName: "",
+        teamSize: "",
+        currentTool: "",
+        mainGoal: "",
+        timeline: "",
+        notes: "",
+        website: "",
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      setSalesError(message);
+    } finally {
+      setSalesLoading(false);
+    }
+  }
 
   const plans: Plan[] = [
     {
+      name: "Solo",
+      price: "£8 / month",
+      amount: "8",
+      priceNote: "+ £5 / extra user",
+      description: "For individuals who need structure and follow-up discipline",
+      features: [
+        "CRM (orders + kanban)",
+        "Filters & search",
+        "Custom statuses",
+        "Basic inbox",
+        "Today & follow-ups",
+        "Limited team management",
+      ],
+      cta: "Start with Solo",
+      action: () => router.push("/login"),
+    },
+    {
       name: "Starter",
-      price: "$0",
-      period: "/ forever",
-      note: "To launch your first workspace in Ordo",
-      features: ["Up to 30 orders / month", "Basic statuses", "Mobile-friendly"],
-      cta: "Start free",
+      price: "£39 / month",
+      amount: "39",
+      priceNote: "Includes up to 5 users",
+      description: "For small teams getting control over daily operations",
+      features: [
+        "CRM (orders + kanban)",
+        "Filters & search",
+        "Custom statuses",
+        "Full inbox",
+        "Today & follow-ups",
+        "Team management",
+        "Basic support workflow",
+      ],
+      cta: "Start with Starter",
       action: () => router.push("/login"),
     },
     {
       name: "Business",
-      price: "$9",
-      period: "/ month",
-      note: "For small stores",
+      price: "£79 / month",
+      amount: "79",
+      priceNote: "Includes up to 10 users",
+      description: "For growing teams that need execution visibility and control",
       features: [
-        "Unlimited orders",
-        "Due dates + payment tracking",
-        "Manager access",
-        "Search & filters",
+        "CRM (orders + kanban)",
+        "Filters & search",
+        "Custom statuses",
+        "Full inbox",
+        "Today & follow-ups",
+        "Team management",
+        "Manager dashboards",
+        "KPI tracking",
+        "Productivity analytics",
+        "Alerts",
+        "Basic support workflow",
       ],
-      cta: "Get Business",
+      cta: "Upgrade to Business",
       highlight: true,
-      action: () => router.push("/login?next=%2Fb%2Ftest"),
+      action: () => router.push("/login"),
     },
     {
       name: "Pro",
-      price: "$19",
-      period: "/ month",
-      note: "For teams",
+      price: "£149 / month",
+      amount: "149",
+      priceNote: "Includes up to 20 users",
+      description: "For teams that need full operational control and risk visibility",
       features: [
-        "Everything in Business",
-        "Simple analytics",
+        "CRM (orders + kanban)",
+        "Filters & search",
+        "Custom statuses",
+        "Full inbox",
+        "Today & follow-ups",
+        "Team management",
+        "Manager dashboards",
+        "KPI tracking",
+        "Productivity analytics",
+        "Alerts",
+        "Risk score",
+        "Full support workflow",
         "Priority support",
-        "Custom branding (soon)",
       ],
-      cta: "Get Pro",
-      action: () => router.push("/login?next=%2Fb%2Ftest"),
+      cta: "Go Pro",
+      action: () => router.push("/login"),
     },
   ];
 
@@ -107,9 +283,9 @@ export default function PricingPage() {
         </nav>
 
         <section className="hero card">
-          <p className="eyebrow">Bring your business into order</p>
-          <h1>Pricing for Ordo</h1>
-          <p className="heroCopy">Start with CRM now, keep team operations structured, and unlock more capability as Tasks and Academy come online.</p>
+          <p className="eyebrow">UK launch pricing</p>
+          <h1>Control execution. Not just tasks.</h1>
+          <p className="heroCopy">A CRM built for real operations — track orders, manage follow-ups, and keep your team accountable with full visibility and control.</p>
           <div className="heroCtas">
             <button className="primary" onClick={() => router.push("/login")}>Get started</button>
             <button className="secondary" onClick={() => document.getElementById("compare")?.scrollIntoView({ behavior: "smooth" })}>Compare plans</button>
@@ -121,11 +297,16 @@ export default function PricingPage() {
             <article className={`plan card ${plan.highlight ? "highlight" : ""}`} key={plan.name}>
               {plan.highlight && <span className="pill">Most popular</span>}
               <h2>{plan.name}</h2>
-              <p className="note">{plan.note}</p>
+              <p className="note">{plan.description}</p>
               <div className="priceRow">
-                <span className="price">{plan.price}</span>
-                <span className="period">{plan.period}</span>
+                <span className="sr-only">{plan.price}</span>
+                <span className="price" aria-hidden>
+                  <span className="currency">£</span>
+                  <span className="amount">{plan.amount}</span>
+                  <span className="period">/ month</span>
+                </span>
               </div>
+              <p className="priceNote">{plan.priceNote}</p>
               <ul>
                 {plan.features.map((item) => (
                   <li key={item}>{item}</li>
@@ -138,10 +319,151 @@ export default function PricingPage() {
           ))}
         </section>
 
-        <section className="trustStrip card" aria-label="Reassurance">
-          <p>No credit card for Starter</p>
-          <p>Cancel anytime</p>
-          <p>Setup in 5 minutes</p>
+        <section className="card enterpriseCta" aria-label="Enterprise contact">
+          <div className="enterpriseTop">
+            <div>
+              <h3>Enterprise</h3>
+              <p>Need enterprise-level rollout and support? Contact sales.</p>
+            </div>
+            <button className="secondary" onClick={() => setShowSalesForm((prev) => !prev)}>
+              {showSalesForm ? "Hide form" : "Contact sales"}
+            </button>
+          </div>
+          {showSalesForm ? (
+            <form className="salesForm" onSubmit={onSubmitSalesForm}>
+              <div className="salesGrid">
+                <label>
+                  <span>Full name</span>
+                  <input
+                    className={salesTouched.fullName && salesFieldErrors.fullName ? "invalid" : ""}
+                    value={salesForm.fullName}
+                    onChange={(event) => setSalesForm((prev) => ({ ...prev, fullName: event.target.value }))}
+                    onBlur={() => setSalesTouched((prev) => ({ ...prev, fullName: true }))}
+                    required
+                    minLength={2}
+                  />
+                  {salesTouched.fullName && salesFieldErrors.fullName ? (
+                    <small className="fieldError">{salesFieldErrors.fullName}</small>
+                  ) : null}
+                </label>
+                <label>
+                  <span>Work email</span>
+                  <input
+                    type="email"
+                    className={salesTouched.workEmail && salesFieldErrors.workEmail ? "invalid" : ""}
+                    value={salesForm.workEmail}
+                    onChange={(event) => setSalesForm((prev) => ({ ...prev, workEmail: event.target.value }))}
+                    onBlur={() => setSalesTouched((prev) => ({ ...prev, workEmail: true }))}
+                    required
+                  />
+                  {salesTouched.workEmail && salesFieldErrors.workEmail ? (
+                    <small className="fieldError">{salesFieldErrors.workEmail}</small>
+                  ) : null}
+                </label>
+                <label>
+                  <span>Company name</span>
+                  <input
+                    className={salesTouched.companyName && salesFieldErrors.companyName ? "invalid" : ""}
+                    value={salesForm.companyName}
+                    onChange={(event) => setSalesForm((prev) => ({ ...prev, companyName: event.target.value }))}
+                    onBlur={() => setSalesTouched((prev) => ({ ...prev, companyName: true }))}
+                    required
+                    minLength={2}
+                  />
+                  {salesTouched.companyName && salesFieldErrors.companyName ? (
+                    <small className="fieldError">{salesFieldErrors.companyName}</small>
+                  ) : null}
+                </label>
+                <label>
+                  <span>Team size</span>
+                  <select
+                    value={salesForm.teamSize}
+                    onChange={(event) => setSalesForm((prev) => ({ ...prev, teamSize: event.target.value }))}
+                  >
+                    <option value="">Select...</option>
+                    <option value="1">1</option>
+                    <option value="2-5">2-5</option>
+                    <option value="6-10">6-10</option>
+                    <option value="11-20">11-20</option>
+                    <option value="21-50">21-50</option>
+                    <option value="50+">50+</option>
+                  </select>
+                </label>
+              </div>
+
+              <div className="salesGrid salesGridSecondary">
+                <label>
+                  <span>Current tool (optional)</span>
+                  <input
+                    value={salesForm.currentTool}
+                    onChange={(event) => setSalesForm((prev) => ({ ...prev, currentTool: event.target.value }))}
+                    placeholder="HubSpot, Pipedrive, spreadsheets, etc."
+                  />
+                </label>
+                <label>
+                  <span>Timeline (optional)</span>
+                  <select
+                    value={salesForm.timeline}
+                    onChange={(event) => setSalesForm((prev) => ({ ...prev, timeline: event.target.value }))}
+                  >
+                    <option value="">Select...</option>
+                    <option value="ASAP">ASAP</option>
+                    <option value="This month">This month</option>
+                    <option value="Next 1-2 months">Next 1-2 months</option>
+                    <option value="This quarter">This quarter</option>
+                    <option value="Researching">Researching</option>
+                  </select>
+                </label>
+              </div>
+
+              <label>
+                <span>Main goal</span>
+                <textarea
+                  className={salesTouched.mainGoal && salesFieldErrors.mainGoal ? "invalid" : ""}
+                  value={salesForm.mainGoal}
+                  onChange={(event) => setSalesForm((prev) => ({ ...prev, mainGoal: event.target.value }))}
+                  onBlur={() => setSalesTouched((prev) => ({ ...prev, mainGoal: true }))}
+                  required
+                  minLength={10}
+                  placeholder="What should improve first in your operations workflow?"
+                />
+                {salesTouched.mainGoal && salesFieldErrors.mainGoal ? (
+                  <small className="fieldError">{salesFieldErrors.mainGoal}</small>
+                ) : null}
+              </label>
+
+              <label>
+                <span>Additional notes (optional)</span>
+                <textarea
+                  value={salesForm.notes}
+                  onChange={(event) => setSalesForm((prev) => ({ ...prev, notes: event.target.value }))}
+                  placeholder="Anything important for rollout, integrations, or team setup?"
+                />
+              </label>
+
+              <label className="honey">
+                <span>Website</span>
+                <input
+                  value={salesForm.website}
+                  onChange={(event) => setSalesForm((prev) => ({ ...prev, website: event.target.value }))}
+                  tabIndex={-1}
+                  autoComplete="off"
+                />
+              </label>
+
+              {salesError ? <div className="salesError">{salesError}</div> : null}
+              {salesSuccess ? <div className="salesSuccess">{salesSuccess}</div> : null}
+
+              <div className="salesActions">
+                <button type="button" className="secondary" onClick={() => setShowSalesForm(false)}>
+                  Cancel
+                </button>
+                <button type="submit" className="primary" disabled={salesLoading}>
+                  {salesLoading ? "Sending..." : "Send sales request"}
+                </button>
+              </div>
+            </form>
+          ) : null}
         </section>
 
         <section id="compare" className="card tableWrap">
@@ -151,6 +473,7 @@ export default function PricingPage() {
               <thead>
                 <tr>
                   <th>Feature</th>
+                  <th>Solo</th>
                   <th>Starter</th>
                   <th>Business</th>
                   <th>Pro</th>
@@ -160,6 +483,7 @@ export default function PricingPage() {
                 {comparisonRows.map((row) => (
                   <tr key={row.feature}>
                     <td>{row.feature}</td>
+                    <td>{row.solo}</td>
                     <td>{row.starter}</td>
                     <td>{row.business}</td>
                     <td>{row.pro}</td>
@@ -170,24 +494,15 @@ export default function PricingPage() {
           </div>
         </section>
 
-        <section className="card howItWorks">
-          <h3>How it works</h3>
+        <section className="card whoIsFor">
+          <h3>Who is this for</h3>
           <div className="steps">
-            <article>
-              <span>1</span>
-              <h4>Create a workspace</h4>
-              <p>Create your workspace, invite the team, and set the base for a structured operating flow.</p>
-            </article>
-            <article>
-              <span>2</span>
-              <h4>Add the first client or deal</h4>
-              <p>Capture the client, next step, and business context in one system instead of scattered chats.</p>
-            </article>
-            <article>
-              <span>3</span>
-              <h4>Keep the workflow in order</h4>
-              <p>The team sees the current stage, ownership, and context without losing control in messages and ad hoc notes.</p>
-            </article>
+            {whoIsThisFor.map((item) => (
+              <article key={item.name}>
+                <h4>{item.name}</h4>
+                <p>{item.text}</p>
+              </article>
+            ))}
           </div>
         </section>
 
@@ -203,13 +518,6 @@ export default function PricingPage() {
           </div>
         </section>
 
-        <section className="card bottomCta">
-          <h3>Start with CRM and scale inside one system</h3>
-          <div className="heroCtas">
-            <button className="primary" onClick={() => router.push("/login")}>Get started</button>
-            <button className="secondary" onClick={() => router.push("/")}>Back to home</button>
-          </div>
-        </section>
       </div>
 
       <style jsx>{`
@@ -326,65 +634,193 @@ export default function PricingPage() {
         .pricingGrid {
           display: grid;
           grid-template-columns: 1fr;
-          gap: 14px;
+          gap: 16px;
+          margin-top: 2px;
         }
         .plan {
           padding: 22px;
           position: relative;
+          display: flex;
+          flex-direction: column;
+          border-color: #e2e8f0;
         }
         .plan.highlight {
-          border: 2px solid #6366F1;
-          box-shadow: 0 8px 26px rgba(29, 78, 216, 0.12);
+          border-color: #818cf8;
+          box-shadow: 0 6px 16px rgba(79, 70, 229, 0.08);
+          background: linear-gradient(180deg, #ffffff 0%, #fcfdff 100%);
         }
         .pill {
           position: absolute;
-          top: 14px;
-          right: 14px;
+          top: 12px;
+          right: 12px;
           background: #EEF2FF;
           color: #4F46E5;
           border: 1px solid #C7D2FE;
           border-radius: 999px;
-          font-size: 12px;
+          font-size: 11px;
           font-weight: 700;
-          padding: 5px 10px;
+          padding: 4px 9px;
         }
         h2 {
           margin: 0;
           font-size: 20px;
         }
         .note {
-          margin: 6px 0 0;
-          color: #64748b;
+          margin: 8px 0 0;
+          color: #475569;
+          line-height: 1.45;
+          min-height: 78px;
         }
         .priceRow {
           margin-top: 10px;
+          min-height: 52px;
           display: flex;
-          align-items: baseline;
-          gap: 6px;
+          align-items: flex-end;
         }
         .price {
-          font-size: 40px;
-          line-height: 1;
+          display: inline-flex;
+          align-items: baseline;
+          gap: 6px;
+          line-height: 1.05;
           font-weight: 800;
         }
+        .currency {
+          font-size: 26px;
+          letter-spacing: -0.01em;
+        }
+        .amount {
+          font-size: 48px;
+          letter-spacing: -0.03em;
+        }
         .period {
-          color: #64748b;
+          font-size: 20px;
+          color: #334155;
+          font-weight: 700;
+          letter-spacing: -0.01em;
+        }
+        .priceNote {
+          margin: 8px 0 0;
+          color: #475569;
           font-weight: 600;
+          font-size: 14px;
+          min-height: 22px;
         }
         .plan ul {
-          margin: 14px 0;
+          margin: 14px 0 0;
           padding-left: 20px;
-          color: #334155;
-          line-height: 1.8;
+          color: #1f2937;
+          line-height: 1.58;
+          flex: 1 1 auto;
         }
-        .trustStrip {
+        .plan li + li {
+          margin-top: 2px;
+        }
+        .plan button {
+          margin-top: 16px;
+          align-self: flex-start;
+        }
+        .enterpriseCta {
           padding: 14px 18px;
           display: grid;
-          grid-template-columns: 1fr;
-          gap: 8px;
-          color: #1e293b;
+          gap: 14px;
+        }
+        .enterpriseTop {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 14px;
+        }
+        .enterpriseCta h3 {
+          margin: 0 0 6px;
+          font-size: 20px;
+        }
+        .enterpriseCta p {
+          margin: 0;
+          color: #475569;
+        }
+        .salesForm {
+          border-top: 1px solid #e2e8f0;
+          padding-top: 14px;
+          display: grid;
+          gap: 12px;
+        }
+        .salesGrid {
+          display: grid;
+          gap: 12px;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .salesGridSecondary {
+          grid-template-columns: 1.4fr 0.6fr;
+        }
+        .salesForm label {
+          display: grid;
+          gap: 6px;
+        }
+        .salesForm label > span {
+          font-size: 13px;
+          color: #334155;
           font-weight: 600;
-          text-align: center;
+        }
+        .fieldError {
+          color: #be123c;
+          font-size: 12px;
+          line-height: 1.3;
+        }
+        .salesForm input,
+        .salesForm select,
+        .salesForm textarea {
+          width: 100%;
+          border: 1px solid #cbd5e1;
+          border-radius: 10px;
+          background: #fff;
+          color: #0f172a;
+          outline: none;
+          font-size: 14px;
+          padding: 10px 12px;
+          transition: border-color 0.15s ease;
+        }
+        .salesForm textarea {
+          min-height: 96px;
+          resize: vertical;
+        }
+        .salesForm input:focus,
+        .salesForm select:focus,
+        .salesForm textarea:focus {
+          border-color: #6366F1;
+        }
+        .salesForm .invalid {
+          border-color: #fb7185;
+          background: #fff1f2;
+        }
+        .salesActions {
+          display: flex;
+          justify-content: flex-end;
+          gap: 10px;
+          margin-top: 2px;
+        }
+        .salesError,
+        .salesSuccess {
+          border-radius: 10px;
+          padding: 10px 12px;
+          font-size: 14px;
+        }
+        .salesError {
+          border: 1px solid #fecdd3;
+          background: #fff1f2;
+          color: #be123c;
+        }
+        .salesSuccess {
+          border: 1px solid #bbf7d0;
+          background: #f0fdf4;
+          color: #166534;
+        }
+        .honey {
+          position: absolute;
+          left: -10000px;
+          top: auto;
+          width: 1px;
+          height: 1px;
+          overflow: hidden;
         }
         .tableWrap {
           padding: 20px;
@@ -416,7 +852,7 @@ export default function PricingPage() {
           color: #0f172a;
           font-weight: 700;
         }
-        .howItWorks {
+        .whoIsFor {
           padding: 20px;
         }
         .steps {
@@ -429,19 +865,8 @@ export default function PricingPage() {
           border-radius: 14px;
           padding: 14px;
         }
-        .steps span {
-          width: 28px;
-          height: 28px;
-          display: inline-grid;
-          place-items: center;
-          border-radius: 999px;
-          background: #EEF2FF;
-          color: #4F46E5;
-          font-weight: 700;
-          font-size: 14px;
-        }
         h4 {
-          margin: 10px 0 6px;
+          margin: 0 0 6px;
           font-size: 17px;
         }
         .steps p,
@@ -463,23 +888,15 @@ export default function PricingPage() {
           border-radius: 14px;
           padding: 14px;
         }
-        .bottomCta {
-          padding: 24px;
-          text-align: center;
-        }
-
         @media (min-width: 800px) {
           .pricingGrid {
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(4, 1fr);
           }
           .steps {
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(2, 1fr);
           }
           .faqGrid {
             grid-template-columns: repeat(2, 1fr);
-          }
-          .trustStrip {
-            grid-template-columns: repeat(3, 1fr);
           }
         }
 
@@ -511,10 +928,42 @@ export default function PricingPage() {
           .hero,
           .plan,
           .tableWrap,
-          .howItWorks,
-          .faq,
-          .bottomCta {
+          .whoIsFor,
+          .faq {
             padding: 18px;
+          }
+          .note {
+            min-height: 0;
+          }
+          .priceRow {
+            min-height: 0;
+          }
+          .amount {
+            font-size: 44px;
+          }
+          .period {
+            font-size: 18px;
+          }
+          .priceNote {
+            min-height: 0;
+          }
+          .enterpriseTop {
+            width: 100%;
+            flex-direction: column;
+            align-items: flex-start;
+          }
+          .enterpriseTop > button {
+            width: 100%;
+          }
+          .salesGrid,
+          .salesGridSecondary {
+            grid-template-columns: 1fr;
+          }
+          .salesActions {
+            flex-direction: column-reverse;
+          }
+          .salesActions button {
+            width: 100%;
           }
         }
       `}</style>

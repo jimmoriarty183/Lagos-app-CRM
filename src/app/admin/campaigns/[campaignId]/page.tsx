@@ -1,0 +1,108 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { AdminShell } from "@/app/admin/_components/AdminShell";
+import { AdminCampaignForm } from "@/components/campaigns/AdminCampaignForm";
+import { requireAdminUser } from "@/lib/admin/access";
+import { getAdminCampaignClient } from "@/lib/campaigns/server";
+import { getAdminCampaigns, getCampaignPreviewDetails, getSurveyByCampaignId } from "@/lib/campaigns/service";
+
+function formatDateTime(value: string | null) {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" });
+}
+
+export default async function AdminCampaignEditPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ campaignId: string }>;
+  searchParams: Promise<{ view?: string }>;
+}) {
+  const { campaignId } = await params;
+  const { view } = await searchParams;
+  const { workspaceHref } = await requireAdminUser(`/admin/campaigns/${campaignId}`);
+  const client = getAdminCampaignClient();
+  const campaigns = await getAdminCampaigns(client);
+  const campaign = campaigns.find((item) => String(item.id) === String(campaignId));
+
+  if (!campaign) notFound();
+
+  const survey = campaign.type === "survey" ? await getSurveyByCampaignId(client, campaign.id) : null;
+  const preview = await getCampaignPreviewDetails(client, campaign.id);
+  const isReadOnly = campaign.status === "active" || campaign.status === "archived";
+  const showPreview = view === "details" || isReadOnly;
+
+  return (
+    <AdminShell
+      activeHref="/admin/campaigns"
+      workspaceHref={workspaceHref}
+      title="Campaign details"
+      description="Campaign data, recipients, and delivery status."
+      actions={
+        <div className="flex items-center gap-2">
+          {campaign.type === "survey" ? (
+            <Link
+              href={`/admin/campaigns/${campaign.id}/stats`}
+              className="inline-flex h-10 items-center rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-slate-300"
+            >
+              Survey stats
+            </Link>
+          ) : null}
+          <Link
+            href={`/admin/campaigns/new?copyFrom=${campaign.id}`}
+            className="inline-flex h-10 items-center rounded-lg border border-indigo-200 bg-indigo-50 px-4 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-100"
+          >
+            Duplicate
+          </Link>
+          <Link
+            href={`/admin/campaigns/${campaign.id}?view=details`}
+            className="inline-flex h-10 items-center rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-slate-300"
+          >
+            View / Preview
+          </Link>
+        </div>
+      }
+    >
+      {showPreview && preview ? (
+        <div className="mb-4 rounded-xl border border-slate-200 bg-white p-4">
+          <div className="grid gap-2 text-sm text-slate-700 md:grid-cols-2">
+            <div><span className="font-semibold text-slate-900">Status:</span> {preview.status}</div>
+            <div><span className="font-semibold text-slate-900">Type:</span> {preview.campaign.type}</div>
+            <div><span className="font-semibold text-slate-900">Sent by:</span> {preview.sentByLabel ?? "-"}</div>
+            <div><span className="font-semibold text-slate-900">Sent at:</span> {formatDateTime(preview.sentAt)}</div>
+            <div><span className="font-semibold text-slate-900">Audience roles:</span> {preview.targetRoles.length ? preview.targetRoles.join(", ") : "All roles"}</div>
+            <div><span className="font-semibold text-slate-900">Audience segments:</span> {preview.targetSegments.length ? preview.targetSegments.join(", ") : "All segments"}</div>
+            <div className="md:col-span-2"><span className="font-semibold text-slate-900">Channels:</span> {preview.campaign.channels.join(", ")}</div>
+            <div className="md:col-span-2"><span className="font-semibold text-slate-900">Recipients count:</span> {preview.sentRecipientCount}</div>
+            <div className="md:col-span-2">
+              <div className="font-semibold text-slate-900">Recipients preview:</div>
+              {preview.recipientsPreview.length === 0 ? (
+                <div className="text-slate-500">No recipients snapshot yet.</div>
+              ) : (
+                <ul className="mt-1 max-h-44 overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-2 text-xs">
+                  {preview.recipientsPreview.map((recipient) => (
+                    <li key={recipient.userId} className="py-1 text-slate-700">
+                      {recipient.label}
+                      {recipient.email ? ` (${recipient.email})` : ""}
+                      {recipient.role ? ` | ${recipient.role}` : ""}
+                      {recipient.segment ? ` | ${recipient.segment}` : ""}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      <AdminCampaignForm
+        mode="edit"
+        initialCampaign={campaign}
+        initialSurvey={survey}
+        readOnly={isReadOnly}
+      />
+    </AdminShell>
+  );
+}

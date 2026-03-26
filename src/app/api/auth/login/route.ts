@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@supabase/supabase-js";
 import { normalizePhone } from "@/lib/phone";
 
 function safePath(input: unknown): string {
@@ -30,15 +30,23 @@ export async function POST(req: Request) {
   }
 
   // иначе ищем бизнес по телефону (под твою схему, возможно нужно поменять поля!)
-  const { data, error } = await supabase
-    .from("businesses")
-    .select("slug")
-    .or(`owner_phone.eq.${phone},manager_phone.eq.${phone}`)
-    .limit(1)
-    .maybeSingle();
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (supabaseUrl && supabaseAnonKey) {
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      auth: { persistSession: false },
+    });
 
-  if (!error && data?.slug) {
-    return NextResponse.json({ phone, redirectTo: `/b/${data.slug}` });
+    const { data, error } = await supabase
+      .from("businesses")
+      .select("slug")
+      .or(`owner_phone.eq.${phone},manager_phone.eq.${phone}`)
+      .limit(1)
+      .maybeSingle();
+
+    if (!error && data?.slug) {
+      return NextResponse.json({ phone, redirectTo: `/b/${data.slug}` });
+    }
   }
 
   return NextResponse.json({ phone, redirectTo: "/" });
