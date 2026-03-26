@@ -141,10 +141,10 @@ function mapInternalNote(row: AnyRow): SupportInternalNoteRecord {
     id: getFirstString(row, ["id"]) ?? "",
     requestId: getFirstString(row, ["request_id", "support_request_id"]) ?? "",
     note:
-      getFirstString(row, ["note", "message", "body", "internal_note"]) ??
+      getFirstString(row, ["note_text", "note", "message", "body", "internal_note"]) ??
       "",
     createdAt: toIsoOrNull(row.created_at),
-    createdByUserId: getFirstString(row, ["created_by_user_id", "created_by", "user_id"]),
+    createdByUserId: getFirstString(row, ["author_user_id", "created_by_user_id", "created_by", "user_id"]),
     createdByLabel: getFirstString(row, ["created_by_name", "created_by_email", "user_name"]),
   };
 }

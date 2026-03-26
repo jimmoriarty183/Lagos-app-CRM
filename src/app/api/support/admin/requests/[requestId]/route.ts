@@ -30,10 +30,6 @@ async function canManageSupportRequest(
   if (error || !user) throw new Error("Unauthorized");
 
   const { data: isAdmin } = await supabase.rpc("is_platform_admin");
-  if (isAdmin) {
-    return { userId: user.id, requestBusinessId: null as string | null, requesterUserId: null as string | null, currentStatus: null as string | null, subject: null as string | null };
-  }
-
   const { data: requestRow, error: requestError } = await supabase
     .from("support_requests")
     .select("id, business_id, created_by_user_id, status, subject")
@@ -41,6 +37,16 @@ async function canManageSupportRequest(
     .maybeSingle();
 
   if (requestError || !requestRow) throw new Error("Support request not found");
+
+  if (isAdmin) {
+    return {
+      userId: user.id,
+      requestBusinessId: cleanText((requestRow as Record<string, unknown>).business_id) || null,
+      requesterUserId: cleanText((requestRow as Record<string, unknown>).created_by_user_id) || null,
+      currentStatus: cleanText((requestRow as Record<string, unknown>).status) || null,
+      subject: cleanText((requestRow as Record<string, unknown>).subject) || null,
+    };
+  }
 
   const businessId = cleanText((requestRow as Record<string, unknown>).business_id);
   if (!businessId) throw new Error("Support request business is missing");
@@ -216,22 +222,21 @@ export async function PATCH(
     if (customerReply) {
       const { data: currentRow, error: currentError } = await adminClient
         .from("support_requests")
-        .select("message, description")
+        .select("message")
         .eq("id", requestId)
         .maybeSingle();
       if (currentError) {
         return NextResponse.json({ ok: false, error: getErrorMessage(currentError) }, { status: 500 });
       }
 
-      const existingMessage =
-        cleanText((currentRow as Record<string, unknown> | null)?.message) ||
-        cleanText((currentRow as Record<string, unknown> | null)?.description);
-      const replyBlock = `\n\nSupport reply:\n${customerReply}`;
+      const existingMessage = cleanText((currentRow as Record<string, unknown> | null)?.message);
+      const replyAtIso = new Date().toISOString();
+      const replyBlock = `\n\nSupport reply [${replyAtIso}]:\n${customerReply}`;
       const nextMessage = existingMessage.includes(customerReply)
         ? existingMessage
         : `${existingMessage}${replyBlock}`.trim();
 
-      const messageColumns = ["message", "description"];
+      const messageColumns = ["message"];
       let messageUpdated = false;
       for (const column of messageColumns) {
         const { data, error } = await adminClient

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase/server";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { SUPPORT_ATTACHMENT_BUCKET, sanitizeFileName } from "@/lib/support/utils";
 
 function cleanText(value: unknown) {
@@ -47,6 +48,7 @@ export async function GET(
     }
 
     const supabase = await supabaseServer();
+    const admin = supabaseAdmin();
     const {
       data: { user },
       error: authError,
@@ -121,12 +123,23 @@ export async function GET(
         const { data: signed, error: signError } = await supabase.storage
           .from(bucket)
           .createSignedUrl(objectPath, 60, shouldDownload ? { download: fileName } : undefined);
-
         if (!signError && signed?.signedUrl) {
           signedUrl = signed.signedUrl;
           break;
         }
-        lastSignError = getErrorMessage(signError) || lastSignError;
+
+        // Some storage buckets are private to service role; sign with admin after attachment access is verified.
+        const { data: adminSigned, error: adminSignError } = await admin.storage
+          .from(bucket)
+          .createSignedUrl(objectPath, 60, shouldDownload ? { download: fileName } : undefined);
+        if (!adminSignError && adminSigned?.signedUrl) {
+          signedUrl = adminSigned.signedUrl;
+          break;
+        }
+        lastSignError =
+          getErrorMessage(adminSignError) ||
+          getErrorMessage(signError) ||
+          lastSignError;
       }
       if (signedUrl) break;
     }

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { AdminShell } from "@/app/admin/_components/AdminShell";
 import { requireAdminUser } from "@/lib/admin/access";
 import { supabaseServerReadOnly } from "@/lib/supabase/server";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import {
   fetchBusinessSupportRequestById,
   fetchSupportAssignments,
@@ -29,6 +30,7 @@ export default async function AdminSupportRequestDetailsPage({
   const { workspaceHref } = await requireAdminUser("/admin/support");
   const { requestId } = await params;
   const supabase = await supabaseServerReadOnly();
+  const admin = supabaseAdmin();
   const request = await fetchBusinessSupportRequestById(supabase, requestId);
   if (!request) notFound();
 
@@ -42,7 +44,7 @@ export default async function AdminSupportRequestDetailsPage({
     [attachments, history, notes, assignments] = await Promise.all([
       fetchSupportAttachments(supabase, requestId),
       fetchSupportStatusHistory(supabase, requestId),
-      fetchSupportInternalNotes(supabase, requestId),
+      fetchSupportInternalNotes(admin, requestId),
       fetchSupportAssignments(supabase, requestId),
     ]);
   } catch (error) {

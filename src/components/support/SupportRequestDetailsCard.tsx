@@ -2,6 +2,43 @@ import type { SupportRequestRecord } from "@/lib/support/types";
 import { formatSupportDate } from "@/lib/support/utils";
 import { SupportPriorityBadge, SupportStatusBadge } from "@/components/support/SupportBadges";
 
+type ParsedSupportReply = {
+  body: string;
+  createdAt: string | null;
+};
+
+function parseMessageWithSupportReplies(message: string) {
+  const text = String(message ?? "").trim();
+  if (!text) return { baseMessage: "", replies: [] as ParsedSupportReply[] };
+
+  const marker = /\n\nSupport reply(?: \[([^\]]+)\])?:\n/g;
+  const matches = Array.from(text.matchAll(marker));
+  if (matches.length === 0) {
+    return { baseMessage: text, replies: [] as ParsedSupportReply[] };
+  }
+
+  const firstMatchIndex = matches[0].index ?? 0;
+  const baseMessage = text.slice(0, firstMatchIndex).trim();
+  const replies: ParsedSupportReply[] = [];
+
+  for (let i = 0; i < matches.length; i += 1) {
+    const current = matches[i];
+    const next = matches[i + 1];
+    const start = (current.index ?? 0) + current[0].length;
+    const end = next?.index ?? text.length;
+    const body = text.slice(start, end).trim();
+    if (!body) continue;
+    const createdAtRaw = (current[1] ?? "").trim();
+    const createdAt = createdAtRaw && !Number.isNaN(new Date(createdAtRaw).getTime()) ? createdAtRaw : null;
+    replies.push({ body, createdAt });
+  }
+
+  return {
+    baseMessage,
+    replies,
+  };
+}
+
 export function SupportRequestDetailsCard({
   request,
   showBusiness = false,
@@ -11,6 +48,8 @@ export function SupportRequestDetailsCard({
   showBusiness?: boolean;
   showSubmitter?: boolean;
 }) {
+  const parsed = parseMessageWithSupportReplies(request.message || "");
+
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -27,7 +66,7 @@ export function SupportRequestDetailsCard({
       <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
         <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
           <div className="text-xs uppercase tracking-[0.12em] text-slate-500">Type</div>
-          <div className="mt-1 text-slate-800">{request.type?.replaceAll("_", " ") || "—"}</div>
+          <div className="mt-1 text-slate-800">{request.type?.replaceAll("_", " ") || "-"}</div>
         </div>
         <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
           <div className="text-xs uppercase tracking-[0.12em] text-slate-500">Created</div>
@@ -40,26 +79,39 @@ export function SupportRequestDetailsCard({
         {showBusiness ? (
           <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
             <div className="text-xs uppercase tracking-[0.12em] text-slate-500">Business</div>
-            <div className="mt-1 text-slate-800">{request.businessLabel || request.businessId || "—"}</div>
+            <div className="mt-1 text-slate-800">{request.businessLabel || request.businessId || "-"}</div>
           </div>
         ) : null}
         {showSubmitter ? (
           <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
             <div className="text-xs uppercase tracking-[0.12em] text-slate-500">Submitter</div>
-            <div className="mt-1 text-slate-800">{request.submitterLabel || request.submitterUserId || "—"}</div>
+            <div className="mt-1 text-slate-800">{request.submitterLabel || request.submitterUserId || "-"}</div>
           </div>
         ) : null}
         <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
           <div className="text-xs uppercase tracking-[0.12em] text-slate-500">Contact</div>
-          <div className="mt-1 text-slate-800">{request.contactEmail || request.contactPhone || "—"}</div>
+          <div className="mt-1 text-slate-800">{request.contactEmail || request.contactPhone || "-"}</div>
         </div>
       </div>
 
       <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3">
         <div className="text-xs uppercase tracking-[0.12em] text-slate-500">Message</div>
-        <p className="mt-2 whitespace-pre-wrap text-sm text-slate-800">{request.message || "—"}</p>
+        <p className="mt-2 whitespace-pre-wrap text-sm text-slate-800">{parsed.baseMessage || "-"}</p>
+        {parsed.replies.map((reply, index) => (
+          <div
+            key={`support-reply-${index}`}
+            className="mt-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2"
+          >
+            <div className="flex items-center justify-between gap-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-blue-700">
+              <span>Support reply</span>
+              <span className="normal-case tracking-normal text-blue-700/80">
+                {reply.createdAt ? formatSupportDate(reply.createdAt) : "Date unavailable"}
+              </span>
+            </div>
+            <p className="mt-1 whitespace-pre-wrap text-sm text-blue-900">{reply.body}</p>
+          </div>
+        ))}
       </div>
     </section>
   );
 }
-

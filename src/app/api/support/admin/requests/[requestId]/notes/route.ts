@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase/server";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 
 function cleanText(value: unknown) {
   return String(value ?? "").trim();
@@ -71,10 +72,11 @@ export async function POST(
 
     const supabase = await supabaseServer();
     const userId = await requireSupportOperator(supabase, requestId);
+    const admin = supabaseAdmin();
 
     const requestIdColumns = ["request_id", "support_request_id", "ticket_id", "support_ticket_id"];
-    const noteColumns = ["note", "message", "internal_note", "content", "text", "body"];
-    const authorColumns = ["created_by_user_id", "created_by", "user_id", "author_user_id"];
+    const noteColumns = ["note_text", "note", "message", "internal_note", "content", "text", "body"];
+    const authorColumns = ["author_user_id", "created_by_user_id", "created_by", "user_id"];
 
     let lastError = "Failed to insert internal note";
 
@@ -87,7 +89,7 @@ export async function POST(
           };
           if (authorCol) payload[authorCol] = userId;
 
-          const { error } = await supabase.from("support_request_internal_notes").insert(payload);
+          const { error } = await admin.from("support_request_internal_notes").insert(payload);
           if (!error) {
             return NextResponse.json({ ok: true });
           }
