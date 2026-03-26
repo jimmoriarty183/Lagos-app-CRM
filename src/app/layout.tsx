@@ -55,6 +55,12 @@ export default function RootLayout({
       <head>
         <meta name="color-scheme" content="light only" />
         <meta name="theme-color" content="#f5f6f8" />
+        <Script
+          id="Cookiebot"
+          src="https://consent.cookiebot.com/uc.js"
+          data-cbid="c4f78d66-aa96-4b34-b262-03351f8af84d"
+          strategy="beforeInteractive"
+        />
         {shouldEnableGoogleTag ? (
           <>
             <Script
