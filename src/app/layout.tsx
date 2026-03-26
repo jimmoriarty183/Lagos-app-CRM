@@ -48,23 +48,29 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const shouldEnableGoogleTag = process.env.VERCEL_ENV === "production";
+
   return (
     <html lang="en">
       <head>
         <meta name="color-scheme" content="light only" />
         <meta name="theme-color" content="#f5f6f8" />
-        <Script
-          src="https://www.googletagmanager.com/gtag/js?id=G-B34H3D8SG9"
-          strategy="afterInteractive"
-        />
-        <Script id="google-gtag-init" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'G-B34H3D8SG9');
-          `}
-        </Script>
+        {shouldEnableGoogleTag ? (
+          <>
+            <Script
+              src="https://www.googletagmanager.com/gtag/js?id=G-B34H3D8SG9"
+              strategy="afterInteractive"
+            />
+            <Script id="google-gtag-init" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', 'G-B34H3D8SG9');
+              `}
+            </Script>
+          </>
+        ) : null}
         <Script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async />
       </head>
       <body
