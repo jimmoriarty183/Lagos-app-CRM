@@ -53,6 +53,18 @@ export default function RootLayout({
       <head>
         <meta name="color-scheme" content="light only" />
         <meta name="theme-color" content="#f5f6f8" />
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-B34H3D8SG9"
+          strategy="afterInteractive"
+        />
+        <Script id="google-gtag-init" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-B34H3D8SG9');
+          `}
+        </Script>
         <Script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async />
       </head>
       <body
