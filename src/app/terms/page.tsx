@@ -2,50 +2,48 @@ import type { Metadata } from "next";
 import LegalDocumentPage from "@/components/LegalDocumentPage";
 
 export const metadata: Metadata = {
-  title: "Terms of Use | Ordo",
-  description: "Ordo terms of use.",
+  title: "Terms of Service | Ordo",
+  description: "ORDO terms of service.",
 };
 
 export default function TermsPage() {
   return (
     <LegalDocumentPage
       eyebrow="Legal"
-      title="Terms of Use"
-      intro="These terms govern access to Ordo and set the basic rules for using the service in a business setting."
-      updatedAt="March 17, 2026"
+      title="Terms of Service"
+      intro="Please read these terms before using ORDO."
+      updatedAt="March 26, 2026"
       sections={[
         {
-          title: "Using Ordo",
+          title: "General",
           paragraphs: [
-            "You may use Ordo only for lawful business operations and internal workflow management. You are responsible for activity performed through your account and for keeping your login credentials secure.",
-            "You must provide accurate account information and keep it reasonably up to date so your workspace can function correctly.",
+            "ORDO is a SaaS CRM platform operated by an individual developer.",
+            "The service allows users to manage orders, customers, and workflows through a web-based interface.",
           ],
         },
         {
-          title: "Workspace data",
+          title: "Acceptable use",
           paragraphs: [
-            "You retain responsibility for the customer, order, and team information entered into your workspace. Do not upload content you do not have the right to store or share.",
-            "We may process your data to operate the product, maintain security, prevent abuse, and support essential service functionality.",
+            "By using ORDO, you agree to use the service only for lawful purposes and not to misuse the platform.",
           ],
         },
         {
-          title: "Availability and changes",
+          title: "Billing and access",
           paragraphs: [
-            "Ordo may evolve over time. We may update features, improve workflows, or fix defects as part of normal product maintenance.",
-            "We may suspend or limit access when required for security, abuse prevention, maintenance, or legal compliance.",
+            "Subscriptions are billed on a recurring basis and can be cancelled at any time.",
+            "Access to the service may be suspended if these terms are violated.",
           ],
         },
         {
-          title: "Termination",
+          title: "Disclaimer",
           paragraphs: [
-            "You may stop using Ordo at any time. We may suspend or terminate access if these terms are violated or if continued access creates security or legal risk.",
-            "Some obligations, including payment obligations if introduced later and duties relating to lawful use of the service, survive termination.",
+            "The service is provided \"as is\" without warranties. We are not responsible for data loss or business losses.",
           ],
         },
         {
-          title: "Contact",
+          title: "Changes",
           paragraphs: [
-            "If you have questions about these terms, contact the Ordo team through the support channel provided in your workspace or launch materials.",
+            "We reserve the right to update these terms at any time.",
           ],
         },
       ]}

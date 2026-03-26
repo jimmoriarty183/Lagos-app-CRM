@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { BrandWordmark } from "@/components/Brand";
+import { PublicFooter } from "@/components/PublicFooter";
 
 type Plan = {
   name: string;
@@ -90,7 +91,8 @@ export default function PricingPage() {
   ];
 
   return (
-    <main className="page">
+    <div className="flex min-h-screen flex-col">
+      <main className="page">
       <div className="shell">
         <nav className="topNav">
           <button className="brand" onClick={() => router.push("/")} aria-label="Go to Ordo home">
@@ -305,8 +307,8 @@ export default function PricingPage() {
         }
         h1 {
           margin: 14px 0 8px;
-          font-size: clamp(28px, 5vw, 44px);
-          line-height: 1.1;
+          font-size: clamp(30px, 3.6vw, 34px);
+          line-height: 1.12;
           letter-spacing: -0.03em;
           overflow-wrap: anywhere;
         }
@@ -348,7 +350,7 @@ export default function PricingPage() {
         }
         h2 {
           margin: 0;
-          font-size: 24px;
+          font-size: 20px;
         }
         .note {
           margin: 6px 0 0;
@@ -516,7 +518,9 @@ export default function PricingPage() {
           }
         }
       `}</style>
-    </main>
+      </main>
+      <PublicFooter />
+    </div>
   );
 }
 

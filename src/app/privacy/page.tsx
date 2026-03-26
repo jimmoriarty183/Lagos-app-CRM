@@ -3,7 +3,7 @@ import LegalDocumentPage from "@/components/LegalDocumentPage";
 
 export const metadata: Metadata = {
   title: "Privacy Policy | Ordo",
-  description: "Ordo privacy policy.",
+  description: "ORDO privacy policy.",
 };
 
 export default function PrivacyPage() {
@@ -11,41 +11,38 @@ export default function PrivacyPage() {
     <LegalDocumentPage
       eyebrow="Legal"
       title="Privacy Policy"
-      intro="This policy explains what information Ordo handles and why that information is used when you work inside the product."
-      updatedAt="March 17, 2026"
+      intro="This policy explains how ORDO handles user information."
+      updatedAt="March 26, 2026"
       sections={[
         {
-          title: "Information we collect",
+          title: "General",
           paragraphs: [
-            "Ordo may collect account details, workspace information, CRM records, task data, team activity, device and browser data, and operational logs needed to run the service.",
-            "Some information is provided directly by you, while other data is generated automatically as part of authentication, security monitoring, and product usage.",
+            "ORDO is operated by an individual developer.",
           ],
         },
         {
-          title: "How we use information",
+          title: "What we collect",
           paragraphs: [
-            "We use information to provide the service, authenticate users, support workspace collaboration, secure the platform, troubleshoot issues, and improve product reliability.",
-            "We may also use limited operational information to detect abuse, enforce product rules, and comply with legal obligations.",
+            "We collect basic user information such as email, account details, and usage data to provide and improve the service.",
           ],
         },
         {
-          title: "Sharing and access",
+          title: "Data sharing",
           paragraphs: [
-            "Workspace data is shared with authorized members of the same business workspace based on their access level. We do not sell personal information.",
-            "Service providers may process data on our behalf only when needed to host infrastructure, deliver authentication, store files, or support core product operations.",
+            "We do not sell personal data to third parties.",
+            "Data may be shared with trusted providers (such as payment processors) only as necessary to operate the service.",
           ],
         },
         {
-          title: "Retention and security",
+          title: "Security",
           paragraphs: [
-            "We retain information for as long as reasonably necessary to operate the service, maintain records, resolve disputes, and meet legal or security requirements.",
-            "We apply reasonable administrative and technical safeguards, but no system can guarantee absolute security.",
+            "We take reasonable measures to protect user data, but cannot guarantee absolute security.",
           ],
         },
         {
-          title: "Questions",
+          title: "Acceptance",
           paragraphs: [
-            "If you need privacy-related help, contact the Ordo team through the support channel associated with your account or launch materials.",
+            "By using ORDO, you agree to this policy.",
           ],
         },
       ]}

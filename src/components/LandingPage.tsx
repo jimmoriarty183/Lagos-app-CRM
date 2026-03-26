@@ -7,6 +7,7 @@ import {
   Smartphone,
 } from "lucide-react";
 import { BrandLockup } from "./Brand";
+import { PublicFooter } from "./PublicFooter";
 
 const ORDER_STATES = [
   { label: "NEW", tone: "bg-blue-50 text-blue-700 border-blue-100" },
@@ -19,7 +20,7 @@ const ORDER_STATES = [
 
 export function LandingPage() {
   return (
-    <div className="w-full bg-gradient-to-b from-white via-slate-50/40 to-white text-slate-900">
+    <div className="flex min-h-screen w-full flex-col bg-gradient-to-b from-white via-slate-50/40 to-white text-slate-900">
       <header className="sticky top-0 z-50 border-b border-slate-200/70 bg-white/85 backdrop-blur">
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-5 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3">
@@ -49,15 +50,15 @@ export function LandingPage() {
         </div>
       </header>
 
-      <main className="mx-auto grid w-full max-w-7xl gap-12 px-5 py-10 sm:px-6 sm:py-14 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16 lg:px-8 lg:py-20">
-        <section className="space-y-8 lg:space-y-10">
+      <main className="mx-auto grid w-full max-w-7xl flex-1 gap-10 px-5 py-10 sm:px-6 sm:py-14 lg:grid-cols-[1.05fr_0.95fr] lg:gap-14 lg:px-8 lg:py-16">
+        <section className="space-y-8">
           <div className="brand-soft-chip inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-wide sm:text-sm sm:normal-case sm:tracking-normal">
             <span className="h-1.5 w-1.5 rounded-full bg-[#6366f1]" />
             Bring your business into order
           </div>
 
-          <div className="space-y-5">
-            <h1 className="text-[2.4rem] font-semibold leading-[1.08] tracking-tight text-slate-900 sm:text-[2.8rem] lg:text-[3.15rem]">
+          <div className="space-y-4">
+            <h1 className="text-[1.875rem] font-semibold leading-[1.14] tracking-tight text-slate-900 sm:text-[2rem] lg:text-[2.125rem]">
               Clients, tasks, and team
               <br />
               in one business system.
@@ -174,6 +175,8 @@ export function LandingPage() {
           </p>
         </section>
       </main>
+
+      <PublicFooter />
     </div>
   );
 }
