@@ -170,6 +170,7 @@ export default function InviteInbox({
       notification.entity_type === "campaign" ||
       notificationId.startsWith("campaign:");
 
+    setError("");
     setItems((current) =>
       current.map((item) =>
         item.id === notificationId ? { ...item, is_read: true } : item,
@@ -221,12 +222,13 @@ export default function InviteInbox({
           item.id === notificationId ? { ...item, is_read: true } : item,
         ),
       );
-    } catch {
+    } catch (error: unknown) {
       setItems((current) =>
         current.map((item) =>
           item.id === notificationId ? { ...item, is_read: false } : item,
         ),
       );
+      setError(error instanceof Error ? error.message : "Failed to mark notification as read");
     } finally {
       setActiveId("");
     }
@@ -244,6 +246,7 @@ export default function InviteInbox({
 
     setItems((current) => current.map((item) => ({ ...item, is_read: true })));
 
+    setError("");
     try {
       const campaignResults = await Promise.allSettled(
         unreadCampaignIds.map((campaignId) =>
@@ -273,7 +276,8 @@ export default function InviteInbox({
       if (hasCampaignFailure || hasRegularFailure) {
         throw new Error("Failed to mark all as read");
       }
-    } catch {
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : "Failed to mark all notifications as read");
       void load();
     }
   }, [items, load, resolveCampaignId]);
