@@ -191,7 +191,7 @@ export default function InviteInbox({
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 keepalive: true,
-                body: JSON.stringify({ campaignId }),
+                body: JSON.stringify({ campaignId, notificationId }),
               })
             : Promise.resolve(new Response(null, { status: 204 })),
         ]);
