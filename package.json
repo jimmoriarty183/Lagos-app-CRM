@@ -4,9 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build",
+    "build": "npm run check:conflicts && next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "check:conflicts": "bash -lc \"if rg -n '^(<<<<<<<|=======|>>>>>>>)' src docs supabase >/dev/null; then echo 'Conflict markers found'; rg -n '^(<<<<<<<|=======|>>>>>>>)' src docs supabase; exit 1; else echo 'No conflict markers found'; fi\""
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
