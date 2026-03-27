@@ -148,8 +148,28 @@ export default function InviteInbox({
     return () => document.removeEventListener("mousedown", onDown);
   }, []);
 
-  const markAsRead = useCallback(async (notificationId: string) => {
+  const resolveCampaignId = useCallback((notification: InboxNotification) => {
+    const fromNotificationId = notification.id.startsWith("campaign:")
+      ? notification.id.slice("campaign:".length).trim()
+      : "";
+    if (fromNotificationId) return fromNotificationId;
+
+    const fromMetadata = String(
+      notification.metadata?.campaign_id ?? notification.entity_id ?? "",
+    ).trim();
+    return fromMetadata;
+  }, []);
+
+  const markAsRead = useCallback(async (notification: InboxNotification) => {
+    const notificationId = String(notification.id ?? "").trim();
     if (!notificationId || notificationId.startsWith("invite:")) return;
+
+    const isCampaignItem =
+      notification.type === "campaign_announcement" ||
+      notification.type === "campaign_survey" ||
+      notification.entity_type === "campaign" ||
+      notificationId.startsWith("campaign:");
+
     setItems((current) =>
       current.map((item) =>
         item.id === notificationId ? { ...item, is_read: true } : item,
@@ -157,12 +177,19 @@ export default function InviteInbox({
     );
     setActiveId(notificationId);
     try {
-      const res = await fetch("/api/inbox/mark-read", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        keepalive: true,
-        body: JSON.stringify({ notificationId }),
-      });
+      const res = isCampaignItem
+        ? await fetch("/api/campaigns/read", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            keepalive: true,
+            body: JSON.stringify({ campaignId: resolveCampaignId(notification) }),
+          })
+        : await fetch("/api/inbox/mark-read", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            keepalive: true,
+            body: JSON.stringify({ notificationId }),
+          });
       const json = await res.json().catch(() => ({}));
 
       if (!res.ok || !json?.ok) {
@@ -175,32 +202,61 @@ export default function InviteInbox({
         ),
       );
     } catch {
-      // Silently fail - will be reloaded next time
+      setItems((current) =>
+        current.map((item) =>
+          item.id === notificationId ? { ...item, is_read: false } : item,
+        ),
+      );
     } finally {
       setActiveId("");
     }
-  }, []);
+  }, [resolveCampaignId]);
 
   const markAllAsRead = useCallback(async () => {
-    try {
-      const res = await fetch("/api/inbox/mark-read", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ markAll: true }),
-      });
-      const json = await res.json().catch(() => ({}));
+    const unreadCampaignIds = items
+      .filter((item) => !item.is_read)
+      .map((item) => resolveCampaignId(item))
+      .filter((campaignId) => campaignId.length > 0);
+    const unreadRegularIds = items
+      .filter((item) => !item.is_read)
+      .map((item) => String(item.id ?? "").trim())
+      .filter((id) => id.length > 0 && !id.startsWith("campaign:") && !id.startsWith("invite:"));
 
-      if (!res.ok || !json?.ok) {
-        throw new Error(json?.error || "Failed to mark all as read");
+    setItems((current) => current.map((item) => ({ ...item, is_read: true })));
+
+    try {
+      const campaignResults = await Promise.allSettled(
+        unreadCampaignIds.map((campaignId) =>
+          fetch("/api/campaigns/read", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ campaignId }),
+          }),
+        ),
+      );
+
+      const hasCampaignFailure = campaignResults.some(
+        (result) => result.status === "rejected" || !result.value.ok,
+      );
+
+      let hasRegularFailure = false;
+      if (unreadRegularIds.length > 0) {
+        const res = await fetch("/api/inbox/mark-read", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ markAll: true }),
+        });
+        const json = await res.json().catch(() => ({}));
+        hasRegularFailure = !res.ok || !json?.ok;
       }
 
-      setItems((current) =>
-        current.map((item) => ({ ...item, is_read: true })),
-      );
+      if (hasCampaignFailure || hasRegularFailure) {
+        throw new Error("Failed to mark all as read");
+      }
     } catch {
-      // Silently fail
+      void load();
     }
-  }, []);
+  }, [items, load, resolveCampaignId]);
 
   const handleNotificationClick = useCallback(
     (notification: InboxNotification) => {
@@ -209,7 +265,7 @@ export default function InviteInbox({
 
       // Mark as read for all actionable items (campaign + regular notifications).
       if (!notification.is_read && notification.type !== "invitation_received") {
-        void markAsRead(notification.id);
+        void markAsRead(notification);
       }
 
       // Navigate based on notification type
@@ -364,7 +420,11 @@ export default function InviteInbox({
                           notification={notification}
                           activeId={activeId}
                           onClick={handleNotificationClick}
-                          onMarkRead={markAsRead}
+                          onMarkRead={(notificationId) => {
+                            const target = items.find((item) => item.id === notificationId);
+                            if (!target) return;
+                            void markAsRead(target);
+                          }}
                         />
                       ))}
                     </div>
@@ -381,7 +441,11 @@ export default function InviteInbox({
                           notification={notification}
                           activeId={activeId}
                           onClick={handleNotificationClick}
-                          onMarkRead={markAsRead}
+                          onMarkRead={(notificationId) => {
+                            const target = items.find((item) => item.id === notificationId);
+                            if (!target) return;
+                            void markAsRead(target);
+                          }}
                         />
                       ))}
                     </div>
