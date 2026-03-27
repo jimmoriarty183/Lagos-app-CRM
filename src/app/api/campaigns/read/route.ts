@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getRequiredUserId } from "@/lib/campaigns/server";
-import { supabaseAdmin } from "@/lib/supabase/admin";
+import { supabaseServer } from "@/lib/supabase/server";
 
 export async function POST(request: Request) {
   try {
@@ -16,8 +16,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: "campaignId must be numeric" }, { status: 400 });
     }
 
+    // IMPORTANT: use request-scoped client (user JWT) so RPC auth.uid() targets
+    // the current user row in user_campaign_states. Do not use service-role here.
+    const supabase = await supabaseServer();
+    const rpcResult = await supabase.rpc("mark_campaign_read", { p_campaign_id: parsedCampaignId });
+
     const client = supabaseAdmin();
     const rpcResult = await client.rpc("mark_campaign_read", { p_campaign_id: parsedCampaignId });
+
     if (rpcResult.error) {
       return NextResponse.json({ ok: false, error: rpcResult.error.message }, { status: 500 });
     }
