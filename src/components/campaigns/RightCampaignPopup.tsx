@@ -141,11 +141,14 @@ export function RightCampaignPopup() {
   useEffect(() => {
     if (!campaignIdFromBell || !item || item.isRead) return;
     const markRead = async () => {
-      await fetch("/api/campaigns/read", {
+      const response = await fetch("/api/campaigns/read", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ campaignId: item.id }),
       });
+      if (response.ok) {
+        setItem((current) => (current && current.id === item.id ? { ...current, isRead: true } : current));
+      }
     };
     void markRead();
   }, [campaignIdFromBell, item]);
