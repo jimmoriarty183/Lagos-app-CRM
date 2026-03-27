@@ -27,7 +27,34 @@ This is configured in **Vercel Project Settings**, not in app code:
 
 After that, each successful `staging` preview deploy should include `test.ordo.uno`.
 
+> Note: repository code cannot enforce custom domain attachment by itself; this mapping is controlled by Vercel project settings.
+
 ## 3) Why domain disappears sometimes
 
 If deployment status is **Error**, Vercel may not attach custom preview alias to that failed deployment entry.
 Once the next `staging` deployment is **Ready**, `test.ordo.uno` appears again.
+
+## 4) Conflict-free blocks to keep
+
+`src/app/api/campaigns/read/route.ts` keep:
+
+```ts
+const supabase = await supabaseServer();
+const rpcResult = await supabase.rpc("mark_campaign_read", { p_campaign_id: parsedCampaignId });
+```
+
+`src/app/api/inbox/mark-read/route.ts` keep:
+
+```ts
+const campaignReadAllResult = await supabase.rpc("mark_all_campaigns_read");
+```
+
+and:
+
+```ts
+const campaignReadResult = await supabase.rpc("mark_campaign_read", {
+  p_campaign_id: parsedCampaignId,
+});
+```
+
+Remove duplicated `supabaseAdmin()` campaign RPC blocks if both variants appear after merge.
