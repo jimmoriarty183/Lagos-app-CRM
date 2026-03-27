@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { supabaseServerReadOnly } from "@/lib/supabase/server";
 import { normalizePhone } from "@/lib/phone";
 import { updateOrder } from "../../actions";
 
@@ -34,6 +34,7 @@ export default async function EditOrderPage({
   params,
   searchParams,
 }: PageProps) {
+  const supabase = await supabaseServerReadOnly();
   const [{ slug, id }, sp] = await Promise.all([params, searchParams]);
 
   if (!slug || !id) notFound();
@@ -71,8 +72,6 @@ export default async function EditOrderPage({
     : isManager
     ? "MANAGER"
     : "GUEST";
-
-  const isOwnerManager = isOwner && isManager;
 
   // can edit only manager OR owner-manager
   // can edit: OWNER or MANAGER (and owner-manager obviously too)
