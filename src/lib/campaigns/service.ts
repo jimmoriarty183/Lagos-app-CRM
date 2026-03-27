@@ -12,7 +12,9 @@ import type {
   Campaign,
   CampaignBellItem,
   CampaignChannel,
+  CampaignDeliveryMode,
   CampaignDatabase,
+  CampaignAnalyticsSummary,
   CampaignStatus,
   CreateCampaignPayload,
   CreateSurveyOptionPayload,
@@ -49,14 +51,12 @@ export type CampaignPreviewDetails = {
   targetRoles: string[];
   targetSegments: string[];
   recipientsPreview: CampaignRecipientSnapshot[];
+  analytics: CampaignAnalyticsSummary;
 };
 
 const POPUP_CHANNEL: CampaignChannel = "popup_right";
 const BELL_CHANNEL: CampaignChannel = "bell";
-const CAMPAIGN_SELECT_BASE =
-  "id, type, title, body, status, starts_at, ends_at, created_at, updated_at";
-const CAMPAIGN_SELECT_EXTENDED =
-  `${CAMPAIGN_SELECT_BASE}, channels, show_in_bell, show_in_popup_right, target_segment, target_segments, priority`;
+const CAMPAIGN_SELECT_EXTENDED = "*";
 const SURVEY_QUESTION_SELECT_PRIMARY = "id, campaign_id, question_order, question_type, title";
 const SURVEY_QUESTION_SELECT_FALLBACK = "id, campaign_id, question_order, type, title";
 const SURVEY_OPTION_SELECT_PRIMARY = "id, question_id, option_order, label, value";
@@ -100,6 +100,35 @@ function isUuidLike(value: string | null | undefined) {
 function isInvalidEnumError(error: unknown) {
   const code = String((error as { code?: string } | null)?.code ?? "");
   return code === "22P02";
+}
+
+function extractMissingColumnName(error: unknown, table: string): string | null {
+  const message = String((error as { message?: string } | null)?.message ?? "");
+  const lower = message.toLowerCase();
+  const tableLower = table.toLowerCase();
+
+  const patternA = new RegExp(`column\\s+${tableLower}\\.([a-z0-9_]+)\\s+does not exist`, "i");
+  const matchA = message.match(patternA);
+  if (matchA?.[1]) return matchA[1];
+
+  const patternB = new RegExp(`could not find the '([a-z0-9_]+)' column of '${tableLower}'`, "i");
+  const matchB = lower.match(patternB);
+  if (matchB?.[1]) return matchB[1];
+
+  return null;
+}
+
+function toErrorMessage(error: unknown) {
+  if (error instanceof Error && error.message) return error.message;
+  const message = String((error as { message?: unknown } | null)?.message ?? "").trim();
+  if (message) return message;
+  return "Unknown error";
+}
+
+function buildCampaignSchemaError(error: unknown) {
+  return new Error(
+    `Campaign delivery schema is incomplete. Run latest migrations before using campaigns. Root: ${toErrorMessage(error)}`,
+  );
 }
 
 function normalizeRole(value: string) {
@@ -234,6 +263,18 @@ function canSeeCampaignBySegment(campaign: Campaign, userSegments: string[]) {
 
 function hasChannel(campaign: Campaign, channel: CampaignChannel) {
   return campaign.channels.includes(channel);
+}
+
+function getDeliveryMode(channels: CampaignChannel[]): CampaignDeliveryMode {
+  const hasBell = channels.includes(BELL_CHANNEL);
+  const hasPopup = channels.includes(POPUP_CHANNEL);
+  if (hasBell && hasPopup) return "both";
+  if (hasPopup) return "popup_only";
+  return "bell_only";
+}
+
+function toIsoNow() {
+  return new Date().toISOString();
 }
 
 type MembershipRow = {
@@ -403,12 +444,94 @@ async function getUserCampaignStatesMap(client: CampaignClient, campaignIds: str
     map.set(campaignId, {
       campaignId,
       userId: userIdValue,
+      deliveredAt: pickString(record, ["delivered_at", "deliveredAt"]),
+      bellShownAt: pickString(record, ["bell_shown_at", "bellShownAt"]),
+      popupShownAt: pickString(record, ["popup_shown_at", "popupShownAt"]),
+      openedAt: pickString(record, ["opened_at", "openedAt"]),
+      bellOpenedAt: pickString(record, ["bell_opened_at", "bellOpenedAt"]),
+      popupOpenedAt: pickString(record, ["popup_opened_at", "popupOpenedAt"]),
+      clickedAt: pickString(record, ["clicked_at", "clickedAt"]),
+      bellClickedAt: pickString(record, ["bell_clicked_at", "bellClickedAt"]),
+      popupClickedAt: pickString(record, ["popup_clicked_at", "popupClickedAt"]),
       readAt: pickString(record, ["read_at", "readAt"]),
       dismissedAt: pickString(record, ["dismissed_at", "dismissedAt"]),
       completedAt: pickString(record, ["completed_at", "completedAt"]),
     });
   }
   return map;
+}
+
+async function getUserCampaignStateFromEvents(
+  client: CampaignClient,
+  campaignIds: string[],
+  userId: string,
+) {
+  const read = new Set<string>();
+  const dismissed = new Set<string>();
+  const completed = new Set<string>();
+  if (campaignIds.length === 0 || !isUuidLike(userId)) {
+    return { read, dismissed, completed };
+  }
+
+  const result = await client
+    .from("event_log")
+    .select("event_type, metadata, target_user_id")
+    .eq("target_user_id", userId)
+    .in("event_type", ["campaign_read", "campaign_dismissed", "campaign_completed"]);
+  if (result.error) {
+    if (isMissingSchemaError(result.error)) return { read, dismissed, completed };
+    return { read, dismissed, completed };
+  }
+
+  const allowed = new Set(campaignIds);
+  for (const row of result.data ?? []) {
+    const record = row as Record<string, unknown>;
+    const metadata = (record.metadata as Record<string, unknown> | null) ?? {};
+    const campaignId = pickString(metadata, ["campaign_id", "campaignId"]);
+    if (!campaignId || !allowed.has(campaignId)) continue;
+    const eventType = String(record.event_type ?? "");
+    if (eventType === "campaign_read") read.add(campaignId);
+    if (eventType === "campaign_dismissed") dismissed.add(campaignId);
+    if (eventType === "campaign_completed") {
+      completed.add(campaignId);
+      read.add(campaignId);
+    }
+  }
+
+  return { read, dismissed, completed };
+}
+
+async function getUserCompletedSurveyCampaignIds(
+  client: CampaignClient,
+  campaignIds: string[],
+  userId: string,
+) {
+  const completed = new Set<string>();
+  if (campaignIds.length === 0) return completed;
+  const safeCampaignIds = campaignIds.filter((campaignId) => isUuidLike(campaignId));
+
+  if (safeCampaignIds.length > 0) {
+    const primary = await client
+      .from("survey_responses")
+      .select("campaign_id")
+      .eq("user_id", userId)
+      .in("campaign_id", safeCampaignIds);
+    if (!primary.error) {
+      for (const row of primary.data ?? []) {
+        const campaignId = pickString(row as Record<string, unknown>, ["campaign_id", "campaignId", "survey_id"]);
+        if (campaignId) completed.add(campaignId);
+      }
+    } else if (!isMissingSchemaError(primary.error) && !isInvalidInputSyntaxError(primary.error)) {
+      throw primary.error;
+    }
+  }
+
+  for (const campaignId of campaignIds) {
+    if (completed.has(campaignId)) continue;
+    const answers = await loadSurveyResponsesByCampaignAndUser(client, campaignId, userId);
+    if (answers.length > 0) completed.add(campaignId);
+  }
+  return completed;
 }
 
 async function listCampaigns(client: CampaignClient, statuses: CampaignStatus[]) {
@@ -427,15 +550,8 @@ async function listCampaigns(client: CampaignClient, statuses: CampaignStatus[])
       return allowed.has(status);
     });
   }
-  if (!isMissingSchemaError(extended.error)) throw extended.error;
-
-  const base = await runQuery(CAMPAIGN_SELECT_BASE);
-  if (base.error) throw base.error;
-  const allowed = new Set(statuses.map((status) => normalizeStatus(status)));
-  return (base.data ?? []).filter((row) => {
-    const status = normalizeStatus((row as Record<string, unknown>).status as string | undefined);
-    return allowed.has(status);
-  });
+  if (isMissingSchemaError(extended.error)) throw buildCampaignSchemaError(extended.error);
+  throw extended.error;
 }
 
 async function upsertCampaignState(
@@ -444,19 +560,55 @@ async function upsertCampaignState(
   campaignId: string,
   patch: Partial<CampaignDatabase["public"]["Tables"]["user_campaign_states"]["Update"]>,
 ) {
-  if (!isUuidLike(campaignId) || !isUuidLike(userId)) {
-    return;
-  }
-  const payload: CampaignDatabase["public"]["Tables"]["user_campaign_states"]["Insert"] = {
+  const payload: Record<string, unknown> = {
     campaign_id: campaignId,
     user_id: userId,
     ...patch,
   };
-  const result = await client
-    .from("user_campaign_states")
-    .upsert(payload, { onConflict: "campaign_id,user_id" });
-  if (result.error) {
+
+  const triedMissingColumns = new Set<string>();
+  while (true) {
+    const result = await client
+      .from("user_campaign_states")
+      .upsert(payload as CampaignDatabase["public"]["Tables"]["user_campaign_states"]["Insert"], {
+        onConflict: "campaign_id,user_id",
+      });
+    if (!result.error) return;
     if (isInvalidInputSyntaxError(result.error)) return;
+
+    const missingColumn = extractMissingColumnName(result.error, "user_campaign_states");
+    if (missingColumn && missingColumn in payload && !triedMissingColumns.has(missingColumn)) {
+      triedMissingColumns.add(missingColumn);
+      delete payload[missingColumn];
+      continue;
+    }
+    throw result.error;
+  }
+}
+
+async function logCampaignEvent(
+  client: CampaignClient,
+  params: {
+    eventType: string;
+    campaignId: string;
+    actorUserId?: string | null;
+    targetUserId?: string | null;
+    metadata?: Record<string, unknown>;
+  },
+) {
+  const payload: CampaignDatabase["public"]["Tables"]["event_log"]["Insert"] = {
+    event_type: params.eventType,
+    actor_user_id: isUuidLike(params.actorUserId) ? params.actorUserId ?? null : null,
+    target_user_id: isUuidLike(params.targetUserId) ? params.targetUserId ?? null : null,
+    entity_type: "campaign",
+    entity_id: isUuidLike(params.campaignId) ? params.campaignId : null,
+    metadata: {
+      campaign_id: params.campaignId,
+      ...params.metadata,
+    },
+  };
+  const result = await client.from("event_log").insert(payload);
+  if (result.error && !isMissingSchemaError(result.error) && !isInvalidInputSyntaxError(result.error)) {
     throw result.error;
   }
 }
@@ -468,16 +620,10 @@ async function getCampaignById(client: CampaignClient, campaignId: string): Prom
     .eq("id", campaignId)
     .maybeSingle();
 
-  let row = primary.data as Record<string, unknown> | null;
+  const row = primary.data as Record<string, unknown> | null;
   if (primary.error) {
-    if (!isMissingSchemaError(primary.error)) throw primary.error;
-    const fallback = await client
-      .from("campaigns")
-      .select(CAMPAIGN_SELECT_BASE)
-      .eq("id", campaignId)
-      .maybeSingle();
-    if (fallback.error) throw fallback.error;
-    row = fallback.data as Record<string, unknown> | null;
+    if (isMissingSchemaError(primary.error)) throw buildCampaignSchemaError(primary.error);
+    throw primary.error;
   }
   if (!row) return null;
 
@@ -586,6 +732,7 @@ async function persistDispatchSnapshot(
   actorUserId: string | null,
   recipients: CampaignRecipientSnapshot[],
 ) {
+  const nowIso = toIsoNow();
   const campaignIdIsUuid = isUuidLike(campaign.id);
   if (campaignIdIsUuid && recipients.length > 0) {
     const batchSize = 200;
@@ -594,29 +741,39 @@ async function persistDispatchSnapshot(
       const chunk = validRecipientIds.slice(index, index + batchSize).map((recipient) => ({
         campaign_id: campaign.id,
         user_id: recipient.userId,
+        delivered_at: nowIso,
       }));
       if (chunk.length === 0) continue;
       const result = await client
         .from("user_campaign_states")
         .upsert(chunk, { onConflict: "campaign_id,user_id", ignoreDuplicates: true });
       if (result.error) {
-        if (isInvalidInputSyntaxError(result.error)) break;
+        if (isInvalidInputSyntaxError(result.error)) {
+          await logCampaignEvent(client, {
+            eventType: "campaign_delivery_failed",
+            campaignId: campaign.id,
+            actorUserId,
+            metadata: { reason: "invalid_input_syntax", channel_mode: getDeliveryMode(campaign.channels) },
+          });
+          break;
+        }
         throw result.error;
       }
     }
   }
 
-  const payload = {
-    event_type: "campaign_sent",
-    actor_user_id: isUuidLike(actorUserId) ? actorUserId : null,
-    entity_type: "campaign",
-    entity_id: campaignIdIsUuid ? campaign.id : null,
+  await logCampaignEvent(client, {
+    eventType: "campaign_sent",
+    campaignId: campaign.id,
+    actorUserId,
     metadata: {
-      campaign_id: campaign.id,
       campaign_type: campaign.type,
       target_roles: campaign.targetRoles,
       target_segments: campaign.targetSegments,
+      delivery_mode: getDeliveryMode(campaign.channels),
+      channels: campaign.channels,
       recipient_count: recipients.length,
+      sent_at: nowIso,
       recipient_preview: recipients.slice(0, 50).map((recipient) => ({
         user_id: recipient.userId,
         role: recipient.role,
@@ -625,10 +782,31 @@ async function persistDispatchSnapshot(
         email: recipient.email,
       })),
     },
-  } satisfies CampaignDatabase["public"]["Tables"]["event_log"]["Insert"];
-  const eventResult = await client.from("event_log").insert(payload);
-  if (eventResult.error && !isMissingSchemaError(eventResult.error) && !isInvalidInputSyntaxError(eventResult.error)) {
-    throw eventResult.error;
+  });
+
+  await logCampaignEvent(client, {
+    eventType: "campaign_delivered",
+    campaignId: campaign.id,
+    actorUserId,
+    metadata: {
+      delivery_mode: getDeliveryMode(campaign.channels),
+      channels: campaign.channels,
+      recipient_count: recipients.length,
+      delivered_at: nowIso,
+    },
+  });
+
+  if (recipients.length === 0) {
+    await logCampaignEvent(client, {
+      eventType: "campaign_delivery_failed",
+      campaignId: campaign.id,
+      actorUserId,
+      metadata: {
+        reason: "no_matching_recipients",
+        delivery_mode: getDeliveryMode(campaign.channels),
+        channels: campaign.channels,
+      },
+    });
   }
 }
 
@@ -639,12 +817,14 @@ export async function getBellItems(client: CampaignClient, userId: string): Prom
     getUserSegments(client, userId),
   ]);
   const campaignIds = rawCampaigns.map((row) => row.id);
-  const [rolesMap, statesMap] = await Promise.all([
+  const [rolesMap, statesMap, completedSurveyCampaignIds, eventState] = await Promise.all([
     getCampaignRolesMap(client, campaignIds),
     getUserCampaignStatesMap(client, campaignIds, userId),
+    getUserCompletedSurveyCampaignIds(client, campaignIds, userId),
+    getUserCampaignStateFromEvents(client, campaignIds, userId),
   ]);
 
-  return rawCampaigns
+  const items = rawCampaigns
     .map((row) => {
       const normalized = normalizeCampaignRow(row as Record<string, unknown>);
       return mapCampaign(normalized, rolesMap.get(normalized.id) ?? []);
@@ -655,17 +835,26 @@ export async function getBellItems(client: CampaignClient, userId: string): Prom
     .filter((campaign) => canSeeCampaignBySegment(campaign, userSegments))
     .map((campaign) => {
       const state = statesMap.get(campaign.id);
+      const isCompleted =
+        Boolean(state?.completedAt) ||
+        eventState.completed.has(campaign.id) ||
+        (campaign.type === "survey" && completedSurveyCampaignIds.has(campaign.id));
+      const isRead = Boolean(state?.readAt) || eventState.read.has(campaign.id) || isCompleted;
       return {
         ...campaign,
-        isRead: Boolean(state?.readAt),
-        isDismissed: Boolean(state?.dismissedAt),
-        isCompleted: Boolean(state?.completedAt),
+        deliveryMode: getDeliveryMode(campaign.channels),
+        isRead,
+        isDismissed: Boolean(state?.dismissedAt) || eventState.dismissed.has(campaign.id),
+        isCompleted,
+        surveyStateLabel: campaign.type === "survey" ? (isCompleted ? "Voted" : "Not answered") : null,
       };
     })
     .sort((a, b) => {
       if (a.isRead !== b.isRead) return a.isRead ? 1 : -1;
       return new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime();
     });
+
+  return items;
 }
 
 export async function getPopupItem(client: CampaignClient, userId: string): Promise<CampaignBellItem | null> {
@@ -675,9 +864,11 @@ export async function getPopupItem(client: CampaignClient, userId: string): Prom
     getUserSegments(client, userId),
   ]);
   const campaignIds = rawCampaigns.map((row) => row.id);
-  const [rolesMap, statesMap] = await Promise.all([
+  const [rolesMap, statesMap, completedSurveyCampaignIds, eventState] = await Promise.all([
     getCampaignRolesMap(client, campaignIds),
     getUserCampaignStatesMap(client, campaignIds, userId),
+    getUserCompletedSurveyCampaignIds(client, campaignIds, userId),
+    getUserCampaignStateFromEvents(client, campaignIds, userId),
   ]);
 
   const visible = rawCampaigns
@@ -691,11 +882,18 @@ export async function getPopupItem(client: CampaignClient, userId: string): Prom
     .filter((campaign) => canSeeCampaignBySegment(campaign, userSegments))
     .map((campaign) => {
       const state = statesMap.get(campaign.id);
+      const isCompleted =
+        Boolean(state?.completedAt) ||
+        eventState.completed.has(campaign.id) ||
+        (campaign.type === "survey" && completedSurveyCampaignIds.has(campaign.id));
+      const isRead = Boolean(state?.readAt) || eventState.read.has(campaign.id) || isCompleted;
       return {
         ...campaign,
-        isRead: Boolean(state?.readAt),
-        isDismissed: Boolean(state?.dismissedAt),
-        isCompleted: Boolean(state?.completedAt),
+        deliveryMode: getDeliveryMode(campaign.channels),
+        isRead,
+        isDismissed: Boolean(state?.dismissedAt) || eventState.dismissed.has(campaign.id),
+        isCompleted,
+        surveyStateLabel: campaign.type === "survey" ? (isCompleted ? "Voted" : "Not answered") : null,
       };
     })
     .filter((item) => !item.isDismissed)
@@ -705,11 +903,77 @@ export async function getPopupItem(client: CampaignClient, userId: string): Prom
 }
 
 export async function markCampaignRead(client: CampaignClient, userId: string, campaignId: string) {
-  await upsertCampaignState(client, userId, campaignId, { read_at: new Date().toISOString() });
+  const nowIso = toIsoNow();
+  await upsertCampaignState(client, userId, campaignId, { read_at: nowIso, opened_at: nowIso });
+  await logCampaignEvent(client, {
+    eventType: "campaign_read",
+    campaignId,
+    targetUserId: userId,
+    metadata: { read_at: nowIso },
+  });
 }
 
 export async function dismissCampaign(client: CampaignClient, userId: string, campaignId: string) {
-  await upsertCampaignState(client, userId, campaignId, { dismissed_at: new Date().toISOString() });
+  const nowIso = toIsoNow();
+  await upsertCampaignState(client, userId, campaignId, { dismissed_at: nowIso });
+  await logCampaignEvent(client, {
+    eventType: "campaign_dismissed",
+    campaignId,
+    targetUserId: userId,
+    metadata: { dismissed_at: nowIso },
+  });
+}
+
+export async function markCampaignOpened(
+  client: CampaignClient,
+  userId: string,
+  campaignId: string,
+  channel: CampaignChannel,
+) {
+  const statesMap = await getUserCampaignStatesMap(client, [campaignId], userId);
+  const existing = statesMap.get(campaignId);
+  const alreadyOpenedChannel = channel === "bell" ? Boolean(existing?.bellOpenedAt) : Boolean(existing?.popupOpenedAt);
+  if (alreadyOpenedChannel) return;
+
+  const nowIso = toIsoNow();
+  const channelPatch =
+    channel === "bell" ? { bell_opened_at: nowIso } : { popup_opened_at: nowIso };
+  await upsertCampaignState(client, userId, campaignId, {
+    opened_at: nowIso,
+    ...channelPatch,
+  });
+  await logCampaignEvent(client, {
+    eventType: channel === "bell" ? "campaign_bell_opened" : "campaign_popup_opened",
+    campaignId,
+    targetUserId: userId,
+    metadata: { channel, opened_at: nowIso },
+  });
+}
+
+export async function markCampaignClicked(
+  client: CampaignClient,
+  userId: string,
+  campaignId: string,
+  channel: CampaignChannel,
+) {
+  const statesMap = await getUserCampaignStatesMap(client, [campaignId], userId);
+  const existing = statesMap.get(campaignId);
+  const alreadyClickedChannel = channel === "bell" ? Boolean(existing?.bellClickedAt) : Boolean(existing?.popupClickedAt);
+  if (alreadyClickedChannel) return;
+
+  const nowIso = toIsoNow();
+  const channelPatch =
+    channel === "bell" ? { bell_clicked_at: nowIso } : { popup_clicked_at: nowIso };
+  await upsertCampaignState(client, userId, campaignId, {
+    clicked_at: nowIso,
+    ...channelPatch,
+  });
+  await logCampaignEvent(client, {
+    eventType: "campaign_notification_clicked",
+    campaignId,
+    targetUserId: userId,
+    metadata: { channel, clicked_at: nowIso },
+  });
 }
 
 export async function getSurveyByCampaignId(
@@ -722,16 +986,10 @@ export async function getSurveyByCampaignId(
     .eq("id", campaignId)
     .maybeSingle();
 
-  let campaignRow = campaignResult.data;
+  const campaignRow = campaignResult.data;
   if (campaignResult.error) {
-    if (!isMissingSchemaError(campaignResult.error)) throw campaignResult.error;
-    const fallback = await client
-      .from("campaigns")
-      .select(CAMPAIGN_SELECT_BASE)
-      .eq("id", campaignId)
-      .maybeSingle();
-    if (fallback.error) throw fallback.error;
-    campaignRow = fallback.data;
+    if (isMissingSchemaError(campaignResult.error)) throw buildCampaignSchemaError(campaignResult.error);
+    throw campaignResult.error;
   }
 
   if (!campaignRow) return null;
@@ -843,6 +1101,150 @@ function validateAnswerForQuestion(question: SurveyQuestion, optionIds: string[]
   }
 }
 
+async function loadSurveyResponsesByCampaignAndUser(
+  client: CampaignClient,
+  campaignId: string,
+  userId: string,
+) {
+  const campaignColumns = ["campaign_id", "campaignId", "survey_id"];
+  const userColumns = ["user_id", "userId"];
+  let lastError: unknown = null;
+
+  for (const campaignColumn of campaignColumns) {
+    for (const userColumn of userColumns) {
+      const result = await client
+        .from("survey_responses")
+        .select("*")
+        .eq(campaignColumn, campaignId)
+        .eq(userColumn, userId);
+      if (!result.error) return (result.data ?? []) as Record<string, unknown>[];
+      if (isMissingSchemaError(result.error) || isInvalidInputSyntaxError(result.error)) {
+        lastError = result.error;
+        continue;
+      }
+      throw result.error;
+    }
+  }
+
+  if (lastError && !isMissingSchemaError(lastError) && !isInvalidInputSyntaxError(lastError)) throw lastError;
+
+  const fullScan = await client.from("survey_responses").select("*").eq("user_id", userId);
+  if (!fullScan.error) {
+    return (fullScan.data ?? []).filter((row) => {
+      const record = row as Record<string, unknown>;
+      const candidateCampaignId = pickString(record, ["campaign_id", "campaignId", "survey_id"]);
+      return candidateCampaignId === campaignId;
+    }) as Record<string, unknown>[];
+  }
+
+  if (fullScan.error && !isMissingSchemaError(fullScan.error) && !isInvalidInputSyntaxError(fullScan.error)) {
+    throw fullScan.error;
+  }
+  return [] as Record<string, unknown>[];
+}
+
+async function insertSurveyResponsesWithFallback(
+  client: CampaignClient,
+  rows: Array<{ campaignId: string; questionId: string; optionId: string; userId: string }>,
+) {
+  if (rows.length === 0) return;
+
+  const payloadVariants = [
+    rows.map((row) => ({
+      campaign_id: row.campaignId,
+      question_id: row.questionId,
+      option_id: row.optionId,
+      user_id: row.userId,
+    })),
+    rows.map((row) => ({
+      campaign_id: row.campaignId,
+      survey_question_id: row.questionId,
+      survey_option_id: row.optionId,
+      user_id: row.userId,
+    })),
+    rows.map((row) => ({
+      survey_id: row.campaignId,
+      question_id: row.questionId,
+      selected_option_id: row.optionId,
+      user_id: row.userId,
+    })),
+  ] as Record<string, unknown>[][];
+
+  let lastError: unknown = null;
+  for (const payload of payloadVariants) {
+    const result = await client.from("survey_responses").insert(payload);
+    if (!result.error) return;
+    if (isMissingSchemaError(result.error)) {
+      lastError = result.error;
+      continue;
+    }
+    throw result.error;
+  }
+
+  if (lastError) throw lastError;
+}
+
+async function getSurveyResponderIdsForCampaign(client: CampaignClient, campaignId: string) {
+  const responders = new Set<string>();
+
+  const primary = await client
+    .from("survey_responses")
+    .select("user_id")
+    .eq("campaign_id", campaignId);
+  if (!primary.error) {
+    for (const row of primary.data ?? []) {
+      const userId = pickString(row as Record<string, unknown>, ["user_id", "userId"]);
+      if (userId) responders.add(userId);
+    }
+    return responders;
+  }
+
+  if (!isMissingSchemaError(primary.error)) {
+    throw primary.error;
+  }
+
+  const fallback = await client
+    .from("survey_responses")
+    .select("*")
+    .eq("survey_id", campaignId);
+  if (!fallback.error) {
+    for (const row of fallback.data ?? []) {
+      const userId = pickString(row as Record<string, unknown>, ["user_id", "userId"]);
+      if (userId) responders.add(userId);
+    }
+    return responders;
+  }
+
+  if (!isMissingSchemaError(fallback.error)) {
+    throw fallback.error;
+  }
+
+  const fullScan = await client.from("survey_responses").select("*");
+  if (!fullScan.error) {
+    for (const row of fullScan.data ?? []) {
+      const record = row as Record<string, unknown>;
+      const candidateCampaignId = pickString(record, ["campaign_id", "campaignId", "survey_id"]);
+      if (candidateCampaignId !== campaignId) continue;
+      const userId = pickString(record, ["user_id", "userId"]);
+      if (userId) responders.add(userId);
+    }
+  }
+
+  return responders;
+}
+
+function normalizeSurveyAnswersFromRows(rows: Record<string, unknown>[]) {
+  const result: Record<string, string[]> = {};
+  for (const row of rows) {
+    const questionId = pickString(row, ["question_id", "survey_question_id", "questionId"]);
+    const optionId = pickString(row, ["option_id", "survey_option_id", "selected_option_id", "optionId"]);
+    if (!questionId || !optionId) continue;
+    if (!result[questionId]) result[questionId] = [];
+    if (!result[questionId].includes(optionId)) result[questionId].push(optionId);
+  }
+  return result;
+}
+
 export async function submitSurvey(
   client: CampaignClient,
   userId: string,
@@ -875,35 +1277,47 @@ export async function submitSurvey(
     }
   }
 
-  const deleteResult = await client
-    .from("survey_responses")
-    .delete()
-    .eq("campaign_id", campaignId)
-    .eq("user_id", userId);
-  if (deleteResult.error) throw deleteResult.error;
+  const existingAnswers = await getSurveyAnswersForUser(client, userId, campaignId);
+  const hasExistingAnswers = Object.values(existingAnswers).some((optionIds) => optionIds.length > 0);
+  if (hasExistingAnswers) {
+    throw new Error("Survey already answered");
+  }
 
-  const inserts: CampaignDatabase["public"]["Tables"]["survey_responses"]["Insert"][] = [];
+  const inserts: Array<{ campaignId: string; questionId: string; optionId: string; userId: string }> = [];
   for (const [questionId, optionIds] of deduped.entries()) {
     for (const optionId of optionIds) {
       inserts.push({
-        campaign_id: campaignId,
-        question_id: questionId,
-        option_id: optionId,
-        user_id: userId,
+        campaignId,
+        questionId,
+        optionId,
+        userId,
       });
     }
   }
 
-  if (inserts.length > 0) {
-    const insertResult = await client.from("survey_responses").insert(inserts);
-    if (insertResult.error) throw insertResult.error;
-  }
+  await insertSurveyResponsesWithFallback(client, inserts);
 
   const nowIso = new Date().toISOString();
   await upsertCampaignState(client, userId, campaignId, {
     completed_at: nowIso,
     read_at: nowIso,
+    opened_at: nowIso,
   });
+  await logCampaignEvent(client, {
+    eventType: "campaign_completed",
+    campaignId,
+    targetUserId: userId,
+    metadata: { completed_at: nowIso, source: "survey_submit" },
+  });
+}
+
+export async function getSurveyAnswersForUser(
+  client: CampaignClient,
+  userId: string,
+  campaignId: string,
+) {
+  const rows = await loadSurveyResponsesByCampaignAndUser(client, campaignId, userId);
+  return normalizeSurveyAnswersFromRows(rows);
 }
 
 export async function getAdminCampaigns(client: CampaignClient, filters: AdminCampaignFilters = {}) {
@@ -914,12 +1328,10 @@ export async function getAdminCampaigns(client: CampaignClient, filters: AdminCa
 
   // We filter locally to support different enum casing in existing DB.
 
-  let campaignsResult = await query;
+  const campaignsResult = await query;
   if (campaignsResult.error) {
-    if (!isMissingSchemaError(campaignsResult.error)) throw campaignsResult.error;
-    const fallbackQuery = client.from("campaigns").select(CAMPAIGN_SELECT_BASE).order("created_at", { ascending: false });
-    campaignsResult = await fallbackQuery;
-    if (campaignsResult.error) throw campaignsResult.error;
+    if (isMissingSchemaError(campaignsResult.error)) throw buildCampaignSchemaError(campaignsResult.error);
+    throw campaignsResult.error;
   }
 
   const campaignIds = (campaignsResult.data ?? []).map((row) => row.id);
@@ -933,6 +1345,165 @@ export async function getAdminCampaigns(client: CampaignClient, filters: AdminCa
       return true;
     })
     .map((row) => mapCampaign(row, rolesMap.get(row.id) ?? []));
+}
+
+export async function getCampaignAnalyticsSummary(
+  client: CampaignClient,
+  campaignId: string,
+): Promise<CampaignAnalyticsSummary> {
+  const campaignIdIsUuid = isUuidLike(campaignId);
+  if (!campaignIdIsUuid) {
+    return {
+      campaignId,
+      recipientCount: 0,
+      readCount: 0,
+      unreadCount: 0,
+      dismissedCount: 0,
+      completedCount: 0,
+      deliveredCount: 0,
+      shownCount: 0,
+      openedCount: 0,
+      clickedCount: 0,
+      bellShownCount: 0,
+      popupShownCount: 0,
+      bellOpenedCount: 0,
+      popupOpenedCount: 0,
+      bellClickedCount: 0,
+      popupClickedCount: 0,
+      failedDeliveryCount: 0,
+    };
+  }
+
+  const statesResult = await client.from("user_campaign_states").select("*").eq("campaign_id", campaignId);
+  if (statesResult.error && !isMissingSchemaError(statesResult.error)) {
+    throw statesResult.error;
+  }
+  const states = (statesResult.error ? [] : statesResult.data ?? []) as Record<string, unknown>[];
+  let recipientCount = states.length;
+  let readCount = states.filter((row) => Boolean(pickString(row, ["read_at", "readAt"]))).length;
+  const dismissedCount = states.filter((row) => Boolean(pickString(row, ["dismissed_at", "dismissedAt"]))).length;
+  let completedCount = states.filter((row) => Boolean(pickString(row, ["completed_at", "completedAt"]))).length;
+  let deliveredCount = states.filter((row) => Boolean(pickString(row, ["delivered_at", "deliveredAt"]))).length;
+  let bellShownCount = states.filter((row) => Boolean(pickString(row, ["bell_shown_at", "bellShownAt"]))).length;
+  let popupShownCount = states.filter((row) => Boolean(pickString(row, ["popup_shown_at", "popupShownAt"]))).length;
+  let bellOpenedCount = states.filter((row) => Boolean(pickString(row, ["bell_opened_at", "bellOpenedAt"]))).length;
+  let popupOpenedCount = states.filter((row) => Boolean(pickString(row, ["popup_opened_at", "popupOpenedAt"]))).length;
+  let bellClickedCount = states.filter((row) => Boolean(pickString(row, ["bell_clicked_at", "bellClickedAt"]))).length;
+  let popupClickedCount = states.filter((row) => Boolean(pickString(row, ["popup_clicked_at", "popupClickedAt"]))).length;
+  let shownCount = states.filter((row) => {
+    const bellShown = Boolean(pickString(row, ["bell_shown_at", "bellShownAt"]));
+    const popupShown = Boolean(pickString(row, ["popup_shown_at", "popupShownAt"]));
+    return bellShown || popupShown;
+  }).length;
+  let openedCount = states.filter((row) => Boolean(pickString(row, ["opened_at", "openedAt"]))).length;
+  let clickedCount = states.filter((row) => Boolean(pickString(row, ["clicked_at", "clickedAt"]))).length;
+
+  const responders = await getSurveyResponderIdsForCampaign(client, campaignId);
+  completedCount = Math.max(completedCount, responders.size);
+  readCount = Math.max(readCount, responders.size);
+  openedCount = Math.max(openedCount, responders.size);
+
+  const eventRowsResult = await client
+    .from("event_log")
+    .select("event_type, target_user_id, entity_id, metadata")
+    .in("event_type", [
+      "campaign_sent",
+      "campaign_delivered",
+      "campaign_bell_shown",
+      "campaign_popup_shown",
+      "campaign_completed",
+      "campaign_read",
+      "campaign_bell_opened",
+      "campaign_popup_opened",
+      "campaign_notification_clicked",
+      "campaign_delivery_failed",
+    ]);
+  if (!eventRowsResult.error) {
+    const campaignEvents = (eventRowsResult.data ?? []).filter((row) => {
+      const record = row as Record<string, unknown>;
+      const entityCampaignId = pickString(record, ["entity_id", "entityId"]);
+      if (entityCampaignId === campaignId) return true;
+      const metadata = (record.metadata as Record<string, unknown> | null) ?? {};
+      const metadataCampaignId = pickString(metadata, ["campaign_id", "campaignId"]);
+      return metadataCampaignId === campaignId;
+    });
+
+    const uniqueCountByEvent = (eventType: string) =>
+      new Set(
+        campaignEvents
+          .filter((row) => String((row as Record<string, unknown>).event_type ?? "") === eventType)
+          .map((row) => pickString(row as Record<string, unknown>, ["target_user_id", "targetUserId"]))
+          .filter((value): value is string => Boolean(value)),
+      ).size;
+
+    const latestCampaignSent = campaignEvents
+      .filter((row) => String((row as Record<string, unknown>).event_type ?? "") === "campaign_sent")
+      .slice(-1)[0] as Record<string, unknown> | undefined;
+    const metadata = (latestCampaignSent?.metadata as Record<string, unknown> | null) ?? {};
+    const metadataRecipientCount = Number(metadata.recipient_count ?? 0);
+    if (recipientCount === 0 && Number.isFinite(metadataRecipientCount) && metadataRecipientCount > 0) {
+      recipientCount = metadataRecipientCount;
+    }
+
+    deliveredCount = Math.max(deliveredCount, uniqueCountByEvent("campaign_delivered"), recipientCount);
+    bellShownCount = Math.max(bellShownCount, uniqueCountByEvent("campaign_bell_shown"));
+    popupShownCount = Math.max(popupShownCount, uniqueCountByEvent("campaign_popup_shown"));
+    shownCount = Math.max(shownCount, bellShownCount, popupShownCount);
+    bellOpenedCount = Math.max(bellOpenedCount, uniqueCountByEvent("campaign_bell_opened"));
+    popupOpenedCount = Math.max(popupOpenedCount, uniqueCountByEvent("campaign_popup_opened"));
+    openedCount = Math.max(openedCount, bellOpenedCount, popupOpenedCount);
+    clickedCount = Math.max(clickedCount, uniqueCountByEvent("campaign_notification_clicked"));
+    bellClickedCount = Math.max(bellClickedCount, uniqueCountByEvent("campaign_notification_clicked"));
+    popupClickedCount = Math.max(popupClickedCount, uniqueCountByEvent("campaign_notification_clicked"));
+    completedCount = Math.max(completedCount, uniqueCountByEvent("campaign_completed"));
+    readCount = Math.max(readCount, uniqueCountByEvent("campaign_read"));
+
+    const failedDeliveryFromEvents = campaignEvents.filter(
+      (row) => String((row as Record<string, unknown>).event_type ?? "") === "campaign_delivery_failed",
+    ).length;
+
+    return {
+      campaignId,
+      recipientCount,
+      readCount,
+      unreadCount: Math.max(recipientCount - readCount, 0),
+      dismissedCount,
+      completedCount,
+      deliveredCount,
+      shownCount,
+      openedCount,
+      clickedCount,
+      bellShownCount,
+      popupShownCount,
+      bellOpenedCount,
+      popupOpenedCount,
+      bellClickedCount,
+      popupClickedCount,
+      failedDeliveryCount: failedDeliveryFromEvents,
+    };
+  }
+
+  const failedDeliveryCount = 0;
+
+  return {
+    campaignId,
+    recipientCount,
+    readCount,
+    unreadCount: Math.max(recipientCount - readCount, 0),
+    dismissedCount,
+    completedCount,
+    deliveredCount,
+    shownCount,
+    openedCount,
+    clickedCount,
+    bellShownCount,
+    popupShownCount,
+    bellOpenedCount,
+    popupOpenedCount,
+    bellClickedCount,
+    popupClickedCount,
+    failedDeliveryCount,
+  };
 }
 
 export async function getCampaignPreviewDetails(
@@ -1012,6 +1583,7 @@ export async function getCampaignPreviewDetails(
   }
 
   const metadataCount = Number((metadata as Record<string, unknown>).recipient_count ?? 0);
+  const analytics = await getCampaignAnalyticsSummary(client, campaignId);
   const sentRecipientCount =
     Number.isFinite(metadataCount) && metadataCount > 0
       ? metadataCount
@@ -1029,56 +1601,88 @@ export async function getCampaignPreviewDetails(
     targetRoles: campaign.targetRoles.map((role) => String(role)),
     targetSegments: campaign.targetSegments,
     recipientsPreview: recipientsPreview.slice(0, 50),
+    analytics,
   };
 }
 
 export async function createCampaign(client: CampaignClient, payload: CreateCampaignPayload, actorUserId?: string) {
   const parsed = campaignPayloadSchema.parse(payload);
 
-  const fullInsert = await client
-    .from("campaigns")
-    .insert({
-      type: parsed.type,
-      title: parsed.title,
-      body: parsed.body,
-      status: parsed.status,
-      starts_at: parsed.startsAt,
-      ends_at: parsed.endsAt,
+  const baseInsertPayload = {
+    type: parsed.type,
+    title: parsed.title,
+    body: parsed.body,
+    status: parsed.status,
+    starts_at: parsed.startsAt,
+    ends_at: parsed.endsAt,
+  };
+  const payloadVariants: Record<string, unknown>[] = [
+    {
+      ...baseInsertPayload,
       channels: parsed.channels,
       show_in_bell: parsed.channels.includes("bell"),
       show_in_popup_right: parsed.channels.includes("popup_right"),
       target_segments: parsed.targetSegments,
       target_segment: parsed.targetSegments[0] ?? null,
-    })
-    .select(CAMPAIGN_SELECT_EXTENDED)
-    .single();
+    },
+    {
+      ...baseInsertPayload,
+      show_in_bell: parsed.channels.includes("bell"),
+      show_in_popup_right: parsed.channels.includes("popup_right"),
+      target_segments: parsed.targetSegments,
+      target_segment: parsed.targetSegments[0] ?? null,
+    },
+    {
+      ...baseInsertPayload,
+      show_in_bell: parsed.channels.includes("bell"),
+      show_in_popup_right: parsed.channels.includes("popup_right"),
+    },
+    {
+      ...baseInsertPayload,
+      target_segments: parsed.targetSegments,
+      target_segment: parsed.targetSegments[0] ?? null,
+    },
+    {
+      ...baseInsertPayload,
+    },
+  ];
 
-  let campaign = fullInsert.data;
-  if (fullInsert.error) {
-    if (!isMissingSchemaError(fullInsert.error)) throw fullInsert.error;
-    const fallbackInsert = await client
-      .from("campaigns")
-      .insert({
-        type: parsed.type,
-        title: parsed.title,
-        body: parsed.body,
-        status: parsed.status,
-        starts_at: parsed.startsAt,
-        ends_at: parsed.endsAt,
-      })
-      .select(CAMPAIGN_SELECT_BASE)
-      .single();
-    if (fallbackInsert.error) throw fallbackInsert.error;
-    campaign = fallbackInsert.data;
+  let campaign: Record<string, unknown> | null = null;
+  let lastSchemaError: unknown = null;
+  for (const variant of payloadVariants) {
+    const insertResult = await client.from("campaigns").insert(variant).select(CAMPAIGN_SELECT_EXTENDED).single();
+    if (!insertResult.error) {
+      campaign = insertResult.data as Record<string, unknown>;
+      break;
+    }
+    if (isMissingSchemaError(insertResult.error)) {
+      lastSchemaError = insertResult.error;
+      continue;
+    }
+    throw insertResult.error;
   }
 
+  if (!campaign && lastSchemaError) throw buildCampaignSchemaError(lastSchemaError);
   if (!campaign) throw new Error("Failed to create campaign");
 
   if (parsed.targetRoles.length > 0) {
-    await insertCampaignTargetRoles(client, campaign.id, parsed.targetRoles);
+    await insertCampaignTargetRoles(client, String(campaign.id), parsed.targetRoles);
   }
 
-  const mapped = mapCampaign(normalizeCampaignRow(campaign as Record<string, unknown>), parsed.targetRoles);
+  const mapped = mapCampaign(normalizeCampaignRow(campaign), parsed.targetRoles);
+  await logCampaignEvent(client, {
+    eventType: "campaign_created",
+    campaignId: mapped.id,
+    actorUserId: actorUserId ?? null,
+    metadata: {
+      campaign_type: mapped.type,
+      status: mapped.status,
+      delivery_mode: getDeliveryMode(mapped.channels),
+      channels: mapped.channels,
+      target_roles: mapped.targetRoles,
+      target_segments: mapped.targetSegments,
+    },
+  });
   if (normalizeStatus(mapped.status) === "active") {
     const recipients = await resolveCampaignRecipients(client, mapped);
     await persistDispatchSnapshot(client, mapped, actorUserId ?? null, recipients);
@@ -1101,42 +1705,63 @@ export async function updateCampaign(client: CampaignClient, payload: UpdateCamp
     throw new Error("Campaign is already sent and is read-only");
   }
 
-  const updateFull = await client
-    .from("campaigns")
-    .update({
-      type: parsed.type,
-      title: parsed.title,
-      body: parsed.body,
-      status: parsed.status,
-      starts_at: parsed.startsAt,
-      ends_at: parsed.endsAt,
+  const baseUpdatePayload = {
+    type: parsed.type,
+    title: parsed.title,
+    body: parsed.body,
+    status: parsed.status,
+    starts_at: parsed.startsAt,
+    ends_at: parsed.endsAt,
+  };
+  const updateVariants: Record<string, unknown>[] = [
+    {
+      ...baseUpdatePayload,
       channels: parsed.channels,
       show_in_bell: parsed.channels.includes("bell"),
       show_in_popup_right: parsed.channels.includes("popup_right"),
       target_segments: parsed.targetSegments,
       target_segment: parsed.targetSegments[0] ?? null,
-    })
-    .eq("id", campaignId)
-    .select(CAMPAIGN_SELECT_EXTENDED)
-    .single();
-  let updated = updateFull.data;
-  if (updateFull.error) {
-    if (!isMissingSchemaError(updateFull.error)) throw updateFull.error;
-    const fallbackUpdate = await client
+    },
+    {
+      ...baseUpdatePayload,
+      show_in_bell: parsed.channels.includes("bell"),
+      show_in_popup_right: parsed.channels.includes("popup_right"),
+      target_segments: parsed.targetSegments,
+      target_segment: parsed.targetSegments[0] ?? null,
+    },
+    {
+      ...baseUpdatePayload,
+      show_in_bell: parsed.channels.includes("bell"),
+      show_in_popup_right: parsed.channels.includes("popup_right"),
+    },
+    {
+      ...baseUpdatePayload,
+      target_segments: parsed.targetSegments,
+      target_segment: parsed.targetSegments[0] ?? null,
+    },
+    {
+      ...baseUpdatePayload,
+    },
+  ];
+
+  let updated: Record<string, unknown> | null = null;
+  let lastSchemaError: unknown = null;
+  for (const variant of updateVariants) {
+    const updateResult = await client
       .from("campaigns")
-      .update({
-        type: parsed.type,
-        title: parsed.title,
-        body: parsed.body,
-        status: parsed.status,
-        starts_at: parsed.startsAt,
-        ends_at: parsed.endsAt,
-      })
+      .update(variant)
       .eq("id", campaignId)
-      .select(CAMPAIGN_SELECT_BASE)
+      .select(CAMPAIGN_SELECT_EXTENDED)
       .single();
-    if (fallbackUpdate.error) throw fallbackUpdate.error;
-    updated = fallbackUpdate.data;
+    if (!updateResult.error) {
+      updated = updateResult.data as Record<string, unknown>;
+      break;
+    }
+    if (isMissingSchemaError(updateResult.error)) {
+      lastSchemaError = updateResult.error;
+      continue;
+    }
+    throw updateResult.error;
   }
 
   const removeRolesResult = await client
@@ -1149,8 +1774,22 @@ export async function updateCampaign(client: CampaignClient, payload: UpdateCamp
     await insertCampaignTargetRoles(client, campaignId, parsed.targetRoles);
   }
 
+  if (!updated && lastSchemaError) throw buildCampaignSchemaError(lastSchemaError);
   if (!updated) throw new Error("Failed to update campaign");
-  const mapped = mapCampaign(normalizeCampaignRow(updated as Record<string, unknown>), parsed.targetRoles);
+  const mapped = mapCampaign(normalizeCampaignRow(updated), parsed.targetRoles);
+  await logCampaignEvent(client, {
+    eventType: "campaign_updated",
+    campaignId,
+    actorUserId: actorUserId ?? null,
+    metadata: {
+      campaign_type: mapped.type,
+      status: mapped.status,
+      delivery_mode: getDeliveryMode(mapped.channels),
+      channels: mapped.channels,
+      target_roles: mapped.targetRoles,
+      target_segments: mapped.targetSegments,
+    },
+  });
   const becameActive = existingStatus !== "active" && normalizeStatus(mapped.status) === "active";
   if (becameActive) {
     const recipients = await resolveCampaignRecipients(client, mapped);
@@ -1266,19 +1905,155 @@ export async function createSurveyOption(client: CampaignClient, payload: Create
   };
 }
 
+export async function updateSurveyQuestion(
+  client: CampaignClient,
+  payload: { questionId: string; title: string; questionType: SurveyQuestionType },
+) {
+  const primary = await client
+    .from("survey_questions")
+    .update({
+      title: payload.title,
+      question_type: payload.questionType,
+    })
+    .eq("id", payload.questionId)
+    .select(SURVEY_QUESTION_SELECT_PRIMARY)
+    .single();
+
+  let row = primary.data as Record<string, unknown> | null;
+  if (primary.error) {
+    if (!isMissingSchemaError(primary.error)) throw primary.error;
+
+    const fallback = await client
+      .from("survey_questions")
+      .update({
+        title: payload.title,
+        type: payload.questionType,
+      })
+      .eq("id", payload.questionId)
+      .select(SURVEY_QUESTION_SELECT_FALLBACK)
+      .single();
+    if (fallback.error) throw fallback.error;
+    row = fallback.data as Record<string, unknown> | null;
+  }
+  if (!row) throw new Error("Failed to update survey question");
+
+  const id = pickString(row, ["id"]);
+  const campaignId = pickString(row, ["campaign_id", "campaignId"]);
+  const questionOrderValue = row.question_order;
+  const questionOrder = typeof questionOrderValue === "number" ? questionOrderValue : Number(questionOrderValue);
+  const questionType = pickString(row, ["question_type", "type"]) as SurveyQuestionType | null;
+  const title = pickString(row, ["title"]);
+  if (!id || !campaignId || !Number.isFinite(questionOrder) || !questionType || !title) {
+    throw new Error("Updated survey question has invalid shape");
+  }
+
+  return {
+    id,
+    campaignId,
+    questionOrder,
+    questionType,
+    title,
+    options: [] as SurveyOption[],
+  };
+}
+
+export async function deleteSurveyQuestion(client: CampaignClient, questionId: string) {
+  const result = await client
+    .from("survey_questions")
+    .delete()
+    .eq("id", questionId);
+  if (result.error) throw result.error;
+}
+
+export async function updateSurveyOption(
+  client: CampaignClient,
+  payload: { optionId: string; label: string; value?: string | null },
+) {
+  const primary = await client
+    .from("survey_options")
+    .update({
+      label: payload.label,
+      value: payload.value ?? null,
+    })
+    .eq("id", payload.optionId)
+    .select(SURVEY_OPTION_SELECT_PRIMARY)
+    .single();
+
+  let row = primary.data as Record<string, unknown> | null;
+  if (primary.error) {
+    if (!isMissingSchemaError(primary.error)) throw primary.error;
+
+    const normalizedValue = payload.value?.trim() ?? "";
+    const numericValue =
+      normalizedValue && /^-?\d+$/.test(normalizedValue) ? Number(normalizedValue) : null;
+    const fallback = await client
+      .from("survey_options")
+      .update({
+        text: payload.label,
+        ...(numericValue !== null ? { value: numericValue } : {}),
+      })
+      .eq("id", payload.optionId)
+      .select(SURVEY_OPTION_SELECT_FALLBACK)
+      .single();
+    if (fallback.error) throw fallback.error;
+    row = fallback.data as Record<string, unknown> | null;
+  }
+  if (!row) throw new Error("Failed to update survey option");
+
+  const id = pickString(row, ["id"]);
+  const questionId = pickString(row, ["question_id", "questionId"]);
+  const optionOrderValue = row.option_order;
+  const optionOrder = typeof optionOrderValue === "number" ? optionOrderValue : Number(optionOrderValue);
+  const label = pickString(row, ["label", "text"]);
+  if (!id || !questionId || !Number.isFinite(optionOrder) || !label) {
+    throw new Error("Updated survey option has invalid shape");
+  }
+
+  return {
+    id,
+    questionId,
+    optionOrder,
+    label,
+    value: pickString(row, ["value"]),
+  };
+}
+
+export async function deleteSurveyOption(client: CampaignClient, optionId: string) {
+  const result = await client
+    .from("survey_options")
+    .delete()
+    .eq("id", optionId);
+  if (result.error) throw result.error;
+}
+
 export async function getSurveyStats(client: CampaignClient, campaignId: string): Promise<SurveyStats | null> {
   const survey = await getSurveyByCampaignId(client, campaignId);
   if (!survey) return null;
 
-  const responsesResult = await client
+  let responseRows = [] as Record<string, unknown>[];
+  const primaryResponses = await client
     .from("survey_responses")
     .select("option_id")
     .eq("campaign_id", campaignId);
-  if (responsesResult.error) throw responsesResult.error;
+  if (!primaryResponses.error) {
+    responseRows = (primaryResponses.data ?? []) as Record<string, unknown>[];
+  } else if (isMissingSchemaError(primaryResponses.error)) {
+    const fallbackResponses = await client.from("survey_responses").select("*");
+    if (fallbackResponses.error) throw fallbackResponses.error;
+    responseRows = (fallbackResponses.data ?? []).filter((row) => {
+      const record = row as Record<string, unknown>;
+      const candidateCampaignId = pickString(record, ["campaign_id", "campaignId", "survey_id"]);
+      return candidateCampaignId === campaignId;
+    }) as Record<string, unknown>[];
+  } else {
+    throw primaryResponses.error;
+  }
 
   const optionCount = new Map<string, number>();
-  for (const response of responsesResult.data ?? []) {
-    optionCount.set(response.option_id, (optionCount.get(response.option_id) ?? 0) + 1);
+  for (const response of responseRows) {
+    const optionId = pickString(response, ["option_id", "survey_option_id", "selected_option_id", "optionId"]);
+    if (!optionId) continue;
+    optionCount.set(optionId, (optionCount.get(optionId) ?? 0) + 1);
   }
 
   const questions: SurveyQuestionStats[] = survey.questions.map((question) => {

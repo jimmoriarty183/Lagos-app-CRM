@@ -150,11 +150,17 @@ export default function InviteInbox({
 
   const markAsRead = useCallback(async (notificationId: string) => {
     if (!notificationId || notificationId.startsWith("invite:")) return;
+    setItems((current) =>
+      current.map((item) =>
+        item.id === notificationId ? { ...item, is_read: true } : item,
+      ),
+    );
     setActiveId(notificationId);
     try {
       const res = await fetch("/api/inbox/mark-read", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        keepalive: true,
         body: JSON.stringify({ notificationId }),
       });
       const json = await res.json().catch(() => ({}));
@@ -201,8 +207,8 @@ export default function InviteInbox({
       const isCampaignItem =
         notification.type === "campaign_announcement" || notification.type === "campaign_survey";
 
-      // Mark as read only for non-campaign items.
-      if (!notification.is_read && notification.type !== "invitation_received" && !isCampaignItem) {
+      // Mark as read for all actionable items (campaign + regular notifications).
+      if (!notification.is_read && notification.type !== "invitation_received") {
         void markAsRead(notification.id);
       }
 
@@ -215,8 +221,25 @@ export default function InviteInbox({
         const campaignId = String(
           notification.metadata?.campaign_id ?? notification.entity_id ?? "",
         ).trim();
-
         if (isCampaignItem && campaignId) {
+          void fetch("/api/campaigns/read", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            keepalive: true,
+            body: JSON.stringify({ campaignId }),
+          });
+          void fetch("/api/campaigns/click", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            keepalive: true,
+            body: JSON.stringify({ campaignId, channel: "bell" }),
+          });
+          void fetch("/api/campaigns/open", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            keepalive: true,
+            body: JSON.stringify({ campaignId, channel: "bell" }),
+          });
           router.push(`/b/${currentBusinessSlug}?campaign=${encodeURIComponent(campaignId)}`);
         } else if (notification.entity_type === "support_request" && supportRequestId) {
           router.push(`/b/${currentBusinessSlug}/support/${encodeURIComponent(supportRequestId)}`);
@@ -262,7 +285,7 @@ export default function InviteInbox({
         )}
         {unreadCount > 0 ? (
           <span className="absolute -right-1 -top-1 inline-flex min-w-5 items-center justify-center rounded-full bg-[#6366F1] px-1.5 py-0.5 text-[10px] font-bold text-white">
-            {unreadCount > 9 ? "9+" : unreadCount}
+            {unreadCount > 99 ? "99+" : unreadCount}
           </span>
         ) : null}
       </button>
@@ -341,6 +364,7 @@ export default function InviteInbox({
                           notification={notification}
                           activeId={activeId}
                           onClick={handleNotificationClick}
+                          onMarkRead={markAsRead}
                         />
                       ))}
                     </div>
@@ -357,6 +381,7 @@ export default function InviteInbox({
                           notification={notification}
                           activeId={activeId}
                           onClick={handleNotificationClick}
+                          onMarkRead={markAsRead}
                         />
                       ))}
                     </div>
@@ -375,61 +400,108 @@ type NotificationItemProps = {
   notification: InboxNotification;
   activeId: string;
   onClick: (notification: InboxNotification) => void;
+  onMarkRead: (notificationId: string) => void;
 };
 
 function NotificationItem({
   notification,
   activeId,
   onClick,
+  onMarkRead,
 }: NotificationItemProps) {
   const isBusy = activeId === notification.id;
   const isUnread = !notification.is_read;
 
   return (
-    <button
-      type="button"
-      onClick={() => onClick(notification)}
-      disabled={isBusy}
-      className={`group flex w-full items-start gap-3 px-4 py-3 text-left transition disabled:cursor-not-allowed ${
+    <div
+      className={`group flex w-full items-start gap-3 px-4 py-3 text-left transition ${
         isUnread
           ? "bg-blue-50/30 hover:bg-blue-50/60"
           : "bg-white hover:bg-slate-50"
       }`}
     >
-      {/* Icon */}
-      <div
-        className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${
-          isUnread ? "bg-[#6366F1] text-white" : "bg-slate-100 text-slate-500"
-        }`}
+      <button
+        type="button"
+        onClick={() => onClick(notification)}
+        disabled={isBusy}
+        className="flex min-w-0 flex-1 items-start gap-3 text-left disabled:cursor-not-allowed"
       >
-        {getNotificationIcon(notification.type)}
-      </div>
-
-      {/* Content */}
-      <div className="min-w-0 flex-1">
+        {/* Icon */}
         <div
-          className={`text-[13px] leading-snug ${
-            isUnread
-              ? "font-semibold text-slate-900"
-              : "font-normal text-slate-700"
+          className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${
+            isUnread ? "bg-[#6366F1] text-white" : "bg-slate-100 text-slate-500"
           }`}
         >
-          {notification.title}
+          {getNotificationIcon(notification.type)}
         </div>
-        {notification.preview ? (
-          <div className="mt-0.5 truncate text-[12px] text-slate-500">
-            {notification.preview}
+
+        {/* Content */}
+        <div className="min-w-0 flex-1">
+          <div
+            className={`text-[13px] leading-snug ${
+              isUnread
+                ? "font-semibold text-slate-900"
+                : "font-normal text-slate-700"
+            }`}
+          >
+            {notification.title}
           </div>
-        ) : null}
-        <div className="mt-1 text-[11px] text-slate-400">
-          {formatNotificationTime(notification.created_at)}
+          {notification.preview ? (
+            <div className="mt-0.5 truncate text-[12px] text-slate-500">
+              {notification.preview}
+            </div>
+          ) : null}
+          <div className="mt-1.5 text-[11px] font-semibold text-[#4f46e5]">
+            {notification.type === "campaign_survey" ? "Open survey" : "Open notification"}
+          </div>
+          {notification.entity_type === "campaign" ? (
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
+              <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
+                {notification.metadata?.delivery_mode === "both"
+                  ? "Bell + Popup"
+                  : notification.metadata?.delivery_mode === "popup_only"
+                    ? "Popup"
+                    : "Bell"}
+              </span>
+              <span
+                className={[
+                  "rounded-full border px-2 py-0.5 text-[10px] font-semibold",
+                  isUnread ? "border-blue-200 bg-blue-50 text-blue-700" : "border-slate-200 bg-slate-100 text-slate-600",
+                ].join(" ")}
+              >
+                {isUnread ? "Unread" : "Read"}
+              </span>
+              {notification.type === "campaign_survey" &&
+              (notification.metadata?.survey_state === "voted" || notification.preview === "Voted") ? (
+                <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+                  Voted
+                </span>
+              ) : null}
+            </div>
+          ) : null}
+          <div className="mt-1 text-[11px] text-slate-400">
+            {formatNotificationTime(notification.created_at)}
+          </div>
         </div>
-      </div>
+      </button>
 
       {/* Unread indicator */}
       {isUnread ? (
-        <div className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-[#6366F1]" />
+        <div className="mt-1 flex shrink-0 flex-col items-end gap-2">
+          <div className="h-2 w-2 rounded-full bg-[#6366F1]" />
+          <button
+            type="button"
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              onMarkRead(notification.id);
+            }}
+            className="rounded-md border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-800"
+          >
+            Mark read
+          </button>
+        </div>
       ) : null}
-    </button>
+    </div>
   );
 }

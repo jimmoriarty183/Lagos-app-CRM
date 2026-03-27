@@ -149,7 +149,7 @@ function RailLink({
       ? "min-h-14 w-full items-start justify-start gap-3 rounded-2xl px-4 py-3"
       : "h-12 w-full items-center justify-center rounded-2xl",
     active
-      ? "border-[#C7D2FE] bg-[#EEF2FF] text-[#1F2937] shadow-[0_10px_24px_rgba(99,102,241,0.12)] ring-1 ring-[#E0E7FF]"
+      ? "border-[#D7DEFA] bg-[#F5F7FF] text-[#334155] shadow-[0_4px_12px_rgba(99,102,241,0.08)]"
       : disabled
         ? "cursor-not-allowed border-[#E5E7EB] bg-[#F9FAFB] text-[#9CA3AF] opacity-90"
         : "cursor-pointer border-[#E5E7EB] bg-white text-[#6B7280] hover:-translate-y-[1px] hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937] hover:shadow-[0_10px_24px_rgba(15,23,42,0.08)]",
@@ -161,7 +161,7 @@ function RailLink({
         className={[
           "relative shrink-0 rounded-xl transition-colors duration-150",
           active
-            ? "bg-[#6366F1] p-2 text-white shadow-[0_8px_18px_rgba(99,102,241,0.28)]"
+            ? "bg-[#E7EBFF] p-2 text-[#4F46E5]"
             : disabled
               ? "bg-white/70 p-2 text-[#9CA3AF]"
               : "bg-[#EEF2FF] p-2 text-[#6366F1] group-hover:bg-[#E0E7FF] group-hover:text-[#5558E3]",
@@ -191,7 +191,7 @@ function RailLink({
               </span>
             ) : null}
             {active ? (
-              <span className="inline-flex items-center rounded-full border border-[#C7D2FE] bg-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[#6366F1]">
+              <span className="inline-flex items-center rounded-full border border-[#D7DEFA] bg-white px-2 py-0.5 text-[10px] font-semibold text-[#6366F1]">
                 Active
               </span>
             ) : null}
@@ -381,8 +381,9 @@ export default function DesktopLeftRail({
 
   return (
     <div
+      data-desktop-left-rail="1"
       className={[
-        "relative z-40 hidden shrink-0 lg:block",
+        "relative z-40 hidden shrink-0 transition-opacity duration-200 lg:block",
         expanded ? expandedRailWidth : collapsedRailWidth,
       ].join(" ")}
     >

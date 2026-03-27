@@ -83,7 +83,7 @@ export function BellNotifications() {
         <Bell className="h-4 w-4" />
         {unreadCount > 0 ? (
           <span className="absolute -right-1 -top-1 inline-flex min-w-5 items-center justify-center rounded-full bg-indigo-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
-            {unreadCount > 9 ? "9+" : unreadCount}
+            {unreadCount > 99 ? "99+" : unreadCount}
           </span>
         ) : null}
       </button>
@@ -94,6 +94,16 @@ export function BellNotifications() {
           loading={loading}
           error={error}
           onItemClick={(item) => {
+            void fetch("/api/campaigns/click", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ campaignId: item.id, channel: "bell" }),
+            });
+            void fetch("/api/campaigns/open", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ campaignId: item.id, channel: "bell" }),
+            });
             if (!item.isRead) {
               void markRead(item.id);
             }

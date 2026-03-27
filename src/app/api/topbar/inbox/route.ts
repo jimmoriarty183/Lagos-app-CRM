@@ -148,7 +148,7 @@ export async function GET(request: Request) {
       .map(normalizeNotificationRow)
       .filter((row): row is NotificationRow => Boolean(row))
       .filter((row) => {
-        if (!row.recipient_user_id) return true;
+        if (!row.recipient_user_id) return false;
         return row.recipient_user_id === userId;
       });
 
@@ -335,7 +335,7 @@ export async function GET(request: Request) {
       title: "You were invited to a workspace",
       preview: String(invite.role ?? "MANAGER"),
       actor_label: actorLabelsById.get(String(invite.invited_by ?? "")) ?? null,
-      is_read: false,
+      is_read: true,
       created_at: String(invite.created_at ?? new Date().toISOString()),
       metadata: {
         invite_id: invite.id,
@@ -365,13 +365,28 @@ export async function GET(request: Request) {
         order_id: null,
         order_number: null,
         title: item.title,
-        preview: item.body ?? null,
+        preview:
+          item.type === "survey" && (item.isCompleted || item.surveyStateLabel === "Voted")
+            ? "Voted"
+            : item.type === "survey" && item.isDismissed
+              ? "Not answered"
+              : item.body ?? null,
         actor_label: null,
         is_read: item.isRead,
         created_at: item.createdAt ?? new Date().toISOString(),
         metadata: {
           campaign_id: item.id,
           campaign_type: item.type,
+          channels: item.channels,
+          delivery_mode: item.deliveryMode,
+          has_popup: item.channels.includes("popup_right"),
+          has_bell: item.channels.includes("bell"),
+          survey_state:
+            item.type === "survey" && (item.isCompleted || item.surveyStateLabel === "Voted")
+              ? "voted"
+              : item.type === "survey" && item.isDismissed
+                ? "not_answered"
+                : null,
           source: "campaigns",
         },
       }));

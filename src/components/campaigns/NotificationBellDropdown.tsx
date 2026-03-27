@@ -1,5 +1,6 @@
 "use client";
 
+import { CampaignDeliveryBadge, CampaignReadBadge, CampaignTypeBadge } from "@/components/campaigns/CampaignBadges";
 import type { CampaignBellItem } from "@/lib/campaigns/types";
 
 type Props = {
@@ -55,18 +56,15 @@ export function NotificationBellDropdown({ items, loading, error, onItemClick }:
               >
                 <div className="flex items-center justify-between gap-3">
                   <div className="truncate text-sm font-semibold text-slate-900">{item.title}</div>
-                  <span
-                    className={[
-                      "rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase",
-                      item.type === "survey" ? "bg-indigo-100 text-indigo-700" : "bg-slate-100 text-slate-700",
-                    ].join(" ")}
-                  >
-                    {item.type}
-                  </span>
+                  <CampaignReadBadge isRead={item.isRead} />
                 </div>
                 {item.body ? (
                   <div className="mt-1 line-clamp-2 text-xs text-slate-600">{item.body}</div>
                 ) : null}
+                <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                  <CampaignTypeBadge type={item.type} />
+                  <CampaignDeliveryBadge channels={item.channels} />
+                </div>
                 <div className="mt-1 text-[11px] text-slate-400">{formatRelative(item.createdAt)}</div>
               </button>
             ))}

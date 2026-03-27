@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 
 import { getBellItems, markCampaignRead } from "@/lib/campaigns/service";
-import { getUserCampaignClient } from "@/lib/campaigns/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { supabaseServer } from "@/lib/supabase/server";
 
@@ -31,7 +30,9 @@ async function updateNotificationsForUser(
 ) {
   const readAt = new Date().toISOString();
   const payloads = [
+    { is_read: true, read: true, read_at: readAt },
     { is_read: true, read_at: readAt },
+    { read: true, read_at: readAt },
     { read_at: readAt },
   ];
 
@@ -48,7 +49,9 @@ async function updateNotificationsForUser(
       if (!result.error) return null;
       if (
         isMissingColumnError(result.error, recipientColumn) ||
-        isMissingColumnError(result.error, "is_read")
+        isMissingColumnError(result.error, "is_read") ||
+        isMissingColumnError(result.error, "read") ||
+        isMissingColumnError(result.error, "read_at")
       ) {
         continue;
       }
@@ -65,7 +68,13 @@ async function updateNotificationsForUser(
       .eq("id", notificationId);
 
     if (!fallback.error) return null;
-    if (isMissingColumnError(fallback.error, "is_read")) continue;
+    if (
+      isMissingColumnError(fallback.error, "is_read") ||
+      isMissingColumnError(fallback.error, "read") ||
+      isMissingColumnError(fallback.error, "read_at")
+    ) {
+      continue;
+    }
     return fallback.error;
   }
 
@@ -102,7 +111,7 @@ export async function POST(request: Request) {
         }
       }
 
-      const campaignClient = await getUserCampaignClient();
+      const campaignClient = supabaseAdmin();
       try {
         const campaignItems = await getBellItems(campaignClient, userId);
         const unread = campaignItems.filter((item) => !item.isRead);
@@ -130,7 +139,7 @@ export async function POST(request: Request) {
       if (!campaignId) {
         return NextResponse.json({ ok: false, error: "campaignId is required" }, { status: 400 });
       }
-      const campaignClient = await getUserCampaignClient();
+      const campaignClient = supabaseAdmin();
       await markCampaignRead(campaignClient, userId, campaignId);
       return NextResponse.json({ ok: true });
     }

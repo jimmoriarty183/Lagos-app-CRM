@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { dismissCampaign } from "@/lib/campaigns/service";
-import { getRequiredUserId, getUserCampaignClient } from "@/lib/campaigns/server";
+import { getRequiredUserId } from "@/lib/campaigns/server";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 
 export async function POST(request: Request) {
   try {
@@ -10,7 +11,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: "campaignId is required" }, { status: 400 });
     }
 
-    const client = await getUserCampaignClient();
+    const client = supabaseAdmin();
     const userId = await getRequiredUserId();
     await dismissCampaign(client, userId, campaignId);
 
@@ -22,4 +23,3 @@ export async function POST(request: Request) {
     );
   }
 }
-

@@ -3,6 +3,7 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 export type CampaignType = "announcement" | "survey";
 export type CampaignStatus = "draft" | "active" | "archived";
 export type CampaignChannel = "bell" | "popup_right";
+export type CampaignDeliveryMode = "bell_only" | "popup_only" | "both";
 export type SurveyQuestionType = "single_choice" | "multiple_choice" | "yes_no" | "rating_1_5";
 
 export type AppRole = "OWNER" | "MANAGER" | "GUEST" | "owner" | "manager" | "guest" | string;
@@ -25,15 +26,46 @@ export type Campaign = {
 export type UserCampaignState = {
   campaignId: string;
   userId: string;
+  deliveredAt: string | null;
+  bellShownAt: string | null;
+  popupShownAt: string | null;
+  openedAt: string | null;
+  bellOpenedAt: string | null;
+  popupOpenedAt: string | null;
+  clickedAt: string | null;
+  bellClickedAt: string | null;
+  popupClickedAt: string | null;
   readAt: string | null;
   dismissedAt: string | null;
   completedAt: string | null;
 };
 
 export type CampaignBellItem = Campaign & {
+  deliveryMode: CampaignDeliveryMode;
   isRead: boolean;
   isDismissed: boolean;
   isCompleted: boolean;
+  surveyStateLabel?: "Not answered" | "Voted" | null;
+};
+
+export type CampaignAnalyticsSummary = {
+  campaignId: string;
+  recipientCount: number;
+  readCount: number;
+  unreadCount: number;
+  dismissedCount: number;
+  completedCount: number;
+  deliveredCount: number;
+  shownCount: number;
+  openedCount: number;
+  clickedCount: number;
+  bellShownCount: number;
+  popupShownCount: number;
+  bellOpenedCount: number;
+  popupOpenedCount: number;
+  bellClickedCount: number;
+  popupClickedCount: number;
+  failedDeliveryCount: number;
 };
 
 export type SurveyOption = {
@@ -181,6 +213,15 @@ export type CampaignDatabase = {
         Row: {
           campaign_id: string;
           user_id: string;
+          delivered_at: string | null;
+          bell_shown_at: string | null;
+          popup_shown_at: string | null;
+          opened_at: string | null;
+          bell_opened_at: string | null;
+          popup_opened_at: string | null;
+          clicked_at: string | null;
+          bell_clicked_at: string | null;
+          popup_clicked_at: string | null;
           read_at: string | null;
           dismissed_at: string | null;
           completed_at: string | null;
@@ -189,11 +230,29 @@ export type CampaignDatabase = {
         Insert: {
           campaign_id: string;
           user_id: string;
+          delivered_at?: string | null;
+          bell_shown_at?: string | null;
+          popup_shown_at?: string | null;
+          opened_at?: string | null;
+          bell_opened_at?: string | null;
+          popup_opened_at?: string | null;
+          clicked_at?: string | null;
+          bell_clicked_at?: string | null;
+          popup_clicked_at?: string | null;
           read_at?: string | null;
           dismissed_at?: string | null;
           completed_at?: string | null;
         };
         Update: {
+          delivered_at?: string | null;
+          bell_shown_at?: string | null;
+          popup_shown_at?: string | null;
+          opened_at?: string | null;
+          bell_opened_at?: string | null;
+          popup_opened_at?: string | null;
+          clicked_at?: string | null;
+          bell_clicked_at?: string | null;
+          popup_clicked_at?: string | null;
           read_at?: string | null;
           dismissed_at?: string | null;
           completed_at?: string | null;

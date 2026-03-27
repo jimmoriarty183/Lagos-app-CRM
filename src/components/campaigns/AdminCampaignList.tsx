@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { CampaignDeliveryBadge, CampaignStatusBadge, CampaignTypeBadge } from "@/components/campaigns/CampaignBadges";
 import type { Campaign } from "@/lib/campaigns/types";
 
 type Props = {
@@ -9,7 +10,7 @@ type Props = {
 };
 
 function fmtDate(value: string | null) {
-  if (!value) return "—";
+  if (!value) return "-";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   return date.toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" });
@@ -35,36 +36,35 @@ export function AdminCampaignList({ initialItems }: Props) {
           onChange={(event) => setTypeFilter(event.target.value as "all" | "announcement" | "survey")}
           className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700"
         >
-          <option value="all">Все типы</option>
-          <option value="announcement">Уведомление</option>
-          <option value="survey">Опрос</option>
+          <option value="all">All types</option>
+          <option value="announcement">Announcement</option>
+          <option value="survey">Survey</option>
         </select>
         <select
           value={statusFilter}
           onChange={(event) => setStatusFilter(event.target.value as "all" | "draft" | "active" | "archived")}
           className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700"
         >
-          <option value="all">Все статусы</option>
-          <option value="draft">Черновик</option>
-          <option value="active">Активно</option>
-          <option value="archived">Архив</option>
+          <option value="all">All statuses</option>
+          <option value="draft">Draft</option>
+          <option value="active">Sent</option>
+          <option value="archived">Archived</option>
         </select>
       </div>
 
       {items.length === 0 ? (
         <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
-          Кампании не найдены
+          No campaigns found
         </div>
       ) : (
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
           <table className="w-full table-fixed border-collapse">
             <thead className="bg-slate-50">
               <tr className="border-b border-slate-200">
-                <th className="px-4 py-3 text-left text-xs uppercase tracking-[0.12em] text-slate-500">Заголовок</th>
-                <th className="px-4 py-3 text-left text-xs uppercase tracking-[0.12em] text-slate-500">Тип</th>
-                <th className="px-4 py-3 text-left text-xs uppercase tracking-[0.12em] text-slate-500">Статус</th>
-                <th className="px-4 py-3 text-left text-xs uppercase tracking-[0.12em] text-slate-500">Период</th>
-                <th className="px-4 py-3 text-left text-xs uppercase tracking-[0.12em] text-slate-500">Роли</th>
+                <th className="px-4 py-3 text-left text-xs uppercase tracking-[0.12em] text-slate-500">Title</th>
+                <th className="px-4 py-3 text-left text-xs uppercase tracking-[0.12em] text-slate-500">Markers</th>
+                <th className="px-4 py-3 text-left text-xs uppercase tracking-[0.12em] text-slate-500">Period</th>
+                <th className="px-4 py-3 text-left text-xs uppercase tracking-[0.12em] text-slate-500">Audience</th>
               </tr>
             </thead>
             <tbody>
@@ -81,13 +81,18 @@ export function AdminCampaignList({ initialItems }: Props) {
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-sm text-slate-700">{item.type}</td>
-                  <td className="px-4 py-3 text-sm text-slate-700">{item.status}</td>
+                  <td className="px-4 py-3 text-sm text-slate-700">
+                    <div className="flex flex-wrap gap-1.5">
+                      <CampaignTypeBadge type={item.type} />
+                      <CampaignStatusBadge status={item.status} />
+                      <CampaignDeliveryBadge channels={item.channels} />
+                    </div>
+                  </td>
                   <td className="px-4 py-3 text-sm text-slate-700">
                     {fmtDate(item.startsAt)} - {fmtDate(item.endsAt)}
                   </td>
                   <td className="px-4 py-3 text-sm text-slate-700">
-                    {item.targetRoles.length > 0 ? item.targetRoles.join(", ") : "Все роли"}
+                    {item.targetRoles.length > 0 ? item.targetRoles.join(", ") : "All roles"}
                   </td>
                 </tr>
               ))}

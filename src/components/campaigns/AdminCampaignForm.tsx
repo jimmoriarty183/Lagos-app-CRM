@@ -12,6 +12,23 @@ type Props = {
   initialCampaign?: Campaign | null;
   initialSurvey?: Survey | null;
   readOnly?: boolean;
+  campaignTemplates?: CampaignTemplate[];
+};
+
+type DraftQuestion = { title: string; questionType: SurveyQuestionType; options: string[] };
+
+type CampaignTemplate = {
+  id: string;
+  type: CampaignType;
+  title: string;
+  body: string;
+  status: CampaignStatus;
+  startsAt: string | null;
+  endsAt: string | null;
+  channels: CampaignChannel[];
+  targetRoles: string[];
+  targetSegments: string[];
+  questions: DraftQuestion[];
 };
 
 async function safeJson<T>(response: Response): Promise<T | null> {
@@ -30,7 +47,7 @@ function extractErrorMessageFromPayload(
   return fallback;
 }
 
-export function AdminCampaignForm({ mode, initialCampaign, initialSurvey, readOnly = false }: Props) {
+export function AdminCampaignForm({ mode, initialCampaign, initialSurvey, readOnly = false, campaignTemplates = [] }: Props) {
   const ROLE_OPTIONS = ["OWNER", "MANAGER"] as const;
   const QUESTION_TYPES: SurveyQuestionType[] = ["single_choice", "multiple_choice", "yes_no", "rating_1_5"];
   const router = useRouter();
@@ -53,9 +70,15 @@ export function AdminCampaignForm({ mode, initialCampaign, initialSurvey, readOn
   const [draftQuestionType, setDraftQuestionType] = useState<SurveyQuestionType>("single_choice");
   const [draftOptionInput, setDraftOptionInput] = useState("");
   const [draftOptions, setDraftOptions] = useState<string[]>([]);
-  const [draftQuestions, setDraftQuestions] = useState<
-    Array<{ title: string; questionType: SurveyQuestionType; options: string[] }>
-  >([]);
+  const [draftQuestions, setDraftQuestions] = useState<DraftQuestion[]>(
+    mode === "create"
+      ? (initialSurvey?.questions ?? []).map((question) => ({
+        title: question.title,
+        questionType: question.questionType,
+        options: question.options.map((option) => option.label),
+      }))
+      : [],
+  );
   const [showTypeHelp, setShowTypeHelp] = useState(false);
   const [showHeaderBodyHelp, setShowHeaderBodyHelp] = useState(false);
 
@@ -123,14 +146,14 @@ export function AdminCampaignForm({ mode, initialCampaign, initialSurvey, readOn
       targetSegments,
     };
 
-    const response = await fetch(
-      mode === "create" ? "/api/admin/campaigns" : `/api/admin/campaigns/${campaignId}`,
-      {
-        method: mode === "create" ? "POST" : "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      },
-    );
+    const shouldDelayActivation = mode === "create" && type === "survey" && draftQuestions.length > 0 && status === "active";
+    const createPayload = shouldDelayActivation ? { ...payload, status: "draft" as CampaignStatus } : payload;
+
+    const response = await fetch(mode === "create" ? "/api/admin/campaigns" : `/api/admin/campaigns/${campaignId}`, {
+      method: mode === "create" ? "POST" : "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(mode === "create" ? createPayload : payload),
+    });
     const json = await safeJson<{ ok: boolean; campaign?: Campaign; error?: string }>(response);
     if (!response.ok || !json?.ok || !json.campaign) {
       setError(extractErrorMessageFromPayload(json, "Не удалось создать кампанию"));
@@ -178,6 +201,20 @@ export function AdminCampaignForm({ mode, initialCampaign, initialSurvey, readOn
       }
     }
 
+    if (mode === "create" && shouldDelayActivation) {
+      const activateResponse = await fetch(`/api/admin/campaigns/${json.campaign.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const activateJson = await safeJson<{ ok: boolean; error?: string }>(activateResponse);
+      if (!activateResponse.ok || !activateJson?.ok) {
+        setError(extractErrorMessageFromPayload(activateJson, "Кампания создана, но не удалось активировать после добавления вопросов"));
+        setBusy(false);
+        return;
+      }
+    }
+
     setBusy(false);
     router.push(`/admin/campaigns/${json.campaign.id}?view=details`);
     router.refresh();
@@ -217,6 +254,24 @@ export function AdminCampaignForm({ mode, initialCampaign, initialSurvey, readOn
 
   const removeDraftQuestion = (indexToRemove: number) => {
     setDraftQuestions((current) => current.filter((_, index) => index !== indexToRemove));
+  };
+
+  const applyTemplate = (template: CampaignTemplate) => {
+    if (readOnly || mode !== "create") return;
+    setType(template.type);
+    setTitle(`${template.title} (Copy)`);
+    setBody(template.body ?? "");
+    setStatus("draft");
+    setStartsAt("");
+    setEndsAt("");
+    setTargetRoles((template.targetRoles ?? []).filter((role) => role === "OWNER" || role === "MANAGER"));
+    setTargetSegments(template.targetSegments ?? []);
+    setChannels(template.channels?.length ? template.channels : ["bell"]);
+    setDraftQuestions((template.questions ?? []).map((question) => ({
+      title: question.title,
+      questionType: question.questionType,
+      options: [...question.options],
+    })));
   };
 
   return (
@@ -373,6 +428,35 @@ export function AdminCampaignForm({ mode, initialCampaign, initialSurvey, readOn
           </Link>
         </div>
       </div>
+
+      {mode === "create" && campaignTemplates.length > 0 ? (
+        <div className="rounded-xl border border-slate-200 bg-white p-4">
+          <div className="text-sm font-semibold text-slate-900">Быстрые шаблоны</div>
+          <div className="mt-1 text-xs text-slate-500">
+            Выберите предыдущую кампанию, чтобы подставить её параметры и вопросы в новую.
+          </div>
+          <div className="mt-3 grid gap-2">
+            {campaignTemplates.map((template) => (
+              <div key={template.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+                <div className="min-w-0">
+                  <div className="truncate text-sm font-semibold text-slate-900">{template.title}</div>
+                  <div className="text-xs text-slate-500">
+                    {template.type === "survey" ? "Опрос" : "Уведомление"} • {template.channels.join(" + ")}
+                    {template.type === "survey" ? ` • вопросов: ${template.questions.length}` : ""}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => applyTemplate(template)}
+                  className="inline-flex h-8 items-center rounded-lg border border-indigo-200 bg-indigo-50 px-3 text-xs font-semibold text-indigo-700 transition hover:bg-indigo-100"
+                >
+                  Использовать
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
 
       {type === "survey" && !readOnly ? (
         campaignId ? (

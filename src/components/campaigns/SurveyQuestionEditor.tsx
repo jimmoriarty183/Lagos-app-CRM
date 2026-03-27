@@ -24,8 +24,12 @@ export function SurveyQuestionEditor({ campaignId, initialQuestions }: Props) {
   const [title, setTitle] = useState("");
   const [questionType, setQuestionType] = useState<SurveyQuestionType>("single_choice");
   const [busy, setBusy] = useState(false);
+  const [actionBusy, setActionBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showTypeHelp, setShowTypeHelp] = useState(false);
+  const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
+  const [editQuestionTitle, setEditQuestionTitle] = useState("");
+  const [editQuestionType, setEditQuestionType] = useState<SurveyQuestionType>("single_choice");
   const questionTypeLabel: Record<SurveyQuestionType, string> = {
     single_choice: "Один вариант",
     multiple_choice: "Несколько вариантов",
@@ -68,6 +72,84 @@ export function SurveyQuestionEditor({ campaignId, initialQuestions }: Props) {
         question.id === questionId ? { ...question, options: [...question.options, option] } : question,
       ),
     );
+  };
+
+  const onOptionUpdated = (questionId: string, option: SurveyOption) => {
+    setQuestions((current) =>
+      current.map((question) =>
+        question.id === questionId
+          ? {
+            ...question,
+            options: question.options.map((candidate) => (candidate.id === option.id ? option : candidate)),
+          }
+          : question,
+      ),
+    );
+  };
+
+  const onOptionDeleted = (questionId: string, optionId: string) => {
+    setQuestions((current) =>
+      current.map((question) =>
+        question.id === questionId
+          ? { ...question, options: question.options.filter((option) => option.id !== optionId) }
+          : question,
+      ),
+    );
+  };
+
+  const startEditingQuestion = (question: SurveyQuestion) => {
+    setEditingQuestionId(question.id);
+    setEditQuestionTitle(question.title);
+    setEditQuestionType(question.questionType);
+    setError(null);
+  };
+
+  const saveQuestion = async () => {
+    if (!editingQuestionId) return;
+    const normalizedTitle = editQuestionTitle.trim();
+    if (!normalizedTitle) {
+      setError("Введите текст вопроса");
+      return;
+    }
+    setActionBusy(true);
+    setError(null);
+    const response = await fetch(`/api/admin/campaigns/${campaignId}/questions/${editingQuestionId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: normalizedTitle, questionType: editQuestionType }),
+    });
+    const json = await safeJson<{ ok: boolean; question?: SurveyQuestion; error?: string }>(response);
+    if (!response.ok || !json?.ok || !json.question) {
+      setError(json?.error ?? "Не удалось обновить вопрос");
+      setActionBusy(false);
+      return;
+    }
+    setQuestions((current) =>
+      current.map((question) =>
+        question.id === editingQuestionId
+          ? { ...question, title: json.question!.title, questionType: json.question!.questionType }
+          : question,
+      ),
+    );
+    setEditingQuestionId(null);
+    setActionBusy(false);
+  };
+
+  const removeQuestion = async (questionId: string) => {
+    setActionBusy(true);
+    setError(null);
+    const response = await fetch(`/api/admin/campaigns/${campaignId}/questions/${questionId}`, {
+      method: "DELETE",
+    });
+    const json = await safeJson<{ ok: boolean; error?: string }>(response);
+    if (!response.ok || !json?.ok) {
+      setError(json?.error ?? "Не удалось удалить вопрос");
+      setActionBusy(false);
+      return;
+    }
+    setQuestions((current) => current.filter((question) => question.id !== questionId));
+    if (editingQuestionId === questionId) setEditingQuestionId(null);
+    setActionBusy(false);
   };
 
   return (
@@ -135,11 +217,61 @@ export function SurveyQuestionEditor({ campaignId, initialQuestions }: Props) {
                 {question.questionOrder}. {question.title}
               </div>
               <div className="mt-1 text-xs uppercase tracking-[0.08em] text-slate-500">{questionTypeLabel[question.questionType]}</div>
+              <div className="mt-2 flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => startEditingQuestion(question)}
+                  disabled={actionBusy}
+                  className="text-xs font-medium text-indigo-700 hover:text-indigo-800 disabled:opacity-60"
+                >
+                  Изменить вопрос
+                </button>
+                <button
+                  type="button"
+                  onClick={() => removeQuestion(question.id)}
+                  disabled={actionBusy}
+                  className="text-xs font-medium text-rose-600 hover:text-rose-700 disabled:opacity-60"
+                >
+                  Удалить вопрос
+                </button>
+              </div>
+              {editingQuestionId === question.id ? (
+                <div className="mt-2 space-y-2 rounded-md border border-slate-200 bg-white p-2">
+                  <div className="grid gap-2 md:grid-cols-[1fr_180px_auto]">
+                    <input
+                      value={editQuestionTitle}
+                      onChange={(event) => setEditQuestionTitle(event.target.value)}
+                      className="h-9 rounded-md border border-slate-200 px-2 text-xs"
+                    />
+                    <select
+                      value={editQuestionType}
+                      onChange={(event) => setEditQuestionType(event.target.value as SurveyQuestionType)}
+                      className="h-9 rounded-md border border-slate-200 px-2 text-xs"
+                    >
+                      {QUESTION_TYPES.map((value) => (
+                        <option key={value} value={value}>
+                          {questionTypeLabel[value]}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={saveQuestion}
+                      disabled={actionBusy}
+                      className="inline-flex h-9 items-center justify-center rounded-md bg-indigo-600 px-3 text-xs font-semibold text-white disabled:opacity-60"
+                    >
+                      Сохранить
+                    </button>
+                  </div>
+                </div>
+              ) : null}
               <div className="mt-3">
                 <SurveyOptionEditor
                   questionId={question.id}
                   options={question.options}
                   onCreated={(option) => onOptionCreated(question.id, option)}
+                  onUpdated={(option) => onOptionUpdated(question.id, option)}
+                  onDeleted={(optionId) => onOptionDeleted(question.id, optionId)}
                 />
               </div>
             </div>
