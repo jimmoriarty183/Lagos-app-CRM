@@ -134,20 +134,35 @@ export async function GET(request: Request) {
     const campaignClient = supabaseAdmin();
 
     let notifications: NotificationRow[] = [];
-    const notificationsResult = await admin
-      .from("notifications")
+    const notificationsCompatResult = await admin
+      .from("notifications_compat")
       .select("*")
       .order("created_at", { ascending: false })
       .limit(200);
 
-    if (notificationsResult.error && !isMissingRelationError(notificationsResult.error, "notifications")) {
-      return NextResponse.json(
-        { ok: false, error: notificationsResult.error.message },
-        { status: 500 },
-      );
+    let notificationsRows = notificationsCompatResult.data as RawNotificationRow[] | null;
+    if (notificationsCompatResult.error) {
+      if (!isMissingRelationError(notificationsCompatResult.error, "notifications_compat")) {
+        return NextResponse.json(
+          { ok: false, error: notificationsCompatResult.error.message },
+          { status: 500 },
+        );
+      }
+      const notificationsResult = await admin
+        .from("notifications")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(200);
+      if (notificationsResult.error && !isMissingRelationError(notificationsResult.error, "notifications")) {
+        return NextResponse.json(
+          { ok: false, error: notificationsResult.error.message },
+          { status: 500 },
+        );
+      }
+      notificationsRows = (notificationsResult.data ?? []) as RawNotificationRow[];
     }
 
-    notifications = ((notificationsResult.data ?? []) as RawNotificationRow[])
+    notifications = (notificationsRows ?? [])
       .map(normalizeNotificationRow)
       .filter((row): row is NotificationRow => Boolean(row))
       .filter((row) => {
