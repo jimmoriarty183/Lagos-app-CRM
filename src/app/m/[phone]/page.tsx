@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
+import { supabaseServerReadOnly } from "@/lib/supabase/server";
 import { normalizePhone } from "@/lib/phone";
 
 type PageProps = {
@@ -16,6 +16,7 @@ type Business = {
 };
 
 export default async function ManagerHome({ params }: PageProps) {
+  const supabase = await supabaseServerReadOnly();
   const { phone: phoneParam } = await params;
 
   const rawPhone = decodeURIComponent(phoneParam || "");
