@@ -21,3 +21,5 @@ Click **Redeploy** to create a new Preview deployment from the current `staging`
 - `test.ordo.uno` is attached by Vercel as a custom **Preview** domain when the deployment is **Ready**.
 - If deployment status is **Error** / build failed, the alias may not be attached to that failed deployment card.
 - After fixing build errors and redeploying the same `staging` commit range, `test.ordo.uno` should appear again on the successful deployment.
+
+See also: `docs/staging-merge-and-domain.md` for conflict-resolution and domain mapping steps.
