@@ -177,23 +177,43 @@ export default function InviteInbox({
     );
     setActiveId(notificationId);
     try {
-      const res = isCampaignItem
-        ? await fetch("/api/campaigns/read", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            keepalive: true,
-            body: JSON.stringify({ campaignId: resolveCampaignId(notification) }),
-          })
-        : await fetch("/api/inbox/mark-read", {
+      if (isCampaignItem) {
+        const campaignId = resolveCampaignId(notification);
+        const [notificationRes, campaignRes] = await Promise.all([
+          fetch("/api/inbox/mark-read", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             keepalive: true,
             body: JSON.stringify({ notificationId }),
-          });
-      const json = await res.json().catch(() => ({}));
+          }),
+          campaignId
+            ? fetch("/api/campaigns/read", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                keepalive: true,
+                body: JSON.stringify({ campaignId }),
+              })
+            : Promise.resolve(new Response(null, { status: 204 })),
+        ]);
+        const notificationJson = await notificationRes.json().catch(() => ({}));
+        const campaignJson = await campaignRes.json().catch(() => ({}));
+        const notificationOk = notificationRes.ok && (notificationJson?.ok ?? true);
+        const campaignOk = campaignRes.ok && (campaignJson?.ok ?? true);
+        if (!notificationOk && !campaignOk) {
+          throw new Error("Failed to mark campaign notification as read");
+        }
+      } else {
+        const res = await fetch("/api/inbox/mark-read", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          keepalive: true,
+          body: JSON.stringify({ notificationId }),
+        });
+        const json = await res.json().catch(() => ({}));
 
-      if (!res.ok || !json?.ok) {
-        throw new Error(json?.error || "Failed to mark as read");
+        if (!res.ok || !json?.ok) {
+          throw new Error(json?.error || "Failed to mark as read");
+        }
       }
 
       setItems((current) =>
