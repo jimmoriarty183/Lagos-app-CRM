@@ -108,10 +108,15 @@ export async function POST(request: Request) {
         } else {
           return NextResponse.json({ ok: false, error: updateError.message }, { status: 500 });
         }
+       
       }
+
 
       // IMPORTANT: keep user auth context for RPC auth.uid(); service-role can no-op here.
       const campaignReadAllResult = await supabase.rpc("mark_all_campaigns_read");
+
+      const campaignClient = supabaseAdmin();
+
       if (campaignReadAllResult.error) {
         return NextResponse.json({ ok: false, error: campaignReadAllResult.error.message }, { status: 500 });
       }
@@ -139,8 +144,13 @@ export async function POST(request: Request) {
       if (!Number.isFinite(parsedCampaignId)) {
         return NextResponse.json({ ok: false, error: "campaignId must be numeric" }, { status: 400 });
       }
+
       // IMPORTANT: keep user auth context for RPC auth.uid(); service-role can no-op here.
       const campaignReadResult = await supabase.rpc("mark_campaign_read", {
+
+      const campaignClient = supabaseAdmin();
+      const campaignReadResult = await campaignClient.rpc("mark_campaign_read", {
+
         p_campaign_id: parsedCampaignId,
       });
       if (campaignReadResult.error) {

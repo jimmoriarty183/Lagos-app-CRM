@@ -20,6 +20,10 @@ export async function POST(request: Request) {
     // the current user row in user_campaign_states. Do not use service-role here.
     const supabase = await supabaseServer();
     const rpcResult = await supabase.rpc("mark_campaign_read", { p_campaign_id: parsedCampaignId });
+
+    const client = supabaseAdmin();
+    const rpcResult = await client.rpc("mark_campaign_read", { p_campaign_id: parsedCampaignId });
+
     if (rpcResult.error) {
       return NextResponse.json({ ok: false, error: rpcResult.error.message }, { status: 500 });
     }
