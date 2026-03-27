@@ -33,10 +33,12 @@ async function updateNotificationsForUser(
     { is_read: true, read: true, read_at: readAt },
     { is_read: true, read_at: readAt },
     { read: true, read_at: readAt },
+    { isRead: true, readAt: readAt },
+    { isRead: true },
     { read_at: readAt },
   ];
 
-  const recipientColumns = ["recipient_user_id", "recipient_id", "user_id"];
+  const recipientColumns = ["recipient_user_id", "recipient_id", "user_id", "recipientUserId", "userId"];
 
   for (const payload of payloads) {
     for (const recipientColumn of recipientColumns) {
@@ -51,7 +53,9 @@ async function updateNotificationsForUser(
         isMissingColumnError(result.error, recipientColumn) ||
         isMissingColumnError(result.error, "is_read") ||
         isMissingColumnError(result.error, "read") ||
-        isMissingColumnError(result.error, "read_at")
+        isMissingColumnError(result.error, "read_at") ||
+        isMissingColumnError(result.error, "isRead") ||
+        isMissingColumnError(result.error, "readAt")
       ) {
         continue;
       }
@@ -71,7 +75,9 @@ async function updateNotificationsForUser(
     if (
       isMissingColumnError(fallback.error, "is_read") ||
       isMissingColumnError(fallback.error, "read") ||
-      isMissingColumnError(fallback.error, "read_at")
+      isMissingColumnError(fallback.error, "read_at") ||
+      isMissingColumnError(fallback.error, "isRead") ||
+      isMissingColumnError(fallback.error, "readAt")
     ) {
       continue;
     }

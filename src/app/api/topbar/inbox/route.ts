@@ -93,15 +93,15 @@ function normalizeNotificationRow(record: RawNotificationRow): NotificationRow |
 
   return {
     id,
-    recipient_user_id: getStringField(record, ["recipient_user_id", "recipient_id", "user_id"]),
-    actor_user_id: getStringField(record, ["actor_user_id", "actor_id", "created_by"]),
+    recipient_user_id: getStringField(record, ["recipient_user_id", "recipient_id", "user_id", "recipientUserId", "userId"]),
+    actor_user_id: getStringField(record, ["actor_user_id", "actor_id", "created_by", "actorUserId", "actorId"]),
     type: getStringField(record, ["type", "notification_type"]) ?? "notification",
     entity_type: getStringField(record, ["entity_type", "entity"]) ?? "unknown",
     entity_id: getStringField(record, ["entity_id"]) ?? id,
     order_id: getStringField(record, ["order_id"]) ?? metadataOrderId,
     metadata,
-    is_read: getBooleanField(record, ["is_read", "read"], Boolean(readAt)),
-    read_at: readAt,
+    is_read: getBooleanField(record, ["is_read", "read", "isRead"], Boolean(readAt)),
+    read_at: readAt ?? getStringField(record, ["readAt"]),
     created_at:
       getStringField(record, ["created_at", "inserted_at", "ts"]) ??
       new Date().toISOString(),

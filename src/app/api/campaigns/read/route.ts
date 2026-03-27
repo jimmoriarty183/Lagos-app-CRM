@@ -25,9 +25,11 @@ async function markNotificationsReadForCampaign(
     { is_read: true, read: true, read_at: readAt },
     { is_read: true, read_at: readAt },
     { read: true, read_at: readAt },
+    { isRead: true, readAt: readAt },
+    { isRead: true },
     { read_at: readAt },
   ];
-  const recipientColumns = ["recipient_user_id", "recipient_id", "user_id"];
+  const recipientColumns = ["recipient_user_id", "recipient_id", "user_id", "recipientUserId", "userId"];
 
   const shouldSkipRecipientColumnError = (error: unknown) =>
     isMissingColumnError(error, "recipient_user_id") ||
@@ -37,7 +39,9 @@ async function markNotificationsReadForCampaign(
   const shouldSkipReadColumnError = (error: unknown) =>
     isMissingColumnError(error, "is_read") ||
     isMissingColumnError(error, "read") ||
-    isMissingColumnError(error, "read_at");
+    isMissingColumnError(error, "read_at") ||
+    isMissingColumnError(error, "isRead") ||
+    isMissingColumnError(error, "readAt");
 
   if (notificationId) {
     for (const payload of payloads) {
