@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 
 import { getBellItems } from "@/lib/campaigns/service";
-import { getUserCampaignReadClient } from "@/lib/campaigns/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { supabaseServer } from "@/lib/supabase/server";
 
@@ -128,7 +127,11 @@ export async function GET(request: Request) {
     }
 
     const userId = user.id;
-    const campaignClient = await getUserCampaignReadClient();
+    // Use admin client to avoid RLS/policy mismatches when reading persisted
+    // campaign state (read_at, opened_at, etc.) for the current user.
+    // This keeps topbar read status consistent with mark-read/campaign APIs
+    // that also write using admin privileges.
+    const campaignClient = supabaseAdmin();
 
     let notifications: NotificationRow[] = [];
     const notificationsResult = await admin
