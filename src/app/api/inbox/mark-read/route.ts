@@ -108,19 +108,11 @@ export async function POST(request: Request) {
         } else {
           return NextResponse.json({ ok: false, error: updateError.message }, { status: 500 });
         }
-       
       }
-
-codex/fix-status-update-issues-from-database-dd63i9
-      const campaignReadAllResult = await supabase.rpc("mark_all_campaigns_read");
-
 
       // IMPORTANT: keep user auth context for RPC auth.uid(); service-role can no-op here.
       const campaignReadAllResult = await supabase.rpc("mark_all_campaigns_read");
 
-      const campaignClient = supabaseAdmin();
-
-staging
       if (campaignReadAllResult.error) {
         return NextResponse.json({ ok: false, error: campaignReadAllResult.error.message }, { status: 500 });
       }
@@ -144,26 +136,21 @@ staging
       if (!campaignId) {
         return NextResponse.json({ ok: false, error: "campaignId is required" }, { status: 400 });
       }
+
       const parsedCampaignId = Number.parseInt(campaignId, 10);
       if (!Number.isFinite(parsedCampaignId)) {
         return NextResponse.json({ ok: false, error: "campaignId must be numeric" }, { status: 400 });
       }
-codex/fix-status-update-issues-from-database-dd63i9
-      const campaignReadResult = await supabase.rpc("mark_campaign_read", {
-
 
       // IMPORTANT: keep user auth context for RPC auth.uid(); service-role can no-op here.
       const campaignReadResult = await supabase.rpc("mark_campaign_read", {
-
-      const campaignClient = supabaseAdmin();
-      const campaignReadResult = await campaignClient.rpc("mark_campaign_read", {
-
-        staging
         p_campaign_id: parsedCampaignId,
       });
+
       if (campaignReadResult.error) {
         return NextResponse.json({ ok: false, error: campaignReadResult.error.message }, { status: 500 });
       }
+
       return NextResponse.json({ ok: true });
     }
 
