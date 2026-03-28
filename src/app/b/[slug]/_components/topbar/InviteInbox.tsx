@@ -184,7 +184,10 @@ export default function InviteInbox({
     );
     setActiveId(notificationId);
     try {
-      const res = isCampaignItem && campaignId
+      if (isCampaignItem && !campaignId) {
+        throw new Error("Missing campaignId for campaign notification");
+      }
+      const res = isCampaignItem
         ? await fetch("/api/campaigns/read", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
