@@ -224,7 +224,7 @@ export type CampaignDatabase = {
           popup_clicked_at: string | null;
           read_at: string | null;
           dismissed_at: string | null;
-          completed_at: string | null;
+          survey_completed_at: string | null;
           updated_at: string | null;
         };
         Insert: {
@@ -241,7 +241,7 @@ export type CampaignDatabase = {
           popup_clicked_at?: string | null;
           read_at?: string | null;
           dismissed_at?: string | null;
-          completed_at?: string | null;
+          survey_completed_at?: string | null;
         };
         Update: {
           delivered_at?: string | null;
@@ -255,7 +255,7 @@ export type CampaignDatabase = {
           popup_clicked_at?: string | null;
           read_at?: string | null;
           dismissed_at?: string | null;
-          completed_at?: string | null;
+          survey_completed_at?: string | null;
         };
       };
       user_roles: {
