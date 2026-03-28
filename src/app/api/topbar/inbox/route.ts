@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { resolveCampaignCompletionState } from "@/lib/campaigns/completion-state";
-import { getBellItems } from "@/lib/campaigns/service";
+import { getSurveyAnswersForUser } from "@/lib/campaigns/service";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { supabaseServer } from "@/lib/supabase/server";
 
@@ -59,6 +59,8 @@ function getStringField(record: RawNotificationRow, keys: string[]) {
   for (const key of keys) {
     const value = record[key];
     if (typeof value === "string" && value.trim()) return value.trim();
+    if (typeof value === "number" && Number.isFinite(value)) return String(value);
+    if (typeof value === "bigint") return String(value);
   }
   return null;
 }
@@ -79,6 +81,28 @@ function getObjectField(record: RawNotificationRow, keys: string[]) {
     }
   }
   return {};
+}
+
+function pickLatestTimestampByCampaignId(
+  rows: RawNotificationRow[],
+  campaignIdKeys: string[],
+  timestampKeys: string[],
+  allowedCampaignIds: Set<string>,
+) {
+  const result = new Map<string, string>();
+
+  for (const row of rows) {
+    const campaignId = getStringField(row, campaignIdKeys);
+    const timestamp = getStringField(row, timestampKeys);
+    if (!campaignId || !timestamp || !allowedCampaignIds.has(campaignId)) continue;
+
+    const previous = result.get(campaignId);
+    if (!previous || new Date(previous).getTime() < new Date(timestamp).getTime()) {
+      result.set(campaignId, timestamp);
+    }
+  }
+
+  return result;
 }
 
 function normalizeNotificationRow(record: RawNotificationRow): NotificationRow | null {
@@ -128,12 +152,6 @@ export async function GET(request: Request) {
     }
 
     const userId = user.id;
-    // Use admin client to avoid RLS/policy mismatches when reading persisted
-    // campaign state (read_at, opened_at, etc.) for the current user.
-    // This keeps topbar read status consistent with mark-read/campaign APIs
-    // that also write using admin privileges.
-    const campaignClient = supabaseAdmin();
-
     let notifications: NotificationRow[] = [];
     const notificationsCompatResult = await admin
       .from("notifications_compat")
@@ -375,27 +393,76 @@ export async function GET(request: Request) {
       (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
     );
 
-    let campaignItems = [] as Awaited<ReturnType<typeof getBellItems>>;
-    try {
-      campaignItems = await getBellItems(campaignClient, userId);
-    } catch {
-      campaignItems = [];
+    let campaignFeedRows = [] as RawNotificationRow[];
+    const campaignFeedResult = await admin
+      .from("campaign_notifications_feed")
+      .select("*")
+      .eq("recipient_user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(200);
+
+    if (campaignFeedResult.error) {
+      if (!isMissingRelationError(campaignFeedResult.error, "campaign_notifications_feed")) {
+        return NextResponse.json(
+          { ok: false, error: campaignFeedResult.error.message },
+          { status: 500 },
+        );
+      }
+    } else {
+      campaignFeedRows = (campaignFeedResult.data ?? []) as RawNotificationRow[];
     }
-    const campaignIds = campaignItems.map((item) => item.id).filter(Boolean);
+
+    const campaignRows = campaignFeedRows
+      .map(normalizeNotificationRow)
+      .filter((row): row is NotificationRow => Boolean(row))
+      .filter((row) => row.recipient_user_id === userId)
+      .filter((row) => {
+        const type = String(row.type ?? "").toLowerCase();
+        const entityType = String(row.entity_type ?? "").toLowerCase();
+        return (
+          entityType === "campaign" ||
+          type === "campaign_announcement" ||
+          type === "campaign_survey"
+        );
+      });
+
+    const campaignIds = campaignRows
+      .map((row) => String(row.entity_id ?? "").trim())
+      .filter(Boolean);
+    const campaignIdSet = new Set(campaignIds);
+    const surveyAnswerPresenceByCampaignId = new Map<string, boolean>();
     const surveyStateByCampaignId = new Map<string, { surveyCompletedAt: string | null; bellOpenedAt: string | null }>();
     const latestSurveyResponseAtByCampaignId = new Map<string, string>();
     const latestCompletedEventAtByCampaignId = new Map<string, string>();
     if (campaignIds.length > 0) {
+      const surveyCampaignIds = campaignRows
+        .filter((row) => row.type === "campaign_survey")
+        .map((row) => String(row.entity_id ?? "").trim())
+        .filter(Boolean);
+
+      await Promise.all(
+        surveyCampaignIds.map(async (campaignId) => {
+          try {
+            const answers = await getSurveyAnswersForUser(admin, userId, campaignId);
+            surveyAnswerPresenceByCampaignId.set(
+              campaignId,
+              Object.values(answers).some((optionIds) => optionIds.length > 0),
+            );
+          } catch {
+            surveyAnswerPresenceByCampaignId.set(campaignId, false);
+          }
+        }),
+      );
+
       const surveyStateResult = await admin
         .from("user_campaign_states")
-        .select("campaign_id,survey_completed_at,bell_opened_at")
-        .eq("user_id", userId)
-        .in("campaign_id", campaignIds);
+        .select("campaign_id,survey_completed_at,bell_opened_at,user_id")
+        .eq("user_id", userId);
 
       if (!surveyStateResult.error) {
         for (const row of surveyStateResult.data ?? []) {
           const campaignId = String(row.campaign_id ?? "").trim();
-          if (!campaignId) continue;
+          if (!campaignId || !campaignIdSet.has(campaignId)) continue;
           surveyStateByCampaignId.set(campaignId, {
             surveyCompletedAt: typeof (row as { survey_completed_at?: unknown }).survey_completed_at === "string"
               ? String((row as { survey_completed_at?: unknown }).survey_completed_at)
@@ -407,87 +474,108 @@ export async function GET(request: Request) {
 
       const surveyResponseRows = await admin
         .from("survey_responses")
-        .select("campaign_id,created_at")
-        .eq("user_id", userId)
-        .in("campaign_id", campaignIds);
+        .select("*")
+        .eq("user_id", userId);
       if (!surveyResponseRows.error) {
-        for (const row of surveyResponseRows.data ?? []) {
-          const campaignId = String(row.campaign_id ?? "").trim();
-          const createdAt = typeof row.created_at === "string" ? row.created_at : "";
-          if (!campaignId || !createdAt) continue;
-          const prev = latestSurveyResponseAtByCampaignId.get(campaignId);
-          if (!prev || new Date(prev).getTime() < new Date(createdAt).getTime()) {
-            latestSurveyResponseAtByCampaignId.set(campaignId, createdAt);
-          }
+        const latestSurveyResponseByCampaignId = pickLatestTimestampByCampaignId(
+          (surveyResponseRows.data ?? []) as RawNotificationRow[],
+          ["campaign_id", "campaignId", "survey_id"],
+          ["created_at", "inserted_at", "updated_at"],
+          campaignIdSet,
+        );
+        for (const [campaignId, createdAt] of latestSurveyResponseByCampaignId.entries()) {
+          latestSurveyResponseAtByCampaignId.set(campaignId, createdAt);
         }
       }
 
       const completedEventRows = await admin
         .from("event_log")
-        .select("entity_id,created_at,event_type,target_user_id")
+        .select("entity_id,created_at,event_type,target_user_id,metadata")
         .eq("event_type", "campaign_completed")
-        .eq("target_user_id", userId)
-        .in("entity_id", campaignIds);
+        .eq("target_user_id", userId);
       if (!completedEventRows.error) {
-        for (const row of completedEventRows.data ?? []) {
-          const campaignId = String(row.entity_id ?? "").trim();
-          const createdAt = typeof row.created_at === "string" ? row.created_at : "";
-          if (!campaignId || !createdAt) continue;
-          const prev = latestCompletedEventAtByCampaignId.get(campaignId);
-          if (!prev || new Date(prev).getTime() < new Date(createdAt).getTime()) {
-            latestCompletedEventAtByCampaignId.set(campaignId, createdAt);
-          }
+        const normalizedRows = ((completedEventRows.data ?? []) as RawNotificationRow[]).map((row) => ({
+          ...row,
+          entity_id:
+            getStringField(row, ["entity_id"]) ??
+            getStringField(getObjectField(row, ["metadata"]), ["campaign_id", "campaignId"]) ??
+            "",
+        }));
+        const latestCompletedByCampaignId = pickLatestTimestampByCampaignId(
+          normalizedRows,
+          ["entity_id"],
+          ["created_at", "inserted_at", "updated_at"],
+          campaignIdSet,
+        );
+        for (const [campaignId, createdAt] of latestCompletedByCampaignId.entries()) {
+          latestCompletedEventAtByCampaignId.set(campaignId, createdAt);
         }
       }
     }
-    const campaignNotifications: InboxNotification[] = campaignItems
-      .filter((item) => String(item.id ?? "").trim().length > 0)
-      .map((item) => ({
-        id: `campaign:${item.id}`,
-        type: item.type === "survey" ? "campaign_survey" : "campaign_announcement",
-        entity_type: "campaign",
-        entity_id: item.id,
+    const campaignNotifications: InboxNotification[] = campaignRows
+      .filter((row) => String(row.id ?? "").trim().length > 0)
+      .map((row) => {
+        const campaignId = String(row.entity_id ?? "").trim();
+        const metadata = (row.metadata as Record<string, unknown>) ?? {};
+        const isSurvey = row.type === "campaign_survey";
+        const surveyState = surveyStateByCampaignId.get(campaignId);
+        const completion = resolveCampaignCompletionState({
+          surveyCompletedAt: surveyState?.surveyCompletedAt ?? null,
+          latestSurveyResponseAt: latestSurveyResponseAtByCampaignId.get(campaignId) ?? null,
+          latestCompletedEventAt: latestCompletedEventAtByCampaignId.get(campaignId) ?? null,
+          isCompletedFlag:
+            isSurvey &&
+            (
+              (
+                typeof metadata.survey_state === "string"
+                  ? String(metadata.survey_state).toLowerCase() === "voted"
+                  : false
+              ) ||
+              surveyAnswerPresenceByCampaignId.get(campaignId) === true
+            ),
+        });
+        const surveyStateLabel = isSurvey
+          ? completion.isCompleted
+            ? "Voted"
+            : "Not answered"
+          : null;
+
+        return {
+          id: String(row.id),
+          type: row.type as NotificationType,
+          entity_type: "campaign",
+          entity_id: campaignId,
         order_id: null,
         order_number: null,
-        title: item.title,
+        title: String(metadata.title ?? `${row.type} notification`),
         preview:
-          item.type === "survey" && (item.isCompleted || item.surveyStateLabel === "Voted")
+          isSurvey && surveyStateLabel === "Voted"
             ? "Voted"
-            : item.type === "survey" && item.isDismissed
+            : isSurvey && surveyStateLabel === "Not answered"
               ? "Not answered"
-              : item.body ?? null,
+              : null,
         actor_label: null,
-        is_read: item.isRead,
-        created_at: item.createdAt ?? new Date().toISOString(),
+        is_read: Boolean(row.is_read),
+        created_at: String(row.created_at ?? new Date().toISOString()),
         metadata: {
-          campaign_id: item.id,
-          campaign_type: item.type,
-          channels: item.channels,
-          delivery_mode: item.deliveryMode,
-          has_popup: item.channels.includes("popup_right"),
-          has_bell: item.channels.includes("bell"),
-          survey_state:
-            item.type === "survey" && (item.isCompleted || item.surveyStateLabel === "Voted")
+          ...metadata,
+          campaign_id: campaignId,
+          campaign_type: isSurvey ? "survey" : "announcement",
+          survey_state: isSurvey
+            ? surveyStateLabel === "Voted"
               ? "voted"
-              : item.type === "survey" && item.isDismissed
-                ? "not_answered"
-                : null,
+              : "not_answered"
+            : null,
           survey_unseen_in_bell: (() => {
-            if (item.type !== "survey") return false;
-            const surveyState = surveyStateByCampaignId.get(item.id);
-            const completion = resolveCampaignCompletionState({
-              surveyCompletedAt: surveyState?.surveyCompletedAt ?? null,
-              latestSurveyResponseAt: latestSurveyResponseAtByCampaignId.get(item.id) ?? null,
-              latestCompletedEventAt: latestCompletedEventAtByCampaignId.get(item.id) ?? null,
-              isCompletedFlag: item.isCompleted || item.surveyStateLabel === "Voted",
-            });
+            if (!isSurvey) return false;
             if (!completion.isCompleted || !completion.effectiveCompletedAt) return false;
             if (!surveyState?.bellOpenedAt) return true;
             return new Date(surveyState.bellOpenedAt).getTime() < new Date(completion.effectiveCompletedAt).getTime();
           })(),
-          source: "campaigns",
+          source: "campaign_notifications_feed",
         },
-      }));
+        };
+      });
 
     const mergedWithCampaigns = [...mergedNotifications, ...campaignNotifications].sort(
       (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),

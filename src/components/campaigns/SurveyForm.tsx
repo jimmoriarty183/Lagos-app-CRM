@@ -229,7 +229,7 @@ export function SurveyForm({
             Voted
           </span>
         )}
-        {onClose ? (
+        {onClose && !readOnly ? (
           <button
             type="button"
             onClick={onClose}
