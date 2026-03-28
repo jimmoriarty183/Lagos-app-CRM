@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { resolveCampaignCompletionState } from "@/lib/campaigns/completion-state";
 import { getBellItems } from "@/lib/campaigns/service";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { supabaseServer } from "@/lib/supabase/server";
@@ -165,6 +166,13 @@ export async function GET(request: Request) {
     notifications = (notificationsRows ?? [])
       .map(normalizeNotificationRow)
       .filter((row): row is NotificationRow => Boolean(row))
+      .filter((row) => {
+        const type = String(row.type ?? "").toLowerCase();
+        const entityType = String(row.entity_type ?? "").toLowerCase();
+        if (entityType === "campaign") return false;
+        if (type === "campaign_announcement" || type === "campaign_survey") return false;
+        return true;
+      })
       .filter((row) => {
         if (!row.recipient_user_id) return false;
         return row.recipient_user_id === userId;
@@ -373,6 +381,65 @@ export async function GET(request: Request) {
     } catch {
       campaignItems = [];
     }
+    const campaignIds = campaignItems.map((item) => item.id).filter(Boolean);
+    const surveyStateByCampaignId = new Map<string, { surveyCompletedAt: string | null; bellOpenedAt: string | null }>();
+    const latestSurveyResponseAtByCampaignId = new Map<string, string>();
+    const latestCompletedEventAtByCampaignId = new Map<string, string>();
+    if (campaignIds.length > 0) {
+      const surveyStateResult = await admin
+        .from("user_campaign_states")
+        .select("campaign_id,survey_completed_at,bell_opened_at")
+        .eq("user_id", userId)
+        .in("campaign_id", campaignIds);
+
+      if (!surveyStateResult.error) {
+        for (const row of surveyStateResult.data ?? []) {
+          const campaignId = String(row.campaign_id ?? "").trim();
+          if (!campaignId) continue;
+          surveyStateByCampaignId.set(campaignId, {
+            surveyCompletedAt: typeof (row as { survey_completed_at?: unknown }).survey_completed_at === "string"
+              ? String((row as { survey_completed_at?: unknown }).survey_completed_at)
+              : null,
+            bellOpenedAt: typeof row.bell_opened_at === "string" ? row.bell_opened_at : null,
+          });
+        }
+      }
+
+      const surveyResponseRows = await admin
+        .from("survey_responses")
+        .select("campaign_id,created_at")
+        .eq("user_id", userId)
+        .in("campaign_id", campaignIds);
+      if (!surveyResponseRows.error) {
+        for (const row of surveyResponseRows.data ?? []) {
+          const campaignId = String(row.campaign_id ?? "").trim();
+          const createdAt = typeof row.created_at === "string" ? row.created_at : "";
+          if (!campaignId || !createdAt) continue;
+          const prev = latestSurveyResponseAtByCampaignId.get(campaignId);
+          if (!prev || new Date(prev).getTime() < new Date(createdAt).getTime()) {
+            latestSurveyResponseAtByCampaignId.set(campaignId, createdAt);
+          }
+        }
+      }
+
+      const completedEventRows = await admin
+        .from("event_log")
+        .select("entity_id,created_at,event_type,target_user_id")
+        .eq("event_type", "campaign_completed")
+        .eq("target_user_id", userId)
+        .in("entity_id", campaignIds);
+      if (!completedEventRows.error) {
+        for (const row of completedEventRows.data ?? []) {
+          const campaignId = String(row.entity_id ?? "").trim();
+          const createdAt = typeof row.created_at === "string" ? row.created_at : "";
+          if (!campaignId || !createdAt) continue;
+          const prev = latestCompletedEventAtByCampaignId.get(campaignId);
+          if (!prev || new Date(prev).getTime() < new Date(createdAt).getTime()) {
+            latestCompletedEventAtByCampaignId.set(campaignId, createdAt);
+          }
+        }
+      }
+    }
     const campaignNotifications: InboxNotification[] = campaignItems
       .filter((item) => String(item.id ?? "").trim().length > 0)
       .map((item) => ({
@@ -405,6 +472,19 @@ export async function GET(request: Request) {
               : item.type === "survey" && item.isDismissed
                 ? "not_answered"
                 : null,
+          survey_unseen_in_bell: (() => {
+            if (item.type !== "survey") return false;
+            const surveyState = surveyStateByCampaignId.get(item.id);
+            const completion = resolveCampaignCompletionState({
+              surveyCompletedAt: surveyState?.surveyCompletedAt ?? null,
+              latestSurveyResponseAt: latestSurveyResponseAtByCampaignId.get(item.id) ?? null,
+              latestCompletedEventAt: latestCompletedEventAtByCampaignId.get(item.id) ?? null,
+              isCompletedFlag: item.isCompleted || item.surveyStateLabel === "Voted",
+            });
+            if (!completion.isCompleted || !completion.effectiveCompletedAt) return false;
+            if (!surveyState?.bellOpenedAt) return true;
+            return new Date(surveyState.bellOpenedAt).getTime() < new Date(completion.effectiveCompletedAt).getTime();
+          })(),
           source: "campaigns",
         },
       }));
