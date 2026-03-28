@@ -148,7 +148,12 @@ export default function InviteInbox({
       void load();
     };
     window.addEventListener("campaign:state-changed", onCampaignStateChanged);
-    return () => window.removeEventListener("campaign:state-changed", onCampaignStateChanged);
+    return () => {
+      window.removeEventListener(
+        "campaign:state-changed",
+        onCampaignStateChanged,
+      );
+    };
   }, [load]);
 
   useEffect(() => {

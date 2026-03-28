@@ -111,7 +111,7 @@ export async function POST(request: Request) {
         }
       }
 
-      await markAllCampaignsRead(supabase, userId);
+      await markAllCampaignsRead(admin, userId);
 
       return NextResponse.json({ ok: true });
     }
@@ -133,7 +133,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ ok: false, error: "campaignId is required" }, { status: 400 });
       }
 
-      await markCampaignRead(supabase, userId, campaignId);
+      await markCampaignRead(admin, userId, campaignId);
 
       return NextResponse.json({ ok: true });
     }

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { getRequiredUserId } from "@/lib/campaigns/server";
 import { markCampaignRead } from "@/lib/campaigns/service";
-import { supabaseServerAction } from "@/lib/supabase/server";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 
 export async function POST(request: Request) {
   try {
@@ -15,7 +15,7 @@ export async function POST(request: Request) {
 
     const userId = await getRequiredUserId();
 
-    const client = await supabaseServerAction();
+    const client = supabaseAdmin();
     await markCampaignRead(client, userId, campaignId);
 
     return NextResponse.json({ ok: true });
