@@ -574,7 +574,11 @@ async function upsertCampaignState(
         onConflict: "campaign_id,user_id",
       });
     if (!result.error) return;
-    if (isInvalidInputSyntaxError(result.error)) return;
+    if (isInvalidInputSyntaxError(result.error)) {
+      throw new Error(
+        `Invalid campaign state payload (campaign_id/user_id). campaignId=${campaignId} userId=${userId}`,
+      );
+    }
 
     const missingColumn = extractMissingColumnName(result.error, "user_campaign_states");
     if (missingColumn && missingColumn in payload && !triedMissingColumns.has(missingColumn)) {
