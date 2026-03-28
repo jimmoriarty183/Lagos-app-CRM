@@ -8,16 +8,29 @@ import React, {
   useState,
   useTransition,
 } from "react";
-import { Bell, BellRing, Loader2 } from "lucide-react";
+import {
+  AtSign,
+  Bell,
+  BellRing,
+  Check,
+  Loader2,
+  Megaphone,
+  MessageCircleWarning,
+  Package,
+  ShieldAlert,
+  UserPlus,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import type {
   InboxNotification,
   NotificationType,
 } from "@/app/api/topbar/inbox/route";
+import { cn } from "@/components/ui/utils";
 import {
   getInboxBellIndicatorState,
-  isAnsweredSurvey,
+  getInboxNotificationDisplayState,
 } from "@/lib/inbox/display-state";
 
 type Props = {
@@ -67,27 +80,41 @@ function formatNotificationTime(value: string) {
   });
 }
 
-function getNotificationIcon(type: NotificationType | string) {
-  switch (type) {
-    case "mention":
-    case "mention_received":
-      return "@";
-    case "order_assigned":
-    case "order_reassigned":
-      return "→";
-    case "important_comment_received":
-      return "💬";
-    case "support_request_updated":
-      return "🛠";
-    case "invitation_received":
-      return "✉️";
-    case "campaign_announcement":
-      return "📢";
-    case "campaign_survey":
-      return "🗳";
-    default:
-      return "•";
-  }
+const NOTIFICATION_ICONS = {
+  mention: AtSign,
+  mention_received: AtSign,
+  order_assigned: Package,
+  order_reassigned: Package,
+  important_comment_received: MessageCircleWarning,
+  support_request_updated: ShieldAlert,
+  invitation_received: UserPlus,
+  campaign_announcement: Megaphone,
+  campaign_survey: Check,
+} as const satisfies Partial<Record<NotificationType, LucideIcon>>;
+
+function NotificationIcon({
+  type,
+  emphasized,
+}: {
+  type: NotificationType | string;
+  emphasized: boolean;
+}) {
+  const IconComponent =
+    NOTIFICATION_ICONS[type as keyof typeof NOTIFICATION_ICONS] ?? Bell;
+
+  return (
+    <div
+      className={cn(
+        "mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition-colors",
+        emphasized
+          ? "border-indigo-200 bg-white text-indigo-600"
+          : "border-slate-200 bg-slate-50 text-slate-500 group-hover:text-slate-700",
+      )}
+      aria-hidden="true"
+    >
+      <IconComponent className="h-4 w-4" />
+    </div>
+  );
 }
 
 export default function InviteInbox({
@@ -110,15 +137,12 @@ export default function InviteInbox({
   const answeredUnseenCount = bellState.answeredUnseenCount;
 
   const { newNotifications, earlierNotifications } = useMemo(() => {
-    const now = new Date();
-    const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-
     const newItems: InboxNotification[] = [];
     const earlierItems: InboxNotification[] = [];
 
     for (const item of items) {
-      const createdAt = new Date(item.created_at);
-      if (createdAt >= twentyFourHoursAgo) {
+      const displayState = getInboxNotificationDisplayState(item);
+      if (displayState.tone === "new") {
         newItems.push(item);
       } else {
         earlierItems.push(item);
@@ -163,7 +187,7 @@ export default function InviteInbox({
       setItems([]);
       return;
     }
-    load();
+    void load();
   }, [businessId, load]);
 
   useEffect(() => {
@@ -358,10 +382,20 @@ export default function InviteInbox({
 
   const title = useMemo(() => {
     if (unreadCount === 0 && answeredUnseenCount === 0) return "Inbox is clear";
-    if (answeredUnseenCount > 0 && unreadCount === 0) return `${answeredUnseenCount} answered survey updates`;
+    if (answeredUnseenCount > 0 && unreadCount === 0) {
+      return `${answeredUnseenCount} answered survey updates`;
+    }
     if (unreadCount === 1) return "1 unread notification";
     return `${unreadCount} unread notifications`;
   }, [answeredUnseenCount, unreadCount]);
+
+  const summaryCount = unreadCount + answeredUnseenCount;
+  const summaryLabel =
+    summaryCount > 0
+      ? `${summaryCount} new ${summaryCount === 1 ? "update" : "updates"}`
+      : items.length === 0
+        ? "No notifications"
+        : "All caught up";
 
   return (
     <div className="relative" ref={ref}>
@@ -373,14 +407,16 @@ export default function InviteInbox({
         }}
         aria-label="Inbox"
         title={title}
-        className={`relative flex h-9 w-9 items-center justify-center rounded-xl border bg-white/90 shadow-sm transition ${
+        className={cn(
+          "relative flex h-9 w-9 items-center justify-center rounded-xl border bg-white/90 shadow-sm transition",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-2",
           open
             ? "border-blue-300 bg-blue-50/80"
-            : "border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-[#FCFCFD]"
-        }`}
+            : "border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-[#FCFCFD]",
+        )}
       >
-        {open || unreadCount > 0 || answeredUnseenCount > 0 ? (
-          <BellRing className={`h-4 w-4 transition ${unreadCount > 0 ? "text-[#6366F1]" : "text-emerald-600"}`} />
+        {open || unreadCount > 0 ? (
+          <BellRing className="h-4 w-4 text-[#6366F1] transition" />
         ) : (
           <Bell className="h-4 w-4 text-slate-700 transition" />
         )}
@@ -388,14 +424,6 @@ export default function InviteInbox({
           <span className="absolute -right-1 -top-1 inline-flex min-w-5 items-center justify-center rounded-full bg-[#6366F1] px-1.5 py-0.5 text-[10px] font-bold text-white">
             {unreadCount > 99 ? "99+" : unreadCount}
           </span>
-        ) : answeredUnseenCount > 0 ? (
-          <>
-            <span className="absolute -right-1.5 -top-1.5 inline-flex h-4 w-4 animate-ping rounded-full bg-emerald-400/70" />
-            <span className="absolute -right-0.5 -top-0.5 inline-flex h-3 w-3 rounded-full border border-white bg-emerald-500" />
-            <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 rounded-full bg-emerald-600 px-1 py-[1px] text-[8px] font-bold uppercase tracking-[0.04em] text-white shadow">
-              New
-            </span>
-          </>
         ) : null}
       </button>
 
@@ -410,19 +438,15 @@ export default function InviteInbox({
 
           <div className="fixed left-4 right-4 top-[calc(env(safe-area-inset-top)+5rem)] z-50 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_20px_44px_-22px_rgba(15,23,42,0.65)] sm:absolute sm:left-auto sm:right-0 sm:top-[calc(100%+0.5rem)] sm:mt-0 sm:w-[430px] sm:max-w-[calc(100vw-1.5rem)]">
             <div className="border-b border-slate-100 bg-white/95 px-4 py-3 backdrop-blur">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-[15px] font-bold text-indigo-950">
-                    Inbox
-                  </div>
-                  <div className="mt-1 text-xs text-slate-500">
-                    {unreadCount > 0
-                      ? `${unreadCount} unread`
-                      : answeredUnseenCount > 0
-                        ? `${answeredUnseenCount} answered`
-                        : items.length === 0
-                          ? "No notifications"
-                          : "All caught up"}
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <div className="text-[15px] font-semibold text-slate-950">
+                      Inbox
+                    </div>
+                    <div className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600">
+                      {summaryLabel}
+                    </div>
                   </div>
                 </div>
                 {items.length > 0 ? (
@@ -430,19 +454,12 @@ export default function InviteInbox({
                     type="button"
                     onClick={markAllAsRead}
                     disabled={isPending || unreadCount === 0}
-                    className="inline-flex h-8 items-center rounded-lg border border-indigo-300 bg-indigo-600 px-3 text-[11px] font-semibold !text-white shadow-sm transition hover:border-indigo-400 hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex h-8 shrink-0 items-center rounded-lg px-2.5 text-[12px] font-medium text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     Mark all as read
                   </button>
                 ) : null}
               </div>
-              {answeredUnseenCount > 0 ? (
-                <div className="mt-2 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-[11px] font-semibold text-emerald-800">
-                  {answeredUnseenCount === 1
-                    ? "1 survey has a new answer you haven't viewed in bell yet."
-                    : `${answeredUnseenCount} surveys have new answers you haven't viewed in bell yet.`}
-                </div>
-              ) : null}
             </div>
 
             {error ? (
@@ -471,7 +488,7 @@ export default function InviteInbox({
                 <div className="divide-y divide-slate-100">
                   {newNotifications.length > 0 ? (
                     <div>
-                      <div className="sticky top-0 z-[1] bg-slate-50/90 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-400 backdrop-blur">
+                      <div className="sticky top-0 z-[1] bg-white/95 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400 backdrop-blur">
                         New
                       </div>
                       {newNotifications.map((notification, index) => (
@@ -480,7 +497,6 @@ export default function InviteInbox({
                           notification={notification}
                           activeId={activeId}
                           onClick={handleNotificationClick}
-                          onMarkRead={markAsRead}
                         />
                       ))}
                     </div>
@@ -488,7 +504,7 @@ export default function InviteInbox({
 
                   {earlierNotifications.length > 0 ? (
                     <div>
-                      <div className="sticky top-0 z-[1] bg-slate-50/90 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-400 backdrop-blur">
+                      <div className="sticky top-0 z-[1] bg-white/95 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400 backdrop-blur">
                         Earlier
                       </div>
                       {earlierNotifications.map((notification, index) => (
@@ -497,7 +513,6 @@ export default function InviteInbox({
                           notification={notification}
                           activeId={activeId}
                           onClick={handleNotificationClick}
-                          onMarkRead={markAsRead}
                         />
                       ))}
                     </div>
@@ -516,117 +531,86 @@ type NotificationItemProps = {
   notification: InboxNotification;
   activeId: string;
   onClick: (notification: InboxNotification) => void;
-  onMarkRead: (notification: InboxNotification) => void;
 };
 
 function NotificationItem({
   notification,
   activeId,
   onClick,
-  onMarkRead,
 }: NotificationItemProps) {
   const isBusy = activeId === notification.id;
-  const isUnread = !notification.is_read;
-  const isSurveyAnsweredUnseen =
-    isCampaignNotification(notification) &&
-    notification.type === "campaign_survey" &&
-    notification.metadata?.survey_unseen_in_bell === true;
+  const displayState = getInboxNotificationDisplayState(notification);
 
   return (
-    <div
-      className={`group flex w-full items-start gap-3 px-4 py-3.5 text-left transition ${
-        isUnread
-          ? "bg-indigo-50/45 hover:bg-indigo-50/80"
-          : "bg-white hover:bg-slate-50"
-      }`}
+    <button
+      type="button"
+      onClick={() => onClick(notification)}
+      disabled={isBusy}
+      className={cn(
+        "group flex w-full items-start gap-3 px-4 py-2.5 text-left transition duration-150 ease-out",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/70 focus-visible:ring-inset",
+        "disabled:cursor-not-allowed disabled:opacity-70",
+        displayState.emphasized
+          ? "bg-indigo-50/55 hover:bg-indigo-50 active:bg-indigo-100/80"
+          : "bg-white hover:bg-slate-50 active:bg-slate-100/80",
+      )}
+      aria-label={`${notification.title}. ${displayState.srLabel}. ${formatNotificationTime(notification.created_at)}.`}
     >
-      <button
-        type="button"
-        onClick={() => onClick(notification)}
-        disabled={isBusy}
-        className="flex min-w-0 flex-1 items-start gap-3 text-left disabled:cursor-not-allowed"
-      >
-        <div
-          className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${
-            isUnread ? "bg-[#6366F1] text-white" : "bg-slate-100 text-slate-500"
-          }`}
-        >
-          {getNotificationIcon(notification.type)}
-        </div>
+      <NotificationIcon
+        type={notification.type}
+        emphasized={displayState.emphasized}
+      />
 
-        <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1">
+        <div className="flex items-start gap-3">
           <div
-            className={`text-[13px] leading-snug ${
-              isUnread
-                ? "font-semibold text-indigo-950"
-                : "font-normal text-slate-700"
-            }`}
+            className={cn(
+              "min-w-0 flex-1 truncate text-[13px] leading-5",
+              displayState.emphasized
+                ? "font-semibold text-slate-950"
+                : "font-medium text-slate-700",
+            )}
           >
             {notification.title}
           </div>
-          {notification.preview ? (
-            <div className="mt-0.5 truncate text-[12px] text-slate-500">
-              {notification.preview}
-            </div>
-          ) : null}
-          <div className="mt-1.5 text-[11px] font-semibold text-[#4f46e5]">
-            {notification.type === "campaign_survey"
-              ? "Open survey"
-              : "Open notification"}
-          </div>
-          {isCampaignNotification(notification) ? (
-            <div className="mt-1.5 flex flex-wrap gap-1.5">
-              <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
-                {notification.metadata?.delivery_mode === "both"
-                  ? "Bell + Popup"
-                  : notification.metadata?.delivery_mode === "popup_only"
-                    ? "Popup"
-                    : "Bell"}
-              </span>
-              <span
-                className={[
-                  "rounded-full border px-2 py-0.5 text-[10px] font-semibold",
-                  isUnread
-                    ? "border-blue-200 bg-blue-50 text-blue-700"
-                    : "border-slate-200 bg-slate-100 text-slate-600",
-                ].join(" ")}
-              >
-                {isUnread ? "Unread" : "Read"}
-              </span>
-              {isAnsweredSurvey(notification) || notification.preview === "Voted" ? (
-                <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
-                  Voted
-                </span>
-              ) : null}
-              {isSurveyAnsweredUnseen ? (
-                <span className="rounded-full border border-emerald-300 bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
-                  Answered • New in bell
-                </span>
-              ) : null}
-            </div>
-          ) : null}
-          <div className="mt-1 text-[11px] text-slate-400">
-            {formatNotificationTime(notification.created_at)}
+          <div className="shrink-0">
+            <NotificationStatusIndicator displayState={displayState} />
           </div>
         </div>
-      </button>
+        <div className="mt-0.5 text-[11px] text-slate-400">
+          {formatNotificationTime(notification.created_at)}
+        </div>
+      </div>
+    </button>
+  );
+}
 
-      {isUnread ? (
-        <div className="mt-1 flex shrink-0 flex-col items-end gap-2">
-          <div className="h-2 w-2 rounded-full bg-[#6366F1]" />
-          <button
-            type="button"
-            onClick={(event) => {
-              event.preventDefault();
-              event.stopPropagation();
-              onMarkRead(notification);
-            }}
-            className="rounded-md border border-indigo-500 bg-indigo-600 px-2.5 py-1 text-[10px] font-semibold !text-white shadow-sm transition hover:bg-indigo-700"
-          >
-            Mark read
-          </button>
-        </div>
-      ) : null}
-    </div>
+function NotificationStatusIndicator({
+  displayState,
+}: {
+  displayState: ReturnType<typeof getInboxNotificationDisplayState>;
+}) {
+  if (displayState.tone === "new") {
+    return (
+      <span className="inline-flex h-5 items-center rounded-full bg-indigo-600 px-2 text-[10px] font-semibold tracking-[0.02em] text-white">
+        New
+      </span>
+    );
+  }
+
+  if (displayState.tone === "answered") {
+    return (
+      <span className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700">
+        <Check className="h-3 w-3" />
+        <span className="sr-only">Answered</span>
+      </span>
+    );
+  }
+
+  return (
+    <span className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-500">
+      <Check className="h-3 w-3" />
+      <span className="sr-only">Read</span>
+    </span>
   );
 }

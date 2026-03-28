@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { X } from "lucide-react";
 import type { CampaignBellItem, Survey } from "@/lib/campaigns/types";
-import { CampaignDeliveryBadge, CampaignReadBadge, CampaignTypeBadge } from "@/components/campaigns/CampaignBadges";
+import { CampaignReadBadge, CampaignTypeBadge } from "@/components/campaigns/CampaignBadges";
 import { SurveyForm } from "@/components/campaigns/SurveyForm";
 import { Button } from "@/components/ui/button";
 
@@ -204,14 +205,22 @@ export function RightCampaignPopup() {
         <div className="flex items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-1.5">
             <CampaignTypeBadge type={item.type} />
-            <CampaignDeliveryBadge channels={item.channels} />
-            <CampaignReadBadge isRead={item.isRead} />
+            {!isSurveyCompleted ? <CampaignReadBadge isRead={item.isRead} /> : null}
             {isSurvey && isSurveyCompleted ? (
               <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
                 Voted
               </span>
             ) : null}
           </div>
+          <button
+            type="button"
+            onClick={dismiss}
+            disabled={dismissBusy}
+            aria-label="Close popup"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition hover:border-slate-300 hover:text-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
         <div className="mt-2 text-[18px] font-semibold leading-6 text-slate-900">{item.title}</div>
 
