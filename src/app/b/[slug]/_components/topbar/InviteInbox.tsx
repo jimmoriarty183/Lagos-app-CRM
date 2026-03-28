@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, {
   useCallback,
@@ -148,7 +148,11 @@ export default function InviteInbox({
       void load();
     };
     window.addEventListener("campaign:state-changed", onCampaignStateChanged);
-    return () => window.removeEventListener("campaign:state-changed", onCampaignStateChanged);
+    return () =>
+      window.removeEventListener(
+        "campaign:state-changed",
+        onCampaignStateChanged,
+      );
   }, [load]);
 
   useEffect(() => {
@@ -160,41 +164,48 @@ export default function InviteInbox({
     return () => document.removeEventListener("mousedown", onDown);
   }, []);
 
-  const markAsRead = useCallback(async (notificationId: string) => {
-    if (!notificationId || notificationId.startsWith("invite:")) return;
-    const prevItems = items;
-    setItems((current) =>
-      current.map((item) =>
-        item.id === notificationId ? { ...item, is_read: true } : item,
-      ),
-    );
-    setActiveId(notificationId);
-    try {
-      const res = await fetch("/api/inbox/mark-read", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        keepalive: true,
-        body: JSON.stringify({ notificationId }),
-      });
-      const json = await res.json().catch(() => ({}));
-
-      if (!res.ok || !json?.ok) {
-        throw new Error(json?.error || "Failed to mark as read");
-      }
-
+  const markAsRead = useCallback(
+    async (notificationId: string) => {
+      if (!notificationId || notificationId.startsWith("invite:")) return;
+      const prevItems = items;
       setItems((current) =>
         current.map((item) =>
           item.id === notificationId ? { ...item, is_read: true } : item,
         ),
       );
-      window.dispatchEvent(new CustomEvent("campaign:state-changed", { detail: { notificationId, action: "read" } }));
-    } catch {
-      setItems(prevItems);
-      setError("Failed to mark as read");
-    } finally {
-      setActiveId("");
-    }
-  }, [items]);
+      setActiveId(notificationId);
+      try {
+        const res = await fetch("/api/inbox/mark-read", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          keepalive: true,
+          body: JSON.stringify({ notificationId }),
+        });
+        const json = await res.json().catch(() => ({}));
+
+        if (!res.ok || !json?.ok) {
+          throw new Error(json?.error || "Failed to mark as read");
+        }
+
+        setItems((current) =>
+          current.map((item) =>
+            item.id === notificationId ? { ...item, is_read: true } : item,
+          ),
+        );
+        window.dispatchEvent(
+          new CustomEvent("campaign:state-changed", {
+            detail: { notificationId, action: "read" },
+          }),
+        );
+      } catch {
+        setItems(prevItems);
+        setError("Failed to mark as read");
+      } finally {
+        setActiveId("");
+      }
+    },
+    [items],
+  );
 
   const markAllAsRead = useCallback(async () => {
     try {
@@ -209,10 +220,12 @@ export default function InviteInbox({
         throw new Error(json?.error || "Failed to mark all as read");
       }
 
-      setItems((current) =>
-        current.map((item) => ({ ...item, is_read: true })),
+      setItems((current) => current.map((item) => ({ ...item, is_read: true })));
+      window.dispatchEvent(
+        new CustomEvent("campaign:state-changed", {
+          detail: { action: "mark_all_read" },
+        }),
       );
-      window.dispatchEvent(new CustomEvent("campaign:state-changed", { detail: { action: "mark_all_read" } }));
     } catch {
       setError("Failed to mark all as read");
       void load();
@@ -224,16 +237,22 @@ export default function InviteInbox({
       bellOpenSyncKeyRef.current = "";
       return;
     }
+
     if (items.length === 0) return;
+
     const campaignIds = Array.from(
       new Set(
         items
           .filter((item) => item.entity_type === "campaign")
-          .map((item) => String(item.metadata?.campaign_id ?? item.entity_id ?? "").trim())
+          .map((item) =>
+            String(item.metadata?.campaign_id ?? item.entity_id ?? "").trim(),
+          )
           .filter(Boolean),
       ),
     );
+
     if (campaignIds.length === 0) return;
+
     const syncKey = campaignIds.slice().sort().join("|");
     if (bellOpenSyncKeyRef.current === syncKey) return;
     bellOpenSyncKeyRef.current = syncKey;
@@ -247,28 +266,32 @@ export default function InviteInbox({
           body: JSON.stringify({ campaignId, channel: "bell" }),
         }),
       ),
-    );
-  }, [items, open]);
+    ).then(() => {
+      void load();
+    });
+  }, [items, load, open]);
 
   const handleNotificationClick = useCallback(
     (notification: InboxNotification) => {
       const isCampaignItem =
-        notification.type === "campaign_announcement" || notification.type === "campaign_survey";
+        notification.type === "campaign_announcement" ||
+        notification.type === "campaign_survey";
 
-      // Mark as read for all actionable items (campaign + regular notifications).
       if (!notification.is_read && notification.type !== "invitation_received") {
         void markAsRead(notification.id);
       }
 
-      // Navigate based on notification type
       startTransition(() => {
         setOpen(false);
         const supportRequestId = String(
-          notification.metadata?.support_request_id ?? notification.entity_id ?? "",
+          notification.metadata?.support_request_id ??
+            notification.entity_id ??
+            "",
         ).trim();
         const campaignId = String(
           notification.metadata?.campaign_id ?? notification.entity_id ?? "",
         ).trim();
+
         if (isCampaignItem && campaignId) {
           void fetch("/api/campaigns/read", {
             method: "POST",
@@ -288,15 +311,25 @@ export default function InviteInbox({
             keepalive: true,
             body: JSON.stringify({ campaignId, channel: "bell" }),
           });
-          router.push(`/b/${currentBusinessSlug}?campaign=${encodeURIComponent(campaignId)}`);
-        } else if (notification.entity_type === "support_request" && supportRequestId) {
-          router.push(`/b/${currentBusinessSlug}/support/${encodeURIComponent(supportRequestId)}`);
+          router.push(
+            `/b/${currentBusinessSlug}?campaign=${encodeURIComponent(campaignId)}`,
+          );
+        } else if (
+          notification.entity_type === "support_request" &&
+          supportRequestId
+        ) {
+          router.push(
+            `/b/${currentBusinessSlug}/support/${encodeURIComponent(
+              supportRequestId,
+            )}`,
+          );
         } else if (notification.order_id) {
           router.push(
-            `/b/${currentBusinessSlug}?focusOrder=${encodeURIComponent(notification.order_id)}`,
+            `/b/${currentBusinessSlug}?focusOrder=${encodeURIComponent(
+              notification.order_id,
+            )}`,
           );
         } else if (notification.type === "invitation_received") {
-          // For invitations, we could open a modal or navigate to invites page
           router.refresh();
         }
       });
@@ -306,7 +339,9 @@ export default function InviteInbox({
 
   const title = useMemo(() => {
     if (unreadCount === 0 && answeredUnseenCount === 0) return "Inbox is clear";
-    if (answeredUnseenCount > 0 && unreadCount === 0) return `${answeredUnseenCount} answered survey updates`;
+    if (answeredUnseenCount > 0 && unreadCount === 0) {
+      return `${answeredUnseenCount} answered survey updates`;
+    }
     if (unreadCount === 1) return "1 unread notification";
     return `${unreadCount} unread notifications`;
   }, [answeredUnseenCount, unreadCount]);
@@ -328,7 +363,11 @@ export default function InviteInbox({
         }`}
       >
         {open || unreadCount > 0 || answeredUnseenCount > 0 ? (
-          <BellRing className={`h-4 w-4 transition ${unreadCount > 0 ? "text-[#6366F1]" : "text-emerald-600"}`} />
+          <BellRing
+            className={`h-4 w-4 transition ${
+              unreadCount > 0 ? "text-[#6366F1]" : "text-emerald-600"
+            }`}
+          />
         ) : (
           <Bell className="h-4 w-4 text-slate-700 transition" />
         )}
@@ -362,9 +401,9 @@ export default function InviteInbox({
                       ? `${unreadCount} unread`
                       : answeredUnseenCount > 0
                         ? `${answeredUnseenCount} answered`
-                      : items.length === 0
-                        ? "No notifications"
-                        : "All caught up"}
+                        : items.length === 0
+                          ? "No notifications"
+                          : "All caught up"}
                   </div>
                 </div>
                 {items.length > 0 ? (
@@ -390,9 +429,7 @@ export default function InviteInbox({
               {loading ? (
                 <div className="flex items-center justify-center px-4 py-8">
                   <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
-                  <span className="ml-2 text-sm text-slate-500">
-                    Loading...
-                  </span>
+                  <span className="ml-2 text-sm text-slate-500">Loading...</span>
                 </div>
               ) : items.length === 0 ? (
                 <div className="flex flex-col items-center justify-center px-4 py-12">
@@ -479,7 +516,6 @@ function NotificationItem({
         disabled={isBusy}
         className="flex min-w-0 flex-1 items-start gap-3 text-left disabled:cursor-not-allowed"
       >
-        {/* Icon */}
         <div
           className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${
             isUnread ? "bg-[#6366F1] text-white" : "bg-slate-100 text-slate-500"
@@ -488,7 +524,6 @@ function NotificationItem({
           {getNotificationIcon(notification.type)}
         </div>
 
-        {/* Content */}
         <div className="min-w-0 flex-1">
           <div
             className={`text-[13px] leading-snug ${
@@ -505,7 +540,9 @@ function NotificationItem({
             </div>
           ) : null}
           <div className="mt-1.5 text-[11px] font-semibold text-[#4f46e5]">
-            {notification.type === "campaign_survey" ? "Open survey" : "Open notification"}
+            {notification.type === "campaign_survey"
+              ? "Open survey"
+              : "Open notification"}
           </div>
           {notification.entity_type === "campaign" ? (
             <div className="mt-1.5 flex flex-wrap gap-1.5">
@@ -519,12 +556,15 @@ function NotificationItem({
               <span
                 className={[
                   "rounded-full border px-2 py-0.5 text-[10px] font-semibold",
-                  isUnread ? "border-blue-200 bg-blue-50 text-blue-700" : "border-slate-200 bg-slate-100 text-slate-600",
+                  isUnread
+                    ? "border-blue-200 bg-blue-50 text-blue-700"
+                    : "border-slate-200 bg-slate-100 text-slate-600",
                 ].join(" ")}
               >
                 {isUnread ? "Unread" : "Read"}
               </span>
-              {isAnsweredSurvey(notification) || notification.preview === "Voted" ? (
+              {isAnsweredSurvey(notification) ||
+              notification.preview === "Voted" ? (
                 <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
                   Voted
                 </span>
@@ -537,7 +577,6 @@ function NotificationItem({
         </div>
       </button>
 
-      {/* Unread indicator */}
       {isUnread ? (
         <div className="mt-1 flex shrink-0 flex-col items-end gap-2">
           <div className="h-2 w-2 rounded-full bg-[#6366F1]" />
