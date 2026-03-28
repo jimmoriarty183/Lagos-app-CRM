@@ -25,6 +25,29 @@ type Props = {
   currentBusinessSlug: string;
 };
 
+function isCampaignNotification(notification: InboxNotification) {
+  return (
+    notification.entity_type === "campaign" ||
+    notification.id.startsWith("campaign:") ||
+    notification.type === "campaign_announcement" ||
+    notification.type === "campaign_survey"
+  );
+}
+
+function getCampaignId(notification: InboxNotification) {
+  const metadataCampaignId = String(notification.metadata?.campaign_id ?? "").trim();
+  if (metadataCampaignId) return metadataCampaignId;
+
+  const entityId = String(notification.entity_id ?? "").trim();
+  if (entityId) return entityId;
+
+  if (notification.id.startsWith("campaign:")) {
+    return notification.id.slice("campaign:".length).trim();
+  }
+
+  return "";
+}
+
 function formatNotificationTime(value: string) {
   const date = new Date(value);
   const now = new Date();
@@ -167,39 +190,35 @@ export default function InviteInbox({
 
   const markAsRead = useCallback(async (notification: InboxNotification) => {
     const notificationId = String(notification.id ?? "").trim();
-    if (!notificationId || notification.type === "invitation_received" || notificationId.startsWith("invite:")) return;
+    if (!notificationId || notificationId.startsWith("invite:")) return;
+
     const prevItems = items;
-    const isCampaignItem =
-      notification.entity_type === "campaign" || notificationId.startsWith("campaign:");
-    const campaignId = isCampaignItem
-      ? String(notification.metadata?.campaign_id ?? notification.entity_id ?? "").trim() ||
-        (notificationId.startsWith("campaign:")
-          ? notificationId.slice("campaign:".length).trim()
-          : "")
-      : "";
+    const isCampaignItem = isCampaignNotification(notification);
+    const campaignId = isCampaignItem ? getCampaignId(notification) : "";
+
     setItems((current) =>
       current.map((item) =>
         item.id === notificationId ? { ...item, is_read: true } : item,
       ),
     );
     setActiveId(notificationId);
+
     try {
       if (isCampaignItem && !campaignId) {
-        throw new Error("Missing campaignId for campaign notification");
+        throw new Error("campaignId is required");
       }
-      const res = isCampaignItem
-        ? await fetch("/api/campaigns/read", {
+
+      const res = await fetch(
+        isCampaignItem ? "/api/campaigns/read" : "/api/inbox/mark-read",
+        {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           keepalive: true,
-          body: JSON.stringify({ campaignId }),
-        })
-        : await fetch("/api/inbox/mark-read", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          keepalive: true,
-          body: JSON.stringify({ notificationId }),
-        });
+          body: JSON.stringify(
+            isCampaignItem ? { campaignId } : { notificationId },
+          ),
+        },
+      );
       const json = await res.json().catch(() => ({}));
 
       if (!res.ok || !json?.ok) {
@@ -211,8 +230,12 @@ export default function InviteInbox({
           item.id === notificationId ? { ...item, is_read: true } : item,
         ),
       );
-      window.dispatchEvent(new CustomEvent("campaign:state-changed", { detail: { notificationId, action: "read" } }));
-      void load();
+      window.dispatchEvent(
+        new CustomEvent("campaign:state-changed", {
+          detail: { notificationId, action: "read" },
+        }),
+      );
+      await load();
     } catch {
       setItems(prevItems);
       setError("Failed to mark as read");
@@ -240,7 +263,6 @@ export default function InviteInbox({
           detail: { action: "mark_all_read" },
         }),
       );
-      window.dispatchEvent(new CustomEvent("campaign:state-changed", { detail: { action: "mark_all_read" } }));
     } catch {
       setError("Failed to mark all as read");
       void load();
@@ -256,8 +278,8 @@ export default function InviteInbox({
     const campaignIds = Array.from(
       new Set(
         items
-          .filter((item) => item.entity_type === "campaign")
-          .map((item) => String(item.metadata?.campaign_id ?? item.entity_id ?? "").trim())
+          .filter((item) => isCampaignNotification(item))
+          .map((item) => getCampaignId(item))
           .filter(Boolean),
       ),
     );
@@ -280,9 +302,8 @@ export default function InviteInbox({
 
   const handleNotificationClick = useCallback(
     (notification: InboxNotification) => {
-      const isCampaignItem =
-        notification.type === "campaign_announcement" ||
-        notification.type === "campaign_survey";
+      const isCampaignItem = isCampaignNotification(notification);
+      const campaignId = isCampaignItem ? getCampaignId(notification) : "";
 
       if (!notification.is_read && notification.type !== "invitation_received") {
         void markAsRead(notification);
@@ -294,9 +315,6 @@ export default function InviteInbox({
           notification.metadata?.support_request_id ??
             notification.entity_id ??
             "",
-        ).trim();
-        const campaignId = String(
-          notification.metadata?.campaign_id ?? notification.entity_id ?? "",
         ).trim();
 
         if (isCampaignItem && campaignId) {
@@ -402,9 +420,9 @@ export default function InviteInbox({
                       ? `${unreadCount} unread`
                       : answeredUnseenCount > 0
                         ? `${answeredUnseenCount} answered`
-                      : items.length === 0
-                        ? "No notifications"
-                        : "All caught up"}
+                        : items.length === 0
+                          ? "No notifications"
+                          : "All caught up"}
                   </div>
                 </div>
                 {items.length > 0 ? (
@@ -421,8 +439,8 @@ export default function InviteInbox({
               {answeredUnseenCount > 0 ? (
                 <div className="mt-2 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-[11px] font-semibold text-emerald-800">
                   {answeredUnseenCount === 1
-                    ? "1 survey has a new answer you haven’t viewed in bell yet."
-                    : `${answeredUnseenCount} surveys have new answers you haven’t viewed in bell yet.`}
+                    ? "1 survey has a new answer you haven't viewed in bell yet."
+                    : `${answeredUnseenCount} surveys have new answers you haven't viewed in bell yet.`}
                 </div>
               ) : null}
             </div>
@@ -510,7 +528,7 @@ function NotificationItem({
   const isBusy = activeId === notification.id;
   const isUnread = !notification.is_read;
   const isSurveyAnsweredUnseen =
-    notification.entity_type === "campaign" &&
+    isCampaignNotification(notification) &&
     notification.type === "campaign_survey" &&
     notification.metadata?.survey_unseen_in_bell === true;
 
@@ -556,7 +574,7 @@ function NotificationItem({
               ? "Open survey"
               : "Open notification"}
           </div>
-          {notification.entity_type === "campaign" ? (
+          {isCampaignNotification(notification) ? (
             <div className="mt-1.5 flex flex-wrap gap-1.5">
               <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
                 {notification.metadata?.delivery_mode === "both"
