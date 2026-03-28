@@ -32,7 +32,7 @@ export function CampaignStatusBadge({ status }: { status: Campaign["status"] }) 
 
 export function CampaignTypeBadge({ type }: { type: Campaign["type"] }) {
   if (type === "survey") return <Badge className="border-violet-200 bg-violet-50 text-violet-700">Survey</Badge>;
-  return <Badge className="border-cyan-200 bg-cyan-50 text-cyan-700">Announcement</Badge>;
+  return <Badge className="border-sky-200 bg-sky-50 text-sky-700">Notification</Badge>;
 }
 
 export function CampaignReadBadge({ isRead }: { isRead: boolean }) {

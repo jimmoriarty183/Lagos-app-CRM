@@ -431,7 +431,11 @@ export async function GET(request: Request) {
       .filter(Boolean);
     const campaignIdSet = new Set(campaignIds);
     const surveyAnswerPresenceByCampaignId = new Map<string, boolean>();
-    const surveyStateByCampaignId = new Map<string, { surveyCompletedAt: string | null; bellOpenedAt: string | null }>();
+    const surveyStateByCampaignId = new Map<string, {
+      surveyCompletedAt: string | null;
+      bellOpenedAt: string | null;
+      readAt: string | null;
+    }>();
     const latestSurveyResponseAtByCampaignId = new Map<string, string>();
     const latestCompletedEventAtByCampaignId = new Map<string, string>();
     if (campaignIds.length > 0) {
@@ -456,7 +460,7 @@ export async function GET(request: Request) {
 
       const surveyStateResult = await admin
         .from("user_campaign_states")
-        .select("campaign_id,survey_completed_at,bell_opened_at,user_id")
+        .select("campaign_id,survey_completed_at,bell_opened_at,read_at,user_id")
         .eq("user_id", userId);
 
       if (!surveyStateResult.error) {
@@ -468,6 +472,9 @@ export async function GET(request: Request) {
               ? String((row as { survey_completed_at?: unknown }).survey_completed_at)
               : null,
             bellOpenedAt: typeof row.bell_opened_at === "string" ? row.bell_opened_at : null,
+            readAt: typeof (row as { read_at?: unknown }).read_at === "string"
+              ? String((row as { read_at?: unknown }).read_at)
+              : null,
           });
         }
       }
@@ -534,6 +541,10 @@ export async function GET(request: Request) {
               surveyAnswerPresenceByCampaignId.get(campaignId) === true
             ),
         });
+        const isRead =
+          Boolean(row.is_read) ||
+          Boolean(surveyState?.readAt) ||
+          completion.isCompleted;
         const surveyStateLabel = isSurvey
           ? completion.isCompleted
             ? "Voted"
@@ -555,12 +566,13 @@ export async function GET(request: Request) {
               ? "Not answered"
               : null,
         actor_label: null,
-        is_read: Boolean(row.is_read),
+        is_read: isRead,
         created_at: String(row.created_at ?? new Date().toISOString()),
         metadata: {
           ...metadata,
           campaign_id: campaignId,
           campaign_type: isSurvey ? "survey" : "announcement",
+          read_at: surveyState?.readAt ?? null,
           survey_state: isSurvey
             ? surveyStateLabel === "Voted"
               ? "voted"

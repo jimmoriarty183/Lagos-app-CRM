@@ -31,7 +31,7 @@ function roleLabel(role: Role) {
 
 function roleBadgeClass(role: Role) {
   if (role === "OWNER") return "border-[#C7D2FE] bg-[#EEF2FF] text-[#3645A0]";
-  if (role === "MANAGER") return "border-[#D9E2EC] bg-[#F9FAFB] text-[#475467]";
+  if (role === "MANAGER") return "border-[#E5E7EB] bg-[#F9FAFB] text-[#475467]";
   return "border-[#E5E7EB] bg-white text-[#98A2B3]";
 }
 
@@ -110,8 +110,8 @@ export default function BusinessSwitcher({
     variant === "toolbar-compact"
       ? "inline-flex h-8 w-full items-center justify-between gap-2 rounded-lg border border-transparent bg-transparent px-2.5 transition hover:border-[#E5E7EB] hover:bg-[#F8FAFC]"
       : variant === "toolbar"
-        ? "inline-flex h-10 w-full items-center justify-between gap-2 rounded-xl border border-[#E5E7EB] bg-white px-3.5 shadow-sm transition hover:border-[#D6DAE1] hover:bg-[#FCFCFD]"
-        : "inline-flex h-11 w-full items-center justify-between gap-3 rounded-2xl border border-[#E5E7EB] bg-white/90 px-4 shadow-sm backdrop-blur transition hover:bg-white";
+        ? "inline-flex h-10 w-full items-center justify-between gap-2 rounded-xl border border-[#E5E7EB] bg-white px-3.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#D1D5DB] hover:bg-[#F9FAFB]"
+        : "inline-flex h-11 w-full items-center justify-between gap-3 rounded-2xl border border-[#E5E7EB] bg-white px-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:bg-[#F9FAFB]";
 
   return (
     <div className={`relative z-50 ${widthClassName}`} ref={ref}>
@@ -148,7 +148,7 @@ export default function BusinessSwitcher({
       {open ? (
         <div
           role="menu"
-          className="absolute right-0 z-50 mt-2 w-[280px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_20px_48px_rgba(15,23,42,0.14)]"
+          className="absolute right-0 z-50 mt-2 w-[280px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_12px_28px_rgba(16,24,40,0.12)]"
         >
           {!compact ? (
             <div className="border-b border-gray-100 p-3">
@@ -156,7 +156,7 @@ export default function BusinessSwitcher({
                 value={q}
                 onChange={(event) => setQ(event.target.value)}
                 placeholder="Search workspace..."
-                className="h-10 w-full rounded-xl border border-gray-200 px-3 text-sm outline-none focus:border-gray-300"
+                className="h-10 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm text-[#1F2937] outline-none transition focus:border-[#C7D2FE] focus:ring-4 focus:ring-[rgba(99,102,241,0.12)]"
               />
             </div>
           ) : null}
@@ -173,7 +173,7 @@ export default function BusinessSwitcher({
                     setOpen(false);
                     onSelect(business.slug);
                   }}
-                  className={`w-full rounded-xl px-3 py-2 text-left transition hover:bg-gray-50 ${isCurrent ? "bg-blue-50/60" : ""}`}
+                  className={`w-full rounded-xl px-3 py-2 text-left transition hover:bg-[#F9FAFB] ${isCurrent ? "bg-[#EEF2FF]" : ""}`}
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
@@ -187,7 +187,7 @@ export default function BusinessSwitcher({
 
                     <div className="flex items-center gap-2">
                       {isCurrent ? (
-                        <Check className="h-4 w-4 shrink-0 text-blue-700" />
+                        <Check className="h-4 w-4 shrink-0 text-[#4F46E5]" />
                       ) : null}
                       <RoleBadge role={business.role} />
                       {business.isAdmin ? <AdminBadge /> : null}
@@ -202,7 +202,7 @@ export default function BusinessSwitcher({
             <button
               type="button"
               disabled={disabledAdd}
-              className={`w-full rounded-xl px-3 py-2 text-left text-sm font-semibold transition ${disabledAdd ? "cursor-not-allowed text-gray-400" : "text-gray-900 hover:bg-gray-50"}`}
+              className={`w-full rounded-xl px-3 py-2 text-left text-sm font-semibold transition ${disabledAdd ? "cursor-not-allowed text-gray-400" : "text-[#1F2937] hover:bg-[#F9FAFB]"}`}
             >
               + Create workspace <span className="ml-2 text-[11px]">(soon)</span>
             </button>

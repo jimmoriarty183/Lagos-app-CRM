@@ -168,6 +168,17 @@ export function RightCampaignPopup() {
     };
   }, [loading, item]);
 
+  const closePopup = () => {
+    if (campaignIdFromBell) {
+      const next = new URLSearchParams(searchParamsValue);
+      next.delete("campaign");
+      const query = next.toString();
+      router.push(query ? `${pathname}?${query}` : pathname, { scroll: false });
+      return;
+    }
+    setItem(null);
+  };
+
   const dismiss = async () => {
     if (!item) return;
     setDismissBusy(true);
@@ -182,14 +193,35 @@ export function RightCampaignPopup() {
       body: JSON.stringify({ campaignId: item.id }),
     });
     setDismissBusy(false);
-    if (campaignIdFromBell) {
-      const next = new URLSearchParams(searchParamsValue);
-      next.delete("campaign");
-      const query = next.toString();
-      router.push(query ? `${pathname}?${query}` : pathname, { scroll: false });
-      return;
-    }
-    setItem(null);
+    closePopup();
+  };
+
+  const acknowledge = async () => {
+    if (!item) return;
+    setDismissBusy(true);
+    await fetch("/api/campaigns/read", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ campaignId: item.id }),
+    });
+    await fetch("/api/campaigns/click", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ campaignId: item.id, channel: "popup_right" }),
+    });
+    await fetch("/api/campaigns/dismiss", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ campaignId: item.id }),
+    });
+    window.dispatchEvent(
+      new CustomEvent("campaign:state-changed", {
+        detail: { campaignId: item.id, action: "read" },
+      }),
+    );
+    setItem((current) => (current ? { ...current, isRead: true } : current));
+    setDismissBusy(false);
+    closePopup();
   };
 
   if (loading || !item) return null;
@@ -255,7 +287,7 @@ export function RightCampaignPopup() {
             <div className="flex flex-wrap gap-2">
               <Button
                 type="button"
-                onClick={dismiss}
+                onClick={acknowledge}
                 disabled={dismissBusy}
                 size="sm"
                 className="h-9 px-3.5 disabled:cursor-not-allowed"

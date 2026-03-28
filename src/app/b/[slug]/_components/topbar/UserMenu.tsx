@@ -57,8 +57,8 @@ export function UserMenu({
       <div
         className={
           compact
-            ? "inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#E5E7EB] bg-white/90 text-[#374151] shadow-sm"
-            : "inline-flex h-9 items-center gap-2 rounded-xl border border-[#E5E7EB] bg-white/90 pl-1.5 pr-2.5 text-[#374151] shadow-sm"
+            ? "inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#E5E7EB] bg-white text-[#4B5563] shadow-[0_1px_2px_rgba(16,24,40,0.04)]"
+            : "inline-flex h-9 items-center gap-2 rounded-xl border border-[#E5E7EB] bg-white pl-1.5 pr-2.5 text-[#4B5563] shadow-[0_1px_2px_rgba(16,24,40,0.04)]"
         }
       >
         {userAvatarUrl ? (
@@ -85,8 +85,8 @@ export function UserMenu({
           aria-label="Open user menu"
           className={
             compact
-              ? "inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#E5E7EB] bg-white/90 text-[#374151] shadow-sm transition hover:border-[#D6DAE1] hover:bg-[#FCFCFD]"
-              : "inline-flex h-9 items-center gap-2 rounded-xl border border-[#E5E7EB] bg-white/90 pl-1.5 pr-2.5 text-[#374151] shadow-sm transition hover:border-[#D6DAE1] hover:bg-[#FCFCFD]"
+              ? "inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#E5E7EB] bg-white text-[#4B5563] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#D1D5DB] hover:bg-[#F9FAFB]"
+              : "inline-flex h-9 items-center gap-2 rounded-xl border border-[#E5E7EB] bg-white pl-1.5 pr-2.5 text-[#4B5563] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#D1D5DB] hover:bg-[#F9FAFB]"
           }
         >
           {userAvatarUrl ? (
@@ -102,7 +102,7 @@ export function UserMenu({
           )}
           {compact ? null : (
             <>
-              <span className="hidden max-w-[132px] truncate text-[13px] font-semibold text-[#111827] lg:inline">
+              <span className="hidden max-w-[132px] truncate text-[13px] font-semibold text-[#1F2937] lg:inline">
                 {userLabel}
               </span>
               <ChevronDown className="h-4 w-4 text-[#9CA3AF]" />
@@ -114,10 +114,10 @@ export function UserMenu({
       <DropdownMenuContent
         align="end"
         sideOffset={10}
-        className="w-[220px] rounded-2xl border-[#E5E7EB] bg-white p-1.5 shadow-[0_20px_48px_rgba(15,23,42,0.14)]"
+        className="w-[220px]"
       >
         <DropdownMenuLabel className="px-3 py-2">
-          <div className="truncate text-sm font-semibold text-[#111827]">{userLabel}</div>
+          <div className="truncate text-sm font-semibold text-[#1F2937]">{userLabel}</div>
           <div className="pt-0.5 text-[11px] font-medium capitalize text-[#9CA3AF]">{roleLabel}</div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />

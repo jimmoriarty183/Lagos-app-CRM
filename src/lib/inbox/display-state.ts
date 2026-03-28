@@ -19,11 +19,24 @@ export type InboxNotificationDisplayState = {
   iconTone: "accent" | "success" | "muted";
 };
 
+export type InboxNotificationTypeDisplay = {
+  kind: "survey" | "update";
+  label: "Survey" | "Notification";
+};
+
 function getMetadataBoolean(
   metadata: Record<string, unknown> | null | undefined,
   key: string,
 ) {
   return metadata?.[key] === true;
+}
+
+function hasMetadataTimestamp(
+  metadata: Record<string, unknown> | null | undefined,
+  key: string,
+) {
+  const value = metadata?.[key];
+  return typeof value === "string" && value.trim().length > 0;
 }
 
 export function isSurveyNotification(item: InboxNotificationLike) {
@@ -41,9 +54,36 @@ export function isAnsweredSurveyUnseenInBell(item: InboxNotificationLike) {
   return getMetadataBoolean(item.metadata, "survey_unseen_in_bell");
 }
 
+export function getInboxNotificationTypeDisplay(
+  item: InboxNotificationLike,
+): InboxNotificationTypeDisplay {
+  if (isSurveyNotification(item)) {
+    return {
+      kind: "survey",
+      label: "Survey",
+    };
+  }
+
+  return {
+    kind: "update",
+    label: "Notification",
+  };
+}
+
+function isExplicitlyOpenedOrRead(item: InboxNotificationLike) {
+  return (
+    item.is_read ||
+    hasMetadataTimestamp(item.metadata, "read_at") ||
+    hasMetadataTimestamp(item.metadata, "opened_at") ||
+    hasMetadataTimestamp(item.metadata, "bell_opened_at")
+  );
+}
+
 export function getInboxNotificationDisplayState(
   item: InboxNotificationLike,
 ): InboxNotificationDisplayState {
+  const isOpenedOrRead = isExplicitlyOpenedOrRead(item);
+
   if (isAnsweredSurvey(item)) {
     return {
       tone: "answered",
@@ -54,7 +94,7 @@ export function getInboxNotificationDisplayState(
     };
   }
 
-  if (!item.is_read) {
+  if (!isOpenedOrRead) {
     return {
       tone: "new",
       label: "New",
