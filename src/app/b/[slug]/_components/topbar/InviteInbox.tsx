@@ -15,6 +15,10 @@ import type {
   InboxNotification,
   NotificationType,
 } from "@/app/api/topbar/inbox/route";
+import {
+  getInboxBellIndicatorState,
+  isAnsweredSurvey,
+} from "@/lib/inbox/display-state";
 
 type Props = {
   businessId?: string;
@@ -69,6 +73,7 @@ export default function InviteInbox({
 }: Props) {
   const router = useRouter();
   const ref = useRef<HTMLDivElement | null>(null);
+  const bellOpenSyncKeyRef = useRef("");
 
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -77,10 +82,9 @@ export default function InviteInbox({
   const [activeId, setActiveId] = useState("");
   const [isPending, startTransition] = useTransition();
 
-  const unreadCount = useMemo(
-    () => items.filter((item) => !item.is_read).length,
-    [items],
-  );
+  const bellState = useMemo(() => getInboxBellIndicatorState(items), [items]);
+  const unreadCount = bellState.unreadCount;
+  const answeredUnseenCount = bellState.answeredUnseenCount;
 
   const { newNotifications, earlierNotifications } = useMemo(() => {
     const now = new Date();
@@ -140,6 +144,19 @@ export default function InviteInbox({
   }, [businessId, load]);
 
   useEffect(() => {
+    const onCampaignStateChanged = () => {
+      void load();
+    };
+    window.addEventListener("campaign:state-changed", onCampaignStateChanged);
+    return () => {
+      window.removeEventListener(
+        "campaign:state-changed",
+        onCampaignStateChanged,
+      );
+    };
+  }, [load]);
+
+  useEffect(() => {
     const onDown = (e: MouseEvent) => {
       if (!ref.current) return;
       if (!ref.current.contains(e.target as Node)) setOpen(false);
@@ -150,6 +167,10 @@ export default function InviteInbox({
 
   const markAsRead = useCallback(async (notificationId: string) => {
     if (!notificationId || notificationId.startsWith("invite:")) return;
+    const prevItems = items;
+    const campaignId = notificationId.startsWith("campaign:")
+      ? notificationId.slice("campaign:".length).trim()
+      : "";
     setItems((current) =>
       current.map((item) =>
         item.id === notificationId ? { ...item, is_read: true } : item,
@@ -157,12 +178,19 @@ export default function InviteInbox({
     );
     setActiveId(notificationId);
     try {
-      const res = await fetch("/api/inbox/mark-read", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        keepalive: true,
-        body: JSON.stringify({ notificationId }),
-      });
+      const res = campaignId
+        ? await fetch("/api/campaigns/read", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          keepalive: true,
+          body: JSON.stringify({ campaignId }),
+        })
+        : await fetch("/api/inbox/mark-read", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          keepalive: true,
+          body: JSON.stringify({ notificationId }),
+        });
       const json = await res.json().catch(() => ({}));
 
       if (!res.ok || !json?.ok) {
@@ -174,12 +202,14 @@ export default function InviteInbox({
           item.id === notificationId ? { ...item, is_read: true } : item,
         ),
       );
+      window.dispatchEvent(new CustomEvent("campaign:state-changed", { detail: { notificationId, action: "read" } }));
     } catch {
-      // Silently fail - will be reloaded next time
+      setItems(prevItems);
+      setError("Failed to mark as read");
     } finally {
       setActiveId("");
     }
-  }, []);
+  }, [items]);
 
   const markAllAsRead = useCallback(async () => {
     try {
@@ -197,10 +227,43 @@ export default function InviteInbox({
       setItems((current) =>
         current.map((item) => ({ ...item, is_read: true })),
       );
+      window.dispatchEvent(new CustomEvent("campaign:state-changed", { detail: { action: "mark_all_read" } }));
     } catch {
-      // Silently fail
+      setError("Failed to mark all as read");
+      void load();
     }
-  }, []);
+  }, [load]);
+
+  useEffect(() => {
+    if (!open) {
+      bellOpenSyncKeyRef.current = "";
+      return;
+    }
+    if (items.length === 0) return;
+    const campaignIds = Array.from(
+      new Set(
+        items
+          .filter((item) => item.entity_type === "campaign")
+          .map((item) => String(item.metadata?.campaign_id ?? item.entity_id ?? "").trim())
+          .filter(Boolean),
+      ),
+    );
+    if (campaignIds.length === 0) return;
+    const syncKey = campaignIds.slice().sort().join("|");
+    if (bellOpenSyncKeyRef.current === syncKey) return;
+    bellOpenSyncKeyRef.current = syncKey;
+
+    void Promise.allSettled(
+      campaignIds.map((campaignId) =>
+        fetch("/api/campaigns/open", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          keepalive: true,
+          body: JSON.stringify({ campaignId, channel: "bell" }),
+        }),
+      ),
+    );
+  }, [items, open]);
 
   const handleNotificationClick = useCallback(
     (notification: InboxNotification) => {
@@ -257,10 +320,11 @@ export default function InviteInbox({
   );
 
   const title = useMemo(() => {
-    if (unreadCount === 0) return "Inbox is clear";
+    if (unreadCount === 0 && answeredUnseenCount === 0) return "Inbox is clear";
+    if (answeredUnseenCount > 0 && unreadCount === 0) return `${answeredUnseenCount} answered survey updates`;
     if (unreadCount === 1) return "1 unread notification";
     return `${unreadCount} unread notifications`;
-  }, [unreadCount]);
+  }, [answeredUnseenCount, unreadCount]);
 
   return (
     <div className="relative" ref={ref}>
@@ -278,8 +342,8 @@ export default function InviteInbox({
             : "border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-[#FCFCFD]"
         }`}
       >
-        {open || unreadCount > 0 ? (
-          <BellRing className="h-4 w-4 text-[#6366F1] transition" />
+        {open || unreadCount > 0 || answeredUnseenCount > 0 ? (
+          <BellRing className={`h-4 w-4 transition ${unreadCount > 0 ? "text-[#6366F1]" : "text-emerald-600"}`} />
         ) : (
           <Bell className="h-4 w-4 text-slate-700 transition" />
         )}
@@ -287,6 +351,14 @@ export default function InviteInbox({
           <span className="absolute -right-1 -top-1 inline-flex min-w-5 items-center justify-center rounded-full bg-[#6366F1] px-1.5 py-0.5 text-[10px] font-bold text-white">
             {unreadCount > 99 ? "99+" : unreadCount}
           </span>
+        ) : answeredUnseenCount > 0 ? (
+          <>
+            <span className="absolute -right-1.5 -top-1.5 inline-flex h-4 w-4 animate-ping rounded-full bg-emerald-400/70" />
+            <span className="absolute -right-0.5 -top-0.5 inline-flex h-3 w-3 rounded-full border border-white bg-emerald-500" />
+            <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 rounded-full bg-emerald-600 px-1 py-[1px] text-[8px] font-bold uppercase tracking-[0.04em] text-white shadow">
+              New
+            </span>
+          </>
         ) : null}
       </button>
 
@@ -299,16 +371,18 @@ export default function InviteInbox({
             className="fixed inset-0 z-40"
           />
 
-          <div className="fixed left-4 right-4 top-[calc(env(safe-area-inset-top)+5rem)] z-50 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg sm:absolute sm:left-auto sm:right-0 sm:top-[calc(100%+0.5rem)] sm:mt-0 sm:w-[400px] sm:max-w-[calc(100vw-1.5rem)]">
-            <div className="border-b border-slate-100 px-4 py-3">
+          <div className="fixed left-4 right-4 top-[calc(env(safe-area-inset-top)+5rem)] z-50 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_20px_44px_-22px_rgba(15,23,42,0.65)] sm:absolute sm:left-auto sm:right-0 sm:top-[calc(100%+0.5rem)] sm:mt-0 sm:w-[430px] sm:max-w-[calc(100vw-1.5rem)]">
+            <div className="border-b border-slate-100 bg-white/95 px-4 py-3 backdrop-blur">
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-sm font-semibold text-slate-900">
+                  <div className="text-[15px] font-bold text-slate-900">
                     Inbox
                   </div>
                   <div className="mt-1 text-xs text-slate-500">
                     {unreadCount > 0
                       ? `${unreadCount} unread`
+                      : answeredUnseenCount > 0
+                        ? `${answeredUnseenCount} answered`
                       : items.length === 0
                         ? "No notifications"
                         : "All caught up"}
@@ -319,12 +393,19 @@ export default function InviteInbox({
                     type="button"
                     onClick={markAllAsRead}
                     disabled={isPending || unreadCount === 0}
-                    className="inline-flex h-8 items-center rounded-lg border border-[#C7D2FE] bg-[#EEF2FF] px-3 text-[11px] font-semibold text-[#3645A0] transition hover:border-[#A5B4FC] hover:bg-[#E0E7FF] hover:text-[#2F3EA8] disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex h-8 items-center rounded-lg border border-indigo-200 bg-indigo-50 px-3 text-[11px] font-semibold text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-100 hover:text-indigo-800 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     Mark all as read
                   </button>
                 ) : null}
               </div>
+              {answeredUnseenCount > 0 ? (
+                <div className="mt-2 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-[11px] font-semibold text-emerald-800">
+                  {answeredUnseenCount === 1
+                    ? "1 survey has a new answer you haven’t viewed in bell yet."
+                    : `${answeredUnseenCount} surveys have new answers you haven’t viewed in bell yet.`}
+                </div>
+              ) : null}
             </div>
 
             {error ? (
@@ -333,7 +414,7 @@ export default function InviteInbox({
               </div>
             ) : null}
 
-            <div className="max-h-[400px] overflow-auto">
+            <div className="max-h-[420px] overflow-auto">
               {loading ? (
                 <div className="flex items-center justify-center px-4 py-8">
                   <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
@@ -355,7 +436,7 @@ export default function InviteInbox({
                 <div className="divide-y divide-slate-100">
                   {newNotifications.length > 0 ? (
                     <div>
-                      <div className="bg-slate-50/50 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.06em] text-slate-400">
+                      <div className="sticky top-0 z-[1] bg-slate-50/90 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-400 backdrop-blur">
                         New
                       </div>
                       {newNotifications.map((notification, index) => (
@@ -372,7 +453,7 @@ export default function InviteInbox({
 
                   {earlierNotifications.length > 0 ? (
                     <div>
-                      <div className="bg-slate-50/50 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.06em] text-slate-400">
+                      <div className="sticky top-0 z-[1] bg-slate-50/90 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-400 backdrop-blur">
                         Earlier
                       </div>
                       {earlierNotifications.map((notification, index) => (
@@ -411,12 +492,16 @@ function NotificationItem({
 }: NotificationItemProps) {
   const isBusy = activeId === notification.id;
   const isUnread = !notification.is_read;
+  const isSurveyAnsweredUnseen =
+    notification.entity_type === "campaign" &&
+    notification.type === "campaign_survey" &&
+    notification.metadata?.survey_unseen_in_bell === true;
 
   return (
     <div
-      className={`group flex w-full items-start gap-3 px-4 py-3 text-left transition ${
+      className={`group flex w-full items-start gap-3 px-4 py-3.5 text-left transition ${
         isUnread
-          ? "bg-blue-50/30 hover:bg-blue-50/60"
+          ? "bg-indigo-50/45 hover:bg-indigo-50/80"
           : "bg-white hover:bg-slate-50"
       }`}
     >
@@ -428,7 +513,7 @@ function NotificationItem({
       >
         {/* Icon */}
         <div
-          className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${
+          className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${
             isUnread ? "bg-[#6366F1] text-white" : "bg-slate-100 text-slate-500"
           }`}
         >
@@ -471,10 +556,14 @@ function NotificationItem({
               >
                 {isUnread ? "Unread" : "Read"}
               </span>
-              {notification.type === "campaign_survey" &&
-              (notification.metadata?.survey_state === "voted" || notification.preview === "Voted") ? (
+              {isAnsweredSurvey(notification) || notification.preview === "Voted" ? (
                 <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
                   Voted
+                </span>
+              ) : null}
+              {isSurveyAnsweredUnseen ? (
+                <span className="rounded-full border border-emerald-300 bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
+                  Answered • New in bell
                 </span>
               ) : null}
             </div>
@@ -496,7 +585,7 @@ function NotificationItem({
               event.stopPropagation();
               onMarkRead(notification.id);
             }}
-            className="rounded-md border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-800"
+            className="rounded-md border border-indigo-500 bg-indigo-600 px-2.5 py-1 text-[10px] font-semibold text-white shadow-sm transition hover:bg-indigo-700"
           >
             Mark read
           </button>
