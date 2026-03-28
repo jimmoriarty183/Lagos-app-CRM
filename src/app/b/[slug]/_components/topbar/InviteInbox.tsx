@@ -15,6 +15,10 @@ import type {
   InboxNotification,
   NotificationType,
 } from "@/app/api/topbar/inbox/route";
+import {
+  getInboxBellIndicatorState,
+  isAnsweredSurvey,
+} from "@/lib/inbox/display-state";
 
 type Props = {
   businessId?: string;
@@ -69,6 +73,7 @@ export default function InviteInbox({
 }: Props) {
   const router = useRouter();
   const ref = useRef<HTMLDivElement | null>(null);
+  const bellOpenSyncKeyRef = useRef("");
 
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -77,10 +82,9 @@ export default function InviteInbox({
   const [activeId, setActiveId] = useState("");
   const [isPending, startTransition] = useTransition();
 
-  const unreadCount = useMemo(
-    () => items.filter((item) => !item.is_read).length,
-    [items],
-  );
+  const bellState = useMemo(() => getInboxBellIndicatorState(items), [items]);
+  const unreadCount = bellState.unreadCount;
+  const answeredUnseenCount = bellState.answeredUnseenCount;
 
   const { newNotifications, earlierNotifications } = useMemo(() => {
     const now = new Date();
@@ -140,6 +144,14 @@ export default function InviteInbox({
   }, [businessId, load]);
 
   useEffect(() => {
+    const onCampaignStateChanged = () => {
+      void load();
+    };
+    window.addEventListener("campaign:state-changed", onCampaignStateChanged);
+    return () => window.removeEventListener("campaign:state-changed", onCampaignStateChanged);
+  }, [load]);
+
+  useEffect(() => {
     const onDown = (e: MouseEvent) => {
       if (!ref.current) return;
       if (!ref.current.contains(e.target as Node)) setOpen(false);
@@ -150,6 +162,10 @@ export default function InviteInbox({
 
   const markAsRead = useCallback(async (notificationId: string) => {
     if (!notificationId || notificationId.startsWith("invite:")) return;
+    const prevItems = items;
+    const campaignId = notificationId.startsWith("campaign:")
+      ? notificationId.slice("campaign:".length).trim()
+      : "";
     setItems((current) =>
       current.map((item) =>
         item.id === notificationId ? { ...item, is_read: true } : item,
@@ -157,12 +173,19 @@ export default function InviteInbox({
     );
     setActiveId(notificationId);
     try {
-      const res = await fetch("/api/inbox/mark-read", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        keepalive: true,
-        body: JSON.stringify({ notificationId }),
-      });
+      const res = campaignId
+        ? await fetch("/api/campaigns/read", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          keepalive: true,
+          body: JSON.stringify({ campaignId }),
+        })
+        : await fetch("/api/inbox/mark-read", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          keepalive: true,
+          body: JSON.stringify({ notificationId }),
+        });
       const json = await res.json().catch(() => ({}));
 
       if (!res.ok || !json?.ok) {
@@ -174,12 +197,14 @@ export default function InviteInbox({
           item.id === notificationId ? { ...item, is_read: true } : item,
         ),
       );
+      window.dispatchEvent(new CustomEvent("campaign:state-changed", { detail: { notificationId, action: "read" } }));
     } catch {
-      // Silently fail - will be reloaded next time
+      setItems(prevItems);
+      setError("Failed to mark as read");
     } finally {
       setActiveId("");
     }
-  }, []);
+  }, [items]);
 
   const markAllAsRead = useCallback(async () => {
     try {
@@ -197,10 +222,43 @@ export default function InviteInbox({
       setItems((current) =>
         current.map((item) => ({ ...item, is_read: true })),
       );
+      window.dispatchEvent(new CustomEvent("campaign:state-changed", { detail: { action: "mark_all_read" } }));
     } catch {
-      // Silently fail
+      setError("Failed to mark all as read");
+      void load();
     }
-  }, []);
+  }, [load]);
+
+  useEffect(() => {
+    if (!open) {
+      bellOpenSyncKeyRef.current = "";
+      return;
+    }
+    if (items.length === 0) return;
+    const campaignIds = Array.from(
+      new Set(
+        items
+          .filter((item) => item.entity_type === "campaign")
+          .map((item) => String(item.metadata?.campaign_id ?? item.entity_id ?? "").trim())
+          .filter(Boolean),
+      ),
+    );
+    if (campaignIds.length === 0) return;
+    const syncKey = campaignIds.slice().sort().join("|");
+    if (bellOpenSyncKeyRef.current === syncKey) return;
+    bellOpenSyncKeyRef.current = syncKey;
+
+    void Promise.allSettled(
+      campaignIds.map((campaignId) =>
+        fetch("/api/campaigns/open", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          keepalive: true,
+          body: JSON.stringify({ campaignId, channel: "bell" }),
+        }),
+      ),
+    );
+  }, [items, open]);
 
   const handleNotificationClick = useCallback(
     (notification: InboxNotification) => {
@@ -257,10 +315,11 @@ export default function InviteInbox({
   );
 
   const title = useMemo(() => {
-    if (unreadCount === 0) return "Inbox is clear";
+    if (unreadCount === 0 && answeredUnseenCount === 0) return "Inbox is clear";
+    if (answeredUnseenCount > 0 && unreadCount === 0) return `${answeredUnseenCount} answered survey updates`;
     if (unreadCount === 1) return "1 unread notification";
     return `${unreadCount} unread notifications`;
-  }, [unreadCount]);
+  }, [answeredUnseenCount, unreadCount]);
 
   return (
     <div className="relative" ref={ref}>
@@ -278,8 +337,8 @@ export default function InviteInbox({
             : "border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-[#FCFCFD]"
         }`}
       >
-        {open || unreadCount > 0 ? (
-          <BellRing className="h-4 w-4 text-[#6366F1] transition" />
+        {open || unreadCount > 0 || answeredUnseenCount > 0 ? (
+          <BellRing className={`h-4 w-4 transition ${unreadCount > 0 ? "text-[#6366F1]" : "text-emerald-600"}`} />
         ) : (
           <Bell className="h-4 w-4 text-slate-700 transition" />
         )}
@@ -287,6 +346,8 @@ export default function InviteInbox({
           <span className="absolute -right-1 -top-1 inline-flex min-w-5 items-center justify-center rounded-full bg-[#6366F1] px-1.5 py-0.5 text-[10px] font-bold text-white">
             {unreadCount > 99 ? "99+" : unreadCount}
           </span>
+        ) : answeredUnseenCount > 0 ? (
+          <span className="absolute -right-0.5 -top-0.5 inline-flex h-3 w-3 rounded-full border border-white bg-emerald-500" />
         ) : null}
       </button>
 
@@ -309,6 +370,8 @@ export default function InviteInbox({
                   <div className="mt-1 text-xs text-slate-500">
                     {unreadCount > 0
                       ? `${unreadCount} unread`
+                      : answeredUnseenCount > 0
+                        ? `${answeredUnseenCount} answered`
                       : items.length === 0
                         ? "No notifications"
                         : "All caught up"}
@@ -471,8 +534,7 @@ function NotificationItem({
               >
                 {isUnread ? "Unread" : "Read"}
               </span>
-              {notification.type === "campaign_survey" &&
-              (notification.metadata?.survey_state === "voted" || notification.preview === "Voted") ? (
+              {isAnsweredSurvey(notification) || notification.preview === "Voted" ? (
                 <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
                   Voted
                 </span>
