@@ -390,7 +390,7 @@ export default function InviteInbox({
             <div className="border-b border-slate-100 bg-white/95 px-4 py-3 backdrop-blur">
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-[15px] font-bold text-slate-900">
+                  <div className="text-[15px] font-bold text-indigo-950">
                     Inbox
                   </div>
                   <div className="mt-1 text-xs text-slate-500">
@@ -408,7 +408,7 @@ export default function InviteInbox({
                     type="button"
                     onClick={markAllAsRead}
                     disabled={isPending || unreadCount === 0}
-                    className="inline-flex h-8 items-center rounded-lg border border-indigo-200 bg-indigo-50 px-3 text-[11px] font-semibold text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-100 hover:text-indigo-800 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex h-8 items-center rounded-lg border border-indigo-300 bg-indigo-600 px-3 text-[11px] font-semibold !text-white shadow-sm transition hover:border-indigo-400 hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     Mark all as read
                   </button>
@@ -536,7 +536,7 @@ function NotificationItem({
           <div
             className={`text-[13px] leading-snug ${
               isUnread
-                ? "font-semibold text-slate-900"
+                ? "font-semibold text-indigo-950"
                 : "font-normal text-slate-700"
             }`}
           >
@@ -599,7 +599,7 @@ function NotificationItem({
               event.stopPropagation();
               onMarkRead(notification.id);
             }}
-            className="rounded-md border border-indigo-500 bg-indigo-600 px-2.5 py-1 text-[10px] font-semibold text-white shadow-sm transition hover:bg-indigo-700"
+            className="rounded-md border border-indigo-500 bg-indigo-600 px-2.5 py-1 text-[10px] font-semibold !text-white shadow-sm transition hover:bg-indigo-700"
           >
             Mark read
           </button>

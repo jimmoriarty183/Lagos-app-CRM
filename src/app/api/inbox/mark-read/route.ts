@@ -29,6 +29,7 @@ async function updateNotificationsForUser(
   notificationId?: string,
 ) {
   const readAt = new Date().toISOString();
+  const tables = ["notifications_compat", "notifications"];
   const payloads = [
     { is_read: true, read: true, read_at: readAt },
     { is_read: true, read_at: readAt },
@@ -37,45 +38,59 @@ async function updateNotificationsForUser(
   ];
 
   const recipientColumns = ["recipient_id", "recipient_user_id", "user_id"];
+  let attemptedAnyTable = false;
 
-  for (const payload of payloads) {
-    for (const recipientColumn of recipientColumns) {
-      let query = admin.from("notifications").update(payload);
-      if (notificationId) {
-        query = query.eq("id", notificationId);
-      }
-      const result = await query.eq(recipientColumn, userId);
+  for (const table of tables) {
+    for (const payload of payloads) {
+      for (const recipientColumn of recipientColumns) {
+        attemptedAnyTable = true;
+        let query = admin.from(table).update(payload);
+        if (notificationId) {
+          query = query.eq("id", notificationId);
+        }
+        const result = await query.eq(recipientColumn, userId);
 
-      if (!result.error) return null;
-      if (
-        isMissingColumnError(result.error, recipientColumn) ||
-        isMissingColumnError(result.error, "is_read") ||
-        isMissingColumnError(result.error, "read") ||
-        isMissingColumnError(result.error, "read_at")
-      ) {
-        continue;
+        if (!result.error) return null;
+        if (isMissingRelationError(result.error, table)) {
+          continue;
+        }
+        if (
+          isMissingColumnError(result.error, recipientColumn) ||
+          isMissingColumnError(result.error, "is_read") ||
+          isMissingColumnError(result.error, "read") ||
+          isMissingColumnError(result.error, "read_at")
+        ) {
+          continue;
+        }
+        return result.error;
       }
-      return result.error;
     }
   }
 
-  if (!notificationId) return null;
+  if (!notificationId) {
+    return attemptedAnyTable ? null : new Error("No notification table available for updates");
+  }
 
-  for (const payload of payloads) {
-    const fallback = await admin
-      .from("notifications")
-      .update(payload)
-      .eq("id", notificationId);
+  for (const table of tables) {
+    for (const payload of payloads) {
+      const fallback = await admin
+        .from(table)
+        .update(payload)
+        .eq("id", notificationId);
 
-    if (!fallback.error) return null;
-    if (
-      isMissingColumnError(fallback.error, "is_read") ||
-      isMissingColumnError(fallback.error, "read") ||
-      isMissingColumnError(fallback.error, "read_at")
-    ) {
-      continue;
+      if (!fallback.error) return null;
+      if (isMissingRelationError(fallback.error, table)) {
+        continue;
+      }
+      if (
+        isMissingColumnError(fallback.error, "is_read") ||
+        isMissingColumnError(fallback.error, "read") ||
+        isMissingColumnError(fallback.error, "read_at")
+      ) {
+        continue;
+      }
+      return fallback.error;
     }
-    return fallback.error;
   }
 
   return null;
