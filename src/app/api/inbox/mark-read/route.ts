@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+import { markCampaignRead } from "@/lib/campaigns/service";
+import { getUserCampaignClient } from "@/lib/campaigns/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { supabaseServer } from "@/lib/supabase/server";
 
@@ -124,16 +126,9 @@ export async function POST(request: Request) {
       if (!campaignId) {
         return NextResponse.json({ ok: false, error: "campaignId is required" }, { status: 400 });
       }
-      const parsedCampaignId = Number.parseInt(campaignId, 10);
-      if (!Number.isFinite(parsedCampaignId)) {
-        return NextResponse.json({ ok: false, error: "campaignId must be numeric" }, { status: 400 });
-      }
-      const campaignReadResult = await supabase.rpc("mark_campaign_read", {
-        p_campaign_id: parsedCampaignId,
-      });
-      if (campaignReadResult.error) {
-        return NextResponse.json({ ok: false, error: campaignReadResult.error.message }, { status: 500 });
-      }
+
+      const campaignClient = await getUserCampaignClient();
+      await markCampaignRead(campaignClient, userId, campaignId);
       return NextResponse.json({ ok: true });
     }
 
