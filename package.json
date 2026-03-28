@@ -4,9 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build",
+    "build": "npm run check:conflicts && next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "check:conflicts": "node -e \"const { spawnSync } = require('node:child_process'); const result = spawnSync('rg', ['-n', '^(<<<<<<<|=======|>>>>>>>)', 'src', 'docs', 'supabase'], { stdio: 'inherit' }); if (result.status === 0) { console.error('Conflict markers found'); process.exit(1); } if (result.status === 1) { console.log('No conflict markers found'); process.exit(0); } process.exit(result.status ?? 1);\""
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

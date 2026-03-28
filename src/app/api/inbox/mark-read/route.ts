@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
 
-import { getBellItems, markCampaignRead } from "@/lib/campaigns/service";
-import { getUserCampaignClient } from "@/lib/campaigns/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { supabaseServer } from "@/lib/supabase/server";
 
@@ -35,7 +33,7 @@ async function updateNotificationsForUser(
     { read_at: readAt },
   ];
 
-  const recipientColumns = ["recipient_user_id", "recipient_id", "user_id"];
+  const recipientColumns = ["recipient_id", "recipient_user_id", "user_id"];
 
   for (const payload of payloads) {
     for (const recipientColumn of recipientColumns) {
@@ -102,13 +100,9 @@ export async function POST(request: Request) {
         }
       }
 
-      const campaignClient = await getUserCampaignClient();
-      try {
-        const campaignItems = await getBellItems(campaignClient, userId);
-        const unread = campaignItems.filter((item) => !item.isRead);
-        await Promise.all(unread.map((item) => markCampaignRead(campaignClient, userId, item.id)));
-      } catch {
-        // Do not fail mark-all if campaign tables are unavailable.
+      const campaignReadAllResult = await supabase.rpc("mark_all_campaigns_read");
+      if (campaignReadAllResult.error) {
+        return NextResponse.json({ ok: false, error: campaignReadAllResult.error.message }, { status: 500 });
       }
 
       return NextResponse.json({ ok: true });
@@ -130,12 +124,19 @@ export async function POST(request: Request) {
       if (!campaignId) {
         return NextResponse.json({ ok: false, error: "campaignId is required" }, { status: 400 });
       }
-      const campaignClient = await getUserCampaignClient();
-      await markCampaignRead(campaignClient, userId, campaignId);
+      const parsedCampaignId = Number.parseInt(campaignId, 10);
+      if (!Number.isFinite(parsedCampaignId)) {
+        return NextResponse.json({ ok: false, error: "campaignId must be numeric" }, { status: 400 });
+      }
+      const campaignReadResult = await supabase.rpc("mark_campaign_read", {
+        p_campaign_id: parsedCampaignId,
+      });
+      if (campaignReadResult.error) {
+        return NextResponse.json({ ok: false, error: campaignReadResult.error.message }, { status: 500 });
+      }
       return NextResponse.json({ ok: true });
     }
 
-    // Mark single notification as read
     const updateError = await updateNotificationsForUser(
       admin,
       userId,
