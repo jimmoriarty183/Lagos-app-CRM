@@ -65,6 +65,7 @@ export function BellNotifications() {
     const json = await safeJson<{ ok: boolean }>(response);
     if (!response.ok || !json?.ok) return;
     setItems((current) => current.map((item) => (item.id === campaignId ? { ...item, isRead: true } : item)));
+    window.dispatchEvent(new CustomEvent("campaign:state-changed", { detail: { campaignId, action: "read" } }));
   }, []);
 
   return (

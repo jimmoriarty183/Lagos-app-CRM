@@ -184,6 +184,7 @@ export function SurveyForm({
 
     setSuccess(true);
     setSubmitting(false);
+    window.dispatchEvent(new CustomEvent("campaign:state-changed", { detail: { campaignId: survey.campaign.id, action: "survey_submitted" } }));
     onSubmitted();
   };
 
