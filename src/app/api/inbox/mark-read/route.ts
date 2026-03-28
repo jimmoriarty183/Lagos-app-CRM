@@ -147,9 +147,7 @@ export async function POST(request: Request) {
       if (!campaignId) {
         return NextResponse.json({ ok: false, error: "campaignId is required" }, { status: 400 });
       }
-
       await markCampaignRead(admin, userId, campaignId);
-
       return NextResponse.json({ ok: true });
     }
 
