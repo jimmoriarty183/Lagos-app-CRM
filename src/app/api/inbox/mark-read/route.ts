@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 
+ codex/fix-campaign-read-state-persistence-6y37v0
+import { markAllCampaignsRead, markCampaignRead } from "@/lib/campaigns/service";
+=======
 import { markCampaignRead } from "@/lib/campaigns/service";
+ staging
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { supabaseServer } from "@/lib/supabase/server";
 
@@ -111,12 +115,7 @@ export async function POST(request: Request) {
         }
       }
 
-      // IMPORTANT: keep user auth context for RPC auth.uid(); service-role can no-op here.
-      const campaignReadAllResult = await supabase.rpc("mark_all_campaigns_read");
-
-      if (campaignReadAllResult.error) {
-        return NextResponse.json({ ok: false, error: campaignReadAllResult.error.message }, { status: 500 });
-      }
+      await markAllCampaignsRead(supabase, userId);
 
       return NextResponse.json({ ok: true });
     }
@@ -138,12 +137,16 @@ export async function POST(request: Request) {
         return NextResponse.json({ ok: false, error: "campaignId is required" }, { status: 400 });
       }
 
+ codex/fix-campaign-read-state-persistence-6y37v0
+      await markCampaignRead(supabase, userId, campaignId);
+
       const parsedCampaignId = Number.parseInt(campaignId, 10);
       if (!Number.isFinite(parsedCampaignId)) {
         return NextResponse.json({ ok: false, error: "campaignId must be numeric" }, { status: 400 });
       }
 
       await markCampaignRead(supabase, userId, String(parsedCampaignId));
+ staging
 
       return NextResponse.json({ ok: true });
     }
