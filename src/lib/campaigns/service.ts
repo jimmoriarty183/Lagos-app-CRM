@@ -455,7 +455,7 @@ async function getUserCampaignStatesMap(client: CampaignClient, campaignIds: str
       popupClickedAt: pickString(record, ["popup_clicked_at", "popupClickedAt"]),
       readAt: pickString(record, ["read_at", "readAt"]),
       dismissedAt: pickString(record, ["dismissed_at", "dismissedAt"]),
-      completedAt: pickString(record, ["completed_at", "completedAt"]),
+      completedAt: pickString(record, ["survey_completed_at", "surveyCompletedAt"]),
     });
   }
   return map;
@@ -913,6 +913,20 @@ export async function markCampaignRead(client: CampaignClient, userId: string, c
   });
 }
 
+export async function markAllCampaignsRead(client: CampaignClient, userId: string) {
+  const items = await getBellItems(client, userId);
+  const unreadCampaignIds = items
+    .filter((item) => !item.isRead)
+    .map((item) => item.id)
+    .filter(Boolean);
+
+  for (const campaignId of unreadCampaignIds) {
+    await markCampaignRead(client, userId, campaignId);
+  }
+
+  return { markedCount: unreadCampaignIds.length };
+}
+
 export async function dismissCampaign(client: CampaignClient, userId: string, campaignId: string) {
   const nowIso = toIsoNow();
   await upsertCampaignState(client, userId, campaignId, { dismissed_at: nowIso });
@@ -1299,7 +1313,7 @@ export async function submitSurvey(
 
   const nowIso = new Date().toISOString();
   await upsertCampaignState(client, userId, campaignId, {
-    completed_at: nowIso,
+    survey_completed_at: nowIso,
     read_at: nowIso,
     opened_at: nowIso,
   });
@@ -1382,7 +1396,7 @@ export async function getCampaignAnalyticsSummary(
   let recipientCount = states.length;
   let readCount = states.filter((row) => Boolean(pickString(row, ["read_at", "readAt"]))).length;
   const dismissedCount = states.filter((row) => Boolean(pickString(row, ["dismissed_at", "dismissedAt"]))).length;
-  let completedCount = states.filter((row) => Boolean(pickString(row, ["completed_at", "completedAt"]))).length;
+  let completedCount = states.filter((row) => Boolean(pickString(row, ["survey_completed_at", "surveyCompletedAt"]))).length;
   let deliveredCount = states.filter((row) => Boolean(pickString(row, ["delivered_at", "deliveredAt"]))).length;
   let bellShownCount = states.filter((row) => Boolean(pickString(row, ["bell_shown_at", "bellShownAt"]))).length;
   let popupShownCount = states.filter((row) => Boolean(pickString(row, ["popup_shown_at", "popupShownAt"]))).length;
