@@ -380,8 +380,8 @@ export default function InviteInbox({
             className="fixed inset-0 z-40"
           />
 
-          <div className="fixed left-4 right-4 top-[calc(env(safe-area-inset-top)+5rem)] z-50 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg sm:absolute sm:left-auto sm:right-0 sm:top-[calc(100%+0.5rem)] sm:mt-0 sm:w-[400px] sm:max-w-[calc(100vw-1.5rem)]">
-            <div className="border-b border-slate-100 px-4 py-3">
+          <div className="fixed left-4 right-4 top-[calc(env(safe-area-inset-top)+5rem)] z-50 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_16px_36px_-20px_rgba(15,23,42,0.55)] sm:absolute sm:left-auto sm:right-0 sm:top-[calc(100%+0.5rem)] sm:mt-0 sm:w-[400px] sm:max-w-[calc(100vw-1.5rem)]">
+            <div className="border-b border-slate-100 bg-white/95 px-4 py-3 backdrop-blur">
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-sm font-semibold text-slate-900">
@@ -402,7 +402,7 @@ export default function InviteInbox({
                     type="button"
                     onClick={markAllAsRead}
                     disabled={isPending || unreadCount === 0}
-                    className="inline-flex h-8 items-center rounded-lg border border-[#C7D2FE] bg-[#EEF2FF] px-3 text-[11px] font-semibold text-[#3645A0] transition hover:border-[#A5B4FC] hover:bg-[#E0E7FF] hover:text-[#2F3EA8] disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex h-8 items-center rounded-lg border border-indigo-200 bg-indigo-50 px-3 text-[11px] font-semibold text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-100 hover:text-indigo-800 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     Mark all as read
                   </button>
@@ -416,7 +416,7 @@ export default function InviteInbox({
               </div>
             ) : null}
 
-            <div className="max-h-[400px] overflow-auto">
+            <div className="max-h-[420px] overflow-auto">
               {loading ? (
                 <div className="flex items-center justify-center px-4 py-8">
                   <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
@@ -436,7 +436,7 @@ export default function InviteInbox({
                 <div className="divide-y divide-slate-100">
                   {newNotifications.length > 0 ? (
                     <div>
-                      <div className="bg-slate-50/50 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.06em] text-slate-400">
+                      <div className="sticky top-0 z-[1] bg-slate-50/90 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-400 backdrop-blur">
                         New
                       </div>
                       {newNotifications.map((notification, index) => (
@@ -453,7 +453,7 @@ export default function InviteInbox({
 
                   {earlierNotifications.length > 0 ? (
                     <div>
-                      <div className="bg-slate-50/50 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.06em] text-slate-400">
+                      <div className="sticky top-0 z-[1] bg-slate-50/90 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-400 backdrop-blur">
                         Earlier
                       </div>
                       {earlierNotifications.map((notification, index) => (
@@ -495,7 +495,7 @@ function NotificationItem({
 
   return (
     <div
-      className={`group flex w-full items-start gap-3 px-4 py-3 text-left transition ${
+      className={`group flex w-full items-start gap-3 px-4 py-3.5 text-left transition ${
         isUnread
           ? "bg-blue-50/30 hover:bg-blue-50/60"
           : "bg-white hover:bg-slate-50"
@@ -508,7 +508,7 @@ function NotificationItem({
         className="flex min-w-0 flex-1 items-start gap-3 text-left disabled:cursor-not-allowed"
       >
         <div
-          className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${
+          className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${
             isUnread ? "bg-[#6366F1] text-white" : "bg-slate-100 text-slate-500"
           }`}
         >
@@ -577,7 +577,7 @@ function NotificationItem({
               event.stopPropagation();
               onMarkRead(notification.id);
             }}
-            className="rounded-md border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-800"
+            className="rounded-md border border-slate-200 bg-white px-2.5 py-1 text-[10px] font-semibold text-slate-600 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
           >
             Mark read
           </button>
