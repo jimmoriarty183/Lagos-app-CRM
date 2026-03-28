@@ -15,8 +15,18 @@ export async function POST(request: Request) {
 
     const userId = await getRequiredUserId();
 
+codex/fix-campaign-read-state-persistence-6y37v0
     const client = await supabaseServerAction();
     await markCampaignRead(client, userId, campaignId);
+
+    const parsedCampaignId = Number.parseInt(campaignId, 10);
+    if (!Number.isFinite(parsedCampaignId)) {
+      return NextResponse.json({ ok: false, error: "campaignId must be numeric" }, { status: 400 });
+    }
+
+    const client = await supabaseServerAction();
+    await markCampaignRead(client, userId, String(parsedCampaignId));
+staging
 
     return NextResponse.json({ ok: true });
   } catch (error: unknown) {
