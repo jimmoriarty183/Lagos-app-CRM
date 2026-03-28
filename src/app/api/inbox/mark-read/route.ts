@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { markCampaignRead } from "@/lib/campaigns/service";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { supabaseServer } from "@/lib/supabase/server";
 
@@ -142,14 +143,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ ok: false, error: "campaignId must be numeric" }, { status: 400 });
       }
 
-      // IMPORTANT: keep user auth context for RPC auth.uid(); service-role can no-op here.
-      const campaignReadResult = await supabase.rpc("mark_campaign_read", {
-        p_campaign_id: parsedCampaignId,
-      });
-
-      if (campaignReadResult.error) {
-        return NextResponse.json({ ok: false, error: campaignReadResult.error.message }, { status: 500 });
-      }
+      await markCampaignRead(supabase, userId, String(parsedCampaignId));
 
       return NextResponse.json({ ok: true });
     }
