@@ -367,7 +367,13 @@ export default function InviteInbox({
             {unreadCount > 99 ? "99+" : unreadCount}
           </span>
         ) : answeredUnseenCount > 0 ? (
-          <span className="absolute -right-0.5 -top-0.5 inline-flex h-3 w-3 rounded-full border border-white bg-emerald-500" />
+          <>
+            <span className="absolute -right-1.5 -top-1.5 inline-flex h-4 w-4 animate-ping rounded-full bg-emerald-400/70" />
+            <span className="absolute -right-0.5 -top-0.5 inline-flex h-3 w-3 rounded-full border border-white bg-emerald-500" />
+            <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 rounded-full bg-emerald-600 px-1 py-[1px] text-[8px] font-bold uppercase tracking-[0.04em] text-white shadow">
+              New
+            </span>
+          </>
         ) : null}
       </button>
 
@@ -380,11 +386,11 @@ export default function InviteInbox({
             className="fixed inset-0 z-40"
           />
 
-          <div className="fixed left-4 right-4 top-[calc(env(safe-area-inset-top)+5rem)] z-50 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_16px_36px_-20px_rgba(15,23,42,0.55)] sm:absolute sm:left-auto sm:right-0 sm:top-[calc(100%+0.5rem)] sm:mt-0 sm:w-[400px] sm:max-w-[calc(100vw-1.5rem)]">
+          <div className="fixed left-4 right-4 top-[calc(env(safe-area-inset-top)+5rem)] z-50 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_20px_44px_-22px_rgba(15,23,42,0.65)] sm:absolute sm:left-auto sm:right-0 sm:top-[calc(100%+0.5rem)] sm:mt-0 sm:w-[430px] sm:max-w-[calc(100vw-1.5rem)]">
             <div className="border-b border-slate-100 bg-white/95 px-4 py-3 backdrop-blur">
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-sm font-semibold text-slate-900">
+                  <div className="text-[15px] font-bold text-slate-900">
                     Inbox
                   </div>
                   <div className="mt-1 text-xs text-slate-500">
@@ -408,6 +414,13 @@ export default function InviteInbox({
                   </button>
                 ) : null}
               </div>
+              {answeredUnseenCount > 0 ? (
+                <div className="mt-2 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-[11px] font-semibold text-emerald-800">
+                  {answeredUnseenCount === 1
+                    ? "1 survey has a new answer you haven’t viewed in bell yet."
+                    : `${answeredUnseenCount} surveys have new answers you haven’t viewed in bell yet.`}
+                </div>
+              ) : null}
             </div>
 
             {error ? (
@@ -492,12 +505,16 @@ function NotificationItem({
 }: NotificationItemProps) {
   const isBusy = activeId === notification.id;
   const isUnread = !notification.is_read;
+  const isSurveyAnsweredUnseen =
+    notification.entity_type === "campaign" &&
+    notification.type === "campaign_survey" &&
+    notification.metadata?.survey_unseen_in_bell === true;
 
   return (
     <div
       className={`group flex w-full items-start gap-3 px-4 py-3.5 text-left transition ${
         isUnread
-          ? "bg-blue-50/30 hover:bg-blue-50/60"
+          ? "bg-indigo-50/45 hover:bg-indigo-50/80"
           : "bg-white hover:bg-slate-50"
       }`}
     >
@@ -559,6 +576,11 @@ function NotificationItem({
                   Voted
                 </span>
               ) : null}
+              {isSurveyAnsweredUnseen ? (
+                <span className="rounded-full border border-emerald-300 bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
+                  Answered • New in bell
+                </span>
+              ) : null}
             </div>
           ) : null}
           <div className="mt-1 text-[11px] text-slate-400">
@@ -577,7 +599,7 @@ function NotificationItem({
               event.stopPropagation();
               onMarkRead(notification.id);
             }}
-            className="rounded-md border border-slate-200 bg-white px-2.5 py-1 text-[10px] font-semibold text-slate-600 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
+            className="rounded-md border border-indigo-500 bg-indigo-600 px-2.5 py-1 text-[10px] font-semibold text-white shadow-sm transition hover:bg-indigo-700"
           >
             Mark read
           </button>
