@@ -165,11 +165,17 @@ export default function InviteInbox({
     return () => document.removeEventListener("mousedown", onDown);
   }, []);
 
-  const markAsRead = useCallback(async (notificationId: string) => {
-    if (!notificationId || notificationId.startsWith("invite:")) return;
+  const markAsRead = useCallback(async (notification: InboxNotification) => {
+    const notificationId = String(notification.id ?? "").trim();
+    if (!notificationId || notification.type === "invitation_received" || notificationId.startsWith("invite:")) return;
     const prevItems = items;
-    const campaignId = notificationId.startsWith("campaign:")
-      ? notificationId.slice("campaign:".length).trim()
+    const isCampaignItem =
+      notification.entity_type === "campaign" || notificationId.startsWith("campaign:");
+    const campaignId = isCampaignItem
+      ? String(notification.metadata?.campaign_id ?? notification.entity_id ?? "").trim() ||
+        (notificationId.startsWith("campaign:")
+          ? notificationId.slice("campaign:".length).trim()
+          : "")
       : "";
     setItems((current) =>
       current.map((item) =>
@@ -178,7 +184,7 @@ export default function InviteInbox({
     );
     setActiveId(notificationId);
     try {
-      const res = campaignId
+      const res = isCampaignItem && campaignId
         ? await fetch("/api/campaigns/read", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -203,13 +209,14 @@ export default function InviteInbox({
         ),
       );
       window.dispatchEvent(new CustomEvent("campaign:state-changed", { detail: { notificationId, action: "read" } }));
+      void load();
     } catch {
       setItems(prevItems);
       setError("Failed to mark as read");
     } finally {
       setActiveId("");
     }
-  }, [items]);
+  }, [items, load]);
 
   const markAllAsRead = useCallback(async () => {
     try {
@@ -275,7 +282,7 @@ export default function InviteInbox({
         notification.type === "campaign_survey";
 
       if (!notification.is_read && notification.type !== "invitation_received") {
-        void markAsRead(notification.id);
+        void markAsRead(notification);
       }
 
       startTransition(() => {
@@ -290,12 +297,6 @@ export default function InviteInbox({
         ).trim();
 
         if (isCampaignItem && campaignId) {
-          void fetch("/api/campaigns/read", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            keepalive: true,
-            body: JSON.stringify({ campaignId }),
-          });
           void fetch("/api/campaigns/click", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -494,7 +495,7 @@ type NotificationItemProps = {
   notification: InboxNotification;
   activeId: string;
   onClick: (notification: InboxNotification) => void;
-  onMarkRead: (notificationId: string) => void;
+  onMarkRead: (notification: InboxNotification) => void;
 };
 
 function NotificationItem({
@@ -597,7 +598,7 @@ function NotificationItem({
             onClick={(event) => {
               event.preventDefault();
               event.stopPropagation();
-              onMarkRead(notification.id);
+              onMarkRead(notification);
             }}
             className="rounded-md border border-indigo-500 bg-indigo-600 px-2.5 py-1 text-[10px] font-semibold !text-white shadow-sm transition hover:bg-indigo-700"
           >
