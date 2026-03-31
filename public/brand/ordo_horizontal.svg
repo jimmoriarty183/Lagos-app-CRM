@@ -1,6 +1,8 @@
-﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 48" fill="none">
-  <rect width="48" height="48" rx="8" fill="#6366F1"/>
-  <path d="M24 12L34 18V30L24 36L14 30V18L24 12Z" stroke="#FFFFFF" stroke-width="2" stroke-linejoin="round"/>
-  <circle cx="24" cy="24" r="4" fill="#FFFFFF"/>
-  <text x="60" y="35" fill="#111827" font-family="Inter, SF Pro Display, Arial, sans-serif" font-size="36" font-weight="700" letter-spacing="-1.2">Ordo</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 48" fill="none">
+  <rect width="48" height="48" rx="10" fill="#5B5BB3"/>
+  <rect x="10" y="10" width="11" height="11" rx="1.5" stroke="#FFFFFF" stroke-width="2.5"/>
+  <rect x="27" y="10" width="11" height="11" rx="1.5" fill="#FFFFFF"/>
+  <rect x="10" y="27" width="11" height="11" rx="1.5" fill="#FFFFFF"/>
+  <rect x="27" y="27" width="11" height="11" rx="1.5" stroke="#FFFFFF" stroke-width="2.5"/>
+  <text x="64" y="34" fill="#0F1419" font-family="Geist, Inter, Arial, sans-serif" font-size="32" font-weight="600" letter-spacing="-0.5">Ordo</text>
 </svg>

@@ -17,6 +17,7 @@ const geistMono = Geist_Mono({
 
 export const viewport: Viewport = {
   colorScheme: "light",
+  themeColor: "var(--brand-600)",
 };
 
 export const metadata: Metadata = {
@@ -27,19 +28,26 @@ export const metadata: Metadata = {
     default: "Ordo",
     template: "%s | Ordo",
   },
-  description: "Ordo is a business management system that keeps clients, tasks, and team workflows in one place.",
+  description:
+    "Ordo is a business management system that keeps clients, tasks, and team workflows in one place.",
   applicationName: "Ordo",
   icons: {
-    icon: [
-      { url: "/brand/favicon.svg", type: "image/svg+xml" },
-    ],
-    shortcut: [{ url: "/brand/favicon.svg", type: "image/svg+xml" }],
+    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
+    shortcut: [{ url: "/favicon.svg", type: "image/svg+xml" }],
     apple: [{ url: "/brand/app_icon.svg", type: "image/svg+xml" }],
   },
   openGraph: {
     title: "Ordo",
-    description: "Bring your business into order with clients, tasks, and team workflows connected in one system.",
-    images: [{ url: "/brand/app_icon.svg", width: 512, height: 512, alt: "Ordo app icon" }],
+    description:
+      "Bring your business into order with clients, tasks, and team workflows connected in one system.",
+    images: [
+      {
+        url: "/brand/app_icon.svg",
+        width: 512,
+        height: 512,
+        alt: "Ordo app icon",
+      },
+    ],
   },
 };
 
@@ -77,7 +85,10 @@ export default function RootLayout({
             </Script>
           </>
         ) : null}
-        <Script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async />
+        <Script
+          src="https://mcp.figma.com/mcp/html-to-design/capture.js"
+          async
+        />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}

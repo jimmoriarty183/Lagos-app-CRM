@@ -2,7 +2,15 @@
 
 import type { ReactNode } from "react";
 import { startTransition, useEffect, useMemo, useRef, useState } from "react";
-import { Building2, Globe, Hash, MapPin, PencilLine, Phone, Tags } from "lucide-react";
+import {
+  Building2,
+  Globe,
+  Hash,
+  MapPin,
+  PencilLine,
+  Phone,
+  Tags,
+} from "lucide-react";
 import { BUSINESS_SEGMENTS } from "@/lib/business-segments";
 import {
   Select,
@@ -37,7 +45,10 @@ function normalizeDraftFromProps({
   businessAddress,
   businessSegment,
   businessWebsite,
-}: Pick<Props, "businessPhone" | "businessAddress" | "businessSegment" | "businessWebsite">): BusinessDraft {
+}: Pick<
+  Props,
+  "businessPhone" | "businessAddress" | "businessSegment" | "businessWebsite"
+>): BusinessDraft {
   return {
     phone: businessPhone?.trim() || "",
     address: businessAddress?.trim() || "",
@@ -65,8 +76,12 @@ function ReadonlyCard({
         </span>
         {label}
       </div>
-      <div className="mt-3 break-all text-sm font-semibold text-[#1F2937]">{value}</div>
-      {hint ? <div className="mt-1 text-xs leading-5 text-[#6B7280]">{hint}</div> : null}
+      <div className="mt-3 break-all text-sm font-semibold text-[#1F2937]">
+        {value}
+      </div>
+      {hint ? (
+        <div className="mt-1 text-xs leading-5 text-[#6B7280]">{hint}</div>
+      ) : null}
     </div>
   );
 }
@@ -108,7 +123,7 @@ function EditableCard({
           className={[
             "inline-flex h-9 w-9 items-center justify-center rounded-xl border transition",
             editing
-              ? "border-[#6366F1] bg-[#EEF2FF] text-[#6366F1] shadow-[0_0_0_3px_rgba(99,102,241,0.12)]"
+              ? "border-[var(--brand-600)] bg-[var(--brand-50)] text-[var(--brand-600)] shadow-[0_0_0_3px_rgba(91,91,179,0.12)]"
               : "border-[#E5E7EB] bg-white text-[#4B5563] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]",
           ].join(" ")}
           aria-label={editing ? `Close ${label} editing` : `Edit ${label}`}
@@ -124,7 +139,9 @@ function EditableCard({
           <div
             className={[
               "min-h-11 rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] px-3.5 py-3 text-sm",
-              displayValue ? "border-[#E5E7EB] bg-[#F9FAFB] text-[#1F2937]" : "border-[#E5E7EB] bg-[#F9FAFB] text-[#9CA3AF]",
+              displayValue
+                ? "border-[#E5E7EB] bg-[#F9FAFB] text-[#1F2937]"
+                : "border-[#E5E7EB] bg-[#F9FAFB] text-[#9CA3AF]",
             ].join(" ")}
           >
             {displayValue || placeholder}
@@ -132,13 +149,15 @@ function EditableCard({
         )}
       </div>
 
-      {hint ? <div className="mt-2 text-xs leading-5 text-[#6B7280]">{hint}</div> : null}
+      {hint ? (
+        <div className="mt-2 text-xs leading-5 text-[#6B7280]">{hint}</div>
+      ) : null}
     </div>
   );
 }
 
 const inputClassName =
-  "h-11 w-full rounded-xl border border-[#E5E7EB] bg-white px-3.5 text-sm text-[#1F2937] outline-none transition placeholder:text-[#9CA3AF] hover:border-[#C7D2FE] focus:border-[#6366F1] focus:ring-4 focus:ring-[#6366F1]/15";
+  "h-11 w-full rounded-xl border border-[#E5E7EB] bg-white px-3.5 text-sm text-[#1F2937] outline-none transition placeholder:text-[#9CA3AF] hover:border-[var(--brand-200)] focus:border-[var(--brand-600)] focus:ring-4 focus:ring-[var(--brand-600)]/15";
 
 export default function BusinessInfoPanel({
   businessId,
@@ -151,7 +170,13 @@ export default function BusinessInfoPanel({
   businessWebsite,
 }: Props) {
   const initialDraft = useMemo(
-    () => normalizeDraftFromProps({ businessPhone, businessAddress, businessSegment, businessWebsite }),
+    () =>
+      normalizeDraftFromProps({
+        businessPhone,
+        businessAddress,
+        businessSegment,
+        businessWebsite,
+      }),
     [businessAddress, businessPhone, businessSegment, businessWebsite],
   );
   const [savedDraft, setSavedDraft] = useState<BusinessDraft>(initialDraft);
@@ -201,7 +226,9 @@ export default function BusinessInfoPanel({
       const currentUrl = new URL(window.location.href);
       if (nextUrl.href === currentUrl.href) return;
 
-      const shouldLeave = window.confirm("You have unsaved business changes. Leave this page without saving?");
+      const shouldLeave = window.confirm(
+        "You have unsaved business changes. Leave this page without saving?",
+      );
       if (!shouldLeave) {
         event.preventDefault();
         event.stopPropagation();
@@ -210,9 +237,15 @@ export default function BusinessInfoPanel({
 
     const handlePopState = () => {
       if (saveInProgressRef.current) return;
-      const shouldLeave = window.confirm("You have unsaved business changes. Leave this page without saving?");
+      const shouldLeave = window.confirm(
+        "You have unsaved business changes. Leave this page without saving?",
+      );
       if (!shouldLeave) {
-        window.history.pushState({ businessDraft: true }, "", window.location.href);
+        window.history.pushState(
+          { businessDraft: true },
+          "",
+          window.location.href,
+        );
       }
     };
 
@@ -288,7 +321,11 @@ export default function BusinessInfoPanel({
       setMessage("Business info updated");
     } catch (error) {
       setStatus("error");
-      setMessage(error instanceof Error ? error.message : "Failed to save business profile");
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Failed to save business profile",
+      );
     } finally {
       saveInProgressRef.current = false;
     }
@@ -298,15 +335,11 @@ export default function BusinessInfoPanel({
     <section className="mt-5 rounded-[20px] border border-[#E5E7EB] bg-[#F9FAFB] p-4 sm:p-5">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <div className="product-section-label text-[#6B7280]">
-            Business
-          </div>
-          <h2 className="product-section-title mt-1.5">
-            Business info
-          </h2>
+          <div className="product-section-label text-[#6B7280]">Business</div>
+          <h2 className="product-section-title mt-1.5">Business info</h2>
           <p className="product-page-subtitle mt-1.5 max-w-[700px]">
-            Keep the business card editable here: contact phone, address, website or shop, and
-            segment. User phone stays in the user profile.
+            Keep the business card editable here: contact phone, address,
+            website or shop, and segment. User phone stays in the user profile.
           </p>
         </div>
 
@@ -328,7 +361,7 @@ export default function BusinessInfoPanel({
                 });
               }}
               disabled={status === "saving"}
-              className="inline-flex h-11 items-center rounded-full bg-[#6366F1] px-5 text-sm font-semibold !text-white transition hover:bg-[#5558E3] disabled:cursor-not-allowed disabled:!text-white disabled:opacity-60"
+              className="inline-flex h-11 items-center rounded-full bg-[var(--brand-600)] px-5 text-sm font-semibold !text-white transition hover:bg-[var(--brand-700)] disabled:cursor-not-allowed disabled:!text-white disabled:opacity-60"
             >
               {status === "saving" ? "Saving..." : "Save changes"}
             </button>
@@ -423,7 +456,7 @@ export default function BusinessInfoPanel({
               closeEditor();
             }}
           >
-            <SelectTrigger className="h-11 w-full rounded-xl border border-[#E5E7EB] bg-white px-3.5 text-sm text-[#1F2937] outline-none transition hover:border-[#C7D2FE] focus:border-[#6366F1] focus:ring-4 focus:ring-[#6366F1]/15 data-[placeholder]:text-[#9CA3AF]">
+            <SelectTrigger className="h-11 w-full rounded-xl border border-[#E5E7EB] bg-white px-3.5 text-sm text-[#1F2937] outline-none transition hover:border-[var(--brand-200)] focus:border-[var(--brand-600)] focus:ring-4 focus:ring-[var(--brand-600)]/15 data-[placeholder]:text-[#9CA3AF]">
               <SelectValue placeholder="Select business segment" />
             </SelectTrigger>
             <SelectContent className="rounded-xl border border-[#E5E7EB] bg-white p-1 shadow-[0_12px_30px_rgba(15,23,42,0.12)]">
@@ -431,7 +464,7 @@ export default function BusinessInfoPanel({
                 <SelectItem
                   key={option}
                   value={option}
-                  className="rounded-lg px-3 py-2 text-sm text-[#4B5563] focus:bg-[#6366F1] focus:text-white"
+                  className="rounded-lg px-3 py-2 text-sm text-[#4B5563] focus:bg-[var(--brand-50)] focus:text-[var(--brand-600)]"
                 >
                   {option}
                 </SelectItem>

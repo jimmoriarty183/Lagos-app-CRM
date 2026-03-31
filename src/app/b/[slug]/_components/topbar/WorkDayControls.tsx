@@ -54,14 +54,14 @@ function compactActionClass(
   if (tone === "neutral") {
     return "h-9 justify-start rounded-lg border border-[#E5E7EB] bg-white px-3 text-sm font-semibold text-[#374151] shadow-none hover:border-[#D6DAE1] hover:bg-[#FCFCFD] disabled:opacity-100";
   }
-  return "h-9 justify-start rounded-lg border border-[#6366F1] bg-[#6366F1] px-3 text-sm font-semibold !text-white shadow-[0_1px_2px_rgba(16,24,40,0.10)] hover:border-[#5558E3] hover:bg-[#5558E3] disabled:opacity-100 disabled:!text-white";
+  return "h-9 justify-start rounded-lg border border-[var(--brand-600)] bg-[var(--brand-600)] px-3 text-sm font-semibold !text-white shadow-[0_1px_2px_rgba(16,24,40,0.10)] hover:border-[var(--brand-700)] hover:bg-[var(--brand-700)] disabled:opacity-100 disabled:!text-white";
 }
 
 function desktopActionClass(
   tone: "primary" | "warning" | "success" | "neutral",
 ) {
   if (tone === "primary") {
-    return "inline-flex h-8 items-center rounded-lg border border-[#6366F1] bg-[#6366F1] px-3 text-[12px] font-semibold !text-white shadow-[0_1px_2px_rgba(16,24,40,0.10)] transition hover:border-[#5558E3] hover:bg-[#5558E3] disabled:opacity-100 disabled:!text-white";
+    return "inline-flex h-8 items-center rounded-lg border border-[var(--brand-600)] bg-[var(--brand-600)] px-3 text-[12px] font-semibold !text-white shadow-[0_1px_2px_rgba(16,24,40,0.10)] transition hover:border-[var(--brand-700)] hover:bg-[var(--brand-700)] disabled:opacity-100 disabled:!text-white";
   }
   if (tone === "warning") {
     return "inline-flex h-8 items-center rounded-lg border border-[#FDE68A] bg-[#FFFBEB] px-3 text-[12px] font-semibold text-[#B54708] shadow-sm transition hover:border-[#FCD34D] hover:bg-[#FEF3C7] disabled:opacity-100";

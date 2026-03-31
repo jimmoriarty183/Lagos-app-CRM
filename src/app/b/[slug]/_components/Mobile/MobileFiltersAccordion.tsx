@@ -139,9 +139,15 @@ export default function MobileFiltersAccordion({
       setIsOpen(true);
     };
 
-    window.addEventListener("orders-mobile-open-filters", onOpen as EventListener);
+    window.addEventListener(
+      "orders-mobile-open-filters",
+      onOpen as EventListener,
+    );
     return () =>
-      window.removeEventListener("orders-mobile-open-filters", onOpen as EventListener);
+      window.removeEventListener(
+        "orders-mobile-open-filters",
+        onOpen as EventListener,
+      );
   }, [actor, filters.endDate, filters.range, filters.startDate, sort]);
 
   useEffect(() => {
@@ -149,10 +155,13 @@ export default function MobileFiltersAccordion({
 
     async function loadActors() {
       try {
-        const res = await fetch(`/api/manager/status?business_id=${encodeURIComponent(businessId)}`, {
-          credentials: "same-origin",
-          cache: "no-store",
-        });
+        const res = await fetch(
+          `/api/manager/status?business_id=${encodeURIComponent(businessId)}`,
+          {
+            credentials: "same-origin",
+            cache: "no-store",
+          },
+        );
         if (!res.ok) return;
 
         const data = (await res.json()) as ManagerStatusResponse;
@@ -217,10 +226,10 @@ export default function MobileFiltersAccordion({
 
   const inputCls =
     "h-11 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm text-[#374151] outline-none transition " +
-    "focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15";
+    "focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15";
   const selectTriggerCls =
     "h-11 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm text-[#374151] shadow-none transition " +
-    "focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15 data-[placeholder]:text-[#9CA3AF]";
+    "focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15 data-[placeholder]:text-[#9CA3AF]";
   const selectContentCls =
     "z-[130] rounded-xl border border-[#E5E7EB] bg-white p-1 shadow-[0_16px_40px_rgba(15,23,42,0.12)]";
 
@@ -236,7 +245,10 @@ export default function MobileFiltersAccordion({
   const hasFiltersApplied = activeCount > 0;
   const showCustomRange = rangeValue === "custom";
   const statusOptions = [
-    ...statuses.map((status) => ({ value: status.value as StatusFilterValue, label: status.label })),
+    ...statuses.map((status) => ({
+      value: status.value as StatusFilterValue,
+      label: status.label,
+    })),
     { value: "OVERDUE" as const, label: "Overdue" },
   ];
   const effectiveActors = useMemo(
@@ -264,7 +276,9 @@ export default function MobileFiltersAccordion({
   const shouldKeepDefaultStatuses =
     statusMode === "default" ||
     (filters.statuses.length === defaultVisibleStatuses.length &&
-      defaultVisibleStatuses.every((status) => filters.statuses.includes(status)));
+      defaultVisibleStatuses.every((status) =>
+        filters.statuses.includes(status),
+      ));
 
   if (!isOpen) return null;
 
@@ -287,7 +301,9 @@ export default function MobileFiltersAccordion({
               Search & Filters
             </div>
             <div className="mt-1 text-xs text-[#9CA3AF]">
-              {hasFiltersApplied ? `${activeCount} active` : "No active filters"}
+              {hasFiltersApplied
+                ? `${activeCount} active`
+                : "No active filters"}
             </div>
           </div>
 
@@ -310,15 +326,22 @@ export default function MobileFiltersAccordion({
           </div>
         </div>
 
-        <form method="get" className="grid max-h-[calc(88vh-72px)] gap-4 overflow-y-auto px-4 py-4">
+        <form
+          method="get"
+          className="grid max-h-[calc(88vh-72px)] gap-4 overflow-y-auto px-4 py-4"
+        >
           <input type="hidden" name="u" value={phoneRaw} />
           <input type="hidden" name="srange" value={summaryRange} />
           <input type="hidden" name="page" value="1" />
           <input type="hidden" name="range" value={rangeValue} />
           <input type="hidden" name="actor" value={actorValue} />
           <input type="hidden" name="sort" value={sortValue} />
-          {shouldKeepAllStatuses ? <input type="hidden" name="statusMode" value="all" /> : null}
-          {viewMode === "kanban" ? <input type="hidden" name="view" value="kanban" /> : null}
+          {shouldKeepAllStatuses ? (
+            <input type="hidden" name="statusMode" value="all" />
+          ) : null}
+          {viewMode === "kanban" ? (
+            <input type="hidden" name="view" value="kanban" />
+          ) : null}
 
           <label className="grid gap-2">
             <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
@@ -387,7 +410,10 @@ export default function MobileFiltersAccordion({
             <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
               Sort
             </span>
-            <Select value={sortValue} onValueChange={(value) => setSortValue(value as OrderSort)}>
+            <Select
+              value={sortValue}
+              onValueChange={(value) => setSortValue(value as OrderSort)}
+            >
               <SelectTrigger className={selectTriggerCls}>
                 <SelectValue placeholder="Select sort" />
               </SelectTrigger>
@@ -420,7 +446,7 @@ export default function MobileFiltersAccordion({
                     }
                     className="peer sr-only"
                   />
-                  <span className="inline-flex min-h-9 items-center rounded-full border border-[#E5E7EB] bg-white px-3 py-2 text-[12px] font-medium leading-4 text-[#374151] transition peer-checked:border-[#6366F1] peer-checked:bg-[#6366F1] peer-checked:text-white">
+                  <span className="inline-flex min-h-9 items-center rounded-full border border-[#E5E7EB] bg-white px-3 py-2 text-[12px] font-medium leading-4 text-[#374151] transition peer-checked:border-[var(--brand-600)] peer-checked:bg-[var(--brand-600)] peer-checked:text-white">
                     {option.label}
                   </span>
                 </label>
@@ -443,7 +469,9 @@ export default function MobileFiltersAccordion({
                   type="date"
                   name="start"
                   value={customStart}
-                  onChange={(event) => setCustomStart(event.currentTarget.value)}
+                  onChange={(event) =>
+                    setCustomStart(event.currentTarget.value)
+                  }
                   className={inputCls}
                 />
               </label>

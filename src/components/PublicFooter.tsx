@@ -15,18 +15,27 @@ export function PublicFooter() {
           <div className="max-w-sm">
             <div className="flex items-center gap-3">
               <BrandIcon size={30} />
-              <p className="text-[1.125rem] font-semibold tracking-tight text-slate-900">Ordo</p>
+              <p className="text-[1.125rem] font-semibold tracking-tight text-slate-900">
+                Ordo
+              </p>
             </div>
-            <p className="mt-3 text-sm leading-6 text-slate-700">CRM for managing orders and customers</p>
+            <p className="mt-3 text-sm leading-6 text-slate-700">
+              CRM for managing orders and customers
+            </p>
           </div>
 
-          <nav aria-label="Legal links" className="flex flex-col gap-3 md:items-end">
-            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">Legal</p>
+          <nav
+            aria-label="Legal links"
+            className="flex flex-col gap-3 md:items-end"
+          >
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">
+              Legal
+            </p>
             {legalLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="text-sm font-medium text-slate-700 transition-colors hover:text-[#6366F1]"
+                className="text-sm font-medium text-slate-700 transition-colors hover:text-[var(--brand-600)]"
               >
                 {link.label}
               </Link>
@@ -34,7 +43,9 @@ export function PublicFooter() {
           </nav>
         </div>
 
-        <div className="border-t border-slate-200 pt-4 text-xs font-medium text-slate-600">(c) 2026 ORDO</div>
+        <div className="border-t border-slate-200 pt-4 text-xs font-medium text-slate-600">
+          (c) 2026 ORDO
+        </div>
       </div>
     </footer>
   );

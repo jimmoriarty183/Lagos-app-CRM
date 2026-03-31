@@ -20,14 +20,21 @@ export function BellNotifications() {
   const [items, setItems] = useState<CampaignBellItem[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  const unreadCount = useMemo(() => items.filter((item) => !item.isRead).length, [items]);
+  const unreadCount = useMemo(
+    () => items.filter((item) => !item.isRead).length,
+    [items],
+  );
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
 
     const response = await fetch("/api/campaigns/bell", { cache: "no-store" });
-    const json = await safeJson<{ ok: boolean; items?: CampaignBellItem[]; error?: string }>(response);
+    const json = await safeJson<{
+      ok: boolean;
+      items?: CampaignBellItem[];
+      error?: string;
+    }>(response);
     if (!response.ok || !json?.ok) {
       setItems([]);
       setError(json?.error ?? "Failed to load notifications");
@@ -64,8 +71,16 @@ export function BellNotifications() {
     });
     const json = await safeJson<{ ok: boolean }>(response);
     if (!response.ok || !json?.ok) return;
-    setItems((current) => current.map((item) => (item.id === campaignId ? { ...item, isRead: true } : item)));
-    window.dispatchEvent(new CustomEvent("campaign:state-changed", { detail: { campaignId, action: "read" } }));
+    setItems((current) =>
+      current.map((item) =>
+        item.id === campaignId ? { ...item, isRead: true } : item,
+      ),
+    );
+    window.dispatchEvent(
+      new CustomEvent("campaign:state-changed", {
+        detail: { campaignId, action: "read" },
+      }),
+    );
   }, []);
 
   return (
@@ -83,7 +98,7 @@ export function BellNotifications() {
       >
         <Bell className="h-4 w-4" />
         {unreadCount > 0 ? (
-          <span className="absolute -right-1 -top-1 inline-flex min-w-5 items-center justify-center rounded-full bg-indigo-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
+          <span className="absolute -right-1 -top-1 inline-flex min-w-5 items-center justify-center rounded-full bg-[var(--brand-600)] px-1.5 py-0.5 text-[10px] font-bold text-white">
             {unreadCount > 99 ? "99+" : unreadCount}
           </span>
         ) : null}

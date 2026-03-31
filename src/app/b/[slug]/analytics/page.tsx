@@ -38,7 +38,9 @@ type BusinessRow = {
 };
 
 function upperRole(value: unknown): "OWNER" | "MANAGER" | "GUEST" {
-  const normalized = String(value ?? "").trim().toUpperCase();
+  const normalized = String(value ?? "")
+    .trim()
+    .toUpperCase();
   if (normalized === "OWNER") return "OWNER";
   if (normalized === "MANAGER") return "MANAGER";
   return "GUEST";
@@ -48,7 +50,10 @@ function cleanText(value: unknown) {
   return String(value ?? "").trim();
 }
 
-export default async function OwnerAnalyticsPage({ params, searchParams }: PageProps) {
+export default async function OwnerAnalyticsPage({
+  params,
+  searchParams,
+}: PageProps) {
   const emptySearchParams: Awaited<NonNullable<PageProps["searchParams"]>> = {};
   const [{ slug }, sp] = await Promise.all([
     params,
@@ -60,15 +65,29 @@ export default async function OwnerAnalyticsPage({ params, searchParams }: PageP
   const reportFromRaw = cleanText(sp?.rfrom);
   const reportToRaw = cleanText(sp?.rto);
   const reportManagerRaw = cleanText(sp?.rmanager);
-  const reportFromDate = /^\d{4}-\d{2}-\d{2}$/.test(reportFromRaw) ? reportFromRaw : "";
-  const reportToDate = /^\d{4}-\d{2}-\d{2}$/.test(reportToRaw) ? reportToRaw : "";
+  const reportFromDate = /^\d{4}-\d{2}-\d{2}$/.test(reportFromRaw)
+    ? reportFromRaw
+    : "";
+  const reportToDate = /^\d{4}-\d{2}-\d{2}$/.test(reportToRaw)
+    ? reportToRaw
+    : "";
   const reportManagerId = reportManagerRaw;
-  const analyticsView: "overview" | "managers" | "alerts" | "reports" | "productivity" =
-    tabRaw === "managers" || tabRaw === "alerts" || tabRaw === "reports" || tabRaw === "productivity"
+  const analyticsView:
+    | "overview"
+    | "managers"
+    | "alerts"
+    | "reports"
+    | "productivity" =
+    tabRaw === "managers" ||
+    tabRaw === "alerts" ||
+    tabRaw === "reports" ||
+    tabRaw === "productivity"
       ? (tabRaw as "managers" | "alerts" | "reports" | "productivity")
       : "overview";
   const productivityPeriod: "day" | "week" | "month" =
-    periodRaw === "day" || periodRaw === "month" ? (periodRaw as "day" | "month") : "week";
+    periodRaw === "day" || periodRaw === "month"
+      ? (periodRaw as "day" | "month")
+      : "week";
 
   const supabase = await supabaseServerReadOnly();
   const admin = supabaseAdmin();
@@ -103,7 +122,9 @@ export default async function OwnerAnalyticsPage({ params, searchParams }: PageP
     redirect("/app/crm");
   }
 
-  const role = upperRole(memberships.find((m) => m.business_id === currentBusiness.id)?.role);
+  const role = upperRole(
+    memberships.find((m) => m.business_id === currentBusiness.id)?.role,
+  );
   if (role !== "OWNER") {
     redirect(`/b/${slug}`);
   }
@@ -114,8 +135,13 @@ export default async function OwnerAnalyticsPage({ params, searchParams }: PageP
     .eq("id", user.id)
     .maybeSingle();
 
-  const currentUserName = resolveUserDisplay(profileRaw ?? {}).primary || cleanText(user.email) || "User";
-  const currentUserAvatarUrl = cleanText((profileRaw as { avatar_url?: string | null } | null)?.avatar_url);
+  const currentUserName =
+    resolveUserDisplay(profileRaw ?? {}).primary ||
+    cleanText(user.email) ||
+    "User";
+  const currentUserAvatarUrl = cleanText(
+    (profileRaw as { avatar_url?: string | null } | null)?.avatar_url,
+  );
   const adminHref = isAdminEmail(user.email) ? getAdminUsersPath() : undefined;
 
   const businessOptions: BusinessOption[] = businesses
@@ -125,7 +151,8 @@ export default async function OwnerAnalyticsPage({ params, searchParams }: PageP
       slug: entry.slug,
       name: cleanText(entry.name) || entry.slug,
       role: upperRole(
-        memberships.find((membership) => membership.business_id === entry.id)?.role,
+        memberships.find((membership) => membership.business_id === entry.id)
+          ?.role,
       ),
       isAdmin: isAdminEmail(user.email),
     }));
@@ -146,7 +173,9 @@ export default async function OwnerAnalyticsPage({ params, searchParams }: PageP
     phoneRaw && phoneRaw.length > 0
       ? `/b/${slug}/analytics?u=${encodeURIComponent(phoneRaw)}`
       : `/b/${slug}/analytics`;
-  const makeTabHref = (tab: "overview" | "managers" | "alerts" | "reports" | "productivity") => {
+  const makeTabHref = (
+    tab: "overview" | "managers" | "alerts" | "reports" | "productivity",
+  ) => {
     const params = new URLSearchParams();
     if (phoneRaw) params.set("u", phoneRaw);
     if (tab !== "overview") params.set("tab", tab);
@@ -239,20 +268,22 @@ export default async function OwnerAnalyticsPage({ params, searchParams }: PageP
 
           <div className="min-w-0 space-y-4 pl-2">
             <div className="inline-flex rounded-lg border border-[#E5E7EB] bg-white p-1">
-              {([
-                { key: "overview", label: "Overview" },
-                { key: "managers", label: "Managers" },
-                { key: "alerts", label: "Alerts" },
-                { key: "reports", label: "Reports" },
-                { key: "productivity", label: "Productivity" },
-              ] as const).map((tab) => (
+              {(
+                [
+                  { key: "overview", label: "Overview" },
+                  { key: "managers", label: "Managers" },
+                  { key: "alerts", label: "Alerts" },
+                  { key: "reports", label: "Reports" },
+                  { key: "productivity", label: "Productivity" },
+                ] as const
+              ).map((tab) => (
                 <a
                   key={tab.key}
                   href={makeTabHref(tab.key)}
                   className={[
                     "rounded-md px-3 py-1.5 text-[12px] font-semibold transition",
                     analyticsView === tab.key
-                      ? "bg-[#6366F1] text-white"
+                      ? "bg-[var(--brand-600)] text-white"
                       : "text-[#6B7280] hover:bg-[#F9FAFB] hover:text-[#1F2937]",
                   ].join(" ")}
                 >
@@ -282,20 +313,22 @@ export default async function OwnerAnalyticsPage({ params, searchParams }: PageP
 
         <div className="space-y-4 lg:hidden">
           <div className="inline-flex rounded-lg border border-[#E5E7EB] bg-white p-1">
-            {([
-              { key: "overview", label: "Overview" },
-              { key: "managers", label: "Managers" },
-              { key: "alerts", label: "Alerts" },
-              { key: "reports", label: "Reports" },
-              { key: "productivity", label: "Productivity" },
-            ] as const).map((tab) => (
+            {(
+              [
+                { key: "overview", label: "Overview" },
+                { key: "managers", label: "Managers" },
+                { key: "alerts", label: "Alerts" },
+                { key: "reports", label: "Reports" },
+                { key: "productivity", label: "Productivity" },
+              ] as const
+            ).map((tab) => (
               <a
                 key={tab.key}
                 href={makeTabHref(tab.key)}
                 className={[
                   "rounded-md px-3 py-1.5 text-[12px] font-semibold transition",
                   analyticsView === tab.key
-                    ? "bg-[#6366F1] text-white"
+                    ? "bg-[var(--brand-600)] text-white"
                     : "text-[#6B7280] hover:bg-[#F9FAFB] hover:text-[#1F2937]",
                 ].join(" ")}
               >

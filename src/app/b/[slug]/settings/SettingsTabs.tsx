@@ -18,7 +18,7 @@ export default function SettingsTabs({ tabs }: { tabs: Tab[] }) {
           className={[
             "inline-flex h-9 items-center rounded-full border px-3.5 text-[13px] font-semibold transition",
             tab.active
-              ? "border-[#6366F1] bg-[#6366F1] text-white shadow-[0_8px_18px_rgba(99,102,241,0.18)]"
+              ? "border-[var(--brand-600)] bg-[var(--brand-600)] text-white shadow-[0_8px_18px_rgba(91,91,179,0.18)]"
               : "border-[#E5E7EB] bg-white text-[#4B5563] hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]",
           ].join(" ")}
         >

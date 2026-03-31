@@ -52,13 +52,17 @@ export default function InviteClient() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string>("");
 
-  const fullName = [firstName.trim(), lastName.trim()].filter(Boolean).join(" ");
+  const fullName = [firstName.trim(), lastName.trim()]
+    .filter(Boolean)
+    .join(" ");
   const isExistingAccount = (currentUser?.membershipsCount ?? 0) > 0;
 
   async function ensureSessionFromHash() {
     if (typeof window === "undefined") return;
 
-    const { access_token, refresh_token } = parseHashTokens(window.location.hash);
+    const { access_token, refresh_token } = parseHashTokens(
+      window.location.hash,
+    );
     if (access_token && refresh_token) {
       const { error: setErr } = await supabase.auth.setSession({
         access_token,
@@ -81,7 +85,9 @@ export default function InviteClient() {
 
     if (!inviteId) {
       setLoading(false);
-      setError("Invite link is missing invite_id. Please open the email again.");
+      setError(
+        "Invite link is missing invite_id. Please open the email again.",
+      );
       return;
     }
 
@@ -95,7 +101,9 @@ export default function InviteClient() {
         setEmail("");
         setBusiness(null);
         setCurrentUser(null);
-        setError("No active session. Please sign in and open the invite again.");
+        setError(
+          "No active session. Please sign in and open the invite again.",
+        );
         setLoading(false);
         return;
       }
@@ -217,7 +225,9 @@ export default function InviteClient() {
               <Spinner />
               <div>
                 <div className="text-sm font-semibold text-gray-900">
-                  {isExistingAccount ? "Confirming access..." : "Finishing setup..."}
+                  {isExistingAccount
+                    ? "Confirming access..."
+                    : "Finishing setup..."}
                 </div>
                 <div className="mt-0.5 text-xs text-gray-600">
                   {isExistingAccount
@@ -233,21 +243,29 @@ export default function InviteClient() {
       <div className="mx-auto max-w-2xl px-4 py-10">
         <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
           <h1 className="text-xl font-semibold text-gray-900 sm:text-2xl">
-            {isExistingAccount ? "Confirm manager access" : "Complete your manager profile"}
+            {isExistingAccount
+              ? "Confirm manager access"
+              : "Complete your manager profile"}
           </h1>
 
           <p className="mt-2 text-sm text-gray-600">
             You&apos;re signing in as{" "}
-            <span className="font-semibold text-gray-900">{email || "..."}</span>
+            <span className="font-semibold text-gray-900">
+              {email || "..."}
+            </span>
           </p>
 
           {business?.slug && (
             <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
-              <div className="text-xs font-semibold text-gray-600">Invitation to</div>
+              <div className="text-xs font-semibold text-gray-600">
+                Invitation to
+              </div>
               <div className="mt-1 text-base font-semibold text-gray-900">
                 {business.name || business.slug}
               </div>
-              <div className="mt-0.5 text-xs text-gray-500">/{business.slug}</div>
+              <div className="mt-0.5 text-xs text-gray-500">
+                /{business.slug}
+              </div>
             </div>
           )}
 
@@ -289,7 +307,7 @@ export default function InviteClient() {
                   "w-full rounded-xl py-3 text-sm font-semibold transition-all shadow-sm",
                   !canAcceptExisting
                     ? "bg-gray-200 text-gray-700 cursor-not-allowed"
-                    : "bg-[#6366F1] text-white hover:bg-[#5558E6] active:scale-[0.99]",
+                    : "bg-[var(--brand-600)] text-white hover:bg-[var(--brand-700)] active:scale-[0.99]",
                 ].join(" ")}
               >
                 Accept invite and open business
@@ -311,7 +329,7 @@ export default function InviteClient() {
                     onChange={(e) => setFirstName(e.target.value)}
                     placeholder="John"
                     autoComplete="given-name"
-                    className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none placeholder:text-gray-400 focus:border-[#6366F1] focus:ring-2 focus:ring-[rgba(99,102,241,0.14)]"
+                    className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none placeholder:text-gray-400 focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[rgba(91,91,179,0.14)]"
                   />
                 </div>
 
@@ -324,20 +342,22 @@ export default function InviteClient() {
                     onChange={(e) => setLastName(e.target.value)}
                     placeholder="Doe"
                     autoComplete="family-name"
-                    className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none placeholder:text-gray-400 focus:border-[#6366F1] focus:ring-2 focus:ring-[rgba(99,102,241,0.14)]"
+                    className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none placeholder:text-gray-400 focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[rgba(91,91,179,0.14)]"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="text-sm font-medium text-gray-700">Password</label>
+                <label className="text-sm font-medium text-gray-700">
+                  Password
+                </label>
                 <input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Min 8 characters"
                   autoComplete="new-password"
-                  className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none placeholder:text-gray-400 focus:border-[#6366F1] focus:ring-2 focus:ring-[rgba(99,102,241,0.14)]"
+                  className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none placeholder:text-gray-400 focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[rgba(91,91,179,0.14)]"
                 />
               </div>
 
@@ -351,10 +371,12 @@ export default function InviteClient() {
                   onChange={(e) => setPassword2(e.target.value)}
                   placeholder="Repeat password"
                   autoComplete="new-password"
-                  className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none placeholder:text-gray-400 focus:border-[#6366F1] focus:ring-2 focus:ring-[rgba(99,102,241,0.14)]"
+                  className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none placeholder:text-gray-400 focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[rgba(91,91,179,0.14)]"
                 />
                 {password && password2 && password !== password2 && (
-                  <div className="mt-2 text-xs text-red-600">Passwords do not match</div>
+                  <div className="mt-2 text-xs text-red-600">
+                    Passwords do not match
+                  </div>
                 )}
               </div>
 
@@ -368,7 +390,10 @@ export default function InviteClient() {
                   />
                   <span className="text-sm text-gray-700">
                     I agree to the terms and conditions and privacy policy
-                    <span className="text-gray-500"> (text will be updated)</span>
+                    <span className="text-gray-500">
+                      {" "}
+                      (text will be updated)
+                    </span>
                   </span>
                 </label>
 
@@ -386,19 +411,22 @@ export default function InviteClient() {
                   "w-full rounded-xl py-3 text-sm font-semibold transition-all shadow-sm",
                   !canSubmitSetup
                     ? "bg-gray-200 text-gray-700 cursor-not-allowed"
-                    : "bg-[#6366F1] text-white hover:bg-[#5558E6] active:scale-[0.99]",
+                    : "bg-[var(--brand-600)] text-white hover:bg-[var(--brand-700)] active:scale-[0.99]",
                 ].join(" ")}
               >
                 Continue
               </button>
 
               <p className="text-xs text-gray-500">
-                After saving, you&apos;ll be redirected to the business dashboard.
+                After saving, you&apos;ll be redirected to the business
+                dashboard.
                 {fullName ? (
                   <>
                     {" "}
                     Your name:{" "}
-                    <span className="font-semibold text-gray-700">{fullName}</span>
+                    <span className="font-semibold text-gray-700">
+                      {fullName}
+                    </span>
                   </>
                 ) : null}
               </p>
@@ -409,5 +437,3 @@ export default function InviteClient() {
     </main>
   );
 }
-
-

@@ -118,12 +118,12 @@ function SummaryCard({
               iconWrap: "bg-[#fef3f2] text-[#d92d20]",
               value: "text-[#d92d20]",
               meta: "text-[#b42318]",
-          }
-        : {
-            iconWrap: "bg-[#f2f4f7] text-[#6B7280]",
-            value: "text-[#1F2937]",
-            meta: "text-[#6B7280]",
-          };
+            }
+          : {
+              iconWrap: "bg-[#f2f4f7] text-[#6B7280]",
+              value: "text-[#1F2937]",
+              meta: "text-[#6B7280]",
+            };
 
   const trendClasses =
     trendTone === "positive"
@@ -142,9 +142,7 @@ function SummaryCard({
   return (
     <article className="flex h-full min-w-0 flex-col rounded-xl border border-[#E5E7EB] bg-white p-5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
       <div className="flex items-center justify-between gap-3">
-        <div className="text-[12px] font-medium text-[#6B7280]">
-          {label}
-        </div>
+        <div className="text-[12px] font-medium text-[#6B7280]">{label}</div>
         <div
           className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl ${toneClasses.iconWrap}`}
         >
@@ -158,14 +156,20 @@ function SummaryCard({
         </div>
       ) : (
         <>
-          <div className={`mt-4 text-[24px] font-semibold leading-none tabular-nums sm:text-[26px] ${toneClasses.value}`}>
+          <div
+            className={`mt-4 text-[24px] font-semibold leading-none tabular-nums sm:text-[26px] ${toneClasses.value}`}
+          >
             {value}
           </div>
 
           <div className="mt-2.5 space-y-1">
-            <div className={`text-[12px] font-medium ${toneClasses.meta}`}>{periodLabel}</div>
+            <div className={`text-[12px] font-medium ${toneClasses.meta}`}>
+              {periodLabel}
+            </div>
             {trendText ? (
-              <div className={`inline-flex items-center gap-1 text-[12px] font-medium ${trendClasses}`}>
+              <div
+                className={`inline-flex items-center gap-1 text-[12px] font-medium ${trendClasses}`}
+              >
                 {TrendIcon ? <TrendIcon className="h-3.5 w-3.5" /> : null}
                 <span>{trendText}</span>
               </div>
@@ -239,7 +243,11 @@ export default function DesktopAnalyticsCard({
             aria-label={hidden ? "Show summary" : "Hide summary"}
             title={hidden ? "Show summary" : "Hide summary"}
           >
-            {hidden ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+            {hidden ? (
+              <ChevronDown className="h-4 w-4" />
+            ) : (
+              <ChevronUp className="h-4 w-4" />
+            )}
           </button>
           <div className="inline-flex rounded-full border border-[#E5E7EB] bg-white p-1">
             {periodOptions.map((option) => (
@@ -249,7 +257,7 @@ export default function DesktopAnalyticsCard({
                 className={[
                   "rounded-md px-3 py-1.5 text-[11px] font-semibold transition",
                   option.active
-                    ? "bg-[#6366F1] text-white"
+                    ? "bg-[var(--brand-600)] text-white"
                     : "text-[#6B7280] hover:bg-[#F9FAFB] hover:text-[#1F2937]",
                 ].join(" ")}
               >
@@ -271,7 +279,7 @@ export default function DesktopAnalyticsCard({
                     className={[
                       "block rounded-xl px-3 py-2 text-[12px] font-medium transition",
                       option.active
-                        ? "bg-[#6366F1] text-white"
+                        ? "bg-[var(--brand-600)] text-white"
                         : "text-[#374151] hover:bg-[#F9FAFB]",
                     ].join(" ")}
                   >
@@ -282,90 +290,132 @@ export default function DesktopAnalyticsCard({
             </details>
           ) : null}
           <div className="text-[11px] font-medium text-[#9CA3AF]">
-            {hasComparison && comparisonLabel ? `${periodLabel} vs ${comparisonLabel}` : periodLabel}
+            {hasComparison && comparisonLabel
+              ? `${periodLabel} vs ${comparisonLabel}`
+              : periodLabel}
           </div>
         </div>
       </div>
 
       {hidden ? null : (
         <>
+          {customRange?.active ? (
+            <form
+              method="get"
+              className="space-y-3 rounded-2xl border border-[#E5E7EB] bg-white px-3 py-3"
+            >
+              <input type="hidden" name="u" value={customRange.phoneRaw} />
+              {customRange.tableQuery.q ? (
+                <input
+                  type="hidden"
+                  name="q"
+                  value={customRange.tableQuery.q}
+                />
+              ) : null}
+              {customRange.tableQuery.sort &&
+              customRange.tableQuery.sort !== "newest" ? (
+                <input
+                  type="hidden"
+                  name="sort"
+                  value={customRange.tableQuery.sort}
+                />
+              ) : null}
+              {customRange.tableQuery.statuses.map((status) => (
+                <input
+                  key={status}
+                  type="hidden"
+                  name="status"
+                  value={status}
+                />
+              ))}
+              {customRange.tableQuery.range !== "ALL" ? (
+                <input
+                  type="hidden"
+                  name="range"
+                  value={customRange.tableQuery.range}
+                />
+              ) : null}
+              {customRange.tableQuery.startDate ? (
+                <input
+                  type="hidden"
+                  name="start"
+                  value={customRange.tableQuery.startDate}
+                />
+              ) : null}
+              {customRange.tableQuery.endDate ? (
+                <input
+                  type="hidden"
+                  name="end"
+                  value={customRange.tableQuery.endDate}
+                />
+              ) : null}
+              {customRange.tableQuery.actor !== "ALL" ? (
+                <input
+                  type="hidden"
+                  name="actor"
+                  value={customRange.tableQuery.actor}
+                />
+              ) : null}
+              <input type="hidden" name="srange" value="custom" />
+              <div className="flex items-end gap-3">
+                <label className="flex min-w-0 flex-1 flex-col gap-1">
+                  <span className="text-[11px] font-medium text-[#6B7280]">
+                    Start
+                  </span>
+                  <input
+                    type="date"
+                    name="sstart"
+                    defaultValue={customRange.startDate ?? ""}
+                    className="h-11 rounded-xl border border-[#E5E7EB] bg-white px-4 text-sm font-medium text-[#374151] outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
+                  />
+                </label>
+                <label className="flex min-w-0 flex-1 flex-col gap-1">
+                  <span className="text-[11px] font-medium text-[#6B7280]">
+                    End
+                  </span>
+                  <input
+                    type="date"
+                    name="send"
+                    defaultValue={customRange.endDate ?? ""}
+                    className="h-11 rounded-xl border border-[#E5E7EB] bg-white px-4 text-sm font-medium text-[#374151] outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
+                  />
+                </label>
+                <a
+                  href={customRange.resetHref}
+                  className="inline-flex h-11 min-w-[112px] shrink-0 items-center justify-center rounded-xl border border-[#E5E7EB] bg-white px-4 text-sm font-semibold text-[#374151] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
+                >
+                  Reset
+                </a>
+                <button
+                  type="submit"
+                  className="inline-flex h-11 min-w-[152px] shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-[var(--brand-600)] px-4 text-sm font-semibold transition hover:bg-[var(--brand-700)]"
+                  style={{ color: "#ffffff" }}
+                  aria-label="Apply custom range"
+                >
+                  <span className="whitespace-nowrap leading-none text-white">
+                    Apply
+                  </span>
+                </button>
+              </div>
+            </form>
+          ) : null}
 
-      {customRange?.active ? (
-        <form method="get" className="space-y-3 rounded-2xl border border-[#E5E7EB] bg-white px-3 py-3">
-          <input type="hidden" name="u" value={customRange.phoneRaw} />
-          {customRange.tableQuery.q ? <input type="hidden" name="q" value={customRange.tableQuery.q} /> : null}
-          {customRange.tableQuery.sort && customRange.tableQuery.sort !== "newest" ? (
-            <input type="hidden" name="sort" value={customRange.tableQuery.sort} />
-          ) : null}
-          {customRange.tableQuery.statuses.map((status) => (
-            <input key={status} type="hidden" name="status" value={status} />
-          ))}
-          {customRange.tableQuery.range !== "ALL" ? (
-            <input type="hidden" name="range" value={customRange.tableQuery.range} />
-          ) : null}
-          {customRange.tableQuery.startDate ? (
-            <input type="hidden" name="start" value={customRange.tableQuery.startDate} />
-          ) : null}
-          {customRange.tableQuery.endDate ? (
-            <input type="hidden" name="end" value={customRange.tableQuery.endDate} />
-          ) : null}
-          {customRange.tableQuery.actor !== "ALL" ? (
-            <input type="hidden" name="actor" value={customRange.tableQuery.actor} />
-          ) : null}
-          <input type="hidden" name="srange" value="custom" />
-          <div className="flex items-end gap-3">
-            <label className="flex min-w-0 flex-1 flex-col gap-1">
-              <span className="text-[11px] font-medium text-[#6B7280]">Start</span>
-              <input
-                type="date"
-                name="sstart"
-                defaultValue={customRange.startDate ?? ""}
-                className="h-11 rounded-xl border border-[#E5E7EB] bg-white px-4 text-sm font-medium text-[#374151] outline-none transition focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15"
+          <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {cards.map((card) => (
+              <SummaryCard
+                key={card.label}
+                label={card.label}
+                value={card.value}
+                periodLabel={periodLabel}
+                hasOrdersEver={hasOrdersEver}
+                trendText={card.trendText}
+                trendDirection={card.trendDirection}
+                trendTone={card.trendTone}
+                tone={card.tone}
+                icon={cardIcons[card.label]}
               />
-            </label>
-            <label className="flex min-w-0 flex-1 flex-col gap-1">
-              <span className="text-[11px] font-medium text-[#6B7280]">End</span>
-              <input
-                type="date"
-                name="send"
-                defaultValue={customRange.endDate ?? ""}
-                className="h-11 rounded-xl border border-[#E5E7EB] bg-white px-4 text-sm font-medium text-[#374151] outline-none transition focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15"
-              />
-            </label>
-            <a
-              href={customRange.resetHref}
-              className="inline-flex h-11 min-w-[112px] shrink-0 items-center justify-center rounded-xl border border-[#E5E7EB] bg-white px-4 text-sm font-semibold text-[#374151] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
-            >
-              Reset
-            </a>
-            <button
-              type="submit"
-              className="inline-flex h-11 min-w-[152px] shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-[#6366F1] px-4 text-sm font-semibold transition hover:bg-[#5558E3]"
-              style={{ color: "#ffffff" }}
-              aria-label="Apply custom range"
-            >
-              <span className="whitespace-nowrap leading-none text-white">Apply</span>
-            </button>
+            ))}
           </div>
-        </form>
-      ) : null}
-
-      <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {cards.map((card) => (
-            <SummaryCard
-              key={card.label}
-              label={card.label}
-              value={card.value}
-              periodLabel={periodLabel}
-              hasOrdersEver={hasOrdersEver}
-              trendText={card.trendText}
-              trendDirection={card.trendDirection}
-              trendTone={card.trendTone}
-            tone={card.tone}
-            icon={cardIcons[card.label]}
-          />
-        ))}
-      </div>
         </>
       )}
     </section>

@@ -5,7 +5,14 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { SurveyQuestionEditor } from "@/components/campaigns/SurveyQuestionEditor";
 import { BUSINESS_SEGMENTS } from "@/lib/business-segments";
-import type { Campaign, CampaignChannel, CampaignStatus, CampaignType, Survey, SurveyQuestionType } from "@/lib/campaigns/types";
+import type {
+  Campaign,
+  CampaignChannel,
+  CampaignStatus,
+  CampaignType,
+  Survey,
+  SurveyQuestionType,
+} from "@/lib/campaigns/types";
 
 type Props = {
   mode: "create" | "edit";
@@ -15,7 +22,11 @@ type Props = {
   campaignTemplates?: CampaignTemplate[];
 };
 
-type DraftQuestion = { title: string; questionType: SurveyQuestionType; options: string[] };
+type DraftQuestion = {
+  title: string;
+  questionType: SurveyQuestionType;
+  options: string[];
+};
 
 type CampaignTemplate = {
   id: string;
@@ -47,43 +58,74 @@ function extractErrorMessageFromPayload(
   return fallback;
 }
 
-export function AdminCampaignForm({ mode, initialCampaign, initialSurvey, readOnly = false, campaignTemplates = [] }: Props) {
+export function AdminCampaignForm({
+  mode,
+  initialCampaign,
+  initialSurvey,
+  readOnly = false,
+  campaignTemplates = [],
+}: Props) {
   const ROLE_OPTIONS = ["OWNER", "MANAGER"] as const;
-  const QUESTION_TYPES: SurveyQuestionType[] = ["single_choice", "multiple_choice", "yes_no", "rating_1_5"];
+  const QUESTION_TYPES: SurveyQuestionType[] = [
+    "single_choice",
+    "multiple_choice",
+    "yes_no",
+    "rating_1_5",
+  ];
   const router = useRouter();
-  const [type, setType] = useState<CampaignType>(initialCampaign?.type ?? "announcement");
+  const [type, setType] = useState<CampaignType>(
+    initialCampaign?.type ?? "announcement",
+  );
   const [title, setTitle] = useState(
-    mode === "create" && initialCampaign?.title ? `${initialCampaign.title} (Copy)` : (initialCampaign?.title ?? ""),
+    mode === "create" && initialCampaign?.title
+      ? `${initialCampaign.title} (Copy)`
+      : (initialCampaign?.title ?? ""),
   );
   const [body, setBody] = useState(initialCampaign?.body ?? "");
-  const [status, setStatus] = useState<CampaignStatus>(mode === "create" ? "draft" : (initialCampaign?.status ?? "draft"));
-  const [startsAt, setStartsAt] = useState(initialCampaign?.startsAt?.slice(0, 16) ?? "");
-  const [endsAt, setEndsAt] = useState(initialCampaign?.endsAt?.slice(0, 16) ?? "");
-  const [targetRoles, setTargetRoles] = useState<string[]>(
-    (initialCampaign?.targetRoles ?? []).filter((role) => role === "OWNER" || role === "MANAGER"),
+  const [status, setStatus] = useState<CampaignStatus>(
+    mode === "create" ? "draft" : (initialCampaign?.status ?? "draft"),
   );
-  const [targetSegments, setTargetSegments] = useState<string[]>(initialCampaign?.targetSegments ?? []);
-  const [channels, setChannels] = useState<CampaignChannel[]>(initialCampaign?.channels ?? ["bell"]);
+  const [startsAt, setStartsAt] = useState(
+    initialCampaign?.startsAt?.slice(0, 16) ?? "",
+  );
+  const [endsAt, setEndsAt] = useState(
+    initialCampaign?.endsAt?.slice(0, 16) ?? "",
+  );
+  const [targetRoles, setTargetRoles] = useState<string[]>(
+    (initialCampaign?.targetRoles ?? []).filter(
+      (role) => role === "OWNER" || role === "MANAGER",
+    ),
+  );
+  const [targetSegments, setTargetSegments] = useState<string[]>(
+    initialCampaign?.targetSegments ?? [],
+  );
+  const [channels, setChannels] = useState<CampaignChannel[]>(
+    initialCampaign?.channels ?? ["bell"],
+  );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [draftQuestionTitle, setDraftQuestionTitle] = useState("");
-  const [draftQuestionType, setDraftQuestionType] = useState<SurveyQuestionType>("single_choice");
+  const [draftQuestionType, setDraftQuestionType] =
+    useState<SurveyQuestionType>("single_choice");
   const [draftOptionInput, setDraftOptionInput] = useState("");
   const [draftOptions, setDraftOptions] = useState<string[]>([]);
   const [draftQuestions, setDraftQuestions] = useState<DraftQuestion[]>(
     mode === "create"
       ? (initialSurvey?.questions ?? []).map((question) => ({
-        title: question.title,
-        questionType: question.questionType,
-        options: question.options.map((option) => option.label),
-      }))
+          title: question.title,
+          questionType: question.questionType,
+          options: question.options.map((option) => option.label),
+        }))
       : [],
   );
   const [showTypeHelp, setShowTypeHelp] = useState(false);
   const [showHeaderBodyHelp, setShowHeaderBodyHelp] = useState(false);
 
   const campaignId = initialCampaign?.id ?? null;
-  const normalizedTargetRoles = useMemo(() => [...new Set(targetRoles)], [targetRoles]);
+  const normalizedTargetRoles = useMemo(
+    () => [...new Set(targetRoles)],
+    [targetRoles],
+  );
   const questionTypeLabel = useMemo<Record<SurveyQuestionType, string>>(
     () => ({
       single_choice: "Один вариант",
@@ -146,54 +188,105 @@ export function AdminCampaignForm({ mode, initialCampaign, initialSurvey, readOn
       targetSegments,
     };
 
-    const shouldDelayActivation = mode === "create" && type === "survey" && draftQuestions.length > 0 && status === "active";
-    const createPayload = shouldDelayActivation ? { ...payload, status: "draft" as CampaignStatus } : payload;
+    const shouldDelayActivation =
+      mode === "create" &&
+      type === "survey" &&
+      draftQuestions.length > 0 &&
+      status === "active";
+    const createPayload = shouldDelayActivation
+      ? { ...payload, status: "draft" as CampaignStatus }
+      : payload;
 
-    const response = await fetch(mode === "create" ? "/api/admin/campaigns" : `/api/admin/campaigns/${campaignId}`, {
-      method: mode === "create" ? "POST" : "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(mode === "create" ? createPayload : payload),
-    });
-    const json = await safeJson<{ ok: boolean; campaign?: Campaign; error?: string }>(response);
+    const response = await fetch(
+      mode === "create"
+        ? "/api/admin/campaigns"
+        : `/api/admin/campaigns/${campaignId}`,
+      {
+        method: mode === "create" ? "POST" : "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(mode === "create" ? createPayload : payload),
+      },
+    );
+    const json = await safeJson<{
+      ok: boolean;
+      campaign?: Campaign;
+      error?: string;
+    }>(response);
     if (!response.ok || !json?.ok || !json.campaign) {
-      setError(extractErrorMessageFromPayload(json, "Не удалось создать кампанию"));
+      setError(
+        extractErrorMessageFromPayload(json, "Не удалось создать кампанию"),
+      );
       setBusy(false);
       return;
     }
 
     if (mode === "create" && type === "survey" && draftQuestions.length > 0) {
-      for (let questionIndex = 0; questionIndex < draftQuestions.length; questionIndex += 1) {
+      for (
+        let questionIndex = 0;
+        questionIndex < draftQuestions.length;
+        questionIndex += 1
+      ) {
         const question = draftQuestions[questionIndex];
-        const questionResponse = await fetch(`/api/admin/campaigns/${json.campaign.id}/questions`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            questionOrder: questionIndex + 1,
-            questionType: question.questionType,
-            title: question.title,
-          }),
-        });
-        const questionJson = await safeJson<{ ok: boolean; question?: { id: string }; error?: string }>(questionResponse);
-        if (!questionResponse.ok || !questionJson?.ok || !questionJson.question?.id) {
-          setError(extractErrorMessageFromPayload(questionJson, "Кампания создана, но не удалось создать вопросы"));
+        const questionResponse = await fetch(
+          `/api/admin/campaigns/${json.campaign.id}/questions`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              questionOrder: questionIndex + 1,
+              questionType: question.questionType,
+              title: question.title,
+            }),
+          },
+        );
+        const questionJson = await safeJson<{
+          ok: boolean;
+          question?: { id: string };
+          error?: string;
+        }>(questionResponse);
+        if (
+          !questionResponse.ok ||
+          !questionJson?.ok ||
+          !questionJson.question?.id
+        ) {
+          setError(
+            extractErrorMessageFromPayload(
+              questionJson,
+              "Кампания создана, но не удалось создать вопросы",
+            ),
+          );
           setBusy(false);
           return;
         }
 
-        for (let optionIndex = 0; optionIndex < question.options.length; optionIndex += 1) {
+        for (
+          let optionIndex = 0;
+          optionIndex < question.options.length;
+          optionIndex += 1
+        ) {
           const optionLabel = question.options[optionIndex];
-          const optionResponse = await fetch(`/api/admin/questions/${questionJson.question.id}/options`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              optionOrder: optionIndex + 1,
-              label: optionLabel,
-              value: optionLabel,
-            }),
-          });
-          const optionJson = await safeJson<{ ok: boolean; error?: string }>(optionResponse);
+          const optionResponse = await fetch(
+            `/api/admin/questions/${questionJson.question.id}/options`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                optionOrder: optionIndex + 1,
+                label: optionLabel,
+                value: optionLabel,
+              }),
+            },
+          );
+          const optionJson = await safeJson<{ ok: boolean; error?: string }>(
+            optionResponse,
+          );
           if (!optionResponse.ok || !optionJson?.ok) {
-            setError(extractErrorMessageFromPayload(optionJson, "Кампания создана, но не удалось создать варианты"));
+            setError(
+              extractErrorMessageFromPayload(
+                optionJson,
+                "Кампания создана, но не удалось создать варианты",
+              ),
+            );
             setBusy(false);
             return;
           }
@@ -202,14 +295,24 @@ export function AdminCampaignForm({ mode, initialCampaign, initialSurvey, readOn
     }
 
     if (mode === "create" && shouldDelayActivation) {
-      const activateResponse = await fetch(`/api/admin/campaigns/${json.campaign.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const activateJson = await safeJson<{ ok: boolean; error?: string }>(activateResponse);
+      const activateResponse = await fetch(
+        `/api/admin/campaigns/${json.campaign.id}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        },
+      );
+      const activateJson = await safeJson<{ ok: boolean; error?: string }>(
+        activateResponse,
+      );
       if (!activateResponse.ok || !activateJson?.ok) {
-        setError(extractErrorMessageFromPayload(activateJson, "Кампания создана, но не удалось активировать после добавления вопросов"));
+        setError(
+          extractErrorMessageFromPayload(
+            activateJson,
+            "Кампания создана, но не удалось активировать после добавления вопросов",
+          ),
+        );
         setBusy(false);
         return;
       }
@@ -253,7 +356,9 @@ export function AdminCampaignForm({ mode, initialCampaign, initialSurvey, readOn
   };
 
   const removeDraftQuestion = (indexToRemove: number) => {
-    setDraftQuestions((current) => current.filter((_, index) => index !== indexToRemove));
+    setDraftQuestions((current) =>
+      current.filter((_, index) => index !== indexToRemove),
+    );
   };
 
   const applyTemplate = (template: CampaignTemplate) => {
@@ -264,14 +369,20 @@ export function AdminCampaignForm({ mode, initialCampaign, initialSurvey, readOn
     setStatus("draft");
     setStartsAt("");
     setEndsAt("");
-    setTargetRoles((template.targetRoles ?? []).filter((role) => role === "OWNER" || role === "MANAGER"));
+    setTargetRoles(
+      (template.targetRoles ?? []).filter(
+        (role) => role === "OWNER" || role === "MANAGER",
+      ),
+    );
     setTargetSegments(template.targetSegments ?? []);
     setChannels(template.channels?.length ? template.channels : ["bell"]);
-    setDraftQuestions((template.questions ?? []).map((question) => ({
-      title: question.title,
-      questionType: question.questionType,
-      options: [...question.options],
-    })));
+    setDraftQuestions(
+      (template.questions ?? []).map((question) => ({
+        title: question.title,
+        questionType: question.questionType,
+        options: [...question.options],
+      })),
+    );
   };
 
   return (
@@ -279,15 +390,29 @@ export function AdminCampaignForm({ mode, initialCampaign, initialSurvey, readOn
       <div className="rounded-xl border border-slate-200 bg-white p-4">
         <fieldset disabled={readOnly} className="grid gap-3 md:grid-cols-2">
           <label className="space-y-1">
-            <span className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-500">Тип</span>
-            <select value={type} onChange={(event) => setType(event.target.value as CampaignType)} className="h-10 w-full rounded-lg border border-slate-200 px-3 text-sm">
+            <span className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-500">
+              Тип
+            </span>
+            <select
+              value={type}
+              onChange={(event) => setType(event.target.value as CampaignType)}
+              className="h-10 w-full rounded-lg border border-slate-200 px-3 text-sm"
+            >
               <option value="announcement">Уведомление</option>
               <option value="survey">Опрос</option>
             </select>
           </label>
           <label className="space-y-1">
-            <span className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-500">Статус</span>
-            <select value={status} onChange={(event) => setStatus(event.target.value as CampaignStatus)} className="h-10 w-full rounded-lg border border-slate-200 px-3 text-sm">
+            <span className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-500">
+              Статус
+            </span>
+            <select
+              value={status}
+              onChange={(event) =>
+                setStatus(event.target.value as CampaignStatus)
+              }
+              className="h-10 w-full rounded-lg border border-slate-200 px-3 text-sm"
+            >
               <option value="draft">Черновик</option>
               <option value="active">Активно</option>
               <option value="archived">Архив</option>
@@ -306,7 +431,11 @@ export function AdminCampaignForm({ mode, initialCampaign, initialSurvey, readOn
                 ?
               </button>
             </span>
-            <input value={title} onChange={(event) => setTitle(event.target.value)} className="h-10 w-full rounded-lg border border-slate-200 px-3 text-sm" />
+            <input
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+              className="h-10 w-full rounded-lg border border-slate-200 px-3 text-sm"
+            />
             <div className="text-xs text-slate-500">
               {type === "announcement"
                 ? "Заголовок уведомления для пользователя."
@@ -314,8 +443,14 @@ export function AdminCampaignForm({ mode, initialCampaign, initialSurvey, readOn
             </div>
           </label>
           <label className="space-y-1 md:col-span-2">
-            <span className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-500">Текст</span>
-            <textarea value={body} onChange={(event) => setBody(event.target.value)} className="min-h-28 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" />
+            <span className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-500">
+              Текст
+            </span>
+            <textarea
+              value={body}
+              onChange={(event) => setBody(event.target.value)}
+              className="min-h-28 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+            />
             <div className="text-xs text-slate-500">
               {type === "announcement"
                 ? "Основной текст уведомления."
@@ -324,24 +459,52 @@ export function AdminCampaignForm({ mode, initialCampaign, initialSurvey, readOn
           </label>
           {showHeaderBodyHelp ? (
             <div className="md:col-span-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
-              <div><b>Для уведомления</b>: заголовок + текст = само сообщение пользователю.</div>
-              <div><b>Для опроса</b>: заголовок + текст = шапка опроса (название и описание).</div>
-              <div><b>Вопросы и варианты ответов</b> задаются отдельно в «Конструкторе опроса» ниже.</div>
+              <div>
+                <b>Для уведомления</b>: заголовок + текст = само сообщение
+                пользователю.
+              </div>
+              <div>
+                <b>Для опроса</b>: заголовок + текст = шапка опроса (название и
+                описание).
+              </div>
+              <div>
+                <b>Вопросы и варианты ответов</b> задаются отдельно в
+                «Конструкторе опроса» ниже.
+              </div>
             </div>
           ) : null}
           <label className="space-y-1">
-            <span className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-500">Начало</span>
-            <input type="datetime-local" value={startsAt} onChange={(event) => setStartsAt(event.target.value)} className="h-10 w-full rounded-lg border border-slate-200 px-3 text-sm" />
+            <span className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-500">
+              Начало
+            </span>
+            <input
+              type="datetime-local"
+              value={startsAt}
+              onChange={(event) => setStartsAt(event.target.value)}
+              className="h-10 w-full rounded-lg border border-slate-200 px-3 text-sm"
+            />
           </label>
           <label className="space-y-1">
-            <span className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-500">Окончание</span>
-            <input type="datetime-local" value={endsAt} onChange={(event) => setEndsAt(event.target.value)} className="h-10 w-full rounded-lg border border-slate-200 px-3 text-sm" />
+            <span className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-500">
+              Окончание
+            </span>
+            <input
+              type="datetime-local"
+              value={endsAt}
+              onChange={(event) => setEndsAt(event.target.value)}
+              className="h-10 w-full rounded-lg border border-slate-200 px-3 text-sm"
+            />
           </label>
           <div className="space-y-2 md:col-span-2">
-            <div className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-500">Роли получателей</div>
+            <div className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-500">
+              Роли получателей
+            </div>
             <div className="grid gap-2 sm:grid-cols-2">
               {ROLE_OPTIONS.map((role) => (
-                <label key={role} className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700">
+                <label
+                  key={role}
+                  className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700"
+                >
                   <input
                     type="checkbox"
                     checked={targetRoles.includes(role)}
@@ -357,7 +520,9 @@ export function AdminCampaignForm({ mode, initialCampaign, initialSurvey, readOn
             </div>
           </div>
           <div className="space-y-2 md:col-span-2">
-            <div className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-500">Сегменты получателей</div>
+            <div className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-500">
+              Сегменты получателей
+            </div>
             <div className="grid gap-2 md:grid-cols-2">
               {BUSINESS_SEGMENTS.map((segment) => {
                 const checked = targetSegments.includes(segment);
@@ -366,7 +531,9 @@ export function AdminCampaignForm({ mode, initialCampaign, initialSurvey, readOn
                     key={segment}
                     className={[
                       "flex items-center gap-2 rounded-lg border px-3 py-2 text-xs transition",
-                      checked ? "border-indigo-300 bg-indigo-50 text-indigo-700" : "border-slate-200 bg-white text-slate-700",
+                      checked
+                        ? "border-indigo-300 bg-indigo-50 text-indigo-700"
+                        : "border-slate-200 bg-white text-slate-700",
                     ].join(" ")}
                   >
                     <input
@@ -385,7 +552,9 @@ export function AdminCampaignForm({ mode, initialCampaign, initialSurvey, readOn
             </div>
           </div>
           <div className="space-y-2 md:col-span-2">
-            <div className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-500">Каналы показа</div>
+            <div className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-500">
+              Каналы показа
+            </div>
             <div className="flex flex-wrap items-center gap-2">
               {(["bell", "popup_right"] as CampaignChannel[]).map((channel) => {
                 const checked = channels.includes(channel);
@@ -396,7 +565,9 @@ export function AdminCampaignForm({ mode, initialCampaign, initialSurvey, readOn
                     onClick={() => toggleChannel(channel)}
                     className={[
                       "rounded-lg border px-3 py-1.5 text-sm transition",
-                      checked ? "border-indigo-300 bg-indigo-50 text-indigo-700" : "border-slate-200 bg-white text-slate-700",
+                      checked
+                        ? "border-indigo-300 bg-indigo-50 text-indigo-700"
+                        : "border-slate-200 bg-white text-slate-700",
                     ].join(" ")}
                   >
                     {channel}
@@ -407,10 +578,15 @@ export function AdminCampaignForm({ mode, initialCampaign, initialSurvey, readOn
           </div>
         </fieldset>
 
-        {error ? <div className="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-600">{error}</div> : null}
+        {error ? (
+          <div className="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-600">
+            {error}
+          </div>
+        ) : null}
         {readOnly ? (
           <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-            Campaign is sent/published. Editing is disabled. Use Preview or Duplicate from details.
+            Campaign is sent/published. Editing is disabled. Use Preview or
+            Duplicate from details.
           </div>
         ) : null}
 
@@ -419,11 +595,18 @@ export function AdminCampaignForm({ mode, initialCampaign, initialSurvey, readOn
             type="button"
             onClick={submit}
             disabled={busy || readOnly}
-            className="inline-flex h-10 items-center rounded-lg bg-indigo-600 px-4 text-sm font-semibold text-white transition hover:bg-indigo-500 disabled:opacity-60"
+            className="inline-flex h-10 items-center rounded-lg bg-[var(--brand-600)] px-4 text-sm font-semibold text-white transition hover:bg-[var(--brand-700)] disabled:opacity-60"
           >
-            {busy ? "Сохранение..." : mode === "create" ? "Создать кампанию" : "Сохранить кампанию"}
+            {busy
+              ? "Сохранение..."
+              : mode === "create"
+                ? "Создать кампанию"
+                : "Сохранить кампанию"}
           </button>
-          <Link href="/admin/campaigns" className="text-sm font-medium text-slate-500 hover:text-slate-700">
+          <Link
+            href="/admin/campaigns"
+            className="text-sm font-medium text-slate-500 hover:text-slate-700"
+          >
             К списку кампаний
           </Link>
         </div>
@@ -431,24 +614,35 @@ export function AdminCampaignForm({ mode, initialCampaign, initialSurvey, readOn
 
       {mode === "create" && campaignTemplates.length > 0 ? (
         <div className="rounded-xl border border-slate-200 bg-white p-4">
-          <div className="text-sm font-semibold text-slate-900">Быстрые шаблоны</div>
+          <div className="text-sm font-semibold text-slate-900">
+            Быстрые шаблоны
+          </div>
           <div className="mt-1 text-xs text-slate-500">
-            Выберите предыдущую кампанию, чтобы подставить её параметры и вопросы в новую.
+            Выберите предыдущую кампанию, чтобы подставить её параметры и
+            вопросы в новую.
           </div>
           <div className="mt-3 grid gap-2">
             {campaignTemplates.map((template) => (
-              <div key={template.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+              <div
+                key={template.id}
+                className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
+              >
                 <div className="min-w-0">
-                  <div className="truncate text-sm font-semibold text-slate-900">{template.title}</div>
+                  <div className="truncate text-sm font-semibold text-slate-900">
+                    {template.title}
+                  </div>
                   <div className="text-xs text-slate-500">
-                    {template.type === "survey" ? "Опрос" : "Уведомление"} • {template.channels.join(" + ")}
-                    {template.type === "survey" ? ` • вопросов: ${template.questions.length}` : ""}
+                    {template.type === "survey" ? "Опрос" : "Уведомление"} •{" "}
+                    {template.channels.join(" + ")}
+                    {template.type === "survey"
+                      ? ` • вопросов: ${template.questions.length}`
+                      : ""}
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => applyTemplate(template)}
-                  className="inline-flex h-8 items-center rounded-lg border border-indigo-200 bg-indigo-50 px-3 text-xs font-semibold text-indigo-700 transition hover:bg-indigo-100"
+                  className="inline-flex h-8 items-center rounded-lg border border-[var(--brand-200)] bg-[var(--brand-50)] px-3 text-xs font-semibold text-[var(--brand-700)] transition hover:bg-[var(--brand-100)]"
                 >
                   Использовать
                 </button>
@@ -461,17 +655,25 @@ export function AdminCampaignForm({ mode, initialCampaign, initialSurvey, readOn
       {type === "survey" && !readOnly ? (
         campaignId ? (
           <div className="space-y-2">
-            <div className="text-sm font-semibold text-slate-900">Конструктор опроса</div>
+            <div className="text-sm font-semibold text-slate-900">
+              Конструктор опроса
+            </div>
             <div className="text-xs text-slate-500">
               Добавляйте вопросы и варианты ответов ниже.
             </div>
-            <SurveyQuestionEditor campaignId={campaignId} initialQuestions={initialSurvey?.questions ?? []} />
+            <SurveyQuestionEditor
+              campaignId={campaignId}
+              initialQuestions={initialSurvey?.questions ?? []}
+            />
           </div>
         ) : (
           <div className="space-y-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
-            <div className="text-sm font-semibold text-amber-900">Конструктор опроса</div>
+            <div className="text-sm font-semibold text-amber-900">
+              Конструктор опроса
+            </div>
             <div className="text-xs text-amber-800">
-              Можно сразу подготовить вопросы. После `Создать кампанию` они создадутся автоматически.
+              Можно сразу подготовить вопросы. После `Создать кампанию` они
+              создадутся автоматически.
             </div>
 
             <div className="grid gap-2 md:grid-cols-[1fr_200px]">
@@ -484,7 +686,11 @@ export function AdminCampaignForm({ mode, initialCampaign, initialSurvey, readOn
               <div className="flex items-center gap-2">
                 <select
                   value={draftQuestionType}
-                  onChange={(event) => setDraftQuestionType(event.target.value as SurveyQuestionType)}
+                  onChange={(event) =>
+                    setDraftQuestionType(
+                      event.target.value as SurveyQuestionType,
+                    )
+                  }
                   className="h-10 flex-1 rounded-lg border border-amber-200 bg-white px-3 text-sm"
                 >
                   {QUESTION_TYPES.map((value) => (
@@ -506,10 +712,18 @@ export function AdminCampaignForm({ mode, initialCampaign, initialSurvey, readOn
             </div>
             {showTypeHelp ? (
               <div className="rounded-lg border border-amber-200 bg-white px-3 py-2 text-xs text-amber-900">
-                <div><b>Один вариант</b>: пользователь выбирает только один ответ.</div>
-                <div><b>Несколько вариантов</b>: можно выбрать несколько ответов.</div>
-                <div><b>Да/Нет</b>: два варианта ответа.</div>
-                <div><b>Оценка 1-5</b>: оценка по шкале от 1 до 5.</div>
+                <div>
+                  <b>Один вариант</b>: пользователь выбирает только один ответ.
+                </div>
+                <div>
+                  <b>Несколько вариантов</b>: можно выбрать несколько ответов.
+                </div>
+                <div>
+                  <b>Да/Нет</b>: два варианта ответа.
+                </div>
+                <div>
+                  <b>Оценка 1-5</b>: оценка по шкале от 1 до 5.
+                </div>
               </div>
             ) : null}
 
@@ -532,7 +746,10 @@ export function AdminCampaignForm({ mode, initialCampaign, initialSurvey, readOn
             {draftOptions.length > 0 ? (
               <div className="flex flex-wrap gap-2">
                 {draftOptions.map((option, index) => (
-                  <span key={`${option}-${index}`} className="rounded-full border border-amber-300 bg-white px-2 py-1 text-xs text-amber-900">
+                  <span
+                    key={`${option}-${index}`}
+                    className="rounded-full border border-amber-300 bg-white px-2 py-1 text-xs text-amber-900"
+                  >
                     {option}
                   </span>
                 ))}
@@ -549,9 +766,14 @@ export function AdminCampaignForm({ mode, initialCampaign, initialSurvey, readOn
 
             {draftQuestions.length > 0 ? (
               <div className="space-y-2 rounded-lg border border-amber-200 bg-white p-3">
-                <div className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-500">Вопросы, которые будут созданы</div>
+                <div className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-500">
+                  Вопросы, которые будут созданы
+                </div>
                 {draftQuestions.map((question, index) => (
-                  <div key={`${question.title}-${index}`} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
+                  <div
+                    key={`${question.title}-${index}`}
+                    className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm"
+                  >
                     <div className="flex items-start justify-between gap-3">
                       <div className="font-semibold text-slate-900">
                         {index + 1}. {question.title}
@@ -564,9 +786,15 @@ export function AdminCampaignForm({ mode, initialCampaign, initialSurvey, readOn
                         Удалить
                       </button>
                     </div>
-                    <div className="mt-1 text-xs text-slate-500">{question.questionType}</div>
-                    <div className="mt-1 text-xs text-slate-500">Тип: {questionTypeLabel[question.questionType]}</div>
-                    <div className="mt-2 text-xs text-slate-700">{question.options.join(" • ")}</div>
+                    <div className="mt-1 text-xs text-slate-500">
+                      {question.questionType}
+                    </div>
+                    <div className="mt-1 text-xs text-slate-500">
+                      Тип: {questionTypeLabel[question.questionType]}
+                    </div>
+                    <div className="mt-2 text-xs text-slate-700">
+                      {question.options.join(" • ")}
+                    </div>
                   </div>
                 ))}
               </div>

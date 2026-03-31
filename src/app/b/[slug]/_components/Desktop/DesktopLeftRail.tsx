@@ -64,7 +64,13 @@ type Props = {
   adminHref?: string;
   canSeeAnalytics: boolean;
   showFilters?: boolean;
-  activeSection?: "crm" | "analytics" | "today" | "support" | "settings" | "admin";
+  activeSection?:
+    | "crm"
+    | "analytics"
+    | "today"
+    | "support"
+    | "settings"
+    | "admin";
   layoutMode?: "list" | "kanban";
 };
 
@@ -94,30 +100,22 @@ function getExpandedServerSnapshot() {
   return false;
 }
 
-function SidebarBrand({
-  expanded,
-  href,
-}: {
-  expanded: boolean;
-  href: string;
-}) {
-  return (
-    expanded ? (
-      <BrandLockup
-        href={href}
-        iconSize={40}
-        textClassName="text-[1.95rem]"
-        className="rounded-2xl px-3 py-3"
-      />
-    ) : (
-      <a
-        href={href}
-        aria-label="Open Ordo CRM"
-        className="group flex justify-center rounded-2xl py-3 text-slate-900 transition"
-      >
-        <BrandIcon size={40} />
-      </a>
-    )
+function SidebarBrand({ expanded, href }: { expanded: boolean; href: string }) {
+  return expanded ? (
+    <BrandLockup
+      href={href}
+      iconSize={40}
+      textClassName="text-[1.95rem]"
+      className="rounded-2xl px-3 py-3"
+    />
+  ) : (
+    <a
+      href={href}
+      aria-label="Open Ordo CRM"
+      className="group flex justify-center rounded-2xl py-3 text-slate-900 transition"
+    >
+      <BrandIcon size={40} />
+    </a>
   );
 }
 
@@ -164,14 +162,14 @@ function RailLink({
             ? "bg-[#E7EBFF] p-2 text-[#4F46E5]"
             : disabled
               ? "bg-white/70 p-2 text-[#9CA3AF]"
-              : "bg-[#EEF2FF] p-2 text-[#6366F1] group-hover:bg-[#E0E7FF] group-hover:text-[#5558E3]",
+              : "bg-[var(--brand-50)] p-2 text-[var(--brand-600)] group-hover:bg-[var(--brand-100)] group-hover:text-[var(--brand-700)]",
         ].join(" ")}
       >
         {icon}
         {badgeCount > 0 ? (
           <span
             className={[
-              "absolute -right-2 -top-2 inline-flex min-w-5 items-center justify-center rounded-full border border-white bg-[#6366F1] px-1 text-[10px] font-bold leading-5 text-white shadow-[0_6px_12px_rgba(99,102,241,0.28)]",
+              "absolute -right-2 -top-2 inline-flex min-w-5 items-center justify-center rounded-full border border-white bg-[var(--brand-600)] px-1 text-[10px] font-bold leading-5 text-white shadow-[0_6px_12px_rgba(91,91,179,0.28)]",
               expanded ? "h-5" : "h-5",
             ].join(" ")}
           >
@@ -186,12 +184,12 @@ function RailLink({
               {label}
             </span>
             {badgeCount > 0 ? (
-              <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#EEF2FF] px-1.5 text-[10px] font-bold text-[#6366F1]">
+              <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--brand-50)] px-1.5 text-[10px] font-bold text-[var(--brand-600)]">
                 {badgeCount}
               </span>
             ) : null}
             {active ? (
-              <span className="inline-flex items-center rounded-full border border-[#D7DEFA] bg-white px-2 py-0.5 text-[10px] font-semibold text-[#6366F1]">
+              <span className="inline-flex items-center rounded-full border border-[var(--brand-200)] bg-white px-2 py-0.5 text-[10px] font-semibold text-[var(--brand-600)]">
                 Active
               </span>
             ) : null}
@@ -224,7 +222,7 @@ function RailLink({
               "pointer-events-none absolute left-[calc(100%+10px)] top-1/2 z-20 hidden -translate-y-1/2 whitespace-nowrap rounded-xl border bg-white px-2.5 py-1.5 text-xs font-medium shadow-sm",
               hoverable ? "group-hover:block group-focus-visible:block" : "",
               active
-                ? "border-[#C7D2FE] text-[#6366F1]"
+                ? "border-[var(--brand-200)] text-[var(--brand-600)]"
                 : disabled
                   ? "border-[#E5E7EB] text-[#9CA3AF]"
                   : "border-[#E5E7EB] text-[#374151]",
@@ -359,7 +357,8 @@ export default function DesktopLeftRail({
     if (!filtersOpen) return;
     const previous = document.body.style.overflow;
     const previousPaddingRight = document.body.style.paddingRight;
-    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    const scrollbarWidth =
+      window.innerWidth - document.documentElement.clientWidth;
     document.body.style.overflow = "hidden";
     if (scrollbarWidth > 0) {
       document.body.style.paddingRight = `${scrollbarWidth}px`;
@@ -377,7 +376,9 @@ export default function DesktopLeftRail({
     academy: <GraduationCap className="h-5 w-5" />,
     settings: <Settings className="h-5 w-5" />,
   } as const;
-  const analyticsTarget = analyticsHref ?? `${businessHref}${businessHref.includes("?") ? "&" : "?"}section=analytics#owner-analytics`;
+  const analyticsTarget =
+    analyticsHref ??
+    `${businessHref}${businessHref.includes("?") ? "&" : "?"}section=analytics#owner-analytics`;
 
   return (
     <div
@@ -534,7 +535,6 @@ export default function DesktopLeftRail({
                     active={activeSection === "admin"}
                   />
                 ) : null}
-
               </div>
             </div>
           )}
@@ -578,4 +578,3 @@ export default function DesktopLeftRail({
     </div>
   );
 }
-

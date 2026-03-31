@@ -2,7 +2,13 @@
 
 import { useEffect, useState } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { CalendarDays, CheckCircle2, CirclePlus, Clock3, Trash2 } from "lucide-react";
+import {
+  CalendarDays,
+  CheckCircle2,
+  CirclePlus,
+  Clock3,
+  Trash2,
+} from "lucide-react";
 import { emitOrderActivityRefresh } from "@/app/b/[slug]/_components/orders/order-activity";
 
 type ChecklistItem = {
@@ -55,7 +61,11 @@ function parseDateOnly(value: string | null | undefined) {
   if (!value) return null;
   const match = String(value).match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (!match) return null;
-  return buildSafeDate(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+  return buildSafeDate(
+    Number(match[1]),
+    Number(match[2]) - 1,
+    Number(match[3]),
+  );
 }
 
 function formatDueDate(value: string | Date | null | undefined) {
@@ -95,32 +105,46 @@ function buildSafeDate(year: number, monthIndex: number, day: number) {
 function extractDueDate(title: string, createdAt: string) {
   const normalized = title.trim().toLowerCase();
   const createdDate = new Date(createdAt);
-  const fallbackYear = Number.isNaN(createdDate.getTime()) ? new Date().getFullYear() : createdDate.getFullYear();
+  const fallbackYear = Number.isNaN(createdDate.getTime())
+    ? new Date().getFullYear()
+    : createdDate.getFullYear();
 
   const isoMatch = normalized.match(/\b(\d{4})-(\d{1,2})-(\d{1,2})\b/);
   if (isoMatch) {
-    const candidate = buildSafeDate(Number(isoMatch[1]), Number(isoMatch[2]) - 1, Number(isoMatch[3]));
+    const candidate = buildSafeDate(
+      Number(isoMatch[1]),
+      Number(isoMatch[2]) - 1,
+      Number(isoMatch[3]),
+    );
     if (candidate) return candidate;
   }
 
-  const numericMatch = normalized.match(/\b(\d{1,2})[./](\d{1,2})(?:[./](\d{2,4}))?\b/);
+  const numericMatch = normalized.match(
+    /\b(\d{1,2})[./](\d{1,2})(?:[./](\d{2,4}))?\b/,
+  );
   if (numericMatch) {
     const day = Number(numericMatch[1]);
     const monthIndex = Number(numericMatch[2]) - 1;
     const rawYear = numericMatch[3];
     const year =
-      rawYear == null ? fallbackYear : rawYear.length === 2 ? 2000 + Number(rawYear) : Number(rawYear);
+      rawYear == null
+        ? fallbackYear
+        : rawYear.length === 2
+          ? 2000 + Number(rawYear)
+          : Number(rawYear);
     const candidate = buildSafeDate(year, monthIndex, day);
     if (candidate) return candidate;
   }
 
   const namedMonthMatch = normalized.match(
     /\b(?:due\s+)?(?:(jan|january|feb|february|mar|march|apr|april|may|jun|june|jul|july|aug|august|sep|sept|september|oct|october|nov|november|dec|december)\s+(\d{1,2})(?:,\s*(\d{4}))?|(\d{1,2})\s+(jan|january|feb|february|mar|march|apr|april|may|jun|june|jul|july|aug|august|sep|sept|september|oct|october|nov|november|dec|december)(?:\s+(\d{4}))?)\b/,
-    );
+  );
   if (namedMonthMatch) {
     const monthName = namedMonthMatch[1] ?? namedMonthMatch[5];
     const day = Number(namedMonthMatch[2] ?? namedMonthMatch[4]);
-    const year = Number(namedMonthMatch[3] ?? namedMonthMatch[6] ?? fallbackYear);
+    const year = Number(
+      namedMonthMatch[3] ?? namedMonthMatch[6] ?? fallbackYear,
+    );
     const monthIndex = MONTH_INDEX_BY_NAME[monthName];
     const candidate = buildSafeDate(year, monthIndex, day);
     if (candidate) return candidate;
@@ -130,7 +154,9 @@ function extractDueDate(title: string, createdAt: string) {
 }
 
 function isMissingColumnError(error: unknown, column: string) {
-  const message = String((error as { message?: string } | null)?.message ?? "").toLowerCase();
+  const message = String(
+    (error as { message?: string } | null)?.message ?? "",
+  ).toLowerCase();
   return (
     message.includes(`could not find the '${column.toLowerCase()}' column`) &&
     message.includes("schema cache")
@@ -173,7 +199,8 @@ export function OrderChecklist({
 
   const completedCount = items.filter((item) => item.is_done).length;
   const pendingCount = items.length - completedCount;
-  const progress = items.length > 0 ? Math.round((completedCount / items.length) * 100) : 0;
+  const progress =
+    items.length > 0 ? Math.round((completedCount / items.length) * 100) : 0;
 
   useEffect(() => {
     let cancelled = false;
@@ -261,7 +288,9 @@ export function OrderChecklist({
       done_at: nextDone ? new Date().toISOString() : null,
     };
 
-    setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, ...patch } : i)));
+    setItems((prev) =>
+      prev.map((i) => (i.id === item.id ? { ...i, ...patch } : i)),
+    );
 
     const { error } = await supabase
       .from("order_checklist_items")
@@ -315,9 +344,14 @@ export function OrderChecklist({
       <div className="space-y-2.5">
         <div>
           <div className="product-section-title">
-            Checklist <span className="text-xs font-semibold text-[#9CA3AF]">({items.length})</span>
+            Checklist{" "}
+            <span className="text-xs font-semibold text-[#9CA3AF]">
+              ({items.length})
+            </span>
           </div>
-          <p className="mt-1 text-sm text-[#6B7280]">Track the next action and deadline for this order.</p>
+          <p className="mt-1 text-sm text-[#6B7280]">
+            Track the next action and deadline for this order.
+          </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
@@ -351,12 +385,19 @@ export function OrderChecklist({
               </p>
             </div>
             <div className="text-right">
-              <div className="text-base font-semibold text-[#1F2937]">{progress}%</div>
-              <div className="text-xs text-[#9CA3AF]">{completedCount}/{items.length || 0} done</div>
+              <div className="text-base font-semibold text-[#1F2937]">
+                {progress}%
+              </div>
+              <div className="text-xs text-[#9CA3AF]">
+                {completedCount}/{items.length || 0} done
+              </div>
             </div>
           </div>
           <div className="mt-3 h-2 overflow-hidden rounded-full bg-[#eef2f6]">
-            <div className="h-full rounded-full bg-[#6366F1] transition-[width] duration-300" style={{ width: `${progress}%` }} />
+            <div
+              className="h-full rounded-full bg-[var(--brand-600)] transition-[width] duration-300"
+              style={{ width: `${progress}%` }}
+            />
           </div>
         </div>
       </div>
@@ -364,13 +405,25 @@ export function OrderChecklist({
       <div className="mt-4 space-y-2.5">
         {items.map((item) => {
           const resolvedDueDate =
-            item.due_date ?? extractDueDate(item.title, item.created_at)?.toISOString().slice(0, 10) ?? null;
+            item.due_date ??
+            extractDueDate(item.title, item.created_at)
+              ?.toISOString()
+              .slice(0, 10) ??
+            null;
           const dueDateValue = parseDateOnly(resolvedDueDate);
           const isOverdue =
             !!dueDateValue &&
             !item.is_done &&
-            new Date(dueDateValue.getFullYear(), dueDateValue.getMonth(), dueDateValue.getDate()).getTime() <
-              new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()).getTime();
+            new Date(
+              dueDateValue.getFullYear(),
+              dueDateValue.getMonth(),
+              dueDateValue.getDate(),
+            ).getTime() <
+              new Date(
+                new Date().getFullYear(),
+                new Date().getMonth(),
+                new Date().getDate(),
+              ).getTime();
 
           return (
             <div
@@ -387,13 +440,15 @@ export function OrderChecklist({
                   type="checkbox"
                   checked={!!item.is_done}
                   onChange={() => toggle(item)}
-                  className="mt-1 h-4 w-4 rounded border-[#C7D2FE] text-[#6366F1] focus:ring-0"
+                  className="mt-1 h-4 w-4 rounded border-[var(--brand-200)] text-[var(--brand-600)] focus:ring-0"
                 />
                 <span className="min-w-0 flex-1">
                   <span
                     className={[
                       "block text-[15px] font-medium",
-                      item.is_done ? "text-[#9CA3AF] line-through" : "text-[#374151]",
+                      item.is_done
+                        ? "text-[#9CA3AF] line-through"
+                        : "text-[#374151]",
                     ].join(" ")}
                   >
                     {item.title}
@@ -431,7 +486,7 @@ export function OrderChecklist({
               <button
                 type="button"
                 onClick={() => remove(item)}
-                className="inline-flex h-9 w-9 shrink-0 items-center justify-center self-end rounded-full border border-transparent text-[#9CA3AF] transition hover:border-[#f3d1cd] hover:bg-[#fff1f3] hover:text-[#d92d20] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6366F1]/15 sm:self-auto"
+                className="inline-flex h-9 w-9 shrink-0 items-center justify-center self-end rounded-full border border-transparent text-[#9CA3AF] transition hover:border-[#f3d1cd] hover:bg-[#fff1f3] hover:text-[#d92d20] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-600)]/15 sm:self-auto"
                 title="Delete"
                 aria-label="Delete checklist item"
               >
@@ -446,9 +501,12 @@ export function OrderChecklist({
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F9FAFB] text-[#6B7280]">
               <CirclePlus className="h-5 w-5" />
             </div>
-            <div className="mt-3 text-sm font-semibold text-[#1F2937]">No checklist yet</div>
+            <div className="mt-3 text-sm font-semibold text-[#1F2937]">
+              No checklist yet
+            </div>
             <p className="mt-1 text-xs leading-5 text-[#9CA3AF]">
-              Add the first step, follow-up, or deadline so the workflow stays structured.
+              Add the first step, follow-up, or deadline so the workflow stays
+              structured.
             </p>
           </div>
         ) : null}
@@ -460,7 +518,7 @@ export function OrderChecklist({
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Add checklist item..."
-            className="h-11 min-w-0 flex-1 rounded-2xl border border-[#E5E7EB] bg-[#F9FAFB] px-4 text-sm text-[#1F2937] outline-none transition placeholder:text-[#9CA3AF] focus:border-[#6366F1] focus:bg-white focus:ring-2 focus:ring-[#6366F1]/15"
+            className="h-11 min-w-0 flex-1 rounded-2xl border border-[#E5E7EB] bg-[#F9FAFB] px-4 text-sm text-[#1F2937] outline-none transition placeholder:text-[#9CA3AF] focus:border-[var(--brand-600)] focus:bg-white focus:ring-2 focus:ring-[var(--brand-600)]/15"
             onKeyDown={(e) => {
               if (e.key === "Enter") add();
             }}
@@ -470,7 +528,7 @@ export function OrderChecklist({
             type="date"
             value={dueDate}
             onChange={(e) => setDueDate(e.target.value)}
-            className="h-11 min-w-0 rounded-2xl border border-[#E5E7EB] bg-[#F9FAFB] px-4 text-sm text-[#1F2937] outline-none transition focus:border-[#6366F1] focus:bg-white focus:ring-2 focus:ring-[#6366F1]/15 sm:w-[160px]"
+            className="h-11 min-w-0 rounded-2xl border border-[#E5E7EB] bg-[#F9FAFB] px-4 text-sm text-[#1F2937] outline-none transition focus:border-[var(--brand-600)] focus:bg-white focus:ring-2 focus:ring-[var(--brand-600)]/15 sm:w-[160px]"
             aria-label="Checklist due date"
           />
 
@@ -480,7 +538,7 @@ export function OrderChecklist({
             disabled={loading || !title.trim()}
             aria-disabled={loading || !title.trim()}
             className={[
-              "inline-flex h-11 w-full min-w-0 shrink-0 items-center justify-center gap-2 rounded-[18px] border px-4 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6366F1]/15 sm:w-auto sm:min-w-[132px]",
+              "inline-flex h-11 w-full min-w-0 shrink-0 items-center justify-center gap-2 rounded-[18px] border px-4 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-600)]/15 sm:w-auto sm:min-w-[132px]",
               !title.trim() || loading
                 ? "cursor-not-allowed border-[#E5E7EB] bg-[#F3F4F6] text-[#9CA3AF]"
                 : "border-[#E5E7EB] bg-white text-[#1F2937] shadow-[0_1px_2px_rgba(16,24,40,0.04)] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]",
@@ -491,7 +549,8 @@ export function OrderChecklist({
           </button>
         </div>
         <p className="mt-1.5 px-1 text-xs text-[#9CA3AF]">
-          Set a deadline in the date field. Older items can still show a date if it was written in the text.
+          Set a deadline in the date field. Older items can still show a date if
+          it was written in the text.
         </p>
         {errorMessage ? (
           <div className="mt-2 rounded-2xl border border-[#fecdca] bg-[#fff6f5] px-3 py-2 text-xs leading-5 text-[#b42318]">
@@ -502,4 +561,3 @@ export function OrderChecklist({
     </div>
   );
 }
-

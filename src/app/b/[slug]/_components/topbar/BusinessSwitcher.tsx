@@ -35,7 +35,13 @@ function roleBadgeClass(role: Role) {
   return "border-[#E5E7EB] bg-white text-[#98A2B3]";
 }
 
-function RoleBadge({ role, compact = false }: { role: Role; compact?: boolean }) {
+function RoleBadge({
+  role,
+  compact = false,
+}: {
+  role: Role;
+  compact?: boolean;
+}) {
   return (
     <span
       className={`inline-flex items-center rounded-full border font-semibold ${roleBadgeClass(role)} ${
@@ -52,7 +58,7 @@ function AdminBadge({ compact = false }: { compact?: boolean }) {
     <span
       title="Admin"
       aria-label="Admin"
-      className={`inline-flex items-center justify-center rounded-full border border-[#C7D2FE] bg-white text-[#6366F1] shadow-sm ${
+      className={`inline-flex items-center justify-center rounded-full border border-[var(--brand-200)] bg-white text-[var(--brand-600)] shadow-sm ${
         compact ? "h-5 w-5" : "h-7 w-7"
       }`}
     >
@@ -75,7 +81,9 @@ export default function BusinessSwitcher({
   const ref = useRef<HTMLDivElement | null>(null);
 
   const current = useMemo(
-    () => businesses.find((business) => business.slug === currentSlug) || businesses[0],
+    () =>
+      businesses.find((business) => business.slug === currentSlug) ||
+      businesses[0],
     [businesses, currentSlug],
   );
 
@@ -125,7 +133,9 @@ export default function BusinessSwitcher({
         <div className="min-w-0 flex flex-1 items-center gap-2">
           <div className="min-w-0 flex-1 text-left leading-tight">
             <div className="flex min-w-0 items-center gap-2">
-              <div className={`truncate font-semibold text-slate-900 ${compact ? "text-[12px]" : "text-sm"}`}>
+              <div
+                className={`truncate font-semibold text-slate-900 ${compact ? "text-[12px]" : "text-sm"}`}
+              >
                 {current.name}
               </div>
               <div className="flex shrink-0 items-center gap-1.5">
@@ -134,7 +144,9 @@ export default function BusinessSwitcher({
               </div>
             </div>
             {!compact ? (
-              <p className="truncate pt-0.5 text-[11px] text-slate-500">{hintText}</p>
+              <p className="truncate pt-0.5 text-[11px] text-slate-500">
+                {hintText}
+              </p>
             ) : null}
           </div>
         </div>
@@ -204,7 +216,8 @@ export default function BusinessSwitcher({
               disabled={disabledAdd}
               className={`w-full rounded-xl px-3 py-2 text-left text-sm font-semibold transition ${disabledAdd ? "cursor-not-allowed text-gray-400" : "text-[#1F2937] hover:bg-[#F9FAFB]"}`}
             >
-              + Create workspace <span className="ml-2 text-[11px]">(soon)</span>
+              + Create workspace{" "}
+              <span className="ml-2 text-[11px]">(soon)</span>
             </button>
           </div>
         </div>

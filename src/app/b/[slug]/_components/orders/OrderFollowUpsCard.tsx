@@ -118,17 +118,20 @@ function ActionButton({
       className={cn(
         "flex flex-1 flex-col items-center justify-center gap-1 rounded-xl border-2 p-3 transition-all",
         active
-          ? "border-[#6366F1] bg-[#6366F1]/10"
-          : "border-[#E5E7EB] bg-white hover:border-[#6366F1]/50 hover:bg-[#6366F1]/5",
+          ? "border-[var(--brand-600)] bg-[var(--brand-600)]/10"
+          : "border-[#E5E7EB] bg-white hover:border-[var(--brand-200)] hover:bg-[var(--brand-50)]",
       )}
     >
       <Icon
-        className={cn("h-5 w-5", active ? "text-[#6366F1]" : "text-[#6B7280]")}
+        className={cn(
+          "h-5 w-5",
+          active ? "text-[var(--brand-600)]" : "text-[#6B7280]",
+        )}
       />
       <span
         className={cn(
           "text-xs font-medium",
-          active ? "text-[#6366F1]" : "text-[#374151]",
+          active ? "text-[var(--brand-600)]" : "text-[#374151]",
         )}
       >
         {label}
@@ -155,7 +158,7 @@ function parseMeetingDurationMinutes(data: {
   const raw =
     data.duration === MEETING_DURATION_CUSTOM
       ? data.customDuration
-      : data.duration ?? "30";
+      : (data.duration ?? "30");
   if (!raw) return null;
   const parsed = Number.parseInt(raw, 10);
   if (!Number.isFinite(parsed)) return null;
@@ -893,7 +896,7 @@ function FollowUpItemRow({
             "mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition",
             completed
               ? "border-[#D1FADF] bg-[#ECFDF3] text-[#067647]"
-              : "border-[#D9E2EC] bg-[#F9FAFB] text-[#9CA3AF] hover:border-[#C7D2FE] hover:text-[#5558E3]",
+              : "border-[#D9E2EC] bg-[#F9FAFB] text-[#9CA3AF] hover:border-[var(--brand-200)] hover:text-[var(--brand-700)]",
           )}
           aria-label={completed ? "Reopen follow-up" : "Mark follow-up as done"}
         >
@@ -940,7 +943,7 @@ function FollowUpItemRow({
             <button
               type="button"
               onClick={() => onReopen(item)}
-              className="mt-2 text-xs font-semibold text-[#5558E3] transition hover:text-[#3645A0]"
+              className="mt-2 text-xs font-semibold text-[var(--brand-700)] transition hover:text-[var(--brand-800)]"
             >
               Reopen
             </button>
@@ -1151,7 +1154,8 @@ export function OrderFollowUpsCard({
             customDuration?: string;
             description?: string;
           };
-          const meetingDurationMinutes = parseMeetingDurationMinutes(meetingData);
+          const meetingDurationMinutes =
+            parseMeetingDurationMinutes(meetingData);
           if (!meetingDurationMinutes) {
             setErrorMessage(
               `Meeting duration must be between ${MIN_MEETING_DURATION_MINUTES} and ${MAX_MEETING_DURATION_MINUTES} minutes`,
@@ -1288,7 +1292,7 @@ export function OrderFollowUpsCard({
               variant="outline"
               size="sm"
               onClick={() => setQuickActionType("meeting")}
-              className="h-9 gap-2 rounded-full border-[#E5E7EB] bg-white text-sm font-semibold text-[#374151] hover:border-[#6366F1] hover:bg-[#EEF2FF] hover:text-[#6366F1]"
+              className="h-9 gap-2 rounded-full border-[#E5E7EB] bg-white text-sm font-semibold text-[#374151] hover:border-[var(--brand-200)] hover:bg-[var(--brand-50)] hover:text-[var(--brand-600)]"
             >
               <CirclePlus className="h-4 w-4" />
               Quick Action

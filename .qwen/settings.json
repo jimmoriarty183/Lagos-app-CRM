@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(get-process *)",
+      "Bash(where-object *)",
+      "Bash(stop-process *)",
+      "Bash(start-sleep *)",
+      "Bash(remove-item *)"
+    ]
+  },
+  "$version": 3
+}

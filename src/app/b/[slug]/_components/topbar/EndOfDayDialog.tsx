@@ -19,7 +19,11 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import type { FollowUpRow } from "@/lib/follow-ups";
 import { createClient } from "@/lib/supabase/client";
-import { getTodayDateOnly, getTomorrowDateOnly, startOfLocalDay } from "@/lib/follow-ups";
+import {
+  getTodayDateOnly,
+  getTomorrowDateOnly,
+  startOfLocalDay,
+} from "@/lib/follow-ups";
 import type { WorkDayRow } from "@/lib/work-day";
 import { emitWorkDayUpdated } from "./work-day-events";
 
@@ -83,10 +87,16 @@ export function EndOfDayDialog({
   const [isSaving, setIsSaving] = React.useState(false);
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
   const [dailySummary, setDailySummary] = React.useState("");
-  const [tomorrowItems, setTomorrowItems] = React.useState<TomorrowItemDraft[]>([buildTomorrowItem("initial")]);
-  const [existingWorkDay, setExistingWorkDay] = React.useState<WorkDayRow | null>(null);
-  const [completedToday, setCompletedToday] = React.useState<FollowUpSnapshot[]>([]);
-  const [existingTomorrowFollowUps, setExistingTomorrowFollowUps] = React.useState<FollowUpSnapshot[]>([]);
+  const [tomorrowItems, setTomorrowItems] = React.useState<TomorrowItemDraft[]>(
+    [buildTomorrowItem("initial")],
+  );
+  const [existingWorkDay, setExistingWorkDay] =
+    React.useState<WorkDayRow | null>(null);
+  const [completedToday, setCompletedToday] = React.useState<
+    FollowUpSnapshot[]
+  >([]);
+  const [existingTomorrowFollowUps, setExistingTomorrowFollowUps] =
+    React.useState<FollowUpSnapshot[]>([]);
   const dailySummaryRef = React.useRef<HTMLTextAreaElement | null>(null);
   const open = controlledOpen ?? internalOpen;
 
@@ -107,7 +117,10 @@ export function EndOfDayDialog({
     const baseHeight = 96;
     const maxHeight = 240;
     node.style.height = "0px";
-    const nextHeight = Math.min(Math.max(node.scrollHeight, baseHeight), maxHeight);
+    const nextHeight = Math.min(
+      Math.max(node.scrollHeight, baseHeight),
+      maxHeight,
+    );
     node.style.height = `${nextHeight}px`;
     node.style.overflowY = node.scrollHeight > maxHeight ? "auto" : "hidden";
   }, [dailySummary, open]);
@@ -142,7 +155,11 @@ export function EndOfDayDialog({
       const tomorrowStart = new Date(dayStart.getTime());
       tomorrowStart.setDate(tomorrowStart.getDate() + 1);
 
-      const [{ data: workDayData, error: workDayError }, { data: completedData, error: completedError }, { data: tomorrowData, error: tomorrowError }] = await Promise.all([
+      const [
+        { data: workDayData, error: workDayError },
+        { data: completedData, error: completedError },
+        { data: tomorrowData, error: tomorrowError },
+      ] = await Promise.all([
         supabase
           .from("work_days")
           .select("*")
@@ -227,7 +244,9 @@ export function EndOfDayDialog({
       onComplete?.();
       router.refresh();
     } catch (error) {
-      setErrorMessage(formatWorkDayError(error) || "Failed to complete work day");
+      setErrorMessage(
+        formatWorkDayError(error) || "Failed to complete work day",
+      );
     } finally {
       setIsSaving(false);
     }
@@ -252,7 +271,9 @@ export function EndOfDayDialog({
                 : "inline-flex h-10 items-center rounded-lg border border-[#E5E7EB] bg-white px-3 text-[12px] font-semibold text-[#374151] shadow-sm transition hover:border-[#C7D2FE] hover:text-[#1F2937]")
             }
           >
-            <MoonStar className={compact ? "h-4 w-4 text-gray-500" : "mr-2 h-4 w-4"} />
+            <MoonStar
+              className={compact ? "h-4 w-4 text-gray-500" : "mr-2 h-4 w-4"}
+            />
             <span>{triggerLabel ?? "End day"}</span>
           </button>
         </DialogTrigger>
@@ -268,7 +289,8 @@ export function EndOfDayDialog({
                     End day
                   </DialogTitle>
                   <DialogDescription className="mt-1 text-sm leading-6 text-[#6B7280]">
-                    Wrap up today, save a concise summary, and add any missing actions for tomorrow as follow-ups.
+                    Wrap up today, save a concise summary, and add any missing
+                    actions for tomorrow as follow-ups.
                   </DialogDescription>
                 </div>
                 {existingWorkDay?.status === "finished" ? (
@@ -288,9 +310,13 @@ export function EndOfDayDialog({
               ) : (
                 <>
                   <section className="rounded-[22px] border border-[#E5E7EB] bg-white p-4 shadow-[0_8px_20px_rgba(15,23,42,0.04)]">
-                    <div className="text-sm font-semibold text-[#1F2937]">What did you get done today?</div>
+                    <div className="text-sm font-semibold text-[#1F2937]">
+                      What did you get done today?
+                    </div>
                     <p className="mt-1 text-xs leading-5 text-[#9CA3AF]">
-                      Completed follow-ups are pulled in as a draft. Edit the summary and add any manual context you want to keep for the future work day tracker.
+                      Completed follow-ups are pulled in as a draft. Edit the
+                      summary and add any manual context you want to keep for
+                      the future work day tracker.
                     </p>
                     {completedToday.length > 0 ? (
                       <div className="mt-3 rounded-[18px] border border-[#E5E7EB] bg-[#F9FAFB] px-4 py-3">
@@ -299,7 +325,10 @@ export function EndOfDayDialog({
                         </div>
                         <div className="mt-2 space-y-2">
                           {completedToday.map((item) => (
-                            <div key={item.id} className="rounded-[14px] border border-white bg-white px-3 py-2 text-sm text-[#374151] shadow-[0_4px_12px_rgba(15,23,42,0.04)]">
+                            <div
+                              key={item.id}
+                              className="rounded-[14px] border border-white bg-white px-3 py-2 text-sm text-[#374151] shadow-[0_4px_12px_rgba(15,23,42,0.04)]"
+                            >
                               {item.title}
                             </div>
                           ))}
@@ -309,18 +338,24 @@ export function EndOfDayDialog({
                     <Textarea
                       ref={dailySummaryRef}
                       value={dailySummary}
-                      onChange={(event) => setDailySummary(event.currentTarget.value)}
+                      onChange={(event) =>
+                        setDailySummary(event.currentTarget.value)
+                      }
                       placeholder="Summarize completed work, decisions, blockers cleared, and outcomes."
-                      className="mt-3 min-h-[96px] rounded-[18px] border-[#E5E7EB] bg-[#F9FAFB] text-sm leading-6 text-[#1F2937] shadow-none focus-visible:border-[#6366F1] focus-visible:ring-[#6366F1]/15"
+                      className="mt-3 min-h-[96px] rounded-[18px] border-[#E5E7EB] bg-[#F9FAFB] text-sm leading-6 text-[#1F2937] shadow-none focus-visible:border-[var(--brand-600)] focus-visible:ring-[var(--brand-600)]/15"
                     />
                   </section>
 
                   <section className="rounded-[22px] border border-[#E5E7EB] bg-white p-4 shadow-[0_8px_20px_rgba(15,23,42,0.04)]">
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <div className="text-sm font-semibold text-[#1F2937]">What should happen tomorrow?</div>
+                        <div className="text-sm font-semibold text-[#1F2937]">
+                          What should happen tomorrow?
+                        </div>
                         <p className="mt-1 text-xs leading-5 text-[#9CA3AF]">
-                          Existing tomorrow follow-ups are shown first. Only the new items you type below will create additional follow-ups due tomorrow.
+                          Existing tomorrow follow-ups are shown first. Only the
+                          new items you type below will create additional
+                          follow-ups due tomorrow.
                         </p>
                       </div>
                       <Button
@@ -328,7 +363,12 @@ export function EndOfDayDialog({
                         variant="outline"
                         size="sm"
                         className="h-9 rounded-[14px] border-[#E5E7EB] bg-white px-3 text-xs text-[#374151] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
-                        onClick={() => setTomorrowItems((current) => [...current, buildTomorrowItem()])}
+                        onClick={() =>
+                          setTomorrowItems((current) => [
+                            ...current,
+                            buildTomorrowItem(),
+                          ])
+                        }
                       >
                         <Plus className="h-4 w-4" />
                         Add item
@@ -342,8 +382,11 @@ export function EndOfDayDialog({
                         </div>
                         <div className="mt-2 space-y-2">
                           {existingTomorrowFollowUps.map((item) => (
-                            <div key={item.id} className="flex items-center gap-2 rounded-[14px] border border-white bg-white px-3 py-2 text-sm text-[#374151] shadow-[0_4px_12px_rgba(15,23,42,0.04)]">
-                              <span className="inline-flex h-2 w-2 rounded-full bg-[#6366F1]" />
+                            <div
+                              key={item.id}
+                              className="flex items-center gap-2 rounded-[14px] border border-white bg-white px-3 py-2 text-sm text-[#374151] shadow-[0_4px_12px_rgba(15,23,42,0.04)]"
+                            >
+                              <span className="inline-flex h-2 w-2 rounded-full bg-[var(--brand-600)]" />
                               <span>{item.title}</span>
                             </div>
                           ))}
@@ -362,19 +405,28 @@ export function EndOfDayDialog({
                             onChange={(event) =>
                               setTomorrowItems((current) =>
                                 current.map((entry) =>
-                                  entry.id === item.id ? { ...entry, title: event.currentTarget.value } : entry,
+                                  entry.id === item.id
+                                    ? {
+                                        ...entry,
+                                        title: event.currentTarget.value,
+                                      }
+                                    : entry,
                                 ),
                               )
                             }
                             placeholder="Add a follow-up for tomorrow"
-                            className="h-10 rounded-[14px] border-[#E5E7EB] bg-[#F9FAFB] text-sm shadow-none focus-visible:border-[#6366F1] focus-visible:ring-[#6366F1]/15"
+                            className="h-10 rounded-[14px] border-[#E5E7EB] bg-[#F9FAFB] text-sm shadow-none focus-visible:border-[var(--brand-600)] focus-visible:ring-[var(--brand-600)]/15"
                           />
                           <button
                             type="button"
                             disabled={tomorrowItems.length === 1}
                             onClick={() =>
                               setTomorrowItems((current) =>
-                                current.length === 1 ? current : current.filter((entry) => entry.id !== item.id),
+                                current.length === 1
+                                  ? current
+                                  : current.filter(
+                                      (entry) => entry.id !== item.id,
+                                    ),
                               )
                             }
                             className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] border border-[#E5E7EB] bg-white text-[#6B7280] transition hover:border-[#FECACA] hover:text-[#B42318] disabled:cursor-not-allowed disabled:opacity-40"

@@ -8,13 +8,7 @@ import React, {
   useState,
   useTransition,
 } from "react";
-import {
-  Bell,
-  BellRing,
-  Check,
-  FileText,
-  Loader2,
-} from "lucide-react";
+import { Bell, BellRing, Check, FileText, Loader2 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -44,7 +38,9 @@ function isCampaignNotification(notification: InboxNotification) {
 }
 
 function getCampaignId(notification: InboxNotification) {
-  const metadataCampaignId = String(notification.metadata?.campaign_id ?? "").trim();
+  const metadataCampaignId = String(
+    notification.metadata?.campaign_id ?? "",
+  ).trim();
   if (metadataCampaignId) return metadataCampaignId;
 
   const entityId = String(notification.entity_id ?? "").trim();
@@ -100,19 +96,19 @@ function NotificationIcon({
   const isSurveyIcon = type === "campaign_survey";
 
   return (
-      <div
-        className={cn(
-          "mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition-colors",
-          isSurveyIcon
+    <div
+      className={cn(
+        "mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition-colors",
+        isSurveyIcon
           ? emphasized
             ? "border-violet-200 bg-violet-50/70 text-slate-600"
             : "border-violet-100 bg-violet-50/45 text-slate-500 group-hover:text-slate-600"
           : emphasized
             ? "border-sky-200 bg-sky-50/70 text-slate-600"
             : "border-sky-100 bg-sky-50/45 text-slate-500 group-hover:text-slate-600",
-        )}
-        aria-hidden="true"
-      >
+      )}
+      aria-hidden="true"
+    >
       <IconComponent className="h-4 w-4" />
     </div>
   );
@@ -131,7 +127,9 @@ export default function InviteInbox({
   const [items, setItems] = useState<InboxNotification[]>([]);
   const [error, setError] = useState("");
   const [activeId, setActiveId] = useState("");
-  const [filter, setFilter] = useState<"all" | "survey" | "notification">("all");
+  const [filter, setFilter] = useState<"all" | "survey" | "notification">(
+    "all",
+  );
   const [isPending, startTransition] = useTransition();
 
   const bellState = useMemo(() => getInboxBellIndicatorState(items), [items]);
@@ -164,7 +162,8 @@ export default function InviteInbox({
     };
   }, [filter, items]);
 
-  const visibleItemsCount = newNotifications.length + earlierNotifications.length;
+  const visibleItemsCount =
+    newNotifications.length + earlierNotifications.length;
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -223,61 +222,64 @@ export default function InviteInbox({
     return () => document.removeEventListener("mousedown", onDown);
   }, []);
 
-  const markAsRead = useCallback(async (notification: InboxNotification) => {
-    const notificationId = String(notification.id ?? "").trim();
-    if (!notificationId || notificationId.startsWith("invite:")) return;
+  const markAsRead = useCallback(
+    async (notification: InboxNotification) => {
+      const notificationId = String(notification.id ?? "").trim();
+      if (!notificationId || notificationId.startsWith("invite:")) return;
 
-    const prevItems = items;
-    const isCampaignItem = isCampaignNotification(notification);
-    const campaignId = isCampaignItem ? getCampaignId(notification) : "";
-
-    setItems((current) =>
-      current.map((item) =>
-        item.id === notificationId ? { ...item, is_read: true } : item,
-      ),
-    );
-    setActiveId(notificationId);
-
-    try {
-      if (isCampaignItem && !campaignId) {
-        throw new Error("campaignId is required");
-      }
-
-      const res = await fetch(
-        isCampaignItem ? "/api/campaigns/read" : "/api/inbox/mark-read",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          keepalive: true,
-          body: JSON.stringify(
-            isCampaignItem ? { campaignId } : { notificationId },
-          ),
-        },
-      );
-      const json = await res.json().catch(() => ({}));
-
-      if (!res.ok || !json?.ok) {
-        throw new Error(json?.error || "Failed to mark as read");
-      }
+      const prevItems = items;
+      const isCampaignItem = isCampaignNotification(notification);
+      const campaignId = isCampaignItem ? getCampaignId(notification) : "";
 
       setItems((current) =>
         current.map((item) =>
           item.id === notificationId ? { ...item, is_read: true } : item,
         ),
       );
-      window.dispatchEvent(
-        new CustomEvent("campaign:state-changed", {
-          detail: { notificationId, action: "read" },
-        }),
-      );
-      await load();
-    } catch {
-      setItems(prevItems);
-      setError("Failed to mark as read");
-    } finally {
-      setActiveId("");
-    }
-  }, [items, load]);
+      setActiveId(notificationId);
+
+      try {
+        if (isCampaignItem && !campaignId) {
+          throw new Error("campaignId is required");
+        }
+
+        const res = await fetch(
+          isCampaignItem ? "/api/campaigns/read" : "/api/inbox/mark-read",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            keepalive: true,
+            body: JSON.stringify(
+              isCampaignItem ? { campaignId } : { notificationId },
+            ),
+          },
+        );
+        const json = await res.json().catch(() => ({}));
+
+        if (!res.ok || !json?.ok) {
+          throw new Error(json?.error || "Failed to mark as read");
+        }
+
+        setItems((current) =>
+          current.map((item) =>
+            item.id === notificationId ? { ...item, is_read: true } : item,
+          ),
+        );
+        window.dispatchEvent(
+          new CustomEvent("campaign:state-changed", {
+            detail: { notificationId, action: "read" },
+          }),
+        );
+        await load();
+      } catch {
+        setItems(prevItems);
+        setError("Failed to mark as read");
+      } finally {
+        setActiveId("");
+      }
+    },
+    [items, load],
+  );
 
   const markAllAsRead = useCallback(async () => {
     try {
@@ -292,7 +294,9 @@ export default function InviteInbox({
         throw new Error(json?.error || "Failed to mark all as read");
       }
 
-      setItems((current) => current.map((item) => ({ ...item, is_read: true })));
+      setItems((current) =>
+        current.map((item) => ({ ...item, is_read: true })),
+      );
       window.dispatchEvent(
         new CustomEvent("campaign:state-changed", {
           detail: { action: "mark_all_read" },
@@ -340,7 +344,10 @@ export default function InviteInbox({
       const isCampaignItem = isCampaignNotification(notification);
       const campaignId = isCampaignItem ? getCampaignId(notification) : "";
 
-      if (!notification.is_read && notification.type !== "invitation_received") {
+      if (
+        !notification.is_read &&
+        notification.type !== "invitation_received"
+      ) {
         void markAsRead(notification);
       }
 
@@ -427,12 +434,12 @@ export default function InviteInbox({
         )}
       >
         {open || unreadCount > 0 ? (
-          <BellRing className="h-4 w-4 text-[#6366F1] transition" />
+          <BellRing className="h-4 w-4 text-[var(--brand-600)] transition" />
         ) : (
           <Bell className="h-4 w-4 text-slate-700 transition" />
         )}
         {unreadCount > 0 ? (
-          <span className="absolute -right-1 -top-1 inline-flex min-w-5 items-center justify-center rounded-full bg-[#6366F1] px-1.5 py-0.5 text-[10px] font-bold text-white">
+          <span className="absolute -right-1 -top-1 inline-flex min-w-5 items-center justify-center rounded-full bg-[var(--brand-600)] px-1.5 py-0.5 text-[10px] font-bold text-white">
             {unreadCount > 99 ? "99+" : unreadCount}
           </span>
         ) : null}
@@ -505,7 +512,9 @@ export default function InviteInbox({
               {loading ? (
                 <div className="flex items-center justify-center px-4 py-8">
                   <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
-                  <span className="ml-2 text-sm text-slate-500">Loading...</span>
+                  <span className="ml-2 text-sm text-slate-500">
+                    Loading...
+                  </span>
                 </div>
               ) : items.length === 0 ? (
                 <div className="flex flex-col items-center justify-center px-4 py-12">
@@ -646,9 +655,14 @@ function NotificationItem({
           >
             {typeDisplay.label}
           </span>
-          <span className="h-1 w-1 rounded-full bg-slate-300" aria-hidden="true" />
+          <span
+            className="h-1 w-1 rounded-full bg-slate-300"
+            aria-hidden="true"
+          />
           <span>{formatNotificationTime(notification.created_at)}</span>
-          <span className="text-slate-300" aria-hidden="true">·</span>
+          <span className="text-slate-300" aria-hidden="true">
+            ·
+          </span>
           <span className="text-slate-500">{exactTime}</span>
         </div>
       </div>
@@ -680,7 +694,7 @@ function InboxFilterChip({
             ? "border-violet-200 bg-violet-50 text-violet-700"
             : tone === "notification"
               ? "border-sky-200 bg-sky-50 text-sky-700"
-              : "border-indigo-200 bg-indigo-50 text-indigo-700"
+              : "border-[var(--brand-200)] bg-[var(--brand-50)] text-[var(--brand-700)]"
           : "border-slate-200 bg-white text-slate-500 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-600",
       )}
     >
@@ -709,7 +723,7 @@ function NotificationStatusIndicator({
 }) {
   if (displayState.tone === "new") {
     return (
-      <span className="inline-flex h-5 items-center rounded-full bg-indigo-600 px-2 text-[10px] font-semibold tracking-[0.02em] text-white">
+      <span className="inline-flex h-5 items-center rounded-full bg-[var(--brand-600)] px-2 text-[10px] font-semibold tracking-[0.02em] text-white">
         New
       </span>
     );

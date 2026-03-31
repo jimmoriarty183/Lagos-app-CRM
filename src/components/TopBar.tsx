@@ -40,12 +40,15 @@ export default function TopBar({
         height: 38,
         padding: "0 12px",
         borderRadius: 12,
-        border: primary ? "1px solid #111827" : "1px solid #e5e7eb",
-        background: primary ? "#111827" : "rgba(255,255,255,0.7)",
-        color: primary ? "white" : "#111827",
-        fontWeight: primary ? 900 : 800,
+        border: primary
+          ? "1px solid var(--brand-600)"
+          : "1px solid var(--neutral-200)",
+        background: primary ? "var(--brand-600)" : "#FFFFFF",
+        color: primary ? "#FFFFFF" : "var(--neutral-900)",
+        fontWeight: primary ? 600 : 600,
         cursor: "pointer",
         whiteSpace: "nowrap",
+        transition: "all 0.15s ease",
       }}
     >
       {children}
@@ -53,7 +56,13 @@ export default function TopBar({
   );
 
   return (
-    <header style={{ padding: "10px 6px" }}>
+    <header
+      style={{
+        padding: "10px 6px",
+        borderBottom: "1px solid var(--neutral-200)",
+        backgroundColor: "#FFFFFF",
+      }}
+    >
       {/* ВАЖНО: контейнер внутри TopBar */}
       <div
         style={{
@@ -79,7 +88,14 @@ export default function TopBar({
           <div style={{ minWidth: 0 }}>
             <BrandLockup iconSize={34} textClassName="text-[1.9rem]" />
             {subtitle ? (
-              <div style={{ opacity: 0.65, fontSize: 12, marginTop: 2 }}>
+              <div
+                style={{
+                  opacity: 0.65,
+                  fontSize: 12,
+                  marginTop: 2,
+                  color: "var(--neutral-500)",
+                }}
+              >
                 {subtitle}
               </div>
             ) : null}

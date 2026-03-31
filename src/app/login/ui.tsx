@@ -36,7 +36,7 @@ function OverlayLoader({ text }: { text: string }) {
   return (
     <div className="absolute inset-0 z-50 flex items-center justify-center rounded-[20px] bg-white/70 backdrop-blur-sm">
       <div className="flex flex-col items-center gap-3 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-lg shadow-slate-900/5">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-300 border-t-[#6366F1]" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-300 border-t-[var(--brand-600)]" />
         <div className="text-sm font-semibold text-slate-800">{text}</div>
       </div>
     </div>
@@ -68,7 +68,9 @@ function Input({
 }) {
   return (
     <label className="block">
-      <div className="mb-1.5 text-[13px] font-semibold text-slate-700">{label}</div>
+      <div className="mb-1.5 text-[13px] font-semibold text-slate-700">
+        {label}
+      </div>
       <input
         name={name}
         type={type}
@@ -77,7 +79,7 @@ function Input({
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange?.(e.target.value)}
-        className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-[#6366F1] focus:ring-4 focus:ring-[rgba(99,102,241,0.14)]"
+        className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-[var(--brand-600)] focus:ring-4 focus:ring-[rgba(91,91,179,0.14)]"
       />
     </label>
   );
@@ -102,13 +104,15 @@ function Select({
 }) {
   return (
     <label className="block">
-      <div className="mb-1.5 text-[13px] font-semibold text-slate-700">{label}</div>
+      <div className="mb-1.5 text-[13px] font-semibold text-slate-700">
+        {label}
+      </div>
       <select
         name={name}
         required={required}
         value={value}
         onChange={(e) => onChange?.(e.target.value)}
-        className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition hover:border-slate-300 focus:border-[#6366F1] focus:ring-4 focus:ring-[rgba(99,102,241,0.14)]"
+        className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition hover:border-slate-300 focus:border-[var(--brand-600)] focus:ring-4 focus:ring-[rgba(91,91,179,0.14)]"
       >
         <option value="">{placeholder}</option>
         {options.map((option) => (
@@ -149,7 +153,9 @@ function PasswordInput({
 
   return (
     <label className="block">
-      <div className="mb-1.5 text-[13px] font-semibold text-slate-700">{label}</div>
+      <div className="mb-1.5 text-[13px] font-semibold text-slate-700">
+        {label}
+      </div>
       <div className="relative">
         <input
           name={name}
@@ -159,7 +165,7 @@ function PasswordInput({
           placeholder={placeholder}
           value={value}
           onChange={(e) => onChange?.(e.target.value)}
-          className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-3.5 pr-[4.75rem] text-sm text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-[#6366F1] focus:ring-4 focus:ring-[rgba(99,102,241,0.14)]"
+          className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-3.5 pr-[4.75rem] text-sm text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-[var(--brand-600)] focus:ring-4 focus:ring-[rgba(91,91,179,0.14)]"
         />
         <button
           type="button"
@@ -183,9 +189,9 @@ export default function LoginUI({
   mode?: "login" | "register" | "reset";
   onModeChange?: (mode: "login" | "register" | "reset") => void;
 }) {
-  const [localMode, setLocalMode] = React.useState<"login" | "register" | "reset">(
-    "login",
-  );
+  const [localMode, setLocalMode] = React.useState<
+    "login" | "register" | "reset"
+  >("login");
   const mode = controlledMode ?? localMode;
   const setMode = React.useCallback(
     (nextMode: "login" | "register" | "reset") => {
@@ -267,7 +273,6 @@ export default function LoginUI({
 
   const activeState =
     mode === "login" ? loginState : mode === "register" ? regState : resetState;
-
 
   function validateRegister(): string {
     const bn = businessName.trim();
@@ -428,7 +433,7 @@ export default function LoginUI({
                   setLocalError("");
                   setEmailReset(emailLogin);
                 }}
-                className="text-xs font-semibold text-slate-600 transition hover:text-[#6366F1]"
+                className="text-xs font-semibold text-slate-600 transition hover:text-[var(--brand-600)]"
               >
                 Forgot password?
               </button>
@@ -443,7 +448,11 @@ export default function LoginUI({
             </button>
           </form>
         ) : mode === "register" ? (
-          <form action={regSubmit} onSubmit={onRegisterSubmit} className="space-y-4">
+          <form
+            action={regSubmit}
+            onSubmit={onRegisterSubmit}
+            className="space-y-4"
+          >
             <input type="hidden" name="invite_id" value={inviteId} />
             <input type="hidden" name="agree" value={agree ? "on" : ""} />
 
@@ -467,7 +476,8 @@ export default function LoginUI({
                   placeholder="Select your business segment"
                 />
                 <Hint>
-                  Recommended for setup. Everything else can be added later in business settings.
+                  Recommended for setup. Everything else can be added later in
+                  business settings.
                 </Hint>
               </>
             )}
@@ -531,15 +541,21 @@ export default function LoginUI({
                 type="checkbox"
                 checked={agree}
                 onChange={(e) => setAgree(e.target.checked)}
-                className="mt-0.5 h-4 w-4 rounded border-slate-300 text-[#6366F1] focus:ring-[rgba(99,102,241,0.18)]"
+                className="mt-0.5 h-4 w-4 rounded border-slate-300 text-[var(--brand-600)] focus:ring-[rgba(91,91,179,0.18)]"
               />
               <div className="text-xs leading-snug text-slate-700">
                 I agree to the{" "}
-                <a href="/terms" className="font-semibold text-[#6366F1] hover:underline">
+                <a
+                  href="/terms"
+                  className="font-semibold text-[var(--brand-600)] hover:underline"
+                >
                   Terms of Service
                 </a>{" "}
                 and{" "}
-                <a href="/privacy" className="font-semibold text-[#6366F1] hover:underline">
+                <a
+                  href="/privacy"
+                  className="font-semibold text-[var(--brand-600)] hover:underline"
+                >
                   Privacy Policy
                 </a>
                 .
@@ -555,7 +571,11 @@ export default function LoginUI({
             </button>
           </form>
         ) : (
-          <form action={resetSubmit} onSubmit={onResetSubmit} className="space-y-4">
+          <form
+            action={resetSubmit}
+            onSubmit={onResetSubmit}
+            className="space-y-4"
+          >
             <Input
               label="Email"
               name="email"
@@ -568,7 +588,8 @@ export default function LoginUI({
             />
 
             <Hint>
-              We&apos;ll email a secure reset link to this address. Check spam if needed.
+              We&apos;ll email a secure reset link to this address. Check spam
+              if needed.
             </Hint>
 
             <button
@@ -584,5 +605,3 @@ export default function LoginUI({
     </div>
   );
 }
-
-

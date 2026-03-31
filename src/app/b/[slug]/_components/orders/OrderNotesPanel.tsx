@@ -1,7 +1,13 @@
 "use client";
 
 import * as React from "react";
-import { Ellipsis, MessageSquareText, PencilLine, Pin, Trash2 } from "lucide-react";
+import {
+  Ellipsis,
+  MessageSquareText,
+  PencilLine,
+  Pin,
+  Trash2,
+} from "lucide-react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -102,7 +108,8 @@ export function OrderNoteComposer({
               {mode === "create" ? "New internal note" : "Edit note"}
             </div>
             <p className="mt-1 text-xs leading-5 text-[#6B7280]">
-              Capture internal context, blockers, or next steps for the order team.
+              Capture internal context, blockers, or next steps for the order
+              team.
             </p>
           </div>
           <button
@@ -116,7 +123,9 @@ export function OrderNoteComposer({
             )}
             aria-pressed={isPinned}
           >
-            <Pin className={cn("h-3.5 w-3.5", isPinned ? "fill-current" : "")} />
+            <Pin
+              className={cn("h-3.5 w-3.5", isPinned ? "fill-current" : "")}
+            />
             {isPinned ? "Pinned" : "Pin note"}
           </button>
         </div>
@@ -125,7 +134,7 @@ export function OrderNoteComposer({
           value={body}
           onChange={(event) => setBody(event.currentTarget.value)}
           placeholder="Add private notes for this order"
-          className="min-h-[112px] rounded-[20px] border-[#E5E7EB] bg-[#F9FAFB] px-4 py-3 text-sm leading-6 text-[#1F2937] placeholder:text-[#9CA3AF] focus-visible:border-[#6366F1] focus-visible:ring-[#6366F1]/15"
+          className="min-h-[112px] rounded-[20px] border-[#E5E7EB] bg-[#F9FAFB] px-4 py-3 text-sm leading-6 text-[#1F2937] placeholder:text-[#9CA3AF] focus-visible:border-[var(--brand-600)] focus-visible:ring-[var(--brand-600)]/15"
         />
 
         <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end">
@@ -140,7 +149,7 @@ export function OrderNoteComposer({
             type="button"
             onClick={() => onSubmit({ body: trimmedBody, isPinned })}
             disabled={!trimmedBody}
-            className="inline-flex h-11 min-w-32 items-center justify-center rounded-xl border border-[#6366F1] bg-[#6366F1] px-5 text-base font-semibold transition hover:bg-[#5558E3] disabled:cursor-not-allowed disabled:border-[#9CA3AF] disabled:bg-[#9CA3AF]"
+            className="inline-flex h-11 min-w-32 items-center justify-center rounded-xl border border-[var(--brand-600)] bg-[var(--brand-600)] px-5 text-base font-semibold transition hover:bg-[var(--brand-700)] disabled:cursor-not-allowed disabled:border-[#9CA3AF] disabled:bg-[#9CA3AF]"
             style={{ color: "#ffffff" }}
           >
             {submitLabel}
@@ -206,7 +215,9 @@ export function OrderNoteItem({
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="space-y-1">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-sm font-semibold text-[#1F2937]">{note.authorName}</span>
+                <span className="text-sm font-semibold text-[#1F2937]">
+                  {note.authorName}
+                </span>
                 {note.isPinned ? (
                   <span className="inline-flex items-center gap-1 rounded-full border border-[#d5ddf6] bg-[#eef2ff] px-2.5 py-1 text-[11px] font-semibold text-[#3645a0]">
                     <Pin className="h-3 w-3 fill-current" />
@@ -216,7 +227,9 @@ export function OrderNoteItem({
               </div>
               <div className="flex flex-wrap items-center gap-2 text-xs text-[#9CA3AF]">
                 <span>{formatDateTime(note.createdAt)}</span>
-                {wasEdited ? <span>Edited {formatDateTime(updatedAt!)}</span> : null}
+                {wasEdited ? (
+                  <span>Edited {formatDateTime(updatedAt!)}</span>
+                ) : null}
               </div>
             </div>
 
@@ -231,13 +244,21 @@ export function OrderNoteItem({
                     <Ellipsis className="h-4 w-4" />
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-40 rounded-xl border-[#E5E7EB]">
+                <DropdownMenuContent
+                  align="end"
+                  className="w-40 rounded-xl border-[#E5E7EB]"
+                >
                   <DropdownMenuItem onSelect={onEdit}>
                     <PencilLine className="h-4 w-4" />
                     Edit
                   </DropdownMenuItem>
                   <DropdownMenuItem onSelect={onTogglePinned}>
-                    <Pin className={cn("h-4 w-4", note.isPinned ? "fill-current" : "")} />
+                    <Pin
+                      className={cn(
+                        "h-4 w-4",
+                        note.isPinned ? "fill-current" : "",
+                      )}
+                    />
                     {note.isPinned ? "Unpin" : "Pin"}
                   </DropdownMenuItem>
                   <DropdownMenuItem onSelect={onDelete} variant="destructive">
@@ -249,7 +270,9 @@ export function OrderNoteItem({
             ) : null}
           </div>
 
-          <div className="mt-3 whitespace-pre-wrap text-sm leading-6 text-[#374151]">{note.body}</div>
+          <div className="mt-3 whitespace-pre-wrap text-sm leading-6 text-[#374151]">
+            {note.body}
+          </div>
         </div>
       </div>
     </article>
@@ -268,15 +291,18 @@ export function OrderNotesEmptyState({
       <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F9FAFB] text-[#6B7280]">
         <MessageSquareText className="h-5 w-5" />
       </div>
-      <div className="mt-3 text-sm font-semibold text-[#1F2937]">No notes yet</div>
+      <div className="mt-3 text-sm font-semibold text-[#1F2937]">
+        No notes yet
+      </div>
       <p className="mt-1 text-sm leading-6 text-[#6B7280]">
-        Add internal notes so the team keeps context, decisions, and handoffs in one place.
+        Add internal notes so the team keeps context, decisions, and handoffs in
+        one place.
       </p>
       {canManage ? (
         <button
           type="button"
           onClick={onAddFirstNote}
-          className="mt-4 inline-flex h-11 min-w-40 items-center justify-center rounded-[18px] border border-[#6366F1] bg-[#6366F1] px-5 text-base font-semibold shadow-[0_8px_18px_rgba(99,102,241,0.18)] transition hover:bg-[#5558E3]"
+          className="mt-4 inline-flex h-11 min-w-40 items-center justify-center rounded-[18px] border border-[var(--brand-600)] bg-[var(--brand-600)] px-5 text-base font-semibold shadow-[0_8px_18px_rgba(91,91,179,0.18)] transition hover:bg-[var(--brand-700)]"
           style={{ color: "#ffffff" }}
         >
           Add first note
@@ -295,7 +321,9 @@ export function OrderNotesPanel({
   onDeleteNote,
   className,
 }: OrderNotesPanelProps) {
-  const [composerMode, setComposerMode] = React.useState<"create" | "edit" | null>(null);
+  const [composerMode, setComposerMode] = React.useState<
+    "create" | "edit" | null
+  >(null);
   const [editingNoteId, setEditingNoteId] = React.useState<string | null>(null);
 
   React.useEffect(() => {
@@ -357,7 +385,9 @@ export function OrderNotesPanel({
                 <MessageSquareText className="h-4 w-4 text-[#6B7280]" />
                 <span>Internal notes</span>
               </div>
-              <p className="mt-1 text-sm text-[#6B7280]">Private notes visible only to managers</p>
+              <p className="mt-1 text-sm text-[#6B7280]">
+                Private notes visible only to managers
+              </p>
             </div>
 
             <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
@@ -366,7 +396,7 @@ export function OrderNotesPanel({
               </span>
               {pinnedNotes.length > 0 ? (
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-[#F9FAFB] px-3 py-1 text-[#4B5563]">
-                  <Pin className="h-3.5 w-3.5 fill-current text-[#6366F1]" />
+                  <Pin className="h-3.5 w-3.5 fill-current text-[var(--brand-600)]" />
                   {pinnedNotes.length} pinned
                 </span>
               ) : null}
@@ -398,7 +428,10 @@ export function OrderNotesPanel({
             Only managers can view and add internal notes for this order.
           </div>
         ) : notes.length === 0 ? (
-          <OrderNotesEmptyState canManage={canManage} onAddFirstNote={openCreateComposer} />
+          <OrderNotesEmptyState
+            canManage={canManage}
+            onAddFirstNote={openCreateComposer}
+          />
         ) : (
           <div className="space-y-3">
             {pinnedNotes.length > 0 ? (
@@ -457,9 +490,7 @@ export function OrderNotesPanel({
             ) : null}
           </div>
         )}
-
       </div>
     </section>
   );
 }
-

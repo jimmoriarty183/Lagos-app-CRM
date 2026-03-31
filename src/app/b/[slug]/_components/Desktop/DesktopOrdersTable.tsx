@@ -607,7 +607,8 @@ function ManagerAssignmentCell({
   const resolvedActor = localManagerId
     ? options.find((actor) => actor.id === localManagerId) || null
     : null;
-  const resolvedManagerName = resolvedActor?.label || localManagerName?.trim() || "";
+  const resolvedManagerName =
+    resolvedActor?.label || localManagerName?.trim() || "";
   const resolvedManagerAvatarUrl = resolvedActor?.avatar_url ?? null;
   const label = resolvedManagerName || "Unassigned";
   const isUnassigned = !localManagerId;
@@ -683,7 +684,7 @@ function ManagerAssignmentCell({
             className={[
               "flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm transition",
               !localManagerId
-                ? "bg-[#EEF2FF] text-[#6366F1]"
+                ? "bg-[var(--brand-50)] text-[var(--brand-600)]"
                 : "text-[#4B5563] hover:bg-[#F9FAFB]",
             ].join(" ")}
             onClick={() => {
@@ -726,7 +727,7 @@ function ManagerAssignmentCell({
               className={[
                 "flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm transition",
                 localManagerId === actor.id
-                  ? "bg-[#EEF2FF] text-[#6366F1]"
+                  ? "bg-[var(--brand-50)] text-[var(--brand-600)]"
                   : "text-[#374151] hover:bg-[#F9FAFB]",
               ].join(" ")}
               onClick={() => {
@@ -876,9 +877,9 @@ export default function DesktopOrdersTable({
     DONE: false,
     CANCELED: true,
   });
-  const cancelReasonResolverRef = React.useRef<((reason: string | null) => void) | null>(
-    null,
-  );
+  const cancelReasonResolverRef = React.useRef<
+    ((reason: string | null) => void) | null
+  >(null);
 
   React.useEffect(() => {
     isMountedRef.current = true;
@@ -901,8 +902,7 @@ export default function DesktopOrdersTable({
       }>;
       setTerminalColumnHidden({
         DONE: Boolean(parsed.DONE),
-        CANCELED:
-          typeof parsed.CANCELED === "boolean" ? parsed.CANCELED : true,
+        CANCELED: typeof parsed.CANCELED === "boolean" ? parsed.CANCELED : true,
       });
     } catch {
       // Ignore invalid persisted visibility state.
@@ -1039,69 +1039,58 @@ export default function DesktopOrdersTable({
       : statusTouched
         ? statusValues
         : normalizeQuickStatuses(statusFilter, activeStatusOptions);
-  const kanbanColumns = useMemo(
-    () => {
-      const columns = workflowStatuses.map((status) => ({
-        ...status,
-        orders: boardRows.filter((order) => {
-          const orderStatus = String(order.status ?? "").toUpperCase();
-          return orderStatus === status.value.toUpperCase();
-        }),
-      }));
+  const kanbanColumns = useMemo(() => {
+    const columns = workflowStatuses.map((status) => ({
+      ...status,
+      orders: boardRows.filter((order) => {
+        const orderStatus = String(order.status ?? "").toUpperCase();
+        return orderStatus === status.value.toUpperCase();
+      }),
+    }));
 
-      console.log("[desktop-orders-table] kanbanColumns", {
-        workflowStatuses: workflowStatuses.map((status) => ({
-          value: status.value,
-          label: status.label,
-          builtIn: status.builtIn ?? false,
-          active: status.active,
-        })),
-        workflowHasDEL: workflowStatuses.some((status) => status.value === "DEL"),
-        boardRowsCount: boardRows.length,
-        boardDELCount: boardRows.filter(
-          (order) => String(order.status ?? "").toUpperCase() === "DEL",
-        ).length,
-        columns: columns.map((column) => ({
-          value: column.value,
-          builtIn: column.builtIn ?? false,
-          ordersCount: column.orders.length,
-        })),
-      });
+    console.log("[desktop-orders-table] kanbanColumns", {
+      workflowStatuses: workflowStatuses.map((status) => ({
+        value: status.value,
+        label: status.label,
+        builtIn: status.builtIn ?? false,
+        active: status.active,
+      })),
+      workflowHasDEL: workflowStatuses.some((status) => status.value === "DEL"),
+      boardRowsCount: boardRows.length,
+      boardDELCount: boardRows.filter(
+        (order) => String(order.status ?? "").toUpperCase() === "DEL",
+      ).length,
+      columns: columns.map((column) => ({
+        value: column.value,
+        builtIn: column.builtIn ?? false,
+        ordersCount: column.orders.length,
+      })),
+    });
 
-      return columns;
-    },
-    [boardRows, workflowStatuses],
-  );
-  const visibleKanbanColumns = useMemo(
-    () => {
-      const visibleColumns = kanbanColumns;
+    return columns;
+  }, [boardRows, workflowStatuses]);
+  const visibleKanbanColumns = useMemo(() => {
+    const visibleColumns = kanbanColumns;
 
-      console.log("[desktop-orders-table] visibleKanbanColumns", {
-        statusMode,
-        statusFilter,
-        workflowStatuses: workflowStatuses.map((status) => ({
-          value: status.value,
-          builtIn: status.builtIn ?? false,
-        })),
-        visibleColumns: visibleColumns.map((column) => ({
-          value: column.value,
-          builtIn: column.builtIn ?? false,
-          isBuiltInTerminal:
-            Boolean(column.builtIn) &&
-            ["DONE", "CANCELED"].includes(column.value),
-          ordersCount: column.orders.length,
-        })),
-      });
-
-      return visibleColumns;
-    },
-    [
-      kanbanColumns,
-      statusFilter,
+    console.log("[desktop-orders-table] visibleKanbanColumns", {
       statusMode,
-      workflowStatuses,
-    ],
-  );
+      statusFilter,
+      workflowStatuses: workflowStatuses.map((status) => ({
+        value: status.value,
+        builtIn: status.builtIn ?? false,
+      })),
+      visibleColumns: visibleColumns.map((column) => ({
+        value: column.value,
+        builtIn: column.builtIn ?? false,
+        isBuiltInTerminal:
+          Boolean(column.builtIn) &&
+          ["DONE", "CANCELED"].includes(column.value),
+        ordersCount: column.orders.length,
+      })),
+    });
+
+    return visibleColumns;
+  }, [kanbanColumns, statusFilter, statusMode, workflowStatuses]);
 
   const toggleOrderPreview = (orderId: string) => {
     if (shouldIgnoreOverlayCloseClick()) return;
@@ -1588,12 +1577,12 @@ export default function DesktopOrdersTable({
     visibleKanbanColumns.length > 0 && visibleKanbanColumns.length <= 5;
   const kanbanColumnMinWidth = 220;
   const collapsedKanbanColumnWidth = 132;
-  const isCollapsedKanbanColumn = (column: (typeof visibleKanbanColumns)[number]) =>
+  const isCollapsedKanbanColumn = (
+    column: (typeof visibleKanbanColumns)[number],
+  ) =>
     Boolean(column.builtIn) &&
-    ((column.value === "DONE" &&
-      terminalColumnHidden.DONE) ||
-      (column.value === "CANCELED" &&
-        terminalColumnHidden.CANCELED));
+    ((column.value === "DONE" && terminalColumnHidden.DONE) ||
+      (column.value === "CANCELED" && terminalColumnHidden.CANCELED));
   const hasCollapsedKanbanColumns = visibleKanbanColumns.some((column) =>
     isCollapsedKanbanColumn(column),
   );
@@ -1666,10 +1655,14 @@ export default function DesktopOrdersTable({
           <div className="relative overflow-hidden rounded-2xl border border-[#D9E2FF] bg-white px-5 py-4 shadow-[0_18px_44px_rgba(99,102,241,0.18)]">
             <div className="pointer-events-none absolute inset-0 -translate-x-full animate-[shimmer_1.4s_ease-in-out_infinite] bg-gradient-to-r from-transparent via-[#EEF2FF]/70 to-transparent" />
             <div className="relative flex items-center gap-3">
-              <span className="inline-flex h-2.5 w-2.5 animate-pulse rounded-full bg-[#6366F1]" />
+              <span className="inline-flex h-2.5 w-2.5 animate-pulse rounded-full bg-[var(--brand-600)]" />
               <div>
-                <div className="text-sm font-semibold text-[#1F2937]">Preparing Kanban board...</div>
-                <div className="mt-1 text-xs text-[#6B7280]">Organizing your orders by status</div>
+                <div className="text-sm font-semibold text-[#1F2937]">
+                  Preparing Kanban board...
+                </div>
+                <div className="mt-1 text-xs text-[#6B7280]">
+                  Organizing your orders by status
+                </div>
               </div>
             </div>
           </div>
@@ -1723,7 +1716,7 @@ export default function DesktopOrdersTable({
                   setOpenId(null);
                   setCreatePreviewOpen(true);
                 }}
-                className="inline-flex h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-lg border border-[#6366F1] bg-[#6366F1] px-4 text-[15px] font-medium text-white transition hover:bg-[#5558E3] hover:border-[#5558E3]"
+                className="inline-flex h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-lg border border-[var(--brand-600)] bg-[var(--brand-600)] px-4 text-[15px] font-medium text-white transition hover:bg-[var(--brand-700)] hover:border-[var(--brand-700)]"
               >
                 <Plus className="h-4 w-4 text-white" />
                 <span className="text-white">Add deal</span>
@@ -1732,14 +1725,14 @@ export default function DesktopOrdersTable({
             <button
               type="button"
               onClick={openKanbanFilters}
-              className="relative inline-flex h-10 items-center justify-center gap-2 rounded-lg border-2 border-[#6366F1] bg-white px-4 text-sm font-medium text-[#6366F1] transition hover:bg-[#6366F1] hover:text-white"
+              className="relative inline-flex h-10 items-center justify-center gap-2 rounded-lg border-2 border-[var(--brand-600)] bg-white px-4 text-sm font-medium text-[var(--brand-600)] transition hover:bg-[var(--brand-600)] hover:text-white"
               aria-label="Open search and filters"
               title="Search and filters"
             >
               <Search className="h-[14px] w-[14px]" />
               <SlidersHorizontal className="h-[15px] w-[15px]" />
               {hasActiveFilters ? (
-                <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[#EEF2FF] px-1 text-[9px] font-bold text-[#6366F1]">
+                <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--brand-50)] px-1 text-[9px] font-bold text-[var(--brand-600)]">
                   1
                 </span>
               ) : null}
@@ -1753,7 +1746,7 @@ export default function DesktopOrdersTable({
               </a>
             ) : null}
 
-            <div className="inline-flex items-center rounded-xl border border-[#C7D2FE] bg-[#EEF2FF] p-1">
+            <div className="inline-flex items-center rounded-xl border border-[var(--brand-200)] bg-[var(--brand-50)] p-1">
               <button
                 type="button"
                 onClick={() => {
@@ -1764,7 +1757,7 @@ export default function DesktopOrdersTable({
                 className={[
                   "inline-flex h-9 items-center gap-2 rounded-lg px-3.5 text-[15px] font-medium transition",
                   viewMode === "list"
-                    ? "border border-[#C7D2FE] bg-white text-[#1F2937] shadow-[0_8px_18px_rgba(99,102,241,0.12)]"
+                    ? "border border-[var(--brand-200)] bg-white text-[#1F2937] shadow-[0_8px_18px_rgba(91,91,179,0.12)]"
                     : "border border-transparent text-[#6B7280] hover:text-[#1F2937]",
                 ].join(" ")}
               >
@@ -1779,7 +1772,7 @@ export default function DesktopOrdersTable({
                 className={[
                   "inline-flex h-9 items-center gap-2 rounded-lg px-3.5 text-[15px] font-medium transition",
                   viewMode === "kanban"
-                    ? "border border-[#C7D2FE] bg-white text-[#1F2937] shadow-[0_8px_18px_rgba(99,102,241,0.12)]"
+                    ? "border border-[var(--brand-200)] bg-white text-[#1F2937] shadow-[0_8px_18px_rgba(91,91,179,0.12)]"
                     : "border border-transparent text-[#6B7280] hover:text-[#1F2937]",
                 ].join(" ")}
               >
@@ -1820,7 +1813,7 @@ export default function DesktopOrdersTable({
                   }
                 }}
                 placeholder="Search by client, phone, manager, status, amount..."
-                className="h-11 w-full rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] pl-11 pr-4 text-sm text-[#374151] outline-none transition placeholder:text-[#9CA3AF] focus:border-[#6366F1] focus:bg-white focus:ring-2 focus:ring-[#6366F1]/15"
+                className="h-11 w-full rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] pl-11 pr-4 text-sm text-[#374151] outline-none transition placeholder:text-[#9CA3AF] focus:border-[var(--brand-600)] focus:bg-white focus:ring-2 focus:ring-[var(--brand-600)]/15"
               />
             </label>
           </div>
@@ -1834,7 +1827,7 @@ export default function DesktopOrdersTable({
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
-                  className="inline-flex h-11 min-w-[150px] flex-1 items-center justify-between rounded-xl border border-[#E5E7EB] bg-white px-4 text-sm font-medium text-[#374151] outline-none transition hover:border-[#C7D2FE] focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15"
+                  className="inline-flex h-11 min-w-[150px] flex-1 items-center justify-between rounded-xl border border-[#E5E7EB] bg-white px-4 text-sm font-medium text-[#374151] outline-none transition hover:border-[var(--brand-200)] focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
                 >
                   <span className="truncate">
                     {getPeriodTriggerLabel(rangeValue)}
@@ -1855,7 +1848,7 @@ export default function DesktopOrdersTable({
                     <DropdownMenuRadioItem
                       key={option.value}
                       value={option.value}
-                      className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#374151] data-[state=checked]:bg-[#EEF2FF] data-[state=checked]:font-semibold data-[state=checked]:text-[#6366F1]"
+                      className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#374151] data-[state=checked]:bg-[var(--brand-50)] data-[state=checked]:font-semibold data-[state=checked]:text-[var(--brand-600)]"
                       onSelect={() => {
                         setRangeValue(option.value);
                         setRangeTouched(true);
@@ -1880,7 +1873,7 @@ export default function DesktopOrdersTable({
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
-                  className="inline-flex h-11 min-w-[150px] flex-1 items-center justify-between rounded-xl border border-[#E5E7EB] bg-white px-4 text-sm font-medium text-[#374151] outline-none transition hover:border-[#C7D2FE] focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15"
+                  className="inline-flex h-11 min-w-[150px] flex-1 items-center justify-between rounded-xl border border-[#E5E7EB] bg-white px-4 text-sm font-medium text-[#374151] outline-none transition hover:border-[var(--brand-200)] focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
                 >
                   <span className="truncate">
                     {getStatusTriggerLabel(
@@ -2051,7 +2044,7 @@ export default function DesktopOrdersTable({
                   {currentUserId ? (
                     <DropdownMenuRadioItem
                       value="ME"
-                      className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#374151] data-[state=checked]:bg-[#EEF2FF] data-[state=checked]:font-semibold data-[state=checked]:text-[#6366F1]"
+                      className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#374151] data-[state=checked]:bg-[var(--brand-50)] data-[state=checked]:font-semibold data-[state=checked]:text-[var(--brand-600)]"
                       onSelect={() => {
                         setManagerValue("ME");
                         setManagerTouched(true);
@@ -2074,14 +2067,17 @@ export default function DesktopOrdersTable({
                     <DropdownMenuRadioItem
                       key={option.value}
                       value={option.value}
-                      className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#374151] data-[state=checked]:bg-[#EEF2FF] data-[state=checked]:font-semibold data-[state=checked]:text-[#6366F1]"
+                      className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#374151] data-[state=checked]:bg-[var(--brand-50)] data-[state=checked]:font-semibold data-[state=checked]:text-[var(--brand-600)]"
                       onSelect={() => {
                         setManagerValue(option.value);
                         setManagerTouched(true);
                       }}
                     >
                       <div className="flex items-center gap-2">
-                        <ActorAvatar label={option.label} avatarUrl={option.avatar_url} />
+                        <ActorAvatar
+                          label={option.label}
+                          avatarUrl={option.avatar_url}
+                        />
                         <span className="truncate">{option.label}</span>
                       </div>
                     </DropdownMenuRadioItem>
@@ -2100,7 +2096,7 @@ export default function DesktopOrdersTable({
                   setCustomStart(event.currentTarget.value);
                   setRangeTouched(true);
                 }}
-                className="h-11 min-w-[170px] flex-1 rounded-xl border border-[#E5E7EB] bg-white px-4 text-sm font-medium text-[#374151] outline-none transition focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15"
+                className="h-11 min-w-[170px] flex-1 rounded-xl border border-[#E5E7EB] bg-white px-4 text-sm font-medium text-[#374151] outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
               />
               <input
                 type="date"
@@ -2109,7 +2105,7 @@ export default function DesktopOrdersTable({
                   setCustomEnd(event.currentTarget.value);
                   setRangeTouched(true);
                 }}
-                className="h-11 min-w-[170px] flex-1 rounded-xl border border-[#E5E7EB] bg-white px-4 text-sm font-medium text-[#374151] outline-none transition focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15"
+                className="h-11 min-w-[170px] flex-1 rounded-xl border border-[#E5E7EB] bg-white px-4 text-sm font-medium text-[#374151] outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
               />
             </div>
           ) : null}
@@ -2134,7 +2130,7 @@ export default function DesktopOrdersTable({
             <button
               type="submit"
               disabled={statusValues.length === 0 || !customRangeReady}
-              className="inline-flex h-11 min-w-[112px] shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-[#6366F1] px-4 text-sm font-semibold transition hover:bg-[#5558E3] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:bg-[#6366F1]"
+              className="inline-flex h-11 min-w-[112px] shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-[var(--brand-600)] px-4 text-sm font-semibold transition hover:bg-[var(--brand-700)] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:bg-[var(--brand-600)]"
               style={{ color: "#ffffff" }}
             >
               <span className="leading-none text-white">Apply</span>
@@ -2357,7 +2353,9 @@ export default function DesktopOrdersTable({
                     colSpan={7}
                     className="px-6 py-12 text-center text-sm text-[#9CA3AF]"
                   >
-                    {isPending ? "Updating orders..." : "No deals yet. Add your first one to start building the workflow."}
+                    {isPending
+                      ? "Updating orders..."
+                      : "No deals yet. Add your first one to start building the workflow."}
                   </td>
                 </tr>
               ) : null}
@@ -2414,509 +2412,526 @@ export default function DesktopOrdersTable({
                   }
                 >
                   {visibleKanbanColumns.map((column) => {
-                  const tone = getStatusTone(column.value, customStatuses);
+                    const tone = getStatusTone(column.value, customStatuses);
 
-                  // Only built-in terminal statuses can be hidden
-                  const isBuiltInTerminal =
-                    column.builtIn &&
-                    (column.value === "DONE" ||
-                      column.value === "CANCELED");
+                    // Only built-in terminal statuses can be hidden
+                    const isBuiltInTerminal =
+                      column.builtIn &&
+                      (column.value === "DONE" || column.value === "CANCELED");
 
-                  const hiddenTerminalCount = isBuiltInTerminal
-                    ? column.value === "DONE"
-                      ? hiddenKanbanCounts.done
-                      : column.value === "CANCELED"
-                        ? hiddenKanbanCounts.canceled
-                        : 0
-                    : 0;
+                    const hiddenTerminalCount = isBuiltInTerminal
+                      ? column.value === "DONE"
+                        ? hiddenKanbanCounts.done
+                        : column.value === "CANCELED"
+                          ? hiddenKanbanCounts.canceled
+                          : 0
+                      : 0;
 
-                  const hiddenByFilter = isBuiltInTerminal
-                    ? statusMode === "custom" &&
-                      ((column.value === "DONE" &&
-                        !doneVisibleInFilter &&
-                        hiddenKanbanCounts.done > 0) ||
-                      (column.value === "CANCELED" &&
-                        !canceledVisibleInFilter &&
-                        hiddenKanbanCounts.canceled > 0))
-                    : false;
-                  const hiddenByPreference = isBuiltInTerminal
-                    ? column.value === "DONE"
-                      ? terminalColumnHidden.DONE
-                      : terminalColumnHidden.CANCELED
-                    : false;
-                  const hiddenCardCount =
-                    hiddenByFilter || hiddenByPreference
-                      ? hiddenTerminalCount
-                      : column.orders.length;
+                    const hiddenByFilter = isBuiltInTerminal
+                      ? statusMode === "custom" &&
+                        ((column.value === "DONE" &&
+                          !doneVisibleInFilter &&
+                          hiddenKanbanCounts.done > 0) ||
+                          (column.value === "CANCELED" &&
+                            !canceledVisibleInFilter &&
+                            hiddenKanbanCounts.canceled > 0))
+                      : false;
+                    const hiddenByPreference = isBuiltInTerminal
+                      ? column.value === "DONE"
+                        ? terminalColumnHidden.DONE
+                        : terminalColumnHidden.CANCELED
+                      : false;
+                    const hiddenCardCount =
+                      hiddenByFilter || hiddenByPreference
+                        ? hiddenTerminalCount
+                        : column.orders.length;
 
-                  const hiddenTitle = isBuiltInTerminal
-                    ? hiddenByPreference
-                      ? `${column.label} is hidden`
-                      : hiddenByFilter
-                        ? column.value === "DONE"
-                          ? "Done is hidden by filters"
-                          : `${column.label} is hidden by filters`
-                      : `${column.label} is hidden`
-                    : `${column.label} is hidden by filters`;
-                  const isCollapsedColumn = isCollapsedKanbanColumn(column);
+                    const hiddenTitle = isBuiltInTerminal
+                      ? hiddenByPreference
+                        ? `${column.label} is hidden`
+                        : hiddenByFilter
+                          ? column.value === "DONE"
+                            ? "Done is hidden by filters"
+                            : `${column.label} is hidden by filters`
+                          : `${column.label} is hidden`
+                      : `${column.label} is hidden by filters`;
+                    const isCollapsedColumn = isCollapsedKanbanColumn(column);
 
-                  return (
-                    <div
-                      key={column.value}
-                      className={[
-                        "flex h-full min-h-0 flex-col rounded-[24px] border p-2.5 transition",
-                        isCollapsedColumn ? "px-2.5" : "",
-                        dropStatusValue === column.value
-                          ? "border-[#6366F1] shadow-[0_18px_40px_rgba(99,102,241,0.12)]"
-                          : "border-[#e2e8f0]",
-                      ].join(" ")}
-                      style={{
-                        background: dropStatusValue === column.value
-                          ? `linear-gradient(180deg, ${tone.selectedBackground} 0%, #EEF2FF 28%, #ffffff 100%)`
-                          : `linear-gradient(180deg, ${tone.background} 0%, #F9FAFB 22%, #ffffff 100%)`,
-                      }}
-                      onDragOver={(event) => {
-                        if (!canManage) return;
-                        event.preventDefault();
-                        setDropStatusValue(column.value);
-                      }}
-                      onDragLeave={(event) => {
-                        if (
-                          event.currentTarget.contains(
-                            event.relatedTarget as Node | null,
-                          )
-                        )
-                          return;
-                        setDropStatusValue((current) =>
-                          current === column.value ? null : current,
-                        );
-                      }}
-                      onDrop={(event) => {
-                        event.preventDefault();
-                        const orderId =
-                          event.dataTransfer.getData("text/order-id") ||
-                          draggingOrderId;
-                        if (!orderId) return;
-                        void handleDropToStatus(orderId, column.value);
-                      }}
-                    >
+                    return (
                       <div
+                        key={column.value}
                         className={[
-                          "sticky top-0 z-[1] flex items-center justify-between gap-3 rounded-[18px] border border-transparent bg-[#F9FAFB]/95 pb-2.5 backdrop-blur",
-                          isCollapsedColumn ? "px-0" : "px-1.5",
+                          "flex h-full min-h-0 flex-col rounded-[24px] border p-2.5 transition",
+                          isCollapsedColumn ? "px-2.5" : "",
+                          dropStatusValue === column.value
+                            ? "border-[var(--brand-600)] shadow-[0_18px_40px_rgba(91,91,179,0.12)]"
+                            : "border-[#e2e8f0]",
                         ].join(" ")}
                         style={{
-                          background: isCollapsedColumn
-                            ? `${tone.background}`
-                            : `${tone.background}CC`,
+                          background:
+                            dropStatusValue === column.value
+                              ? `linear-gradient(180deg, ${tone.selectedBackground} 0%, #EEF2FF 28%, #ffffff 100%)`
+                              : `linear-gradient(180deg, ${tone.background} 0%, #F9FAFB 22%, #ffffff 100%)`,
+                        }}
+                        onDragOver={(event) => {
+                          if (!canManage) return;
+                          event.preventDefault();
+                          setDropStatusValue(column.value);
+                        }}
+                        onDragLeave={(event) => {
+                          if (
+                            event.currentTarget.contains(
+                              event.relatedTarget as Node | null,
+                            )
+                          )
+                            return;
+                          setDropStatusValue((current) =>
+                            current === column.value ? null : current,
+                          );
+                        }}
+                        onDrop={(event) => {
+                          event.preventDefault();
+                          const orderId =
+                            event.dataTransfer.getData("text/order-id") ||
+                            draggingOrderId;
+                          if (!orderId) return;
+                          void handleDropToStatus(orderId, column.value);
                         }}
                       >
                         <div
                           className={[
-                            "flex min-w-0 items-center",
-                            isCollapsedColumn
-                              ? "gap-1.5"
-                              : "gap-3",
+                            "sticky top-0 z-[1] flex items-center justify-between gap-3 rounded-[18px] border border-transparent bg-[#F9FAFB]/95 pb-2.5 backdrop-blur",
+                            isCollapsedColumn ? "px-0" : "px-1.5",
                           ].join(" ")}
+                          style={{
+                            background: isCollapsedColumn
+                              ? `${tone.background}`
+                              : `${tone.background}CC`,
+                          }}
                         >
-                          <span
-                            className="h-3 w-3 shrink-0 rounded-full"
-                            style={{ background: tone.dot }}
-                          />
-                          <div className="min-w-0">
-                            <div
-                              className={[
-                                "font-semibold text-[#1F2937]",
-                                isCollapsedColumn
-                                  ? "text-[13px] leading-4 whitespace-normal"
-                                  : "truncate text-[15px]",
-                              ].join(" ")}
-                            >
-                              {column.label}
-                            </div>
-                            <div
-                              className={[
-                                "font-medium text-[#9CA3AF]",
-                                isCollapsedColumn
-                                  ? "text-[11px] leading-4"
-                                  : "text-xs",
-                              ].join(" ")}
-                            >
-                              {isCollapsedColumn
-                                ? `${hiddenCardCount} hidden`
-                                : hiddenByFilter || hiddenByPreference
-                                  ? `${hiddenCardCount} hidden`
-                                : `${column.orders.length} ${column.orders.length === 1 ? "order" : "orders"}`}
-                            </div>
-                          </div>
-                        </div>
-                        <div
-                          className={`flex ${
-                            isCollapsedColumn
-                              ? "flex-col items-end gap-1"
-                              : hiddenByPreference
-                                ? "flex-col items-end gap-1.5"
-                              : "items-center gap-2"
-                          }`}
-                        >
-                          <div
-                            className="inline-flex h-7 min-w-7 items-center justify-center rounded-full px-2 text-[11px] font-semibold"
-                            style={{
-                              background: tone.background,
-                              color: tone.color,
-                            }}
-                          >
-                            {hiddenByFilter || hiddenByPreference
-                              ? hiddenCardCount
-                              : column.orders.length}
-                          </div>
-                          {isBuiltInTerminal ? (
-                            <button
-                              type="button"
-                              onClick={() =>
-                                hiddenByFilter || hiddenByPreference
-                                  ? revealTerminalColumn(
-                                      column.value as "DONE" | "CANCELED",
-                                    )
-                                  : hideTerminalColumn(
-                                      column.value as "DONE" | "CANCELED",
-                                    )
-                              }
-                              aria-label={
-                                hiddenByFilter || hiddenByPreference
-                                  ? "Show"
-                                  : `Hide ${column.label.toLowerCase()}`
-                              }
-                              title={
-                                hiddenByFilter || hiddenByPreference
-                                  ? "Show"
-                                  : `Hide ${column.label.toLowerCase()}`
-                              }
-                              className={[
-                                "inline-flex items-center justify-center rounded-full transition",
-                                hiddenByFilter || hiddenByPreference
-                                  ? isCollapsedColumn
-                                    ? "h-6 min-w-[42px] px-1.5 text-[10px] font-semibold"
-                                    : "h-7 min-w-[48px] px-2 text-[11px] font-semibold"
-                                  : isCollapsedColumn
-                                    ? "h-6 min-w-[42px] border border-[#E5E7EB] bg-white px-1.5 text-[10px] font-semibold text-[#6B7280] hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]"
-                                    : "h-7 min-w-[48px] border border-[#E5E7EB] bg-white px-2 text-[11px] font-semibold text-[#6B7280] hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]",
-                              ].join(" ")}
-                              style={
-                                hiddenByFilter || hiddenByPreference
-                                  ? {
-                                      background: tone.background,
-                                      color: tone.color,
-                                    }
-                                  : undefined
-                              }
-                            >
-                              {hiddenByFilter || hiddenByPreference ? (
-                                "Show"
-                              ) : (
-                                "Hide"
-                              )}
-                            </button>
-                          ) : null}
-                        </div>
-                      </div>
-
-                      <div
-                        className="flex min-h-0 flex-1 flex-col gap-2.5 rounded-[18px] p-0.5"
-                        style={{
-                          background: isCollapsedColumn
-                            ? `${tone.background}80`
-                            : "rgba(255,255,255,0.4)",
-                        }}
-                      >
-                        {hiddenByFilter || hiddenByPreference ? (
                           <div
                             className={[
-                              "flex flex-col items-center justify-center rounded-[20px] border border-dashed text-center",
-                              isCollapsedColumn
-                                ? "min-h-[220px] px-2 py-4"
-                                : "min-h-[160px] px-4",
+                              "flex min-w-0 items-center",
+                              isCollapsedColumn ? "gap-1.5" : "gap-3",
                             ].join(" ")}
-                            style={{
-                              borderColor: `${tone.dot}33`,
-                              background: "rgba(255,255,255,0.72)",
-                            }}
+                          >
+                            <span
+                              className="h-3 w-3 shrink-0 rounded-full"
+                              style={{ background: tone.dot }}
+                            />
+                            <div className="min-w-0">
+                              <div
+                                className={[
+                                  "font-semibold text-[#1F2937]",
+                                  isCollapsedColumn
+                                    ? "text-[13px] leading-4 whitespace-normal"
+                                    : "truncate text-[15px]",
+                                ].join(" ")}
+                              >
+                                {column.label}
+                              </div>
+                              <div
+                                className={[
+                                  "font-medium text-[#9CA3AF]",
+                                  isCollapsedColumn
+                                    ? "text-[11px] leading-4"
+                                    : "text-xs",
+                                ].join(" ")}
+                              >
+                                {isCollapsedColumn
+                                  ? `${hiddenCardCount} hidden`
+                                  : hiddenByFilter || hiddenByPreference
+                                    ? `${hiddenCardCount} hidden`
+                                    : `${column.orders.length} ${column.orders.length === 1 ? "order" : "orders"}`}
+                              </div>
+                            </div>
+                          </div>
+                          <div
+                            className={`flex ${
+                              isCollapsedColumn
+                                ? "flex-col items-end gap-1"
+                                : hiddenByPreference
+                                  ? "flex-col items-end gap-1.5"
+                                  : "items-center gap-2"
+                            }`}
                           >
                             <div
-                              className={`font-semibold text-[#374151] ${
-                                isCollapsedColumn
-                                  ? "text-[13px] leading-5"
-                                  : "text-sm"
-                              }`}
+                              className="inline-flex h-7 min-w-7 items-center justify-center rounded-full px-2 text-[11px] font-semibold"
+                              style={{
+                                background: tone.background,
+                                color: tone.color,
+                              }}
                             >
-                              {hiddenTitle}
+                              {hiddenByFilter || hiddenByPreference
+                                ? hiddenCardCount
+                                : column.orders.length}
                             </div>
-                            <div
-                              className={`mt-1 text-[#9CA3AF] ${
-                                isCollapsedColumn
-                                  ? "text-[12px] leading-5"
-                                  : "text-sm"
-                              }`}
-                            >
-                              {hiddenCardCount}{" "}
-                              {hiddenCardCount === 1 ? "order" : "orders"}{" "}
-                              in this status
-                            </div>
-                          </div>
-                        ) : null}
-
-                        {!hiddenByFilter && !hiddenByPreference ? (
-                          <div className="min-h-0 flex-1 space-y-2.5 overflow-y-auto pr-1">
-                          {column.orders.map((order) => {
-                            const isOverdue = isOrderOverdue(order, todayISO);
-                            const canCancel =
-                              canEdit &&
-                              order.status !== "CANCELED" &&
-                              order.status !== "DONE";
-                            const canDeletePermanently = userRole === "OWNER";
-                            const isDragging = draggingOrderId === order.id;
-                            const isSavingCard =
-                              savingStatusOrderId === order.id;
-
-                            return (
-                              <div
-                                key={order.id}
-                                draggable={canManage && !isSavingCard}
-                                onDragStart={(event) => {
-                                  if (!canManage) return;
-                                  event.dataTransfer.effectAllowed = "move";
-                                  event.dataTransfer.setData(
-                                    "text/order-id",
-                                    order.id,
-                                  );
-                                  setDraggingOrderId(order.id);
-                                  setDropStatusValue(column.value);
-                                }}
-                                onDragEnd={() => {
-                                  setDraggingOrderId(null);
-                                  setDropStatusValue(null);
-                                }}
+                            {isBuiltInTerminal ? (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  hiddenByFilter || hiddenByPreference
+                                    ? revealTerminalColumn(
+                                        column.value as "DONE" | "CANCELED",
+                                      )
+                                    : hideTerminalColumn(
+                                        column.value as "DONE" | "CANCELED",
+                                      )
+                                }
+                                aria-label={
+                                  hiddenByFilter || hiddenByPreference
+                                    ? "Show"
+                                    : `Hide ${column.label.toLowerCase()}`
+                                }
+                                title={
+                                  hiddenByFilter || hiddenByPreference
+                                    ? "Show"
+                                    : `Hide ${column.label.toLowerCase()}`
+                                }
                                 className={[
-                                  "group rounded-[16px] border border-[#E5E7EB] bg-white px-2.5 py-2 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition",
-                                  isDragging
-                                    ? "scale-[0.99] border-[#C7D2FE] bg-[#F9FAFB] opacity-90 shadow-[0_18px_36px_rgba(15,23,42,0.14)]"
-                                    : "hover:-translate-y-0.5 hover:border-[#C7D2FE] hover:shadow-[0_16px_32px_rgba(15,23,42,0.08)]",
-                                  canManage && !isSavingCard
-                                    ? "cursor-grab active:cursor-grabbing"
-                                    : "",
+                                  "inline-flex items-center justify-center rounded-full transition",
+                                  hiddenByFilter || hiddenByPreference
+                                    ? isCollapsedColumn
+                                      ? "h-6 min-w-[42px] px-1.5 text-[10px] font-semibold"
+                                      : "h-7 min-w-[48px] px-2 text-[11px] font-semibold"
+                                    : isCollapsedColumn
+                                      ? "h-6 min-w-[42px] border border-[#E5E7EB] bg-white px-1.5 text-[10px] font-semibold text-[#6B7280] hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]"
+                                      : "h-7 min-w-[48px] border border-[#E5E7EB] bg-white px-2 text-[11px] font-semibold text-[#6B7280] hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]",
                                 ].join(" ")}
-                                style={{
-                                  cursor:
-                                    canManage && !isSavingCard
-                                      ? isDragging
-                                        ? "grabbing"
-                                        : "grab"
-                                      : undefined,
-                                  }}
-                                >
-                                <div className="flex items-start justify-between gap-2.5">
-                                  <button
-                                    type="button"
-                                    onClick={() => toggleOrderPreview(order.id)}
-                                    className="min-w-0 text-left"
-                                    style={{
-                                      cursor:
-                                        canManage && !isSavingCard
-                                          ? isDragging
-                                            ? "grabbing"
-                                            : "grab"
-                                          : undefined,
-                                    }}
-                                  >
-                                    <div className="text-[15px] font-semibold leading-5 text-[#1F2937]">
-                                      #{order.order_number ?? "-"}
-                                    </div>
-                                    <div className="mt-0.5 text-[12px] font-medium text-[#9CA3AF]">
-                                      {formatCreatedAt(order.created_at)}
-                                    </div>
-                                  </button>
+                                style={
+                                  hiddenByFilter || hiddenByPreference
+                                    ? {
+                                        background: tone.background,
+                                        color: tone.color,
+                                      }
+                                    : undefined
+                                }
+                              >
+                                {hiddenByFilter || hiddenByPreference
+                                  ? "Show"
+                                  : "Hide"}
+                              </button>
+                            ) : null}
+                          </div>
+                        </div>
 
-                                  <div
-                                    onClick={(event) => event.stopPropagation()}
-                                  >
-                                    <DropdownMenu>
-                                      <DropdownMenuTrigger asChild>
-                                        <button
-                                          type="button"
-                                          className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-[#E5E7EB] bg-white text-[#6B7280] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]"
-                                          aria-label="Open order actions"
-                                          style={{
-                                            cursor:
-                                              canManage && !isSavingCard
-                                                ? isDragging
-                                                  ? "grabbing"
-                                                  : "grab"
-                                                : undefined,
-                                          }}
-                                        >
-                                          <Ellipsis className="h-4 w-4" />
-                                        </button>
-                                      </DropdownMenuTrigger>
-                                      <DropdownMenuContent
-                                        align="end"
-                                        className="w-48 rounded-xl border-[#E5E7EB] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
-                                      >
-                                        <DropdownMenuItem
-                                          className="rounded-lg px-3 py-2 text-sm font-medium"
-                                          onSelect={(event) => {
-                                            event.preventDefault();
-                                            setOpenId(order.id);
-                                          }}
-                                        >
-                                          <Eye className="h-4 w-4" />
-                                          Open order
-                                        </DropdownMenuItem>
-                                        {canCancel ? (
-                                          <DropdownMenuItem
-                                            className="rounded-lg px-3 py-2 text-sm font-medium text-red-700 focus:text-red-700"
-                                            onSelect={(event) => {
-                                              event.preventDefault();
-                                              void handleCancelOrder(
-                                                order.id,
-                                                order.status,
-                                              );
-                                            }}
-                                            disabled={deletingId === order.id}
-                                          >
-                                            <Trash2 className="h-4 w-4" />
-                                            {deletingId === order.id
-                                              ? "Canceling..."
-                                              : "Cancel order"}
-                                          </DropdownMenuItem>
-                                        ) : null}
-                                        {canDeletePermanently ? (
-                                          <>
-                                            {canCancel ? (
-                                              <DropdownMenuSeparator />
-                                            ) : null}
-                                            <DropdownMenuItem
-                                              className="rounded-lg px-3 py-2 text-sm font-medium text-red-700 focus:text-red-700"
-                                              onSelect={(event) => {
-                                                event.preventDefault();
-                                                setConfirmDeleteId(order.id);
-                                              }}
-                                              disabled={deletingId === order.id}
-                                            >
-                                              <Trash2 className="h-4 w-4" />
-                                              {deletingId === order.id
-                                                ? "Deleting..."
-                                                : "Delete permanently"}
-                                            </DropdownMenuItem>
-                                          </>
-                                        ) : null}
-                                      </DropdownMenuContent>
-                                    </DropdownMenu>
-                                  </div>
-                                </div>
-
-                                <button
-                                  type="button"
-                                  onClick={() => toggleOrderPreview(order.id)}
-                                  className="mt-2 block w-full text-left"
-                                  style={{
-                                    cursor:
-                                      canManage && !isSavingCard
-                                        ? isDragging
-                                          ? "grabbing"
-                                          : "grab"
-                                        : undefined,
-                                  }}
-                                >
-                                  <div className="truncate text-[14px] font-semibold leading-5 text-[#1F2937]">
-                                    {order.client_full_name?.trim() ||
-                                      order.client_name?.trim() ||
-                                      "Unknown"}
-                                  </div>
-                                  <div className="mt-0.5 flex items-center justify-between gap-2 text-[12px] text-[#9CA3AF]">
-                                    <span className="truncate">
-                                      {fmtAmount(Number(order.amount))}
-                                    </span>
-                                    <span
-                                      className={[
-                                        "inline-flex items-center gap-1 truncate font-medium",
-                                        isOverdue
-                                          ? "text-[#d92d20]"
-                                          : "text-[#6B7280]",
-                                      ].join(" ")}
-                                    >
-                                      {isOverdue ? (
-                                        <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-                                      ) : null}
-                                      <span className="truncate">
-                                        {formatDueDate(order.due_date)}
-                                      </span>
-                                    </span>
-                                  </div>
-                                </button>
-
-                                <div className="mt-2 flex items-center justify-between gap-2">
-                                  <div
-                                    className="min-w-0 flex items-center gap-2"
-                                    onClick={(event) => event.stopPropagation()}
-                                    style={{
-                                      cursor:
-                                        canManage && !isSavingCard
-                                          ? isDragging
-                                            ? "grabbing"
-                                            : "grab"
-                                          : undefined,
-                                    }}
-                                  >
-                                    <ManagerAssignmentCell
-                                      orderId={order.id}
-                                      businessSlug={businessSlug}
-                                      managerId={order.manager_id}
-                                      managerName={order.manager_name}
-                                      actors={effectiveActors}
-                                      canManage={canManage}
-                                      avatarOnly
-                                      onAssigned={() => router.refresh()}
-                                    />
-                                    <span className="truncate text-[12px] font-medium text-[#6B7280]">
-                                      {order.manager_name?.trim() || "Unassigned"}
-                                    </span>
-                                  </div>
-                                  <div
-                                    onClick={(event) => event.stopPropagation()}
-                                    style={{
-                                      cursor:
-                                        canManage && !isSavingCard
-                                          ? isDragging
-                                            ? "grabbing"
-                                            : "grab"
-                                          : undefined,
-                                    }}
-                                  >
-                                    <StatusCell
-                                      orderId={order.id}
-                                      businessId={businessId}
-                                      businessSlug={businessSlug}
-                                      value={order.status}
-                                      canManage={canManage}
-                                    />
-                                  </div>
-                                </div>
+                        <div
+                          className="flex min-h-0 flex-1 flex-col gap-2.5 rounded-[18px] p-0.5"
+                          style={{
+                            background: isCollapsedColumn
+                              ? `${tone.background}80`
+                              : "rgba(255,255,255,0.4)",
+                          }}
+                        >
+                          {hiddenByFilter || hiddenByPreference ? (
+                            <div
+                              className={[
+                                "flex flex-col items-center justify-center rounded-[20px] border border-dashed text-center",
+                                isCollapsedColumn
+                                  ? "min-h-[220px] px-2 py-4"
+                                  : "min-h-[160px] px-4",
+                              ].join(" ")}
+                              style={{
+                                borderColor: `${tone.dot}33`,
+                                background: "rgba(255,255,255,0.72)",
+                              }}
+                            >
+                              <div
+                                className={`font-semibold text-[#374151] ${
+                                  isCollapsedColumn
+                                    ? "text-[13px] leading-5"
+                                    : "text-sm"
+                                }`}
+                              >
+                                {hiddenTitle}
                               </div>
-                            );
-                          })}
-
-                          {column.orders.length === 0 ? (
-                            <div className="flex min-h-[160px] items-center justify-center rounded-[20px] border border-dashed border-[#E5E7EB] bg-white/70 px-4 text-center text-sm text-[#9CA3AF]">
-                              {dropStatusValue === column.value
-                                ? "Drop order here"
-                                : "No deals in this status yet"}
+                              <div
+                                className={`mt-1 text-[#9CA3AF] ${
+                                  isCollapsedColumn
+                                    ? "text-[12px] leading-5"
+                                    : "text-sm"
+                                }`}
+                              >
+                                {hiddenCardCount}{" "}
+                                {hiddenCardCount === 1 ? "order" : "orders"} in
+                                this status
+                              </div>
                             </div>
                           ) : null}
-                          </div>
-                        ) : null}
+
+                          {!hiddenByFilter && !hiddenByPreference ? (
+                            <div className="min-h-0 flex-1 space-y-2.5 overflow-y-auto pr-1">
+                              {column.orders.map((order) => {
+                                const isOverdue = isOrderOverdue(
+                                  order,
+                                  todayISO,
+                                );
+                                const canCancel =
+                                  canEdit &&
+                                  order.status !== "CANCELED" &&
+                                  order.status !== "DONE";
+                                const canDeletePermanently =
+                                  userRole === "OWNER";
+                                const isDragging = draggingOrderId === order.id;
+                                const isSavingCard =
+                                  savingStatusOrderId === order.id;
+
+                                return (
+                                  <div
+                                    key={order.id}
+                                    draggable={canManage && !isSavingCard}
+                                    onDragStart={(event) => {
+                                      if (!canManage) return;
+                                      event.dataTransfer.effectAllowed = "move";
+                                      event.dataTransfer.setData(
+                                        "text/order-id",
+                                        order.id,
+                                      );
+                                      setDraggingOrderId(order.id);
+                                      setDropStatusValue(column.value);
+                                    }}
+                                    onDragEnd={() => {
+                                      setDraggingOrderId(null);
+                                      setDropStatusValue(null);
+                                    }}
+                                    className={[
+                                      "group rounded-[16px] border border-[#E5E7EB] bg-white px-2.5 py-2 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition",
+                                      isDragging
+                                        ? "scale-[0.99] border-[#C7D2FE] bg-[#F9FAFB] opacity-90 shadow-[0_18px_36px_rgba(15,23,42,0.14)]"
+                                        : "hover:-translate-y-0.5 hover:border-[#C7D2FE] hover:shadow-[0_16px_32px_rgba(15,23,42,0.08)]",
+                                      canManage && !isSavingCard
+                                        ? "cursor-grab active:cursor-grabbing"
+                                        : "",
+                                    ].join(" ")}
+                                    style={{
+                                      cursor:
+                                        canManage && !isSavingCard
+                                          ? isDragging
+                                            ? "grabbing"
+                                            : "grab"
+                                          : undefined,
+                                    }}
+                                  >
+                                    <div className="flex items-start justify-between gap-2.5">
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          toggleOrderPreview(order.id)
+                                        }
+                                        className="min-w-0 text-left"
+                                        style={{
+                                          cursor:
+                                            canManage && !isSavingCard
+                                              ? isDragging
+                                                ? "grabbing"
+                                                : "grab"
+                                              : undefined,
+                                        }}
+                                      >
+                                        <div className="text-[15px] font-semibold leading-5 text-[#1F2937]">
+                                          #{order.order_number ?? "-"}
+                                        </div>
+                                        <div className="mt-0.5 text-[12px] font-medium text-[#9CA3AF]">
+                                          {formatCreatedAt(order.created_at)}
+                                        </div>
+                                      </button>
+
+                                      <div
+                                        onClick={(event) =>
+                                          event.stopPropagation()
+                                        }
+                                      >
+                                        <DropdownMenu>
+                                          <DropdownMenuTrigger asChild>
+                                            <button
+                                              type="button"
+                                              className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-[#E5E7EB] bg-white text-[#6B7280] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]"
+                                              aria-label="Open order actions"
+                                              style={{
+                                                cursor:
+                                                  canManage && !isSavingCard
+                                                    ? isDragging
+                                                      ? "grabbing"
+                                                      : "grab"
+                                                    : undefined,
+                                              }}
+                                            >
+                                              <Ellipsis className="h-4 w-4" />
+                                            </button>
+                                          </DropdownMenuTrigger>
+                                          <DropdownMenuContent
+                                            align="end"
+                                            className="w-48 rounded-xl border-[#E5E7EB] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
+                                          >
+                                            <DropdownMenuItem
+                                              className="rounded-lg px-3 py-2 text-sm font-medium"
+                                              onSelect={(event) => {
+                                                event.preventDefault();
+                                                setOpenId(order.id);
+                                              }}
+                                            >
+                                              <Eye className="h-4 w-4" />
+                                              Open order
+                                            </DropdownMenuItem>
+                                            {canCancel ? (
+                                              <DropdownMenuItem
+                                                className="rounded-lg px-3 py-2 text-sm font-medium text-red-700 focus:text-red-700"
+                                                onSelect={(event) => {
+                                                  event.preventDefault();
+                                                  void handleCancelOrder(
+                                                    order.id,
+                                                    order.status,
+                                                  );
+                                                }}
+                                                disabled={
+                                                  deletingId === order.id
+                                                }
+                                              >
+                                                <Trash2 className="h-4 w-4" />
+                                                {deletingId === order.id
+                                                  ? "Canceling..."
+                                                  : "Cancel order"}
+                                              </DropdownMenuItem>
+                                            ) : null}
+                                            {canDeletePermanently ? (
+                                              <>
+                                                {canCancel ? (
+                                                  <DropdownMenuSeparator />
+                                                ) : null}
+                                                <DropdownMenuItem
+                                                  className="rounded-lg px-3 py-2 text-sm font-medium text-red-700 focus:text-red-700"
+                                                  onSelect={(event) => {
+                                                    event.preventDefault();
+                                                    setConfirmDeleteId(
+                                                      order.id,
+                                                    );
+                                                  }}
+                                                  disabled={
+                                                    deletingId === order.id
+                                                  }
+                                                >
+                                                  <Trash2 className="h-4 w-4" />
+                                                  {deletingId === order.id
+                                                    ? "Deleting..."
+                                                    : "Delete permanently"}
+                                                </DropdownMenuItem>
+                                              </>
+                                            ) : null}
+                                          </DropdownMenuContent>
+                                        </DropdownMenu>
+                                      </div>
+                                    </div>
+
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        toggleOrderPreview(order.id)
+                                      }
+                                      className="mt-2 block w-full text-left"
+                                      style={{
+                                        cursor:
+                                          canManage && !isSavingCard
+                                            ? isDragging
+                                              ? "grabbing"
+                                              : "grab"
+                                            : undefined,
+                                      }}
+                                    >
+                                      <div className="truncate text-[14px] font-semibold leading-5 text-[#1F2937]">
+                                        {order.client_full_name?.trim() ||
+                                          order.client_name?.trim() ||
+                                          "Unknown"}
+                                      </div>
+                                      <div className="mt-0.5 flex items-center justify-between gap-2 text-[12px] text-[#9CA3AF]">
+                                        <span className="truncate">
+                                          {fmtAmount(Number(order.amount))}
+                                        </span>
+                                        <span
+                                          className={[
+                                            "inline-flex items-center gap-1 truncate font-medium",
+                                            isOverdue
+                                              ? "text-[#d92d20]"
+                                              : "text-[#6B7280]",
+                                          ].join(" ")}
+                                        >
+                                          {isOverdue ? (
+                                            <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                                          ) : null}
+                                          <span className="truncate">
+                                            {formatDueDate(order.due_date)}
+                                          </span>
+                                        </span>
+                                      </div>
+                                    </button>
+
+                                    <div className="mt-2 flex items-center justify-between gap-2">
+                                      <div
+                                        className="min-w-0 flex items-center gap-2"
+                                        onClick={(event) =>
+                                          event.stopPropagation()
+                                        }
+                                        style={{
+                                          cursor:
+                                            canManage && !isSavingCard
+                                              ? isDragging
+                                                ? "grabbing"
+                                                : "grab"
+                                              : undefined,
+                                        }}
+                                      >
+                                        <ManagerAssignmentCell
+                                          orderId={order.id}
+                                          businessSlug={businessSlug}
+                                          managerId={order.manager_id}
+                                          managerName={order.manager_name}
+                                          actors={effectiveActors}
+                                          canManage={canManage}
+                                          avatarOnly
+                                          onAssigned={() => router.refresh()}
+                                        />
+                                        <span className="truncate text-[12px] font-medium text-[#6B7280]">
+                                          {order.manager_name?.trim() ||
+                                            "Unassigned"}
+                                        </span>
+                                      </div>
+                                      <div
+                                        onClick={(event) =>
+                                          event.stopPropagation()
+                                        }
+                                        style={{
+                                          cursor:
+                                            canManage && !isSavingCard
+                                              ? isDragging
+                                                ? "grabbing"
+                                                : "grab"
+                                              : undefined,
+                                        }}
+                                      >
+                                        <StatusCell
+                                          orderId={order.id}
+                                          businessId={businessId}
+                                          businessSlug={businessSlug}
+                                          value={order.status}
+                                          canManage={canManage}
+                                        />
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+
+                              {column.orders.length === 0 ? (
+                                <div className="flex min-h-[160px] items-center justify-center rounded-[20px] border border-dashed border-[#E5E7EB] bg-white/70 px-4 text-center text-sm text-[#9CA3AF]">
+                                  {dropStatusValue === column.value
+                                    ? "Drop order here"
+                                    : "No deals in this status yet"}
+                                </div>
+                              ) : null}
+                            </div>
+                          ) : null}
+                        </div>
                       </div>
-                    </div>
-                  );
+                    );
                   })}
                 </div>
               </div>
@@ -2931,7 +2946,10 @@ export default function DesktopOrdersTable({
                   </div>
                   <div className="space-y-2">
                     {visibleKanbanColumns.map((statusColumn) => {
-                      const tone = getStatusTone(statusColumn.value, customStatuses);
+                      const tone = getStatusTone(
+                        statusColumn.value,
+                        customStatuses,
+                      );
                       const isCurrentStatus =
                         draggingOrder.status === statusColumn.value;
                       const isActiveTarget =
@@ -2961,14 +2979,17 @@ export default function DesktopOrdersTable({
                               event.dataTransfer.getData("text/order-id") ||
                               draggingOrderId;
                             if (!orderId) return;
-                            void handleDropToStatus(orderId, statusColumn.value);
+                            void handleDropToStatus(
+                              orderId,
+                              statusColumn.value,
+                            );
                           }}
                           className={[
                             "pointer-events-auto flex min-h-11 items-center justify-between rounded-[16px] border px-3 py-2 transition",
                             isCurrentStatus
                               ? "border-transparent bg-[#F9FAFB] text-[#9CA3AF]"
                               : isActiveTarget
-                                ? "border-[#6366F1] bg-[#EEF2FF] text-[#1F2937]"
+                                ? "border-[var(--brand-200)] bg-[var(--brand-50)] text-[#1F2937]"
                                 : "border-[#E5E7EB] bg-white text-[#374151]",
                           ].join(" ")}
                         >
@@ -3012,7 +3033,7 @@ export default function DesktopOrdersTable({
                 <DropdownMenuTrigger asChild>
                   <button
                     type="button"
-                    className="inline-flex h-9 min-w-[74px] items-center justify-between rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm font-medium text-[#374151] outline-none transition hover:border-[#C7D2FE] focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15"
+                    className="inline-flex h-9 min-w-[74px] items-center justify-between rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm font-medium text-[#374151] outline-none transition hover:border-[var(--brand-200)] focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
                   >
                     <span>{perPage}</span>
                     <ChevronDown className="ml-3 h-4 w-4 shrink-0 text-[#9CA3AF]" />
@@ -3029,7 +3050,7 @@ export default function DesktopOrdersTable({
                       <DropdownMenuRadioItem
                         key={option}
                         value={String(option)}
-                        className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#374151] data-[state=checked]:bg-[#EEF2FF] data-[state=checked]:font-semibold data-[state=checked]:text-[#6366F1]"
+                        className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#374151] data-[state=checked]:bg-[var(--brand-50)] data-[state=checked]:font-semibold data-[state=checked]:text-[var(--brand-600)]"
                         onSelect={() =>
                           navigateWithFallback(paginationHref(1, option))
                         }
@@ -3050,7 +3071,9 @@ export default function DesktopOrdersTable({
                       href={paginationHref(Math.max(1, currentPage - 1))}
                       aria-disabled={currentPage === 1}
                       className={
-                        currentPage === 1 ? "pointer-events-none opacity-50" : ""
+                        currentPage === 1
+                          ? "pointer-events-none opacity-50"
+                          : ""
                       }
                     />
                   </PaginationItem>
@@ -3078,7 +3101,9 @@ export default function DesktopOrdersTable({
                   })}
                   <PaginationItem>
                     <PaginationNext
-                      href={paginationHref(Math.min(totalPages, currentPage + 1))}
+                      href={paginationHref(
+                        Math.min(totalPages, currentPage + 1),
+                      )}
                       aria-disabled={currentPage === totalPages}
                       className={
                         currentPage === totalPages
@@ -3139,7 +3164,8 @@ export default function DesktopOrdersTable({
               Why is this order canceled?
             </AlertDialogTitle>
             <AlertDialogDescription className="text-sm leading-6 text-slate-500">
-              Pick a common reason or write your own. This reason will be saved with the order.
+              Pick a common reason or write your own. This reason will be saved
+              with the order.
             </AlertDialogDescription>
           </AlertDialogHeader>
 
@@ -3162,9 +3188,11 @@ export default function DesktopOrdersTable({
             </label>
             <textarea
               value={cancelReasonDraft}
-              onChange={(event) => setCancelReasonDraft(event.currentTarget.value)}
+              onChange={(event) =>
+                setCancelReasonDraft(event.currentTarget.value)
+              }
               placeholder="Write the cancel reason..."
-              className="min-h-24 w-full resize-none rounded-2xl border border-[#E5E7EB] bg-white px-4 py-3 text-sm text-[#1F2937] outline-none transition placeholder:text-[#9CA3AF] focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15"
+              className="min-h-24 w-full resize-none rounded-2xl border border-[#E5E7EB] bg-white px-4 py-3 text-sm text-[#1F2937] outline-none transition placeholder:text-[#9CA3AF] focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
             />
           </div>
 
@@ -3234,4 +3262,3 @@ export default function DesktopOrdersTable({
     </section>
   );
 }
-

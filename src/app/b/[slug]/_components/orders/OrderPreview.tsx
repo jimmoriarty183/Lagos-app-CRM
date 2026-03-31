@@ -20,8 +20,16 @@ import {
 import { OrderChecklist } from "@/app/b/[slug]/OrderChecklist";
 import { OrderActivitySection } from "@/app/b/[slug]/_components/orders/OrderActivitySection";
 import { OrderFollowUpsCard } from "@/app/b/[slug]/_components/orders/OrderFollowUpsCard";
-import { OrderNotesPanel, type OrderNote } from "@/app/b/[slug]/_components/orders/OrderNotesPanel";
-import { createOrder, setOrderManager, setOrderStatus, updateOrder } from "@/app/b/[slug]/actions";
+import {
+  OrderNotesPanel,
+  type OrderNote,
+} from "@/app/b/[slug]/_components/orders/OrderNotesPanel";
+import {
+  createOrder,
+  setOrderManager,
+  setOrderStatus,
+  updateOrder,
+} from "@/app/b/[slug]/actions";
 import { CANCELED_REASONS } from "@/app/b/[slug]/order-status-reasons";
 import {
   appendLocalActivityEvent,
@@ -105,7 +113,14 @@ type Props = {
   onClose: () => void;
 };
 
-const LABEL_SUGGESTIONS = ["urgent", "VIP", "paid", "callback", "installation", "follow-up"];
+const LABEL_SUGGESTIONS = [
+  "urgent",
+  "VIP",
+  "paid",
+  "callback",
+  "installation",
+  "follow-up",
+];
 const ORDER_PREVIEW_LAYOUT_STORAGE_KEY = "order-preview-layout-mode";
 type OverviewAttachmentRow = {
   id: string;
@@ -123,10 +138,14 @@ function getSuggestedLabelsStorageKey(businessId: string) {
 function readSuggestedLabels(businessId: string) {
   if (typeof window === "undefined") return [] as string[];
   try {
-    const raw = window.localStorage.getItem(getSuggestedLabelsStorageKey(businessId));
+    const raw = window.localStorage.getItem(
+      getSuggestedLabelsStorageKey(businessId),
+    );
     if (!raw) return [];
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : [];
+    return Array.isArray(parsed)
+      ? parsed.filter((item): item is string => typeof item === "string")
+      : [];
   } catch {
     return [];
   }
@@ -140,11 +159,7 @@ function saveSuggestedLabel(businessId: string, label: string) {
   const previous = readSuggestedLabels(businessId);
   const next: string[] = [];
   const seen = new Set<string>();
-  for (const item of [
-    normalized,
-    ...previous,
-    ...LABEL_SUGGESTIONS,
-  ]) {
+  for (const item of [normalized, ...previous, ...LABEL_SUGGESTIONS]) {
     const candidate = item.trim();
     const key = candidate.toLowerCase();
     if (!candidate || seen.has(key)) continue;
@@ -153,12 +168,16 @@ function saveSuggestedLabel(businessId: string, label: string) {
     if (next.length >= 12) break;
   }
 
-  window.localStorage.setItem(getSuggestedLabelsStorageKey(businessId), JSON.stringify(next));
+  window.localStorage.setItem(
+    getSuggestedLabelsStorageKey(businessId),
+    JSON.stringify(next),
+  );
 }
 
-
 function fmtAmount(n: number) {
-  return new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(Number(n || 0));
+  return new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(
+    Number(n || 0),
+  );
 }
 
 function formatDateTime(value: string) {
@@ -203,18 +222,21 @@ function formatFileSize(value: number | null) {
   const size = Number(value || 0);
   if (!Number.isFinite(size) || size <= 0) return "Unknown size";
   if (size < 1024) return `${size} B`;
-  if (size < 1024 * 1024) return `${(size / 1024).toFixed(size >= 10 * 1024 ? 0 : 1)} KB`;
-  if (size < 1024 * 1024 * 1024) return `${(size / (1024 * 1024)).toFixed(size >= 10 * 1024 * 1024 ? 0 : 1)} MB`;
+  if (size < 1024 * 1024)
+    return `${(size / 1024).toFixed(size >= 10 * 1024 ? 0 : 1)} KB`;
+  if (size < 1024 * 1024 * 1024)
+    return `${(size / (1024 * 1024)).toFixed(size >= 10 * 1024 * 1024 ? 0 : 1)} MB`;
   return `${(size / (1024 * 1024 * 1024)).toFixed(1)} GB`;
 }
 
 function ActorAvatar({ label }: { label: string }) {
-  const initials = label
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? "")
-    .join("") || "?";
+  const initials =
+    label
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase() ?? "")
+      .join("") || "?";
 
   return (
     <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#1F2937] text-[10px] font-semibold text-white">
@@ -222,7 +244,6 @@ function ActorAvatar({ label }: { label: string }) {
     </span>
   );
 }
-
 
 function DrawerStatusSelect({
   orderId,
@@ -250,10 +271,13 @@ function DrawerStatusSelect({
   const [open, setOpen] = React.useState(false);
   const [isPending, startTransition] = React.useTransition();
   const [isCreateOpen, setIsCreateOpen] = React.useState(false);
-  const [reasonTarget, setReasonTarget] = React.useState<StatusValue | null>(null);
+  const [reasonTarget, setReasonTarget] = React.useState<StatusValue | null>(
+    null,
+  );
   const [customReason, setCustomReason] = React.useState("");
   const [draftStatusLabel, setDraftStatusLabel] = React.useState("");
-  const [draftStatusColor, setDraftStatusColor] = React.useState<string>("blue");
+  const [draftStatusColor, setDraftStatusColor] =
+    React.useState<string>("blue");
   const [customStatusColor, setCustomStatusColor] = React.useState("#2563EB");
   const [createError, setCreateError] = React.useState<string | null>(null);
   const [isCreating, setIsCreating] = React.useState(false);
@@ -273,11 +297,19 @@ function DrawerStatusSelect({
   const canManageStatuses = userRole === "OWNER";
 
   const refreshStatuses = React.useCallback(() => {
-    window.dispatchEvent(new CustomEvent(getBusinessStatusesEventName(), { detail: { businessId } }));
+    window.dispatchEvent(
+      new CustomEvent(getBusinessStatusesEventName(), {
+        detail: { businessId },
+      }),
+    );
   }, [businessId]);
 
   const commitStatusChange = React.useCallback(
-    async (next: StatusValue, previous: StatusValue, reason?: string | null) => {
+    async (
+      next: StatusValue,
+      previous: StatusValue,
+      reason?: string | null,
+    ) => {
       await setOrderStatus({ orderId, businessSlug, status: next, reason });
       onCommitted?.(next, reason ?? null);
       appendLocalActivityEvent(businessId, orderId, {
@@ -296,7 +328,15 @@ function DrawerStatusSelect({
         },
       });
     },
-    [businessId, businessSlug, currentUserName, customStatuses, onCommitted, orderId, userRole],
+    [
+      businessId,
+      businessSlug,
+      currentUserName,
+      customStatuses,
+      onCommitted,
+      orderId,
+      userRole,
+    ],
   );
 
   const applyStatusSelection = React.useCallback(
@@ -312,7 +352,9 @@ function DrawerStatusSelect({
           await commitStatusChange(next, prevStatus, reason);
         } catch (error) {
           setLocalStatus(prevStatus);
-          window.alert(error instanceof Error ? error.message : "Failed to update status.");
+          window.alert(
+            error instanceof Error ? error.message : "Failed to update status.",
+          );
         }
       });
     },
@@ -343,7 +385,11 @@ function DrawerStatusSelect({
           businessId,
           label,
           value: valueToCreate,
-          color: normalizeStatusColor(draftStatusColor === "custom" ? customStatusColor : draftStatusColor),
+          color: normalizeStatusColor(
+            draftStatusColor === "custom"
+              ? customStatusColor
+              : draftStatusColor,
+          ),
         }),
       });
       const json = (await res.json().catch(() => ({}))) as { error?: string };
@@ -366,7 +412,9 @@ function DrawerStatusSelect({
         throw error;
       }
     } catch (error) {
-      setCreateError(error instanceof Error ? error.message : "Failed to create status.");
+      setCreateError(
+        error instanceof Error ? error.message : "Failed to create status.",
+      );
     } finally {
       setIsCreating(false);
     }
@@ -380,7 +428,7 @@ function DrawerStatusSelect({
             <button
               type="button"
               disabled={!canManage || isPending}
-              className="inline-flex h-[25px] min-w-[116px] items-center justify-between gap-2 rounded-full px-[11px] text-left text-[12px] font-medium leading-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6366F1]/15 disabled:cursor-default disabled:opacity-60"
+              className="inline-flex h-[25px] min-w-[116px] items-center justify-between gap-2 rounded-full px-[11px] text-left text-[12px] font-medium leading-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-600)]/15 disabled:cursor-default disabled:opacity-60"
               style={{
                 background: tone.background,
                 color: tone.color,
@@ -394,7 +442,9 @@ function DrawerStatusSelect({
                 />
                 <span>{getStatusLabel(localStatus, customStatuses)}</span>
               </span>
-              {canManage ? <ChevronDown className="h-3.5 w-3.5 shrink-0 opacity-60" /> : null}
+              {canManage ? (
+                <ChevronDown className="h-3.5 w-3.5 shrink-0 opacity-60" />
+              ) : null}
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent
@@ -444,16 +494,20 @@ function DrawerStatusSelect({
                 <div className="mt-3 border-t border-[#F3F4F6] px-2 pt-3">
                   <textarea
                     value={customReason}
-                    onChange={(event) => setCustomReason(event.currentTarget.value)}
+                    onChange={(event) =>
+                      setCustomReason(event.currentTarget.value)
+                    }
                     placeholder="Other reason..."
                     rows={3}
-                    className="w-full resize-none rounded-xl border border-[#E5E7EB] px-3 py-2 text-sm outline-none transition placeholder:text-[#9CA3AF] focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15"
+                    className="w-full resize-none rounded-xl border border-[#E5E7EB] px-3 py-2 text-sm outline-none transition placeholder:text-[#9CA3AF] focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
                   />
                   <button
                     type="button"
                     disabled={isPending || !customReason.trim()}
-                    onClick={() => applyStatusSelection("CANCELED", customReason.trim())}
-                    className="mt-2 inline-flex h-9 w-full items-center justify-center rounded-xl bg-[#6366F1] px-3 text-sm font-semibold text-white transition hover:bg-[#5558E3] disabled:cursor-default disabled:opacity-50"
+                    onClick={() =>
+                      applyStatusSelection("CANCELED", customReason.trim())
+                    }
+                    className="mt-2 inline-flex h-9 w-full items-center justify-center rounded-xl bg-[var(--brand-600)] px-3 text-sm font-semibold text-white transition hover:bg-[var(--brand-700)] disabled:cursor-default disabled:opacity-50"
                   >
                     Save reason
                   </button>
@@ -483,7 +537,9 @@ function DrawerStatusSelect({
                       applyStatusSelection(option.value, null);
                     }}
                     style={{
-                      background: selected ? optionTone.selectedBackground : undefined,
+                      background: selected
+                        ? optionTone.selectedBackground
+                        : undefined,
                       color: selected ? optionTone.color : undefined,
                     }}
                   >
@@ -496,7 +552,9 @@ function DrawerStatusSelect({
                         />
                         <span>{option.label}</span>
                       </span>
-                      {selected ? <Check className="h-4 w-4 shrink-0 text-[#6B7280]" /> : null}
+                      {selected ? (
+                        <Check className="h-4 w-4 shrink-0 text-[#6B7280]" />
+                      ) : null}
                     </div>
                   </DropdownMenuItem>
                 );
@@ -522,7 +580,7 @@ function DrawerStatusSelect({
                 setIsCreateOpen((prev) => !prev);
                 setCreateError(null);
               }}
-              className="inline-flex h-7 items-center gap-1 rounded-full border border-[#E5E7EB] bg-[#EEF2FF] px-2.5 text-[12px] font-semibold text-[#6366F1] transition hover:border-[#C7D2FE] hover:bg-[#EEF2FF]"
+              className="inline-flex h-7 items-center gap-1 rounded-full border border-[#E5E7EB] bg-[var(--brand-50)] px-2.5 text-[12px] font-semibold text-[var(--brand-600)] transition hover:border-[var(--brand-200)] hover:bg-[var(--brand-50)]"
             >
               <Plus className="h-3.5 w-3.5" />
               Add status
@@ -533,15 +591,15 @@ function DrawerStatusSelect({
 
       {isCreateOpen ? (
         <div className="rounded-2xl border border-[#E5E7EB] bg-[#F9FAFB] p-3">
-          <div className="product-section-label">
-            New status
-          </div>
+          <div className="product-section-label">New status</div>
           <div className="mt-2 grid gap-2">
             <input
               value={draftStatusLabel}
-              onChange={(event) => setDraftStatusLabel(event.currentTarget.value)}
+              onChange={(event) =>
+                setDraftStatusLabel(event.currentTarget.value)
+              }
               placeholder="Ready for pickup"
-              className="h-10 rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15"
+              className="h-10 rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
             />
             <div className="flex flex-wrap gap-2">
               {STATUS_COLOR_OPTIONS.map((option) => (
@@ -552,7 +610,7 @@ function DrawerStatusSelect({
                   className={[
                     "inline-flex h-9 items-center gap-2 rounded-xl border px-3 text-xs font-semibold transition",
                     draftStatusColor === option.value
-                      ? "border-[#6366F1] bg-[#6366F1] !text-white"
+                      ? "border-[var(--brand-600)] bg-[var(--brand-600)] !text-white"
                       : "border-[#E5E7EB] bg-white text-[#374151] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]",
                   ].join(" ")}
                 >
@@ -570,7 +628,7 @@ function DrawerStatusSelect({
                 className={[
                   "inline-flex h-9 items-center gap-2 rounded-xl border px-3 text-xs font-semibold transition",
                   draftStatusColor === "custom"
-                    ? "border-[#6366F1] bg-[#6366F1] !text-white"
+                    ? "border-[var(--brand-600)] bg-[var(--brand-600)] !text-white"
                     : "border-[#E5E7EB] bg-white text-[#374151] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]",
                 ].join(" ")}
               >
@@ -587,22 +645,29 @@ function DrawerStatusSelect({
                 <input
                   type="color"
                   value={customStatusColor}
-                  onChange={(event) => setCustomStatusColor(event.currentTarget.value.toUpperCase())}
+                  onChange={(event) =>
+                    setCustomStatusColor(
+                      event.currentTarget.value.toUpperCase(),
+                    )
+                  }
                   className="h-8 w-10 cursor-pointer rounded-md border border-[#E5E7EB] bg-white"
                 />
                 <span className="text-xs font-medium text-[#6B7280]">
-                  {customStatusColor.toUpperCase()} keeps the chosen client color with softer badge tones
+                  {customStatusColor.toUpperCase()} keeps the chosen client
+                  color with softer badge tones
                 </span>
               </label>
             ) : null}
             {createError ? (
-              <div className="text-xs font-medium text-red-600">{createError}</div>
+              <div className="text-xs font-medium text-red-600">
+                {createError}
+              </div>
             ) : null}
             <div className="flex items-center gap-2">
               <Button
                 type="button"
                 onClick={() => void handleCreateStatus()}
-                className="h-9 rounded-xl bg-[#6366F1] px-3 text-xs font-semibold !text-white hover:bg-[#5558E3]"
+                className="h-9 rounded-xl bg-[var(--brand-600)] px-3 text-xs font-semibold !text-white hover:bg-[var(--brand-700)]"
                 disabled={isCreating}
               >
                 {isCreating ? "Saving..." : "Create and assign"}
@@ -630,7 +695,9 @@ function MetaItem({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="rounded-[18px] border border-[#F3F4F6] bg-[#F9FAFB] px-3.5 py-2.5">
       <div className="product-section-label">{label}</div>
-      <div className="mt-1 text-sm font-medium leading-5 text-[#1F2937]">{value}</div>
+      <div className="mt-1 text-sm font-medium leading-5 text-[#1F2937]">
+        {value}
+      </div>
     </div>
   );
 }
@@ -658,7 +725,9 @@ function FilesSection({
             <Paperclip className="h-4 w-4 text-[#9CA3AF]" />
             Files
           </div>
-          <p className="mt-1 text-xs text-[#6B7280]">Contracts, photos, invoices, and any order-related documents.</p>
+          <p className="mt-1 text-xs text-[#6B7280]">
+            Contracts, photos, invoices, and any order-related documents.
+          </p>
         </div>
         {canUpload ? (
           <button
@@ -699,7 +768,12 @@ function FilesSection({
                   <span className="truncate">{file.file_name}</span>
                 </div>
                 <div className="mt-1 text-xs text-[#6B7280]">
-                  {[formatFileSize(file.file_size), file.created_at ? formatDateTime(file.created_at) : null].filter(Boolean).join(" • ")}
+                  {[
+                    formatFileSize(file.file_size),
+                    file.created_at ? formatDateTime(file.created_at) : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" • ")}
                 </div>
               </div>
               <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[#E5E7EB] bg-white text-[#374151]">
@@ -733,7 +807,8 @@ function LabelsSection({
   onChange: React.Dispatch<React.SetStateAction<string[]>>;
 }) {
   const [draft, setDraft] = React.useState("");
-  const [suggestedLabels, setSuggestedLabels] = React.useState<string[]>(LABEL_SUGGESTIONS);
+  const [suggestedLabels, setSuggestedLabels] =
+    React.useState<string[]>(LABEL_SUGGESTIONS);
 
   React.useEffect(() => {
     const stored = readSuggestedLabels(businessId);
@@ -766,7 +841,8 @@ function LabelsSection({
       return next;
     });
     onChange((prev) => {
-      if (prev.some((item) => item.toLowerCase() === normalized.toLowerCase())) return prev;
+      if (prev.some((item) => item.toLowerCase() === normalized.toLowerCase()))
+        return prev;
       appendLocalActivityEvent(businessId, orderId, {
         id: makeLocalActivityEventId("label-added"),
         type: "label_added",
@@ -827,16 +903,21 @@ function LabelsSection({
       </div>
 
       <div className="mt-3 flex flex-wrap gap-1.5">
-        {suggestedLabels.filter((label) => !value.some((item) => item.toLowerCase() === label.toLowerCase())).map((label) => (
-          <button
-            key={label}
-            type="button"
-            onClick={() => addLabel(label)}
-            className="inline-flex items-center rounded-full border border-dashed border-[#E5E7EB] bg-white px-2.5 py-1 text-[11px] font-semibold text-[#6B7280] transition hover:border-[#C7D2FE] hover:text-[#1F2937]"
-          >
-            + {label}
-          </button>
-        ))}
+        {suggestedLabels
+          .filter(
+            (label) =>
+              !value.some((item) => item.toLowerCase() === label.toLowerCase()),
+          )
+          .map((label) => (
+            <button
+              key={label}
+              type="button"
+              onClick={() => addLabel(label)}
+              className="inline-flex items-center rounded-full border border-dashed border-[#E5E7EB] bg-white px-2.5 py-1 text-[11px] font-semibold text-[#6B7280] transition hover:border-[#C7D2FE] hover:text-[#1F2937]"
+            >
+              + {label}
+            </button>
+          ))}
       </div>
 
       <div className="mt-3 flex gap-2">
@@ -850,7 +931,7 @@ function LabelsSection({
             }
           }}
           placeholder="Add label"
-          className="h-10 flex-1 rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] px-3 text-sm outline-none transition focus:border-[#6366F1] focus:bg-white focus:ring-2 focus:ring-[#6366F1]/15"
+          className="h-10 flex-1 rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:bg-white focus:ring-2 focus:ring-[var(--brand-600)]/15"
         />
         <button
           type="button"
@@ -888,18 +969,31 @@ export function OrderPreview({
   const isCreateMode = mode === "create";
   const [activeTab, setActiveTab] = React.useState("overview");
   const [labels, setLabels] = React.useState<string[]>([]);
-  const [layoutMode, setLayoutMode] = React.useState<"default" | "wide">("default");
+  const [layoutMode, setLayoutMode] = React.useState<"default" | "wide">(
+    "default",
+  );
   const [isEditingOverview, setIsEditingOverview] = React.useState(false);
   const [isSavingOverview, startSavingOverview] = React.useTransition();
-  const [previewOrder, setPreviewOrder] = React.useState<OrderRow | null>(order);
-  const [notesByOrderId, setNotesByOrderId] = React.useState<Record<string, OrderNote[]>>({});
-  const [overviewFiles, setOverviewFiles] = React.useState<OverviewAttachmentRow[]>([]);
-  const [isLoadingOverviewFiles, setIsLoadingOverviewFiles] = React.useState(false);
-  const [isUploadingOverviewFiles, setIsUploadingOverviewFiles] = React.useState(false);
-  const [overviewUploadSuccess, setOverviewUploadSuccess] = React.useState<string | null>(null);
+  const [previewOrder, setPreviewOrder] = React.useState<OrderRow | null>(
+    order,
+  );
+  const [notesByOrderId, setNotesByOrderId] = React.useState<
+    Record<string, OrderNote[]>
+  >({});
+  const [overviewFiles, setOverviewFiles] = React.useState<
+    OverviewAttachmentRow[]
+  >([]);
+  const [isLoadingOverviewFiles, setIsLoadingOverviewFiles] =
+    React.useState(false);
+  const [isUploadingOverviewFiles, setIsUploadingOverviewFiles] =
+    React.useState(false);
+  const [overviewUploadSuccess, setOverviewUploadSuccess] = React.useState<
+    string | null
+  >(null);
   const overviewFileInputRef = React.useRef<HTMLInputElement | null>(null);
   const labelStorageKey = React.useMemo(
-    () => (previewOrder ? `order-labels:${businessId}:${previewOrder.id}` : null),
+    () =>
+      previewOrder ? `order-labels:${businessId}:${previewOrder.id}` : null,
     [businessId, previewOrder],
   );
   const [draft, setDraft] = React.useState({
@@ -925,7 +1019,9 @@ export function OrderPreview({
 
   React.useEffect(() => {
     if (typeof window === "undefined") return;
-    const stored = window.localStorage.getItem(ORDER_PREVIEW_LAYOUT_STORAGE_KEY);
+    const stored = window.localStorage.getItem(
+      ORDER_PREVIEW_LAYOUT_STORAGE_KEY,
+    );
     if (stored === "wide" || stored === "default") {
       setLayoutMode(stored);
     }
@@ -945,7 +1041,11 @@ export function OrderPreview({
         return;
       }
       const parsed = JSON.parse(stored);
-      setLabels(Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : []);
+      setLabels(
+        Array.isArray(parsed)
+          ? parsed.filter((item): item is string => typeof item === "string")
+          : [],
+      );
     } catch {
       setLabels([]);
     }
@@ -970,17 +1070,22 @@ export function OrderPreview({
 
   React.useEffect(() => {
     setDraft({
-      firstName: previewOrder?.client_first_name?.trim() || client.firstName || "",
+      firstName:
+        previewOrder?.client_first_name?.trim() || client.firstName || "",
       lastName: previewOrder?.client_last_name?.trim() || client.lastName || "",
       phone: previewOrder?.client_phone?.trim() || "",
       managerId: previewOrder?.manager_id || "",
       amount: previewOrder ? String(previewOrder.amount ?? "") : "",
-      dueDate: previewOrder?.due_date ? String(previewOrder.due_date).slice(0, 10) : "",
+      dueDate: previewOrder?.due_date
+        ? String(previewOrder.due_date).slice(0, 10)
+        : "",
       description: previewOrder?.description?.trim() || "",
     });
   }, [client.firstName, client.lastName, open, previewOrder]);
   const currentOrder = previewOrder;
-  const dueISO = currentOrder?.due_date ? String(currentOrder.due_date).slice(0, 10) : null;
+  const dueISO = currentOrder?.due_date
+    ? String(currentOrder.due_date).slice(0, 10)
+    : null;
   const todayISO = new Date().toISOString().slice(0, 10);
   const isOverdue =
     !!currentOrder &&
@@ -991,29 +1096,34 @@ export function OrderPreview({
   const isCompactPreview = true;
   const isCompactTop = isCompactPreview || activeTab !== "overview";
   const isUltraCompactTop = isCompactPreview;
-  const currentNotes = currentOrder ? notesByOrderId[currentOrder.id] ?? [] : [];
+  const currentNotes = currentOrder
+    ? (notesByOrderId[currentOrder.id] ?? [])
+    : [];
   const canUploadFiles = userRole === "OWNER" || userRole === "MANAGER";
 
-  const loadOverviewFiles = React.useCallback(async (orderId: string) => {
-    setIsLoadingOverviewFiles(true);
-    const { data, error } = await supabase
-      .from("activity_attachments")
-      .select("id, file_name, storage_path, mime_type, file_size, created_at")
-      .eq("business_id", businessId)
-      .eq("order_id", orderId)
-      .order("created_at", { ascending: false })
-      .limit(8);
+  const loadOverviewFiles = React.useCallback(
+    async (orderId: string) => {
+      setIsLoadingOverviewFiles(true);
+      const { data, error } = await supabase
+        .from("activity_attachments")
+        .select("id, file_name, storage_path, mime_type, file_size, created_at")
+        .eq("business_id", businessId)
+        .eq("order_id", orderId)
+        .order("created_at", { ascending: false })
+        .limit(8);
 
-    if (error) {
-      console.error("load overview files error:", error);
-      setOverviewFiles([]);
+      if (error) {
+        console.error("load overview files error:", error);
+        setOverviewFiles([]);
+        setIsLoadingOverviewFiles(false);
+        return;
+      }
+
+      setOverviewFiles((data ?? []) as OverviewAttachmentRow[]);
       setIsLoadingOverviewFiles(false);
-      return;
-    }
-
-    setOverviewFiles((data ?? []) as OverviewAttachmentRow[]);
-    setIsLoadingOverviewFiles(false);
-  }, [businessId, supabase]);
+    },
+    [businessId, supabase],
+  );
 
   React.useEffect(() => {
     if (!open || !currentOrder || isCreateMode) {
@@ -1036,71 +1146,96 @@ export function OrderPreview({
     overviewFileInputRef.current?.click();
   }, []);
 
-  const handleOverviewFilesSelected = React.useCallback(async (fileList: FileList | null) => {
-    if (!fileList?.length || !currentOrder || !canUploadFiles || isUploadingOverviewFiles) return;
+  const handleOverviewFilesSelected = React.useCallback(
+    async (fileList: FileList | null) => {
+      if (
+        !fileList?.length ||
+        !currentOrder ||
+        !canUploadFiles ||
+        isUploadingOverviewFiles
+      )
+        return;
 
-    setIsUploadingOverviewFiles(true);
-    setOverviewUploadSuccess(null);
+      setIsUploadingOverviewFiles(true);
+      setOverviewUploadSuccess(null);
 
-    try {
-      const uploadedNames: string[] = [];
-      for (const file of Array.from(fileList)) {
-        const formData = new FormData();
-        formData.set("businessId", businessId);
-        formData.set("orderId", currentOrder.id);
-        formData.set("file", file);
+      try {
+        const uploadedNames: string[] = [];
+        for (const file of Array.from(fileList)) {
+          const formData = new FormData();
+          formData.set("businessId", businessId);
+          formData.set("orderId", currentOrder.id);
+          formData.set("file", file);
 
-        const response = await fetch("/api/activity-attachments/upload", {
-          method: "POST",
-          body: formData,
-        });
-        const payload = (await response.json().catch(() => ({}))) as {
-          ok?: boolean;
-          error?: string;
-          attachment?: OverviewAttachmentRow;
-        };
+          const response = await fetch("/api/activity-attachments/upload", {
+            method: "POST",
+            body: formData,
+          });
+          const payload = (await response.json().catch(() => ({}))) as {
+            ok?: boolean;
+            error?: string;
+            attachment?: OverviewAttachmentRow;
+          };
 
-        if (!response.ok || !payload.attachment) {
-          throw new Error(payload.error || "Failed to upload file.");
+          if (!response.ok || !payload.attachment) {
+            throw new Error(payload.error || "Failed to upload file.");
+          }
+
+          appendLocalActivityEvent(businessId, currentOrder.id, {
+            id: makeLocalActivityEventId("file-uploaded"),
+            type: "file_uploaded",
+            actorName: currentUserName || "Manager",
+            actorRole: userRole,
+            description: `uploaded file ${file.name}`,
+            ts: payload.attachment.created_at || new Date().toISOString(),
+            payload: {
+              attachmentId: payload.attachment.id,
+              attachment_id: payload.attachment.id,
+              fileName: file.name,
+              fileType: file.type || null,
+              fileSize: file.size,
+            },
+          });
+          uploadedNames.push(file.name);
         }
 
-        appendLocalActivityEvent(businessId, currentOrder.id, {
-          id: makeLocalActivityEventId("file-uploaded"),
-          type: "file_uploaded",
-          actorName: currentUserName || "Manager",
-          actorRole: userRole,
-          description: `uploaded file ${file.name}`,
-          ts: payload.attachment.created_at || new Date().toISOString(),
-          payload: {
-            attachmentId: payload.attachment.id,
-            attachment_id: payload.attachment.id,
-            fileName: file.name,
-            fileType: file.type || null,
-            fileSize: file.size,
-          },
-        });
-        uploadedNames.push(file.name);
+        await loadOverviewFiles(currentOrder.id);
+        if (uploadedNames.length === 1) {
+          setOverviewUploadSuccess(`File uploaded: ${uploadedNames[0]}`);
+        } else if (uploadedNames.length > 1) {
+          setOverviewUploadSuccess(
+            `${uploadedNames.length} files uploaded successfully.`,
+          );
+        }
+      } catch (error) {
+        console.error("overview file upload error:", error);
+        window.alert(
+          error instanceof Error ? error.message : "Failed to upload file.",
+        );
+      } finally {
+        if (overviewFileInputRef.current) {
+          overviewFileInputRef.current.value = "";
+        }
+        setIsUploadingOverviewFiles(false);
       }
-
-      await loadOverviewFiles(currentOrder.id);
-      if (uploadedNames.length === 1) {
-        setOverviewUploadSuccess(`File uploaded: ${uploadedNames[0]}`);
-      } else if (uploadedNames.length > 1) {
-        setOverviewUploadSuccess(`${uploadedNames.length} files uploaded successfully.`);
-      }
-    } catch (error) {
-      console.error("overview file upload error:", error);
-      window.alert(error instanceof Error ? error.message : "Failed to upload file.");
-    } finally {
-      if (overviewFileInputRef.current) {
-        overviewFileInputRef.current.value = "";
-      }
-      setIsUploadingOverviewFiles(false);
-    }
-  }, [businessId, canUploadFiles, currentOrder, currentUserName, isUploadingOverviewFiles, loadOverviewFiles, supabase, userRole]);
+    },
+    [
+      businessId,
+      canUploadFiles,
+      currentOrder,
+      currentUserName,
+      isUploadingOverviewFiles,
+      loadOverviewFiles,
+      supabase,
+      userRole,
+    ],
+  );
 
   function buildOrderNoteId() {
-    if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    if (
+      typeof crypto !== "undefined" &&
+      typeof crypto.randomUUID === "function"
+    ) {
       return crypto.randomUUID();
     }
 
@@ -1144,7 +1279,10 @@ export function OrderPreview({
     });
   }
 
-  function handleUpdateNote(noteId: string, note: { body: string; isPinned: boolean }) {
+  function handleUpdateNote(
+    noteId: string,
+    note: { body: string; isPinned: boolean },
+  ) {
     if (!currentOrder) return;
     const timestamp = new Date().toISOString();
 
@@ -1209,9 +1347,13 @@ export function OrderPreview({
               <div className="px-5 py-4 sm:px-6">
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0 flex-1">
-                    <div className="text-lg font-semibold text-[#1F2937]">Create order</div>
+                    <div className="text-lg font-semibold text-[#1F2937]">
+                      Create order
+                    </div>
                     <div className="mt-3 text-lg font-semibold text-[#1F2937]">
-                      {[draft.firstName.trim(), draft.lastName.trim()].filter(Boolean).join(" ") || "New order"}
+                      {[draft.firstName.trim(), draft.lastName.trim()]
+                        .filter(Boolean)
+                        .join(" ") || "New order"}
                     </div>
                     <div className="mt-1 text-sm text-[#6B7280]">
                       {draft.phone.trim() || "No phone number yet"}
@@ -1221,11 +1363,23 @@ export function OrderPreview({
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => setLayoutMode((current) => (current === "wide" ? "default" : "wide"))}
+                      onClick={() =>
+                        setLayoutMode((current) =>
+                          current === "wide" ? "default" : "wide",
+                        )
+                      }
                       className="hidden h-10 items-center gap-2 rounded-[18px] border border-[#E5E7EB] bg-white px-4 text-sm font-semibold text-[#1F2937] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] sm:inline-flex"
-                      aria-label={isWideLayout ? "Use default order preview width" : "Use wide order preview width"}
+                      aria-label={
+                        isWideLayout
+                          ? "Use default order preview width"
+                          : "Use wide order preview width"
+                      }
                     >
-                      {isWideLayout ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                      {isWideLayout ? (
+                        <Minimize2 className="h-4 w-4" />
+                      ) : (
+                        <Maximize2 className="h-4 w-4" />
+                      )}
                       {isWideLayout ? "Default width" : "Expand"}
                     </button>
                     <button
@@ -1245,9 +1399,12 @@ export function OrderPreview({
               <div className="space-y-4 px-5 py-5 sm:px-6">
                 <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#F3F4F6] bg-white px-4 py-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
                   <div>
-                    <div className="text-sm font-semibold text-[#1F2937]">Overview</div>
+                    <div className="text-sm font-semibold text-[#1F2937]">
+                      Overview
+                    </div>
                     <p className="text-xs text-[#6B7280]">
-                      Fill customer, manager, amount, due date, and description before saving.
+                      Fill customer, manager, amount, due date, and description
+                      before saving.
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -1262,7 +1419,7 @@ export function OrderPreview({
                     <button
                       type="button"
                       disabled={isSavingOverview}
-                      className="inline-flex h-9 min-w-28 items-center justify-center rounded-xl border border-[#6366F1] bg-[#6366F1] px-4 text-sm font-semibold shadow-[0_1px_2px_rgba(16,24,40,0.12)] transition hover:bg-[#5558E3] disabled:opacity-60"
+                      className="inline-flex h-9 min-w-28 items-center justify-center rounded-xl border border-[var(--brand-600)] bg-[var(--brand-600)] px-4 text-sm font-semibold shadow-[0_1px_2px_rgba(16,24,40,0.12)] transition hover:bg-[var(--brand-700)] disabled:opacity-60"
                       style={{ color: "#ffffff" }}
                       onClick={() => {
                         const nextFirstName = draft.firstName.trim();
@@ -1282,20 +1439,27 @@ export function OrderPreview({
                             await createOrder({
                               businessId,
                               businessSlug,
-                              clientName: [nextFirstName, nextLastName].filter(Boolean).join(" "),
+                              clientName: [nextFirstName, nextLastName]
+                                .filter(Boolean)
+                                .join(" "),
                               firstName: nextFirstName,
                               lastName: nextLastName,
                               clientPhone: draft.phone.trim() || undefined,
                               amount: nextAmount,
                               dueDate: draft.dueDate || undefined,
-                              description: draft.description.trim() || undefined,
+                              description:
+                                draft.description.trim() || undefined,
                               status: "NEW",
                               managerId: draft.managerId || null,
                             });
                             router.refresh();
                             onClose();
                           } catch (error) {
-                            window.alert(error instanceof Error ? error.message : "Failed to create order.");
+                            window.alert(
+                              error instanceof Error
+                                ? error.message
+                                : "Failed to create order.",
+                            );
                           }
                         });
                       }}
@@ -1315,9 +1479,12 @@ export function OrderPreview({
                         value={draft.firstName}
                         onChange={(event) => {
                           const nextValue = event.currentTarget.value;
-                          setDraft((prev) => ({ ...prev, firstName: nextValue }));
+                          setDraft((prev) => ({
+                            ...prev,
+                            firstName: nextValue,
+                          }));
                         }}
-                        className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15"
+                        className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
                       />
                     }
                   />
@@ -1328,9 +1495,12 @@ export function OrderPreview({
                         value={draft.lastName}
                         onChange={(event) => {
                           const nextValue = event.currentTarget.value;
-                          setDraft((prev) => ({ ...prev, lastName: nextValue }));
+                          setDraft((prev) => ({
+                            ...prev,
+                            lastName: nextValue,
+                          }));
                         }}
-                        className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15"
+                        className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
                       />
                     }
                   />
@@ -1343,7 +1513,7 @@ export function OrderPreview({
                           const nextValue = event.currentTarget.value;
                           setDraft((prev) => ({ ...prev, phone: nextValue }));
                         }}
-                        className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15"
+                        className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
                       />
                     }
                   />
@@ -1359,11 +1529,13 @@ export function OrderPreview({
                           }))
                         }
                       >
-                        <SelectTrigger className="h-10 w-full rounded-xl border-[#E5E7EB] bg-white text-sm shadow-none focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15">
+                        <SelectTrigger className="h-10 w-full rounded-xl border-[#E5E7EB] bg-white text-sm shadow-none focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="z-[120] rounded-2xl border-[#E5E7EB] bg-white shadow-[0_16px_40px_rgba(15,23,42,0.18)]">
-                          <SelectItem value="__unassigned__">Unassigned</SelectItem>
+                          <SelectItem value="__unassigned__">
+                            Unassigned
+                          </SelectItem>
                           {managerOptions.map((actor) => (
                             <SelectItem key={actor.id} value={actor.id}>
                               {actor.label}
@@ -1384,7 +1556,7 @@ export function OrderPreview({
                           const nextValue = event.currentTarget.value;
                           setDraft((prev) => ({ ...prev, dueDate: nextValue }));
                         }}
-                        className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15"
+                        className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
                       />
                     }
                   />
@@ -1398,7 +1570,7 @@ export function OrderPreview({
                           const nextValue = event.currentTarget.value;
                           setDraft((prev) => ({ ...prev, amount: nextValue }));
                         }}
-                        className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15"
+                        className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
                       />
                     }
                   />
@@ -1406,82 +1578,172 @@ export function OrderPreview({
                 </div>
 
                 <div className="rounded-2xl border border-[#F3F4F6] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
-                  <div className="text-sm font-semibold text-[#1F2937]">Description</div>
+                  <div className="text-sm font-semibold text-[#1F2937]">
+                    Description
+                  </div>
                   <textarea
                     value={draft.description}
                     onChange={(event) => {
                       const nextValue = event.currentTarget.value;
                       setDraft((prev) => ({ ...prev, description: nextValue }));
                     }}
-                    className="mt-2 min-h-28 w-full rounded-2xl border border-[#E5E7EB] bg-white px-4 py-3 text-sm leading-6 text-[#1F2937] outline-none transition focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15"
+                    className="mt-2 min-h-28 w-full rounded-2xl border border-[#E5E7EB] bg-white px-4 py-3 text-sm leading-6 text-[#1F2937] outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
                   />
                 </div>
               </div>
             </ScrollArea>
           </div>
         ) : currentOrder ? (
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex h-full min-h-0 flex-col">
+          <Tabs
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="flex h-full min-h-0 flex-col"
+          >
             <div className="border-b border-[#E5E7EB] bg-white">
-              <div className={["px-4 sm:px-5 transition-all", isUltraCompactTop ? "py-2" : isCompactTop ? "py-3" : "py-5"].join(" ")}>
+              <div
+                className={[
+                  "px-4 sm:px-5 transition-all",
+                  isUltraCompactTop ? "py-2" : isCompactTop ? "py-3" : "py-5",
+                ].join(" ")}
+              >
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                    <div className={["font-semibold text-[#1F2937] transition-all", isUltraCompactTop ? "text-xs sm:text-[13px]" : isCompactTop ? "text-[14px] sm:text-[15px]" : "text-[15px] sm:text-[16px]"].join(" ")}>
+                      <div
+                        className={[
+                          "font-semibold text-[#1F2937] transition-all",
+                          isUltraCompactTop
+                            ? "text-xs sm:text-[13px]"
+                            : isCompactTop
+                              ? "text-[14px] sm:text-[15px]"
+                              : "text-[15px] sm:text-[16px]",
+                        ].join(" ")}
+                      >
                         Order #{currentOrder.order_number ?? currentOrder.id}
                       </div>
                     </div>
 
-                    <div className={["font-semibold leading-none text-[#1F2937] transition-all", isUltraCompactTop ? "mt-0.5 text-lg" : isCompactTop ? "mt-1 text-[19px]" : "mt-2 text-[22px] sm:text-[23px]"].join(" ")}>{displayName}</div>
-                    {!isUltraCompactTop ? <div className={["text-sm text-[#6B7280] transition-all", isCompactTop ? "mt-0.5" : "mt-1"].join(" ")}>{currentOrder.client_phone?.trim() || "No phone number"}</div> : null}
+                    <div
+                      className={[
+                        "font-semibold leading-none text-[#1F2937] transition-all",
+                        isUltraCompactTop
+                          ? "mt-0.5 text-lg"
+                          : isCompactTop
+                            ? "mt-1 text-[19px]"
+                            : "mt-2 text-[22px] sm:text-[23px]",
+                      ].join(" ")}
+                    >
+                      {displayName}
+                    </div>
+                    {!isUltraCompactTop ? (
+                      <div
+                        className={[
+                          "text-sm text-[#6B7280] transition-all",
+                          isCompactTop ? "mt-0.5" : "mt-1",
+                        ].join(" ")}
+                      >
+                        {currentOrder.client_phone?.trim() || "No phone number"}
+                      </div>
+                    ) : null}
 
-                    <div className={["flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-[#4B5563] transition-all", isUltraCompactTop ? "mt-1 text-xs" : isCompactTop ? "mt-2" : "mt-3"].join(" ")}>
+                    <div
+                      className={[
+                        "flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-[#4B5563] transition-all",
+                        isUltraCompactTop
+                          ? "mt-1 text-xs"
+                          : isCompactTop
+                            ? "mt-2"
+                            : "mt-3",
+                      ].join(" ")}
+                    >
                       <span>${fmtAmount(currentOrder.amount)}</span>
-                      <span className={isOverdue ? "font-semibold text-[#d92d20]" : ""}>Due {formatDate(currentOrder.due_date)}</span>
-                      {!isUltraCompactTop ? <span className="inline-flex items-center gap-1.5">
-                        <ActorAvatar label={currentOrder.manager_name?.trim() || "Unassigned"} />
-                        Manager: {currentOrder.manager_name?.trim() || "Unassigned"}
-                      </span> : null}
+                      <span
+                        className={
+                          isOverdue ? "font-semibold text-[#d92d20]" : ""
+                        }
+                      >
+                        Due {formatDate(currentOrder.due_date)}
+                      </span>
+                      {!isUltraCompactTop ? (
+                        <span className="inline-flex items-center gap-1.5">
+                          <ActorAvatar
+                            label={
+                              currentOrder.manager_name?.trim() || "Unassigned"
+                            }
+                          />
+                          Manager:{" "}
+                          {currentOrder.manager_name?.trim() || "Unassigned"}
+                        </span>
+                      ) : null}
                     </div>
 
-                    {!isCompactTop && currentOrder.status === "CANCELED" && currentOrder.status_reason?.trim() ? (
+                    {!isCompactTop &&
+                    currentOrder.status === "CANCELED" &&
+                    currentOrder.status_reason?.trim() ? (
                       <div className="mt-3 inline-flex max-w-full items-start gap-2 rounded-2xl border border-[#f3d1cd] bg-[#fff6f5] px-3 py-2 text-sm text-[#9f1239]">
-                        <span className="font-semibold text-[#b42318]">Canceled:</span>
+                        <span className="font-semibold text-[#b42318]">
+                          Canceled:
+                        </span>
                         <span className="min-w-0 break-words text-[#7a271a]">
                           {currentOrder.status_reason.trim()}
                         </span>
                       </div>
                     ) : null}
 
-                    {!isCompactTop ? <div className="mt-3 flex flex-wrap gap-1.5">
-                      {labels.length > 0 ? (
-                        labels.map((label) => (
-                          <span
-                            key={label}
-                            className="inline-flex items-center rounded-full border border-[#E5E7EB] bg-[#F9FAFB] px-2.5 py-1 text-[11px] font-semibold text-[#6B7280]"
-                          >
-                            {label}
+                    {!isCompactTop ? (
+                      <div className="mt-3 flex flex-wrap gap-1.5">
+                        {labels.length > 0 ? (
+                          labels.map((label) => (
+                            <span
+                              key={label}
+                              className="inline-flex items-center rounded-full border border-[#E5E7EB] bg-[#F9FAFB] px-2.5 py-1 text-[11px] font-semibold text-[#6B7280]"
+                            >
+                              {label}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-xs text-[#9CA3AF]">
+                            No labels yet
                           </span>
-                        ))
-                      ) : (
-                        <span className="text-xs text-[#9CA3AF]">No labels yet</span>
-                      )}
-                    </div> : null}
+                        )}
+                      </div>
+                    ) : null}
                   </div>
 
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => setLayoutMode((current) => (current === "wide" ? "default" : "wide"))}
-                      className={["hidden items-center gap-1.5 rounded-[16px] border border-[#E5E7EB] bg-white font-semibold text-[#1F2937] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] sm:inline-flex", isUltraCompactTop ? "h-8 px-3 text-[13px]" : "h-11 px-5"].join(" ")}
-                      aria-label={isWideLayout ? "Use default order preview width" : "Use wide order preview width"}
+                      onClick={() =>
+                        setLayoutMode((current) =>
+                          current === "wide" ? "default" : "wide",
+                        )
+                      }
+                      className={[
+                        "hidden items-center gap-1.5 rounded-[16px] border border-[#E5E7EB] bg-white font-semibold text-[#1F2937] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] sm:inline-flex",
+                        isUltraCompactTop
+                          ? "h-8 px-3 text-[13px]"
+                          : "h-11 px-5",
+                      ].join(" ")}
+                      aria-label={
+                        isWideLayout
+                          ? "Use default order preview width"
+                          : "Use wide order preview width"
+                      }
                     >
-                      {isWideLayout ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+                      {isWideLayout ? (
+                        <Minimize2 className="h-3.5 w-3.5" />
+                      ) : (
+                        <Maximize2 className="h-3.5 w-3.5" />
+                      )}
                       {isWideLayout ? "Default width" : "Expand"}
                     </button>
                     <button
                       type="button"
                       onClick={onClose}
-                      className={["inline-flex items-center justify-center rounded-[16px] border border-[#E5E7EB] bg-white text-[#6B7280] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]", isUltraCompactTop ? "h-8 w-8" : "h-11 w-11"].join(" ")}
+                      className={[
+                        "inline-flex items-center justify-center rounded-[16px] border border-[#E5E7EB] bg-white text-[#6B7280] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]",
+                        isUltraCompactTop ? "h-8 w-8" : "h-11 w-11",
+                      ].join(" ")}
                       aria-label="Close order preview"
                     >
                       <X className="h-4 w-4" />
@@ -1492,8 +1754,24 @@ export function OrderPreview({
             </div>
 
             <div className="sticky top-0 z-30 bg-white shadow-[0_8px_18px_rgba(15,23,42,0.06)]">
-              <div className={["px-4 sm:px-5 transition-all", isUltraCompactTop ? "py-0.5" : isCompactTop ? "py-2" : "py-2.5"].join(" ")}>
-                <TabsList className={["grid h-auto w-full grid-cols-6 border border-[#E5E7EB] bg-[linear-gradient(180deg,#F9FAFB_0%,#EEF2FF_100%)] shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)]", isUltraCompactTop ? "gap-0.5 rounded-[16px] p-0.5" : "gap-1 rounded-[26px] p-1.5"].join(" ")}>
+              <div
+                className={[
+                  "px-4 sm:px-5 transition-all",
+                  isUltraCompactTop
+                    ? "py-0.5"
+                    : isCompactTop
+                      ? "py-2"
+                      : "py-2.5",
+                ].join(" ")}
+              >
+                <TabsList
+                  className={[
+                    "grid h-auto w-full grid-cols-6 border border-[#E5E7EB] bg-[linear-gradient(180deg,#F9FAFB_0%,#EEF2FF_100%)] shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)]",
+                    isUltraCompactTop
+                      ? "gap-0.5 rounded-[16px] p-0.5"
+                      : "gap-1 rounded-[26px] p-1.5",
+                  ].join(" ")}
+                >
                   {[
                     ["overview", "Overview"],
                     ["followups", "Follow-up"],
@@ -1505,7 +1783,12 @@ export function OrderPreview({
                     <TabsTrigger
                       key={value}
                       value={value}
-                      className={["min-w-0 border border-transparent font-semibold text-[#6B7280] shadow-none transition data-[state=active]:border-[#C7D2FE] data-[state=active]:bg-white data-[state=active]:text-[#1F2937] data-[state=active]:shadow-[0_6px_16px_rgba(15,23,42,0.08)]", isUltraCompactTop ? "rounded-[12px] px-2 py-1 text-xs" : "rounded-[20px] px-3 py-3 text-base"].join(" ")}
+                      className={[
+                        "min-w-0 border border-transparent font-semibold text-[#6B7280] shadow-none transition data-[state=active]:border-[#C7D2FE] data-[state=active]:bg-white data-[state=active]:text-[#1F2937] data-[state=active]:shadow-[0_6px_16px_rgba(15,23,42,0.08)]",
+                        isUltraCompactTop
+                          ? "rounded-[12px] px-2 py-1 text-xs"
+                          : "rounded-[20px] px-3 py-3 text-base",
+                      ].join(" ")}
                       style={{ color: "#6B7280" }}
                     >
                       {label}
@@ -1513,173 +1796,262 @@ export function OrderPreview({
                   ))}
                 </TabsList>
               </div>
-              <div className={isUltraCompactTop ? "h-1 border-t border-[#F3F4F6] bg-white" : "h-2 border-t border-[#F3F4F6] bg-white"} />
+              <div
+                className={
+                  isUltraCompactTop
+                    ? "h-1 border-t border-[#F3F4F6] bg-white"
+                    : "h-2 border-t border-[#F3F4F6] bg-white"
+                }
+              />
             </div>
 
             <ScrollArea className="min-h-0 flex-1">
-              <div className={["space-y-3 px-4 pb-4 sm:px-5", isUltraCompactTop ? "pt-0.5" : "pt-1"].join(" ")}>
-                  <TabsContent value="overview" className="mt-0">
-                    <div className="space-y-3">
-                      {canManage ? (
-                        <div className="flex flex-wrap items-center justify-between gap-3 rounded-[20px] border border-[#F3F4F6] bg-white px-4 py-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
-                          <div>
-                            <div className="text-sm font-semibold text-[#1F2937]">Overview</div>
-                            <p className="text-xs text-[#6B7280]">{isEditingOverview ? "Editing order details." : "Customer, manager, amount, due date, and description."}</p>
-                            {overviewUploadSuccess ? (
-                              <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-[#b7ebc6] bg-[#ecfdf3] px-3 py-1 text-xs font-semibold text-[#067647]">
-                                <Check className="h-3.5 w-3.5" />
-                                <span>{overviewUploadSuccess}</span>
-                              </div>
-                            ) : null}
+              <div
+                className={[
+                  "space-y-3 px-4 pb-4 sm:px-5",
+                  isUltraCompactTop ? "pt-0.5" : "pt-1",
+                ].join(" ")}
+              >
+                <TabsContent value="overview" className="mt-0">
+                  <div className="space-y-3">
+                    {canManage ? (
+                      <div className="flex flex-wrap items-center justify-between gap-3 rounded-[20px] border border-[#F3F4F6] bg-white px-4 py-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                        <div>
+                          <div className="text-sm font-semibold text-[#1F2937]">
+                            Overview
                           </div>
-                          <div className="flex items-center gap-2">
-                            {isEditingOverview ? (
-                              <>
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  className="rounded-xl border-[#E5E7EB] bg-white text-[#374151] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
-                                  onClick={() => {
-                                    setIsEditingOverview(false);
-                                    setDraft({
-                                      firstName: currentOrder.client_first_name?.trim() || client.firstName || "",
-                                      lastName: currentOrder.client_last_name?.trim() || client.lastName || "",
-                                      phone: currentOrder.client_phone?.trim() || "",
-                                      managerId: currentOrder.manager_id || "",
-                                      amount: String(currentOrder.amount ?? ""),
-                                      dueDate: currentOrder.due_date ? String(currentOrder.due_date).slice(0, 10) : "",
-                                      description: currentOrder.description?.trim() || "",
+                          <p className="text-xs text-[#6B7280]">
+                            {isEditingOverview
+                              ? "Editing order details."
+                              : "Customer, manager, amount, due date, and description."}
+                          </p>
+                          {overviewUploadSuccess ? (
+                            <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-[#b7ebc6] bg-[#ecfdf3] px-3 py-1 text-xs font-semibold text-[#067647]">
+                              <Check className="h-3.5 w-3.5" />
+                              <span>{overviewUploadSuccess}</span>
+                            </div>
+                          ) : null}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {isEditingOverview ? (
+                            <>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                className="rounded-xl border-[#E5E7EB] bg-white text-[#374151] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
+                                onClick={() => {
+                                  setIsEditingOverview(false);
+                                  setDraft({
+                                    firstName:
+                                      currentOrder.client_first_name?.trim() ||
+                                      client.firstName ||
+                                      "",
+                                    lastName:
+                                      currentOrder.client_last_name?.trim() ||
+                                      client.lastName ||
+                                      "",
+                                    phone:
+                                      currentOrder.client_phone?.trim() || "",
+                                    managerId: currentOrder.manager_id || "",
+                                    amount: String(currentOrder.amount ?? ""),
+                                    dueDate: currentOrder.due_date
+                                      ? String(currentOrder.due_date).slice(
+                                          0,
+                                          10,
+                                        )
+                                      : "",
+                                    description:
+                                      currentOrder.description?.trim() || "",
+                                  });
+                                }}
+                              >
+                                Cancel
+                              </Button>
+                              <button
+                                type="button"
+                                disabled={isSavingOverview}
+                                className="inline-flex h-9 min-w-24 items-center justify-center rounded-xl border border-[var(--brand-600)] bg-[var(--brand-600)] px-4 text-sm font-semibold shadow-[0_1px_2px_rgba(16,24,40,0.12)] transition hover:bg-[var(--brand-700)] disabled:opacity-60"
+                                style={{ color: "#ffffff" }}
+                                onClick={() => {
+                                  if (!draft.firstName.trim()) {
+                                    window.alert("First name is required.");
+                                    return;
+                                  }
+                                  const nextFirstName = draft.firstName.trim();
+                                  const nextLastName = draft.lastName.trim();
+                                  const nextPhone = draft.phone.trim() || null;
+                                  const nextDescription =
+                                    draft.description.trim() || null;
+                                  const nextAmount = Number(draft.amount || 0);
+                                  const nextDueDate = draft.dueDate || null;
+                                  const nextManagerId = draft.managerId || null;
+                                  const managerChanged =
+                                    (currentOrder.manager_id || null) !==
+                                    nextManagerId;
+                                  const overviewChanges: Array<{
+                                    type: LocalActivityEvent["type"];
+                                    description: string;
+                                    payload: NonNullable<
+                                      LocalActivityEvent["payload"]
+                                    >;
+                                  }> = [];
+
+                                  if (
+                                    (currentOrder.client_first_name?.trim() ||
+                                      client.firstName ||
+                                      "") !== nextFirstName
+                                  ) {
+                                    overviewChanges.push({
+                                      type: "order_updated",
+                                      description: `changed first name from "${currentOrder.client_first_name?.trim() || client.firstName || "Unknown"}" to "${nextFirstName}"`,
+                                      payload: {
+                                        field: "first_name",
+                                        from:
+                                          currentOrder.client_first_name?.trim() ||
+                                          client.firstName ||
+                                          "Unknown",
+                                        to: nextFirstName,
+                                      },
                                     });
-                                  }}
-                                >
-                                  Cancel
-                                </Button>
-                                <button
-                                  type="button"
-                                  disabled={isSavingOverview}
-                                  className="inline-flex h-9 min-w-24 items-center justify-center rounded-xl border border-[#6366F1] bg-[#6366F1] px-4 text-sm font-semibold shadow-[0_1px_2px_rgba(16,24,40,0.12)] transition hover:bg-[#5558E3] disabled:opacity-60"
-                                  style={{ color: "#ffffff" }}
-                                  onClick={() => {
-                                    if (!draft.firstName.trim()) {
-                                      window.alert("First name is required.");
-                                      return;
-                                    }
-                                    const nextFirstName = draft.firstName.trim();
-                                    const nextLastName = draft.lastName.trim();
-                                    const nextPhone = draft.phone.trim() || null;
-                                    const nextDescription = draft.description.trim() || null;
-                                    const nextAmount = Number(draft.amount || 0);
-                                    const nextDueDate = draft.dueDate || null;
-                                    const nextManagerId = draft.managerId || null;
-                                    const managerChanged = (currentOrder.manager_id || null) !== nextManagerId;
-                                    const overviewChanges: Array<{
-                                      type: LocalActivityEvent["type"];
-                                      description: string;
-                                      payload: NonNullable<LocalActivityEvent["payload"]>;
-                                    }> = [];
+                                  }
 
-                                    if ((currentOrder.client_first_name?.trim() || client.firstName || "") !== nextFirstName) {
-                                      overviewChanges.push({
-                                        type: "order_updated",
-                                        description: `changed first name from "${currentOrder.client_first_name?.trim() || client.firstName || "Unknown"}" to "${nextFirstName}"`,
-                                        payload: {
-                                          field: "first_name",
-                                          from: currentOrder.client_first_name?.trim() || client.firstName || "Unknown",
-                                          to: nextFirstName,
-                                        },
+                                  if (
+                                    (currentOrder.client_last_name?.trim() ||
+                                      client.lastName ||
+                                      "") !== nextLastName
+                                  ) {
+                                    overviewChanges.push({
+                                      type: "order_updated",
+                                      description: `changed last name from "${currentOrder.client_last_name?.trim() || client.lastName || "Not provided"}" to "${nextLastName || "Not provided"}"`,
+                                      payload: {
+                                        field: "last_name",
+                                        from:
+                                          currentOrder.client_last_name?.trim() ||
+                                          client.lastName ||
+                                          "Not provided",
+                                        to: nextLastName || "Not provided",
+                                      },
+                                    });
+                                  }
+
+                                  if (
+                                    (currentOrder.client_phone?.trim() ||
+                                      null) !== nextPhone
+                                  ) {
+                                    overviewChanges.push({
+                                      type: "order_updated",
+                                      description: `changed phone from "${formatPhoneValue(currentOrder.client_phone || null)}" to "${formatPhoneValue(nextPhone)}"`,
+                                      payload: {
+                                        field: "phone",
+                                        from: formatPhoneValue(
+                                          currentOrder.client_phone || null,
+                                        ),
+                                        to: formatPhoneValue(nextPhone),
+                                      },
+                                    });
+                                  }
+
+                                  if (
+                                    String(currentOrder.amount ?? 0) !==
+                                    String(nextAmount)
+                                  ) {
+                                    overviewChanges.push({
+                                      type: "order_updated",
+                                      description: `changed amount from "${formatAmountValue(currentOrder.amount)}" to "${formatAmountValue(nextAmount)}"`,
+                                      payload: {
+                                        field: "amount",
+                                        from: currentOrder.amount,
+                                        to: nextAmount,
+                                        fromLabel: formatAmountValue(
+                                          currentOrder.amount,
+                                        ),
+                                        toLabel: formatAmountValue(nextAmount),
+                                      },
+                                    });
+                                  }
+
+                                  if (
+                                    (currentOrder.due_date
+                                      ? String(currentOrder.due_date).slice(
+                                          0,
+                                          10,
+                                        )
+                                      : null) !== nextDueDate
+                                  ) {
+                                    overviewChanges.push({
+                                      type: "order_updated",
+                                      description: `changed due date from "${formatDate(currentOrder.due_date)}" to "${formatDate(nextDueDate)}"`,
+                                      payload: {
+                                        field: "due_date",
+                                        from: currentOrder.due_date || null,
+                                        to: nextDueDate || null,
+                                        fromLabel: formatDate(
+                                          currentOrder.due_date,
+                                        ),
+                                        toLabel: formatDate(nextDueDate),
+                                      },
+                                    });
+                                  }
+
+                                  if (
+                                    (currentOrder.description?.trim() ||
+                                      null) !== nextDescription
+                                  ) {
+                                    overviewChanges.push({
+                                      type: "order_updated",
+                                      description: `changed description from ${formatDescriptionValue(currentOrder.description)} to ${formatDescriptionValue(nextDescription)}`,
+                                      payload: {
+                                        field: "description",
+                                        from:
+                                          currentOrder.description?.trim() ||
+                                          null,
+                                        to: nextDescription,
+                                        fromLabel: formatDescriptionValue(
+                                          currentOrder.description,
+                                        ),
+                                        toLabel:
+                                          formatDescriptionValue(
+                                            nextDescription,
+                                          ),
+                                      },
+                                    });
+                                  }
+
+                                  startSavingOverview(async () => {
+                                    try {
+                                      await updateOrder({
+                                        orderId: currentOrder.id,
+                                        businessSlug,
+                                        clientName: [
+                                          nextFirstName,
+                                          nextLastName,
+                                        ]
+                                          .filter(Boolean)
+                                          .join(" "),
+                                        firstName: nextFirstName,
+                                        lastName: nextLastName,
+                                        clientPhone: nextPhone,
+                                        description: nextDescription,
+                                        amount: nextAmount,
+                                        dueDate: nextDueDate,
                                       });
-                                    }
 
-                                    if ((currentOrder.client_last_name?.trim() || client.lastName || "") !== nextLastName) {
-                                      overviewChanges.push({
-                                        type: "order_updated",
-                                        description: `changed last name from "${currentOrder.client_last_name?.trim() || client.lastName || "Not provided"}" to "${nextLastName || "Not provided"}"`,
-                                        payload: {
-                                          field: "last_name",
-                                          from: currentOrder.client_last_name?.trim() || client.lastName || "Not provided",
-                                          to: nextLastName || "Not provided",
-                                        },
-                                      });
-                                    }
-
-                                    if ((currentOrder.client_phone?.trim() || null) !== nextPhone) {
-                                      overviewChanges.push({
-                                        type: "order_updated",
-                                        description: `changed phone from "${formatPhoneValue(currentOrder.client_phone || null)}" to "${formatPhoneValue(nextPhone)}"`,
-                                        payload: {
-                                          field: "phone",
-                                          from: formatPhoneValue(currentOrder.client_phone || null),
-                                          to: formatPhoneValue(nextPhone),
-                                        },
-                                      });
-                                    }
-
-                                    if (String(currentOrder.amount ?? 0) !== String(nextAmount)) {
-                                      overviewChanges.push({
-                                        type: "order_updated",
-                                        description: `changed amount from "${formatAmountValue(currentOrder.amount)}" to "${formatAmountValue(nextAmount)}"`,
-                                        payload: {
-                                          field: "amount",
-                                          from: currentOrder.amount,
-                                          to: nextAmount,
-                                          fromLabel: formatAmountValue(currentOrder.amount),
-                                          toLabel: formatAmountValue(nextAmount),
-                                        },
-                                      });
-                                    }
-
-                                    if ((currentOrder.due_date ? String(currentOrder.due_date).slice(0, 10) : null) !== nextDueDate) {
-                                      overviewChanges.push({
-                                        type: "order_updated",
-                                        description: `changed due date from "${formatDate(currentOrder.due_date)}" to "${formatDate(nextDueDate)}"`,
-                                        payload: {
-                                          field: "due_date",
-                                          from: currentOrder.due_date || null,
-                                          to: nextDueDate || null,
-                                          fromLabel: formatDate(currentOrder.due_date),
-                                          toLabel: formatDate(nextDueDate),
-                                        },
-                                      });
-                                    }
-
-                                    if ((currentOrder.description?.trim() || null) !== nextDescription) {
-                                      overviewChanges.push({
-                                        type: "order_updated",
-                                        description: `changed description from ${formatDescriptionValue(currentOrder.description)} to ${formatDescriptionValue(nextDescription)}`,
-                                        payload: {
-                                          field: "description",
-                                          from: currentOrder.description?.trim() || null,
-                                          to: nextDescription,
-                                          fromLabel: formatDescriptionValue(currentOrder.description),
-                                          toLabel: formatDescriptionValue(nextDescription),
-                                        },
-                                      });
-                                    }
-
-                                    startSavingOverview(async () => {
-                                      try {
-                                        await updateOrder({
+                                      if (managerChanged) {
+                                        await setOrderManager({
                                           orderId: currentOrder.id,
                                           businessSlug,
-                                          clientName: [nextFirstName, nextLastName].filter(Boolean).join(" "),
-                                          firstName: nextFirstName,
-                                          lastName: nextLastName,
-                                          clientPhone: nextPhone,
-                                          description: nextDescription,
-                                          amount: nextAmount,
-                                          dueDate: nextDueDate,
+                                          managerId: nextManagerId,
                                         });
-
-                                        if (managerChanged) {
-                                          await setOrderManager({
-                                            orderId: currentOrder.id,
-                                            businessSlug,
-                                            managerId: nextManagerId,
-                                          });
-                                          appendLocalActivityEvent(businessId, currentOrder.id, {
-                                            id: makeLocalActivityEventId("manager"),
+                                        appendLocalActivityEvent(
+                                          businessId,
+                                          currentOrder.id,
+                                          {
+                                            id: makeLocalActivityEventId(
+                                              "manager",
+                                            ),
                                             type: "manager_changed",
-                                            actorName: currentUserName || "Manager",
+                                            actorName:
+                                              currentUserName || "Manager",
                                             actorRole: userRole,
                                             description: nextManagerId
                                               ? `changed manager from "${currentOrder.manager_name?.trim() || "Unassigned"}" to "${managerOptions.find((actor) => actor.id === nextManagerId)?.label || "Manager"}"`
@@ -1689,334 +2061,422 @@ export function OrderPreview({
                                               field: "manager_id",
                                               from: currentOrder.manager_id,
                                               to: nextManagerId,
-                                              fromLabel: currentOrder.manager_name?.trim() || "Unassigned",
+                                              fromLabel:
+                                                currentOrder.manager_name?.trim() ||
+                                                "Unassigned",
                                               toLabel: nextManagerId
-                                                ? managerOptions.find((actor) => actor.id === nextManagerId)?.label || "Manager"
+                                                ? managerOptions.find(
+                                                    (actor) =>
+                                                      actor.id ===
+                                                      nextManagerId,
+                                                  )?.label || "Manager"
                                                 : "Unassigned",
                                             },
-                                          });
-                                        }
+                                          },
+                                        );
+                                      }
 
-                                        for (const change of overviewChanges) {
-                                          appendLocalActivityEvent(businessId, currentOrder.id, {
-                                            id: makeLocalActivityEventId("order-updated"),
+                                      for (const change of overviewChanges) {
+                                        appendLocalActivityEvent(
+                                          businessId,
+                                          currentOrder.id,
+                                          {
+                                            id: makeLocalActivityEventId(
+                                              "order-updated",
+                                            ),
                                             type: change.type,
-                                            actorName: currentUserName || "Manager",
+                                            actorName:
+                                              currentUserName || "Manager",
                                             actorRole: userRole,
                                             description: change.description,
                                             ts: new Date().toISOString(),
                                             payload: change.payload,
-                                          });
-                                        }
-
-                                        setPreviewOrder((prev) =>
-                                          prev
-                                            ? {
-                                                ...prev,
-                                                client_name: [nextFirstName, nextLastName].filter(Boolean).join(" ") || prev.client_name,
-                                                client_first_name: nextFirstName,
-                                                client_last_name: nextLastName,
-                                                client_full_name: [nextFirstName, nextLastName].filter(Boolean).join(" "),
-                                                client_phone: nextPhone,
-                                                manager_id: nextManagerId,
-                                                manager_name: nextManagerId
-                                                  ? managerOptions.find((actor) => actor.id === nextManagerId)?.label || prev.manager_name
-                                                  : null,
-                                                amount: nextAmount,
-                                                due_date: nextDueDate,
-                                                description: nextDescription,
-                                              }
-                                            : prev,
+                                          },
                                         );
-                                        setIsEditingOverview(false);
-                                        router.refresh();
-                                      } catch (error) {
-                                        window.alert(error instanceof Error ? error.message : "Failed to update order.");
                                       }
-                                    });
-                                  }}
-                                >
-                                  <span className="whitespace-nowrap leading-none text-white">
-                                    {isSavingOverview ? "Saving..." : "Save"}
-                                  </span>
-                                </button>
-                              </>
-                            ) : (
-                              <>
-                                {canUploadFiles ? (
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    className="h-11 rounded-[18px] border-[#E5E7EB] bg-white px-5 text-[#374151] shadow-[0_1px_2px_rgba(16,24,40,0.04)] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
-                                    onClick={openOverviewFilePicker}
-                                    disabled={isUploadingOverviewFiles}
-                                  >
-                                    {isUploadingOverviewFiles ? "Uploading..." : "Add file"}
-                                  </Button>
-                                ) : null}
+
+                                      setPreviewOrder((prev) =>
+                                        prev
+                                          ? {
+                                              ...prev,
+                                              client_name:
+                                                [nextFirstName, nextLastName]
+                                                  .filter(Boolean)
+                                                  .join(" ") ||
+                                                prev.client_name,
+                                              client_first_name: nextFirstName,
+                                              client_last_name: nextLastName,
+                                              client_full_name: [
+                                                nextFirstName,
+                                                nextLastName,
+                                              ]
+                                                .filter(Boolean)
+                                                .join(" "),
+                                              client_phone: nextPhone,
+                                              manager_id: nextManagerId,
+                                              manager_name: nextManagerId
+                                                ? managerOptions.find(
+                                                    (actor) =>
+                                                      actor.id ===
+                                                      nextManagerId,
+                                                  )?.label || prev.manager_name
+                                                : null,
+                                              amount: nextAmount,
+                                              due_date: nextDueDate,
+                                              description: nextDescription,
+                                            }
+                                          : prev,
+                                      );
+                                      setIsEditingOverview(false);
+                                      router.refresh();
+                                    } catch (error) {
+                                      window.alert(
+                                        error instanceof Error
+                                          ? error.message
+                                          : "Failed to update order.",
+                                      );
+                                    }
+                                  });
+                                }}
+                              >
+                                <span className="whitespace-nowrap leading-none text-white">
+                                  {isSavingOverview ? "Saving..." : "Save"}
+                                </span>
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              {canUploadFiles ? (
                                 <Button
                                   type="button"
                                   variant="outline"
                                   className="h-11 rounded-[18px] border-[#E5E7EB] bg-white px-5 text-[#374151] shadow-[0_1px_2px_rgba(16,24,40,0.04)] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
-                                  onClick={() => setIsEditingOverview(true)}
+                                  onClick={openOverviewFilePicker}
+                                  disabled={isUploadingOverviewFiles}
                                 >
-                                  Edit overview
+                                  {isUploadingOverviewFiles
+                                    ? "Uploading..."
+                                    : "Add file"}
                                 </Button>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      ) : null}
-
-                      <div className="grid gap-2.5 sm:grid-cols-2">
-                        <MetaItem
-                          label="First Name"
-                          value={
-                            isEditingOverview ? (
-                              <input
-                                value={draft.firstName}
-                                onChange={(event) => {
-                                  const nextValue = event.currentTarget.value;
-                                  setDraft((prev) => ({ ...prev, firstName: nextValue }));
-                                }}
-                                className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15"
-                              />
-                            ) : (
-                              currentOrder.client_first_name?.trim() || client.firstName || "Unknown"
-                            )
-                          }
-                        />
-                        <MetaItem
-                          label="Last Name"
-                          value={
-                            isEditingOverview ? (
-                              <input
-                                value={draft.lastName}
-                                onChange={(event) => {
-                                  const nextValue = event.currentTarget.value;
-                                  setDraft((prev) => ({ ...prev, lastName: nextValue }));
-                                }}
-                                className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15"
-                              />
-                            ) : (
-                              currentOrder.client_last_name?.trim() || client.lastName || "Not provided"
-                            )
-                          }
-                        />
-                        <MetaItem
-                          label="Phone"
-                          value={
-                            isEditingOverview ? (
-                              <input
-                                value={draft.phone}
-                                onChange={(event) => {
-                                  const nextValue = event.currentTarget.value;
-                                  setDraft((prev) => ({ ...prev, phone: nextValue }));
-                                }}
-                                className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15"
-                              />
-                            ) : (
-                              currentOrder.client_phone?.trim() || "No phone number"
-                            )
-                          }
-                        />
-                        <MetaItem
-                          label="Manager"
-                          value={
-                            isEditingOverview ? (
-                              <Select
-                                value={draft.managerId || "__unassigned__"}
-                                onValueChange={(value) =>
-                                  setDraft((prev) => ({
-                                    ...prev,
-                                    managerId: value === "__unassigned__" ? "" : value,
-                                  }))
-                                }
+                              ) : null}
+                              <Button
+                                type="button"
+                                variant="outline"
+                                className="h-11 rounded-[18px] border-[#E5E7EB] bg-white px-5 text-[#374151] shadow-[0_1px_2px_rgba(16,24,40,0.04)] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
+                                onClick={() => setIsEditingOverview(true)}
                               >
-                                <SelectTrigger className="h-10 w-full rounded-xl border-[#E5E7EB] bg-white text-sm shadow-none focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent className="z-[120] rounded-2xl border-[#E5E7EB] bg-white shadow-[0_16px_40px_rgba(15,23,42,0.18)]">
-                                  <SelectItem value="__unassigned__">Unassigned</SelectItem>
-                                  {managerOptions.map((actor) => (
-                                    <SelectItem key={actor.id} value={actor.id}>
-                                      {actor.label}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            ) : (
-                              <span className="inline-flex items-center gap-2">
-                                <ActorAvatar label={currentOrder.manager_name?.trim() || "Unassigned"} />
-                                <span>{currentOrder.manager_name?.trim() || "Unassigned"}</span>
-                              </span>
-                            )
-                          }
-                        />
-                        <MetaItem label="Created" value={formatDateTime(currentOrder.created_at)} />
-                        <MetaItem
-                          label="Due date"
-                          value={
-                            isEditingOverview ? (
-                              <input
-                                type="date"
-                                value={draft.dueDate}
-                                onChange={(event) => {
-                                  const nextValue = event.currentTarget.value;
-                                  setDraft((prev) => ({ ...prev, dueDate: nextValue }));
-                                }}
-                                className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15"
-                              />
-                            ) : (
-                              formatDate(currentOrder.due_date)
-                            )
-                          }
-                        />
-                        <MetaItem
-                          label="Amount"
-                          value={
-                            isEditingOverview ? (
-                              <input
-                                inputMode="decimal"
-                                value={draft.amount}
-                                onChange={(event) => {
-                                  const nextValue = event.currentTarget.value;
-                                  setDraft((prev) => ({ ...prev, amount: nextValue }));
-                                }}
-                                className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15"
-                              />
-                            ) : (
-                              `$${fmtAmount(currentOrder.amount)}`
-                            )
-                          }
-                        />
-                        <MetaItem
-                          label="Status"
-                          value={
-                            <DrawerStatusSelect
-                              orderId={currentOrder.id}
-                              businessSlug={businessSlug}
-                              value={currentOrder.status}
-                              canManage={canManage}
-                              businessId={businessId}
-                              currentUserName={currentUserName}
-                              userRole={userRole}
-                              onCommitted={(nextStatus, reason) =>
-                                setPreviewOrder((prev) =>
-                                  prev
-                                    ? {
-                                        ...prev,
-                                        status: nextStatus,
-                                        status_reason:
-                                          nextStatus === "CANCELED"
-                                            ? (reason ?? prev.status_reason ?? null)
-                                            : null,
-                                      }
-                                    : prev,
-                                )
-                              }
+                                Edit overview
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    ) : null}
+
+                    <div className="grid gap-2.5 sm:grid-cols-2">
+                      <MetaItem
+                        label="First Name"
+                        value={
+                          isEditingOverview ? (
+                            <input
+                              value={draft.firstName}
+                              onChange={(event) => {
+                                const nextValue = event.currentTarget.value;
+                                setDraft((prev) => ({
+                                  ...prev,
+                                  firstName: nextValue,
+                                }));
+                              }}
+                              className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
                             />
-                          }
-                        />
-                        {currentOrder.status === "CANCELED" && currentOrder.status_reason?.trim() ? (
-                          <MetaItem
-                            label="Cancel reason"
-                            value={currentOrder.status_reason.trim()}
-                          />
-                        ) : null}
-                      </div>
-
-                      <div className="rounded-[20px] border border-[#F3F4F6] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
-                        <div className="text-sm font-semibold text-[#1F2937]">Description</div>
-                        {isEditingOverview ? (
-                          <textarea
-                            value={draft.description}
-                            onChange={(event) => {
-                              const nextValue = event.currentTarget.value;
-                              setDraft((prev) => ({ ...prev, description: nextValue }));
-                            }}
-                            className="mt-2 min-h-24 w-full rounded-[18px] border border-[#E5E7EB] bg-white px-4 py-3 text-sm leading-6 text-[#1F2937] outline-none transition focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15"
-                          />
-                        ) : (
-                          <p className="mt-2 whitespace-pre-wrap text-sm leading-5 text-[#4B5563]">
-                            {currentOrder.description?.trim() || "No description provided yet."}
-                          </p>
-                        )}
-                      </div>
-                      <LabelsSection
-                        businessId={businessId}
-                        orderId={currentOrder.id}
-                        currentUserName={currentUserName}
-                        userRole={userRole}
-                        value={labels}
-                        onChange={setLabels}
+                          ) : (
+                            currentOrder.client_first_name?.trim() ||
+                            client.firstName ||
+                            "Unknown"
+                          )
+                        }
                       />
+                      <MetaItem
+                        label="Last Name"
+                        value={
+                          isEditingOverview ? (
+                            <input
+                              value={draft.lastName}
+                              onChange={(event) => {
+                                const nextValue = event.currentTarget.value;
+                                setDraft((prev) => ({
+                                  ...prev,
+                                  lastName: nextValue,
+                                }));
+                              }}
+                              className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
+                            />
+                          ) : (
+                            currentOrder.client_last_name?.trim() ||
+                            client.lastName ||
+                            "Not provided"
+                          )
+                        }
+                      />
+                      <MetaItem
+                        label="Phone"
+                        value={
+                          isEditingOverview ? (
+                            <input
+                              value={draft.phone}
+                              onChange={(event) => {
+                                const nextValue = event.currentTarget.value;
+                                setDraft((prev) => ({
+                                  ...prev,
+                                  phone: nextValue,
+                                }));
+                              }}
+                              className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
+                            />
+                          ) : (
+                            currentOrder.client_phone?.trim() ||
+                            "No phone number"
+                          )
+                        }
+                      />
+                      <MetaItem
+                        label="Manager"
+                        value={
+                          isEditingOverview ? (
+                            <Select
+                              value={draft.managerId || "__unassigned__"}
+                              onValueChange={(value) =>
+                                setDraft((prev) => ({
+                                  ...prev,
+                                  managerId:
+                                    value === "__unassigned__" ? "" : value,
+                                }))
+                              }
+                            >
+                              <SelectTrigger className="h-10 w-full rounded-xl border-[#E5E7EB] bg-white text-sm shadow-none focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent className="z-[120] rounded-2xl border-[#E5E7EB] bg-white shadow-[0_16px_40px_rgba(15,23,42,0.18)]">
+                                <SelectItem value="__unassigned__">
+                                  Unassigned
+                                </SelectItem>
+                                {managerOptions.map((actor) => (
+                                  <SelectItem key={actor.id} value={actor.id}>
+                                    {actor.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          ) : (
+                            <span className="inline-flex items-center gap-2">
+                              <ActorAvatar
+                                label={
+                                  currentOrder.manager_name?.trim() ||
+                                  "Unassigned"
+                                }
+                              />
+                              <span>
+                                {currentOrder.manager_name?.trim() ||
+                                  "Unassigned"}
+                              </span>
+                            </span>
+                          )
+                        }
+                      />
+                      <MetaItem
+                        label="Created"
+                        value={formatDateTime(currentOrder.created_at)}
+                      />
+                      <MetaItem
+                        label="Due date"
+                        value={
+                          isEditingOverview ? (
+                            <input
+                              type="date"
+                              value={draft.dueDate}
+                              onChange={(event) => {
+                                const nextValue = event.currentTarget.value;
+                                setDraft((prev) => ({
+                                  ...prev,
+                                  dueDate: nextValue,
+                                }));
+                              }}
+                              className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
+                            />
+                          ) : (
+                            formatDate(currentOrder.due_date)
+                          )
+                        }
+                      />
+                      <MetaItem
+                        label="Amount"
+                        value={
+                          isEditingOverview ? (
+                            <input
+                              inputMode="decimal"
+                              value={draft.amount}
+                              onChange={(event) => {
+                                const nextValue = event.currentTarget.value;
+                                setDraft((prev) => ({
+                                  ...prev,
+                                  amount: nextValue,
+                                }));
+                              }}
+                              className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
+                            />
+                          ) : (
+                            `$${fmtAmount(currentOrder.amount)}`
+                          )
+                        }
+                      />
+                      <MetaItem
+                        label="Status"
+                        value={
+                          <DrawerStatusSelect
+                            orderId={currentOrder.id}
+                            businessSlug={businessSlug}
+                            value={currentOrder.status}
+                            canManage={canManage}
+                            businessId={businessId}
+                            currentUserName={currentUserName}
+                            userRole={userRole}
+                            onCommitted={(nextStatus, reason) =>
+                              setPreviewOrder((prev) =>
+                                prev
+                                  ? {
+                                      ...prev,
+                                      status: nextStatus,
+                                      status_reason:
+                                        nextStatus === "CANCELED"
+                                          ? (reason ??
+                                            prev.status_reason ??
+                                            null)
+                                          : null,
+                                    }
+                                  : prev,
+                              )
+                            }
+                          />
+                        }
+                      />
+                      {currentOrder.status === "CANCELED" &&
+                      currentOrder.status_reason?.trim() ? (
+                        <MetaItem
+                          label="Cancel reason"
+                          value={currentOrder.status_reason.trim()}
+                        />
+                      ) : null}
                     </div>
-                  </TabsContent>
 
-                  <TabsContent value="followups" className="mt-0">
-                    <OrderFollowUpsCard
+                    <div className="rounded-[20px] border border-[#F3F4F6] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                      <div className="text-sm font-semibold text-[#1F2937]">
+                        Description
+                      </div>
+                      {isEditingOverview ? (
+                        <textarea
+                          value={draft.description}
+                          onChange={(event) => {
+                            const nextValue = event.currentTarget.value;
+                            setDraft((prev) => ({
+                              ...prev,
+                              description: nextValue,
+                            }));
+                          }}
+                          className="mt-2 min-h-24 w-full rounded-[18px] border border-[#E5E7EB] bg-white px-4 py-3 text-sm leading-6 text-[#1F2937] outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
+                        />
+                      ) : (
+                        <p className="mt-2 whitespace-pre-wrap text-sm leading-5 text-[#4B5563]">
+                          {currentOrder.description?.trim() ||
+                            "No description provided yet."}
+                        </p>
+                      )}
+                    </div>
+                    <LabelsSection
                       businessId={businessId}
-                      businessSlug={businessSlug}
                       orderId={currentOrder.id}
-                      canManage={canManage}
-                      supabase={supabase}
                       currentUserName={currentUserName}
                       userRole={userRole}
+                      value={labels}
+                      onChange={setLabels}
                     />
-                  </TabsContent>
+                  </div>
+                </TabsContent>
 
-                  <TabsContent value="checklist" className="mt-0">
-                    <OrderChecklist order={{ id: currentOrder.id, business_id: businessId }} supabase={supabase} />
-                  </TabsContent>
-
-                  <TabsContent value="activity" className="mt-0">
-                    <OrderActivitySection
-                      order={currentOrder}
-                      businessId={businessId}
-                      supabase={supabase}
-                      phoneRaw={phoneRaw}
-                      currentUserId={currentUserId}
-                      currentUserName={currentUserName}
-                      userRole={userRole}
-                      actors={actors}
-                      ownerName={actors.find((actor) => actor.kind === "OWNER")?.label ?? null}
-                      managerName={currentOrder.manager_name?.trim() || actors.find((actor) => actor.kind === "MANAGER")?.label || null}
-                      compact
-                    />
-                  </TabsContent>
-
-                  <TabsContent value="notes" className="mt-0">
-                    <OrderNotesPanel
-                      orderId={currentOrder.id}
-                      notes={currentNotes}
-                      canManage={canManage}
-                      onCreateNote={handleCreateNote}
-                      onUpdateNote={handleUpdateNote}
-                      onDeleteNote={handleDeleteNote}
-                    />
-                  </TabsContent>
-
-                  <TabsContent value="files" className="mt-0">
-                    <FilesSection
-                      files={overviewFiles}
-                      loading={isLoadingOverviewFiles}
-                      uploading={isUploadingOverviewFiles}
-                      canUpload={canUploadFiles}
-                      successMessage={overviewUploadSuccess}
-                      onAddFiles={openOverviewFilePicker}
-                    />
-                  </TabsContent>
-                  <input
-                    ref={overviewFileInputRef}
-                    type="file"
-                    multiple
-                    className="hidden"
-                    onChange={(event) => void handleOverviewFilesSelected(event.currentTarget.files)}
+                <TabsContent value="followups" className="mt-0">
+                  <OrderFollowUpsCard
+                    businessId={businessId}
+                    businessSlug={businessSlug}
+                    orderId={currentOrder.id}
+                    canManage={canManage}
+                    supabase={supabase}
+                    currentUserName={currentUserName}
+                    userRole={userRole}
                   />
-                </div>
-              </ScrollArea>
-            </Tabs>
+                </TabsContent>
+
+                <TabsContent value="checklist" className="mt-0">
+                  <OrderChecklist
+                    order={{ id: currentOrder.id, business_id: businessId }}
+                    supabase={supabase}
+                  />
+                </TabsContent>
+
+                <TabsContent value="activity" className="mt-0">
+                  <OrderActivitySection
+                    order={currentOrder}
+                    businessId={businessId}
+                    supabase={supabase}
+                    phoneRaw={phoneRaw}
+                    currentUserId={currentUserId}
+                    currentUserName={currentUserName}
+                    userRole={userRole}
+                    actors={actors}
+                    ownerName={
+                      actors.find((actor) => actor.kind === "OWNER")?.label ??
+                      null
+                    }
+                    managerName={
+                      currentOrder.manager_name?.trim() ||
+                      actors.find((actor) => actor.kind === "MANAGER")?.label ||
+                      null
+                    }
+                    compact
+                  />
+                </TabsContent>
+
+                <TabsContent value="notes" className="mt-0">
+                  <OrderNotesPanel
+                    orderId={currentOrder.id}
+                    notes={currentNotes}
+                    canManage={canManage}
+                    onCreateNote={handleCreateNote}
+                    onUpdateNote={handleUpdateNote}
+                    onDeleteNote={handleDeleteNote}
+                  />
+                </TabsContent>
+
+                <TabsContent value="files" className="mt-0">
+                  <FilesSection
+                    files={overviewFiles}
+                    loading={isLoadingOverviewFiles}
+                    uploading={isUploadingOverviewFiles}
+                    canUpload={canUploadFiles}
+                    successMessage={overviewUploadSuccess}
+                    onAddFiles={openOverviewFilePicker}
+                  />
+                </TabsContent>
+                <input
+                  ref={overviewFileInputRef}
+                  type="file"
+                  multiple
+                  className="hidden"
+                  onChange={(event) =>
+                    void handleOverviewFilesSelected(event.currentTarget.files)
+                  }
+                />
+              </div>
+            </ScrollArea>
+          </Tabs>
         ) : null}
       </SheetContent>
     </Sheet>

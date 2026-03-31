@@ -22,7 +22,11 @@ function formatDateTime(value?: string | null) {
   return d.toLocaleString();
 }
 
-export default function IncomingInvitesPanel({ currentBusinessSlug }: { currentBusinessSlug: string }) {
+export default function IncomingInvitesPanel({
+  currentBusinessSlug,
+}: {
+  currentBusinessSlug: string;
+}) {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<PendingInvite[]>([]);
@@ -122,7 +126,8 @@ export default function IncomingInvitesPanel({ currentBusinessSlug }: { currentB
 
       <div className="mt-3 text-sm font-semibold text-[#1F2937]">{title}</div>
       <div className="mt-1 text-xs leading-5 text-[#6B7280]">
-        Accept access to another business or decline it here, not only from the bell.
+        Accept access to another business or decline it here, not only from the
+        bell.
       </div>
 
       {error ? (
@@ -151,7 +156,9 @@ export default function IncomingInvitesPanel({ currentBusinessSlug }: { currentB
                 <div className="text-sm font-semibold text-[#1F2937]">
                   {invite.business.name || invite.business.slug}
                 </div>
-                <div className="mt-1 text-xs text-[#6B7280]">/{invite.business.slug}</div>
+                <div className="mt-1 text-xs text-[#6B7280]">
+                  /{invite.business.slug}
+                </div>
                 <div className="mt-2 text-xs text-[#9CA3AF]">
                   Invited: {formatDateTime(invite.created_at)}
                 </div>
@@ -161,9 +168,13 @@ export default function IncomingInvitesPanel({ currentBusinessSlug }: { currentB
                     type="button"
                     disabled={busy}
                     onClick={() => void acceptInvite(invite.id)}
-                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#6366F1] px-3 py-2 text-sm font-semibold text-white hover:bg-[#5558E6] disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-[var(--brand-600)] px-3 py-2 text-sm font-semibold text-white hover:bg-[var(--brand-700)] disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                    {busy ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Check className="h-4 w-4" />
+                    )}
                     Accept
                   </button>
 
@@ -185,4 +196,3 @@ export default function IncomingInvitesPanel({ currentBusinessSlug }: { currentB
     </section>
   );
 }
-

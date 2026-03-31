@@ -131,7 +131,9 @@ function getManagerTriggerLabel(actor: string, actors: TeamActor[]) {
   if (actor === "ME") return "Me";
   if (actor === "UNASSIGNED") return "Unassigned";
   if (actor.startsWith("user:")) {
-    return actors.find((member) => `user:${member.id}` === actor)?.label ?? "Manager";
+    return (
+      actors.find((member) => `user:${member.id}` === actor)?.label ?? "Manager"
+    );
   }
   return "All managers";
 }
@@ -180,7 +182,8 @@ export default function DesktopSidebarFilters({
   layoutMode = "list",
 }: Props) {
   const formRef = useRef<HTMLFormElement | null>(null);
-  const { customStatuses, statuses: businessStatuses } = useBusinessStatuses(businessId);
+  const { customStatuses, statuses: businessStatuses } =
+    useBusinessStatuses(businessId);
   const [loadedActors, setLoadedActors] = useState<TeamActor[]>(actors);
   const [rangeValue, setRangeValue] = useState<DashboardRange>(range);
   const [customStart, setCustomStart] = useState(startDate ?? "");
@@ -194,7 +197,8 @@ export default function DesktopSidebarFilters({
   const [actorMenuOpen, setActorMenuOpen] = useState(false);
   const [sortMenuOpen, setSortMenuOpen] = useState(false);
   const showCustomRange = rangeValue === "custom";
-  const customRangeReady = !showCustomRange || (Boolean(customStart) && Boolean(customEnd));
+  const customRangeReady =
+    !showCustomRange || (Boolean(customStart) && Boolean(customEnd));
   const statusOptions = useMemo(
     () => [
       ...businessStatuses.map((status) => ({
@@ -217,22 +221,32 @@ export default function DesktopSidebarFilters({
     [businessStatuses],
   );
   const baseStatusValues = useMemo(() => {
-    if (statusMode === "all") return statusOptions.map((option) => option.value);
+    if (statusMode === "all")
+      return statusOptions.map((option) => option.value);
     if (statuses.length > 0) return statuses;
     return activeStatusOptions.slice();
   }, [activeStatusOptions, statusMode, statusOptions, statuses]);
   const selectedStatusValues = statusTouched ? statusValues : baseStatusValues;
   const shouldKeepAllStatuses =
-    statusMode === "all" || selectedStatusValues.length === 0 || selectedStatusValues.length === statusOptions.length;
+    statusMode === "all" ||
+    selectedStatusValues.length === 0 ||
+    selectedStatusValues.length === statusOptions.length;
   const shouldKeepDefaultStatuses =
     selectedStatusValues.length === activeStatusOptions.length &&
-    activeStatusOptions.every((status) => selectedStatusValues.includes(status));
+    activeStatusOptions.every((status) =>
+      selectedStatusValues.includes(status),
+    );
 
-  const effectiveActors = useMemo(() => mergeActors(actors, loadedActors), [actors, loadedActors]);
+  const effectiveActors = useMemo(
+    () => mergeActors(actors, loadedActors),
+    [actors, loadedActors],
+  );
   const actorOptions = useMemo(
     () =>
       effectiveActors
-        .filter((actorOption) => !currentUserId || actorOption.id !== currentUserId)
+        .filter(
+          (actorOption) => !currentUserId || actorOption.id !== currentUserId,
+        )
         .slice()
         .sort((a, b) => a.label.localeCompare(b.label)),
     [currentUserId, effectiveActors],
@@ -249,14 +263,16 @@ export default function DesktopSidebarFilters({
       : "ALL";
 
   const inputCls =
-    "h-11 w-full rounded-lg border border-[#E5E7EB] bg-white px-4 text-sm font-medium text-[#374151] outline-none transition placeholder:text-[#9CA3AF] focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15";
+    "h-11 w-full rounded-lg border border-[#E5E7EB] bg-white px-4 text-sm font-medium text-[#374151] outline-none transition placeholder:text-[#9CA3AF] focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15";
 
   const toggleStatus = (status: SidebarStatus) => {
     if (!statusTouched) setStatusValues(baseStatusValues);
     setStatusTouched(true);
     setStatusValues((current) =>
       (statusTouched ? current : baseStatusValues).includes(status)
-        ? (statusTouched ? current : baseStatusValues).filter((value) => value !== status)
+        ? (statusTouched ? current : baseStatusValues).filter(
+            (value) => value !== status,
+          )
         : [...(statusTouched ? current : baseStatusValues), status],
     );
   };
@@ -268,10 +284,13 @@ export default function DesktopSidebarFilters({
 
     async function loadActors() {
       try {
-        const res = await fetch(`/api/manager/status?business_id=${encodeURIComponent(businessId)}`, {
-          credentials: "same-origin",
-          cache: "no-store",
-        });
+        const res = await fetch(
+          `/api/manager/status?business_id=${encodeURIComponent(businessId)}`,
+          {
+            credentials: "same-origin",
+            cache: "no-store",
+          },
+        );
         if (!res.ok) return;
 
         const data = (await res.json()) as ManagerStatusResponse;
@@ -349,15 +368,27 @@ export default function DesktopSidebarFilters({
         <input type="hidden" name="srange" value={summaryRange} />
         <input type="hidden" name="page" value="1" />
         <input type="hidden" name="sort" value={sortValue} />
-        {layoutMode === "kanban" ? <input type="hidden" name="view" value="kanban" /> : null}
+        {layoutMode === "kanban" ? (
+          <input type="hidden" name="view" value="kanban" />
+        ) : null}
         <input type="hidden" name="range" value={rangeValue} />
-        {shouldKeepAllStatuses ? <input type="hidden" name="statusMode" value="all" /> : null}
-        {showCustomRange && customStart ? <input type="hidden" name="start" value={customStart} /> : null}
-        {showCustomRange && customEnd ? <input type="hidden" name="end" value={customEnd} /> : null}
-        {normalizedActorValue !== "ALL" ? <input type="hidden" name="actor" value={normalizedActorValue} /> : null}
-        {!shouldKeepAllStatuses && !shouldKeepDefaultStatuses && selectedStatusValues.map((status) => (
-          <input key={status} type="hidden" name="status" value={status} />
-        ))}
+        {shouldKeepAllStatuses ? (
+          <input type="hidden" name="statusMode" value="all" />
+        ) : null}
+        {showCustomRange && customStart ? (
+          <input type="hidden" name="start" value={customStart} />
+        ) : null}
+        {showCustomRange && customEnd ? (
+          <input type="hidden" name="end" value={customEnd} />
+        ) : null}
+        {normalizedActorValue !== "ALL" ? (
+          <input type="hidden" name="actor" value={normalizedActorValue} />
+        ) : null}
+        {!shouldKeepAllStatuses &&
+          !shouldKeepDefaultStatuses &&
+          selectedStatusValues.map((status) => (
+            <input key={status} type="hidden" name="status" value={status} />
+          ))}
 
         <label className="block">
           <span className="mb-1.5 block text-xs font-medium text-[#6B7280]">
@@ -387,125 +418,154 @@ export default function DesktopSidebarFilters({
           <span className="mb-1.5 block text-xs font-medium text-[#6B7280]">
             Status
           </span>
-          <DropdownMenu modal={false} open={statusMenuOpen} onOpenChange={setStatusMenuOpen}>
+          <DropdownMenu
+            modal={false}
+            open={statusMenuOpen}
+            onOpenChange={setStatusMenuOpen}
+          >
             <DropdownMenuTrigger asChild>
-            <button
-              type="button"
-              className="inline-flex h-11 w-full items-center justify-between rounded-lg border border-[#E5E7EB] bg-white px-4 text-sm font-medium text-[#374151] outline-none transition hover:border-[#C7D2FE] focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15"
-            >
-              <span className="truncate">
-                {getStatusTriggerLabel(selectedStatusValues, activeStatusOptions, inactiveStatusOptions)}
-              </span>
-              <ChevronDown className="ml-3 h-4 w-4 shrink-0 text-[#9CA3AF]" />
-            </button>
+              <button
+                type="button"
+                className="inline-flex h-11 w-full items-center justify-between rounded-lg border border-[#E5E7EB] bg-white px-4 text-sm font-medium text-[#374151] outline-none transition hover:border-[var(--brand-200)] focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
+              >
+                <span className="truncate">
+                  {getStatusTriggerLabel(
+                    selectedStatusValues,
+                    activeStatusOptions,
+                    inactiveStatusOptions,
+                  )}
+                </span>
+                <ChevronDown className="ml-3 h-4 w-4 shrink-0 text-[#9CA3AF]" />
+              </button>
             </DropdownMenuTrigger>
             <DropdownMenuPortal>
-            <DropdownMenuContent
-              align="start"
-              side="top"
-              sideOffset={8}
-              className="z-[140] w-56 rounded-xl border-[#E5E7EB] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
-              onCloseAutoFocus={(event) => event.preventDefault()}
-            >
-              <div className="flex items-center justify-between gap-2 px-2 pb-1 pt-1">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setStatusTouched(true);
-                    setStatusValues(statusOptions.map((option) => option.value));
-                  }}
-                  className="text-[11px] font-semibold text-[#374151] transition hover:text-[#1F2937]"
-                >
-                  Select all
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setStatusTouched(true);
-                    setStatusValues([]);
-                  }}
-                  className="text-[11px] font-semibold text-[#6B7280] transition hover:text-[#1F2937]"
-                >
-                  Clear all
-                </button>
-              </div>
-              <DropdownMenuSeparator />
-              <div className="px-2 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
-                Active
-              </div>
-              {activeStatusOptions.map((statusValue) => {
-                const option = statusOptions.find((item) => item.value === statusValue);
-                if (!option) return null;
-                const tone =
-                  option.value === "OVERDUE"
-                    ? { dot: "#DC2626", color: "#DC2626", selectedBackground: "#FEF2F2" }
-                    : getStatusTone(option.value, customStatuses);
-
-                return (
-                  <DropdownMenuCheckboxItem
-                    key={option.value}
-                    checked={selectedStatusValues.includes(option.value)}
-                    className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#374151]"
-                    onSelect={(event) => event.preventDefault()}
-                    onCheckedChange={() => toggleStatus(option.value)}
-                    style={
-                      selectedStatusValues.includes(option.value)
-                        ? { background: tone.selectedBackground, color: tone.color }
-                        : undefined
-                    }
+              <DropdownMenuContent
+                align="start"
+                side="top"
+                sideOffset={8}
+                className="z-[140] w-56 rounded-xl border-[#E5E7EB] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
+                onCloseAutoFocus={(event) => event.preventDefault()}
+              >
+                <div className="flex items-center justify-between gap-2 px-2 pb-1 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStatusTouched(true);
+                      setStatusValues(
+                        statusOptions.map((option) => option.value),
+                      );
+                    }}
+                    className="text-[11px] font-semibold text-[#374151] transition hover:text-[#1F2937]"
                   >
-                    <span className="inline-flex items-center gap-2">
-                      <span
-                        aria-hidden="true"
-                        className="h-[6px] w-[6px] rounded-full"
-                        style={{ background: tone.dot }}
-                      />
-                      {option.label}
-                    </span>
-                  </DropdownMenuCheckboxItem>
-                );
-              })}
-              <DropdownMenuSeparator />
-              <div className="px-2 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
-                Inactive
-              </div>
-              {inactiveStatusOptions.map((statusValue) => {
-                const option = statusOptions.find((item) => item.value === statusValue);
-                if (!option) return null;
-                const tone =
-                  option.value === "OVERDUE"
-                    ? { dot: "#DC2626", color: "#DC2626", selectedBackground: "#FEF2F2" }
-                    : getStatusTone(option.value, customStatuses);
-
-                return (
-                  <DropdownMenuCheckboxItem
-                    key={option.value}
-                    checked={selectedStatusValues.includes(option.value)}
-                    className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#374151]"
-                    onSelect={(event) => event.preventDefault()}
-                    onCheckedChange={() => toggleStatus(option.value)}
-                    style={
-                      selectedStatusValues.includes(option.value)
-                        ? { background: tone.selectedBackground, color: tone.color }
-                        : undefined
-                    }
+                    Select all
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStatusTouched(true);
+                      setStatusValues([]);
+                    }}
+                    className="text-[11px] font-semibold text-[#6B7280] transition hover:text-[#1F2937]"
                   >
-                    <span className="inline-flex items-center gap-2">
-                      <span
-                        aria-hidden="true"
-                        className="h-[6px] w-[6px] rounded-full"
-                        style={{ background: tone.dot }}
-                      />
-                      {option.label}
-                    </span>
-                  </DropdownMenuCheckboxItem>
-                );
-              })}
-            </DropdownMenuContent>
+                    Clear all
+                  </button>
+                </div>
+                <DropdownMenuSeparator />
+                <div className="px-2 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
+                  Active
+                </div>
+                {activeStatusOptions.map((statusValue) => {
+                  const option = statusOptions.find(
+                    (item) => item.value === statusValue,
+                  );
+                  if (!option) return null;
+                  const tone =
+                    option.value === "OVERDUE"
+                      ? {
+                          dot: "#DC2626",
+                          color: "#DC2626",
+                          selectedBackground: "#FEF2F2",
+                        }
+                      : getStatusTone(option.value, customStatuses);
+
+                  return (
+                    <DropdownMenuCheckboxItem
+                      key={option.value}
+                      checked={selectedStatusValues.includes(option.value)}
+                      className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#374151]"
+                      onSelect={(event) => event.preventDefault()}
+                      onCheckedChange={() => toggleStatus(option.value)}
+                      style={
+                        selectedStatusValues.includes(option.value)
+                          ? {
+                              background: tone.selectedBackground,
+                              color: tone.color,
+                            }
+                          : undefined
+                      }
+                    >
+                      <span className="inline-flex items-center gap-2">
+                        <span
+                          aria-hidden="true"
+                          className="h-[6px] w-[6px] rounded-full"
+                          style={{ background: tone.dot }}
+                        />
+                        {option.label}
+                      </span>
+                    </DropdownMenuCheckboxItem>
+                  );
+                })}
+                <DropdownMenuSeparator />
+                <div className="px-2 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
+                  Inactive
+                </div>
+                {inactiveStatusOptions.map((statusValue) => {
+                  const option = statusOptions.find(
+                    (item) => item.value === statusValue,
+                  );
+                  if (!option) return null;
+                  const tone =
+                    option.value === "OVERDUE"
+                      ? {
+                          dot: "#DC2626",
+                          color: "#DC2626",
+                          selectedBackground: "#FEF2F2",
+                        }
+                      : getStatusTone(option.value, customStatuses);
+
+                  return (
+                    <DropdownMenuCheckboxItem
+                      key={option.value}
+                      checked={selectedStatusValues.includes(option.value)}
+                      className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#374151]"
+                      onSelect={(event) => event.preventDefault()}
+                      onCheckedChange={() => toggleStatus(option.value)}
+                      style={
+                        selectedStatusValues.includes(option.value)
+                          ? {
+                              background: tone.selectedBackground,
+                              color: tone.color,
+                            }
+                          : undefined
+                      }
+                    >
+                      <span className="inline-flex items-center gap-2">
+                        <span
+                          aria-hidden="true"
+                          className="h-[6px] w-[6px] rounded-full"
+                          style={{ background: tone.dot }}
+                        />
+                        {option.label}
+                      </span>
+                    </DropdownMenuCheckboxItem>
+                  );
+                })}
+              </DropdownMenuContent>
             </DropdownMenuPortal>
           </DropdownMenu>
           <div className="mt-1.5 text-[11px] font-medium text-[#9CA3AF]">
-            Choose one or several statuses. If none selected, all statuses are shown.
+            Choose one or several statuses. If none selected, all statuses are
+            shown.
           </div>
         </label>
 
@@ -513,46 +573,52 @@ export default function DesktopSidebarFilters({
           <span className="mb-1.5 block text-xs font-medium text-[#6B7280]">
             Period
           </span>
-          <DropdownMenu modal={false} open={rangeMenuOpen} onOpenChange={setRangeMenuOpen}>
+          <DropdownMenu
+            modal={false}
+            open={rangeMenuOpen}
+            onOpenChange={setRangeMenuOpen}
+          >
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="inline-flex h-11 w-full items-center justify-between rounded-xl border border-[#E5E7EB] bg-white px-4 text-sm font-medium text-[#374151] outline-none transition hover:border-[#C7D2FE] focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15"
+                className="inline-flex h-11 w-full items-center justify-between rounded-xl border border-[#E5E7EB] bg-white px-4 text-sm font-medium text-[#374151] outline-none transition hover:border-[var(--brand-200)] focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
               >
                 <span className="truncate">
-                  {DASHBOARD_RANGE_OPTIONS.find((option) => option.value === rangeValue)?.label ?? "All time"}
+                  {DASHBOARD_RANGE_OPTIONS.find(
+                    (option) => option.value === rangeValue,
+                  )?.label ?? "All time"}
                 </span>
                 <ChevronDown className="ml-3 h-4 w-4 shrink-0 text-[#9CA3AF]" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuPortal>
-            <DropdownMenuContent
-              align="start"
-              sideOffset={8}
-              className="z-[140] w-56 rounded-xl border-[#E5E7EB] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
-              onCloseAutoFocus={(event) => event.preventDefault()}
-            >
-              <DropdownMenuRadioGroup value={rangeValue}>
-                {DASHBOARD_RANGE_OPTIONS.map((option) => (
-                  <DropdownMenuRadioItem
-                    key={option.value}
-                    value={option.value}
-                    className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#374151] data-[state=checked]:bg-[#EEF2FF] data-[state=checked]:font-semibold data-[state=checked]:text-[#6366F1]"
-                    onSelect={() => {
-                      setRangeValue(option.value);
-                      if (option.value !== "custom") {
-                        setCustomStart("");
-                        setCustomEnd("");
-                        setRangeMenuOpen(false);
-                        setTimeout(submitNow, 0);
-                      }
-                    }}
-                  >
-                    {option.label}
-                  </DropdownMenuRadioItem>
-                ))}
-              </DropdownMenuRadioGroup>
-            </DropdownMenuContent>
+              <DropdownMenuContent
+                align="start"
+                sideOffset={8}
+                className="z-[140] w-56 rounded-xl border-[#E5E7EB] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
+                onCloseAutoFocus={(event) => event.preventDefault()}
+              >
+                <DropdownMenuRadioGroup value={rangeValue}>
+                  {DASHBOARD_RANGE_OPTIONS.map((option) => (
+                    <DropdownMenuRadioItem
+                      key={option.value}
+                      value={option.value}
+                      className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#374151] data-[state=checked]:bg-[var(--brand-50)] data-[state=checked]:font-semibold data-[state=checked]:text-[var(--brand-600)]"
+                      onSelect={() => {
+                        setRangeValue(option.value);
+                        if (option.value !== "custom") {
+                          setCustomStart("");
+                          setCustomEnd("");
+                          setRangeMenuOpen(false);
+                          setTimeout(submitNow, 0);
+                        }
+                      }}
+                    >
+                      {option.label}
+                    </DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
+              </DropdownMenuContent>
             </DropdownMenuPortal>
           </DropdownMenu>
         </label>
@@ -560,7 +626,9 @@ export default function DesktopSidebarFilters({
         {showCustomRange ? (
           <div className="grid grid-cols-2 gap-2">
             <label className="block">
-              <span className="mb-1.5 block text-xs font-medium text-[#6B7280]">Start date</span>
+              <span className="mb-1.5 block text-xs font-medium text-[#6B7280]">
+                Start date
+              </span>
               <input
                 type="date"
                 value={customStart}
@@ -569,7 +637,9 @@ export default function DesktopSidebarFilters({
               />
             </label>
             <label className="block">
-              <span className="mb-1.5 block text-xs font-medium text-[#6B7280]">End date</span>
+              <span className="mb-1.5 block text-xs font-medium text-[#6B7280]">
+                End date
+              </span>
               <input
                 type="date"
                 value={customEnd}
@@ -584,56 +654,77 @@ export default function DesktopSidebarFilters({
           <span className="mb-1.5 block text-xs font-medium text-[#6B7280]">
             Team
           </span>
-          <DropdownMenu modal={false} open={actorMenuOpen} onOpenChange={setActorMenuOpen}>
+          <DropdownMenu
+            modal={false}
+            open={actorMenuOpen}
+            onOpenChange={setActorMenuOpen}
+          >
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="inline-flex h-11 w-full items-center justify-between rounded-xl border border-[#E5E7EB] bg-white px-4 text-sm font-medium text-[#374151] outline-none transition hover:border-[#C7D2FE] focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15"
+                className="inline-flex h-11 w-full items-center justify-between rounded-xl border border-[#E5E7EB] bg-white px-4 text-sm font-medium text-[#374151] outline-none transition hover:border-[var(--brand-200)] focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
               >
-                <span className="truncate">{getManagerTriggerLabel(normalizedActorValue, actorOptions)}</span>
+                <span className="truncate">
+                  {getManagerTriggerLabel(normalizedActorValue, actorOptions)}
+                </span>
                 <ChevronDown className="ml-3 h-4 w-4 shrink-0 text-[#9CA3AF]" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuPortal>
-            <DropdownMenuContent
-              align="start"
-              sideOffset={8}
-              className="z-[140] w-64 rounded-xl border-[#E5E7EB] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
-              onCloseAutoFocus={(event) => event.preventDefault()}
-            >
-              <DropdownMenuRadioGroup value={normalizedActorValue} className="max-h-[320px] overflow-y-auto pr-1">
-                {([
-                  { value: "ALL", label: "All managers", avatar: false },
-                  ...(currentUserId ? [{ value: "ME", label: "Me", avatar: false }] : []),
-                  { value: "UNASSIGNED", label: "Unassigned", avatar: false },
-                  ...actorOptions.map((actorOption) => ({
-                    value: `user:${actorOption.id}`,
-                    label: actorOption.label,
-                    avatar: true,
-                  })),
-                ] as Array<{ value: string; label: string; avatar: boolean }>).map((option) => (
-                  <DropdownMenuRadioItem
-                    key={option.value}
-                    value={option.value}
-                    className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#374151] data-[state=checked]:bg-[#EEF2FF] data-[state=checked]:font-semibold data-[state=checked]:text-[#6366F1]"
-                    onSelect={() => {
-                      setActorValue(option.value);
-                      setActorMenuOpen(false);
-                      setTimeout(submitNow, 0);
-                    }}
-                  >
-                    {option.avatar ? (
-                      <div className="flex items-center gap-3">
-                        <ActorAvatar label={option.label} />
-                        <span className="truncate">{option.label}</span>
-                      </div>
-                    ) : (
-                      option.label
-                    )}
-                  </DropdownMenuRadioItem>
-                ))}
-              </DropdownMenuRadioGroup>
-            </DropdownMenuContent>
+              <DropdownMenuContent
+                align="start"
+                sideOffset={8}
+                className="z-[140] w-64 rounded-xl border-[#E5E7EB] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
+                onCloseAutoFocus={(event) => event.preventDefault()}
+              >
+                <DropdownMenuRadioGroup
+                  value={normalizedActorValue}
+                  className="max-h-[320px] overflow-y-auto pr-1"
+                >
+                  {(
+                    [
+                      { value: "ALL", label: "All managers", avatar: false },
+                      ...(currentUserId
+                        ? [{ value: "ME", label: "Me", avatar: false }]
+                        : []),
+                      {
+                        value: "UNASSIGNED",
+                        label: "Unassigned",
+                        avatar: false,
+                      },
+                      ...actorOptions.map((actorOption) => ({
+                        value: `user:${actorOption.id}`,
+                        label: actorOption.label,
+                        avatar: true,
+                      })),
+                    ] as Array<{
+                      value: string;
+                      label: string;
+                      avatar: boolean;
+                    }>
+                  ).map((option) => (
+                    <DropdownMenuRadioItem
+                      key={option.value}
+                      value={option.value}
+                      className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#374151] data-[state=checked]:bg-[var(--brand-50)] data-[state=checked]:font-semibold data-[state=checked]:text-[var(--brand-600)]"
+                      onSelect={() => {
+                        setActorValue(option.value);
+                        setActorMenuOpen(false);
+                        setTimeout(submitNow, 0);
+                      }}
+                    >
+                      {option.avatar ? (
+                        <div className="flex items-center gap-3">
+                          <ActorAvatar label={option.label} />
+                          <span className="truncate">{option.label}</span>
+                        </div>
+                      ) : (
+                        option.label
+                      )}
+                    </DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
+              </DropdownMenuContent>
             </DropdownMenuPortal>
           </DropdownMenu>
         </label>
@@ -642,14 +733,19 @@ export default function DesktopSidebarFilters({
           <span className="mb-1.5 block text-xs font-medium text-[#6B7280]">
             Sort
           </span>
-          <DropdownMenu modal={false} open={sortMenuOpen} onOpenChange={setSortMenuOpen}>
+          <DropdownMenu
+            modal={false}
+            open={sortMenuOpen}
+            onOpenChange={setSortMenuOpen}
+          >
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="inline-flex h-11 w-full items-center justify-between rounded-xl border border-[#E5E7EB] bg-white px-4 text-sm font-medium text-[#374151] outline-none transition hover:border-[#C7D2FE] focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15"
+                className="inline-flex h-11 w-full items-center justify-between rounded-xl border border-[#E5E7EB] bg-white px-4 text-sm font-medium text-[#374151] outline-none transition hover:border-[var(--brand-200)] focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
               >
                 <span className="truncate">
-                  {SORT_OPTIONS.find((option) => option.value === sortValue)?.label ?? "Default order"}
+                  {SORT_OPTIONS.find((option) => option.value === sortValue)
+                    ?.label ?? "Default order"}
                 </span>
                 <ChevronDown className="ml-3 h-4 w-4 shrink-0 text-[#9CA3AF]" />
               </button>
@@ -666,7 +762,7 @@ export default function DesktopSidebarFilters({
                     <DropdownMenuRadioItem
                       key={option.value}
                       value={option.value}
-                      className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#374151] data-[state=checked]:bg-[#EEF2FF] data-[state=checked]:font-semibold data-[state=checked]:text-[#6366F1]"
+                      className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#374151] data-[state=checked]:bg-[var(--brand-50)] data-[state=checked]:font-semibold data-[state=checked]:text-[var(--brand-600)]"
                       onSelect={() => {
                         setSortValue(option.value);
                         setSortMenuOpen(false);

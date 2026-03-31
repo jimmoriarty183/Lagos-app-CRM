@@ -1,7 +1,17 @@
 ﻿"use client";
 
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, ArrowRight, Check, GripVertical, PencilLine, Plus, Save, Trash2, X } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  GripVertical,
+  PencilLine,
+  Plus,
+  Save,
+  Trash2,
+  X,
+} from "lucide-react";
 import {
   DEFAULT_STATUS_DEFINITIONS,
   getBusinessStatusesEventName,
@@ -34,10 +44,12 @@ function normalizeDraft(items: BusinessStatusDefinition[]) {
   const activeWorking = active.filter((item) => !isTerminalStatus(item.value));
   const activeTerminal = active.filter((item) => isTerminalStatus(item.value));
   const inactive = next.filter((item) => item.active === false);
-  return [...activeWorking, ...activeTerminal, ...inactive].map((item, index) => ({
-    ...item,
-    sortOrder: index,
-  }));
+  return [...activeWorking, ...activeTerminal, ...inactive].map(
+    (item, index) => ({
+      ...item,
+      sortOrder: index,
+    }),
+  );
 }
 
 function colorButtonClass(selected: boolean) {
@@ -49,14 +61,20 @@ function colorButtonClass(selected: boolean) {
   ].join(" ");
 }
 
-export default function BusinessStatusesPanel({ businessId, canManageStatuses }: Props) {
+export default function BusinessStatusesPanel({
+  businessId,
+  canManageStatuses,
+}: Props) {
   const { statuses } = useBusinessStatuses(businessId);
-  const [draftStatuses, setDraftStatuses] = useState<BusinessStatusDefinition[]>(statuses);
+  const [draftStatuses, setDraftStatuses] =
+    useState<BusinessStatusDefinition[]>(statuses);
   const [draftLabel, setDraftLabel] = useState("");
   const [draftColor, setDraftColor] = useState<string>("blue");
   const [customColor, setCustomColor] = useState("#2563EB");
   const [editingValue, setEditingValue] = useState<string | null>(null);
-  const [selectedWorkflowValue, setSelectedWorkflowValue] = useState<string | null>(null);
+  const [selectedWorkflowValue, setSelectedWorkflowValue] = useState<
+    string | null
+  >(null);
   const [draggedValue, setDraggedValue] = useState<string | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [dragPreview, setDragPreview] = useState<{
@@ -74,10 +92,12 @@ export default function BusinessStatusesPanel({ businessId, canManageStatuses }:
   const saveInProgressRef = useRef(false);
   const workflowItemRefs = useRef(new Map<string, HTMLDivElement>());
   const workflowStatusesRef = useRef<BusinessStatusDefinition[]>([]);
-  const moveWorkflowStatusToIndexRef = useRef<(value: string, targetIndex: number) => void>(() => {});
-  const getClosestDropIndexRef = useRef<(clientX: number, clientY: number, draggedValue: string) => number>(
-    () => 0,
-  );
+  const moveWorkflowStatusToIndexRef = useRef<
+    (value: string, targetIndex: number) => void
+  >(() => {});
+  const getClosestDropIndexRef = useRef<
+    (clientX: number, clientY: number, draggedValue: string) => number
+  >(() => 0);
   const pointerDragRef = useRef<{
     value: string;
     startX: number;
@@ -124,7 +144,9 @@ export default function BusinessStatusesPanel({ businessId, canManageStatuses }:
       const currentUrl = new URL(window.location.href);
       if (nextUrl.href === currentUrl.href) return;
 
-      const shouldLeave = window.confirm("You have unsaved status changes. Leave this page without saving?");
+      const shouldLeave = window.confirm(
+        "You have unsaved status changes. Leave this page without saving?",
+      );
       if (!shouldLeave) {
         event.preventDefault();
         event.stopPropagation();
@@ -133,9 +155,15 @@ export default function BusinessStatusesPanel({ businessId, canManageStatuses }:
 
     const handlePopState = () => {
       if (saveInProgressRef.current) return;
-      const shouldLeave = window.confirm("You have unsaved status changes. Leave this page without saving?");
+      const shouldLeave = window.confirm(
+        "You have unsaved status changes. Leave this page without saving?",
+      );
       if (!shouldLeave) {
-        window.history.pushState({ statusesDraft: true }, "", window.location.href);
+        window.history.pushState(
+          { statusesDraft: true },
+          "",
+          window.location.href,
+        );
       }
     };
 
@@ -150,19 +178,35 @@ export default function BusinessStatusesPanel({ businessId, canManageStatuses }:
     };
   }, [isDirty]);
 
-  const generatedValue = useMemo(() => sanitizeStatusValue(draftLabel), [draftLabel]);
-  const workflowStatuses = useMemo(() => getWorkflowStatuses(draftStatuses), [draftStatuses]);
-  const inactiveStatuses = useMemo(() => getInactiveWorkflowStatuses(draftStatuses), [draftStatuses]);
+  const generatedValue = useMemo(
+    () => sanitizeStatusValue(draftLabel),
+    [draftLabel],
+  );
+  const workflowStatuses = useMemo(
+    () => getWorkflowStatuses(draftStatuses),
+    [draftStatuses],
+  );
+  const inactiveStatuses = useMemo(
+    () => getInactiveWorkflowStatuses(draftStatuses),
+    [draftStatuses],
+  );
   const customStatuses = useMemo(
     () => draftStatuses.filter((status) => !status.builtIn),
     [draftStatuses],
   );
-  const selectedWorkflowIndex = workflowStatuses.findIndex((status) => status.value === selectedWorkflowValue);
-  const selectedWorkflowStatus = workflowStatuses[selectedWorkflowIndex] ?? null;
+  const selectedWorkflowIndex = workflowStatuses.findIndex(
+    (status) => status.value === selectedWorkflowValue,
+  );
+  const selectedWorkflowStatus =
+    workflowStatuses[selectedWorkflowIndex] ?? null;
   const isEditing = Boolean(editingValue);
   const canSubmit = draftLabel.trim().length > 0 && canManageStatuses;
-  const effectiveDraftColor = normalizeStatusColor(draftColor === "custom" ? customColor : draftColor);
-  const customColorTone = getStatusColorOption(normalizeStatusColor(customColor));
+  const effectiveDraftColor = normalizeStatusColor(
+    draftColor === "custom" ? customColor : draftColor,
+  );
+  const customColorTone = getStatusColorOption(
+    normalizeStatusColor(customColor),
+  );
 
   useEffect(() => {
     workflowStatusesRef.current = workflowStatuses;
@@ -173,7 +217,11 @@ export default function BusinessStatusesPanel({ businessId, canManageStatuses }:
     if (error) setError(null);
   };
 
-  const replaceDraftStatuses = (updater: (current: BusinessStatusDefinition[]) => BusinessStatusDefinition[]) => {
+  const replaceDraftStatuses = (
+    updater: (
+      current: BusinessStatusDefinition[],
+    ) => BusinessStatusDefinition[],
+  ) => {
     setDraftStatuses((current) => normalizeDraft(updater(current)));
     markDirty();
   };
@@ -191,7 +239,9 @@ export default function BusinessStatusesPanel({ businessId, canManageStatuses }:
     setEditingValue(status.value);
     setDraftLabel(status.label);
     setDraftColor(normalizedColor.startsWith("#") ? "custom" : normalizedColor);
-    setCustomColor(normalizedColor.startsWith("#") ? normalizedColor : "#2563EB");
+    setCustomColor(
+      normalizedColor.startsWith("#") ? normalizedColor : "#2563EB",
+    );
     if (error) setError(null);
   };
 
@@ -257,7 +307,9 @@ export default function BusinessStatusesPanel({ businessId, canManageStatuses }:
     );
     if (!confirmed) return;
 
-    replaceDraftStatuses((current) => current.filter((status) => status.value !== value));
+    replaceDraftStatuses((current) =>
+      current.filter((status) => status.value !== value),
+    );
     if (selectedWorkflowValue === value) {
       setSelectedWorkflowValue(null);
     }
@@ -268,7 +320,10 @@ export default function BusinessStatusesPanel({ businessId, canManageStatuses }:
 
   const moveWorkflowStatus = (direction: -1 | 1) => {
     if (selectedWorkflowIndex < 0) return;
-    moveWorkflowStatusToIndex(workflowStatuses[selectedWorkflowIndex].value, selectedWorkflowIndex + direction);
+    moveWorkflowStatusToIndex(
+      workflowStatuses[selectedWorkflowIndex].value,
+      selectedWorkflowIndex + direction,
+    );
   };
 
   const clampWorkflowTargetIndex = (
@@ -276,11 +331,17 @@ export default function BusinessStatusesPanel({ businessId, canManageStatuses }:
     targetIndex: number,
     activeStatuses: readonly BusinessStatusDefinition[],
   ) => {
-    const terminalStart = activeStatuses.findIndex((status) => isTerminalStatus(status.value));
-    const boundaryIndex = terminalStart === -1 ? activeStatuses.length : terminalStart;
+    const terminalStart = activeStatuses.findIndex((status) =>
+      isTerminalStatus(status.value),
+    );
+    const boundaryIndex =
+      terminalStart === -1 ? activeStatuses.length : terminalStart;
 
     if (isTerminalStatus(value)) {
-      return Math.max(boundaryIndex, Math.min(targetIndex, activeStatuses.length));
+      return Math.max(
+        boundaryIndex,
+        Math.min(targetIndex, activeStatuses.length),
+      );
     }
 
     return Math.max(0, Math.min(targetIndex, boundaryIndex));
@@ -297,8 +358,13 @@ export default function BusinessStatusesPanel({ businessId, canManageStatuses }:
       const [moved] = next.splice(currentIndex, 1);
       if (!moved) return current;
 
-      const clampedTarget = clampWorkflowTargetIndex(value, targetIndex, active);
-      const adjustedTarget = currentIndex < clampedTarget ? clampedTarget - 1 : clampedTarget;
+      const clampedTarget = clampWorkflowTargetIndex(
+        value,
+        targetIndex,
+        active,
+      );
+      const adjustedTarget =
+        currentIndex < clampedTarget ? clampedTarget - 1 : clampedTarget;
       next.splice(Math.max(0, Math.min(adjustedTarget, next.length)), 0, moved);
       return [...next, ...inactive];
     });
@@ -313,17 +379,26 @@ export default function BusinessStatusesPanel({ businessId, canManageStatuses }:
     workflowItemRefs.current.delete(value);
   };
 
-  const getClosestDropIndex = (clientX: number, clientY: number, draggedWorkflowValue: string) => {
+  const getClosestDropIndex = (
+    clientX: number,
+    clientY: number,
+    draggedWorkflowValue: string,
+  ) => {
     const active = workflowStatusesRef.current;
-    const visibleStatuses = active.filter((status) => status.value !== draggedWorkflowValue);
+    const visibleStatuses = active.filter(
+      (status) => status.value !== draggedWorkflowValue,
+    );
     if (visibleStatuses.length === 0) return 0;
 
     const hoveredElement = document.elementFromPoint(clientX, clientY);
-    const hoveredStatus = hoveredElement instanceof HTMLElement
-      ? hoveredElement.closest<HTMLElement>("[data-workflow-status]")
-      : null;
+    const hoveredStatus =
+      hoveredElement instanceof HTMLElement
+        ? hoveredElement.closest<HTMLElement>("[data-workflow-status]")
+        : null;
     const hoveredValue = hoveredStatus?.dataset.workflowStatus;
-    const hoveredIndex = visibleStatuses.findIndex((status) => status.value === hoveredValue);
+    const hoveredIndex = visibleStatuses.findIndex(
+      (status) => status.value === hoveredValue,
+    );
 
     if (hoveredIndex >= 0 && hoveredValue) {
       const hoveredNode = workflowItemRefs.current.get(hoveredValue);
@@ -366,7 +441,8 @@ export default function BusinessStatusesPanel({ businessId, canManageStatuses }:
       if (!state) return;
 
       const movedEnough =
-        Math.abs(event.clientX - state.startX) > 4 || Math.abs(event.clientY - state.startY) > 4;
+        Math.abs(event.clientX - state.startX) > 4 ||
+        Math.abs(event.clientY - state.startY) > 4;
 
       if (!state.dragging && !movedEnough) return;
 
@@ -396,7 +472,13 @@ export default function BusinessStatusesPanel({ businessId, canManageStatuses }:
             }
           : current,
       );
-      setDragOverIndex(getClosestDropIndexRef.current(event.clientX, event.clientY, state.value));
+      setDragOverIndex(
+        getClosestDropIndexRef.current(
+          event.clientX,
+          event.clientY,
+          state.value,
+        ),
+      );
     };
 
     const finishPointerDrag = () => {
@@ -408,7 +490,11 @@ export default function BusinessStatusesPanel({ businessId, canManageStatuses }:
           state.value,
           dragOverIndex !== null
             ? dragOverIndex
-            : getClosestDropIndexRef.current(state.startX, state.startY, state.value),
+            : getClosestDropIndexRef.current(
+                state.startX,
+                state.startY,
+                state.value,
+              ),
         );
       } else {
         setSelectedWorkflowValue(state.value);
@@ -422,7 +508,9 @@ export default function BusinessStatusesPanel({ businessId, canManageStatuses }:
       setDragPreview(null);
     };
 
-    window.addEventListener("pointermove", handlePointerMove, { passive: false });
+    window.addEventListener("pointermove", handlePointerMove, {
+      passive: false,
+    });
     window.addEventListener("pointerup", finishPointerDrag);
     window.addEventListener("pointercancel", finishPointerDrag);
 
@@ -438,7 +526,9 @@ export default function BusinessStatusesPanel({ businessId, canManageStatuses }:
 
   const toggleWorkflow = (value: string, nextActive: boolean) => {
     if (!nextActive && isRequiredWorkflowStatus(value)) {
-      setError("New, In progress, Done, and Canceled must stay in the workflow.");
+      setError(
+        "New, In progress, Done, and Canceled must stay in the workflow.",
+      );
       return;
     }
 
@@ -547,9 +637,17 @@ export default function BusinessStatusesPanel({ businessId, canManageStatuses }:
 
       setIsDirty(false);
       setError(null);
-      window.dispatchEvent(new CustomEvent(getBusinessStatusesEventName(), { detail: { businessId } }));
+      window.dispatchEvent(
+        new CustomEvent(getBusinessStatusesEventName(), {
+          detail: { businessId },
+        }),
+      );
     } catch (nextError) {
-      setError(nextError instanceof Error ? nextError.message : "Failed to save statuses.");
+      setError(
+        nextError instanceof Error
+          ? nextError.message
+          : "Failed to save statuses.",
+      );
     } finally {
       setIsSaving(false);
       saveInProgressRef.current = false;
@@ -560,14 +658,11 @@ export default function BusinessStatusesPanel({ businessId, canManageStatuses }:
     <section className="mt-5 rounded-[20px] border border-[#E5E7EB] bg-[#F9FAFB] p-4 sm:p-5">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <div className="product-section-label text-[#6B7280]">
-            Statuses
-          </div>
-          <h2 className="product-section-title mt-1.5">
-            Workflow statuses
-          </h2>
+          <div className="product-section-label text-[#6B7280]">Statuses</div>
+          <h2 className="product-section-title mt-1.5">Workflow statuses</h2>
           <p className="product-page-subtitle mt-1.5 max-w-[700px]">
-            Edit the workflow locally first. Nothing is published until you save changes.
+            Edit the workflow locally first. Nothing is published until you save
+            changes.
           </p>
         </div>
 
@@ -617,7 +712,7 @@ export default function BusinessStatusesPanel({ businessId, canManageStatuses }:
                 "h-11 rounded-xl border px-3 text-sm outline-none transition",
                 isEditing
                   ? "border-[#f4c77d] bg-[#fff8ec] text-slate-900 shadow-[0_0_0_3px_rgba(245,158,11,0.12)] focus:border-[#d97706] focus:ring-2 focus:ring-[#f59e0b]/20"
-                  : "border-[#E5E7EB] bg-white focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15",
+                  : "border-[#E5E7EB] bg-white focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15",
               ].join(" ")}
             />
             <span className="text-[11px] text-slate-400">
@@ -675,11 +770,14 @@ export default function BusinessStatusesPanel({ businessId, canManageStatuses }:
               <input
                 type="color"
                 value={customColor}
-                onChange={(event) => setCustomColor(event.currentTarget.value.toUpperCase())}
+                onChange={(event) =>
+                  setCustomColor(event.currentTarget.value.toUpperCase())
+                }
                 className="h-8 w-10 cursor-pointer rounded-md border border-[#E5E7EB] bg-white"
               />
               <span className="text-xs font-medium text-slate-500">
-                {customColor.toUpperCase()} will be softened for badges while preserving the chosen color.
+                {customColor.toUpperCase()} will be softened for badges while
+                preserving the chosen color.
               </span>
               <span
                 aria-hidden="true"
@@ -696,7 +794,11 @@ export default function BusinessStatusesPanel({ businessId, canManageStatuses }:
               disabled={!canSubmit}
               className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#2563eb] px-4 text-sm font-semibold !text-white transition hover:bg-[#1d4ed8] disabled:cursor-not-allowed disabled:bg-slate-300 disabled:!text-white disabled:opacity-80"
             >
-              {isEditing ? <Save className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+              {isEditing ? (
+                <Save className="h-4 w-4" />
+              ) : (
+                <Plus className="h-4 w-4" />
+              )}
               {isEditing ? "Save status" : "Add to draft"}
             </button>
 
@@ -732,7 +834,10 @@ export default function BusinessStatusesPanel({ businessId, canManageStatuses }:
             <button
               type="button"
               onClick={() => moveWorkflowStatus(1)}
-              disabled={selectedWorkflowIndex < 0 || selectedWorkflowIndex >= workflowStatuses.length - 1}
+              disabled={
+                selectedWorkflowIndex < 0 ||
+                selectedWorkflowIndex >= workflowStatuses.length - 1
+              }
               className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#E5E7EB] bg-white text-[#6B7280] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] disabled:cursor-not-allowed disabled:opacity-35"
               aria-label="Move selected status right"
             >
@@ -744,7 +849,12 @@ export default function BusinessStatusesPanel({ businessId, canManageStatuses }:
                 if (!selectedWorkflowValue) return;
                 toggleWorkflow(selectedWorkflowValue, false);
               }}
-              disabled={!selectedWorkflowValue || (selectedWorkflowStatus ? isRequiredWorkflowStatus(selectedWorkflowStatus.value) : false)}
+              disabled={
+                !selectedWorkflowValue ||
+                (selectedWorkflowStatus
+                  ? isRequiredWorkflowStatus(selectedWorkflowStatus.value)
+                  : false)
+              }
               className="inline-flex h-8 items-center gap-2 rounded-full border border-[#f3d5d8] bg-[#fff5f5] px-3 text-xs font-semibold text-red-600 transition hover:border-[#efb8bf] hover:bg-[#ffe8e8] disabled:cursor-not-allowed disabled:opacity-35"
             >
               <X className="h-3.5 w-3.5" />
@@ -796,8 +906,12 @@ export default function BusinessStatusesPanel({ businessId, canManageStatuses }:
                   style={{
                     background: color.background,
                     color: color.color,
-                    borderColor: selected ? color.dot : color.selectedBackground,
-                    boxShadow: selected ? "0 0 0 2px rgba(17,24,39,0.08)" : "none",
+                    borderColor: selected
+                      ? color.dot
+                      : color.selectedBackground,
+                    boxShadow: selected
+                      ? "0 0 0 2px rgba(17,24,39,0.08)"
+                      : "none",
                     opacity: isDragged ? 0.28 : 1,
                     transform: isDragged ? "scale(0.98)" : "none",
                   }}
@@ -819,11 +933,14 @@ export default function BusinessStatusesPanel({ businessId, canManageStatuses }:
           ) : null}
         </div>
         <div className="mt-2 text-[11px] text-slate-400">
-          Click a status to select it. Drag the marker to reorder it anywhere in the active workflow, or use arrows as a fallback.
+          Click a status to select it. Drag the marker to reorder it anywhere in
+          the active workflow, or use arrows as a fallback.
         </div>
       </div>
 
-      {error ? <div className="mt-2 text-sm font-medium text-red-600">{error}</div> : null}
+      {error ? (
+        <div className="mt-2 text-sm font-medium text-red-600">{error}</div>
+      ) : null}
 
       <div className="mt-5 grid gap-5 lg:grid-cols-2">
         <div>
@@ -836,7 +953,8 @@ export default function BusinessStatusesPanel({ businessId, canManageStatuses }:
               .map((status) => {
                 const color = getStatusColorOption(status.color);
                 const inWorkflow = status.active !== false;
-                const isLocked = inWorkflow && isRequiredWorkflowStatus(status.value);
+                const isLocked =
+                  inWorkflow && isRequiredWorkflowStatus(status.value);
                 return (
                   <button
                     key={status.value}
@@ -849,7 +967,9 @@ export default function BusinessStatusesPanel({ businessId, canManageStatuses }:
                     style={{
                       background: color.background,
                       color: color.color,
-                      borderColor: inWorkflow ? color.selectedBackground : "#E5E7EB",
+                      borderColor: inWorkflow
+                        ? color.selectedBackground
+                        : "#E5E7EB",
                       opacity: inWorkflow ? 1 : 0.55,
                     }}
                   >
@@ -869,7 +989,8 @@ export default function BusinessStatusesPanel({ businessId, canManageStatuses }:
               })}
           </div>
           <div className="mt-2 text-[11px] text-slate-400">
-            New, In progress, Done, and Canceled are fixed. Waiting payment can be removed from the active workflow if needed.
+            New, In progress, Done, and Canceled are fixed. Waiting payment can
+            be removed from the active workflow if needed.
           </div>
         </div>
 
@@ -879,7 +1000,8 @@ export default function BusinessStatusesPanel({ businessId, canManageStatuses }:
           </div>
           {customStatuses.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-[#E5E7EB] bg-white px-4 py-5 text-sm text-[#6B7280]">
-              No custom statuses yet. Add your first one to keep the workflow clear for the team.
+              No custom statuses yet. Add your first one to keep the workflow
+              clear for the team.
             </div>
           ) : (
             <div className="grid gap-2">
@@ -902,7 +1024,11 @@ export default function BusinessStatusesPanel({ businessId, canManageStatuses }:
                     >
                       <div
                         className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium"
-                        style={{ background: color.background, color: color.color, opacity: inWorkflow ? 1 : 0.55 }}
+                        style={{
+                          background: color.background,
+                          color: color.color,
+                          opacity: inWorkflow ? 1 : 0.55,
+                        }}
                       >
                         <span
                           aria-hidden="true"
@@ -912,7 +1038,8 @@ export default function BusinessStatusesPanel({ businessId, canManageStatuses }:
                         {status.label}
                       </div>
                       <div className="mt-1 text-xs uppercase tracking-[0.08em] text-slate-400">
-                        {inWorkflow ? "In workflow" : "Inactive"} В· {status.value}
+                        {inWorkflow ? "In workflow" : "Inactive"} В·{" "}
+                        {status.value}
                       </div>
                     </button>
 
@@ -933,7 +1060,9 @@ export default function BusinessStatusesPanel({ businessId, canManageStatuses }:
 
                       <button
                         type="button"
-                        onClick={() => toggleWorkflow(status.value, !inWorkflow)}
+                        onClick={() =>
+                          toggleWorkflow(status.value, !inWorkflow)
+                        }
                         className={[
                           "inline-flex h-9 items-center gap-2 rounded-xl px-3 text-xs font-semibold transition",
                           inWorkflow
@@ -941,12 +1070,16 @@ export default function BusinessStatusesPanel({ businessId, canManageStatuses }:
                             : "border border-[#E5E7EB] bg-white text-[#4B5563] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]",
                         ].join(" ")}
                       >
-                        {inWorkflow ? "Remove from workflow" : "Add to workflow"}
+                        {inWorkflow
+                          ? "Remove from workflow"
+                          : "Add to workflow"}
                       </button>
 
                       <button
                         type="button"
-                        onClick={() => removeCustomStatusPermanently(status.value)}
+                        onClick={() =>
+                          removeCustomStatusPermanently(status.value)
+                        }
                         className="inline-flex h-9 items-center gap-2 rounded-xl border border-[#f3d5d8] bg-[#fff5f5] px-3 text-xs font-semibold text-red-600 transition hover:border-[#efb8bf] hover:bg-[#ffe8e8]"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -959,14 +1092,16 @@ export default function BusinessStatusesPanel({ businessId, canManageStatuses }:
             </div>
           )}
           <div className="mt-2 text-[11px] text-slate-400">
-            Rename, remove from workflow, or mark a custom status for permanent deletion in the current draft.
+            Rename, remove from workflow, or mark a custom status for permanent
+            deletion in the current draft.
           </div>
         </div>
       </div>
 
       {inactiveStatuses.length > 0 ? (
         <div className="mt-4 text-[11px] text-slate-400">
-          Inactive statuses remain available historically and can be returned to the workflow at any time.
+          Inactive statuses remain available historically and can be returned to
+          the workflow at any time.
         </div>
       ) : null}
 
@@ -979,13 +1114,19 @@ export default function BusinessStatusesPanel({ businessId, canManageStatuses }:
             width: dragPreview.width,
             height: dragPreview.height,
             background: getStatusColorOption(
-              workflowStatuses.find((status) => status.value === dragPreview.value)?.color ?? "slate",
+              workflowStatuses.find(
+                (status) => status.value === dragPreview.value,
+              )?.color ?? "slate",
             ).background,
             color: getStatusColorOption(
-              workflowStatuses.find((status) => status.value === dragPreview.value)?.color ?? "slate",
+              workflowStatuses.find(
+                (status) => status.value === dragPreview.value,
+              )?.color ?? "slate",
             ).color,
             borderColor: getStatusColorOption(
-              workflowStatuses.find((status) => status.value === dragPreview.value)?.color ?? "slate",
+              workflowStatuses.find(
+                (status) => status.value === dragPreview.value,
+              )?.color ?? "slate",
             ).dot,
             transform: "rotate(-2deg) scale(1.03)",
           }}
@@ -996,16 +1137,19 @@ export default function BusinessStatusesPanel({ businessId, canManageStatuses }:
             className="h-2 w-2 rounded-full"
             style={{
               background: getStatusColorOption(
-                workflowStatuses.find((status) => status.value === dragPreview.value)?.color ?? "slate",
+                workflowStatuses.find(
+                  (status) => status.value === dragPreview.value,
+                )?.color ?? "slate",
               ).dot,
             }}
           />
           <span>
-            {workflowStatuses.find((status) => status.value === dragPreview.value)?.label ?? dragPreview.value}
+            {workflowStatuses.find(
+              (status) => status.value === dragPreview.value,
+            )?.label ?? dragPreview.value}
           </span>
         </div>
       ) : null}
     </section>
   );
 }
-

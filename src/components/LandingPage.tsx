@@ -53,7 +53,7 @@ export function LandingPage() {
       <main className="mx-auto grid w-full max-w-7xl flex-1 gap-10 px-5 py-10 sm:px-6 sm:py-14 lg:grid-cols-[1.05fr_0.95fr] lg:gap-14 lg:px-8 lg:py-16">
         <section className="space-y-8">
           <div className="brand-soft-chip inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-wide sm:text-sm sm:normal-case sm:tracking-normal">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#6366f1]" />
+            <span className="h-1.5 w-1.5 rounded-full bg-[var(--brand-600)]" />
             Bring your business into order
           </div>
 
@@ -165,7 +165,9 @@ export function LandingPage() {
                 Open system
               </Link>
 
-              <p className="text-center text-xs text-slate-400">Redirect target: /login</p>
+              <p className="text-center text-xs text-slate-400">
+                Redirect target: /login
+              </p>
             </div>
           </div>
 
@@ -215,4 +217,3 @@ function InfoCard({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
-

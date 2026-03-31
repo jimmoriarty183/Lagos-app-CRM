@@ -1,18 +1,14 @@
-type BrandImageProps = {
+"use client";
+
+interface BrandImageProps {
   src: string;
   alt: string;
   className?: string;
   height?: number;
   width?: number;
-};
+}
 
-function BrandImage({
-  src,
-  alt,
-  className,
-  height,
-  width,
-}: BrandImageProps) {
+function BrandImage({ src, alt, className, height, width }: BrandImageProps) {
   return (
     <img
       src={src}
@@ -24,11 +20,18 @@ function BrandImage({
         height: height ? `${height}px` : undefined,
         width: width ? `${width}px` : undefined,
         objectFit: "contain",
+        display: "block",
       }}
     />
   );
 }
 
+/**
+ * BrandIcon - Icon only (Square Grid symbol)
+ * Uses exact brand asset: /brand/ordo_symbol.svg
+ *
+ * Brand color: var(--brand-600) - Muted Purple (#5B5BB3)
+ */
 export function BrandIcon({
   size = 32,
   className,
@@ -49,109 +52,10 @@ export function BrandIcon({
   );
 }
 
-export function BrandLockup({
-  iconSize = 48,
-  textClassName = "text-4xl",
-  className,
-  href,
-  ariaLabel = "Open Ordo CRM",
-}: {
-  iconSize?: number;
-  textClassName?: string;
-  className?: string;
-  href?: string;
-  ariaLabel?: string;
-}) {
-  const content = (
-    <>
-      <BrandIcon size={iconSize} />
-      <span
-        className={[
-          "text-[#1F2937] font-bold leading-none tracking-[-0.04em]",
-          textClassName,
-        ].join(" ")}
-      >
-        Ordo
-      </span>
-    </>
-  );
-
-  if (href) {
-    return (
-      <a
-        href={href}
-        aria-label={ariaLabel}
-        className={["flex items-center gap-3", className].filter(Boolean).join(" ")}
-      >
-        {content}
-      </a>
-    );
-  }
-
-  return (
-    <div className={["flex items-center gap-3", className].filter(Boolean).join(" ")}>
-      {content}
-    </div>
-  );
-}
-
-export function BrandWordmark({
-  height = 24,
-  className,
-  alt = "Ordo",
-}: {
-  variant?: "gradient" | "dark" | "light";
-  height?: number;
-  className?: string;
-  alt?: string;
-}) {
-  return (
-    <BrandImage
-      src="/brand/ordo_horizontal.svg"
-      alt={alt}
-      className={className}
-      height={height}
-    />
-  );
-}
-
-export function LoginBrand({
-  height = 34,
-  className,
-}: {
-  variant?: "dark" | "light";
-  height?: number;
-  className?: string;
-}) {
-  return (
-    <BrandImage
-      src="/brand/ordo_horizontal.svg"
-      alt="Ordo"
-      className={className}
-      height={height}
-    />
-  );
-}
-
-export function BrandLogoDarkBg({
-  height = 46,
-  className,
-  alt = "Ordo",
-}: {
-  height?: number;
-  className?: string;
-  alt?: string;
-}) {
-  return (
-    <BrandImage
-      src="/brand/ordo_horizontal.svg"
-      alt={alt}
-      className={className}
-      height={height}
-    />
-  );
-}
-
+/**
+ * BrandIconDarkBg - Icon with white background for dark surfaces
+ * Uses exact brand asset: /brand/icon-dark-bg.svg
+ */
 export function BrandIconDarkBg({
   size = 40,
   className,
@@ -163,11 +67,150 @@ export function BrandIconDarkBg({
 }) {
   return (
     <BrandImage
-      src="/brand/ordo_symbol.svg"
+      src="/brand/icon-dark-bg.svg"
       alt={alt}
       className={className}
       height={size}
       width={size}
+    />
+  );
+}
+
+/**
+ * BrandLockup - Full logo with icon and text
+ * Uses exact brand assets from /public/brand/
+ *
+ * Usage:
+ * <BrandLockup iconSize={34} textClassName="text-[1.75rem]" />
+ */
+export function BrandLockup({
+  iconSize = 48,
+  textClassName = "text-4xl",
+  className,
+  href,
+  ariaLabel = "Open Ordo CRM",
+  variant = "default",
+}: {
+  iconSize?: number;
+  textClassName?: string;
+  className?: string;
+  href?: string;
+  ariaLabel?: string;
+  variant?: "default" | "dark-bg";
+}) {
+  // For dark backgrounds, use the inverted logo asset
+  const logoSrc =
+    variant === "dark-bg"
+      ? "/brand/logo-dark-bg.svg"
+      : "/brand/ordo_horizontal.svg";
+
+  const content = (
+    <img
+      src={logoSrc}
+      alt="Ordo"
+      style={{
+        height: `${iconSize}px`,
+        width: `${iconSize * 3.75}px`, // Maintain aspect ratio (180/48 = 3.75)
+        objectFit: "contain",
+        display: "block",
+      }}
+    />
+  );
+
+  if (href) {
+    return (
+      <a
+        href={href}
+        aria-label={ariaLabel}
+        className={["flex items-center gap-3", className]
+          .filter(Boolean)
+          .join(" ")}
+      >
+        {content}
+      </a>
+    );
+  }
+
+  return (
+    <div
+      className={["flex items-center gap-3", className]
+        .filter(Boolean)
+        .join(" ")}
+    >
+      {content}
+    </div>
+  );
+}
+
+/**
+ * BrandWordmark - Text-only logo (wordmark)
+ * Uses exact brand asset: /brand/wordmark-dark.svg
+ */
+export function BrandWordmark({
+  height = 24,
+  className,
+  alt = "Ordo",
+  variant = "dark",
+}: {
+  variant?: "gradient" | "dark" | "light";
+  height?: number;
+  className?: string;
+  alt?: string;
+}) {
+  const src =
+    variant === "light"
+      ? "/brand/wordmark-light.svg"
+      : variant === "gradient"
+        ? "/brand/wordmark-gradient.svg"
+        : "/brand/wordmark-dark.svg";
+
+  return (
+    <BrandImage src={src} alt={alt} className={className} height={height} />
+  );
+}
+
+/**
+ * LoginBrand - Logo for login pages
+ * Uses exact brand asset: /brand/login-brand-dark.svg or /brand/login-brand-light.svg
+ */
+export function LoginBrand({
+  height = 34,
+  className,
+  variant = "dark",
+}: {
+  variant?: "dark" | "light";
+  height?: number;
+  className?: string;
+}) {
+  const src =
+    variant === "light"
+      ? "/brand/login-brand-light.svg"
+      : "/brand/login-brand-dark.svg";
+
+  return (
+    <BrandImage src={src} alt="Ordo" className={className} height={height} />
+  );
+}
+
+/**
+ * BrandLogoDarkBg - Full logo with white background for dark surfaces
+ * Uses exact brand asset: /brand/logo-dark-bg.svg
+ */
+export function BrandLogoDarkBg({
+  height = 46,
+  className,
+  alt = "Ordo",
+}: {
+  height?: number;
+  className?: string;
+  alt?: string;
+}) {
+  return (
+    <BrandImage
+      src="/brand/logo-dark-bg.svg"
+      alt={alt}
+      className={className}
+      height={height}
     />
   );
 }

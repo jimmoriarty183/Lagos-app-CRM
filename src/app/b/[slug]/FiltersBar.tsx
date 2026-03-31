@@ -183,7 +183,7 @@ export default function FiltersBar({
               color: "white",
               padding: "0 14px",
               cursor: "pointer",
-              fontWeight: 700,
+              fontWeight: 600,
               justifySelf: "start",
             }}
           >
@@ -207,7 +207,7 @@ export default function FiltersBar({
             color: isDefault ? "#999" : "#111",
             padding: "0 14px",
             cursor: isDefault ? "not-allowed" : "pointer",
-            fontWeight: 700,
+            fontWeight: 600,
           }}
           title="Reset filters"
         >

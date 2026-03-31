@@ -2,7 +2,11 @@
 
 import { useState } from "react";
 import { SurveyOptionEditor } from "@/components/campaigns/SurveyOptionEditor";
-import type { SurveyOption, SurveyQuestion, SurveyQuestionType } from "@/lib/campaigns/types";
+import type {
+  SurveyOption,
+  SurveyQuestion,
+  SurveyQuestionType,
+} from "@/lib/campaigns/types";
 
 type Props = {
   campaignId: string;
@@ -17,19 +21,29 @@ async function safeJson<T>(response: Response): Promise<T | null> {
   }
 }
 
-const QUESTION_TYPES: SurveyQuestionType[] = ["single_choice", "multiple_choice", "yes_no", "rating_1_5"];
+const QUESTION_TYPES: SurveyQuestionType[] = [
+  "single_choice",
+  "multiple_choice",
+  "yes_no",
+  "rating_1_5",
+];
 
 export function SurveyQuestionEditor({ campaignId, initialQuestions }: Props) {
-  const [questions, setQuestions] = useState<SurveyQuestion[]>(initialQuestions);
+  const [questions, setQuestions] =
+    useState<SurveyQuestion[]>(initialQuestions);
   const [title, setTitle] = useState("");
-  const [questionType, setQuestionType] = useState<SurveyQuestionType>("single_choice");
+  const [questionType, setQuestionType] =
+    useState<SurveyQuestionType>("single_choice");
   const [busy, setBusy] = useState(false);
   const [actionBusy, setActionBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showTypeHelp, setShowTypeHelp] = useState(false);
-  const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
+  const [editingQuestionId, setEditingQuestionId] = useState<string | null>(
+    null,
+  );
   const [editQuestionTitle, setEditQuestionTitle] = useState("");
-  const [editQuestionType, setEditQuestionType] = useState<SurveyQuestionType>("single_choice");
+  const [editQuestionType, setEditQuestionType] =
+    useState<SurveyQuestionType>("single_choice");
   const questionTypeLabel: Record<SurveyQuestionType, string> = {
     single_choice: "Один вариант",
     multiple_choice: "Несколько вариантов",
@@ -45,16 +59,23 @@ export function SurveyQuestionEditor({ campaignId, initialQuestions }: Props) {
     setBusy(true);
     setError(null);
 
-    const response = await fetch(`/api/admin/campaigns/${campaignId}/questions`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        questionOrder: questions.length + 1,
-        questionType,
-        title: title.trim(),
-      }),
-    });
-    const json = await safeJson<{ ok: boolean; question?: SurveyQuestion; error?: string }>(response);
+    const response = await fetch(
+      `/api/admin/campaigns/${campaignId}/questions`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          questionOrder: questions.length + 1,
+          questionType,
+          title: title.trim(),
+        }),
+      },
+    );
+    const json = await safeJson<{
+      ok: boolean;
+      question?: SurveyQuestion;
+      error?: string;
+    }>(response);
     if (!response.ok || !json?.ok || !json.question) {
       setError(json?.error ?? "Не удалось создать вопрос");
       setBusy(false);
@@ -69,7 +90,9 @@ export function SurveyQuestionEditor({ campaignId, initialQuestions }: Props) {
   const onOptionCreated = (questionId: string, option: SurveyOption) => {
     setQuestions((current) =>
       current.map((question) =>
-        question.id === questionId ? { ...question, options: [...question.options, option] } : question,
+        question.id === questionId
+          ? { ...question, options: [...question.options, option] }
+          : question,
       ),
     );
   };
@@ -79,9 +102,11 @@ export function SurveyQuestionEditor({ campaignId, initialQuestions }: Props) {
       current.map((question) =>
         question.id === questionId
           ? {
-            ...question,
-            options: question.options.map((candidate) => (candidate.id === option.id ? option : candidate)),
-          }
+              ...question,
+              options: question.options.map((candidate) =>
+                candidate.id === option.id ? option : candidate,
+              ),
+            }
           : question,
       ),
     );
@@ -91,7 +116,12 @@ export function SurveyQuestionEditor({ campaignId, initialQuestions }: Props) {
     setQuestions((current) =>
       current.map((question) =>
         question.id === questionId
-          ? { ...question, options: question.options.filter((option) => option.id !== optionId) }
+          ? {
+              ...question,
+              options: question.options.filter(
+                (option) => option.id !== optionId,
+              ),
+            }
           : question,
       ),
     );
@@ -113,12 +143,22 @@ export function SurveyQuestionEditor({ campaignId, initialQuestions }: Props) {
     }
     setActionBusy(true);
     setError(null);
-    const response = await fetch(`/api/admin/campaigns/${campaignId}/questions/${editingQuestionId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: normalizedTitle, questionType: editQuestionType }),
-    });
-    const json = await safeJson<{ ok: boolean; question?: SurveyQuestion; error?: string }>(response);
+    const response = await fetch(
+      `/api/admin/campaigns/${campaignId}/questions/${editingQuestionId}`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: normalizedTitle,
+          questionType: editQuestionType,
+        }),
+      },
+    );
+    const json = await safeJson<{
+      ok: boolean;
+      question?: SurveyQuestion;
+      error?: string;
+    }>(response);
     if (!response.ok || !json?.ok || !json.question) {
       setError(json?.error ?? "Не удалось обновить вопрос");
       setActionBusy(false);
@@ -127,7 +167,11 @@ export function SurveyQuestionEditor({ campaignId, initialQuestions }: Props) {
     setQuestions((current) =>
       current.map((question) =>
         question.id === editingQuestionId
-          ? { ...question, title: json.question!.title, questionType: json.question!.questionType }
+          ? {
+              ...question,
+              title: json.question!.title,
+              questionType: json.question!.questionType,
+            }
           : question,
       ),
     );
@@ -138,16 +182,21 @@ export function SurveyQuestionEditor({ campaignId, initialQuestions }: Props) {
   const removeQuestion = async (questionId: string) => {
     setActionBusy(true);
     setError(null);
-    const response = await fetch(`/api/admin/campaigns/${campaignId}/questions/${questionId}`, {
-      method: "DELETE",
-    });
+    const response = await fetch(
+      `/api/admin/campaigns/${campaignId}/questions/${questionId}`,
+      {
+        method: "DELETE",
+      },
+    );
     const json = await safeJson<{ ok: boolean; error?: string }>(response);
     if (!response.ok || !json?.ok) {
       setError(json?.error ?? "Не удалось удалить вопрос");
       setActionBusy(false);
       return;
     }
-    setQuestions((current) => current.filter((question) => question.id !== questionId));
+    setQuestions((current) =>
+      current.filter((question) => question.id !== questionId),
+    );
     if (editingQuestionId === questionId) setEditingQuestionId(null);
     setActionBusy(false);
   };
@@ -155,7 +204,9 @@ export function SurveyQuestionEditor({ campaignId, initialQuestions }: Props) {
   return (
     <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-4">
       <div className="flex items-center gap-2">
-        <div className="text-sm font-semibold text-slate-900">Вопросы опроса</div>
+        <div className="text-sm font-semibold text-slate-900">
+          Вопросы опроса
+        </div>
         <button
           type="button"
           onClick={() => setShowTypeHelp((current) => !current)}
@@ -168,10 +219,18 @@ export function SurveyQuestionEditor({ campaignId, initialQuestions }: Props) {
       </div>
       {showTypeHelp ? (
         <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
-          <div><b>Один вариант</b>: пользователь выбирает только один ответ.</div>
-          <div><b>Несколько вариантов</b>: можно выбрать несколько ответов.</div>
-          <div><b>Да/Нет</b>: два варианта ответа.</div>
-          <div><b>Оценка 1-5</b>: оценка по шкале от 1 до 5.</div>
+          <div>
+            <b>Один вариант</b>: пользователь выбирает только один ответ.
+          </div>
+          <div>
+            <b>Несколько вариантов</b>: можно выбрать несколько ответов.
+          </div>
+          <div>
+            <b>Да/Нет</b>: два варианта ответа.
+          </div>
+          <div>
+            <b>Оценка 1-5</b>: оценка по шкале от 1 до 5.
+          </div>
         </div>
       ) : null}
 
@@ -184,7 +243,9 @@ export function SurveyQuestionEditor({ campaignId, initialQuestions }: Props) {
         />
         <select
           value={questionType}
-          onChange={(event) => setQuestionType(event.target.value as SurveyQuestionType)}
+          onChange={(event) =>
+            setQuestionType(event.target.value as SurveyQuestionType)
+          }
           className="h-10 rounded-lg border border-slate-200 px-3 text-sm"
         >
           {QUESTION_TYPES.map((value) => (
@@ -197,10 +258,10 @@ export function SurveyQuestionEditor({ campaignId, initialQuestions }: Props) {
           type="button"
           onClick={createQuestion}
           disabled={busy}
-            className="inline-flex h-10 items-center justify-center rounded-lg bg-indigo-600 px-4 text-sm font-semibold text-white transition hover:bg-indigo-500 disabled:opacity-60"
-          >
-            {busy ? "Сохранение..." : "Добавить вопрос"}
-          </button>
+          className="inline-flex h-10 items-center justify-center rounded-lg bg-[var(--brand-600)] px-4 text-sm font-semibold text-white transition hover:bg-[var(--brand-700)] disabled:opacity-60"
+        >
+          {busy ? "Сохранение..." : "Добавить вопрос"}
+        </button>
       </div>
 
       {error ? <div className="text-sm text-rose-600">{error}</div> : null}
@@ -212,17 +273,22 @@ export function SurveyQuestionEditor({ campaignId, initialQuestions }: Props) {
       ) : (
         <div className="space-y-3">
           {questions.map((question) => (
-            <div key={question.id} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+            <div
+              key={question.id}
+              className="rounded-lg border border-slate-200 bg-slate-50 p-3"
+            >
               <div className="text-sm font-semibold text-slate-900">
                 {question.questionOrder}. {question.title}
               </div>
-              <div className="mt-1 text-xs uppercase tracking-[0.08em] text-slate-500">{questionTypeLabel[question.questionType]}</div>
+              <div className="mt-1 text-xs uppercase tracking-[0.08em] text-slate-500">
+                {questionTypeLabel[question.questionType]}
+              </div>
               <div className="mt-2 flex items-center gap-3">
                 <button
                   type="button"
                   onClick={() => startEditingQuestion(question)}
                   disabled={actionBusy}
-                  className="text-xs font-medium text-indigo-700 hover:text-indigo-800 disabled:opacity-60"
+                  className="text-xs font-medium text-[var(--brand-700)] hover:text-[var(--brand-800)] disabled:opacity-60"
                 >
                   Изменить вопрос
                 </button>
@@ -240,12 +306,18 @@ export function SurveyQuestionEditor({ campaignId, initialQuestions }: Props) {
                   <div className="grid gap-2 md:grid-cols-[1fr_180px_auto]">
                     <input
                       value={editQuestionTitle}
-                      onChange={(event) => setEditQuestionTitle(event.target.value)}
+                      onChange={(event) =>
+                        setEditQuestionTitle(event.target.value)
+                      }
                       className="h-9 rounded-md border border-slate-200 px-2 text-xs"
                     />
                     <select
                       value={editQuestionType}
-                      onChange={(event) => setEditQuestionType(event.target.value as SurveyQuestionType)}
+                      onChange={(event) =>
+                        setEditQuestionType(
+                          event.target.value as SurveyQuestionType,
+                        )
+                      }
                       className="h-9 rounded-md border border-slate-200 px-2 text-xs"
                     >
                       {QUESTION_TYPES.map((value) => (
@@ -258,7 +330,7 @@ export function SurveyQuestionEditor({ campaignId, initialQuestions }: Props) {
                       type="button"
                       onClick={saveQuestion}
                       disabled={actionBusy}
-                      className="inline-flex h-9 items-center justify-center rounded-md bg-indigo-600 px-3 text-xs font-semibold text-white disabled:opacity-60"
+                      className="inline-flex h-9 items-center justify-center rounded-md bg-[var(--brand-600)] px-3 text-xs font-semibold text-white disabled:opacity-60"
                     >
                       Сохранить
                     </button>
@@ -271,7 +343,9 @@ export function SurveyQuestionEditor({ campaignId, initialQuestions }: Props) {
                   options={question.options}
                   onCreated={(option) => onOptionCreated(question.id, option)}
                   onUpdated={(option) => onOptionUpdated(question.id, option)}
-                  onDeleted={(optionId) => onOptionDeleted(question.id, optionId)}
+                  onDeleted={(optionId) =>
+                    onOptionDeleted(question.id, optionId)
+                  }
                 />
               </div>
             </div>

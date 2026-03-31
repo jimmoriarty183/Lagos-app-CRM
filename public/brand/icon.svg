@@ -1,18 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" fill="none">
-  <defs>
-    <linearGradient id="corelixGrad" x1="30" y1="30" x2="150" y2="150" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#7C3AED"/>
-      <stop offset="100%" stop-color="#4F46E5"/>
-    </linearGradient>
-  </defs>
-  <path
-    d="M125 50
-       C100 30 75 30 55 50
-       C35 70 35 110 55 130
-       C75 150 100 150 125 130"
-    stroke="url(#corelixGrad)"
-    stroke-width="14"
-    stroke-linecap="round"
-    fill="none"
-  />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <rect width="48" height="48" rx="10" fill="#5B5BB3"/>
+  <rect x="10" y="10" width="11" height="11" rx="1.5" stroke="#FFFFFF" stroke-width="2.5"/>
+  <rect x="27" y="10" width="11" height="11" rx="1.5" fill="#FFFFFF"/>
+  <rect x="10" y="27" width="11" height="11" rx="1.5" fill="#FFFFFF"/>
+  <rect x="27" y="27" width="11" height="11" rx="1.5" stroke="#FFFFFF" stroke-width="2.5"/>
 </svg>

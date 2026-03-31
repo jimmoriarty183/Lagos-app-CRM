@@ -45,8 +45,8 @@ export default async function EditOrderPage({
     typeof u === "string"
       ? decodeURIComponent(u)
       : Array.isArray(u)
-      ? decodeURIComponent(u[0] || "")
-      : "";
+        ? decodeURIComponent(u[0] || "")
+        : "";
 
   const phone = phoneRaw ? normalizePhone(phoneRaw) : "";
 
@@ -70,8 +70,8 @@ export default async function EditOrderPage({
   const role: "OWNER" | "MANAGER" | "GUEST" = isOwner
     ? "OWNER"
     : isManager
-    ? "MANAGER"
-    : "GUEST";
+      ? "MANAGER"
+      : "GUEST";
 
   // can edit only manager OR owner-manager
   // can edit: OWNER or MANAGER (and owner-manager obviously too)
@@ -99,7 +99,7 @@ export default async function EditOrderPage({
   const { data: order } = await supabase
     .from("orders")
     .select(
-      "id, business_id, client_name, client_phone, description, amount, due_date, status, paid, created_at"
+      "id, business_id, client_name, client_phone, description, amount, due_date, status, paid, created_at",
     )
     .eq("id", id)
     .single<OrderRow>();
@@ -153,7 +153,7 @@ export default async function EditOrderPage({
           style={{ display: "grid", gap: 10 }}
         >
           <label style={{ display: "grid", gap: 6 }}>
-            <span style={{ fontSize: 12, fontWeight: 700 }}>Client name *</span>
+            <span style={{ fontSize: 12, fontWeight: 600 }}>Client name *</span>
             <input
               name="client_name"
               defaultValue={order.client_name}
@@ -167,7 +167,7 @@ export default async function EditOrderPage({
           </label>
 
           <label style={{ display: "grid", gap: 6 }}>
-            <span style={{ fontSize: 12, fontWeight: 700 }}>Client phone</span>
+            <span style={{ fontSize: 12, fontWeight: 600 }}>Client phone</span>
             <input
               name="client_phone"
               defaultValue={order.client_phone || ""}
@@ -181,7 +181,7 @@ export default async function EditOrderPage({
           </label>
 
           <label style={{ display: "grid", gap: 6 }}>
-            <span style={{ fontSize: 12, fontWeight: 700 }}>Description</span>
+            <span style={{ fontSize: 12, fontWeight: 600 }}>Description</span>
             <textarea
               name="description"
               defaultValue={order.description || ""}
@@ -196,7 +196,7 @@ export default async function EditOrderPage({
           </label>
 
           <label style={{ display: "grid", gap: 6 }}>
-            <span style={{ fontSize: 12, fontWeight: 700 }}>Amount *</span>
+            <span style={{ fontSize: 12, fontWeight: 600 }}>Amount *</span>
             <input
               name="amount"
               inputMode="numeric"
@@ -211,7 +211,7 @@ export default async function EditOrderPage({
           </label>
 
           <label style={{ display: "grid", gap: 6 }}>
-            <span style={{ fontSize: 12, fontWeight: 700 }}>Due date</span>
+            <span style={{ fontSize: 12, fontWeight: 600 }}>Due date</span>
             <input
               name="due_date"
               type="date"
@@ -255,7 +255,7 @@ export default async function EditOrderPage({
                 justifyContent: "center",
                 padding: "0 16px",
                 textDecoration: "none",
-                fontWeight: 700,
+                fontWeight: 600,
               }}
             >
               Cancel

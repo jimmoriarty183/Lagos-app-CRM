@@ -115,7 +115,7 @@ export function FollowUpCompleteDialog({
               value={completionNote}
               onChange={(event) => setCompletionNote(event.currentTarget.value)}
               placeholder="Optional outcome or result"
-              className="min-h-[92px] rounded-[18px] border-[#E5E7EB] bg-[#F9FAFB] text-sm leading-6 text-[#111827] shadow-none focus-visible:border-[#6366F1] focus-visible:ring-[#6366F1]/15"
+              className="min-h-[92px] rounded-[18px] border-[#E5E7EB] bg-[#F9FAFB] text-sm leading-6 text-[#111827] shadow-none focus-visible:border-[var(--brand-600)] focus-visible:ring-[var(--brand-600)]/15"
             />
           </div>
 
@@ -153,7 +153,7 @@ export function FollowUpCompleteDialog({
                       setNextTitle(event.currentTarget.value)
                     }
                     placeholder="For example: send proposal"
-                    className="h-11 rounded-[16px] border-[#E5E7EB] bg-white text-sm shadow-none focus-visible:border-[#6366F1] focus-visible:ring-[#6366F1]/15"
+                    className="h-11 rounded-[16px] border-[#E5E7EB] bg-white text-sm shadow-none focus-visible:border-[var(--brand-600)] focus-visible:ring-[var(--brand-600)]/15"
                   />
                 </div>
 
@@ -171,7 +171,7 @@ export function FollowUpCompleteDialog({
                     onChange={(event) =>
                       setNextDueDate(event.currentTarget.value)
                     }
-                    className="h-11 rounded-[16px] border-[#E5E7EB] bg-white text-sm shadow-none focus-visible:border-[#6366F1] focus-visible:ring-[#6366F1]/15"
+                    className="h-11 rounded-[16px] border-[#E5E7EB] bg-white text-sm shadow-none focus-visible:border-[var(--brand-600)] focus-visible:ring-[var(--brand-600)]/15"
                   />
                 </div>
 
@@ -203,7 +203,7 @@ export function FollowUpCompleteDialog({
                         setNextDueAt(parseDateTimeLocalInput(combined));
                       }
                     }}
-                    className="h-11 rounded-[16px] border-[#E5E7EB] bg-white text-sm shadow-none focus-visible:border-[#6366F1] focus-visible:ring-[#6366F1]/15"
+                    className="h-11 rounded-[16px] border-[#E5E7EB] bg-white text-sm shadow-none focus-visible:border-[var(--brand-600)] focus-visible:ring-[var(--brand-600)]/15"
                   />
                 </div>
 
@@ -219,7 +219,7 @@ export function FollowUpCompleteDialog({
                     value={nextNote}
                     onChange={(event) => setNextNote(event.currentTarget.value)}
                     placeholder="Optional context for the next step"
-                    className="min-h-[84px] rounded-[16px] border-[#E5E7EB] bg-white text-sm leading-6 shadow-none focus-visible:border-[#6366F1] focus-visible:ring-[#6366F1]/15"
+                    className="min-h-[84px] rounded-[16px] border-[#E5E7EB] bg-white text-sm leading-6 shadow-none focus-visible:border-[var(--brand-600)] focus-visible:ring-[var(--brand-600)]/15"
                   />
                 </div>
               </div>

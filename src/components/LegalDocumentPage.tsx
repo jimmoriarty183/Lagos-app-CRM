@@ -27,7 +27,7 @@ export default function LegalDocumentPage({
         <div className="mx-auto max-w-3xl">
           <Link
             href="/login"
-            className="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:text-[#6366F1]"
+            className="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:text-[var(--brand-600)]"
           >
             Back to login
           </Link>
@@ -52,7 +52,9 @@ export default function LegalDocumentPage({
               {sections.map((section, index) => (
                 <section
                   key={section.title}
-                  className={index === 0 ? "" : "border-t border-slate-100 pt-8"}
+                  className={
+                    index === 0 ? "" : "border-t border-slate-100 pt-8"
+                  }
                 >
                   <h3 className="!text-[1.375rem] font-semibold tracking-tight text-slate-950 sm:!text-2xl">
                     {section.title}

@@ -46,9 +46,13 @@ function QuestionBlock({
   return (
     <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3">
       {!hideTitle ? (
-        <div className="text-sm font-semibold text-slate-900">{question.title}</div>
+        <div className="text-sm font-semibold text-slate-900">
+          {question.title}
+        </div>
       ) : null}
-      <div className={`${hideTitle ? "" : "mt-2"} ${optionLayout === "numbered_column" ? "space-y-2" : "flex flex-wrap gap-2"}`}>
+      <div
+        className={`${hideTitle ? "" : "mt-2"} ${optionLayout === "numbered_column" ? "space-y-2" : "flex flex-wrap gap-2"}`}
+      >
         {question.options.map((option) => {
           const selected = value.includes(option.id);
           if (readOnly) {
@@ -88,8 +92,8 @@ function QuestionBlock({
                   ? "flex w-full items-center gap-2 rounded-lg border px-3.5 py-2 text-left text-sm font-medium transition-colors"
                   : "rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors",
                 selected
-                  ? "border-indigo-300 bg-indigo-100 text-indigo-800"
-                  : "border-slate-200 bg-white text-slate-700 hover:border-indigo-200 hover:bg-indigo-50/60",
+                  ? "border-[var(--brand-300)] bg-[var(--brand-50)] text-[var(--brand-800)]"
+                  : "border-slate-200 bg-white text-slate-700 hover:border-[var(--brand-200)] hover:bg-[var(--brand-50)]",
                 readOnly ? "cursor-default opacity-95" : "",
               ].join(" ")}
             >
@@ -136,7 +140,9 @@ export function SurveyForm({
   const isSingleQuestion = survey.questions.length === 1;
 
   const isComplete = useMemo(() => {
-    return survey.questions.every((question) => (answers[question.id]?.length ?? 0) > 0);
+    return survey.questions.every(
+      (question) => (answers[question.id]?.length ?? 0) > 0,
+    );
   }, [answers, survey.questions]);
 
   useEffect(() => {
@@ -165,7 +171,9 @@ export function SurveyForm({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-    const json = await safeJson<{ ok: boolean; error?: string }>(response.clone());
+    const json = await safeJson<{ ok: boolean; error?: string }>(
+      response.clone(),
+    );
     let fallbackError = "";
     if (!json) {
       fallbackError = await response.text().catch(() => "");
@@ -184,7 +192,11 @@ export function SurveyForm({
 
     setSuccess(true);
     setSubmitting(false);
-    window.dispatchEvent(new CustomEvent("campaign:state-changed", { detail: { campaignId: survey.campaign.id, action: "survey_submitted" } }));
+    window.dispatchEvent(
+      new CustomEvent("campaign:state-changed", {
+        detail: { campaignId: survey.campaign.id, action: "survey_submitted" },
+      }),
+    );
     onSubmitted();
   };
 
@@ -198,7 +210,9 @@ export function SurveyForm({
 
   return (
     <div className="space-y-3">
-      {helperText ? <p className="text-xs leading-5 text-slate-500">{helperText}</p> : null}
+      {helperText ? (
+        <p className="text-xs leading-5 text-slate-500">{helperText}</p>
+      ) : null}
       {survey.questions.map((question) => (
         <QuestionBlock
           key={question.id}
@@ -207,11 +221,15 @@ export function SurveyForm({
           optionLayout={optionLayout}
           readOnly={readOnly}
           value={answers[question.id] ?? []}
-          onChange={(next) => setAnswers((current) => ({ ...current, [question.id]: next }))}
+          onChange={(next) =>
+            setAnswers((current) => ({ ...current, [question.id]: next }))
+          }
         />
       ))}
       {error ? (
-        <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-600">{error}</div>
+        <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-600">
+          {error}
+        </div>
       ) : null}
       <div className="flex flex-wrap items-center gap-2">
         {!readOnly ? (

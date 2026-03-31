@@ -56,7 +56,7 @@ export function StartDayNudge({
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg">
         <div className="flex items-start gap-3 p-4">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#EEF2FF]">
-            <CheckCircle2 className="h-5 w-5 text-[#6366F1]" />
+            <CheckCircle2 className="h-5 w-5 text-[var(--brand-600)]" />
           </div>
 
           <div className="min-w-0 flex-1">
@@ -71,7 +71,7 @@ export function StartDayNudge({
               <button
                 type="button"
                 onClick={handleOpenTodo}
-                className="inline-flex items-center justify-center rounded-xl bg-[#6366F1] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#5558E6]"
+                className="inline-flex items-center justify-center rounded-xl bg-[var(--brand-600)] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[var(--brand-700)]"
               >
                 Open To do
               </button>
