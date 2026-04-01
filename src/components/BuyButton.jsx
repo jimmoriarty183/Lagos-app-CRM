@@ -31,6 +31,15 @@ async function initPaddle() {
     paddleInitPromise = initializePaddle({
       environment: PADDLE_ENVIRONMENT,
       token: PADDLE_CLIENT_TOKEN,
+      eventCallback: (event) => {
+        if (!event) return;
+        const name = event?.name || 'unknown';
+        if (name.toLowerCase().includes('error')) {
+          console.error('[Paddle] Event error:', event);
+        } else {
+          console.log('[Paddle] Event:', name);
+        }
+      },
     })
       .then((instance) => {
         if (!instance?.Checkout?.open) {
@@ -78,6 +87,7 @@ export async function openCheckout(priceId = FALLBACK_PRICE_ID) {
       items: [
         {
           priceId: priceId || FALLBACK_PRICE_ID,
+          quantity: 1,
         },
       ],
     });
