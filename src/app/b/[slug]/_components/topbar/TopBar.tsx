@@ -67,9 +67,9 @@ export default function TopBar({
   };
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50 border-b border-[#E5E7EB]/80 bg-white/92 backdrop-blur-md">
+    <header className="fixed inset-x-0 top-0 z-50 border-b border-[var(--neutral-200)] bg-white">
       <div className="pt-[env(safe-area-inset-top)]">
-        <div className="mx-auto flex h-[64px] max-w-[1240px] items-center justify-between gap-4 px-4 sm:px-6">
+        <div className="mx-auto flex h-[64px] max-w-[1200px] items-center justify-between gap-4 px-6">
           <div className="flex min-w-0 shrink-0 items-center gap-2.5">
             <MobileTopbarMenu
               businessId={businessId}

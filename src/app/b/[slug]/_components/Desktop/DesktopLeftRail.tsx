@@ -17,7 +17,6 @@ import {
 } from "lucide-react";
 
 import DesktopSidebarFilters from "./DesktopSidebarFilters";
-import { BrandIcon, BrandLockup } from "@/components/Brand";
 import { getPlatformSidebarNavigation } from "@/config/navigation";
 import type { StatusFilterValue } from "@/lib/business-statuses";
 import type { DashboardRange } from "@/lib/order-dashboard-summary";
@@ -98,25 +97,6 @@ function getExpandedSnapshot() {
 
 function getExpandedServerSnapshot() {
   return false;
-}
-
-function SidebarBrand({ expanded, href }: { expanded: boolean; href: string }) {
-  return expanded ? (
-    <BrandLockup
-      href={href}
-      iconSize={40}
-      textClassName="text-[1.95rem]"
-      className="rounded-2xl px-3 py-3"
-    />
-  ) : (
-    <a
-      href={href}
-      aria-label="Open Ordo CRM"
-      className="group flex justify-center rounded-2xl py-3 text-slate-900 transition"
-    >
-      <BrandIcon size={40} />
-    </a>
-  );
 }
 
 function RailLink({
@@ -420,7 +400,6 @@ export default function DesktopLeftRail({
               ].join(" ")}
             >
               <div className="flex flex-col items-stretch gap-1.5">
-                <SidebarBrand expanded={expanded} href={businessHref} />
 
                 {isKanban && !expanded ? (
                   <button

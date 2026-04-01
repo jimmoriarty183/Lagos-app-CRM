@@ -43,9 +43,9 @@ export default function TeamAccessTopBar({
   };
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50 overflow-x-clip border-b border-[#E5E7EB]/80 bg-white/88 backdrop-blur-md">
+    <header className="fixed inset-x-0 top-0 z-50 overflow-x-clip border-b border-[var(--neutral-200)] bg-white">
       <div className="pt-[env(safe-area-inset-top)]">
-        <div className="mx-auto grid h-auto max-w-[1220px] grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 overflow-x-clip px-3 py-2 sm:flex sm:h-[56px] sm:justify-between sm:gap-3 sm:px-6 sm:py-0">
+        <div className="mx-auto grid h-[64px] max-w-[1200px] grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 overflow-x-clip px-3 sm:flex sm:justify-between sm:gap-3 sm:px-6 sm:py-0">
           <div className="flex min-w-0 items-center gap-2 justify-start">
             <Link
               href={ordersHref}

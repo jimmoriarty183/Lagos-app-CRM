@@ -72,7 +72,7 @@ export default async function SettingsPage({
         }
       />
 
-      <div className="mx-auto max-w-[1220px] overflow-x-clip px-2 pb-[max(96px,env(safe-area-inset-bottom))] pt-[88px] sm:px-6 sm:pb-8 sm:pt-[88px]">
+      <div className="container-standard overflow-x-clip pb-[max(96px,env(safe-area-inset-bottom))] pt-[88px] sm:pb-8 sm:pt-[88px]">
         <div className="hidden items-start lg:grid lg:grid-cols-[auto_minmax(0,1fr)] lg:gap-5">
           <DesktopLeftRail
             businessId={String(business.id)}

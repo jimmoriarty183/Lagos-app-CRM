@@ -29,7 +29,7 @@ export default async function PlatformSettingsPage() {
         adminHref={adminHref}
       />
 
-      <div className="mx-auto max-w-[920px] px-4 pb-10 pt-[88px] sm:px-6 sm:pt-[88px]">
+      <div className="container-standard max-w-[920px] pb-10 pt-[88px] sm:pt-[88px]">
         <div className="rounded-[28px] border border-[#E5E7EB] bg-white/92 p-6 shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur">
           <div className="inline-flex items-center rounded-full border border-[#E5E7EB] bg-[#F9FAFB] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#6B7280]">
             Account settings
@@ -41,10 +41,10 @@ export default async function PlatformSettingsPage() {
             Manage account-level destinations separately from workspace configuration.
           </p>
 
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+          <div className="grid-container mt-6">
             <Link
               href="/app/profile"
-              className="group rounded-[22px] border border-[#E5E7EB] bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.04)] transition hover:border-[#D6DAE1] hover:bg-[#FCFCFD]"
+              className="group col-12 sm:col-6 rounded-[22px] border border-[#E5E7EB] bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.04)] transition hover:border-[#D6DAE1] hover:bg-[#FCFCFD]"
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -62,7 +62,7 @@ export default async function PlatformSettingsPage() {
 
             <Link
               href={`/b/${workspace.slug}/settings`}
-              className="group rounded-[22px] border border-[#E5E7EB] bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.04)] transition hover:border-[#D6DAE1] hover:bg-[#FCFCFD]"
+              className="group col-12 sm:col-6 rounded-[22px] border border-[#E5E7EB] bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.04)] transition hover:border-[#D6DAE1] hover:bg-[#FCFCFD]"
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
