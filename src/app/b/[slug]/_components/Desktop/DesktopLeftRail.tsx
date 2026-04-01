@@ -139,7 +139,7 @@ function RailLink({
         className={[
           "relative shrink-0 rounded-xl transition-colors duration-150",
           active
-            ? "bg-[#E7EBFF] p-2 text-[#4F46E5]"
+            ? "bg-[var(--brand-600)] p-2 text-white shadow-[0_8px_18px_rgba(91,91,179,0.26)]"
             : disabled
               ? "bg-white/70 p-2 text-[#9CA3AF]"
               : "bg-[var(--brand-50)] p-2 text-[var(--brand-600)] group-hover:bg-[var(--brand-100)] group-hover:text-[var(--brand-700)]",
