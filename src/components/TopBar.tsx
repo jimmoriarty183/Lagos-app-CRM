@@ -38,8 +38,8 @@ export default function TopBar({
       onClick={onClick}
       style={{
         height: 38,
-        padding: "0 12px",
-        borderRadius: 12,
+        padding: "0 var(--space-3)",
+        borderRadius: "var(--space-3)",
         border: primary
           ? "1px solid var(--brand-600)"
           : "1px solid var(--neutral-200)",
@@ -71,7 +71,7 @@ export default function TopBar({
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          gap: 12,
+          gap: "var(--space-3)",
         }}
       >
         <Link

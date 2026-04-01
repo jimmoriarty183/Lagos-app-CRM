@@ -1853,7 +1853,7 @@ export function OrderPreview({
                               <Button
                                 type="button"
                                 variant="outline"
-                                className="rounded-xl border-[#E5E7EB] bg-white text-[#374151] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
+                                className="h-10 min-w-24 rounded-xl border-[#E5E7EB] bg-white px-5 text-sm font-semibold text-[#374151] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
                                 onClick={() => {
                                   setIsEditingOverview(false);
                                   setDraft({
@@ -1882,11 +1882,11 @@ export function OrderPreview({
                               >
                                 Cancel
                               </Button>
-                              <button
+                              <Button
                                 type="button"
+                                variant="default"
                                 disabled={isSavingOverview}
-                                className="inline-flex h-9 min-w-24 items-center justify-center rounded-xl border border-[var(--brand-600)] bg-[var(--brand-600)] px-4 text-sm font-semibold shadow-[0_1px_2px_rgba(16,24,40,0.12)] transition hover:bg-[var(--brand-700)] disabled:opacity-60"
-                                style={{ color: "#ffffff" }}
+                                className="h-10 min-w-24 rounded-xl px-5 text-sm font-semibold text-white hover:text-white shadow-[0_1px_2px_rgba(16,24,40,0.12)] disabled:opacity-60"
                                 onClick={() => {
                                   if (!draft.firstName.trim()) {
                                     window.alert("First name is required.");
@@ -2157,7 +2157,7 @@ export function OrderPreview({
                                 <span className="whitespace-nowrap leading-none text-white">
                                   {isSavingOverview ? "Saving..." : "Save"}
                                 </span>
-                              </button>
+                              </Button>
                             </>
                           ) : (
                             <>

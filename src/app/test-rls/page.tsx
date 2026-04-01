@@ -42,7 +42,8 @@ export default async function TestRLSPage() {
     <main
       style={{
         padding: 24,
-        fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+        fontFamily:
+          "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
       }}
     >
       <h1 style={{ fontSize: 18, marginBottom: 12 }}>/test-rls</h1>

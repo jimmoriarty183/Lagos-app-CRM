@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { supabaseServerReadOnly } from "@/lib/supabase/server";
 import { fetchBusinessSupportRequests } from "@/lib/support/server";
 import { getBusinessSupportContext } from "@/lib/support/business-context";
@@ -105,12 +106,9 @@ export default async function BusinessSupportPage({
                 <h1 className="product-page-title mt-1.5">Support requests</h1>
                 <p className="product-page-subtitle mt-1.5">Requests for your current business workspace.</p>
               </div>
-              <Link
-                href={`/b/${slug}/support/new`}
-                className="inline-flex h-10 items-center rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white transition hover:bg-blue-700"
-              >
-                New request
-              </Link>
+              <Button asChild className="h-10 px-4 text-sm font-semibold">
+                <Link href={`/b/${slug}/support/new`}>New request</Link>
+              </Button>
             </div>
 
             <form action={`/b/${slug}/support`} className="mt-4 flex gap-3">
@@ -120,12 +118,13 @@ export default async function BusinessSupportPage({
                 placeholder="Search subject or message"
                 className="h-10 min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
               />
-              <button
+              <Button
                 type="submit"
-                className="inline-flex h-10 items-center rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
+                variant="outline"
+                className="h-10 px-4 text-sm font-semibold text-slate-700 hover:border-slate-400 hover:text-slate-900"
               >
                 Search
-              </button>
+              </Button>
             </form>
 
             <div className="mt-4">
@@ -146,12 +145,9 @@ export default async function BusinessSupportPage({
                 <div className="product-page-kicker">Support</div>
                 <h1 className="product-page-title mt-1.5">Support requests</h1>
               </div>
-              <Link
-                href={`/b/${slug}/support/new`}
-                className="inline-flex h-10 items-center rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white transition hover:bg-blue-700"
-              >
-                New request
-              </Link>
+              <Button asChild className="h-10 px-4 text-sm font-semibold">
+                <Link href={`/b/${slug}/support/new`}>New request</Link>
+              </Button>
             </div>
             <form action={`/b/${slug}/support`} className="mt-4 flex gap-3">
               <input
@@ -160,9 +156,13 @@ export default async function BusinessSupportPage({
                 placeholder="Search subject or message"
                 className="h-10 min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
               />
-              <button type="submit" className="inline-flex h-10 items-center rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900">
+              <Button
+                type="submit"
+                variant="outline"
+                className="h-10 px-4 text-sm font-semibold text-slate-700 hover:border-slate-400 hover:text-slate-900"
+              >
                 Search
-              </button>
+              </Button>
             </form>
             <div className="mt-4">
               <SupportRequestsListView

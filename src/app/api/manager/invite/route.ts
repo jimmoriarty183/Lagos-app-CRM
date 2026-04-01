@@ -48,7 +48,7 @@ function renderEmailLayout(input: {
       : "";
 
   return `
-    <div style="margin:0;padding:24px;background:#f3f4f6;font-family:Arial,sans-serif;color:#111827;">
+    <div style="margin:0;padding:24px;background:#f3f4f6;font-family:Geist,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#111827;">
       <div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:14px;padding:24px;">
         <img src="${escapeHtml(logoUrl)}" alt="Ordo" width="72" height="72" style="display:block;border:0;outline:none;text-decoration:none;" />
         <h1 style="font-size:22px;line-height:1.3;margin:18px 0 10px 0;">${escapeHtml(input.title)}</h1>

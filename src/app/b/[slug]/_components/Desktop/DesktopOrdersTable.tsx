@@ -1725,7 +1725,7 @@ export default function DesktopOrdersTable({
             <button
               type="button"
               onClick={openKanbanFilters}
-              className="relative inline-flex h-10 items-center justify-center gap-2 rounded-lg border-2 border-[var(--brand-600)] bg-white px-4 text-sm font-medium text-[var(--brand-600)] transition hover:bg-[var(--brand-600)] hover:text-white"
+              className="relative inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-[var(--brand-200)] bg-white px-4 text-sm font-medium text-[var(--brand-700)] transition hover:border-[#A5B4FC] hover:bg-[var(--brand-50)] hover:text-[var(--brand-700)]"
               aria-label="Open search and filters"
               title="Search and filters"
             >

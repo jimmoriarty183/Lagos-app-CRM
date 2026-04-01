@@ -1,5 +1,6 @@
 import { AdminSectionCard, AdminStatCard } from "@/app/admin/_components/AdminCards";
 import { AdminShell } from "@/app/admin/_components/AdminShell";
+import { Button } from "@/components/ui/button";
 import {
   AdminBadge,
   AdminCell,
@@ -159,9 +160,9 @@ export default async function AdminUsersPage({
                   </option>
                 ))}
               </select>
-              <button type="submit" className="inline-flex h-11 items-center justify-center rounded-xl bg-[#1d4ed8] px-5 text-sm font-semibold text-white transition hover:bg-[#1e40af]">
+              <Button type="submit" className="h-11 px-5 text-sm font-semibold">
                 Применить
-              </button>
+              </Button>
             </div>
           </form>
 

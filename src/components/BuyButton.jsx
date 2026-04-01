@@ -125,9 +125,9 @@ export default function BuyButton({
         : resolvedVariant;
 
   const baseStyle = {
-    borderRadius: '12px',
-    padding: '0 16px',
-    fontWeight: 600,
+    borderRadius: 'var(--radius)',
+    padding: 'var(--space-3) var(--space-6)',
+    fontWeight: 500,
     height: '42px',
     cursor: 'pointer',
     display: 'inline-flex',
@@ -147,7 +147,7 @@ export default function BuyButton({
           border: '1px solid var(--brand-600)',
           background: 'var(--brand-600)',
           color: 'white',
-          boxShadow: '0 10px 20px -12px rgba(99, 102, 241, 0.72)',
+          boxShadow: 'none',
         };
 
   return (

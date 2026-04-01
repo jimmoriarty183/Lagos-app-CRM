@@ -1,5 +1,6 @@
 import { AdminSectionCard } from "@/app/admin/_components/AdminCards";
 import { AdminShell } from "@/app/admin/_components/AdminShell";
+import { Button } from "@/components/ui/button";
 import {
   AdminCell,
   AdminHeadCell,
@@ -69,9 +70,9 @@ export default async function AdminActivityPage({
           <select name="perPage" defaultValue={String(perPage)} className="h-11 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
             {PER_PAGE_OPTIONS.map((value) => <option key={value} value={value}>{value}</option>)}
           </select>
-          <button type="submit" className="inline-flex h-11 items-center justify-center rounded-xl bg-[#1d4ed8] px-5 text-sm font-semibold text-white transition hover:bg-[#1e40af]">
+          <Button type="submit" className="h-11 px-5 text-sm font-semibold">
             Применить
-          </button>
+          </Button>
         </form>
       </AdminSectionCard>
 
