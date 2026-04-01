@@ -196,13 +196,25 @@ export default async function OwnerAnalyticsPage({
   const managerBaseHref = makeTabHref("managers");
   const clearHref = analyticsHref;
 
-  const { count: todoCountRaw } = await admin
-    .from("follow_ups")
-    .select("id", { count: "exact", head: true })
-    .eq("business_id", String(currentBusiness.id))
-    .eq("status", "open")
-    .lte("due_date", getTodayDateOnly());
-  const todoCount = Number(todoCountRaw ?? 0);
+  const todayDate = getTodayDateOnly();
+  const [{ count: overdueCountRaw }, { count: todayCountRaw }] =
+    await Promise.all([
+      admin
+        .from("follow_ups")
+        .select("id", { count: "exact", head: true })
+        .eq("business_id", String(currentBusiness.id))
+        .eq("status", "open")
+        .lt("due_date", todayDate),
+      admin
+        .from("follow_ups")
+        .select("id", { count: "exact", head: true })
+        .eq("business_id", String(currentBusiness.id))
+        .eq("status", "open")
+        .eq("due_date", todayDate),
+    ]);
+  const overdueCount = Number(overdueCountRaw ?? 0);
+  const todayCount = Number(todayCountRaw ?? 0);
+  const todoCount = overdueCount + todayCount;
 
   const analyticsData = await loadOwnerDashboardData(admin, {
     businessId: String(currentBusiness.id),
@@ -233,6 +245,8 @@ export default async function OwnerAnalyticsPage({
         clearHref={clearHref}
         hasActiveFilters={false}
         todoCount={todoCount}
+        overdueCount={overdueCount}
+        todayCount={todayCount}
       />
 
       <main className="mx-auto max-w-[1220px] overflow-x-hidden px-4 pb-8 pt-20 sm:px-6">

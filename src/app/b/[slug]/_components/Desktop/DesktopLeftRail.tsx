@@ -290,7 +290,7 @@ export default function DesktopLeftRail({
   const leftOffset =
     layoutMode === "list"
       ? activeSection === "today"
-        ? "max(1.5rem, calc((100vw - 1520px) / 2 + 1.5rem))"
+        ? "max(1.5rem, calc((100vw - 1440px) / 2 + 1.5rem))"
         : "max(1.5rem, calc((100vw - 1220px) / 2 + 1.5rem))"
       : undefined;
 

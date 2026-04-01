@@ -85,7 +85,22 @@ function isSchemaMissingError(error: { message?: string } | null | undefined) {
   );
 }
 
+function hasMeaningfulErrorPayload(error: unknown) {
+  if (!error) return false;
+  if (typeof error === "string") return error.trim().length > 0;
+  if (typeof error !== "object") return true;
+
+  const record = error as Record<string, unknown>;
+  const fields = ["message", "code", "details", "hint", "status", "name"];
+  return fields.some((field) => {
+    const value = record[field];
+    if (typeof value === "string") return value.trim().length > 0;
+    return value !== null && value !== undefined;
+  });
+}
+
 function logTodayPageError(scope: string, error: unknown) {
+  if (!hasMeaningfulErrorPayload(error)) return;
   console.error(`[today/page] ${scope}`, error);
 }
 
@@ -472,6 +487,12 @@ export default async function TodayFollowUpsPage({
   const todoCount = items.filter(
     (item) => compareDateOnly(item.due_date, getTodayDateOnly()) <= 0,
   ).length;
+  const overdueCount = items.filter(
+    (item) => compareDateOnly(item.due_date, getTodayDateOnly()) < 0,
+  ).length;
+  const todayOnlyCount = items.filter(
+    (item) => compareDateOnly(item.due_date, getTodayDateOnly()) === 0,
+  ).length;
   let hasStartedDay = false;
 
   const { data: workDayRow, error: workDayError } = await supabase
@@ -511,9 +532,11 @@ export default async function TodayFollowUpsPage({
         clearHref={todayHref}
         hasActiveFilters={false}
         todoCount={todoCount}
+        overdueCount={overdueCount}
+        todayCount={todayOnlyCount}
       />
 
-      <main className="mx-auto max-w-[1520px] overflow-x-hidden px-4 pb-8 pt-20 sm:px-6">
+      <main className="mx-auto max-w-[1440px] overflow-x-hidden px-4 pb-8 pt-20 sm:px-6">
         <div className="hidden items-start gap-5 lg:grid lg:grid-cols-[auto_minmax(0,1fr)]">
           <div className="relative shrink-0">
             <DesktopLeftRail
@@ -545,7 +568,7 @@ export default async function TodayFollowUpsPage({
             />
           </div>
 
-          <div className="min-w-0 space-y-4 pl-2">
+          <div className="min-w-0 w-full space-y-4 pl-2">
             <TodoWorkspaceView
               businessSlug={currentBusiness.slug}
               canManage={canManage}

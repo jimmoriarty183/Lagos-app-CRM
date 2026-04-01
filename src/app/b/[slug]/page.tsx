@@ -555,13 +555,25 @@ export default async function Page({ params, searchParams }: PageProps) {
     phoneRaw && phoneRaw.length > 0
       ? `/b/${slug}/support?u=${encodeURIComponent(phoneRaw)}`
       : `/b/${slug}/support`;
-  const { count: todoCountRaw } = await dataClient
-    .from("follow_ups")
-    .select("id", { count: "exact", head: true })
-    .eq("business_id", String(currentBusiness.id))
-    .eq("status", "open")
-    .lte("due_date", getTodayDateOnly());
-  const todoCount = Number(todoCountRaw ?? 0);
+  const todayDate = getTodayDateOnly();
+  const [{ count: overdueCountRaw }, { count: todayCountRaw }] =
+    await Promise.all([
+      dataClient
+        .from("follow_ups")
+        .select("id", { count: "exact", head: true })
+        .eq("business_id", String(currentBusiness.id))
+        .eq("status", "open")
+        .lt("due_date", todayDate),
+      dataClient
+        .from("follow_ups")
+        .select("id", { count: "exact", head: true })
+        .eq("business_id", String(currentBusiness.id))
+        .eq("status", "open")
+        .eq("due_date", todayDate),
+    ]);
+  const overdueCount = Number(overdueCountRaw ?? 0);
+  const todayCount = Number(todayCountRaw ?? 0);
+  const todoCount = overdueCount + todayCount;
   const initialOpenOrderId = cleanText(sp.focusOrder);
 
   const makeSummaryHref = (nextSummaryRange: DashboardRange) => {
@@ -1224,6 +1236,8 @@ export default async function Page({ params, searchParams }: PageProps) {
         clearHref={clearHref}
         hasActiveFilters={hasActiveFilters}
         todoCount={todoCount}
+        overdueCount={overdueCount}
+        todayCount={todayCount}
       />
       <RightCampaignPopup />
 

@@ -64,13 +64,24 @@ function getTimeChipStatus(
 function DueBadge({ dueDate }: { dueDate: string }) {
   const today = getTodayDateOnly();
   const isOverdue = dueDate < today;
+  const dueDateLabel = formatFollowUpDate(dueDate);
+  const daysOverdue = isOverdue
+    ? Math.max(
+        1,
+        Math.floor(
+          (new Date(`${today}T00:00:00`).getTime() -
+            new Date(`${dueDate}T00:00:00`).getTime()) /
+            (1000 * 60 * 60 * 24),
+        ),
+      )
+    : 0;
   const label = isOverdue
-    ? "Overdue"
+    ? `Overdue ${daysOverdue}d · due ${dueDateLabel}`
     : dueDate === getTomorrowDateOnly()
       ? "Tomorrow"
       : dueDate === today
         ? "Today"
-        : formatFollowUpDate(dueDate);
+        : dueDateLabel;
 
   return (
     <span
@@ -80,7 +91,7 @@ function DueBadge({ dueDate }: { dueDate: string }) {
           ? "border-[#FECACA] bg-[#FEF2F2] text-[#B42318]"
           : "border-[#C7D2FE] bg-[#EEF2FF] text-[#3645A0]",
       )}
-      title={formatFollowUpDate(dueDate)}
+      title={isOverdue ? `Due ${dueDateLabel}. Overdue by ${daysOverdue} days.` : dueDateLabel}
     >
       {label}
     </span>
@@ -239,7 +250,7 @@ function FollowUpTodayRow({
                 <Button
                   type="button"
                   size="sm"
-                  className="h-7.5 rounded-[12px] px-2.5 text-[11px] font-medium shadow-none"
+                  className="h-7.5 rounded-[12px] px-2.5 text-[11px] font-medium !text-white hover:!text-white shadow-none"
                   onClick={() => onDone(item)}
                 >
                   Done

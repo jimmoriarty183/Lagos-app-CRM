@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { CheckSquare } from "lucide-react";
+import { CalendarDays, CheckSquare } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { BrandIcon, BrandLockup } from "@/components/Brand";
@@ -28,6 +28,8 @@ type Props = {
   clearHref?: string;
   hasActiveFilters?: boolean;
   todoCount?: number;
+  overdueCount?: number;
+  todayCount?: number;
 };
 
 export default function TopBar({
@@ -45,6 +47,8 @@ export default function TopBar({
   clearHref,
   hasActiveFilters = false,
   todoCount = 0,
+  overdueCount,
+  todayCount,
 }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -56,6 +60,22 @@ export default function TopBar({
   const resolvedSettingsHref = settingsHref ?? "/app/settings";
   const profileHref = "/app/profile";
   const canManage = role === "OWNER" || role === "MANAGER";
+  const hasSplitTodoCounters =
+    typeof overdueCount === "number" || typeof todayCount === "number";
+  const overdueCounter = Math.max(0, Number(overdueCount ?? 0));
+  const todayCounter = Math.max(
+    0,
+    Number(todayCount ?? Math.max(0, todoCount - overdueCounter)),
+  );
+  const calendarDayHref = React.useMemo(() => {
+    if (!todayHref) return null;
+    const [basePath, query = ""] = todayHref.split("?");
+    const params = new URLSearchParams(query);
+    params.set("mode", "calendar");
+    params.set("view", "day");
+    params.set("date", "today");
+    return `${basePath}?${params.toString()}`;
+  }, [todayHref]);
 
   const handleSelect = (slug: string) => {
     document.cookie = `active_business_slug=${encodeURIComponent(slug)}; path=/; max-age=${60 * 60 * 24 * 365}`;
@@ -139,11 +159,38 @@ export default function TopBar({
               >
                 <CheckSquare className="h-4 w-4 text-[#3645A0]" />
                 <span className="ml-2">To do</span>
-                {todoCount > 0 ? (
+                {hasSplitTodoCounters ? (
+                  <span className="ml-2 inline-flex items-center gap-1.5">
+                    {overdueCounter > 0 ? (
+                      <span className="inline-flex min-w-5 items-center justify-center rounded-full border border-[#FECACA] bg-[#FEF2F2] px-1.5 py-0.5 text-[10px] font-bold text-[#B42318]">
+                        {overdueCounter}
+                      </span>
+                    ) : null}
+                    {todayCounter > 0 ? (
+                      <span className="inline-flex min-w-5 items-center justify-center rounded-full border border-[#A5B4FC] bg-white px-1.5 py-0.5 text-[10px] font-bold text-[#3645A0]">
+                        {todayCounter}
+                      </span>
+                    ) : null}
+                    {overdueCounter === 0 && todayCounter === 0 ? (
+                      <span className="inline-flex min-w-5 items-center justify-center rounded-full border border-[#D0D5DD] bg-white px-1.5 py-0.5 text-[10px] font-semibold text-[#667085]">
+                        Clear
+                      </span>
+                    ) : null}
+                  </span>
+                ) : todoCount > 0 ? (
                   <span className="ml-2 inline-flex min-w-5 items-center justify-center rounded-full border border-[#A5B4FC] bg-white px-1.5 py-0.5 text-[10px] font-bold text-[#3645A0]">
                     {todoCount > 99 ? "99+" : todoCount}
                   </span>
                 ) : null}
+              </Link>
+            ) : null}
+            {calendarDayHref ? (
+              <Link
+                href={calendarDayHref}
+                className="inline-flex h-8 items-center rounded-lg border border-[#D6DAE1] bg-white px-3 text-[12px] font-semibold text-[#475467] shadow-sm transition hover:border-[#C7D2FE] hover:bg-[#F8FAFF] hover:text-[#3645A0]"
+              >
+                <CalendarDays className="h-4 w-4 text-[#667085]" />
+                <span className="ml-2">Calendar</span>
               </Link>
             ) : null}
             {businessId ? (

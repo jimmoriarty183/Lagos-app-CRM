@@ -121,6 +121,39 @@ export function TodoWorkspaceView({
     setDetailsCollapsed(false);
   }, [filteredItems]);
 
+  React.useEffect(() => {
+    const modeParam = String(searchParams.get("mode") ?? "")
+      .trim()
+      .toLowerCase();
+    if (modeParam !== "calendar") return;
+
+    const viewParam = String(searchParams.get("view") ?? "")
+      .trim()
+      .toLowerCase();
+    const nextView: TodoCalendarView =
+      viewParam === "month" || viewParam === "week" || viewParam === "day"
+        ? viewParam
+        : "day";
+    setCalendarView((current) => (current === nextView ? current : nextView));
+
+    const rawDateParam = String(searchParams.get("date") ?? "").trim().toLowerCase();
+    let targetDate: Date | null = null;
+    if (!rawDateParam || rawDateParam === "today") {
+      targetDate = new Date();
+    } else if (/^\d{4}-\d{2}-\d{2}$/.test(rawDateParam)) {
+      const parsed = parseDateOnly(rawDateParam);
+      if (!Number.isNaN(parsed.getTime())) targetDate = parsed;
+    }
+
+    if (!targetDate) return;
+    setAnchorDate((current) =>
+      toDateKey(current) === toDateKey(targetDate as Date)
+        ? current
+        : (targetDate as Date),
+    );
+    handleSelectDate(targetDate);
+  }, [searchParams, handleSelectDate]);
+
   const handleSelectItem = React.useCallback((item: TodoCalendarItem) => {
     setSelectedDateKey(item.date);
     setSelectedItemId(item.id);
@@ -144,30 +177,24 @@ export function TodoWorkspaceView({
 
   return (
     <div className="relative space-y-5">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -left-20 -top-14 h-56 w-56 rounded-full bg-[#E0E7FF]/70 blur-3xl"
-      />
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -right-24 top-1/4 h-72 w-72 rounded-full bg-[#DBEAFE]/55 blur-3xl"
-      />
       {mode === "list" ? (
-        <TodayFollowUpsView
-          businessSlug={businessSlug}
-          canManage={canManage}
-          initialItems={initialItems}
-          headerAction={
-            <TodoViewModeSwitch
-              value={mode}
-              onChange={handleModeChange}
-              options={[
-                { value: "list", label: "List" },
-                { value: "calendar", label: "Calendar" },
-              ]}
-            />
-          }
-        />
+        <div className="mx-auto w-full max-w-[1180px]">
+          <TodayFollowUpsView
+            businessSlug={businessSlug}
+            canManage={canManage}
+            initialItems={initialItems}
+            headerAction={
+              <TodoViewModeSwitch
+                value={mode}
+                onChange={handleModeChange}
+                options={[
+                  { value: "list", label: "List" },
+                  { value: "calendar", label: "Calendar" },
+                ]}
+              />
+            }
+          />
+        </div>
       ) : (
         <div className="relative space-y-5">
           <div className="rounded-[24px] border border-[#D9E2FF] bg-[linear-gradient(135deg,#FFFFFF_0%,#F8FAFF_62%,#EEF2FF_100%)] px-5 py-4.5 shadow-[0_16px_38px_rgba(15,23,42,0.08)]">

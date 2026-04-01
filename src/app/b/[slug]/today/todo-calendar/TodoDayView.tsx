@@ -85,13 +85,15 @@ export function TodoDayView({
             className="relative w-[72px] shrink-0 border-r border-[#F2F4F7] bg-[#FCFCFD]"
             style={{ height: CALENDAR_TIMELINE_HEIGHT }}
           >
-            {Array.from({ length: CALENDAR_HOUR_COUNT + 1 }).map((_, index) => {
+            {Array.from({ length: CALENDAR_HOUR_COUNT }).map((_, index) => {
               const hour = CALENDAR_HOUR_START + index;
               return (
                 <div
                   key={hour}
                   className="absolute left-0 right-0 -translate-y-1/2 px-3 text-[11px] font-medium text-[#98A2B3]"
-                  style={{ top: index * CALENDAR_HOUR_HEIGHT }}
+                  style={{
+                    top: index * CALENDAR_HOUR_HEIGHT + CALENDAR_HOUR_HEIGHT / 2,
+                  }}
                 >
                   {format(new Date(2026, 0, 1, hour), "h a")}
                 </div>

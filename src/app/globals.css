@@ -68,7 +68,11 @@
   --brand-primary-text: var(--brand-700);
   
   /* Layout & Typography */
-  --background: linear-gradient(to bottom, var(--neutral-50) 0%, var(--neutral-100) 100%);
+  --background:
+    radial-gradient(1300px 600px at 10% -10%, rgba(91, 91, 179, 0.16) 0%, rgba(91, 91, 179, 0) 64%),
+    radial-gradient(1100px 520px at 88% -12%, rgba(124, 124, 200, 0.13) 0%, rgba(124, 124, 200, 0) 66%),
+    radial-gradient(900px 360px at 50% -18%, rgba(168, 168, 218, 0.12) 0%, rgba(168, 168, 218, 0) 68%),
+    linear-gradient(to bottom, var(--neutral-50) 0%, var(--neutral-100) 100%);
   --foreground: var(--neutral-900);
   --card: #FFFFFF;
   --muted: var(--neutral-500);
