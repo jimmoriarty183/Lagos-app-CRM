@@ -26,9 +26,52 @@ function BrandImage({ src, alt, className, height, width }: BrandImageProps) {
   );
 }
 
+function BrandSymbol({
+  size,
+  bgColor,
+  patternColor,
+  className,
+  alt,
+}: {
+  size: number;
+  bgColor: string;
+  patternColor: string;
+  className?: string;
+  alt?: string;
+}) {
+  const svgSize = size * 0.583;
+  return (
+    <div
+      className={["rounded-lg flex items-center justify-center shrink-0", className]
+        .filter(Boolean)
+        .join(" ")}
+      style={{
+        backgroundColor: bgColor,
+        width: `${size}px`,
+        height: `${size}px`,
+      }}
+      aria-label={alt}
+    >
+      <svg
+        width={svgSize}
+        height={svgSize}
+        viewBox="0 0 28 28"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        aria-hidden="true"
+      >
+        <rect x="4" y="4" width="8" height="8" fill={patternColor} />
+        <rect x="16" y="4" width="8" height="8" stroke={patternColor} strokeWidth="2" />
+        <rect x="4" y="16" width="8" height="8" stroke={patternColor} strokeWidth="2" />
+        <rect x="16" y="16" width="8" height="8" fill={patternColor} />
+      </svg>
+    </div>
+  );
+}
+
 /**
  * BrandIcon - Icon only (Square Grid symbol)
- * Uses exact brand asset: /brand/ordo_symbol.svg
+ * Uses exact grid geometry from Greetingmessage-main logo component
  *
  * Brand color: var(--brand-600) - Muted Purple (#5B5BB3)
  */
@@ -42,19 +85,19 @@ export function BrandIcon({
   alt?: string;
 }) {
   return (
-    <BrandImage
-      src="/brand/ordo_symbol.svg"
-      alt={alt}
+    <BrandSymbol
+      size={size}
+      bgColor="#5B5BB3"
+      patternColor="#FFFFFF"
       className={className}
-      height={size}
-      width={size}
+      alt={alt}
     />
   );
 }
 
 /**
  * BrandIconDarkBg - Icon with white background for dark surfaces
- * Uses exact brand asset: /brand/icon-dark-bg.svg
+ * Uses exact grid geometry from Greetingmessage-main logo component
  */
 export function BrandIconDarkBg({
   size = 40,
@@ -66,12 +109,12 @@ export function BrandIconDarkBg({
   alt?: string;
 }) {
   return (
-    <BrandImage
-      src="/brand/icon-dark-bg.svg"
-      alt={alt}
+    <BrandSymbol
+      size={size}
+      bgColor="#FFFFFF"
+      patternColor="#5B5BB3"
       className={className}
-      height={size}
-      width={size}
+      alt={alt}
     />
   );
 }
@@ -84,7 +127,7 @@ export function BrandIconDarkBg({
  * <BrandLockup iconSize={34} textClassName="text-[1.75rem]" />
  */
 export function BrandLockup({
-  iconSize = 48,
+  iconSize = 32,
   textClassName = "text-4xl",
   className,
   href,
@@ -98,23 +141,50 @@ export function BrandLockup({
   ariaLabel?: string;
   variant?: "default" | "dark-bg";
 }) {
-  // For dark backgrounds, use the inverted logo asset
-  const logoSrc =
-    variant === "dark-bg"
-      ? "/brand/logo-dark-bg.svg"
-      : "/brand/ordo_horizontal.svg";
+  const isDarkBg = variant === "dark-bg";
+  const bgColor = isDarkBg ? "#FFFFFF" : "var(--brand-600)";
+  const patternColor = isDarkBg ? "var(--brand-600)" : "#FFFFFF";
+  const textColor = isDarkBg ? "#FFFFFF" : "var(--neutral-900)";
+  const boxSize = iconSize * 1.125;
+  const svgSize = iconSize * 0.625;
+  const textSize = iconSize * 0.625;
 
   const content = (
-    <img
-      src={logoSrc}
-      alt="Ordo"
-      style={{
-        height: `${iconSize}px`,
-        width: `${iconSize * 3.75}px`, // Maintain aspect ratio (180/48 = 3.75)
-        objectFit: "contain",
-        display: "block",
-      }}
-    />
+    <>
+      <div
+        className="rounded-lg flex items-center justify-center shrink-0"
+        style={{
+          backgroundColor: bgColor,
+          width: `${boxSize}px`,
+          height: `${boxSize}px`,
+        }}
+      >
+        <svg
+          width={svgSize}
+          height={svgSize}
+          viewBox="0 0 28 28"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          aria-hidden="true"
+        >
+          <rect x="4" y="4" width="8" height="8" fill={patternColor} />
+          <rect x="16" y="4" width="8" height="8" stroke={patternColor} strokeWidth="2" />
+          <rect x="4" y="16" width="8" height="8" stroke={patternColor} strokeWidth="2" />
+          <rect x="16" y="16" width="8" height="8" fill={patternColor} />
+        </svg>
+      </div>
+      <span
+        className={textClassName}
+        style={{
+          color: textColor,
+          fontWeight: 600,
+          letterSpacing: "-0.01em",
+          fontSize: `${textSize}px`,
+        }}
+      >
+        Ordo
+      </span>
+    </>
   );
 
   if (href) {

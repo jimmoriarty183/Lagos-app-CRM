@@ -22,24 +22,24 @@ export function Logo({ size = 32, color }: { size?: number; color?: string }) {
         }}
       >
         <svg width={svgSize} height={svgSize} viewBox="0 0 28 28" fill="none">
+          <rect x="4" y="4" width="8" height="8" fill={patternColor} />
           <rect
-            x="4"
+            x="16"
             y="4"
             width="8"
             height="8"
             stroke={patternColor}
             strokeWidth="2"
           />
-          <rect x="16" y="4" width="8" height="8" fill={patternColor} />
-          <rect x="4" y="16" width="8" height="8" fill={patternColor} />
           <rect
-            x="16"
+            x="4"
             y="16"
             width="8"
             height="8"
             stroke={patternColor}
             strokeWidth="2"
           />
+          <rect x="16" y="16" width="8" height="8" fill={patternColor} />
         </svg>
       </div>
       <span
