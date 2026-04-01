@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { ChevronDown } from "lucide-react";
-import { cn } from "@/components/ui/utils";
 
 export function TaskGroupSection({
   title,
@@ -10,6 +9,7 @@ export function TaskGroupSection({
   hint,
   tone = "neutral",
   defaultOpen = true,
+  persistenceKey,
   children,
 }: {
   title: string;
@@ -17,9 +17,33 @@ export function TaskGroupSection({
   hint: string;
   tone?: "danger" | "primary" | "neutral";
   defaultOpen?: boolean;
+  persistenceKey?: string;
   children: React.ReactNode;
 }) {
   const [isOpen, setIsOpen] = React.useState(defaultOpen);
+  const storageKey = persistenceKey
+    ? `task-group-section:${persistenceKey}`
+    : null;
+
+  React.useEffect(() => {
+    if (!storageKey) return;
+    try {
+      const saved = window.localStorage.getItem(storageKey);
+      if (saved === "1") setIsOpen(true);
+      if (saved === "0") setIsOpen(false);
+    } catch {
+      // ignore storage errors
+    }
+  }, [storageKey]);
+
+  React.useEffect(() => {
+    if (!storageKey) return;
+    try {
+      window.localStorage.setItem(storageKey, isOpen ? "1" : "0");
+    } catch {
+      // ignore storage errors
+    }
+  }, [storageKey, isOpen]);
 
   const textClass =
     tone === "danger"

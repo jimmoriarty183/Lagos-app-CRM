@@ -40,6 +40,28 @@ export type TodayFollowUpItem = FollowUpRow & {
   orderHref: string | null;
 };
 
+export type ManagerMonthlyPlanProgress = {
+  monthStart: string;
+  monthEnd: string;
+  daysElapsed: number;
+  daysTotal: number;
+  planAmount: number;
+  actualAmount: number;
+  forecastAmount: number;
+  achievementPct: number;
+  planClosedOrders: number;
+  closedOrders: number;
+  forecastClosedOrders: number;
+};
+
+function formatCurrency(value: number) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
 function getTimeChipStatus(
   item: TodayFollowUpItem,
 ): "normal" | "upcoming" | "overdue" {
@@ -264,78 +286,18 @@ function FollowUpTodayRow({
   );
 }
 
-function SectionHeader({
-  label,
-  count,
-  hint,
-  tone,
-  collapsible = false,
-  open = true,
-  onToggle,
-}: {
-  label: string;
-  count: number;
-  hint: string;
-  tone: "danger" | "primary" | "neutral";
-  collapsible?: boolean;
-  open?: boolean;
-  onToggle?: () => void;
-}) {
-  const textClass =
-    tone === "danger"
-      ? "text-[#B42318]"
-      : tone === "primary"
-        ? "text-[#3645A0]"
-        : "text-[#475467]";
-
-  const content = (
-    <>
-      <div className={`text-[12px] font-medium leading-4 ${textClass}`}>
-        {label} ({count})
-      </div>
-      <div className="flex items-center gap-2">
-        <span className="text-[11px] font-medium text-[#9CA3AF]">{hint}</span>
-        {collapsible ? (
-          <span className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-[#E5E7EB] bg-white text-[#98A2B3]">
-            <ChevronDown
-              className={`h-3.5 w-3.5 transition ${open ? "rotate-180" : ""}`}
-            />
-          </span>
-        ) : null}
-      </div>
-    </>
-  );
-
-  if (!collapsible) {
-    return (
-      <div className="flex items-center justify-between gap-3 px-1">
-        {content}
-      </div>
-    );
-  }
-
-  return (
-    <button
-      type="button"
-      onClick={onToggle}
-      className="flex w-full items-center justify-between gap-3 rounded-[14px] px-1 py-1 text-left transition hover:bg-[#F8FAFC]"
-      aria-expanded={open}
-    >
-      {content}
-    </button>
-  );
-}
-
 export function TodayFollowUpsView({
   businessSlug,
   canManage,
   initialItems,
   headerAction,
+  managerPlanProgress,
 }: {
   businessSlug: string;
   canManage: boolean;
   initialItems: TodayFollowUpItem[];
   headerAction?: React.ReactNode;
+  managerPlanProgress?: ManagerMonthlyPlanProgress | null;
 }) {
   const router = useRouter();
   const [items, setItems] = React.useState(initialItems);
@@ -473,6 +435,37 @@ export function TodayFollowUpsView({
             </span>
           </div>
         </div>
+        {managerPlanProgress ? (
+          <div className="mt-3 rounded-[14px] border border-[#E5E7EB] bg-white px-3 py-2.5">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="text-[12px] font-semibold text-[#111827]">
+                Monthly plan • {managerPlanProgress.monthStart} to {managerPlanProgress.monthEnd}
+              </div>
+              <div className="text-[11px] font-semibold text-[#475467]">
+                Day {managerPlanProgress.daysElapsed}/{managerPlanProgress.daysTotal}
+              </div>
+            </div>
+            <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-[#EEF2FF]">
+              <div
+                className="h-full rounded-full bg-[var(--brand-600)] transition-all"
+                style={{
+                  width: `${Math.max(0, Math.min(100, managerPlanProgress.achievementPct))}%`,
+                }}
+              />
+            </div>
+            <div className="mt-2 grid grid-cols-1 gap-2 text-[11px] text-[#475467] sm:grid-cols-3">
+              <div>
+                Amount: {formatCurrency(managerPlanProgress.planAmount)} / {formatCurrency(managerPlanProgress.actualAmount)} / {formatCurrency(managerPlanProgress.forecastAmount)}
+              </div>
+              <div>
+                Orders: {managerPlanProgress.planClosedOrders} / {managerPlanProgress.closedOrders} / {Math.round(managerPlanProgress.forecastClosedOrders)}
+              </div>
+              <div className="font-semibold text-[#111827]">
+                Achievement: {managerPlanProgress.achievementPct.toFixed(1)}%
+              </div>
+            </div>
+          </div>
+        ) : null}
         {errorMessage ? (
           <div className="mt-3 rounded-[14px] border border-[#FECACA] bg-[#FEF2F2] px-3 py-2.5 text-sm font-medium text-[#B42318]">
             {errorMessage}
@@ -493,6 +486,7 @@ export function TodayFollowUpsView({
         hint="Needs attention"
         tone="danger"
         defaultOpen={true}
+        persistenceKey={`${businessSlug}:today:list:overdue`}
       >
         {overdue.length === 0 ? (
           <div className="rounded-[16px] border border-dashed border-[#E5E7EB] bg-white/70 px-4 py-5 text-sm text-[#6B7280]">
@@ -521,6 +515,7 @@ export function TodayFollowUpsView({
         hint="Scheduled now"
         tone="primary"
         defaultOpen={true}
+        persistenceKey={`${businessSlug}:today:list:today`}
       >
         {today.length === 0 ? (
           <div className="rounded-[16px] border border-dashed border-[#E5E7EB] bg-white/70 px-4 py-5 text-sm text-[#6B7280]">
@@ -549,6 +544,7 @@ export function TodayFollowUpsView({
         hint="Planned for next day"
         tone="neutral"
         defaultOpen={false}
+        persistenceKey={`${businessSlug}:today:list:tomorrow`}
       >
         {tomorrow.length === 0 ? (
           <div className="rounded-[16px] border border-dashed border-[#E5E7EB] bg-white/70 px-4 py-5 text-sm text-[#6B7280]">

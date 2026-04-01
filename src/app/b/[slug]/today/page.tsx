@@ -6,6 +6,7 @@ import { StartDayNudge } from "@/app/b/[slug]/_components/topbar/StartDayNudge";
 import TopBar from "@/app/b/[slug]/_components/topbar/TopBar";
 import { TodoWorkspaceView } from "@/app/b/[slug]/today/TodoWorkspaceView";
 import type { TodayFollowUpItem } from "@/app/b/[slug]/today/TodayFollowUpsView";
+import type { ManagerMonthlyPlanProgress } from "@/app/b/[slug]/today/TodayFollowUpsView";
 import type { TodoCalendarItem } from "@/app/b/[slug]/today/todo-calendar/types";
 import { inferFollowUpSubtype } from "@/app/b/[slug]/today/todo-calendar/utils";
 import { getAdminUsersPath, isAdminEmail } from "@/lib/admin-access";
@@ -76,6 +77,17 @@ type ChecklistCalendarRow = {
   created_at: string;
 };
 
+type SalesMonthTargetRow = {
+  plan_amount: number | string | null;
+  plan_closed_orders: number | string | null;
+};
+
+type SalesMonthOrderRow = {
+  amount: number | string | null;
+  status: string | null;
+  updated_at: string | null;
+};
+
 function isSchemaMissingError(error: { message?: string } | null | undefined) {
   const msg = String(error?.message ?? "").toLowerCase();
   return (
@@ -138,6 +150,11 @@ function buildOrderReferenceLabel(order: OrderLookupRow | null | undefined) {
   if (!order?.id) return null;
   const clientName = cleanText(order.client_name) || "Order";
   return `Order${order.order_number ? ` #${order.order_number}` : ""}${clientName ? ` - ${clientName}` : ""}`;
+}
+
+function parseNumeric(value: number | string | null | undefined) {
+  const parsed = Number(value ?? 0);
+  return Number.isFinite(parsed) ? parsed : 0;
 }
 
 export default async function TodayFollowUpsPage({
@@ -494,6 +511,7 @@ export default async function TodayFollowUpsPage({
     (item) => compareDateOnly(item.due_date, getTodayDateOnly()) === 0,
   ).length;
   let hasStartedDay = false;
+  let managerPlanProgress: ManagerMonthlyPlanProgress | null = null;
 
   const { data: workDayRow, error: workDayError } = await supabase
     .from("work_days")
@@ -513,6 +531,91 @@ export default async function TodayFollowUpsPage({
         .trim()
         .toLowerCase(),
     );
+  }
+
+  if (role === "MANAGER") {
+    const nowDate = new Date();
+    const monthStartDate = new Date(
+      nowDate.getFullYear(),
+      nowDate.getMonth(),
+      1,
+    );
+    const monthEndDate = new Date(
+      nowDate.getFullYear(),
+      nowDate.getMonth() + 1,
+      0,
+    );
+    const monthStart = `${monthStartDate.getFullYear()}-${String(monthStartDate.getMonth() + 1).padStart(2, "0")}-${String(monthStartDate.getDate()).padStart(2, "0")}`;
+    const monthEnd = `${monthEndDate.getFullYear()}-${String(monthEndDate.getMonth() + 1).padStart(2, "0")}-${String(monthEndDate.getDate()).padStart(2, "0")}`;
+    const daysTotal = monthEndDate.getDate();
+    const today = getTodayDateOnly();
+    const daysElapsed =
+      today < monthStart ? 0 : today > monthEnd ? daysTotal : Number(today.slice(8, 10));
+
+    const [targetRes, ordersRes] = await Promise.all([
+      admin
+        .from("sales_month_targets")
+        .select("plan_amount,plan_closed_orders")
+        .eq("business_id", String(currentBusiness.id))
+        .eq("manager_id", user.id)
+        .eq("month_start", monthStart),
+      admin
+        .from("orders")
+        .select("amount,status,updated_at")
+        .eq("business_id", String(currentBusiness.id))
+        .eq("manager_id", user.id),
+    ]);
+
+    if (targetRes.error) {
+      logTodayPageError("manager sales target query failed", targetRes.error);
+    }
+    if (ordersRes.error) {
+      logTodayPageError("manager sales orders query failed", ordersRes.error);
+    }
+
+    const targetRows = (targetRes.data ?? []) as SalesMonthTargetRow[];
+    const planAmount = targetRows.reduce(
+      (sum, row) => sum + parseNumeric(row.plan_amount),
+      0,
+    );
+    const planClosedOrders = targetRows.reduce(
+      (sum, row) => sum + Math.max(0, Math.floor(parseNumeric(row.plan_closed_orders))),
+      0,
+    );
+    const closedOrders = ((ordersRes.data ?? []) as SalesMonthOrderRow[]).filter((row) => {
+      const status = String(row.status ?? "").trim().toUpperCase();
+      const date = String(row.updated_at ?? "").slice(0, 10);
+      return (status === "DONE" || status === "CLOSED") && date >= monthStart && date <= monthEnd;
+    });
+    const actualAmount = closedOrders.reduce(
+      (sum, row) => sum + parseNumeric(row.amount),
+      0,
+    );
+    const closedCount = closedOrders.length;
+    const forecastAmount =
+      daysElapsed > 0
+        ? Number(((actualAmount / daysElapsed) * daysTotal).toFixed(2))
+        : 0;
+    const forecastClosedOrders =
+      daysElapsed > 0
+        ? Number(((closedCount / daysElapsed) * daysTotal).toFixed(2))
+        : 0;
+    const achievementPct =
+      planAmount > 0 ? Number(((actualAmount / planAmount) * 100).toFixed(2)) : 0;
+
+    managerPlanProgress = {
+      monthStart,
+      monthEnd,
+      daysElapsed,
+      daysTotal,
+      planAmount: Number(planAmount.toFixed(2)),
+      actualAmount: Number(actualAmount.toFixed(2)),
+      forecastAmount,
+      achievementPct,
+      planClosedOrders,
+      closedOrders: closedCount,
+      forecastClosedOrders,
+    };
   }
 
   return (
@@ -575,6 +678,7 @@ export default async function TodayFollowUpsPage({
               initialItems={items}
               calendarItems={calendarItems}
               initialMode={initialMode}
+              managerPlanProgress={managerPlanProgress}
             />
           </div>
         </div>
@@ -586,6 +690,7 @@ export default async function TodayFollowUpsPage({
             initialItems={items}
             calendarItems={calendarItems}
             initialMode={initialMode}
+            managerPlanProgress={managerPlanProgress}
           />
         </div>
       </main>

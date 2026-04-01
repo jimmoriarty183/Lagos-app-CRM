@@ -48,6 +48,23 @@ type FollowupLabelRow = {
   order_id: string | null;
 };
 
+type SalesOrderRow = {
+  id: string;
+  manager_id: string | null;
+  amount: number | string | null;
+  status: string | null;
+  due_date: string | null;
+  updated_at: string | null;
+};
+
+type SalesTargetRow = {
+  business_id: string;
+  manager_id: string | null;
+  month_start: string;
+  plan_amount: number | string | null;
+  plan_closed_orders: number | string | null;
+};
+
 export type OwnerDashboardSummary = {
   active_tasks: number;
   overdue_tasks: number;
@@ -158,6 +175,40 @@ export type ProductivitySnapshot = {
   managers: ProductivityManagerRow[];
 };
 
+export type SalesManagerRow = {
+  manager_id: string;
+  manager_name: string;
+  planned_amount: number;
+  actual_amount: number;
+  forecast_amount: number;
+  plan_closed_orders: number;
+  closed_orders: number;
+  forecast_closed_orders: number;
+  achievement_pct: number;
+  forecast_achievement_pct: number;
+  forecast_gap_pct: number;
+};
+
+export type SalesSnapshot = {
+  period: ProductivityPeriod;
+  start_date: string;
+  end_date: string;
+  days_elapsed: number;
+  days_total: number;
+  selected_manager_id: string | null;
+  team_plan_amount: number;
+  team_actual_amount: number;
+  team_forecast_amount: number;
+  team_plan_closed_orders: number;
+  team_closed_orders: number;
+  team_forecast_closed_orders: number;
+  achievement_pct: number;
+  forecast_achievement_pct: number;
+  forecast_gap_pct: number;
+  avg_deal_size: number;
+  managers: SalesManagerRow[];
+};
+
 export type OwnerDashboardData = {
   summary: OwnerDashboardSummary;
   deadline_control: DeadlineControl;
@@ -165,6 +216,7 @@ export type OwnerDashboardData = {
   alerts: OwnerAlert[];
   reports: ManagerDailyReport[];
   productivity: ProductivitySnapshot;
+  sales: SalesSnapshot;
 };
 
 function toDateOnly(value: Date) {
@@ -185,11 +237,6 @@ function addDays(date: Date, days: number) {
   const value = new Date(date.getTime());
   value.setDate(value.getDate() + days);
   return value;
-}
-
-function betweenDateOnly(value: string | null, from: string, to: string) {
-  if (!value) return false;
-  return value >= from && value <= to;
 }
 
 function businessDaysInRange(from: Date, days: number) {
@@ -340,6 +387,8 @@ export async function loadOwnerDashboardData(
     reportFromDate?: string | null;
     reportToDate?: string | null;
     reportManagerId?: string | null;
+    salesMonth?: string | null;
+    salesManagerId?: string | null;
   },
 ): Promise<OwnerDashboardData> {
   const now = new Date();
@@ -360,8 +409,31 @@ export async function loadOwnerDashboardData(
   const reportFromDate = String(input.reportFromDate ?? "").trim();
   const reportToDate = String(input.reportToDate ?? "").trim();
   const reportManagerId = String(input.reportManagerId ?? "").trim();
+  const salesMonthRaw = String(input.salesMonth ?? "").trim();
+  const salesManagerId = String(input.salesManagerId ?? "").trim();
   const hasReportFromDate = /^\d{4}-\d{2}-\d{2}$/.test(reportFromDate);
   const hasReportToDate = /^\d{4}-\d{2}-\d{2}$/.test(reportToDate);
+  const salesMonthDate = /^\d{4}-\d{2}-\d{2}$/.test(salesMonthRaw)
+    ? parseDateOnly(salesMonthRaw, asOf)
+    : new Date(asOf.getFullYear(), asOf.getMonth(), 1);
+  const salesMonthStart = toDateOnly(
+    new Date(salesMonthDate.getFullYear(), salesMonthDate.getMonth(), 1),
+  );
+  const salesMonthEnd = toDateOnly(
+    new Date(salesMonthDate.getFullYear(), salesMonthDate.getMonth() + 1, 0),
+  );
+  const salesDaysTotal = new Date(
+    salesMonthDate.getFullYear(),
+    salesMonthDate.getMonth() + 1,
+    0,
+  ).getDate();
+  const todayISO = toDateOnly(now);
+  const salesDaysElapsed =
+    todayISO < salesMonthStart
+      ? 0
+      : todayISO > salesMonthEnd
+        ? salesDaysTotal
+        : Number(todayISO.slice(8, 10));
   const reportsQuery = admin
     .from("work_days")
     .select("id,business_id,user_id,work_date,status,started_at,finished_at,total_pause_seconds,daily_summary")
@@ -370,7 +442,15 @@ export async function loadOwnerDashboardData(
   if (hasReportToDate) reportsQuery.lte("work_date", reportToDate);
   if (reportManagerId) reportsQuery.eq("user_id", reportManagerId);
 
-  const [tasksRes, followupsRes, rosterRes, capacityRes, reportsRes] = await Promise.all([
+  const [
+    tasksRes,
+    followupsRes,
+    rosterRes,
+    capacityRes,
+    reportsRes,
+    salesOrdersRes,
+    salesTargetsRes,
+  ] = await Promise.all([
     admin
       .from("mv_owner_order_task_facts")
       .select("task_id,business_id,manager_id,status,due_date,closed_at,is_active,is_done,base_effort_points")
@@ -390,6 +470,15 @@ export async function loadOwnerDashboardData(
     reportsQuery
       .order("work_date", { ascending: false })
       .limit(120),
+    admin
+      .from("orders")
+      .select("id,manager_id,amount,status,due_date,updated_at")
+      .eq("business_id", input.businessId),
+    admin
+      .from("sales_month_targets")
+      .select("business_id,manager_id,month_start,plan_amount,plan_closed_orders")
+      .eq("business_id", input.businessId)
+      .eq("month_start", salesMonthStart),
   ]);
 
   if (tasksRes.error) throw tasksRes.error;
@@ -397,6 +486,8 @@ export async function loadOwnerDashboardData(
   if (rosterRes.error) throw rosterRes.error;
   if (capacityRes.error) throw capacityRes.error;
   if (reportsRes.error) throw reportsRes.error;
+  if (salesOrdersRes.error) throw salesOrdersRes.error;
+  if (salesTargetsRes.error) throw salesTargetsRes.error;
 
   const tasks = (tasksRes.data ?? []) as OrderTaskFactRow[];
   const followups = (followupsRes.data ?? []) as FollowupFactRow[];
@@ -413,6 +504,8 @@ export async function loadOwnerDashboardData(
     total_pause_seconds: number | null;
     daily_summary: string | null;
   }>;
+  const salesOrders = (salesOrdersRes.data ?? []) as SalesOrderRow[];
+  const salesTargets = (salesTargetsRes.data ?? []) as SalesTargetRow[];
 
   const managerNameById = new Map<string, string>();
   for (const row of rosterRows) {
@@ -423,6 +516,13 @@ export async function loadOwnerDashboardData(
     if (!task.manager_id) continue;
     if (!managerNameById.has(task.manager_id)) {
       managerNameById.set(task.manager_id, task.manager_id);
+    }
+  }
+  for (const target of salesTargets) {
+    const managerId = String(target.manager_id ?? "").trim();
+    if (!managerId) continue;
+    if (!managerNameById.has(managerId)) {
+      managerNameById.set(managerId, managerId);
     }
   }
 
@@ -761,6 +861,42 @@ export async function loadOwnerDashboardData(
         ? toDateOnly(addDays(asOf, -6))
         : toDateOnly(new Date(asOf.getFullYear(), asOf.getMonth(), 1));
 
+  const isClosedStatus = (status: string | null | undefined) => {
+    const normalized = String(status ?? "")
+      .trim()
+      .toUpperCase();
+    return normalized === "DONE" || normalized === "CLOSED";
+  };
+
+  const inSalesMonth = (value: string | null | undefined) => {
+    const date = String(value ?? "").slice(0, 10);
+    return Boolean(date && date >= salesMonthStart && date <= salesMonthEnd);
+  };
+
+  const parseAmount = (value: number | string | null | undefined) => {
+    const parsed = Number(value ?? 0);
+    return Number.isFinite(parsed) ? parsed : 0;
+  };
+  const parseCount = (value: number | string | null | undefined) => {
+    const parsed = Number(value ?? 0);
+    return Number.isFinite(parsed) ? Math.max(0, Math.floor(parsed)) : 0;
+  };
+
+  const salesPeriodOrders = salesOrders.filter((order) =>
+    inSalesMonth(order.due_date),
+  );
+  const salesClosedOrders = salesOrders.filter(
+    (order) => isClosedStatus(order.status) && inSalesMonth(order.updated_at),
+  );
+  const includedManagerIdsFromTargets = Array.from(
+    new Set(
+      salesTargets
+        .map((row) => String(row.manager_id ?? "").trim())
+        .filter(Boolean),
+    ),
+  );
+  const hasSalesTargetData = includedManagerIdsFromTargets.length > 0;
+
   const productivityManagers: ProductivityManagerRow[] = managerIds.map((managerId) => {
     const managerClosedOrders = tasks.filter((task) => (
       task.manager_id === managerId &&
@@ -797,6 +933,140 @@ export async function loadOwnerDashboardData(
     managers: productivityManagers,
   };
 
+  const scopedSalesManagerIds = salesManagerId
+    ? (hasSalesTargetData
+        ? includedManagerIdsFromTargets.filter(
+            (managerId) => managerId === salesManagerId,
+          )
+        : managerIds.filter((managerId) => managerId === salesManagerId))
+    : (hasSalesTargetData ? includedManagerIdsFromTargets : managerIds);
+
+  const salesManagers: SalesManagerRow[] = scopedSalesManagerIds
+    .map((managerId) => {
+      const managerTargetRows = salesTargets.filter(
+        (row) => row.manager_id === managerId,
+      );
+      const managerPlanAmount = managerTargetRows.reduce(
+        (sum, row) => sum + parseAmount(row.plan_amount),
+        0,
+      );
+      const managerPlanClosedOrders = managerTargetRows.reduce(
+        (sum, row) => sum + parseCount(row.plan_closed_orders),
+        0,
+      );
+      const managerClosed = salesClosedOrders.filter(
+        (order) => order.manager_id === managerId,
+      );
+      const managerActualAmount = managerClosed.reduce(
+        (sum, order) => sum + parseAmount(order.amount),
+        0,
+      );
+      const managerClosedOrders = managerClosed.length;
+      const fallbackManagerPlanAmount =
+        !hasSalesTargetData
+          ? salesPeriodOrders
+              .filter((order) => order.manager_id === managerId)
+              .reduce((sum, order) => sum + parseAmount(order.amount), 0)
+          : 0;
+      const effectiveManagerPlanAmount =
+        hasSalesTargetData
+          ? managerPlanAmount
+          : managerPlanAmount > 0
+            ? managerPlanAmount
+            : fallbackManagerPlanAmount;
+      const managerAchievement =
+        effectiveManagerPlanAmount > 0
+          ? Number(((managerActualAmount / effectiveManagerPlanAmount) * 100).toFixed(2))
+          : 0;
+      const managerForecastAmount =
+        salesDaysElapsed > 0
+          ? Number(((managerActualAmount / salesDaysElapsed) * salesDaysTotal).toFixed(2))
+          : 0;
+      const managerForecastClosedOrders =
+        salesDaysElapsed > 0
+          ? Number(((managerClosedOrders / salesDaysElapsed) * salesDaysTotal).toFixed(2))
+          : 0;
+      const managerForecastAchievementPct =
+        effectiveManagerPlanAmount > 0
+          ? Number(((managerForecastAmount / effectiveManagerPlanAmount) * 100).toFixed(2))
+          : 0;
+      const managerForecastGapPct = Number((managerForecastAchievementPct - 100).toFixed(2));
+
+      return {
+        manager_id: managerId,
+        manager_name: managerNameById.get(managerId) ?? managerId,
+        planned_amount: Number(effectiveManagerPlanAmount.toFixed(2)),
+        actual_amount: Number(managerActualAmount.toFixed(2)),
+        forecast_amount: managerForecastAmount,
+        plan_closed_orders: managerPlanClosedOrders,
+        closed_orders: managerClosedOrders,
+        forecast_closed_orders: managerForecastClosedOrders,
+        achievement_pct: managerAchievement,
+        forecast_achievement_pct: managerForecastAchievementPct,
+        forecast_gap_pct: managerForecastGapPct,
+      };
+    })
+    .sort((a, b) => b.actual_amount - a.actual_amount);
+
+  const teamPlanAmountRaw = salesManagers.reduce(
+    (sum, manager) => sum + manager.planned_amount,
+    0,
+  );
+  const teamActualAmountRaw = salesManagers.reduce(
+    (sum, manager) => sum + manager.actual_amount,
+    0,
+  );
+  const teamForecastAmount = salesManagers.reduce(
+    (sum, manager) => sum + manager.forecast_amount,
+    0,
+  );
+  const teamPlanClosedOrders = salesManagers.reduce(
+    (sum, manager) => sum + manager.plan_closed_orders,
+    0,
+  );
+  const teamClosedOrders = salesManagers.reduce(
+    (sum, manager) => sum + manager.closed_orders,
+    0,
+  );
+  const teamForecastClosedOrders = salesManagers.reduce(
+    (sum, manager) => sum + manager.forecast_closed_orders,
+    0,
+  );
+  const effectiveTeamPlanAmount = teamPlanAmountRaw;
+  const teamAchievementPct =
+    effectiveTeamPlanAmount > 0
+      ? Number(((teamActualAmountRaw / effectiveTeamPlanAmount) * 100).toFixed(2))
+      : 0;
+  const teamForecastAchievementPct =
+    effectiveTeamPlanAmount > 0
+      ? Number(((teamForecastAmount / effectiveTeamPlanAmount) * 100).toFixed(2))
+      : 0;
+  const teamForecastGapPct = Number((teamForecastAchievementPct - 100).toFixed(2));
+  const avgDealSize =
+    teamClosedOrders > 0
+      ? Number((teamActualAmountRaw / teamClosedOrders).toFixed(2))
+      : 0;
+
+  const sales: SalesSnapshot = {
+    period: "month",
+    start_date: salesMonthStart,
+    end_date: salesMonthEnd,
+    days_elapsed: salesDaysElapsed,
+    days_total: salesDaysTotal,
+    selected_manager_id: salesManagerId || null,
+    team_plan_amount: Number(effectiveTeamPlanAmount.toFixed(2)),
+    team_actual_amount: Number(teamActualAmountRaw.toFixed(2)),
+    team_forecast_amount: teamForecastAmount,
+    team_plan_closed_orders: teamPlanClosedOrders,
+    team_closed_orders: teamClosedOrders,
+    team_forecast_closed_orders: teamForecastClosedOrders,
+    achievement_pct: teamAchievementPct,
+    forecast_achievement_pct: teamForecastAchievementPct,
+    forecast_gap_pct: teamForecastGapPct,
+    avg_deal_size: avgDealSize,
+    managers: salesManagers,
+  };
+
   return {
     summary,
     deadline_control: deadlineControl,
@@ -804,5 +1074,6 @@ export async function loadOwnerDashboardData(
     alerts: alerts.slice(0, Math.max(1, input.limitAlerts ?? 100)),
     reports,
     productivity,
+    sales,
   };
 }

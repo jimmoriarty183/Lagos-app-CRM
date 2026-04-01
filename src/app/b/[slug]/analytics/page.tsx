@@ -20,6 +20,8 @@ type PageProps = {
     rfrom?: string;
     rto?: string;
     rmanager?: string;
+    smonth?: string;
+    smanager?: string;
   }>;
 };
 
@@ -28,6 +30,26 @@ type MembershipRow = {
   role: string | null;
   created_at?: string | null;
   user_id?: string | null;
+};
+
+type MemberRoleRow = {
+  user_id: string;
+  role: string | null;
+};
+
+type ProfileLookupRow = {
+  id: string;
+  full_name: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  email: string | null;
+};
+
+type SalesMonthTargetRow = {
+  month_start: string;
+  manager_id: string | null;
+  plan_amount: number | string | null;
+  plan_closed_orders: number | string | null;
 };
 
 type BusinessRow = {
@@ -50,6 +72,11 @@ function cleanText(value: unknown) {
   return String(value ?? "").trim();
 }
 
+function parseNumeric(value: number | string | null | undefined) {
+  const parsed = Number(value ?? 0);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
 export default async function OwnerAnalyticsPage({
   params,
   searchParams,
@@ -65,6 +92,8 @@ export default async function OwnerAnalyticsPage({
   const reportFromRaw = cleanText(sp?.rfrom);
   const reportToRaw = cleanText(sp?.rto);
   const reportManagerRaw = cleanText(sp?.rmanager);
+  const salesMonthRaw = cleanText(sp?.smonth);
+  const salesManagerRaw = cleanText(sp?.smanager);
   const reportFromDate = /^\d{4}-\d{2}-\d{2}$/.test(reportFromRaw)
     ? reportFromRaw
     : "";
@@ -72,17 +101,25 @@ export default async function OwnerAnalyticsPage({
     ? reportToRaw
     : "";
   const reportManagerId = reportManagerRaw;
+  const salesMonth = /^\d{4}-\d{2}$/.test(salesMonthRaw)
+    ? `${salesMonthRaw}-01`
+    : /^\d{4}-\d{2}-\d{2}$/.test(salesMonthRaw)
+      ? salesMonthRaw
+      : "";
+  const salesManagerId = salesManagerRaw;
   const analyticsView:
     | "overview"
     | "managers"
     | "alerts"
     | "reports"
-    | "productivity" =
+    | "productivity"
+    | "sales" =
     tabRaw === "managers" ||
     tabRaw === "alerts" ||
     tabRaw === "reports" ||
-    tabRaw === "productivity"
-      ? (tabRaw as "managers" | "alerts" | "reports" | "productivity")
+    tabRaw === "productivity" ||
+    tabRaw === "sales"
+      ? (tabRaw as "managers" | "alerts" | "reports" | "productivity" | "sales")
       : "overview";
   const productivityPeriod: "day" | "week" | "month" =
     periodRaw === "day" || periodRaw === "month"
@@ -174,7 +211,13 @@ export default async function OwnerAnalyticsPage({
       ? `/b/${slug}/analytics?u=${encodeURIComponent(phoneRaw)}`
       : `/b/${slug}/analytics`;
   const makeTabHref = (
-    tab: "overview" | "managers" | "alerts" | "reports" | "productivity",
+    tab:
+      | "overview"
+      | "managers"
+      | "alerts"
+      | "reports"
+      | "productivity"
+      | "sales",
   ) => {
     const params = new URLSearchParams();
     if (phoneRaw) params.set("u", phoneRaw);
@@ -183,6 +226,8 @@ export default async function OwnerAnalyticsPage({
     if (reportFromDate) params.set("rfrom", reportFromDate);
     if (reportToDate) params.set("rto", reportToDate);
     if (reportManagerId) params.set("rmanager", reportManagerId);
+    if (salesMonth) params.set("smonth", salesMonth);
+    if (salesManagerId) params.set("smanager", salesManagerId);
     const qs = params.toString();
     return qs ? `/b/${slug}/analytics?${qs}` : `/b/${slug}/analytics`;
   };
@@ -195,6 +240,14 @@ export default async function OwnerAnalyticsPage({
   };
   const managerBaseHref = makeTabHref("managers");
   const clearHref = analyticsHref;
+  const defaultSalesMonth = `${getTodayDateOnly().slice(0, 7)}-01`;
+  const selectedSalesMonth = salesMonth || defaultSalesMonth;
+  const currentMonthStart = defaultSalesMonth;
+  const nextMonthStart = (() => {
+    const base = new Date(`${currentMonthStart}T00:00:00`);
+    const next = new Date(base.getFullYear(), base.getMonth() + 1, 1);
+    return `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, "0")}-01`;
+  })();
 
   const todayDate = getTodayDateOnly();
   const [{ count: overdueCountRaw }, { count: todayCountRaw }] =
@@ -227,7 +280,88 @@ export default async function OwnerAnalyticsPage({
     reportFromDate: reportFromDate || null,
     reportToDate: reportToDate || null,
     reportManagerId: reportManagerId || null,
+    salesMonth: salesMonth || null,
+    salesManagerId: salesManagerId || null,
   });
+
+  const memberRolesRes = await admin
+    .from("memberships")
+    .select("user_id, role")
+    .eq("business_id", String(currentBusiness.id));
+  if (memberRolesRes.error) throw memberRolesRes.error;
+
+  const memberRoles = ((memberRolesRes.data ?? []) as MemberRoleRow[]).filter(
+    (row) => {
+      const role = upperRole(row.role);
+      return role === "OWNER" || role === "MANAGER";
+    },
+  );
+  const memberIds = Array.from(
+    new Set(
+      memberRoles
+        .map((row) => cleanText(row.user_id))
+        .filter(Boolean),
+    ),
+  );
+  let memberProfiles: ProfileLookupRow[] = [];
+  if (memberIds.length > 0) {
+    const profilesRes = await admin
+      .from("profiles")
+      .select("id, full_name, first_name, last_name, email")
+      .in("id", memberIds);
+    if (profilesRes.error) throw profilesRes.error;
+    memberProfiles = (profilesRes.data ?? []) as ProfileLookupRow[];
+  }
+  const profileById = new Map(
+    memberProfiles.map((row) => {
+      const fullName = cleanText(row.full_name);
+      const composed = `${cleanText(row.first_name)} ${cleanText(row.last_name)}`.trim();
+      const fallback = cleanText(row.email) || row.id;
+      return [row.id, fullName || composed || fallback];
+    }),
+  );
+
+  const targetsRes = await admin
+    .from("sales_month_targets")
+    .select("month_start, manager_id, plan_amount, plan_closed_orders")
+    .eq("business_id", String(currentBusiness.id))
+    .in("month_start", [currentMonthStart, nextMonthStart]);
+  if (targetsRes.error) throw targetsRes.error;
+  const targets = (targetsRes.data ?? []) as SalesMonthTargetRow[];
+  const buildParticipantsForMonth = (monthStart: string) => {
+    const targetByManagerId = new Map(
+      targets
+        .filter(
+          (row) =>
+            row.month_start === monthStart && cleanText(row.manager_id),
+        )
+        .map((row) => [String(row.manager_id), row]),
+    );
+    return memberRoles
+      .filter((row) => cleanText(row.user_id))
+      .map((row) => {
+        const id = String(row.user_id);
+        const target = targetByManagerId.get(id);
+        const roleLabel = upperRole(row.role);
+        return {
+          id,
+          name: profileById.get(id) ?? id,
+          role: roleLabel,
+          isCurrentUser: id === user.id,
+          included: Boolean(target),
+          planAmount: Number(parseNumeric(target?.plan_amount).toFixed(2)),
+          planClosedOrders: Math.max(
+            0,
+            Math.floor(parseNumeric(target?.plan_closed_orders)),
+          ),
+        };
+      })
+      .sort((a, b) => {
+        if (a.role === "OWNER" && b.role !== "OWNER") return -1;
+        if (a.role !== "OWNER" && b.role === "OWNER") return 1;
+        return a.name.localeCompare(b.name);
+      });
+  };
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-transparent text-slate-900">
@@ -289,6 +423,7 @@ export default async function OwnerAnalyticsPage({
                   { key: "alerts", label: "Alerts" },
                   { key: "reports", label: "Reports" },
                   { key: "productivity", label: "Productivity" },
+                  { key: "sales", label: "Sales" },
                 ] as const
               ).map((tab) => (
                 <a
@@ -321,6 +456,44 @@ export default async function OwnerAnalyticsPage({
                 week: makeProductivityHref("week"),
                 month: makeProductivityHref("month"),
               }}
+              salesFilter={{
+                month: salesMonth,
+                managerId: salesManagerId,
+              }}
+              salesPlanEditor={{
+                businessId: String(currentBusiness.id),
+                selectedMonthStart: selectedSalesMonth,
+                sections: [
+                  {
+                    key: "current",
+                    label: "This month plan",
+                    monthStart: currentMonthStart,
+                    returnHref: (() => {
+                      const params = new URLSearchParams();
+                      if (phoneRaw) params.set("u", phoneRaw);
+                      params.set("tab", "sales");
+                      params.set("smonth", currentMonthStart);
+                      if (salesManagerId) params.set("smanager", salesManagerId);
+                      return `/b/${slug}/analytics?${params.toString()}`;
+                    })(),
+                    participants: buildParticipantsForMonth(currentMonthStart),
+                  },
+                  {
+                    key: "next",
+                    label: "Next month plan",
+                    monthStart: nextMonthStart,
+                    returnHref: (() => {
+                      const params = new URLSearchParams();
+                      if (phoneRaw) params.set("u", phoneRaw);
+                      params.set("tab", "sales");
+                      params.set("smonth", nextMonthStart);
+                      if (salesManagerId) params.set("smanager", salesManagerId);
+                      return `/b/${slug}/analytics?${params.toString()}`;
+                    })(),
+                    participants: buildParticipantsForMonth(nextMonthStart),
+                  },
+                ],
+              }}
             />
           </div>
         </div>
@@ -334,6 +507,7 @@ export default async function OwnerAnalyticsPage({
                 { key: "alerts", label: "Alerts" },
                 { key: "reports", label: "Reports" },
                 { key: "productivity", label: "Productivity" },
+                { key: "sales", label: "Sales" },
               ] as const
             ).map((tab) => (
               <a
@@ -365,6 +539,44 @@ export default async function OwnerAnalyticsPage({
               day: makeProductivityHref("day"),
               week: makeProductivityHref("week"),
               month: makeProductivityHref("month"),
+            }}
+            salesFilter={{
+              month: salesMonth,
+              managerId: salesManagerId,
+            }}
+            salesPlanEditor={{
+              businessId: String(currentBusiness.id),
+              selectedMonthStart: selectedSalesMonth,
+              sections: [
+                {
+                  key: "current",
+                  label: "This month plan",
+                  monthStart: currentMonthStart,
+                  returnHref: (() => {
+                    const params = new URLSearchParams();
+                    if (phoneRaw) params.set("u", phoneRaw);
+                    params.set("tab", "sales");
+                    params.set("smonth", currentMonthStart);
+                    if (salesManagerId) params.set("smanager", salesManagerId);
+                    return `/b/${slug}/analytics?${params.toString()}`;
+                  })(),
+                  participants: buildParticipantsForMonth(currentMonthStart),
+                },
+                {
+                  key: "next",
+                  label: "Next month plan",
+                  monthStart: nextMonthStart,
+                  returnHref: (() => {
+                    const params = new URLSearchParams();
+                    if (phoneRaw) params.set("u", phoneRaw);
+                    params.set("tab", "sales");
+                    params.set("smonth", nextMonthStart);
+                    if (salesManagerId) params.set("smanager", salesManagerId);
+                    return `/b/${slug}/analytics?${params.toString()}`;
+                  })(),
+                  participants: buildParticipantsForMonth(nextMonthStart),
+                },
+              ],
             }}
           />
         </div>

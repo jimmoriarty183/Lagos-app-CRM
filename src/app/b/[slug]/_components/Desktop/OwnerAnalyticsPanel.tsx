@@ -1,10 +1,33 @@
 import type { OwnerDashboardData } from "@/lib/owner-dashboard";
+import { saveSalesPlanRowAction } from "@/app/b/[slug]/analytics/actions";
+import {
+  Activity,
+  AlertTriangle,
+  BarChart3,
+  BellRing,
+  CalendarClock,
+  CircleAlert,
+  Gauge,
+  LineChart,
+  ListChecks,
+  ShieldAlert,
+  Sparkles,
+  Timer,
+  TrendingUp,
+  Users,
+} from "lucide-react";
 
 type Props = {
   data: OwnerDashboardData;
   businessSlug?: string;
   phoneRaw?: string;
-  view?: "overview" | "managers" | "alerts" | "reports" | "productivity";
+  view?:
+    | "overview"
+    | "managers"
+    | "alerts"
+    | "reports"
+    | "productivity"
+    | "sales";
   managerBaseHref?: string;
   reportFilter?: {
     fromDate?: string;
@@ -15,6 +38,29 @@ type Props = {
     day: string;
     week: string;
     month: string;
+  };
+  salesFilter?: {
+    month?: string;
+    managerId?: string;
+  };
+  salesPlanEditor?: {
+    businessId: string;
+    selectedMonthStart: string;
+    sections: Array<{
+      key: string;
+      label: string;
+      monthStart: string;
+      returnHref: string;
+      participants: Array<{
+        id: string;
+        name: string;
+        role: "OWNER" | "MANAGER" | "GUEST";
+        isCurrentUser: boolean;
+        included: boolean;
+        planAmount: number;
+        planClosedOrders: number;
+      }>;
+    }>;
   };
 };
 
@@ -69,11 +115,35 @@ const VIEW_META: Record<
       "Use period switch to detect dips and spikes in output.",
     ],
   },
+  sales: {
+    label: "Sales",
+    helpTitle: "How to read Sales",
+    helpPoints: [
+      "Plan is the amount scheduled in period, Fact is closed amount in period.",
+      "Achievement shows plan fulfillment rate in percent.",
+      "Use manager table to spot who closes revenue and who needs support.",
+    ],
+  },
 };
 
 function formatPercent(value: number | null) {
   if (value === null) return "N/A";
   return `${value.toFixed(1)}%`;
+}
+
+function formatSignedPercent(value: number | null) {
+  if (value === null) return "N/A";
+  if (value > 0) return `+${value.toFixed(1)}%`;
+  return `${value.toFixed(1)}%`;
+}
+
+function formatCurrency(value: number | null) {
+  if (value === null) return "N/A";
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(value);
 }
 
 function formatHours(value: number | null) {
@@ -146,6 +216,11 @@ function formatRatio(value: number) {
   return `${(value * 100).toFixed(1)}%`;
 }
 
+function clampPercent(value: number) {
+  if (!Number.isFinite(value)) return 0;
+  return Math.max(0, Math.min(100, value));
+}
+
 function buildOrderHref(
   orderId: string,
   businessSlug?: string,
@@ -166,6 +241,8 @@ export default function OwnerAnalyticsPanel({
   managerBaseHref,
   reportFilter,
   productivityHrefs,
+  salesFilter,
+  salesPlanEditor,
 }: Props) {
   const totalTraffic = Math.max(
     1,
@@ -186,6 +263,7 @@ export default function OwnerAnalyticsPanel({
   const showAlerts = view === "alerts";
   const showReports = view === "reports";
   const showProductivity = view === "productivity";
+  const showSales = view === "sales";
   const currentViewMeta = VIEW_META[view];
   const managerNameById = new Map(
     data.managers.map((item) => [item.manager_id, item.manager_name]),
@@ -208,10 +286,39 @@ export default function OwnerAnalyticsPanel({
       ? `/b/${businessSlug}/analytics?u=${encodeURIComponent(phoneRaw)}&tab=reports`
       : `/b/${businessSlug}/analytics?tab=reports`
     : "#";
+  const hasSalesFilter =
+    Boolean(String(salesFilter?.month ?? "").trim()) ||
+    Boolean(String(salesFilter?.managerId ?? "").trim());
+  const resetSalesHref = businessSlug
+    ? phoneRaw
+      ? `/b/${businessSlug}/analytics?u=${encodeURIComponent(phoneRaw)}&tab=sales`
+      : `/b/${businessSlug}/analytics?tab=sales`
+    : "#";
   const buildManagerHref = (managerId: string) => {
     if (!managerBaseHref) return null;
     return `${managerBaseHref}#manager-${encodeURIComponent(managerId)}`;
   };
+
+  const overdueRate =
+    data.summary.active_tasks > 0
+      ? (data.summary.overdue_tasks / data.summary.active_tasks) * 100
+      : 0;
+  const duePressureRate =
+    data.summary.active_tasks > 0
+      ? (data.summary.due_7d / data.summary.active_tasks) * 100
+      : 0;
+  const riskDistribution = {
+    high: data.managers.filter((item) => item.risk_level === "high").length,
+    medium: data.managers.filter((item) => item.risk_level === "medium").length,
+    low: data.managers.filter((item) => item.risk_level === "low").length,
+  };
+  const topProductiveManagers = data.productivity.managers.slice(0, 3);
+  const highRiskManagers = data.managers.slice(0, 3);
+  const salesRowsForChart = data.sales.managers;
+  const maxSalesFactAmount = Math.max(
+    1,
+    ...salesRowsForChart.map((row) => row.actual_amount),
+  );
 
   const getAlertAction = (alert: OwnerDashboardData["alerts"][number]) => {
     if (alert.scope === "manager") {
@@ -245,14 +352,17 @@ export default function OwnerAnalyticsPanel({
   return (
     <section
       id="owner-analytics"
-      className="space-y-4 rounded-2xl border border-[#E5E7EB] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.06)]"
+      className="space-y-4 rounded-2xl border border-[#E5E7EB] bg-[linear-gradient(180deg,#FFFFFF_0%,#FBFCFF_100%)] p-4 shadow-[0_14px_34px_rgba(15,23,42,0.08)]"
     >
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between rounded-xl border border-[#E5E7EB] bg-white/90 px-3 py-2.5">
         <div>
           <div className="text-xs text-[#6B7280]">
             Owner Analytics / {currentViewMeta.label}
           </div>
           <div className="mt-1 flex items-center gap-2">
+            <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-[var(--brand-200)] bg-[var(--brand-50)] text-[var(--brand-600)]">
+              <Sparkles className="icon-inline" strokeWidth={2} />
+            </span>
             <h2 className="text-sm font-semibold text-[#111827]">
               {currentViewMeta.label}
             </h2>
@@ -286,17 +396,23 @@ export default function OwnerAnalyticsPanel({
 
       {showOverview ? (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          <article className="rounded-xl border border-[#E5E7EB] p-3">
-            <div className="text-xs font-medium text-[#6B7280]">
-              Active Tasks
+          <article className="rounded-xl border border-[#E5E7EB] bg-white p-3 shadow-[0_8px_18px_rgba(15,23,42,0.05)]">
+            <div className="flex items-center justify-between">
+              <div className="text-xs font-medium text-[#6B7280]">
+                Active Tasks
+              </div>
+              <Activity className="icon-button text-[var(--brand-600)]" strokeWidth={2} />
             </div>
             <div className="mt-1 text-2xl font-semibold text-[#111827]">
               {data.summary.active_tasks}
             </div>
           </article>
-          <article className="rounded-xl border border-[#E5E7EB] p-3">
-            <div className="text-xs font-medium text-[#6B7280]">
-              Overdue Tasks
+          <article className="rounded-xl border border-[#F8D3D7] bg-[#FFF8F8] p-3 shadow-[0_8px_18px_rgba(220,38,38,0.08)]">
+            <div className="flex items-center justify-between">
+              <div className="text-xs font-medium text-[#B42318]">
+                Overdue Tasks
+              </div>
+              <AlertTriangle className="icon-button text-[#B42318]" strokeWidth={2} />
             </div>
             <div
               className={`mt-1 text-2xl font-semibold ${toneClass(data.summary.overdue_tasks, 6, 1)}`}
@@ -304,25 +420,34 @@ export default function OwnerAnalyticsPanel({
               {data.summary.overdue_tasks}
             </div>
           </article>
-          <article className="rounded-xl border border-[#E5E7EB] p-3">
-            <div className="text-xs font-medium text-[#6B7280]">
-              Due in 7 Days
+          <article className="rounded-xl border border-[#E5E7EB] bg-white p-3 shadow-[0_8px_18px_rgba(15,23,42,0.05)]">
+            <div className="flex items-center justify-between">
+              <div className="text-xs font-medium text-[#6B7280]">
+                Due in 7 Days
+              </div>
+              <CalendarClock className="icon-button text-[var(--brand-600)]" strokeWidth={2} />
             </div>
             <div className="mt-1 text-2xl font-semibold text-[#111827]">
               {data.summary.due_7d}
             </div>
           </article>
-          <article className="rounded-xl border border-[#E5E7EB] p-3">
-            <div className="text-xs font-medium text-[#6B7280]">
-              On-Time Completion
+          <article className="rounded-xl border border-[#E5E7EB] bg-white p-3 shadow-[0_8px_18px_rgba(15,23,42,0.05)]">
+            <div className="flex items-center justify-between">
+              <div className="text-xs font-medium text-[#6B7280]">
+                On-Time Completion
+              </div>
+              <TrendingUp className="icon-button text-[#067647]" strokeWidth={2} />
             </div>
             <div className="mt-1 text-2xl font-semibold text-[#111827]">
               {formatPercent(data.summary.on_time_completion_pct)}
             </div>
           </article>
-          <article className="rounded-xl border border-[#E5E7EB] p-3">
-            <div className="text-xs font-medium text-[#6B7280]">
-              Team Workload
+          <article className="rounded-xl border border-[#E5E7EB] bg-white p-3 shadow-[0_8px_18px_rgba(15,23,42,0.05)]">
+            <div className="flex items-center justify-between">
+              <div className="text-xs font-medium text-[#6B7280]">
+                Team Workload
+              </div>
+              <Gauge className="icon-button text-[var(--brand-600)]" strokeWidth={2} />
             </div>
             <div
               className={`mt-1 text-2xl font-semibold ${toneClass(data.summary.team_workload_pct, 130, 90)}`}
@@ -330,9 +455,12 @@ export default function OwnerAnalyticsPanel({
               {formatPercent(data.summary.team_workload_pct)}
             </div>
           </article>
-          <article className="rounded-xl border border-[#E5E7EB] p-3">
-            <div className="text-xs font-medium text-[#6B7280]">
-              Managers At Risk
+          <article className="rounded-xl border border-[#E5E7EB] bg-white p-3 shadow-[0_8px_18px_rgba(15,23,42,0.05)]">
+            <div className="flex items-center justify-between">
+              <div className="text-xs font-medium text-[#6B7280]">
+                Managers At Risk
+              </div>
+              <ShieldAlert className="icon-button text-[#B54708]" strokeWidth={2} />
             </div>
             <div
               className={`mt-1 text-2xl font-semibold ${toneClass(data.summary.managers_at_risk, 3, 1)}`}
@@ -375,9 +503,154 @@ export default function OwnerAnalyticsPanel({
         </article>
       ) : null}
 
+      {showOverview ? (
+        <div className="grid grid-cols-1 gap-3 xl:grid-cols-3">
+          <article className="rounded-xl border border-[#E5E7EB] bg-white p-3 xl:col-span-2">
+            <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-[#111827]">
+              <LineChart className="icon-button text-[var(--brand-600)]" strokeWidth={2} />
+              Execution Health
+            </div>
+            <div className="space-y-3">
+              <div>
+                <div className="mb-1 flex items-center justify-between text-xs text-[#475467]">
+                  <span>Overdue Rate</span>
+                  <span className="font-semibold text-[#B42318]">
+                    {overdueRate.toFixed(1)}%
+                  </span>
+                </div>
+                <div className="h-2 overflow-hidden rounded-full bg-[#F3F4F6]">
+                  <div
+                    className="h-full bg-[#DC2626]"
+                    style={{ width: `${clampPercent(overdueRate)}%` }}
+                  />
+                </div>
+              </div>
+              <div>
+                <div className="mb-1 flex items-center justify-between text-xs text-[#475467]">
+                  <span>7-Day Deadline Pressure</span>
+                  <span className="font-semibold text-[#B54708]">
+                    {duePressureRate.toFixed(1)}%
+                  </span>
+                </div>
+                <div className="h-2 overflow-hidden rounded-full bg-[#F3F4F6]">
+                  <div
+                    className="h-full bg-[#F59E0B]"
+                    style={{ width: `${clampPercent(duePressureRate)}%` }}
+                  />
+                </div>
+              </div>
+              <div>
+                <div className="mb-1 flex items-center justify-between text-xs text-[#475467]">
+                  <span>On-Time Completion</span>
+                  <span className="font-semibold text-[#067647]">
+                    {formatPercent(data.summary.on_time_completion_pct)}
+                  </span>
+                </div>
+                <div className="h-2 overflow-hidden rounded-full bg-[#F3F4F6]">
+                  <div
+                    className="h-full bg-[#16A34A]"
+                    style={{
+                      width: `${clampPercent(data.summary.on_time_completion_pct ?? 0)}%`,
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article className="rounded-xl border border-[#E5E7EB] bg-white p-3">
+            <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-[#111827]">
+              <Users className="icon-button text-[var(--brand-600)]" strokeWidth={2} />
+              Risk Distribution
+            </div>
+            <div className="space-y-2 text-xs">
+              <div className="flex items-center justify-between rounded-lg border border-[#FECACA] bg-[#FEF2F2] px-2.5 py-2">
+                <span className="font-medium text-[#B42318]">High Risk</span>
+                <span className="text-sm font-semibold text-[#B42318]">
+                  {riskDistribution.high}
+                </span>
+              </div>
+              <div className="flex items-center justify-between rounded-lg border border-[#FEDF89] bg-[#FFFAEB] px-2.5 py-2">
+                <span className="font-medium text-[#B54708]">Medium Risk</span>
+                <span className="text-sm font-semibold text-[#B54708]">
+                  {riskDistribution.medium}
+                </span>
+              </div>
+              <div className="flex items-center justify-between rounded-lg border border-[#A6F4C5] bg-[#ECFDF3] px-2.5 py-2">
+                <span className="font-medium text-[#067647]">Low Risk</span>
+                <span className="text-sm font-semibold text-[#067647]">
+                  {riskDistribution.low}
+                </span>
+              </div>
+            </div>
+          </article>
+        </div>
+      ) : null}
+
+      {showOverview ? (
+        <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
+          <article className="rounded-xl border border-[#E5E7EB] bg-white p-3">
+            <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-[#111827]">
+              <ListChecks className="icon-button text-[var(--brand-600)]" strokeWidth={2} />
+              Top Productive Managers
+            </div>
+            <ul className="space-y-2 text-xs">
+              {topProductiveManagers.length === 0 ? (
+                <li className="rounded-lg border border-dashed border-[#D0D5DD] p-2 text-[#6B7280]">
+                  No productivity data yet.
+                </li>
+              ) : (
+                topProductiveManagers.map((manager, idx) => (
+                  <li
+                    key={`prod-${manager.manager_id}`}
+                    className="flex items-center justify-between rounded-lg border border-[#E5E7EB] px-2.5 py-2"
+                  >
+                    <span className="text-[#111827]">
+                      {idx + 1}. {managerLabel(manager.manager_name)}
+                    </span>
+                    <span className="font-semibold text-[#3645A0]">
+                      {manager.total_closed}
+                    </span>
+                  </li>
+                ))
+              )}
+            </ul>
+          </article>
+
+          <article className="rounded-xl border border-[#F8D3D7] bg-[#FFF8F8] p-3">
+            <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-[#111827]">
+              <CircleAlert className="icon-button text-[#B42318]" strokeWidth={2} />
+              High-Risk Watchlist
+            </div>
+            <ul className="space-y-2 text-xs">
+              {highRiskManagers.length === 0 ? (
+                <li className="rounded-lg border border-dashed border-[#FECACA] p-2 text-[#B42318]">
+                  No risk data available.
+                </li>
+              ) : (
+                highRiskManagers.map((manager) => (
+                  <li
+                    key={`risk-${manager.manager_id}`}
+                    className="flex items-center justify-between rounded-lg border border-[#FECACA] bg-[#FEF2F2] px-2.5 py-2"
+                  >
+                    <span className="text-[#111827]">
+                      {managerLabel(manager.manager_name)}
+                    </span>
+                    <span className="font-semibold text-[#B42318]">
+                      Risk {manager.risk_score}
+                    </span>
+                  </li>
+                ))
+              )}
+            </ul>
+          </article>
+        </div>
+      ) : null}
+
       {showManagers ? (
         <article className="rounded-xl border border-[#E5E7EB] p-3">
-          <div className="mb-2 text-sm font-semibold text-[#111827]">
+          <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-[#111827]">
+            <Users className="icon-button text-[var(--brand-600)]" strokeWidth={2} />
             Manager Table
           </div>
           <p className="mb-2 text-xs text-[#6B7280]">
@@ -584,7 +857,8 @@ export default function OwnerAnalyticsPanel({
 
       {showAlerts ? (
         <article className="rounded-xl border border-[#E5E7EB] p-3">
-          <div className="mb-2 text-sm font-semibold text-[#111827]">
+          <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-[#111827]">
+            <BellRing className="icon-button text-[#B54708]" strokeWidth={2} />
             Alerts / Action Queue
           </div>
           <ul className="space-y-2 text-xs">
@@ -617,7 +891,8 @@ export default function OwnerAnalyticsPanel({
 
       {showReports ? (
         <article className="rounded-xl border border-[#E5E7EB] p-3">
-          <div className="mb-2 text-sm font-semibold text-[#111827]">
+          <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-[#111827]">
+            <Timer className="icon-button text-[var(--brand-600)]" strokeWidth={2} />
             Manager Daily Reports
           </div>
           <p className="mb-2 text-xs text-[#6B7280]">
@@ -637,7 +912,7 @@ export default function OwnerAnalyticsPanel({
                 type="date"
                 name="rfrom"
                 defaultValue={String(reportFilter?.fromDate ?? "")}
-                className="h-8 rounded-md border border-[#D0D5DD] px-2 text-xs text-[#111827]"
+                className="h-10 rounded-md border border-[#D0D5DD] px-3 text-[14px] leading-5 text-[#111827]"
               />
             </label>
             <label className="flex flex-col gap-1 text-[11px] text-[#4B5563]">
@@ -646,7 +921,7 @@ export default function OwnerAnalyticsPanel({
                 type="date"
                 name="rto"
                 defaultValue={String(reportFilter?.toDate ?? "")}
-                className="h-8 rounded-md border border-[#D0D5DD] px-2 text-xs text-[#111827]"
+                className="h-10 rounded-md border border-[#D0D5DD] px-3 text-[14px] leading-5 text-[#111827]"
               />
             </label>
             <label className="flex flex-col gap-1 text-[11px] text-[#4B5563] sm:col-span-2">
@@ -654,7 +929,7 @@ export default function OwnerAnalyticsPanel({
               <select
                 name="rmanager"
                 defaultValue={String(reportFilter?.managerId ?? "")}
-                className="h-8 rounded-md border border-[#D0D5DD] bg-white px-2 text-xs text-[#111827]"
+                className="h-10 rounded-md border border-[#D0D5DD] bg-white px-3 text-[14px] leading-5 text-[#111827]"
               >
                 <option value="">All managers</option>
                 {reportManagerOptions.map((item) => (
@@ -667,14 +942,14 @@ export default function OwnerAnalyticsPanel({
             <div className="flex items-end gap-2">
               <button
                 type="submit"
-                className="h-8 rounded-md border border-[var(--brand-600)] bg-[var(--brand-600)] px-3 text-[11px] font-semibold text-white hover:border-[var(--brand-700)] hover:bg-[var(--brand-700)]"
+                className="h-10 rounded-md border border-[var(--brand-600)] bg-[var(--brand-600)] px-3 text-[13px] font-semibold !text-white hover:border-[var(--brand-700)] hover:bg-[var(--brand-700)] hover:!text-white"
               >
                 Apply
               </button>
               {hasReportFilter ? (
                 <a
                   href={resetReportsHref}
-                  className="inline-flex h-8 items-center rounded-md border border-[#D0D5DD] px-3 text-[11px] font-semibold text-[#344054] hover:border-[#98A2B3] hover:text-[#111827]"
+                  className="inline-flex h-10 items-center rounded-md border border-[#D0D5DD] px-3 text-[13px] font-semibold text-[#344054] hover:border-[#98A2B3] hover:text-[#111827]"
                 >
                   Reset
                 </a>
@@ -834,11 +1109,401 @@ export default function OwnerAnalyticsPanel({
         </article>
       ) : null}
 
+      {showSales ? (
+        <article className="space-y-3 rounded-xl border border-[#E5E7EB] p-3">
+          {salesPlanEditor ? (
+            <div className="space-y-2 rounded-xl border border-[#E5E7EB] bg-[#FFFFFF] p-3">
+              <div className="flex items-center justify-between">
+                <div className="text-sm font-semibold text-[#111827]">
+                  Monthly Plan Setup
+                </div>
+                <div className="text-xs text-[#6B7280]">
+                  Checked = included in plan, unchecked + Save row = excluded.
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                {salesPlanEditor.sections.map((section) => {
+                  const includedCount = section.participants.filter(
+                    (participant) => participant.included,
+                  ).length;
+                  return (
+                    <details
+                      key={`plan-section-${section.key}`}
+                      open={salesPlanEditor.selectedMonthStart === section.monthStart}
+                      className="rounded-lg border border-[#E5E7EB] bg-[#FCFCFD]"
+                    >
+                      <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-3 py-2 text-[13px] font-semibold text-[#111827]">
+                        <span>
+                          {section.label} ({section.monthStart})
+                        </span>
+                        <span className="text-[11px] font-medium text-[#6B7280]">
+                          Included {includedCount}/{section.participants.length}
+                        </span>
+                      </summary>
+                      <div className="space-y-2 border-t border-[#E5E7EB] p-2.5">
+                        {section.participants.map((participant) => (
+                          <form
+                            key={`sales-plan-row-${section.key}-${participant.id}`}
+                            action={saveSalesPlanRowAction}
+                            className="grid grid-cols-1 gap-2 rounded-lg border border-[#E5E7EB] bg-white p-2.5 sm:grid-cols-[minmax(0,1fr)_130px_130px_110px]"
+                          >
+                            <input type="hidden" name="businessId" value={salesPlanEditor.businessId} />
+                            <input type="hidden" name="businessSlug" value={businessSlug ?? ""} />
+                            <input type="hidden" name="managerId" value={participant.id} />
+                            <input type="hidden" name="monthStart" value={section.monthStart} />
+                            <input type="hidden" name="returnHref" value={section.returnHref} />
+
+                            <label className="flex items-center gap-2 text-[13px] font-medium text-[#111827]">
+                              <input
+                                type="checkbox"
+                                name="include"
+                                value="1"
+                                defaultChecked={participant.included}
+                                className="h-4 w-4 rounded border-[#D0D5DD] text-[var(--brand-600)] focus:ring-[var(--brand-200)]"
+                              />
+                              <span>
+                                {managerLabel(participant.name)}
+                                {participant.isCurrentUser ? " (You)" : ""}
+                                <span className="ml-2 text-[11px] font-semibold text-[#6B7280]">
+                                  {participant.role}
+                                </span>
+                              </span>
+                            </label>
+
+                            <label className="flex flex-col gap-1 text-[11px] font-medium text-[#6B7280]">
+                              Plan amount
+                              <input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                name="planAmount"
+                                defaultValue={participant.planAmount}
+                                className="h-9 rounded-md border border-[#D0D5DD] bg-white px-2 text-[12px] text-[#111827] outline-none focus:border-[var(--brand-500)]"
+                              />
+                            </label>
+
+                            <label className="flex flex-col gap-1 text-[11px] font-medium text-[#6B7280]">
+                              Plan orders
+                              <input
+                                type="number"
+                                min="0"
+                                step="1"
+                                name="planClosedOrders"
+                                defaultValue={participant.planClosedOrders}
+                                className="h-9 rounded-md border border-[#D0D5DD] bg-white px-2 text-[12px] text-[#111827] outline-none focus:border-[var(--brand-500)]"
+                              />
+                            </label>
+
+                            <div className="flex items-end">
+                              <button
+                                type="submit"
+                                className="inline-flex h-9 w-full items-center justify-center rounded-md bg-[var(--brand-600)] px-3 text-[12px] font-semibold !text-white transition hover:bg-[var(--brand-700)] hover:!text-white"
+                              >
+                                Save row
+                              </button>
+                            </div>
+                          </form>
+                        ))}
+                      </div>
+                    </details>
+                  );
+                })}
+              </div>
+            </div>
+          ) : null}
+
+          <form
+            method="get"
+            action={businessSlug ? `/b/${businessSlug}/analytics` : "#"}
+            className="grid grid-cols-1 gap-2 rounded-xl border border-[#E5E7EB] bg-[#FCFCFD] p-3 sm:grid-cols-2 xl:grid-cols-[minmax(0,240px)_minmax(0,240px)_auto]"
+          >
+            {phoneRaw ? <input type="hidden" name="u" value={phoneRaw} /> : null}
+            <input type="hidden" name="tab" value="sales" />
+            <label className="flex flex-col gap-1 text-[11px] font-medium text-[#6B7280]">
+              Month
+              <input
+                type="month"
+                name="smonth"
+                defaultValue={String(salesFilter?.month ?? "").slice(0, 7)}
+                className="h-10 min-w-[220px] rounded-lg border border-[#D0D5DD] bg-white px-3 text-[14px] leading-5 text-[#111827] outline-none focus:border-[var(--brand-500)]"
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-[11px] font-medium text-[#6B7280]">
+              Manager
+              <select
+                name="smanager"
+                defaultValue={String(salesFilter?.managerId ?? "")}
+                className="h-10 rounded-lg border border-[#D0D5DD] bg-white px-3 text-[14px] leading-5 text-[#111827] outline-none focus:border-[var(--brand-500)]"
+              >
+                <option value="">All managers</option>
+                {reportManagerOptions.map((manager) => (
+                  <option key={`sales-filter-${manager.id}`} value={manager.id}>
+                    {manager.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <div className="flex items-end gap-2">
+              <button
+                type="submit"
+                className="inline-flex h-10 items-center justify-center rounded-lg bg-[var(--brand-600)] px-3 text-[13px] font-semibold !text-white transition hover:bg-[var(--brand-700)] hover:!text-white"
+              >
+                Apply
+              </button>
+              <a
+                href={resetSalesHref}
+                className={[
+                  "inline-flex h-10 items-center justify-center rounded-lg border px-3 text-[13px] font-semibold transition",
+                  hasSalesFilter
+                    ? "border-[#D0D5DD] text-[#374151] hover:bg-[#F9FAFB]"
+                    : "pointer-events-none border-[#EAECF0] text-[#98A2B3]",
+                ].join(" ")}
+                aria-disabled={!hasSalesFilter}
+              >
+                Clear
+              </a>
+            </div>
+          </form>
+
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-2 text-sm font-semibold text-[#111827]">
+                <LineChart className="icon-button text-[var(--brand-600)]" strokeWidth={2} />
+                Sales Plan vs Fact
+              </div>
+              <div className="text-xs text-[#6B7280]">
+                Month: {data.sales.start_date} to {data.sales.end_date} • Day {data.sales.days_elapsed} of {data.sales.days_total}
+              </div>
+            </div>
+            <span
+              className={[
+                "inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold",
+                data.sales.achievement_pct >= 100
+                  ? "border-[#A6F4C5] bg-[#ECFDF3] text-[#067647]"
+                  : data.sales.achievement_pct >= 70
+                    ? "border-[#FEDF89] bg-[#FFFAEB] text-[#B54708]"
+                    : "border-[#FECACA] bg-[#FEF2F2] text-[#B42318]",
+              ].join(" ")}
+            >
+              {formatPercent(data.sales.achievement_pct)} achieved
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <article className="rounded-xl border border-[#E5E7EB] bg-white p-3">
+              <div className="text-xs font-medium text-[#6B7280]">Plan Amount</div>
+              <div className="mt-1 text-2xl font-semibold text-[#111827]">
+                {formatCurrency(data.sales.team_plan_amount)}
+              </div>
+            </article>
+            <article className="rounded-xl border border-[#E5E7EB] bg-white p-3">
+              <div className="text-xs font-medium text-[#6B7280]">Actual Closed</div>
+              <div className="mt-1 text-2xl font-semibold text-[#111827]">
+                {formatCurrency(data.sales.team_actual_amount)}
+              </div>
+            </article>
+            <article className="rounded-xl border border-[#E5E7EB] bg-white p-3">
+              <div className="text-xs font-medium text-[#6B7280]">Forecast (Month)</div>
+              <div className="mt-1 text-2xl font-semibold text-[#111827]">
+                {formatCurrency(data.sales.team_forecast_amount)}
+              </div>
+            </article>
+            <article className="rounded-xl border border-[#E5E7EB] bg-white p-3">
+              <div className="text-xs font-medium text-[#6B7280]">Orders (Plan / Fact / Forecast)</div>
+              <div className="mt-1 text-2xl font-semibold text-[#111827]">
+                {data.sales.team_plan_closed_orders} / {data.sales.team_closed_orders} / {Math.round(data.sales.team_forecast_closed_orders)}
+              </div>
+            </article>
+            <article className="rounded-xl border border-[#E5E7EB] bg-white p-3">
+              <div className="text-xs font-medium text-[#6B7280]">Avg Deal Size</div>
+              <div className="mt-1 text-2xl font-semibold text-[#111827]">
+                {formatCurrency(data.sales.avg_deal_size)}
+              </div>
+            </article>
+            <article className="rounded-xl border border-[#E5E7EB] bg-white p-3">
+              <div className="text-xs font-medium text-[#6B7280]">Current Completion %</div>
+              <div className="mt-1 text-2xl font-semibold text-[#111827]">
+                {formatPercent(data.sales.achievement_pct)}
+              </div>
+            </article>
+            <article className="rounded-xl border border-[#E5E7EB] bg-white p-3">
+              <div className="text-xs font-medium text-[#6B7280]">Forecast Completion %</div>
+              <div className="mt-1 text-2xl font-semibold text-[#111827]">
+                {formatPercent(data.sales.forecast_achievement_pct)}
+              </div>
+              <div
+                className={[
+                  "mt-1 text-xs font-semibold",
+                  data.sales.forecast_gap_pct >= 0 ? "text-[#067647]" : "text-[#B42318]",
+                ].join(" ")}
+              >
+                {data.sales.forecast_gap_pct >= 0 ? "Over plan" : "Under plan"}{" "}
+                {formatSignedPercent(Math.abs(data.sales.forecast_gap_pct))}
+              </div>
+            </article>
+          </div>
+
+          <div className="rounded-xl border border-[#E5E7EB] p-3">
+            <div className="mb-2 text-sm font-semibold text-[#111827]">
+              Sales by Manager
+            </div>
+            {data.sales.managers.length === 0 ? (
+              <div className="rounded-lg border border-dashed border-[#D0D5DD] p-3 text-xs text-[#6B7280]">
+                No sales data in selected period.
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-left text-xs">
+                  <thead className="bg-[#F9FAFB] text-[#4B5563]">
+                    <tr>
+                      <th className="px-2 py-2">Manager</th>
+                      <th className="px-2 py-2">Plan</th>
+                      <th className="px-2 py-2">Fact</th>
+                      <th className="px-2 py-2">Forecast</th>
+                      <th className="px-2 py-2">Orders (P/F/Fc)</th>
+                      <th className="px-2 py-2">Current %</th>
+                      <th className="px-2 py-2">Forecast %</th>
+                      <th className="px-2 py-2">Gap %</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-t-2 border-[#D0D5DD] bg-[#F8FAFF]">
+                      <td className="px-2 py-2 font-semibold text-[#111827]">TOTAL</td>
+                      <td className="px-2 py-2 font-semibold">
+                        {formatCurrency(data.sales.team_plan_amount)}
+                      </td>
+                      <td className="px-2 py-2 font-semibold">
+                        {formatCurrency(data.sales.team_actual_amount)}
+                      </td>
+                      <td className="px-2 py-2 font-semibold">
+                        {formatCurrency(data.sales.team_forecast_amount)}
+                      </td>
+                      <td className="px-2 py-2 font-semibold">
+                        {data.sales.team_plan_closed_orders}/{data.sales.team_closed_orders}/{Math.round(data.sales.team_forecast_closed_orders)}
+                      </td>
+                      <td className="px-2 py-2 font-semibold">
+                        {formatPercent(data.sales.achievement_pct)}
+                      </td>
+                      <td className="px-2 py-2 font-semibold">
+                        {formatPercent(data.sales.forecast_achievement_pct)}
+                      </td>
+                      <td
+                        className={[
+                          "px-2 py-2 font-semibold",
+                          data.sales.forecast_gap_pct >= 0
+                            ? "text-[#067647]"
+                            : "text-[#B42318]",
+                        ].join(" ")}
+                      >
+                        {formatSignedPercent(data.sales.forecast_gap_pct)}
+                      </td>
+                    </tr>
+                    {data.sales.managers.map((manager) => (
+                      <tr
+                        key={`sales-${manager.manager_id}`}
+                        className="border-t border-[#E5E7EB]"
+                      >
+                        <td className="px-2 py-2 font-medium text-[#111827]">
+                          {managerLabel(manager.manager_name)}
+                        </td>
+                        <td className="px-2 py-2">{formatCurrency(manager.planned_amount)}</td>
+                        <td className="px-2 py-2">{formatCurrency(manager.actual_amount)}</td>
+                        <td className="px-2 py-2">{formatCurrency(manager.forecast_amount)}</td>
+                        <td className="px-2 py-2">
+                          {manager.plan_closed_orders}/{manager.closed_orders}/{Math.round(manager.forecast_closed_orders)}
+                        </td>
+                        <td
+                          className={[
+                            "px-2 py-2 font-semibold",
+                            manager.achievement_pct >= 100
+                              ? "text-[#067647]"
+                              : manager.achievement_pct >= 70
+                                ? "text-[#B54708]"
+                                : "text-[#B42318]",
+                          ].join(" ")}
+                        >
+                          {formatPercent(manager.achievement_pct)}
+                        </td>
+                        <td
+                          className={[
+                            "px-2 py-2 font-semibold",
+                            manager.forecast_achievement_pct >= 100
+                              ? "text-[#067647]"
+                              : manager.forecast_achievement_pct >= 70
+                                ? "text-[#B54708]"
+                                : "text-[#B42318]",
+                          ].join(" ")}
+                        >
+                          {formatPercent(manager.forecast_achievement_pct)}
+                        </td>
+                        <td
+                          className={[
+                            "px-2 py-2 font-semibold",
+                            manager.forecast_gap_pct >= 0
+                              ? "text-[#067647]"
+                              : "text-[#B42318]",
+                          ].join(" ")}
+                        >
+                          {formatSignedPercent(manager.forecast_gap_pct)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          {data.sales.managers.length > 0 ? (
+            <article className="space-y-2 rounded-xl border border-[#E5E7EB] bg-white p-3">
+              <div className="flex items-center justify-between gap-2">
+                <div className="text-sm font-semibold text-[#111827]">
+                  Fact Comparison by Manager
+                </div>
+                <div className="text-[11px] text-[#6B7280]">
+                  Bars are normalized by top Fact value.
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                {salesRowsForChart.map((manager) => {
+                  const factWidth = clampPercent(
+                    (manager.actual_amount / maxSalesFactAmount) * 100,
+                  );
+                  return (
+                    <div
+                      key={`sales-graph-fact-${manager.manager_id}`}
+                      className="rounded-lg border border-[#EEF2F6] px-2 py-1.5"
+                    >
+                      <div className="mb-1 flex items-center justify-between gap-2">
+                        <span className="text-[12px] font-medium text-[#111827]">
+                          {managerLabel(manager.manager_name)}
+                        </span>
+                        <span className="text-[11px] text-[#475467]">
+                          Plan {formatCurrency(manager.planned_amount)} • Fact {formatCurrency(manager.actual_amount)} • Fc {formatCurrency(manager.forecast_amount)}
+                        </span>
+                      </div>
+                      <div className="h-2 rounded-full bg-[#EEF2FF]">
+                        <div
+                          className="h-2 rounded-full bg-[var(--brand-600)]"
+                          style={{ width: `${factWidth}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </article>
+          ) : null}
+        </article>
+      ) : null}
+
       {showProductivity ? (
         <article className="space-y-3 rounded-xl border border-[#E5E7EB] p-3">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-sm font-semibold text-[#111827]">
+              <div className="flex items-center gap-2 text-sm font-semibold text-[#111827]">
+                <BarChart3 className="icon-button text-[var(--brand-600)]" strokeWidth={2} />
                 Productivity Dashboard
               </div>
               <div className="text-xs text-[#6B7280]">

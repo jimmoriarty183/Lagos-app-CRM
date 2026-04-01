@@ -1,6 +1,99 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
+import { initializePaddle } from '@paddle/paddle-js';
+
+// Global Paddle instance + init promise (shared across all buttons/components)
+let paddle = null;
+let paddleInitPromise = null;
+
+const PADDLE_CLIENT_TOKEN =
+  process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN || 'REPLACE_WITH_CLIENT_TOKEN';
+const PADDLE_ENVIRONMENT =
+  process.env.NEXT_PUBLIC_PADDLE_ENVIRONMENT || 'sandbox';
+const FALLBACK_PRICE_ID = 'REPLACE_WITH_PRICE_ID';
+
+async function initPaddle() {
+  if (typeof window === 'undefined') return null;
+  if (paddle) return paddle;
+
+  if (!paddleInitPromise) {
+    if (
+      !PADDLE_CLIENT_TOKEN ||
+      PADDLE_CLIENT_TOKEN === 'REPLACE_WITH_CLIENT_TOKEN'
+    ) {
+      console.error(
+        '[Paddle] Missing client token. Set NEXT_PUBLIC_PADDLE_CLIENT_TOKEN in .env.local'
+      );
+      return null;
+    }
+
+    paddleInitPromise = initializePaddle({
+      environment: PADDLE_ENVIRONMENT,
+      token: PADDLE_CLIENT_TOKEN,
+    })
+      .then((instance) => {
+        if (!instance?.Checkout?.open) {
+          console.error('[Paddle] Initialization failed: Checkout.open unavailable');
+          return null;
+        }
+        paddle = instance;
+        console.log(`[Paddle] Initialized (${PADDLE_ENVIRONMENT})`);
+        return paddle;
+      })
+      .catch((error) => {
+        console.error('[Paddle] Initialization error:', error);
+        return null;
+      })
+      .finally(() => {
+        // Allow retry if init failed and paddle is still null.
+        if (!paddle) paddleInitPromise = null;
+      });
+  }
+
+  return paddleInitPromise;
+}
+
+export async function openCheckout(priceId = FALLBACK_PRICE_ID) {
+  if (typeof window === 'undefined') {
+    console.error('[Paddle] Checkout can only be opened in browser');
+    return false;
+  }
+
+  if (!priceId || priceId === FALLBACK_PRICE_ID) {
+    console.error(
+      '[Paddle] Invalid priceId. Provide real price id instead of placeholder.'
+    );
+    return false;
+  }
+
+  const instance = paddle || (await initPaddle());
+  if (!instance?.Checkout?.open) {
+    console.error('[Paddle] Paddle not initialized');
+    return false;
+  }
+
+  try {
+    await instance.Checkout.open({
+      items: [
+        {
+          priceId: priceId || FALLBACK_PRICE_ID,
+        },
+      ],
+    });
+    return true;
+  } catch (error) {
+    console.error('[Paddle] Checkout error:', {
+      environment: PADDLE_ENVIRONMENT,
+      priceId,
+      tokenSet:
+        Boolean(PADDLE_CLIENT_TOKEN) &&
+        PADDLE_CLIENT_TOKEN !== 'REPLACE_WITH_CLIENT_TOKEN',
+      error,
+    });
+    return false;
+  }
+}
 
 /**
  * BuyButton Component
@@ -10,65 +103,14 @@ import { useEffect, useRef } from 'react';
  * <BuyButton priceId="pri_XXXXX" label="Buy Now" />
  */
 export default function BuyButton({
-  priceId = 'pri_01h2xcejqy55r61nf5pj194ysa', // Example price ID - replace with your own
+  priceId = FALLBACK_PRICE_ID,
   label = 'Buy Now',
   className = '',
   onSuccess = null,
   onError = null,
 }) {
-  const paddleInitialized = useRef(false);
-  const paddleInstanceRef = useRef(null);
-
   useEffect(() => {
-    // Prevent multiple initializations
-    if (paddleInitialized.current) return;
-
-    // Initialize Paddle only on client side
-    if (typeof window === 'undefined') return;
-
-    const initPaddle = async () => {
-      try {
-        // Import Paddle loader dynamically on client only to avoid SSR issues.
-        const { initializePaddle } = await import('@paddle/paddle-js');
-
-        // Initialize with client token from environment
-        const clientToken = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN;
-
-        if (!clientToken) {
-          console.error(
-            '[Paddle] Missing NEXT_PUBLIC_PADDLE_CLIENT_TOKEN in environment variables'
-          );
-          onError?.('Paddle not configured');
-          return;
-        }
-
-        const paddleInstance = await initializePaddle({
-          token: clientToken,
-          environment: 'production',
-          eventCallback: (event) => {
-            // Optional: handle Paddle events
-            console.log('[Paddle Event]', event.type, event);
-          },
-        });
-
-        if (!paddleInstance?.Checkout?.open) {
-          console.error('[Paddle] Failed to create Paddle instance');
-          onError?.('Paddle failed to initialize');
-          return;
-        }
-
-        paddleInstanceRef.current = paddleInstance;
-        paddleInitialized.current = true;
-        console.log('[Paddle] Successfully initialized');
-      } catch (error) {
-        console.error('[Paddle] Initialization error:', error);
-        onError?.(error.message);
-      }
-    };
-
-    initPaddle();
-
-    // Cleanup is not needed for Paddle - it persists across component unmounts
+    void initPaddle();
   }, [onError]);
 
   /**
@@ -83,26 +125,11 @@ export default function BuyButton({
         return;
       }
 
-      if (!paddleInstanceRef.current?.Checkout?.open) {
-        console.error('[Paddle] Checkout unavailable because Paddle is not initialized');
+      const opened = await openCheckout(priceId);
+      if (!opened) {
         onError?.('Paddle is still loading');
         return;
       }
-
-      // Open checkout with the price
-      await paddleInstanceRef.current.Checkout.open({
-        items: [
-          {
-            priceId: priceId,
-            quantity: 1,
-          },
-        ],
-        // Optional: customize checkout behavior
-        settings: {
-          theme: 'light',
-          locale: 'en',
-        },
-      });
 
       // Success callback can be handled here if needed
       onSuccess?.({ priceId });

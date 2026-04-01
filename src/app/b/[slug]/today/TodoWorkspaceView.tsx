@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import {
   type TodayFollowUpItem,
+  type ManagerMonthlyPlanProgress,
   TodayFollowUpsView,
 } from "@/app/b/[slug]/today/TodayFollowUpsView";
 import { TodoCalendarDetailsPanel } from "@/app/b/[slug]/today/todo-calendar/TodoCalendarDetailsPanel";
@@ -37,12 +38,14 @@ export function TodoWorkspaceView({
   initialItems,
   calendarItems,
   initialMode,
+  managerPlanProgress,
 }: {
   businessSlug: string;
   canManage: boolean;
   initialItems: TodayFollowUpItem[];
   calendarItems: TodoCalendarItem[];
   initialMode: TodoDisplayMode;
+  managerPlanProgress?: ManagerMonthlyPlanProgress | null;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -183,6 +186,7 @@ export function TodoWorkspaceView({
             businessSlug={businessSlug}
             canManage={canManage}
             initialItems={initialItems}
+            managerPlanProgress={managerPlanProgress}
             headerAction={
               <TodoViewModeSwitch
                 value={mode}
