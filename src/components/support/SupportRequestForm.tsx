@@ -114,7 +114,7 @@ export function SupportRequestForm({ businessSlug }: { businessSlug: string }) {
                 setState((prev) => ({ ...prev, type: event.target.value }))
               }
               required
-              className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
+              className="h-10 w-full rounded-[var(--radius)] border border-[var(--neutral-200)] bg-white px-4 text-[0.9375rem] text-[var(--neutral-900)] outline-none transition focus:border-[var(--brand-600)] focus:ring-0"
             >
               {TYPE_SUGGESTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -132,7 +132,7 @@ export function SupportRequestForm({ businessSlug }: { businessSlug: string }) {
                 setState((prev) => ({ ...prev, priority: event.target.value }))
               }
               required
-              className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
+              className="h-10 w-full rounded-[var(--radius)] border border-[var(--neutral-200)] bg-white px-4 text-[0.9375rem] text-[var(--neutral-900)] outline-none transition focus:border-[var(--brand-600)] focus:ring-0"
             >
               {PRIORITY_SUGGESTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -148,7 +148,7 @@ export function SupportRequestForm({ businessSlug }: { businessSlug: string }) {
           <input
             value={state.subject}
             onChange={(event) => setState((prev) => ({ ...prev, subject: event.target.value }))}
-            className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
+            className="h-10 w-full rounded-[var(--radius)] border border-[var(--neutral-200)] bg-white px-4 text-[0.9375rem] text-[var(--neutral-900)] outline-none transition focus:border-[var(--brand-600)] focus:ring-0"
             minLength={3}
             required
           />
@@ -159,7 +159,7 @@ export function SupportRequestForm({ businessSlug }: { businessSlug: string }) {
           <textarea
             value={state.message}
             onChange={(event) => setState((prev) => ({ ...prev, message: event.target.value }))}
-            className="min-h-[140px] w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
+            className="min-h-[100px] w-full rounded-[var(--radius)] border border-[var(--neutral-200)] bg-white px-4 py-3 text-[0.9375rem] text-[var(--neutral-900)] outline-none transition resize-y focus:border-[var(--brand-600)] focus:ring-0"
             minLength={3}
             required
           />
@@ -169,13 +169,13 @@ export function SupportRequestForm({ businessSlug }: { businessSlug: string }) {
         <div className="grid gap-4 sm:grid-cols-1">
           <label className="space-y-1.5 text-sm">
             <span className="font-medium text-slate-700">Contact email</span>
-            <input
-              type="email"
-              value={state.contactEmail}
-              onChange={(event) => setState((prev) => ({ ...prev, contactEmail: event.target.value }))}
-              className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
-              placeholder="you@company.com"
-            />
+          <input
+            type="email"
+            value={state.contactEmail}
+            onChange={(event) => setState((prev) => ({ ...prev, contactEmail: event.target.value }))}
+            className="h-10 w-full rounded-[var(--radius)] border border-[var(--neutral-200)] bg-white px-4 text-[0.9375rem] text-[var(--neutral-900)] outline-none transition focus:border-[var(--brand-600)] focus:ring-0"
+            placeholder="you@company.com"
+          />
           </label>
         </div>
 
@@ -184,7 +184,7 @@ export function SupportRequestForm({ businessSlug }: { businessSlug: string }) {
           <input
             type="file"
             onChange={(event) => setState((prev) => ({ ...prev, file: event.target.files?.[0] ?? null }))}
-            className="block w-full cursor-pointer rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none transition file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-slate-700 hover:border-slate-300"
+            className="block w-full cursor-pointer rounded-[var(--radius)] border border-[var(--neutral-200)] bg-white px-4 py-2 text-[0.9375rem] text-[var(--neutral-900)] outline-none transition file:mr-3 file:rounded-lg file:border-0 file:bg-[var(--neutral-100)] file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-[var(--neutral-700)] focus:border-[var(--brand-600)] focus:ring-0"
           />
         </label>
 

@@ -42,7 +42,7 @@ export default function DesktopFilters({
   card,
 }: Props) {
   const inputCls =
-    "h-10 w-full rounded-xl border border-gray-200 px-3 outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900 bg-white";
+    "h-10 w-full rounded-[var(--radius)] border border-[var(--neutral-200)] bg-white px-4 text-[0.9375rem] text-[var(--neutral-900)] outline-none transition focus:border-[var(--brand-600)] focus:ring-0";
 
   return (
     <section

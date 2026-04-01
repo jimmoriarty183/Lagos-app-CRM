@@ -37,7 +37,14 @@ function SelectTrigger({
       data-slot="select-trigger"
       data-size={size}
       className={cn(
-        "data-[placeholder]:text-[#9CA3AF] [&_svg:not([class*='text-'])]:text-[#9CA3AF] focus-visible:border-[var(--brand-600)] focus-visible:ring-[rgba(91,91,179,0.18)] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input/30 dark:hover:bg-input/50 flex w-full items-center justify-between gap-2 rounded-md border border-[#E5E7EB] bg-white px-3 py-2 text-sm text-[#1F2937] whitespace-nowrap shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition-[color,box-shadow,border-color] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 data-[size=default]:h-9 data-[size=sm]:h-8 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        "data-[placeholder]:text-[var(--neutral-500)] [&_svg:not([class*='text-'])]:text-[var(--neutral-500)]",
+        "flex w-full items-center justify-between gap-2 whitespace-nowrap rounded-[var(--radius)] border border-[var(--neutral-200)] bg-white px-4 py-2.5 text-[0.9375rem] text-[var(--neutral-900)]",
+        "transition-[border-color,box-shadow,color] outline-none focus-visible:border-[var(--brand-600)] focus-visible:ring-0",
+        "aria-invalid:border-[var(--error-500)]",
+        "disabled:cursor-not-allowed disabled:bg-[var(--neutral-100)] disabled:text-[var(--neutral-500)] disabled:opacity-100",
+        "data-[size=default]:h-10 data-[size=sm]:h-9",
+        "*:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2",
+        "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         className,
       )}
       {...props}

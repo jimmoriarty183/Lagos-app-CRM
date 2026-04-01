@@ -19,13 +19,13 @@ export default function DesktopCreateOrder({
 }: Props) {
   const createOrderAction = createOrderFromForm.bind(null, businessId, businessSlug);
   const inputCls =
-    "h-11 w-full min-w-0 rounded-2xl border border-[#dde3ee] bg-white px-3.5 text-sm text-[#111827] outline-none transition " +
-    "focus:border-[#111827] focus:ring-2 focus:ring-[#111827]/10";
+    "h-10 w-full min-w-0 rounded-[var(--radius)] border border-[var(--neutral-200)] bg-white px-4 text-[0.9375rem] text-[var(--neutral-900)] outline-none transition " +
+    "focus:border-[var(--brand-600)] focus:ring-0 disabled:bg-[var(--neutral-100)] disabled:text-[var(--neutral-500)]";
 
   const labelCls = "text-[11px] font-semibold uppercase tracking-[0.08em] text-[#98a2b3]";
   const textareaCls =
-    "min-h-[96px] w-full rounded-2xl border border-[#dde3ee] bg-white px-3.5 py-3 text-sm text-[#111827] outline-none transition resize-y " +
-    "focus:border-[#111827] focus:ring-2 focus:ring-[#111827]/10";
+    "min-h-[100px] w-full rounded-[var(--radius)] border border-[var(--neutral-200)] bg-white px-4 py-3 text-[0.9375rem] text-[var(--neutral-900)] outline-none transition resize-y " +
+    "focus:border-[var(--brand-600)] focus:ring-0 disabled:bg-[var(--neutral-100)] disabled:text-[var(--neutral-500)]";
 
   return (
     <form

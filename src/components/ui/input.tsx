@@ -8,9 +8,12 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
       type={type}
       data-slot="input"
       className={cn(
-        "file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input flex h-11 w-full min-w-0 rounded-lg border bg-input-background px-4 py-2 text-base transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
-        "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
-        "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+        "file:text-[var(--neutral-900)] placeholder:text-[var(--neutral-500)] selection:bg-[var(--brand-600)] selection:text-white",
+        "flex h-10 w-full min-w-0 rounded-[var(--radius)] border border-[var(--neutral-200)] bg-white px-4 py-2.5 text-[0.9375rem] text-[var(--neutral-900)] transition-[border-color,box-shadow] outline-none",
+        "focus-visible:border-[var(--brand-600)] focus-visible:ring-0",
+        "aria-invalid:border-[var(--error-500)]",
+        "file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium",
+        "disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-[var(--neutral-100)] disabled:text-[var(--neutral-500)]",
         className,
       )}
       {...props}
