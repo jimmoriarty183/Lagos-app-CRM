@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Crown, Mail, User } from "lucide-react";
 import InviteManager from "./InviteManager";
 import { resolveUserDisplay } from "@/lib/user-display";
+import { EmptyState as UiEmptyState } from "@/components/ui/empty-state";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -185,9 +186,10 @@ function RowShell({
 
 function EmptyState({ text }: { text: string }) {
   return (
-    <div className="rounded-2xl border border-dashed border-slate-200 bg-white px-4 py-4 text-[13px] text-slate-500">
-      {text}
-    </div>
+    <UiEmptyState
+      title={text}
+      className="rounded-2xl border-dashed px-4 py-4 text-left justify-items-start"
+    />
   );
 }
 

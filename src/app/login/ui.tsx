@@ -9,6 +9,8 @@ import {
   forgotPasswordAction,
 } from "@/app/actions/auth";
 import { BUSINESS_SEGMENTS } from "@/lib/business-segments";
+import { Spinner } from "@/components/ui/spinner";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type State = { ok: boolean; error: string; next: string };
 const initialState: State = { ok: false, error: "", next: "" };
@@ -36,7 +38,7 @@ function OverlayLoader({ text }: { text: string }) {
   return (
     <div className="absolute inset-0 z-50 flex items-center justify-center rounded-[20px] bg-white/70 backdrop-blur-sm">
       <div className="flex flex-col items-center gap-3 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-lg shadow-slate-900/5">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-300 border-t-[var(--brand-600)]" />
+        <Spinner className="h-8 w-8" />
         <div className="text-sm font-semibold text-slate-800">{text}</div>
       </div>
     </div>
@@ -442,7 +444,7 @@ export default function LoginUI({
             <button
               type="submit"
               disabled={loginPending}
-              className="brand-primary-btn h-11 w-full rounded-xl border px-4 text-sm font-semibold !text-white transition disabled:cursor-not-allowed disabled:opacity-60 disabled:!text-white"
+              className="brand-primary-btn h-11 w-full rounded-xl border px-4 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-60"
             >
               Sign in
             </button>
@@ -536,12 +538,12 @@ export default function LoginUI({
               onToggleShow={() => setShowRegPasswords((s) => !s)}
             />
 
-            <label className="flex items-start gap-2.5 rounded-xl border border-slate-200 bg-slate-50/90 px-3.5 py-3">
-              <input
-                type="checkbox"
+            <label className="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50/90 px-3.5 py-3">
+              <Checkbox
                 checked={agree}
-                onChange={(e) => setAgree(e.target.checked)}
-                className="mt-0.5 h-4 w-4 rounded border-slate-300 text-[var(--brand-600)] focus:ring-[rgba(91,91,179,0.18)]"
+                onCheckedChange={(checked) => setAgree(Boolean(checked))}
+                className="mt-0.5"
+                aria-label="Agree to terms and privacy policy"
               />
               <div className="text-xs leading-snug text-slate-700">
                 I agree to the{" "}
@@ -565,7 +567,7 @@ export default function LoginUI({
             <button
               type="submit"
               disabled={regPending || !agree}
-              className="brand-primary-btn h-11 w-full rounded-xl border px-4 text-sm font-semibold !text-white transition disabled:cursor-not-allowed disabled:opacity-60 disabled:!text-white"
+              className="brand-primary-btn h-11 w-full rounded-xl border px-4 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-60"
             >
               {inviteId ? "Create account & join" : "Create account"}
             </button>
@@ -595,7 +597,7 @@ export default function LoginUI({
             <button
               type="submit"
               disabled={resetPending}
-              className="brand-primary-btn h-11 w-full rounded-xl border px-4 text-sm font-semibold !text-white transition disabled:cursor-not-allowed disabled:opacity-60 disabled:!text-white"
+              className="brand-primary-btn h-11 w-full rounded-xl border px-4 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-60"
             >
               Send reset link
             </button>

@@ -395,7 +395,7 @@ export default function DesktopLeftRail({
           ) : (
             <div
               className={[
-                "max-h-[calc(100vh-136px)] overflow-y-auto overscroll-contain rounded-[26px] border border-[#E5E7EB] bg-[#F9FAFB]/96 p-1.5 shadow-[0_10px_34px_rgba(15,23,42,0.06)] backdrop-blur transition-all",
+                "max-h-[calc(100vh-136px)] overflow-x-hidden overflow-y-auto overscroll-contain rounded-[26px] border border-[#E5E7EB] bg-[#F9FAFB]/96 p-1.5 shadow-[0_10px_34px_rgba(15,23,42,0.06)] backdrop-blur transition-all",
                 expanded ? expandedPanelWidth : collapsedPanelWidth,
               ].join(" ")}
             >

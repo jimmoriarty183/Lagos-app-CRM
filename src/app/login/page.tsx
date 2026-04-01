@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { BrandLockup } from "@/components/Brand";
 import LoginUI from "./ui";
+import { Spinner } from "@/components/ui/spinner";
 
 const benefits = [
   "Run clients and deals without chaos",
@@ -80,8 +81,8 @@ export default function Page() {
           <div className="space-y-4">
             <React.Suspense
               fallback={
-                <div className="w-full rounded-[20px] border border-slate-200 bg-white p-7 shadow-sm">
-                  Loading...
+                <div className="flex w-full items-center justify-center rounded-[20px] border border-slate-200 bg-white p-7 shadow-sm">
+                  <Spinner className="h-8 w-8" />
                 </div>
               }
             >

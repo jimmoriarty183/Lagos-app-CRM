@@ -297,7 +297,7 @@ export default function MobileFiltersAccordion({
         <div className="flex items-center justify-between gap-3 border-b border-[#F3F4F6] px-4 py-4">
           <div className="min-w-0">
             <div className="inline-flex items-center gap-2 text-sm font-semibold text-[#1F2937]">
-              <SlidersHorizontal className="h-4 w-4 text-[#6B7280]" />
+              <SlidersHorizontal className="icon-button text-[#6B7280]" strokeWidth={2} />
               Search & Filters
             </div>
             <div className="mt-1 text-xs text-[#9CA3AF]">
@@ -348,7 +348,7 @@ export default function MobileFiltersAccordion({
               Search
             </span>
             <div className="relative">
-              <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9CA3AF]" />
+              <Search className="icon-button pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#9CA3AF]" strokeWidth={2} />
               <input
                 name="q"
                 defaultValue={filters.q}

@@ -235,66 +235,83 @@ export default function DesktopAnalyticsCard({
           <BarChart3 className="h-4 w-4 text-[#9CA3AF]" />
           Summary
         </div>
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => setHidden(!hidden)}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[#E5E7EB] bg-white text-[#6B7280] transition hover:border-[#C7D2FE] hover:text-[#1F2937]"
-            aria-label={hidden ? "Show summary" : "Hide summary"}
-            title={hidden ? "Show summary" : "Hide summary"}
-          >
-            {hidden ? (
-              <ChevronDown className="h-4 w-4" />
-            ) : (
+        {hidden ? (
+          <div className="flex items-center gap-3">
+            <div className="text-[12px] font-medium text-[#6B7280]">
+              Summary is hidden. Open it to view analytics.
+            </div>
+            <button
+              type="button"
+              onClick={() => setHidden(!hidden)}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[#E5E7EB] bg-white text-[#6B7280] transition hover:border-[#C7D2FE] hover:text-[#1F2937]"
+              aria-label={hidden ? "Show summary" : "Hide summary"}
+              title={hidden ? "Show summary" : "Hide summary"}
+            >
+              {hidden ? (
+                <ChevronDown className="h-4 w-4" />
+              ) : (
+                <ChevronUp className="h-4 w-4" />
+              )}
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-3">
+            <div className="inline-flex rounded-full border border-[#E5E7EB] bg-white p-1">
+              {periodOptions.map((option) => (
+                <a
+                  key={option.label}
+                  href={option.href}
+                  className={[
+                    "rounded-md px-3 py-1.5 text-[11px] font-semibold transition",
+                    option.active
+                      ? "bg-[var(--brand-600)] text-white"
+                      : "text-[#6B7280] hover:bg-[#F9FAFB] hover:text-[#1F2937]",
+                  ].join(" ")}
+                >
+                  {option.shortLabel}
+                </a>
+              ))}
+            </div>
+            {extendedOptions.length > 0 ? (
+              <details className="relative">
+                <summary className="flex h-9 cursor-pointer list-none items-center gap-1 rounded-full border border-[#E5E7EB] bg-white px-3 text-[11px] font-semibold text-[#475467]">
+                  More
+                  <ChevronDown className="h-3.5 w-3.5 text-[#9CA3AF]" />
+                </summary>
+                <div className="absolute right-0 top-11 z-20 min-w-[140px] rounded-2xl border border-[#E5E7EB] bg-white p-1 shadow-[0_12px_24px_rgba(16,24,40,0.12)]">
+                  {extendedOptions.map((option) => (
+                    <a
+                      key={option.label}
+                      href={option.href}
+                      className={[
+                        "block rounded-xl px-3 py-2 text-[12px] font-medium transition",
+                        option.active
+                          ? "bg-[var(--brand-600)] text-white"
+                          : "text-[#374151] hover:bg-[#F9FAFB]",
+                      ].join(" ")}
+                    >
+                      {option.label}
+                    </a>
+                  ))}
+                </div>
+              </details>
+            ) : null}
+            <div className="text-[11px] font-medium text-[#9CA3AF]">
+              {hasComparison && comparisonLabel
+                ? `${periodLabel} vs ${comparisonLabel}`
+                : periodLabel}
+            </div>
+            <button
+              type="button"
+              onClick={() => setHidden(!hidden)}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[#E5E7EB] bg-white text-[#6B7280] transition hover:border-[#C7D2FE] hover:text-[#1F2937]"
+              aria-label={hidden ? "Show summary" : "Hide summary"}
+              title={hidden ? "Show summary" : "Hide summary"}
+            >
               <ChevronUp className="h-4 w-4" />
-            )}
-          </button>
-          <div className="inline-flex rounded-full border border-[#E5E7EB] bg-white p-1">
-            {periodOptions.map((option) => (
-              <a
-                key={option.label}
-                href={option.href}
-                className={[
-                  "rounded-md px-3 py-1.5 text-[11px] font-semibold transition",
-                  option.active
-                    ? "bg-[var(--brand-600)] text-white"
-                    : "text-[#6B7280] hover:bg-[#F9FAFB] hover:text-[#1F2937]",
-                ].join(" ")}
-              >
-                {option.shortLabel}
-              </a>
-            ))}
+            </button>
           </div>
-          {extendedOptions.length > 0 ? (
-            <details className="relative">
-              <summary className="flex h-9 cursor-pointer list-none items-center gap-1 rounded-full border border-[#E5E7EB] bg-white px-3 text-[11px] font-semibold text-[#475467]">
-                More
-                <ChevronDown className="h-3.5 w-3.5 text-[#9CA3AF]" />
-              </summary>
-              <div className="absolute right-0 top-11 z-20 min-w-[140px] rounded-2xl border border-[#E5E7EB] bg-white p-1 shadow-[0_12px_24px_rgba(16,24,40,0.12)]">
-                {extendedOptions.map((option) => (
-                  <a
-                    key={option.label}
-                    href={option.href}
-                    className={[
-                      "block rounded-xl px-3 py-2 text-[12px] font-medium transition",
-                      option.active
-                        ? "bg-[var(--brand-600)] text-white"
-                        : "text-[#374151] hover:bg-[#F9FAFB]",
-                    ].join(" ")}
-                  >
-                    {option.label}
-                  </a>
-                ))}
-              </div>
-            </details>
-          ) : null}
-          <div className="text-[11px] font-medium text-[#9CA3AF]">
-            {hasComparison && comparisonLabel
-              ? `${periodLabel} vs ${comparisonLabel}`
-              : periodLabel}
-          </div>
-        </div>
+        )}
       </div>
 
       {hidden ? null : (

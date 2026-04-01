@@ -801,10 +801,10 @@ export default function MobileOrdersList({
             <button
               type="button"
               onClick={openFilters}
-              className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-lg border-2 border-[var(--brand-600)] bg-white px-4 text-sm font-medium text-[var(--brand-600)] transition hover:bg-[var(--brand-600)] hover:text-white"
+              className="group inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-lg border-2 border-[var(--brand-600)] bg-white px-4 text-sm font-medium text-[var(--brand-600)] transition hover:bg-[var(--brand-600)] hover:text-white"
             >
-              <Search className="h-4 w-4" />
-              <SlidersHorizontal className="h-4 w-4" />
+              <Search className="icon-button" strokeWidth={2} />
+              <SlidersHorizontal className="icon-button" strokeWidth={2} />
               Search & Filters
             </button>
           </div>

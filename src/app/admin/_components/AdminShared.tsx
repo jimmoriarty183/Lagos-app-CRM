@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { EmptyState as UiEmptyState } from "@/components/ui/empty-state";
 
 export type AdminSearchParams = Record<string, string | string[] | undefined>;
 
@@ -159,10 +160,11 @@ export function EmptyState({
   description: string;
 }) {
   return (
-    <div className="rounded-[20px] border border-dashed border-slate-300 bg-slate-50 px-5 py-10 text-center">
-      <div className="text-sm font-semibold text-slate-900">{title}</div>
-      <div className="mt-1 text-sm text-slate-500">{description}</div>
-    </div>
+    <UiEmptyState
+      title={title}
+      description={description}
+      className="rounded-[20px] border-dashed border-slate-300 bg-slate-50 px-5 py-10"
+    />
   );
 }
 

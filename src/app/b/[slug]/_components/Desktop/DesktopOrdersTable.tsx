@@ -1725,12 +1725,12 @@ export default function DesktopOrdersTable({
             <button
               type="button"
               onClick={openKanbanFilters}
-              className="relative inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-[var(--brand-200)] bg-white px-4 text-sm font-medium text-[var(--brand-700)] transition hover:border-[#A5B4FC] hover:bg-[var(--brand-50)] hover:text-[var(--brand-700)]"
+              className="group relative inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-[var(--brand-200)] bg-white px-4 text-sm font-medium text-[var(--brand-700)] transition hover:border-[#A5B4FC] hover:bg-[var(--brand-50)] hover:text-[var(--brand-700)]"
               aria-label="Open search and filters"
               title="Search and filters"
             >
-              <Search className="h-[14px] w-[14px]" />
-              <SlidersHorizontal className="h-[15px] w-[15px]" />
+              <Search className="icon-button icon-interactive" strokeWidth={2} />
+              <SlidersHorizontal className="icon-button icon-interactive" strokeWidth={2} />
               {hasActiveFilters ? (
                 <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--brand-50)] px-1 text-[9px] font-bold text-[var(--brand-600)]">
                   1

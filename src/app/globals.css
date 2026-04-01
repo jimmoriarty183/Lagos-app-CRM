@@ -190,14 +190,135 @@ h4 {
 }
 
 .card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  padding: var(--space-6);
+  border: 1px solid var(--neutral-200);
+  border-radius: 12px;
+  background-color: #FFFFFF;
+}
+
+.card-elevated {
+  box-shadow: var(--shadow-md);
+}
+
+.card-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--neutral-900);
+  margin-bottom: var(--space-3);
 }
 
 .muted {
   color: var(--muted);
+}
+
+/* Alerts */
+.alert {
+  padding: 16px;
+  border-radius: var(--radius);
+  border: 1px solid;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.alert-success {
+  background-color: var(--success-50);
+  border-color: var(--success-500);
+  color: var(--success-500);
+}
+
+.alert-info {
+  background-color: var(--brand-50);
+  border-color: var(--brand-400);
+  color: var(--brand-700);
+}
+
+.alert-warning {
+  background-color: var(--warning-50);
+  border-color: var(--warning-500);
+  color: var(--warning-500);
+}
+
+.alert-error {
+  background-color: var(--error-50);
+  border-color: var(--error-500);
+  color: var(--error-500);
+}
+
+/* Badges */
+.badge {
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.badge-default {
+  background-color: var(--neutral-100);
+  color: var(--neutral-700);
+}
+
+.badge-primary {
+  background-color: var(--brand-50);
+  color: var(--brand-700);
+}
+
+.badge-success {
+  background-color: var(--success-50);
+  color: var(--success-500);
+}
+
+.badge-warning {
+  background-color: var(--warning-50);
+  color: var(--warning-500);
+}
+
+.badge-error {
+  background-color: var(--error-50);
+  color: var(--error-500);
+}
+
+/* Tooltip */
+.tooltip {
+  position: absolute;
+  padding: 8px 12px;
+  background-color: var(--neutral-900);
+  color: #FFFFFF;
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+  white-space: nowrap;
+  z-index: 1000;
+}
+
+.tooltip-arrow {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background-color: var(--neutral-900);
+  transform: rotate(45deg);
+}
+
+/* Empty state */
+.empty-state {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+  text-align: center;
+  padding: var(--space-8);
+  border: 1px dashed var(--neutral-200);
+  border-radius: 12px;
+  background: #FFFFFF;
+}
+
+.empty-state-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--neutral-900);
+}
+
+.empty-state-description {
+  max-width: 42ch;
+  color: var(--neutral-600);
 }
 
 /* Typography utilities */
@@ -233,6 +354,38 @@ h4 {
   font-weight: var(--fw-semibold);
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+/* Loading states */
+.skeleton {
+  background-color: var(--neutral-200);
+  border-radius: 4px;
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--neutral-200);
+  border-top-color: var(--brand-600);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Divider */
+.divider {
+  height: 1px;
+  background-color: var(--neutral-200);
+  margin: var(--space-6) 0;
 }
 
 /* Form Elements */
@@ -291,9 +444,7 @@ textarea:disabled {
 }
 
 input.error,
-input:invalid,
-textarea.error,
-textarea:invalid {
+textarea.error {
   border-color: var(--error-500);
 }
 
@@ -734,6 +885,42 @@ input[type="radio"]:disabled {
   font-weight: 600;
   letter-spacing: normal;
   color: #1f2937;
+}
+
+/* Icon System */
+.icon-inline {
+  width: 16px;
+  height: 16px;
+}
+
+.icon-button {
+  width: 20px;
+  height: 20px;
+}
+
+.icon-standard {
+  width: 24px;
+  height: 24px;
+}
+
+.icon-large {
+  width: 32px;
+  height: 32px;
+}
+
+.icon-hero {
+  width: 48px;
+  height: 48px;
+}
+
+.icon-interactive {
+  color: var(--neutral-700);
+  transition: color 150ms, transform 150ms;
+}
+
+.group:hover .icon-interactive,
+.group:focus-visible .icon-interactive {
+  color: var(--brand-600);
 }
 
 @media (min-width: 640px) {
