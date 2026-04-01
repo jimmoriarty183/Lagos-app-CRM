@@ -371,7 +371,7 @@ export function OrderChecklist({
         </div>
       </div>
 
-      <div className="sticky top-0 z-20 -mx-1 rounded-[24px] bg-[linear-gradient(180deg,rgba(248,250,252,1)_0%,rgba(248,250,252,0.96)_78%,rgba(248,250,252,0)_100%)] px-1 pb-3 pt-3">
+      <div className="-mx-1 rounded-[24px] bg-[#F8FAFC] px-1 pb-3 pt-3">
         <div className="rounded-[18px] border border-[#E5E7EB] bg-white/95 px-4 py-3 shadow-[0_10px_24px_rgba(15,23,42,0.06)] backdrop-blur">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>

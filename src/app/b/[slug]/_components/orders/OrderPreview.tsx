@@ -1324,8 +1324,14 @@ export function OrderPreview({
         side="right"
         showClose={false}
         className={[
-          "top-3 right-3 bottom-3 h-auto w-[calc(100vw-24px)] overflow-hidden border border-[#E5E7EB] bg-[#F9FAFB] p-0 transition-[max-width] duration-200 sm:left-auto sm:w-full sm:rounded-[28px] sm:shadow-[0_20px_60px_rgba(15,23,42,0.18)]",
-          isWideLayout ? "sm:max-w-[calc(100vw-32px)]" : "sm:max-w-[680px]",
+          "h-auto w-[calc(100vw-24px)] overflow-hidden border border-[#E5E7EB] bg-white p-0 transition-[max-width] duration-200",
+          // Normal mode: stick to right
+          !isWideLayout && "top-3 right-3 bottom-3 sm:max-w-[720px]",
+          // Wide mode: center on screen
+          isWideLayout &&
+            "top-3 bottom-3 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:max-w-[1120px] sm:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)]",
+          // Both modes
+          "sm:rounded-[28px]",
         ].join(" ")}
       >
         <SheetTitle className="sr-only">
@@ -1554,7 +1560,10 @@ export function OrderPreview({
                         value={draft.dueDate}
                         onChange={(event) => {
                           const nextValue = event.currentTarget.value;
-                          setDraft((prev) => ({ ...prev, dueDate: nextValue }));
+                          setDraft((prev) => ({
+                            ...prev,
+                            dueDate: nextValue,
+                          }));
                         }}
                         className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
                       />
@@ -1568,7 +1577,10 @@ export function OrderPreview({
                         value={draft.amount}
                         onChange={(event) => {
                           const nextValue = event.currentTarget.value;
-                          setDraft((prev) => ({ ...prev, amount: nextValue }));
+                          setDraft((prev) => ({
+                            ...prev,
+                            amount: nextValue,
+                          }));
                         }}
                         className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
                       />
@@ -1585,7 +1597,10 @@ export function OrderPreview({
                     value={draft.description}
                     onChange={(event) => {
                       const nextValue = event.currentTarget.value;
-                      setDraft((prev) => ({ ...prev, description: nextValue }));
+                      setDraft((prev) => ({
+                        ...prev,
+                        description: nextValue,
+                      }));
                     }}
                     className="mt-2 min-h-28 w-full rounded-2xl border border-[#E5E7EB] bg-white px-4 py-3 text-sm leading-6 text-[#1F2937] outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
                   />

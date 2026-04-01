@@ -2,19 +2,28 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { BrandWordmark } from "@/components/Brand";
+import { BrandLockup } from "@/components/Brand";
+
+import BuyButton from "@/components/BuyButton";
 import { PublicFooter } from "@/components/PublicFooter";
+
+type BillingCycle = "monthly" | "yearly";
 
 type Plan = {
   name: string;
-  price: string;
-  amount: string;
-  priceNote: string;
+  launchAmount: string;
+  regularAmount: string;
+  monthlyLaunchAmount: string;
+  priceNote: {
+    monthly: string;
+    yearly: string;
+  };
   description: string;
   features: string[];
   cta: string;
   highlight?: boolean;
-  action: () => void;
+  priceIdMonthly: string;
+  priceIdYearly: string;
 };
 
 const comparisonRows = [
@@ -139,12 +148,13 @@ const faqs = [
   },
   {
     q: "Is this launch pricing?",
-    a: "Yes. Current prices are part of the launch offer.",
+    a: "Yes. Current prices are part of the launch offer for a limited period.",
   },
 ];
 
 export default function PricingPage() {
   const router = useRouter();
+  const [billingCycle, setBillingCycle] = useState<BillingCycle>("monthly");
   const [showSalesForm, setShowSalesForm] = useState(false);
   const [salesLoading, setSalesLoading] = useState(false);
   const [salesError, setSalesError] = useState<string | null>(null);
@@ -269,9 +279,13 @@ export default function PricingPage() {
   const plans: Plan[] = [
     {
       name: "Solo",
-      price: "£8 / month",
-      amount: "8",
-      priceNote: "+ £5 / extra user",
+      launchAmount: billingCycle === "monthly" ? "8" : "80",
+      regularAmount: billingCycle === "monthly" ? "12" : "120",
+      monthlyLaunchAmount: "8",
+      priceNote: {
+        monthly: "+ £5 / extra user",
+        yearly: "+ £50 / extra user / year",
+      },
       description:
         "For individuals who need structure and follow-up discipline",
       features: [
@@ -283,13 +297,18 @@ export default function PricingPage() {
         "Limited team management",
       ],
       cta: "Start with Solo",
-      action: () => router.push("/login"),
+      priceIdMonthly: "pri_01kmncmgt9csnfq6hwvz6eg5m3",
+      priceIdYearly: "pri_01kn1ztvh3d8mf3c7msstc4yj4",
     },
     {
       name: "Starter",
-      price: "£39 / month",
-      amount: "39",
-      priceNote: "Includes up to 5 users",
+      launchAmount: billingCycle === "monthly" ? "39" : "390",
+      regularAmount: billingCycle === "monthly" ? "49" : "490",
+      monthlyLaunchAmount: "39",
+      priceNote: {
+        monthly: "Includes up to 5 users",
+        yearly: "Includes up to 5 users",
+      },
       description: "For small teams getting control over daily operations",
       features: [
         "CRM (orders + kanban)",
@@ -301,13 +320,18 @@ export default function PricingPage() {
         "Basic support workflow",
       ],
       cta: "Start with Starter",
-      action: () => router.push("/login"),
+      priceIdMonthly: "pri_01kmncq914c512x590mj142cm9",
+      priceIdYearly: "pri_01kn1zrysbhmecpa8dmn3mjkwv",
     },
     {
       name: "Business",
-      price: "£79 / month",
-      amount: "79",
-      priceNote: "Includes up to 10 users",
+      launchAmount: billingCycle === "monthly" ? "79" : "790",
+      regularAmount: billingCycle === "monthly" ? "99" : "990",
+      monthlyLaunchAmount: "79",
+      priceNote: {
+        monthly: "Includes up to 10 users",
+        yearly: "Includes up to 10 users",
+      },
       description:
         "For growing teams that need execution visibility and control",
       features: [
@@ -325,13 +349,18 @@ export default function PricingPage() {
       ],
       cta: "Upgrade to Business",
       highlight: true,
-      action: () => router.push("/login"),
+      priceIdMonthly: "pri_01kmncrvjyqb3y1rwf6w2zcpbq",
+      priceIdYearly: "pri_01kn1zq31rkhqbgxys3f1fgqgj",
     },
     {
       name: "Pro",
-      price: "£149 / month",
-      amount: "149",
-      priceNote: "Includes up to 20 users",
+      launchAmount: billingCycle === "monthly" ? "149" : "1490",
+      regularAmount: billingCycle === "monthly" ? "179" : "1790",
+      monthlyLaunchAmount: "149",
+      priceNote: {
+        monthly: "Includes up to 20 users",
+        yearly: "Includes up to 20 users",
+      },
       description:
         "For teams that need full operational control and risk visibility",
       features: [
@@ -350,7 +379,8 @@ export default function PricingPage() {
         "Priority support",
       ],
       cta: "Go Pro",
-      action: () => router.push("/login"),
+      priceIdMonthly: "pri_01kmncvk1ytkmj0tar1wxb8cw4",
+      priceIdYearly: "pri_01kn1zmv87cs2he9v7xy01xpns",
     },
   ];
 
@@ -363,8 +393,14 @@ export default function PricingPage() {
               className="brand"
               onClick={() => router.push("/")}
               aria-label="Go to Ordo home"
+              style={{
+                background: "none",
+                border: "none",
+                padding: 0,
+                cursor: "pointer",
+              }}
             >
-              <BrandWordmark variant="gradient" height={24} />
+              <BrandLockup variant="default" iconSize={24} />
             </button>
             <div className="links">
               <button onClick={() => router.push("/")}>Home</button>
@@ -386,6 +422,34 @@ export default function PricingPage() {
               A CRM built for real operations — track orders, manage follow-ups,
               and keep your team accountable with full visibility and control.
             </p>
+            <div className="billingToggle">
+              <button
+                type="button"
+                className={
+                  billingCycle === "monthly" ? "toggle active" : "toggle"
+                }
+                onClick={() => setBillingCycle("monthly")}
+                aria-pressed={billingCycle === "monthly"}
+              >
+                Monthly
+              </button>
+              <button
+                type="button"
+                className={
+                  billingCycle === "yearly" ? "toggle active" : "toggle"
+                }
+                onClick={() => setBillingCycle("yearly")}
+                aria-pressed={billingCycle === "yearly"}
+              >
+                Yearly
+                <span className="toggleBadge">2 months free</span>
+              </button>
+            </div>
+
+            <p className="launchBanner">
+              Founding launch pricing available for a limited period.
+            </p>
+
             <div className="heroCtas">
               <button className="primary" onClick={() => router.push("/login")}>
                 Get started
@@ -412,26 +476,60 @@ export default function PricingPage() {
                 {plan.highlight && <span className="pill">Most popular</span>}
                 <h2>{plan.name}</h2>
                 <p className="note">{plan.description}</p>
-                <div className="priceRow">
-                  <span className="sr-only">{plan.price}</span>
-                  <span className="price" aria-hidden>
-                    <span className="currency">£</span>
-                    <span className="amount">{plan.amount}</span>
-                    <span className="period">/ month</span>
+
+                <div className="launchMeta">
+                  <span className="launchPill">Launch price</span>
+                  <span className="launchText">
+                    Limited-time founding offer
                   </span>
                 </div>
-                <p className="priceNote">{plan.priceNote}</p>
+
+                <div className="priceRow">
+                  <span className="sr-only">
+                    Regular price £{plan.regularAmount} /{" "}
+                    {billingCycle === "monthly" ? "month" : "year"}, launch
+                    price £{plan.launchAmount} /{" "}
+                    {billingCycle === "monthly" ? "month" : "year"}
+                  </span>
+                  <div className="priceStack" aria-hidden>
+                    <div className="oldPrice">
+                      <span className="oldCurrency">£</span>
+                      <span className="oldAmount">{plan.regularAmount}</span>
+                      <span className="oldPeriod">
+                        / {billingCycle === "monthly" ? "month" : "year"}
+                      </span>
+                    </div>
+                    <span className="price">
+                      <span className="currency">£</span>
+                      <span className="amount">{plan.launchAmount}</span>
+                      <span className="period">
+                        / {billingCycle === "monthly" ? "month" : "year"}
+                      </span>
+                    </span>
+                  </div>
+                </div>
+
+                {billingCycle === "yearly" ? (
+                  <p className="yearlySavings">
+                    Equivalent to £{plan.monthlyLaunchAmount}/month, billed
+                    annually
+                  </p>
+                ) : null}
+
+                <p className="priceNote">{plan.priceNote[billingCycle]}</p>
+
                 <ul>
                   {plan.features.map((item) => (
                     <li key={item}>{item}</li>
                   ))}
                 </ul>
-                <button
-                  className={plan.highlight ? "primary" : "secondary"}
-                  onClick={plan.action}
-                >
-                  {plan.cta}
-                </button>
+                <div className="planCta">
+                  <BuyButton
+                    priceId={billingCycle === "monthly" ? plan.priceIdMonthly : plan.priceIdYearly}
+                    label={plan.cta}
+                    className={plan.highlight ? "primary" : "secondary"}
+                  />
+                </div>
               </article>
             ))}
           </section>
@@ -798,7 +896,8 @@ export default function PricingPage() {
             color: var(--brand-600);
           }
           button.primary,
-          button.secondary {
+          button.secondary,
+          .toggle {
             height: 42px;
             border-radius: 12px;
             padding: 0 16px;
@@ -842,6 +941,47 @@ export default function PricingPage() {
             margin: 0;
             color: #475569;
             font-size: 16px;
+          }
+          .billingToggle {
+            margin-top: 18px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px;
+            background: #f8fafc;
+            border: 1px solid #dbe5f1;
+            border-radius: 14px;
+            flex-wrap: wrap;
+          }
+          .toggle {
+            border: none;
+            background: transparent;
+            color: #475569;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+          }
+          .toggle.active {
+            background: #ffffff;
+            color: #0f172a;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+          }
+          .toggleBadge {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 999px;
+            padding: 3px 8px;
+            font-size: 11px;
+            font-weight: 700;
+            background: #eef2ff;
+            color: #4f46e5;
+            border: 1px solid #c7d2fe;
+          }
+          .launchBanner {
+            margin: 12px 0 0;
+            color: #4f46e5;
+            font-size: 14px;
+            font-weight: 600;
           }
           .heroCtas {
             margin-top: 18px;
@@ -889,11 +1029,62 @@ export default function PricingPage() {
             line-height: 1.45;
             min-height: 78px;
           }
+          .launchMeta {
+            margin-top: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+          }
+          .launchPill {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 999px;
+            padding: 5px 10px;
+            font-size: 11px;
+            font-weight: 700;
+            background: #eef2ff;
+            color: #4f46e5;
+            border: 1px solid #c7d2fe;
+          }
+          .launchText {
+            color: #64748b;
+            font-size: 12px;
+            font-weight: 600;
+          }
           .priceRow {
             margin-top: 10px;
-            min-height: 52px;
+            min-height: 72px;
             display: flex;
             align-items: flex-end;
+          }
+          .priceStack {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+          }
+          .oldPrice {
+            display: inline-flex;
+            align-items: baseline;
+            gap: 4px;
+            color: #94a3b8;
+            text-decoration: line-through;
+            text-decoration-thickness: 2px;
+            text-decoration-color: #cbd5e1;
+            line-height: 1;
+          }
+          .oldCurrency {
+            font-size: 16px;
+            font-weight: 700;
+          }
+          .oldAmount {
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+          }
+          .oldPeriod {
+            font-size: 14px;
+            font-weight: 600;
           }
           .price {
             display: inline-flex;
@@ -916,6 +1107,13 @@ export default function PricingPage() {
             font-weight: 600;
             letter-spacing: -0.01em;
           }
+          .yearlySavings {
+            margin: 8px 0 0;
+            color: #4f46e5;
+            font-weight: 600;
+            font-size: 13px;
+            min-height: 20px;
+          }
           .priceNote {
             margin: 8px 0 0;
             color: #475569;
@@ -933,9 +1131,10 @@ export default function PricingPage() {
           .plan li + li {
             margin-top: 2px;
           }
-          .plan button {
-            margin-top: 16px;
-            align-self: flex-start;
+          .planCta {
+            margin-top: auto;
+            padding-top: 16px;
+            align-self: stretch;
           }
           .enterpriseCta {
             padding: 14px 18px;
@@ -1139,6 +1338,14 @@ export default function PricingPage() {
             .heroCopy {
               max-width: 28ch;
             }
+            .billingToggle {
+              width: 100%;
+            }
+            .toggle {
+              flex: 1 1 calc(50% - 3px);
+              justify-content: center;
+              min-width: 0;
+            }
             .heroCtas > button {
               flex: 1 1 calc(50% - 5px);
               min-width: 0;
@@ -1162,7 +1369,8 @@ export default function PricingPage() {
             .period {
               font-size: 18px;
             }
-            .priceNote {
+            .priceNote,
+            .yearlySavings {
               min-height: 0;
             }
             .enterpriseTop {

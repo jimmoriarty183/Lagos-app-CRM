@@ -3,6 +3,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import Script from "next/script";
+import { RootLayoutClient } from "./layout-client";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -67,7 +68,7 @@ export default function RootLayout({
           id="Cookiebot"
           src="https://consent.cookiebot.com/uc.js"
           data-cbid="c4f78d66-aa96-4b34-b262-03351f8af84d"
-          strategy="beforeInteractive"
+          strategy="afterInteractive"
         />
         {shouldEnableGoogleTag ? (
           <>
@@ -79,8 +80,40 @@ export default function RootLayout({
               {`
                 window.dataLayer = window.dataLayer || [];
                 function gtag(){dataLayer.push(arguments);}
+                
+                // 1. Set default consent state to DENIED until user decides
+                gtag('consent', 'default', {
+                  analytics_storage: 'denied',
+                  ad_storage: 'denied'
+                });
+                
+                // 2. Listen for CookieBot consent changes and update GA4
+                if (window.CookieConsent) {
+                  window.addEventListener('CookiebotOnConsentUpdated', function(e) {
+                    const consent = window.CookieConsent.consent;
+                    gtag('consent', 'update', {
+                      analytics_storage: consent.analytics ? 'granted' : 'denied',
+                      ad_storage: consent.marketing ? 'granted' : 'denied'
+                    });
+                    console.log('[GA4] Consent updated from CookieBot', consent);
+                  });
+                  
+                  // Also update on load if already decided
+                  window.addEventListener('CookiebotOnLoad', function(e) {
+                    const consent = window.CookieConsent.consent;
+                    gtag('consent', 'update', {
+                      analytics_storage: consent.analytics ? 'granted' : 'denied',
+                      ad_storage: consent.marketing ? 'granted' : 'denied'
+                    });
+                  });
+                }
+                
+                // 3. Initialize GA4
                 gtag('js', new Date());
-                gtag('config', 'G-B34H3D8SG9');
+                gtag('config', 'G-B34H3D8SG9', {
+                  'allow_google_signals': false,
+                  'anonymize_ip': true
+                });
               `}
             </Script>
           </>
@@ -93,7 +126,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <RootLayoutClient>{children}</RootLayoutClient>
         <Analytics />
         <SpeedInsights />
       </body>
