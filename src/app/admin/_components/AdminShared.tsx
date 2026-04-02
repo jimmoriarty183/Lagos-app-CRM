@@ -163,7 +163,7 @@ export function EmptyState({
     <UiEmptyState
       title={title}
       description={description}
-      className="rounded-[20px] border-dashed border-slate-300 bg-slate-50 px-5 py-10"
+      className="rounded-[16px] border-dashed border-slate-300 bg-slate-50 px-4 py-7"
     />
   );
 }
@@ -176,8 +176,8 @@ export function AdminTable({
   children: React.ReactNode;
 }) {
   return (
-    <div className="overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-sm">
-      <table className="w-full table-fixed border-collapse">
+    <div className="overflow-x-auto rounded-[18px] border border-slate-200 bg-white shadow-sm">
+      <table className="min-w-[700px] w-full table-auto border-collapse md:table-fixed">
         <thead className="bg-slate-50/80">{head}</thead>
         <tbody>{children}</tbody>
       </table>
@@ -219,7 +219,7 @@ export function RowPrimaryLink({
   return (
     <Link href={href} className="block rounded-xl px-1 py-0.5 transition hover:text-blue-700">
       <div className="font-semibold text-slate-900">{children}</div>
-      {meta ? <div className="mt-1 text-xs text-slate-500 group-hover:text-slate-600">{meta}</div> : null}
+      {meta ? <div className="mt-0.5 hidden text-xs text-slate-500 group-hover:text-slate-600 sm:block">{meta}</div> : null}
     </Link>
   );
 }
@@ -233,7 +233,7 @@ export function AdminHeadCell({
 }) {
   return (
     <th
-      className={`px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 ${className}`}
+      className={`px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500 ${className}`}
     >
       {children}
     </th>
@@ -247,7 +247,7 @@ export function AdminCell({
   children: React.ReactNode;
   className?: string;
 }) {
-  return <td className={`px-4 py-4 align-top text-sm text-slate-700 whitespace-normal break-words ${className}`}>{children}</td>;
+  return <td className={`px-3 py-2.5 align-top text-xs text-slate-700 whitespace-nowrap sm:text-sm ${className}`}>{children}</td>;
 }
 
 export function PaginationBar({
@@ -266,7 +266,7 @@ export function PaginationBar({
   const pageItems = getPaginationItems(currentPage, totalPages);
 
   return (
-    <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+    <div className="mt-4 flex flex-wrap items-center justify-between gap-2.5">
       <div className="text-sm text-slate-500">
         Страница {currentPage} из {totalPages}
       </div>
@@ -276,7 +276,7 @@ export function PaginationBar({
           href={buildAdminHref(pathname, currentParams, { page: Math.max(1, currentPage - 1) })}
           aria-disabled={currentPage === 1}
           className={[
-            "inline-flex h-9 items-center rounded-xl border px-3 text-sm font-medium",
+            "inline-flex h-8 items-center rounded-lg border px-2.5 text-sm font-medium",
             currentPage === 1
               ? "pointer-events-none border-slate-200 bg-slate-100 text-slate-400"
               : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:text-slate-900",
@@ -295,7 +295,7 @@ export function PaginationBar({
               <Link
                 href={buildAdminHref(pathname, currentParams, { page })}
                 className={[
-                  "inline-flex h-9 min-w-9 items-center justify-center rounded-xl border px-3 text-sm font-medium",
+                  "inline-flex h-8 min-w-8 items-center justify-center rounded-lg border px-2.5 text-sm font-medium",
                   page === currentPage
                     ? "border-[#bfd0ea] bg-[#eef5ff] text-slate-900"
                     : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:text-slate-900",
@@ -311,7 +311,7 @@ export function PaginationBar({
           href={buildAdminHref(pathname, currentParams, { page: Math.min(totalPages, currentPage + 1) })}
           aria-disabled={currentPage === totalPages}
           className={[
-            "inline-flex h-9 items-center rounded-xl border px-3 text-sm font-medium",
+            "inline-flex h-8 items-center rounded-lg border px-2.5 text-sm font-medium",
             currentPage === totalPages
               ? "pointer-events-none border-slate-200 bg-slate-100 text-slate-400"
               : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:text-slate-900",
@@ -373,3 +373,4 @@ export function SectionList({
     </div>
   );
 }
+

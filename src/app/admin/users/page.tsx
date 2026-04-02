@@ -118,7 +118,7 @@ export default async function AdminUsersPage({
 
       <div className="mt-6 grid gap-4">
         <AdminSectionCard title="Фильтры и поиск">
-          <form action="/admin/users" className="grid gap-3 lg:grid-cols-[minmax(0,1.4fr)_160px_160px_160px_140px_180px_120px]">
+          <form action="/admin/users" className="grid gap-3 xl:grid-cols-[minmax(0,1.4fr)_150px_150px_150px_140px_170px_minmax(260px,1fr)]">
             <input
               type="text"
               name="q"
@@ -160,7 +160,7 @@ export default async function AdminUsersPage({
                   </option>
                 ))}
               </select>
-              <Button type="submit" className="h-11 px-5 text-sm font-semibold">
+              <Button type="submit" className="h-11 min-w-[128px] shrink-0 whitespace-nowrap px-5 text-sm font-semibold !text-white">
                 Применить
               </Button>
             </div>
@@ -231,3 +231,4 @@ export default async function AdminUsersPage({
     </AdminShell>
   );
 }
+
