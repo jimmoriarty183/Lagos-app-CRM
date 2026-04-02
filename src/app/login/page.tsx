@@ -5,6 +5,7 @@ import Link from "next/link";
 import { BrandLockup } from "@/components/Brand";
 import LoginUI from "./ui";
 import { Spinner } from "@/components/ui/spinner";
+import { PublicFooter } from "@/components/PublicFooter";
 
 const benefits = [
   "Run clients and deals without chaos",
@@ -19,7 +20,7 @@ export default function Page() {
   const showPromo = mode !== "register";
 
   return (
-    <div className="relative min-h-[100svh] overflow-hidden bg-[#f6f8fb] text-slate-900">
+    <div className="relative flex min-h-[100svh] flex-col overflow-hidden bg-[#f6f8fb] text-slate-900">
       <div className="pointer-events-none absolute -left-40 top-[-9rem] h-[26rem] w-[26rem] rounded-full bg-[radial-gradient(circle,_rgba(59,130,246,0.22)_0%,_rgba(59,130,246,0)_68%)] blur-2xl" />
       <div className="pointer-events-none absolute -right-36 top-10 h-[24rem] w-[24rem] rounded-full bg-[radial-gradient(circle,_rgba(16,185,129,0.2)_0%,_rgba(16,185,129,0)_70%)] blur-2xl" />
       <div className="pointer-events-none absolute bottom-[-10rem] left-1/2 h-[25rem] w-[25rem] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,_rgba(99,102,241,0.18)_0%,_rgba(99,102,241,0)_68%)] blur-2xl" />
@@ -38,7 +39,7 @@ export default function Page() {
         </div>
       </header>
 
-      <main className="relative z-10 mx-auto flex min-h-[calc(100svh-64px)] w-full max-w-6xl items-center px-4 py-8 sm:px-8 sm:py-10">
+      <main className="relative z-10 mx-auto flex w-full max-w-6xl flex-1 items-center px-4 py-8 sm:px-8 sm:py-10">
         <div
           className={[
             "mx-auto grid w-full items-center gap-8 lg:gap-10",
@@ -112,6 +113,10 @@ export default function Page() {
           </div>
         </div>
       </main>
+
+      <div className="relative z-10">
+        <PublicFooter />
+      </div>
     </div>
   );
 }

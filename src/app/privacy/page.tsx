@@ -3,7 +3,7 @@ import LegalDocumentPage from "@/components/LegalDocumentPage";
 
 export const metadata: Metadata = {
   title: "Privacy Policy | Ordo",
-  description: "ORDO privacy policy.",
+  description: "Ordo privacy policy.",
 };
 
 export default function PrivacyPage() {
@@ -11,26 +11,26 @@ export default function PrivacyPage() {
     <LegalDocumentPage
       eyebrow="Legal"
       title="Privacy Policy"
-      intro="This policy explains how ORDO handles user information."
-      updatedAt="March 26, 2026"
+      intro="This policy explains how Ordo handles personal information."
+      updatedAt="April 2, 2026"
       sections={[
         {
-          title: "General",
+          title: "Company",
           paragraphs: [
-            "ORDO is operated by an individual developer.",
+            "This service is provided by Ordo.",
           ],
         },
         {
-          title: "What we collect",
+          title: "Information we collect",
           paragraphs: [
             "We collect basic user information such as email, account details, and usage data to provide and improve the service.",
           ],
         },
         {
-          title: "Data sharing",
+          title: "How we share information",
           paragraphs: [
             "We do not sell personal data to third parties.",
-            "Data may be shared with trusted providers (such as payment processors) only as necessary to operate the service.",
+            "Data may be shared with trusted providers only as needed to operate the service, including Paddle for checkout and payment processing.",
           ],
         },
         {
@@ -40,13 +40,12 @@ export default function PrivacyPage() {
           ],
         },
         {
-          title: "Acceptance",
+          title: "Contact",
           paragraphs: [
-            "By using ORDO, you agree to this policy.",
+            "Privacy questions can be sent to support@ordo.uno.",
           ],
         },
       ]}
     />
   );
 }
-

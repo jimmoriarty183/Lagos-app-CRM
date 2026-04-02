@@ -4,8 +4,13 @@ import { createServerClient } from "@supabase/ssr";
 export async function middleware(req: NextRequest) {
   const { pathname, searchParams } = req.nextUrl;
 
-  // public/auth-bootstrapping routes
+  // Public routes should remain fully accessible for SEO and checkout compliance.
   if (
+    pathname === "/" ||
+    pathname.startsWith("/pricing") ||
+    pathname.startsWith("/terms") ||
+    pathname.startsWith("/privacy") ||
+    pathname.startsWith("/refund") ||
     pathname.startsWith("/login") ||
     pathname.startsWith("/invite") ||
     pathname.startsWith("/api/")

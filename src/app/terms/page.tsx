@@ -3,7 +3,7 @@ import LegalDocumentPage from "@/components/LegalDocumentPage";
 
 export const metadata: Metadata = {
   title: "Terms of Service | Ordo",
-  description: "ORDO terms of service.",
+  description: "Ordo terms of service.",
 };
 
 export default function TermsPage() {
@@ -11,43 +11,59 @@ export default function TermsPage() {
     <LegalDocumentPage
       eyebrow="Legal"
       title="Terms of Service"
-      intro="Please read these terms before using ORDO."
-      updatedAt="March 26, 2026"
+      intro="These Terms of Service govern your use of Ordo."
+      updatedAt="April 2, 2026"
       sections={[
         {
-          title: "General",
+          title: "Company and service provider",
           paragraphs: [
-            "ORDO is a SaaS CRM platform operated by an individual developer.",
-            "The service allows users to manage orders, customers, and workflows through a web-based interface.",
+            "This service is provided by Ordo.",
+            "Ordo provides a web-based CRM platform for managing orders, customers, and workflows.",
           ],
         },
         {
-          title: "Acceptable use",
+          title: "Using the service",
           paragraphs: [
-            "By using ORDO, you agree to use the service only for lawful purposes and not to misuse the platform.",
+            "You agree to use Ordo only for lawful business purposes and in line with these terms.",
+            "You are responsible for your account credentials and activity under your account.",
           ],
         },
         {
-          title: "Billing and access",
+          title: "Billing and subscriptions",
           paragraphs: [
-            "Subscriptions are billed on a recurring basis and can be cancelled at any time.",
-            "Access to the service may be suspended if these terms are violated.",
+            "Paid plans renew automatically until canceled.",
+            "You can cancel at any time to stop future renewals.",
+            "Refunds are handled according to our Refund Policy.",
           ],
         },
         {
-          title: "Disclaimer",
+          title: "Checkout and payments",
           paragraphs: [
-            "The service is provided \"as is\" without warranties. We are not responsible for data loss or business losses.",
+            "Payments are processed through Paddle.",
+            "Paddle is the authorized reseller and merchant of record for checkout transactions.",
           ],
         },
         {
-          title: "Changes",
+          title: "Availability and liability",
           paragraphs: [
-            "We reserve the right to update these terms at any time.",
+            "The service is provided on an \"as is\" and \"as available\" basis.",
+            "To the maximum extent permitted by law, Ordo is not liable for indirect or consequential damages.",
+          ],
+        },
+        {
+          title: "Changes to these terms",
+          paragraphs: [
+            "We may update these terms from time to time.",
+            "Continued use of the service after updates means you accept the updated terms.",
+          ],
+        },
+        {
+          title: "Contact",
+          paragraphs: [
+            "Questions about these terms can be sent to support@ordo.uno.",
           ],
         },
       ]}
     />
   );
 }
-

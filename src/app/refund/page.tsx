@@ -3,7 +3,7 @@ import LegalDocumentPage from "@/components/LegalDocumentPage";
 
 export const metadata: Metadata = {
   title: "Refund Policy | Ordo",
-  description: "ORDO refund policy.",
+  description: "Ordo refund policy.",
 };
 
 export default function RefundPage() {
@@ -11,21 +11,29 @@ export default function RefundPage() {
     <LegalDocumentPage
       eyebrow="Legal"
       title="Refund Policy"
-      intro="This policy outlines ORDO billing refund terms."
-      updatedAt="March 26, 2026"
+      intro="This policy explains refunds for purchases made on ordo.uno."
+      updatedAt="April 2, 2026"
       sections={[
         {
-          title: "General",
+          title: "Who this policy applies to",
           paragraphs: [
-            "ORDO is a subscription-based SaaS product.",
+            "This policy applies to purchases of Ordo subscriptions and services made through our checkout.",
+            "For checkout and payment processing, Paddle acts as the authorized reseller and merchant of record.",
           ],
         },
         {
-          title: "Refund terms",
+          title: "14-day refund period",
           paragraphs: [
-            "Payments are generally non-refundable once a billing cycle has started.",
-            "Users can cancel their subscription at any time to prevent future charges.",
-            "If you experience issues or billing errors, you may contact support and refunds may be considered on a case-by-case basis.",
+            "You can request a full refund within 14 calendar days from the date of your first payment.",
+            "If approved, the refund is returned to your original payment method.",
+            "After the 14-day period, future charges can be stopped by canceling your subscription before renewal.",
+          ],
+        },
+        {
+          title: "How to request a refund",
+          paragraphs: [
+            "Email support@ordo.uno and include the email used for purchase.",
+            "You can also request a refund through Paddle buyer support at paddle.net.",
           ],
         },
       ]}

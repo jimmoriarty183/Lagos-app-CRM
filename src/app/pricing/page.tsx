@@ -542,6 +542,10 @@ export default function PricingPage() {
               <div>
                 <h3>Enterprise</h3>
                 <p>Need enterprise-level rollout and support? Contact sales.</p>
+                <p className="enterpriseContact">
+                  Contact:{" "}
+                  <a href="mailto:support@ordo.uno">support@ordo.uno</a>
+                </p>
               </div>
               <button
                 className="secondary"
@@ -1154,6 +1158,18 @@ export default function PricingPage() {
           .enterpriseCta p {
             margin: 0;
             color: #475569;
+          }
+          .enterpriseContact {
+            margin-top: 6px !important;
+            font-size: 14px;
+          }
+          .enterpriseContact a {
+            color: var(--brand-600);
+            text-decoration: none;
+            font-weight: 600;
+          }
+          .enterpriseContact a:hover {
+            text-decoration: underline;
           }
           .salesForm {
             border-top: 1px solid #e2e8f0;
