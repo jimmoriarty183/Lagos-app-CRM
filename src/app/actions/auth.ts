@@ -122,7 +122,7 @@ async function createBusinessWithFallback(params: {
     // Fallback for broken DB RPC/trigger: create business and membership directly.
     const { data: createdBusiness, error: createBusinessErr } = await admin
       .from("businesses")
-      .insert({ slug: slugCandidate, name: businessName })
+      .insert({ slug: slugCandidate, name: businessName, created_by: userId })
       .select("id, slug")
       .single();
 
@@ -133,7 +133,7 @@ async function createBusinessWithFallback(params: {
       if (isMissingColumnError(createBusinessErr.message)) {
         const { data: fallbackBusiness, error: fallbackErr } = await admin
           .from("businesses")
-          .insert({ slug: slugCandidate })
+          .insert({ slug: slugCandidate, created_by: userId })
           .select("id, slug")
           .single();
         if (fallbackErr) return { ok: false, error: fallbackErr.message };
