@@ -50,7 +50,7 @@ export default async function SelectBusinessPage() {
   if (membershipError) throw membershipError;
 
   const memberships = (membershipRows ?? []) as MembershipRow[];
-  if (memberships.length === 0) redirect("/login?no_business=1");
+  if (memberships.length === 0) redirect("/onboarding/business");
 
   const businessIds = memberships.map((membership) => membership.business_id);
   const { data: businessRows, error: businessError } = await supabase
@@ -78,7 +78,7 @@ export default async function SelectBusinessPage() {
     })
     .filter((option): option is NonNullable<typeof option> => Boolean(option));
 
-  if (options.length === 0) redirect("/login?no_business=1");
+  if (options.length === 0) redirect("/onboarding/business");
   if (options.length === 1) redirect(`/b/${options[0].slug}`);
 
   return (
@@ -129,4 +129,3 @@ export default async function SelectBusinessPage() {
     </main>
   );
 }
-

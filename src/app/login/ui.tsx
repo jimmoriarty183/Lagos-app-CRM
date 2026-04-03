@@ -277,12 +277,10 @@ export default function LoginUI({
     mode === "login" ? loginState : mode === "register" ? regState : resetState;
 
   function validateRegister(): string {
-    const bn = businessName.trim();
     const fn = firstName.trim();
     const ln = lastName.trim();
     const em = emailReg.trim();
 
-    if (!inviteId && !bn) return "Enter your business name";
     if (!fn) return "Enter your first name";
     if (!ln) return "Enter your last name";
     if (!em) return "Enter your email";
@@ -463,7 +461,6 @@ export default function LoginUI({
                 <Input
                   label="Business name"
                   name="business_name"
-                  required
                   placeholder="Acme Operations"
                   value={businessName}
                   onChange={setBusinessName}

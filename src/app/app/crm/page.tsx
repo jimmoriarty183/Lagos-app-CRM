@@ -14,7 +14,7 @@ export default async function PlatformCrmPage() {
   }
 
   if (!workspace) {
-    redirect("/select-business");
+    redirect("/onboarding/business");
   }
 
   redirect(`/b/${workspace.slug}`);

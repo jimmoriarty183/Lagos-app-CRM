@@ -39,7 +39,7 @@ export default async function InvitesPage({
     .single();
 
   if (bizErr || !business) {
-    redirect("/login?no_business=1");
+    redirect("/app/crm");
   }
 
   const { data: mem, error: memErr } = await supabase

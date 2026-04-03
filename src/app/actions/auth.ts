@@ -21,6 +21,16 @@ function isMissingColumnError(message: string) {
   return lowered.includes("column") && (lowered.includes("does not exist") || lowered.includes("schema cache"));
 }
 
+function isDuplicateValueError(message: string) {
+  const lowered = message.toLowerCase();
+  return (
+    lowered.includes("duplicate key") ||
+    lowered.includes("already exists") ||
+    lowered.includes("unique constraint") ||
+    lowered.includes("violates unique")
+  );
+}
+
 // ✅ генерация slug из названия
 function slugify(input: string) {
   const base = String(input || "")
@@ -35,8 +45,8 @@ function slugify(input: string) {
 }
 
 /** ✅ LOGIN (multi-business):
- *  - 0 businesses -> /login?no_business=1
- *  - 1 business  -> /b/[slug]
+ *  - 0 businesses -> /onboarding/business
+ *  - 1 business  -> /app/crm
  *  - 2+          -> /select-business
  */
 export async function loginAction(
@@ -81,7 +91,7 @@ export async function loginAction(
     if (memErr) return { ok: false, error: memErr.message, next: "" };
 
     if (!mems || mems.length === 0) {
-      return { ok: true, error: "", next: "/login?no_business=1" };
+      return { ok: true, error: "", next: "/onboarding/business" };
     }
 
     if (mems.length > 1) {
@@ -90,7 +100,7 @@ export async function loginAction(
 
     const businessId = mems[0]?.business_id;
     if (!businessId)
-      return { ok: true, error: "", next: "/login?no_business=1" };
+      return { ok: true, error: "", next: "/onboarding/business" };
 
     const { data: biz, error: bizErr } = await supabase
       .from("businesses")
@@ -100,7 +110,7 @@ export async function loginAction(
 
     if (bizErr) return { ok: false, error: bizErr.message, next: "" };
     if (!biz?.slug)
-      return { ok: true, error: "", next: "/login?no_business=1" };
+      return { ok: true, error: "", next: "/onboarding/business" };
 
     return { ok: true, error: "", next: "/app/crm" };
   } catch (e) {
@@ -136,15 +146,12 @@ export async function registerOwnerAction(
     if (agree !== "on")
       return { ok: false, error: "Please accept Terms & Privacy Policy", next: "" };
 
-    if (!inviteId && !businessName) {
-      return { ok: false, error: "Business name is required", next: "" };
-    }
     if (businessSegment && !isBusinessSegment(businessSegment)) {
       return { ok: false, error: "Select a valid business segment", next: "" };
     }
 
     const fullName = `${firstName} ${lastName}`.trim();
-    const slug = slugify(businessName);
+    const slug = businessName ? slugify(businessName) : "";
 
     const supabase = await supabaseServer();
     const admin = supabaseAdmin();
@@ -192,6 +199,10 @@ export async function registerOwnerAction(
         error: "",
         next: `/invite?invite_id=${encodeURIComponent(inviteId)}`,
       };
+    }
+
+    if (!businessName) {
+      return { ok: true, error: "", next: "/onboarding/business" };
     }
 
     // 5) create business + owner membership
@@ -285,6 +296,94 @@ export async function updatePasswordAction(
     await supabase.auth.signOut();
 
     return { ok: true, error: "", next: "/login?pw=updated" };
+  } catch (e) {
+    return { ok: false, error: msg(e), next: "" };
+  }
+}
+
+export async function createBusinessOnboardingAction(
+  _prev: State = initial,
+  formData: FormData,
+): Promise<State> {
+  try {
+    const businessName = String(formData.get("business_name") || "").trim();
+    if (!businessName) {
+      return { ok: false, error: "Business name is required", next: "" };
+    }
+
+    const supabase = await supabaseServer();
+    const admin = supabaseAdmin();
+
+    const { data: userData, error: userErr } = await supabase.auth.getUser();
+    if (userErr) return { ok: false, error: userErr.message, next: "" };
+    const user = userData.user;
+    if (!user) return { ok: false, error: "Please sign in again", next: "/login" };
+
+    const { data: membershipRows, error: membershipErr } = await admin
+      .from("memberships")
+      .select("business_id")
+      .eq("user_id", user.id);
+    if (membershipErr) return { ok: false, error: membershipErr.message, next: "" };
+
+    const businessIds = (membershipRows ?? [])
+      .map((row) => String(row.business_id ?? "").trim())
+      .filter(Boolean);
+
+    if (businessIds.length > 0) {
+      const { data: businessRows, error: businessErr } = await admin
+        .from("businesses")
+        .select("id, slug")
+        .in("id", businessIds);
+      if (businessErr) return { ok: false, error: businessErr.message, next: "" };
+
+      const hasLinkedBusiness = (businessRows ?? []).some(
+        (business) => String(business.slug ?? "").trim().length > 0,
+      );
+      if (hasLinkedBusiness) {
+        return { ok: true, error: "", next: "/app/crm" };
+      }
+    }
+
+    const baseSlug = slugify(businessName);
+    let createdSlug: string | null = null;
+
+    for (let attempt = 0; attempt < 7; attempt += 1) {
+      const slugCandidate = attempt === 0 ? baseSlug : `${baseSlug}-${attempt + 2}`;
+      const { error: rpcErr } = await supabase.rpc("create_business_with_owner", {
+        p_slug: slugCandidate,
+        p_owner_phone: null,
+        p_manager_phone: null,
+      });
+
+      if (!rpcErr) {
+        createdSlug = slugCandidate;
+        break;
+      }
+
+      if (rpcErr.code === "23505" || isDuplicateValueError(rpcErr.message)) {
+        continue;
+      }
+
+      return { ok: false, error: rpcErr.message, next: "" };
+    }
+
+    if (!createdSlug) {
+      return {
+        ok: false,
+        error: "Could not create business. Try a slightly different name.",
+        next: "",
+      };
+    }
+
+    const { error: nameUpdateErr } = await admin
+      .from("businesses")
+      .update({ name: businessName })
+      .eq("slug", createdSlug);
+    if (nameUpdateErr && !isMissingColumnError(nameUpdateErr.message)) {
+      return { ok: false, error: nameUpdateErr.message, next: "" };
+    }
+
+    return { ok: true, error: "", next: "/app/crm" };
   } catch (e) {
     return { ok: false, error: msg(e), next: "" };
   }

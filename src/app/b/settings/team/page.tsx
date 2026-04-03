@@ -42,5 +42,5 @@ export default async function TeamSettingsRedirect() {
   if (slug) redirect(`/b/${slug}/settings/team`);
 
   // 3) если вообще ничего не нашли
-  redirect("/login?no_business=1");
+  redirect("/app/crm");
 }
