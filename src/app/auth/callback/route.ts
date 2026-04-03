@@ -1,36 +1,38 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
+import { supabaseServer } from "@/lib/supabase/server";
+
+const SUPABASE_DEBUG = process.env.SUPABASE_DEBUG === "1";
+
+function debugLog(message: string, payload?: Record<string, unknown>) {
+  if (!SUPABASE_DEBUG) return;
+  console.log(`[supabase-debug][auth/callback] ${message}`, payload ?? {});
+}
 
 export async function GET(req: NextRequest) {
-  const cookieStore = await cookies();
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-        setAll(cookiesToSet) {
-          for (const { name, value, options } of cookiesToSet) {
-            cookieStore.set(name, value, options);
-          }
-        },
-      },
-    },
-  );
+  const supabase = await supabaseServer();
 
   const url = new URL(req.url);
 
   // invite flow
   const inviteId = url.searchParams.get("invite_id") || "";
+  const code = url.searchParams.get("code");
+  debugLog("request received", {
+    inviteIdPresent: Boolean(inviteId),
+    codePresent: Boolean(code),
+  });
 
   // PKCE / OAuth code
-  const code = url.searchParams.get("code");
   if (code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
+    const { data: sessionData } = await supabase.auth.getSession();
+    const { data: userData } = await supabase.auth.getUser();
+
+    debugLog("exchange result", {
+      exchangeError: error?.message ?? null,
+      hasSession: Boolean(sessionData.session),
+      userId: userData.user?.id ?? null,
+    });
+
     if (!error) {
       return NextResponse.redirect(
         new URL(
@@ -39,6 +41,10 @@ export async function GET(req: NextRequest) {
         ),
       );
     }
+
+    console.error("[supabase-auth-callback] exchangeCodeForSession failed", {
+      error: error.message,
+    });
   }
 
   // если вдруг пришёл без code — отправляем на логин

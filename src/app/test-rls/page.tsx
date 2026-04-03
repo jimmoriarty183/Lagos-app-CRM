@@ -1,32 +1,16 @@
-import { cookies } from "next/headers";
-import { createServerClient } from "@supabase/ssr";
+import { supabaseServerReadOnly } from "@/lib/supabase/server";
+
+const SUPABASE_DEBUG = process.env.SUPABASE_DEBUG === "1";
 
 async function createSupabaseServerClient() {
-  const cookieStore = await cookies(); // <-- ВАЖНО: await
-
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
-  return createServerClient(url, anonKey, {
-    cookies: {
-      getAll() {
-        return cookieStore.getAll();
-      },
-      setAll(cookiesToSet) {
-        try {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            cookieStore.set(name, value, options);
-          });
-        } catch {}
-      },
-    },
-  });
+  return supabaseServerReadOnly();
 }
 
 export default async function TestRLSPage() {
   const supabase = await createSupabaseServerClient(); // <-- await
 
   const { data: authData } = await supabase.auth.getUser();
+  const { data: sessionData } = await supabase.auth.getSession();
 
   const { data: businesses, error: bizError } = await supabase
     .from("businesses")
@@ -37,6 +21,17 @@ export default async function TestRLSPage() {
     .from("orders")
     .select("id, business_id")
     .limit(200);
+
+  if (SUPABASE_DEBUG) {
+    console.log("[supabase-debug][test-rls] query diagnostics", {
+      hasSession: Boolean(sessionData.session),
+      userId: authData?.user?.id ?? null,
+      businessesError: bizError?.message ?? null,
+      ordersError: ordersError?.message ?? null,
+      businessesCount: businesses?.length ?? 0,
+      ordersCount: orders?.length ?? 0,
+    });
+  }
 
   return (
     <main
@@ -54,6 +49,9 @@ export default async function TestRLSPage() {
             user: authData?.user
               ? { id: authData.user.id, email: authData.user.email }
               : null,
+            session: {
+              exists: Boolean(sessionData.session),
+            },
             businesses: {
               count: businesses?.length ?? 0,
               error: bizError?.message ?? null,

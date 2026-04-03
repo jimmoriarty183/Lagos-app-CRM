@@ -14,6 +14,7 @@ import {
   LifeBuoy,
   Settings,
   SlidersHorizontal,
+  Users,
 } from "lucide-react";
 
 import DesktopSidebarFilters from "./DesktopSidebarFilters";
@@ -56,6 +57,7 @@ type Props = {
   activeFiltersCount: number;
   clearHref: string;
   businessHref: string;
+  clientsHref?: string;
   analyticsHref?: string;
   todayHref?: string;
   settingsHref: string;
@@ -66,6 +68,7 @@ type Props = {
   activeSection?:
     | "crm"
     | "analytics"
+    | "clients"
     | "today"
     | "support"
     | "settings"
@@ -255,6 +258,7 @@ export default function DesktopLeftRail({
   activeFiltersCount,
   clearHref,
   businessHref,
+  clientsHref,
   analyticsHref,
   todayHref,
   settingsHref,
@@ -359,6 +363,11 @@ export default function DesktopLeftRail({
   const analyticsTarget =
     analyticsHref ??
     `${businessHref}${businessHref.includes("?") ? "&" : "?"}section=analytics#owner-analytics`;
+  const inferredClientsHref =
+    clientsHref ??
+    (settingsHref.startsWith("/b/") && settingsHref.includes("/settings")
+      ? settingsHref.replace(/\/settings(?:\/.*)?$/, "/clients")
+      : undefined);
 
   return (
     <div
@@ -494,6 +503,16 @@ export default function DesktopLeftRail({
                     />
                   );
                 })}
+                {inferredClientsHref ? (
+                  <RailLink
+                    icon={<Users className="h-5 w-5" />}
+                    label="Clients"
+                    description="Client directory and ownership"
+                    expanded={expanded}
+                    href={inferredClientsHref}
+                    active={activeSection === "clients"}
+                  />
+                ) : null}
                 {supportHref ? (
                   <RailLink
                     icon={<LifeBuoy className="h-5 w-5" />}

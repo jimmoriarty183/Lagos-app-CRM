@@ -14,6 +14,11 @@ import {
 } from "@/lib/follow-ups";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { supabaseServer } from "@/lib/supabase/server";
+import {
+  findCompanyMatches,
+  findIndividualMatches,
+  normalizePhone as normalizePhoneDigitsFromMatcher,
+} from "@/lib/clients/matching";
 import type { WorkDayStatus } from "@/lib/work-day";
 import { ensureWorkspaceForBusiness } from "@/lib/workspaces";
 
@@ -45,7 +50,7 @@ async function runFollowUpsMutation<T>(
     p: Record<string, unknown>,
   ) => PromiseLike<{ data?: T | null; error: { message?: string } | null }>,
 ) {
-  let nextPayload = { ...payload };
+  const nextPayload = { ...payload };
 
   // First attempt with full payload (including due_at if present)
   const result = await action(nextPayload);
@@ -142,7 +147,16 @@ async function runOrdersMutation<T>(
     const result = await action(nextPayload);
     if (!result.error) return result;
 
-    const missingColumn = ["first_name", "last_name", "full_name", "created_by", "manager_id", "status_reason"]
+    const missingColumn = [
+      "first_name",
+      "last_name",
+      "full_name",
+      "created_by",
+      "manager_id",
+      "status_reason",
+      "client_id",
+      "contact_id",
+    ]
       .find((column) => !stripped.has(column) && isMissingColumnError(result.error, column));
 
     if (!missingColumn) return result;
@@ -333,6 +347,626 @@ async function buildClientColumns(
   return { clientColumns, fullName, firstName: derived.firstName, lastName: derived.lastName };
 }
 
+function normalizePhoneDigits(value: string | null | undefined) {
+  return String(value ?? "").replace(/\D+/g, "");
+}
+
+function normalizeEmail(value: string | null | undefined) {
+  return String(value ?? "").trim().toLowerCase();
+}
+
+function normalizeAlnum(value: string | null | undefined) {
+  return String(value ?? "").trim().toLowerCase().replace(/[^a-z0-9]+/g, "");
+}
+
+function normalizeNameForMatch(value: string | null | undefined) {
+  return String(value ?? "").trim().replace(/\s+/g, " ").toLowerCase();
+}
+
+export type CreateOrderClientPayloadInput = {
+  businessId: string;
+  businessSlug: string;
+  clientType: "individual" | "company";
+  managerId?: string | null;
+  amount: number;
+  dueDate?: string | null;
+  description?: string | null;
+  existingClientId?: string | null;
+  existingContactId?: string | null;
+  individual?: {
+    firstName?: string | null;
+    lastName?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    address?: string | null;
+    postcode?: string | null;
+    inn?: string | null;
+  } | null;
+  company?: {
+    companyName?: string | null;
+    registrationNumber?: string | null;
+    vatNumber?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    legalAddress?: string | null;
+    actualAddress?: string | null;
+    postcode?: string | null;
+  } | null;
+  contact?: {
+    firstName?: string | null;
+    lastName?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    jobTitle?: string | null;
+    isPrimary?: boolean;
+  } | null;
+};
+
+async function resolveIndividualClientForCreate(input: {
+  admin: ReturnType<typeof supabaseAdmin>;
+  businessId: string;
+  userId: string;
+  existingClientId?: string | null;
+  fields: NonNullable<CreateOrderClientPayloadInput["individual"]>;
+}): Promise<{ clientId: string; created: boolean }> {
+  const firstName = cleanText(input.fields.firstName);
+  const lastName = cleanText(input.fields.lastName);
+  const fullName = buildClientFullName(firstName, lastName);
+  const phone = cleanText(input.fields.phone);
+  const email = cleanText(input.fields.email);
+  const postcode = cleanText(input.fields.postcode);
+  const address = cleanText(input.fields.address);
+  const innNormalized = normalizeAlnum(input.fields.inn);
+  const innRaw = cleanText(input.fields.inn);
+
+  if (input.existingClientId) {
+    const { data: existing, error: existingError } = await input.admin
+      .from("clients")
+      .select("id, business_id, client_type, metadata")
+      .eq("id", input.existingClientId)
+      .eq("business_id", input.businessId)
+      .maybeSingle();
+    if (existingError) throw new Error(existingError.message);
+    if (!existing?.id || existing.client_type !== "individual") {
+      throw new Error("Selected client is not a valid individual");
+    }
+
+    const metadata = (existing.metadata as Record<string, unknown> | null) ?? {};
+    if (innNormalized) {
+      metadata.inn = innRaw;
+      metadata.inn_normalized = innNormalized;
+    }
+
+    const { error: clientUpdateError } = await input.admin
+      .from("clients")
+      .update({
+        display_name: fullName || String(existing.id),
+        primary_email: email || null,
+        primary_phone: phone || null,
+        postcode: postcode || null,
+        metadata,
+      })
+      .eq("id", existing.id);
+    if (clientUpdateError) throw new Error(clientUpdateError.message);
+
+    const { error: profileError } = await input.admin
+      .from("client_individual_profiles")
+      .upsert(
+        {
+          client_id: existing.id,
+          first_name: firstName || null,
+          last_name: lastName || null,
+          full_name: fullName || null,
+          email: email || null,
+          phone: phone || null,
+          address_line1: address || null,
+          postcode: postcode || null,
+        },
+        { onConflict: "client_id" },
+      );
+    if (profileError) throw new Error(profileError.message);
+
+    return { clientId: String(existing.id), created: false };
+  }
+
+  const { data: insertedClient, error: clientInsertError } = await input.admin
+    .from("clients")
+    .insert({
+      business_id: input.businessId,
+      workspace_id: null,
+      client_type: "individual",
+      display_name: fullName || "Individual client",
+      primary_email: email || null,
+      primary_phone: phone || null,
+      postcode: postcode || null,
+      created_by: input.userId,
+      metadata: innNormalized
+        ? {
+            inn: innRaw,
+            inn_normalized: innNormalized,
+          }
+        : {},
+    })
+    .select("id")
+    .single();
+  if (clientInsertError) throw new Error(clientInsertError.message);
+
+  const clientId = String((insertedClient as { id: string }).id);
+  const { error: profileError } = await input.admin
+    .from("client_individual_profiles")
+    .insert({
+      client_id: clientId,
+      first_name: firstName || null,
+      last_name: lastName || null,
+      full_name: fullName || null,
+      email: email || null,
+      phone: phone || null,
+      address_line1: address || null,
+      postcode: postcode || null,
+    });
+  if (profileError) throw new Error(profileError.message);
+
+  return { clientId, created: true };
+}
+
+async function resolveCompanyClientForCreate(input: {
+  admin: ReturnType<typeof supabaseAdmin>;
+  businessId: string;
+  userId: string;
+  existingClientId?: string | null;
+  fields: NonNullable<CreateOrderClientPayloadInput["company"]>;
+}): Promise<{ clientId: string; created: boolean }> {
+  const companyName = cleanText(input.fields.companyName);
+  const registrationNumber = cleanText(input.fields.registrationNumber);
+  const vatNumber = cleanText(input.fields.vatNumber);
+  const email = cleanText(input.fields.email);
+  const phone = cleanText(input.fields.phone);
+  const postcode = cleanText(input.fields.postcode);
+  const legalAddress = cleanText(input.fields.legalAddress);
+  const actualAddress = cleanText(input.fields.actualAddress);
+
+  if (input.existingClientId) {
+    const { data: existing, error: existingError } = await input.admin
+      .from("clients")
+      .select("id, business_id, client_type, metadata")
+      .eq("id", input.existingClientId)
+      .eq("business_id", input.businessId)
+      .maybeSingle();
+    if (existingError) throw new Error(existingError.message);
+    if (!existing?.id || existing.client_type !== "company") {
+      throw new Error("Selected client is not a valid company");
+    }
+
+    const metadata = (existing.metadata as Record<string, unknown> | null) ?? {};
+    if (actualAddress) metadata.actual_address = actualAddress;
+
+    const { error: clientUpdateError } = await input.admin
+      .from("clients")
+      .update({
+        display_name: companyName || String(existing.id),
+        primary_email: email || null,
+        primary_phone: phone || null,
+        postcode: postcode || null,
+        metadata,
+      })
+      .eq("id", existing.id);
+    if (clientUpdateError) throw new Error(clientUpdateError.message);
+
+    const { error: profileError } = await input.admin
+      .from("client_company_profiles")
+      .upsert(
+        {
+          client_id: existing.id,
+          company_name: companyName || null,
+          registration_number: registrationNumber || null,
+          vat_number: vatNumber || null,
+          email: email || null,
+          phone: phone || null,
+          address_line1: legalAddress || null,
+          postcode: postcode || null,
+        },
+        { onConflict: "client_id" },
+      );
+    if (profileError) throw new Error(profileError.message);
+
+    return { clientId: String(existing.id), created: false };
+  }
+
+  const { data: insertedClient, error: clientInsertError } = await input.admin
+    .from("clients")
+    .insert({
+      business_id: input.businessId,
+      workspace_id: null,
+      client_type: "company",
+      display_name: companyName || "Company client",
+      primary_email: email || null,
+      primary_phone: phone || null,
+      postcode: postcode || null,
+      created_by: input.userId,
+      metadata: actualAddress
+        ? {
+            actual_address: actualAddress,
+          }
+        : {},
+    })
+    .select("id")
+    .single();
+  if (clientInsertError) throw new Error(clientInsertError.message);
+
+  const clientId = String((insertedClient as { id: string }).id);
+  const { error: profileError } = await input.admin
+    .from("client_company_profiles")
+    .insert({
+      client_id: clientId,
+      company_name: companyName || "Company client",
+      registration_number: registrationNumber || null,
+      vat_number: vatNumber || null,
+      email: email || null,
+      phone: phone || null,
+      address_line1: legalAddress || null,
+      postcode: postcode || null,
+    });
+  if (profileError) throw new Error(profileError.message);
+
+  return { clientId, created: true };
+}
+
+async function resolveCompanyContactForOrder(input: {
+  admin: ReturnType<typeof supabaseAdmin>;
+  businessId: string;
+  clientId: string;
+  existingContactId?: string | null;
+  contact?: CreateOrderClientPayloadInput["contact"] | null;
+  userId: string;
+}) {
+  if (input.existingContactId) {
+    const { data, error } = await input.admin
+      .from("client_contacts")
+      .select("id, client_id")
+      .eq("id", input.existingContactId)
+      .eq("client_id", input.clientId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!data?.id) throw new Error("Selected contact not found for this company");
+    return String(data.id);
+  }
+
+  const contact = input.contact ?? null;
+  if (!contact) return null;
+  const firstName = cleanText(contact.firstName);
+  const lastName = cleanText(contact.lastName);
+  const email = cleanText(contact.email);
+  const phone = cleanText(contact.phone);
+  const jobTitle = cleanText(contact.jobTitle);
+  const fullName = buildClientFullName(firstName, lastName);
+  if (!fullName && !email && !phone) return null;
+
+  const { data: inserted, error } = await input.admin
+    .from("client_contacts")
+    .insert({
+      client_id: input.clientId,
+      first_name: firstName || null,
+      last_name: lastName || null,
+      full_name: fullName || null,
+      email: email || null,
+      phone: phone || null,
+      job_title: jobTitle || null,
+      is_primary: Boolean(contact.isPrimary),
+      is_active: true,
+      created_by: input.userId,
+    })
+    .select("id")
+    .single();
+  if (error) throw new Error(error.message);
+  return String((inserted as { id: string }).id);
+}
+
+export async function createOrderFromClientPayload(input: CreateOrderClientPayloadInput) {
+  const { admin, userId } = await requireBusinessManagerAccess(input.businessId);
+  const amount = Number(input.amount);
+  if (!Number.isFinite(amount) || amount <= 0) throw new Error("Amount must be greater than 0");
+
+  const managerId = cleanText(input.managerId);
+  if (!managerId) throw new Error("Manager is required");
+  const dueDate = cleanText(input.dueDate) || null;
+  const description = cleanText(input.description) || null;
+  const existingClientId = cleanText(input.existingClientId) || null;
+  const existingContactId = cleanText(input.existingContactId) || null;
+
+  if (input.clientType !== "individual" && input.clientType !== "company") {
+    throw new Error("Client type is required");
+  }
+
+  let clientId: string;
+  let createdNewClient = false;
+  let contactId: string | null = null;
+  let legacyFirstName: string | null = null;
+  let legacyLastName: string | null = null;
+  let legacyFullName: string | null = null;
+  let legacyClientName: string | null = null;
+  let legacyPhone: string | null = null;
+
+  if (input.clientType === "individual") {
+    const fields = input.individual ?? {};
+    const firstName = cleanText(fields.firstName);
+    const lastName = cleanText(fields.lastName);
+    const phone = cleanText(fields.phone);
+    const email = cleanText(fields.email);
+    const inn = cleanText(fields.inn);
+    const strongIdentifierOk = Boolean(normalizePhoneDigitsFromMatcher(phone) || normalizeEmail(email) || normalizeAlnum(inn));
+    if (!strongIdentifierOk) {
+      throw new Error("At least one strong identifier is required: INN, phone, or email");
+    }
+    if (!firstName && !lastName) throw new Error("At least one name field is required");
+
+    await findIndividualMatches(admin, input.businessId, {
+      firstName,
+      lastName,
+      phone,
+      email,
+      inn,
+    });
+    {
+      const result = await resolveIndividualClientForCreate({
+      admin,
+      businessId: input.businessId,
+      userId,
+      existingClientId,
+      fields,
+    });
+      clientId = result.clientId;
+      createdNewClient = result.created;
+    }
+
+    legacyFirstName = firstName || null;
+    legacyLastName = lastName || null;
+    legacyFullName = buildClientFullName(firstName, lastName) || null;
+    legacyClientName = legacyFullName;
+    legacyPhone = phone || null;
+  } else {
+    const fields = input.company ?? {};
+    const companyName = cleanText(fields.companyName);
+    const registrationNumber = cleanText(fields.registrationNumber);
+    const vatNumber = cleanText(fields.vatNumber);
+    const phone = cleanText(fields.phone);
+    const email = cleanText(fields.email);
+    const strongIdentifierOk = Boolean(
+      normalizeAlnum(registrationNumber) ||
+        normalizeAlnum(vatNumber) ||
+        normalizePhoneDigitsFromMatcher(phone) ||
+        normalizeEmail(email),
+    );
+    if (!companyName) throw new Error("Company name is required");
+    if (!strongIdentifierOk) {
+      throw new Error("At least one strong identifier is required: registration number, VAT/tax, phone, or email");
+    }
+
+    await findCompanyMatches(admin, input.businessId, {
+      companyName,
+      registrationNumber,
+      vatNumber,
+      phone,
+      email,
+    });
+
+    {
+      const result = await resolveCompanyClientForCreate({
+      admin,
+      businessId: input.businessId,
+      userId,
+      existingClientId,
+      fields,
+    });
+      clientId = result.clientId;
+      createdNewClient = result.created;
+    }
+    contactId = await resolveCompanyContactForOrder({
+      admin,
+      businessId: input.businessId,
+      clientId,
+      existingContactId,
+      contact: input.contact,
+      userId,
+    });
+
+    legacyClientName = companyName || null;
+    legacyFullName = companyName || null;
+    legacyPhone = phone || null;
+  }
+
+  const { count, error: countError } = await admin
+    .from("orders")
+    .select("*", { count: "exact", head: true })
+    .eq("business_id", input.businessId);
+  if (countError) throw new Error(countError.message);
+
+  const orderNumber = (count ?? 0) + 1;
+  const { data: insertedOrder, error: orderError } = await runOrdersMutation(
+    {
+      business_id: input.businessId,
+      order_number: orderNumber,
+      client_name: legacyClientName,
+      first_name: legacyFirstName,
+      last_name: legacyLastName,
+      full_name: legacyFullName,
+      client_phone: legacyPhone,
+      amount,
+      due_date: dueDate,
+      description,
+      status: "NEW",
+      paid: false,
+      created_by: userId,
+      manager_id: managerId,
+      client_id: clientId,
+      contact_id: contactId,
+    },
+    (nextPayload) => admin.from("orders").insert(nextPayload).select("id").single(),
+  );
+  if (orderError) throw new Error(orderError.message);
+  if (!insertedOrder || !(insertedOrder as { id?: string }).id) {
+    throw new Error("Failed to create order");
+  }
+
+  if (createdNewClient) {
+    await ensureClientCurrentManager({
+      admin,
+      clientId,
+      managerId,
+      actorUserId: userId,
+    });
+  }
+
+  revalidatePath(`/b/${input.businessSlug}`);
+  revalidatePath(`/b/${input.businessSlug}/clients`);
+  if (clientId) revalidatePath(`/b/${input.businessSlug}/clients/${clientId}`);
+  revalidatePath(`/b/${input.businessSlug}/today`);
+
+  return {
+    orderId: String((insertedOrder as { id: string }).id),
+    clientId,
+    contactId,
+    createdNewClient,
+  };
+}
+
+function isMissingClientModelError(error: unknown) {
+  const message = String((error as { message?: string } | null)?.message ?? "").toLowerCase();
+  return (
+    message.includes("could not find the table 'public.clients'") ||
+    message.includes("could not find the table 'public.client_individual_profiles'") ||
+    message.includes("could not find the table 'public.client_manager_assignments'") ||
+    message.includes("could not find the 'client_id' column") ||
+    message.includes("could not find the 'contact_id' column")
+  );
+}
+
+async function ensureOrderClientLink(input: {
+  admin: ReturnType<typeof supabaseAdmin>;
+  businessId: string;
+  actorUserId: string;
+  fullName: string | null | undefined;
+  firstName: string | null | undefined;
+  lastName: string | null | undefined;
+  phone: string | null | undefined;
+}) {
+  const fullName = String(input.fullName ?? "").trim();
+  if (!fullName) return null;
+
+  const targetName = normalizeNameForMatch(fullName);
+  const targetDigits = normalizePhoneDigits(input.phone);
+
+  const { data: candidates, error: findError } = await input.admin
+    .from("clients")
+    .select("id, display_name, primary_phone, client_type")
+    .eq("business_id", input.businessId)
+    .eq("client_type", "individual")
+    .limit(200);
+
+  if (findError) {
+    if (isMissingClientModelError(findError)) return null;
+    throw new Error(findError.message);
+  }
+
+  const existing = (candidates ?? []).find((row) => {
+    const rowName = normalizeNameForMatch(String((row as { display_name?: string | null }).display_name ?? ""));
+    if (rowName !== targetName) return false;
+
+    if (!targetDigits) return true;
+    const rowDigits = normalizePhoneDigits((row as { primary_phone?: string | null }).primary_phone ?? "");
+    return !rowDigits || rowDigits === targetDigits;
+  }) as { id: string } | undefined;
+
+  let clientId = existing?.id ?? null;
+
+  if (!clientId) {
+    const { data: inserted, error: insertError } = await input.admin
+      .from("clients")
+      .insert({
+        business_id: input.businessId,
+        workspace_id: null,
+        client_type: "individual",
+        display_name: fullName,
+        primary_phone: String(input.phone ?? "").trim() || null,
+        created_by: input.actorUserId,
+      })
+      .select("id")
+      .single();
+
+    if (insertError) {
+      if (isMissingClientModelError(insertError)) return null;
+      throw new Error(insertError.message);
+    }
+
+    clientId = String((inserted as { id: string }).id);
+  }
+
+  const upsertProfilePayload = {
+    client_id: clientId,
+    first_name: String(input.firstName ?? "").trim() || null,
+    last_name: String(input.lastName ?? "").trim() || null,
+    full_name: fullName,
+    phone: String(input.phone ?? "").trim() || null,
+    updated_at: new Date().toISOString(),
+  };
+
+  const { error: profileError } = await input.admin
+    .from("client_individual_profiles")
+    .upsert(upsertProfilePayload, { onConflict: "client_id" });
+
+  if (profileError && !isMissingClientModelError(profileError)) {
+    throw new Error(profileError.message);
+  }
+
+  return clientId;
+}
+
+async function ensureClientCurrentManager(input: {
+  admin: ReturnType<typeof supabaseAdmin>;
+  clientId: string | null;
+  managerId: string | null;
+  actorUserId: string;
+}) {
+  if (!input.clientId || !input.managerId) return;
+
+  const { data: current, error: currentError } = await input.admin
+    .from("client_manager_assignments")
+    .select("id, manager_id")
+    .eq("client_id", input.clientId)
+    .is("unassigned_at", null)
+    .maybeSingle();
+
+  if (currentError) {
+    if (isMissingClientModelError(currentError)) return;
+    throw new Error(currentError.message);
+  }
+
+  if (current?.manager_id && String(current.manager_id) === input.managerId) return;
+
+  if (current?.id) {
+    const { error: closeError } = await input.admin
+      .from("client_manager_assignments")
+      .update({ unassigned_at: new Date().toISOString() })
+      .eq("id", current.id);
+
+    if (closeError && !isMissingClientModelError(closeError)) {
+      throw new Error(closeError.message);
+    }
+  }
+
+  const { error: insertError } = await input.admin
+    .from("client_manager_assignments")
+    .insert({
+      client_id: input.clientId,
+      manager_id: input.managerId,
+      assigned_by: input.actorUserId,
+      assigned_at: new Date().toISOString(),
+    });
+
+  if (insertError && !isMissingClientModelError(insertError)) {
+    throw new Error(insertError.message);
+  }
+}
+
 export async function createOrder(input: {
   businessId: string;
   businessSlug: string;
@@ -356,10 +990,20 @@ export async function createOrder(input: {
   if (countError) throw new Error(countError.message);
 
   const orderNumber = (count ?? 0) + 1;
-  const { clientColumns } = await buildClientColumns({
+  const { clientColumns, fullName, firstName, lastName } = await buildClientColumns({
     clientName: input.clientName,
     firstName: input.firstName,
     lastName: input.lastName,
+  });
+  const managerId = input.managerId ?? userId;
+  const clientId = await ensureOrderClientLink({
+    admin,
+    businessId: input.businessId,
+    actorUserId: userId,
+    fullName,
+    firstName,
+    lastName,
+    phone: input.clientPhone ?? null,
   });
 
   const { error } = await runOrdersMutation(
@@ -374,12 +1018,20 @@ export async function createOrder(input: {
       status: input.status ?? "NEW",
       paid: false,
       created_by: userId,
-      manager_id: input.managerId ?? userId,
+      manager_id: managerId,
+      client_id: clientId,
+      contact_id: null,
     },
     (nextPayload) => admin.from("orders").insert(nextPayload),
   );
 
   if (error) throw new Error(error.message);
+  await ensureClientCurrentManager({
+    admin,
+    clientId,
+    managerId,
+    actorUserId: userId,
+  });
 
   revalidatePath(`/b/${input.businessSlug}`);
 }
@@ -507,12 +1159,31 @@ export async function updateOrder(input: {
   amount: number;
   dueDate: string | null;
 }) {
-  const { admin } = await requireOrderManagerAccess(input.orderId);
-  const { clientColumns } = await buildClientColumns({
+  const { admin, userId } = await requireOrderManagerAccess(input.orderId);
+  const { data: orderBefore, error: orderBeforeError } = await admin
+    .from("orders")
+    .select("business_id, manager_id, client_id")
+    .eq("id", input.orderId)
+    .maybeSingle();
+
+  if (orderBeforeError) throw new Error(orderBeforeError.message);
+  if (!orderBefore?.business_id) throw new Error("Order not found");
+
+  const { clientColumns, fullName, firstName, lastName } = await buildClientColumns({
     clientName: input.clientName,
     firstName: input.firstName,
     lastName: input.lastName,
   });
+  const resolvedClientId = await ensureOrderClientLink({
+    admin,
+    businessId: String(orderBefore.business_id),
+    actorUserId: userId,
+    fullName,
+    firstName,
+    lastName,
+    phone: input.clientPhone ?? null,
+  });
+  const managerId = orderBefore.manager_id ? String(orderBefore.manager_id) : null;
 
   const { error } = await runOrdersMutation(
     {
@@ -521,11 +1192,18 @@ export async function updateOrder(input: {
       description: input.description,
       amount: input.amount,
       due_date: input.dueDate,
+      client_id: resolvedClientId ?? (orderBefore.client_id ? String(orderBefore.client_id) : null),
     },
     (nextPayload) => admin.from("orders").update(nextPayload).eq("id", input.orderId),
   );
 
   if (error) throw new Error(error.message);
+  await ensureClientCurrentManager({
+    admin,
+    clientId: resolvedClientId ?? (orderBefore.client_id ? String(orderBefore.client_id) : null),
+    managerId,
+    actorUserId: userId,
+  });
 
   revalidatePath(`/b/${input.businessSlug}`);
 }
@@ -535,7 +1213,7 @@ export async function setOrderManager(input: {
   businessSlug: string;
   managerId: string | null;
 }) {
-  const { admin } = await requireOrderManagerAccess(input.orderId);
+  const { admin, userId } = await requireOrderManagerAccess(input.orderId);
 
   const { error: managerError } = await admin
     .from("orders")
@@ -543,6 +1221,17 @@ export async function setOrderManager(input: {
     .eq("id", input.orderId);
 
   if (!managerError) {
+    const { data: orderAfter } = await admin
+      .from("orders")
+      .select("client_id")
+      .eq("id", input.orderId)
+      .maybeSingle();
+    await ensureClientCurrentManager({
+      admin,
+      clientId: orderAfter?.client_id ? String(orderAfter.client_id) : null,
+      managerId: input.managerId,
+      actorUserId: userId,
+    });
     revalidatePath(`/b/${input.businessSlug}`);
     return;
   }

@@ -99,6 +99,7 @@ export default async function BusinessSupportRequestDetailsPage({
               activeFiltersCount={0}
               clearHref={supportHref}
               businessHref={businessHref}
+              clientsHref={`/b/${slug}/clients`}
               analyticsHref={`/b/${slug}/analytics`}
               todayHref={todayHref}
               settingsHref={settingsHref}

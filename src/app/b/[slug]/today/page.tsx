@@ -59,6 +59,7 @@ type OrderLookupRow = {
   id: string;
   order_number: number | null;
   client_name: string | null;
+  resolved_client_display_name?: string | null;
   due_date?: string | null;
   status?: string | null;
   created_at?: string;
@@ -86,6 +87,10 @@ type SalesMonthOrderRow = {
   amount: number | string | null;
   status: string | null;
   updated_at: string | null;
+};
+
+type EnrichedSalesMonthOrderRow = SalesMonthOrderRow & {
+  legacy_order_manager_id?: string | null;
 };
 
 function isSchemaMissingError(error: { message?: string } | null | undefined) {
@@ -148,7 +153,10 @@ function buildOrderHref(
 
 function buildOrderReferenceLabel(order: OrderLookupRow | null | undefined) {
   if (!order?.id) return null;
-  const clientName = cleanText(order.client_name) || "Order";
+  const clientName =
+    cleanText(order.resolved_client_display_name) ||
+    cleanText(order.client_name) ||
+    "Order";
   return `Order${order.order_number ? ` #${order.order_number}` : ""}${clientName ? ` - ${clientName}` : ""}`;
 }
 
@@ -327,21 +335,32 @@ export default async function TodayFollowUpsPage({
   );
 
   // Fetch orders and checklist items (these don't have due_at)
-  const [ordersResult, checklistResult] = await Promise.all([
-    supabase
-      .from("orders")
-      .select("id, order_number, client_name, due_date, status, created_at")
-      .eq("business_id", currentBusiness.id)
-      .not("due_date", "is", null)
-      .order("due_date", { ascending: true }),
-    supabase
-      .from("order_checklist_items")
-      .select("id, order_id, title, due_date, is_done, created_at")
-      .eq("business_id", currentBusiness.id)
-      .not("due_date", "is", null)
-      .eq("is_done", false)
-      .order("due_date", { ascending: true }),
-  ]);
+  const ordersEnrichedResult = await supabase
+    .from("crm_orders_enriched")
+    .select(
+      "id:order_id, business_id, order_number, client_name:legacy_client_name, resolved_client_display_name, due_date, status, created_at",
+    )
+    .eq("business_id", currentBusiness.id)
+    .not("due_date", "is", null)
+    .order("due_date", { ascending: true });
+
+  const ordersResult =
+    ordersEnrichedResult.error && isSchemaMissingError(ordersEnrichedResult.error)
+      ? await supabase
+          .from("orders")
+          .select("id, order_number, client_name, due_date, status, created_at")
+          .eq("business_id", currentBusiness.id)
+          .not("due_date", "is", null)
+          .order("due_date", { ascending: true })
+      : ordersEnrichedResult;
+
+  const checklistResult = await supabase
+    .from("order_checklist_items")
+    .select("id, order_id, title, due_date, is_done, created_at")
+    .eq("business_id", currentBusiness.id)
+    .not("due_date", "is", null)
+    .eq("is_done", false)
+    .order("due_date", { ascending: true });
 
   const calendarOrderRows = ordersResult.error
     ? []
@@ -384,10 +403,21 @@ export default async function TodayFollowUpsPage({
 
   const orderLookup = new Map<string, OrderLookupRow>();
   if (orderIds.length > 0) {
-    const { data: orders, error: ordersError } = await supabase
-      .from("orders")
-      .select("id, order_number, client_name")
-      .in("id", orderIds);
+    const enrichedOrdersLookupResult = await supabase
+      .from("crm_orders_enriched")
+      .select("id:order_id, order_number, client_name:legacy_client_name, resolved_client_display_name")
+      .in("order_id", orderIds);
+
+    const ordersLookupResult =
+      enrichedOrdersLookupResult.error &&
+      isSchemaMissingError(enrichedOrdersLookupResult.error)
+        ? await supabase
+            .from("orders")
+            .select("id, order_number, client_name")
+            .in("id", orderIds)
+        : enrichedOrdersLookupResult;
+
+    const { data: orders, error: ordersError } = ordersLookupResult;
 
     if (ordersError) {
       logTodayPageError("orders lookup query failed", ordersError);
@@ -560,16 +590,16 @@ export default async function TodayFollowUpsPage({
         .eq("manager_id", user.id)
         .eq("month_start", monthStart),
       admin
-        .from("orders")
-        .select("amount,status,updated_at")
+        .from("crm_orders_enriched")
+        .select("amount,status,updated_at,legacy_order_manager_id")
         .eq("business_id", String(currentBusiness.id))
-        .eq("manager_id", user.id),
+        .eq("legacy_order_manager_id", user.id),
     ]);
 
     if (targetRes.error) {
       logTodayPageError("manager sales target query failed", targetRes.error);
     }
-    if (ordersRes.error) {
+    if (ordersRes.error && !isSchemaMissingError(ordersRes.error)) {
       logTodayPageError("manager sales orders query failed", ordersRes.error);
     }
 
@@ -582,7 +612,28 @@ export default async function TodayFollowUpsPage({
       (sum, row) => sum + Math.max(0, Math.floor(parseNumeric(row.plan_closed_orders))),
       0,
     );
-    const closedOrders = ((ordersRes.data ?? []) as SalesMonthOrderRow[]).filter((row) => {
+    let salesOrderRows: SalesMonthOrderRow[] = [];
+    if (ordersRes.error && isSchemaMissingError(ordersRes.error)) {
+      const fallbackOrdersRes = await admin
+        .from("orders")
+        .select("amount,status,updated_at")
+        .eq("business_id", String(currentBusiness.id))
+        .eq("manager_id", user.id);
+
+      if (fallbackOrdersRes.error) {
+        logTodayPageError("manager sales orders fallback query failed", fallbackOrdersRes.error);
+      } else {
+        salesOrderRows = (fallbackOrdersRes.data ?? []) as SalesMonthOrderRow[];
+      }
+    } else {
+      salesOrderRows = ((ordersRes.data ?? []) as EnrichedSalesMonthOrderRow[]).map((row) => ({
+        amount: row.amount,
+        status: row.status,
+        updated_at: row.updated_at,
+      }));
+    }
+
+    const closedOrders = salesOrderRows.filter((row) => {
       const status = String(row.status ?? "").trim().toUpperCase();
       const date = String(row.updated_at ?? "").slice(0, 10);
       return (status === "DONE" || status === "CLOSED") && date >= monthStart && date <= monthEnd;
@@ -660,6 +711,7 @@ export default async function TodayFollowUpsPage({
               activeFiltersCount={0}
               clearHref={todayHref}
               businessHref={businessHref}
+              clientsHref={`/b/${slug}/clients`}
               analyticsHref={analyticsHref}
               todayHref={todayHref}
               supportHref={supportHref}

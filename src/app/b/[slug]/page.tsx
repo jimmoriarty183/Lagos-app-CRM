@@ -201,8 +201,11 @@ function normalizeActorLabel(input: {
 
 function getOrderManagerValue(order: {
   manager_id?: unknown;
+  current_client_manager_id?: unknown;
   created_by?: unknown;
 }) {
+  const currentClientManagerId = cleanText(order.current_client_manager_id);
+  if (currentClientManagerId) return currentClientManagerId;
   const managerId = cleanText(order.manager_id);
   if (managerId) return managerId;
   const createdBy = cleanText(order.created_by);
@@ -210,6 +213,7 @@ function getOrderManagerValue(order: {
 }
 
 function getClientSearchBlob(order: {
+  resolved_client_display_name?: unknown;
   client_name?: unknown;
   first_name?: unknown;
   last_name?: unknown;
@@ -218,6 +222,9 @@ function getClientSearchBlob(order: {
   client_first_name?: unknown;
   client_last_name?: unknown;
 }) {
+  const resolvedDisplayName = cleanText(order.resolved_client_display_name);
+  if (resolvedDisplayName) return resolvedDisplayName;
+
   const normalized = normalizeOrderClient({
     client_name: String(order.client_name ?? order.client_full_name ?? ""),
     first_name: String(order.first_name ?? order.client_first_name ?? ""),
@@ -305,6 +312,18 @@ const ORDER_SORT_OPTIONS: readonly OrderSort[] = [
   "amountLow",
 ] as const;
 
+const SUPABASE_DEBUG = process.env.SUPABASE_DEBUG === "1";
+
+function debugLog(message: string, payload?: Record<string, unknown>) {
+  if (!SUPABASE_DEBUG) return;
+  console.log(`[supabase-debug][b/[slug]/page] ${message}`, payload ?? {});
+}
+
+function isMissingEnrichedOrdersViewError(error: unknown) {
+  const message = String((error as { message?: string } | null)?.message ?? "").toLowerCase();
+  return message.includes("could not find the table 'public.crm_orders_enriched'");
+}
+
 function normalizeOrderSort(value: string | undefined): OrderSort {
   return ORDER_SORT_OPTIONS.includes(value as OrderSort)
     ? (value as OrderSort)
@@ -325,6 +344,9 @@ export default async function Page({ params, searchParams }: PageProps) {
 
   const { data: userData } = await supabase.auth.getUser();
   const user = userData.user;
+  const sessionData = SUPABASE_DEBUG
+    ? await supabase.auth.getSession()
+    : null;
   if (!user && !bypassUser) redirect("/login");
 
   const bypassMode = !user && Boolean(bypassUser);
@@ -333,7 +355,17 @@ export default async function Page({ params, searchParams }: PageProps) {
     Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY);
   const admin = bypassMode && canUseAdmin ? supabaseAdmin() : null;
   const dataClient = admin ?? supabase;
-  const statusClient = canUseAdmin ? supabaseAdmin() : dataClient;
+  // Keep statuses in user context unless bypass mode explicitly requires admin.
+  const statusClient = dataClient;
+  debugLog("auth and client mode", {
+    hasUser: Boolean(user),
+    userId: user?.id ?? null,
+    hasSession: Boolean(sessionData?.data.session),
+    bypassMode,
+    hasBypassParam: Boolean(bypassUser),
+    usesAdminDataClient: Boolean(admin),
+    usesAdminStatusClient: statusClient !== supabase,
+  });
 
   let memberships: any[] = [];
   let businesses: any[] = [];
@@ -344,7 +376,10 @@ export default async function Page({ params, searchParams }: PageProps) {
       .select("business_id, role, created_at, user_id")
       .eq("user_id", user.id);
 
-    if (memErr) throw memErr;
+    if (memErr) {
+      debugLog("memberships query failed", { error: memErr.message, userId: user.id });
+      throw memErr;
+    }
     memberships = membershipsData ?? [];
 
     const businessIds = memberships.map((m: any) => m.business_id);
@@ -354,7 +389,13 @@ export default async function Page({ params, searchParams }: PageProps) {
         .select("id, slug, name, plan, owner_phone, manager_phone")
         .in("id", businessIds);
 
-      if (bErr) throw bErr;
+      if (bErr) {
+        debugLog("businesses by membership query failed", {
+          error: bErr.message,
+          businessIdsCount: businessIds.length,
+        });
+        throw bErr;
+      }
       businesses = businessesData ?? [];
     }
   }
@@ -368,6 +409,11 @@ export default async function Page({ params, searchParams }: PageProps) {
       .maybeSingle();
 
     if (slugErr) {
+      debugLog("business by slug query failed", {
+        slug,
+        error: slugErr.message,
+        usedAdminClient: Boolean(admin),
+      });
       if (bypassMode) redirect("/login");
       throw slugErr;
     }
@@ -386,8 +432,13 @@ export default async function Page({ params, searchParams }: PageProps) {
   if (admin) {
     await ensureWorkspaceForBusiness(admin, String(currentBusiness.id));
   } else {
+    // TODO(security): this path always uses service_role. Confirm it is required and safe for this page.
     await ensureWorkspaceForBusiness(supabaseAdmin(), String(currentBusiness.id));
   }
+  debugLog("workspace ensured", {
+    businessId: String(currentBusiness.id),
+    usedAdminClient: true,
+  });
 
   const customStatuses = await loadBusinessStatuses(
     statusClient,
@@ -768,7 +819,7 @@ export default async function Page({ params, searchParams }: PageProps) {
 
       if (!email) {
         try {
-          const { data: authLookup } =
+      const { data: authLookup } =
             await adminClient.auth.admin.getUserById(id);
           email = cleanText(authLookup?.user?.email);
         } catch {
@@ -799,7 +850,11 @@ export default async function Page({ params, searchParams }: PageProps) {
     managerIds = teamActors
       .filter((actor) => actor.kind === "MANAGER")
       .map((actor) => actor.id);
-  } catch {
+  } catch (error: unknown) {
+    debugLog("team actors bootstrap failed", {
+      businessId: String(currentBusiness.id),
+      error: error instanceof Error ? error.message : "unknown",
+    });
     teamActors = [];
   }
 
@@ -819,12 +874,61 @@ export default async function Page({ params, searchParams }: PageProps) {
     })
     .sort((a: any, b: any) => a.name.localeCompare(b.name));
 
-  const { data: orders, error: oErr } = await dataClient
-    .from("orders")
-    .select("*")
+  const enrichedOrderSelect = [
+    "id:order_id",
+    "business_id",
+    "order_number",
+    "status",
+    "status_reason",
+    "amount",
+    "paid",
+    "due_date",
+    "created_at",
+    "updated_at",
+    "closed_at",
+    "description",
+    "search_text",
+    "manager_id:legacy_order_manager_id",
+    "client_name:legacy_client_name",
+    "client_phone:legacy_client_phone",
+    "first_name:legacy_first_name",
+    "last_name:legacy_last_name",
+    "full_name:legacy_full_name",
+    "client_id",
+    "contact_id",
+    "resolved_client_display_name",
+    "current_client_manager_id",
+    "current_client_manager_name",
+  ].join(", ");
+
+  const enrichedOrdersResult = await dataClient
+    .from("crm_orders_enriched")
+    .select(enrichedOrderSelect)
     .eq("business_id", currentBusiness.id)
     .order("created_at", { ascending: false });
-  if (oErr && !bypassMode) throw oErr;
+
+  let orders = enrichedOrdersResult.data;
+  let oErr = enrichedOrdersResult.error;
+
+  if (oErr && isMissingEnrichedOrdersViewError(oErr)) {
+    const fallbackOrdersResult = await dataClient
+      .from("orders")
+      .select("*")
+      .eq("business_id", currentBusiness.id)
+      .order("created_at", { ascending: false });
+    orders = fallbackOrdersResult.data;
+    oErr = fallbackOrdersResult.error;
+  }
+
+  if (oErr) {
+    debugLog("orders query failed", {
+      businessId: String(currentBusiness.id),
+      error: oErr.message,
+      bypassMode,
+      usedAdminClient: Boolean(admin),
+    });
+    if (!bypassMode) throw oErr;
+  }
 
   const listRaw: any[] = orders ?? [];
   console.log("[orders-page] orders loaded", {
@@ -1103,8 +1207,11 @@ export default async function Page({ params, searchParams }: PageProps) {
         });
 
   const list: OrderListItem[] = sortedRows.map((order) => {
+    const resolvedClientDisplayName = cleanText(
+      order.resolved_client_display_name,
+    );
     const client = normalizeOrderClient({
-      client_name: order.client_name,
+      client_name: resolvedClientDisplayName || order.client_name,
       first_name: order.first_name,
       last_name: order.last_name,
       full_name: order.full_name,
@@ -1116,12 +1223,17 @@ export default async function Page({ params, searchParams }: PageProps) {
       client_first_name: client.firstName,
       client_last_name: client.lastName,
       client_full_name: client.fullName,
-      manager_id: order.manager_id
-        ? String(order.manager_id)
-        : order.created_by
-          ? String(order.created_by)
-          : null,
+      client_name: resolvedClientDisplayName || order.client_name,
+      manager_id: cleanText(order.current_client_manager_id)
+        ? String(order.current_client_manager_id)
+        : order.manager_id
+          ? String(order.manager_id)
+          : order.created_by
+            ? String(order.created_by)
+            : null,
       manager_name:
+        cleanText(order.current_client_manager_name) ||
+        actorNameById.get(String(order.current_client_manager_id ?? "")) ||
         actorNameById.get(String(order.manager_id ?? "")) ||
         actorNameById.get(String(order.created_by ?? "")) ||
         null,
@@ -1274,6 +1386,7 @@ export default async function Page({ params, searchParams }: PageProps) {
               activeFiltersCount={activeFiltersCount}
               clearHref={clearHref}
               businessHref={businessHref}
+              clientsHref={`/b/${slug}/clients`}
               analyticsHref={analyticsHref}
               todayHref={todayHref}
               supportHref={supportHref}

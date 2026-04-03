@@ -1,51 +1,100 @@
-# Ordo
+# Ordo CRM Platform
 
-Ordo is a business management system that keeps clients, tasks, and team workflows in one place.
+Ordo is a CRM-first business management platform.
 
-The current public module is CRM. The platform foundation is already prepared for future Tasks and Academy modules without changing the product architecture.
+Current production focus:
+- CRM workspace for orders, customers, and team execution
+- Admin panel for operations, health checks, and billing controls
+- Paddle-based billing foundation with entitlement-driven access
+- Campaigns/inbox delivery and read-state tracking
+- Support and sales request handling flows
 
-## Positioning
+## Current Status (April 2026)
 
-- Ordo is not just a task tool or a spreadsheet wrapper.
-- It is a structured workspace for running client operations, team execution, and internal knowledge inside one system.
-- Core promise: bring the business into order.
+### Live platform scope
+- CRM module is active
+- Admin module is active (`/admin`)
+- Campaign flows are active (announcement/survey tracking endpoints and admin campaigns pages)
+- Support flows are active (request views, admin handling routes, attachments)
+- Sales requests flow is active in admin
+- Legal pages are published and linked in footer:
+  - Terms
+  - Privacy
+  - Refund Policy
+- Public pricing page is accessible without login (`/pricing`)
 
-## Current product scope
+### Billing system (implemented)
+- Entitlement resolver (`plan_features + manual_entitlement_overrides`)
+- Subscription service and account billing status API
+- Paddle integration:
+  - customer sync
+  - subscription sync
+  - plan change flow
+  - cancel flow
+  - preview endpoint
+- Webhook pipeline:
+  - signature verification
+  - idempotent event persistence
+  - replay/retry routes
+- Background jobs:
+  - resync
+  - retry webhooks
+  - expire overrides
+- Admin billing UI:
+  - `/admin/billing`
+  - `/admin/billing/accounts/[accountId]`
+  - subscription, entitlements, overrides management
 
-- CRM is enabled and visible
-- Tasks is prepared in architecture and routing, but hidden
-- Academy is prepared in architecture and routing, but hidden
-- Settings remains available as a platform-level area
+### Admin and product operations (implemented)
+- Admin dashboard with period presets and custom range filtering
+- Compact admin UI with desktop rail behavior
+- Users/businesses/invites/orders/health/activity admin sections
+- Support admin pages and status/action routes
+- Sales admin page for inbound enterprise/pricing leads
+
+### Campaigns and inbox (implemented)
+- Campaign read/open/click/dismiss API routes
+- Inbox mark-read behavior aligned for campaign items
+- Campaign feed state persistence hardening
+- Survey completion/read-state compatibility handling in topbar inbox feed
+
+### Plans and pricing seeds
+Plans supported (only):
+- `solo`
+- `starter`
+- `business`
+- `pro`
+
+Important schema note:
+- In `plan_prices`, amount column is `unit_amount_cents` (not `amount_minor`)
 
 ## Tech stack
-
 - Next.js App Router
-- Supabase
-- Server Actions
-- Modular platform configuration via `src/config/modules.ts`
+- TypeScript
+- Supabase (PostgreSQL + Auth)
+- Paddle (billing provider)
+- Vercel deployment
 
-## Brand assets
+## Key folders
+- `src/app/admin` - admin pages and dashboards
+- `src/app/api/billing` - billing APIs and webhook handlers
+- `src/app/api/campaigns` - campaign interaction endpoints
+- `src/app/api/support` - support request/admin endpoints
+- `src/lib/billing` - billing domain logic
+- `src/lib/campaigns` - campaigns read/open/state service logic
+- `supabase/migrations` - SQL migrations
+- `supabase/seed.sql` - seed data
+- `product/backlog_v2.md` - current product/engineering backlog
 
-Place approved Ordo assets in `public/brand/` with these filenames:
+## Operational notes
+- Access checks must be entitlement-based (no hardcoded plan-name gating)
+- Local DB is source of truth for billing state
+- Paddle is provider/mirror and checkout surface
+- Webhook events must remain idempotent
 
-- `ordo_full.png`
-- `favicon_16.png`
-- `favicon_32.png`
-- `app_icon_128.png`
-- `app_icon_256.png`
-
-Code is already prepared to reference these paths in metadata and manifest.
-
-## Routes
-
-- `/app`
-- `/app/crm`
-- `/app/tasks`
-- `/app/academy`
-- `/app/settings`
-
-## Notes
-
-- The UI should currently expose only CRM and Settings.
-- Hidden modules are controlled through the centralized module registry.
-- Workspace-oriented data modeling is prepared for platform growth.
+## Next high-priority work
+1. Production observability for billing and webhooks (dashboards + alerts)
+2. End-to-end smoke tests for checkout/change-plan/cancel/replay
+3. Campaign/inbox analytics reliability checks on production data
+4. Admin UX polish for large datasets (density mode, saved filters)
+5. Legal copy localization alignment (EN/UA/RU consistency)

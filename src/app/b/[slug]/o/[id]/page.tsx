@@ -21,6 +21,7 @@ type OrderRow = {
   id: string;
   business_id: string;
   client_name: string;
+  resolved_client_display_name?: string | null;
   client_phone: string | null;
   description: string | null;
   amount: number;
@@ -95,14 +96,33 @@ export default async function EditOrderPage({
     );
   }
 
-  // load order
-  const { data: order } = await supabase
-    .from("orders")
+  // load order (prefer enriched CRM view, fallback to legacy orders)
+  const enrichedOrderResult = await supabase
+    .from("crm_orders_enriched")
     .select(
-      "id, business_id, client_name, client_phone, description, amount, due_date, status, paid, created_at",
+      "id:order_id, business_id, client_name:legacy_client_name, resolved_client_display_name, client_phone:legacy_client_phone, description, amount, due_date, status, paid, created_at",
     )
-    .eq("id", id)
-    .single<OrderRow>();
+    .eq("order_id", id)
+    .maybeSingle<OrderRow>();
+
+  const orderResult =
+    enrichedOrderResult.error &&
+    String(enrichedOrderResult.error.message ?? "")
+      .toLowerCase()
+      .includes("could not find the table 'public.crm_orders_enriched'")
+      ? await supabase
+          .from("orders")
+          .select(
+            "id, business_id, client_name, client_phone, description, amount, due_date, status, paid, created_at",
+          )
+          .eq("id", id)
+          .maybeSingle<OrderRow>()
+      : enrichedOrderResult;
+
+  const order = orderResult.data ?? null;
+  const resolvedClientName =
+    String(order?.resolved_client_display_name ?? "").trim() ||
+    String(order?.client_name ?? "").trim();
 
   if (!order || order.business_id !== business.id) notFound();
 
@@ -156,7 +176,7 @@ export default async function EditOrderPage({
             <span style={{ fontSize: 12, fontWeight: 600 }}>Client name *</span>
             <input
               name="client_name"
-              defaultValue={order.client_name}
+              defaultValue={resolvedClientName}
               style={{
                 height: 40,
                 borderRadius: 10,

@@ -20,12 +20,12 @@ import {
 import { OrderChecklist } from "@/app/b/[slug]/OrderChecklist";
 import { OrderActivitySection } from "@/app/b/[slug]/_components/orders/OrderActivitySection";
 import { OrderFollowUpsCard } from "@/app/b/[slug]/_components/orders/OrderFollowUpsCard";
+import { ClientOrderForm } from "@/app/b/[slug]/_components/orders/ClientOrderForm";
 import {
   OrderNotesPanel,
   type OrderNote,
 } from "@/app/b/[slug]/_components/orders/OrderNotesPanel";
 import {
-  createOrder,
   setOrderManager,
   setOrderStatus,
   updateOrder,
@@ -68,6 +68,7 @@ import {
   STATUS_COLOR_OPTIONS,
   type StatusValue,
 } from "@/lib/business-statuses";
+import { formatDisplayOrderNumber } from "@/lib/orders/display";
 import { useBusinessStatuses } from "@/lib/use-business-statuses";
 
 type TeamActor = {
@@ -1338,7 +1339,7 @@ export function OrderPreview({
           {isCreateMode
             ? "Create order"
             : currentOrder
-              ? `Order #${currentOrder.order_number ?? currentOrder.id} details`
+              ? `Order ${formatDisplayOrderNumber({ orderNumber: currentOrder.order_number, orderId: currentOrder.id })} details`
               : "Order details"}
         </SheetTitle>
         <SheetDescription className="sr-only">
@@ -1350,261 +1351,35 @@ export function OrderPreview({
         {isCreateMode ? (
           <div className="flex h-full min-h-0 flex-col">
             <div className="sticky top-0 z-20 border-b border-[#E5E7EB] bg-white/95 backdrop-blur">
-              <div className="px-5 py-4 sm:px-6">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0 flex-1">
-                    <div className="text-lg font-semibold text-[#1F2937]">
-                      Create order
-                    </div>
-                    <div className="mt-3 text-lg font-semibold text-[#1F2937]">
-                      {[draft.firstName.trim(), draft.lastName.trim()]
-                        .filter(Boolean)
-                        .join(" ") || "New order"}
-                    </div>
-                    <div className="mt-1 text-sm text-[#6B7280]">
-                      {draft.phone.trim() || "No phone number yet"}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setLayoutMode((current) =>
-                          current === "wide" ? "default" : "wide",
-                        )
-                      }
-                      className="hidden h-10 items-center gap-2 rounded-[18px] border border-[#E5E7EB] bg-white px-4 text-sm font-semibold text-[#1F2937] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] sm:inline-flex"
-                      aria-label={
-                        isWideLayout
-                          ? "Use default order preview width"
-                          : "Use wide order preview width"
-                      }
-                    >
-                      {isWideLayout ? (
-                        <Minimize2 className="h-4 w-4" />
-                      ) : (
-                        <Maximize2 className="h-4 w-4" />
-                      )}
-                      {isWideLayout ? "Default width" : "Expand"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={onClose}
-                      className="inline-flex h-10 w-10 items-center justify-center rounded-[18px] border border-[#E5E7EB] bg-white text-[#374151] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]"
-                      aria-label="Close order preview"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
+              <div className="flex items-start justify-between gap-4 px-5 py-4 sm:px-6">
+                <div>
+                  <div className="text-lg font-semibold text-[#1F2937]">Create order</div>
+                  <div className="mt-1 text-sm text-[#6B7280]">
+                    Type-driven creation with live duplicate checking
                   </div>
                 </div>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-[18px] border border-[#E5E7EB] bg-white text-[#374151] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]"
+                  aria-label="Close order preview"
+                >
+                  <X className="h-4 w-4" />
+                </button>
               </div>
             </div>
-
             <ScrollArea className="min-h-0 flex-1">
               <div className="space-y-4 px-5 py-5 sm:px-6">
-                <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#F3F4F6] bg-white px-4 py-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
-                  <div>
-                    <div className="text-sm font-semibold text-[#1F2937]">
-                      Overview
-                    </div>
-                    <p className="text-xs text-[#6B7280]">
-                      Fill customer, manager, amount, due date, and description
-                      before saving.
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="rounded-xl border-[#E5E7EB] bg-white text-[#374151] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
-                      onClick={onClose}
-                    >
-                      Cancel
-                    </Button>
-                    <button
-                      type="button"
-                      disabled={isSavingOverview}
-                      className="inline-flex h-9 min-w-28 items-center justify-center rounded-xl border border-[var(--brand-600)] bg-[var(--brand-600)] px-4 text-sm font-semibold shadow-[0_1px_2px_rgba(16,24,40,0.12)] transition hover:bg-[var(--brand-700)] disabled:opacity-60"
-                      style={{ color: "#ffffff" }}
-                      onClick={() => {
-                        const nextFirstName = draft.firstName.trim();
-                        const nextLastName = draft.lastName.trim();
-                        const nextAmount = Number(draft.amount || 0);
-                        if (!nextFirstName) {
-                          window.alert("First name is required.");
-                          return;
-                        }
-                        if (!Number.isFinite(nextAmount) || nextAmount <= 0) {
-                          window.alert("Amount must be greater than 0.");
-                          return;
-                        }
-
-                        startSavingOverview(async () => {
-                          try {
-                            await createOrder({
-                              businessId,
-                              businessSlug,
-                              clientName: [nextFirstName, nextLastName]
-                                .filter(Boolean)
-                                .join(" "),
-                              firstName: nextFirstName,
-                              lastName: nextLastName,
-                              clientPhone: draft.phone.trim() || undefined,
-                              amount: nextAmount,
-                              dueDate: draft.dueDate || undefined,
-                              description:
-                                draft.description.trim() || undefined,
-                              status: "NEW",
-                              managerId: draft.managerId || null,
-                            });
-                            router.refresh();
-                            onClose();
-                          } catch (error) {
-                            window.alert(
-                              error instanceof Error
-                                ? error.message
-                                : "Failed to create order.",
-                            );
-                          }
-                        });
-                      }}
-                    >
-                      <span className="whitespace-nowrap leading-none text-white">
-                        {isSavingOverview ? "Creating..." : "Create order"}
-                      </span>
-                    </button>
-                  </div>
-                </div>
-
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <MetaItem
-                    label="First Name"
-                    value={
-                      <input
-                        value={draft.firstName}
-                        onChange={(event) => {
-                          const nextValue = event.currentTarget.value;
-                          setDraft((prev) => ({
-                            ...prev,
-                            firstName: nextValue,
-                          }));
-                        }}
-                        className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
-                      />
-                    }
-                  />
-                  <MetaItem
-                    label="Last Name"
-                    value={
-                      <input
-                        value={draft.lastName}
-                        onChange={(event) => {
-                          const nextValue = event.currentTarget.value;
-                          setDraft((prev) => ({
-                            ...prev,
-                            lastName: nextValue,
-                          }));
-                        }}
-                        className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
-                      />
-                    }
-                  />
-                  <MetaItem
-                    label="Phone"
-                    value={
-                      <input
-                        value={draft.phone}
-                        onChange={(event) => {
-                          const nextValue = event.currentTarget.value;
-                          setDraft((prev) => ({ ...prev, phone: nextValue }));
-                        }}
-                        className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
-                      />
-                    }
-                  />
-                  <MetaItem
-                    label="Manager"
-                    value={
-                      <Select
-                        value={draft.managerId || "__unassigned__"}
-                        onValueChange={(value) =>
-                          setDraft((prev) => ({
-                            ...prev,
-                            managerId: value === "__unassigned__" ? "" : value,
-                          }))
-                        }
-                      >
-                        <SelectTrigger className="h-10 w-full rounded-xl border-[#E5E7EB] bg-white text-sm shadow-none focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="z-[120] rounded-2xl border-[#E5E7EB] bg-white shadow-[0_16px_40px_rgba(15,23,42,0.18)]">
-                          <SelectItem value="__unassigned__">
-                            Unassigned
-                          </SelectItem>
-                          {managerOptions.map((actor) => (
-                            <SelectItem key={actor.id} value={actor.id}>
-                              {actor.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    }
-                  />
-                  <MetaItem label="Created" value="Will be set after save" />
-                  <MetaItem
-                    label="Due date"
-                    value={
-                      <input
-                        type="date"
-                        value={draft.dueDate}
-                        onChange={(event) => {
-                          const nextValue = event.currentTarget.value;
-                          setDraft((prev) => ({
-                            ...prev,
-                            dueDate: nextValue,
-                          }));
-                        }}
-                        className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
-                      />
-                    }
-                  />
-                  <MetaItem
-                    label="Amount"
-                    value={
-                      <input
-                        inputMode="decimal"
-                        value={draft.amount}
-                        onChange={(event) => {
-                          const nextValue = event.currentTarget.value;
-                          setDraft((prev) => ({
-                            ...prev,
-                            amount: nextValue,
-                          }));
-                        }}
-                        className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
-                      />
-                    }
-                  />
-                  <MetaItem label="Status" value="New" />
-                </div>
-
-                <div className="rounded-2xl border border-[#F3F4F6] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
-                  <div className="text-sm font-semibold text-[#1F2937]">
-                    Description
-                  </div>
-                  <textarea
-                    value={draft.description}
-                    onChange={(event) => {
-                      const nextValue = event.currentTarget.value;
-                      setDraft((prev) => ({
-                        ...prev,
-                        description: nextValue,
-                      }));
-                    }}
-                    className="mt-2 min-h-28 w-full rounded-2xl border border-[#E5E7EB] bg-white px-4 py-3 text-sm leading-6 text-[#1F2937] outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
-                  />
-                </div>
+                <ClientOrderForm
+                  businessId={businessId}
+                  businessSlug={businessSlug}
+                  actors={managerOptions}
+                  compact
+                  onCreated={() => {
+                    router.refresh();
+                    onClose();
+                  }}
+                />
               </div>
             </ScrollArea>
           </div>
@@ -1634,7 +1409,7 @@ export function OrderPreview({
                               : "text-[15px] sm:text-[16px]",
                         ].join(" ")}
                       >
-                        Order #{currentOrder.order_number ?? currentOrder.id}
+                        Order {formatDisplayOrderNumber({ orderNumber: currentOrder.order_number, orderId: currentOrder.id })}
                       </div>
                     </div>
 

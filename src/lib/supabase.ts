@@ -1,10 +1,7 @@
-// lib/supabase.ts
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from "@/lib/supabase/client";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
-// MVP: используем anon key. Убедись, что RLS отключен или есть политики.
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: { persistSession: false },
-});
+/**
+ * @deprecated Import from "@/lib/supabase/client" directly in new code.
+ * Kept for backward compatibility.
+ */
+export const supabase = createClient();

@@ -65,6 +65,7 @@ import {
   DASHBOARD_RANGE_OPTIONS,
   type DashboardRange,
 } from "@/lib/order-dashboard-summary";
+import { formatDisplayOrderNumber } from "@/lib/orders/display";
 import { resolveUserDisplay } from "@/lib/user-display";
 import { useBusinessStatuses } from "@/lib/use-business-statuses";
 type OrderSort =
@@ -2212,7 +2213,10 @@ export default function DesktopOrdersTable({
                     >
                       <td className="px-5 py-3 align-middle">
                         <div className="text-sm font-semibold leading-5 text-[#1F2937]">
-                          #{order.order_number ?? "-"}
+                          {formatDisplayOrderNumber({
+                            orderNumber: order.order_number,
+                            orderId: order.id,
+                          })}
                         </div>
                         <div className="mt-0.5 text-xs font-medium leading-4 text-[#9CA3AF]">
                           {formatCreatedAt(order.created_at)}
@@ -2729,7 +2733,10 @@ export default function DesktopOrdersTable({
                                         }}
                                       >
                                         <div className="text-[15px] font-semibold leading-5 text-[#1F2937]">
-                                          #{order.order_number ?? "-"}
+                                          {formatDisplayOrderNumber({
+                                            orderNumber: order.order_number,
+                                            orderId: order.id,
+                                          })}
                                         </div>
                                         <div className="mt-0.5 text-[12px] font-medium text-[#9CA3AF]">
                                           {formatCreatedAt(order.created_at)}
@@ -2942,7 +2949,10 @@ export default function DesktopOrdersTable({
                     Move order
                   </div>
                   <div className="px-1 text-sm font-semibold text-[#1F2937]">
-                    #{draggingOrder.order_number ?? "-"}
+                    {formatDisplayOrderNumber({
+                      orderNumber: draggingOrder.order_number,
+                      orderId: draggingOrder.id,
+                    })}
                   </div>
                   <div className="space-y-2">
                     {visibleKanbanColumns.map((statusColumn) => {

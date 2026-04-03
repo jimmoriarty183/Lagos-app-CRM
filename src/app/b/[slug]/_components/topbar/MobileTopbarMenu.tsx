@@ -8,6 +8,7 @@ import {
   LifeBuoy,
   Menu,
   SlidersHorizontal,
+  Users,
   X,
 } from "lucide-react";
 import { WorkDayControls } from "./WorkDayControls";
@@ -17,6 +18,7 @@ type Props = {
   businessSlug: string;
   canManage: boolean;
   businessHref: string;
+  clientsHref: string;
   todayHref: string;
   supportHref: string;
   clearHref: string;
@@ -31,6 +33,7 @@ export default function MobileTopbarMenu({
   businessSlug,
   canManage,
   businessHref,
+  clientsHref,
   todayHref,
   supportHref,
   clearHref,
@@ -112,6 +115,15 @@ export default function MobileTopbarMenu({
           >
             <BriefcaseBusiness className="h-4 w-4 text-[#6B7280]" />
             <span>CRM</span>
+          </a>
+
+          <a
+            href={clientsHref}
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-[#1F2937] transition-colors hover:bg-[#F9FAFB]"
+          >
+            <Users className="h-4 w-4 text-[#6B7280]" />
+            <span>Clients</span>
           </a>
 
           <a

@@ -1,20 +1,15 @@
 import { cookies } from "next/headers";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
-
-function getEnv() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-  if (!url || !anonKey) throw new Error("Missing Supabase env vars");
-  return { url, anonKey };
-}
+import { getSupabasePublicEnv, getSupabaseServiceEnv } from "@/lib/supabase/env";
 
 /**
- * ✅ Для Server Components (page.tsx / layout.tsx)
- * Только чтение cookies (без setAll).
+ * Server client for Server Components: reads auth cookies only.
+ * Use for data reads in pages/layouts where cookie mutation is not allowed.
  */
 export async function supabaseServerComponent() {
   const cookieStore = await cookies();
-  const { url, anonKey } = getEnv();
+  const { url, anonKey } = getSupabasePublicEnv();
 
   return createServerClient(url, anonKey, {
     cookies: {
@@ -22,19 +17,18 @@ export async function supabaseServerComponent() {
         return cookieStore.getAll();
       },
       setAll() {
-        // ❌ нельзя менять cookies в RSC
+        // Cookie writes are not allowed in Server Components.
       },
     },
   });
 }
 
 /**
- * ✅ Для Route Handlers / Server Actions
- * Здесь можно set cookies.
+ * Server client for Route Handlers / Server Actions: reads and writes auth cookies.
  */
 export async function supabaseServerAction() {
   const cookieStore = await cookies();
-  const { url, anonKey } = getEnv();
+  const { url, anonKey } = getSupabasePublicEnv();
 
   return createServerClient(url, anonKey, {
     cookies: {
@@ -50,16 +44,24 @@ export async function supabaseServerAction() {
   });
 }
 
-/* ------------------------------------------------------------------ */
-/* ✅ ALIASES для твоего текущего кода (чтобы не чинить 20 импортов)     */
-/* ------------------------------------------------------------------ */
+/**
+ * Server-only admin client (service_role). Never use in client components.
+ */
+export function supabaseServiceRole(): SupabaseClient {
+  const { url, serviceRoleKey } = getSupabaseServiceEnv();
+  return createClient(url, serviceRoleKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  });
+}
 
-// Старое имя для Server Components (read-only)
+// Backward-compatible aliases used across the codebase.
 export async function supabaseServerReadOnly() {
   return supabaseServerComponent();
 }
 
-// Старое имя для Route Handlers / Actions (write cookies)
 export async function supabaseServer() {
   return supabaseServerAction();
 }

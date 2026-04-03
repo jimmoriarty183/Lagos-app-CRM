@@ -59,6 +59,7 @@ import {
   type StatusFilterValue,
   type StatusValue,
 } from "@/lib/business-statuses";
+import { formatDisplayOrderNumber } from "@/lib/orders/display";
 import type { DashboardRange } from "@/lib/order-dashboard-summary";
 import { createClient } from "@/lib/supabase/client";
 import { resolveUserDisplay } from "@/lib/user-display";
@@ -913,7 +914,10 @@ export default function MobileOrdersList({
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0 flex-1">
                   <div className="text-sm font-semibold text-[#1F2937]">
-                    #{order.order_number ?? "-"}
+                    {formatDisplayOrderNumber({
+                      orderNumber: order.order_number,
+                      orderId: order.id,
+                    })}
                   </div>
                   <div className="mt-0.5 truncate text-sm font-semibold text-[#1F2937]">
                     {clientName}
@@ -1178,7 +1182,10 @@ export default function MobileOrdersList({
                           <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0">
                               <div className="text-sm font-semibold text-[#1F2937]">
-                                #{order.order_number ?? "-"}
+                                {formatDisplayOrderNumber({
+                                  orderNumber: order.order_number,
+                                  orderId: order.id,
+                                })}
                               </div>
                               <div className="mt-1 text-xs font-medium text-[#9CA3AF]">
                                 {formatCreatedAt(order.created_at)}

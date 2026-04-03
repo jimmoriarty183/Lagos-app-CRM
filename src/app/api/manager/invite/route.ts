@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
 
-function json(status: number, payload: any) {
+function json(status: number, payload: unknown) {
   return NextResponse.json(payload, { status });
 }
 
@@ -90,22 +90,14 @@ async function sendExistingUserAccessEmail(input: {
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json().catch(() => ({} as any));
+    const body: Record<string, unknown> = await req.json().catch(() => ({}));
     const business_id = String(body?.business_id || body?.businessId || "").trim();
     const email = String(body?.email || "").trim().toLowerCase();
 
     if (!business_id) return json(400, { error: "business_id required" });
     if (!email) return json(400, { error: "email required" });
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
-
-    if (!supabaseUrl) return json(500, { error: "Missing SUPABASE_URL" });
-    if (!serviceKey) return json(500, { error: "Missing SUPABASE_SERVICE_ROLE_KEY" });
-
-    const supabase = createClient(supabaseUrl, serviceKey, {
-      auth: { persistSession: false, autoRefreshToken: false },
-    });
+    const supabase = supabaseAdmin();
 
     const { data: existing, error: selErr } = await supabase
       .from("business_invites")
@@ -114,7 +106,10 @@ export async function POST(req: Request) {
       .eq("email", email)
       .maybeSingle();
 
-    if (selErr) return json(500, { error: selErr.message });
+    if (selErr) {
+      console.error("[api/manager/invite] failed to load existing invite", { error: selErr.message });
+      return json(500, { error: selErr.message });
+    }
 
     let invite_id: string;
 
@@ -133,7 +128,10 @@ export async function POST(req: Request) {
           })
           .eq("id", existing.id);
 
-        if (updErr) return json(500, { error: updErr.message });
+        if (updErr) {
+          console.error("[api/manager/invite] failed to reactivate invite", { error: updErr.message });
+          return json(500, { error: updErr.message });
+        }
         invite_id = existing.id;
       }
     } else {
@@ -150,6 +148,9 @@ export async function POST(req: Request) {
         .maybeSingle();
 
       if (createErr || !created?.id) {
+        if (createErr) {
+          console.error("[api/manager/invite] failed to create invite", { error: createErr.message });
+        }
         return json(500, { error: createErr?.message || "Insert failed" });
       }
       invite_id = created.id;
@@ -218,7 +219,8 @@ export async function POST(req: Request) {
       redirectTo,
       existing_user: false,
     });
-  } catch (e: any) {
-    return json(500, { error: e?.message || "Unexpected error" });
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : "Unexpected error";
+    return json(500, { error: message });
   }
 }

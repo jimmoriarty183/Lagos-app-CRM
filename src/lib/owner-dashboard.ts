@@ -37,6 +37,7 @@ type OrderLabelRow = {
   id: string;
   order_number: string | number | null;
   client_name: string | null;
+  resolved_client_display_name: string | null;
   full_name: string | null;
   first_name: string | null;
   last_name: string | null;
@@ -51,6 +52,15 @@ type FollowupLabelRow = {
 type SalesOrderRow = {
   id: string;
   manager_id: string | null;
+  amount: number | string | null;
+  status: string | null;
+  due_date: string | null;
+  updated_at: string | null;
+};
+
+type SalesOrderEnrichedRow = {
+  order_id: string;
+  legacy_order_manager_id: string | null;
   amount: number | string | null;
   status: string | null;
   due_date: string | null;
@@ -299,12 +309,14 @@ function uid(prefix: string, seed: string) {
 
 function getTaskTitle(row: OrderLabelRow | undefined) {
   if (!row) return "Task";
+  const resolvedClientName = String(row.resolved_client_display_name ?? "").trim();
   const fullName = String(row.full_name ?? "").trim();
   const parts = [String(row.first_name ?? "").trim(), String(row.last_name ?? "").trim()]
     .filter(Boolean)
     .join(" ")
     .trim();
-  const clientName = fullName || parts || String(row.client_name ?? "").trim();
+  const clientName =
+    resolvedClientName || fullName || parts || String(row.client_name ?? "").trim();
   const orderNumber = row.order_number !== null && row.order_number !== undefined
     ? `#${String(row.order_number)}`
     : "";
@@ -324,17 +336,47 @@ async function loadOrderLabels(
 ) {
   if (!taskIds.length) return new Map<string, OrderLabelRow>();
   const attempts = [
-    "id, order_number, client_name, full_name, first_name, last_name",
+    "id, order_number, client_name, resolved_client_display_name, full_name, first_name, last_name",
     "id, order_number, client_name",
     "id, client_name",
     "id",
   ];
 
   for (const selectColumns of attempts) {
-    const { data, error } = await admin
-      .from("orders")
-      .select(selectColumns)
-      .in("id", taskIds);
+    const enrichedColumns = selectColumns
+      .replace(/\bid\b/g, "order_id")
+      .replace(/\bclient_name\b/g, "legacy_client_name")
+      .replace(/\bfull_name\b/g, "legacy_full_name")
+      .replace(/\bfirst_name\b/g, "legacy_first_name")
+      .replace(/\blast_name\b/g, "legacy_last_name")
+      .split(",")
+      .map((col) => {
+        const trimmed = col.trim();
+        if (trimmed === "order_id") return "id:order_id";
+        if (trimmed === "legacy_client_name") return "client_name:legacy_client_name";
+        if (trimmed === "resolved_client_display_name") return "resolved_client_display_name";
+        if (trimmed === "legacy_full_name") return "full_name:legacy_full_name";
+        if (trimmed === "legacy_first_name") return "first_name:legacy_first_name";
+        if (trimmed === "legacy_last_name") return "last_name:legacy_last_name";
+        return trimmed;
+      })
+      .join(", ");
+
+    const enrichedResult = await admin
+      .from("crm_orders_enriched")
+      .select(enrichedColumns)
+      .in("order_id", taskIds);
+
+    const { data, error } =
+      enrichedResult.error &&
+      String(enrichedResult.error.message ?? "")
+        .toLowerCase()
+        .includes("could not find the table 'public.crm_orders_enriched'")
+        ? await admin
+            .from("orders")
+            .select(selectColumns)
+            .in("id", taskIds)
+        : enrichedResult;
 
     if (error) continue;
     const map = new Map<string, OrderLabelRow>();
@@ -345,6 +387,8 @@ async function loadOrderLabels(
         id,
         order_number: (row.order_number as string | number | null | undefined) ?? null,
         client_name: (row.client_name as string | null | undefined) ?? null,
+        resolved_client_display_name:
+          (row.resolved_client_display_name as string | null | undefined) ?? null,
         full_name: (row.full_name as string | null | undefined) ?? null,
         first_name: (row.first_name as string | null | undefined) ?? null,
         last_name: (row.last_name as string | null | undefined) ?? null,
@@ -471,8 +515,8 @@ export async function loadOwnerDashboardData(
       .order("work_date", { ascending: false })
       .limit(120),
     admin
-      .from("orders")
-      .select("id,manager_id,amount,status,due_date,updated_at")
+      .from("crm_orders_enriched")
+      .select("order_id,legacy_order_manager_id,amount,status,due_date,updated_at")
       .eq("business_id", input.businessId),
     admin
       .from("sales_month_targets")
@@ -486,7 +530,14 @@ export async function loadOwnerDashboardData(
   if (rosterRes.error) throw rosterRes.error;
   if (capacityRes.error) throw capacityRes.error;
   if (reportsRes.error) throw reportsRes.error;
-  if (salesOrdersRes.error) throw salesOrdersRes.error;
+  if (
+    salesOrdersRes.error &&
+    !String(salesOrdersRes.error.message ?? "")
+      .toLowerCase()
+      .includes("could not find the table 'public.crm_orders_enriched'")
+  ) {
+    throw salesOrdersRes.error;
+  }
   if (salesTargetsRes.error) throw salesTargetsRes.error;
 
   const tasks = (tasksRes.data ?? []) as OrderTaskFactRow[];
@@ -504,7 +555,29 @@ export async function loadOwnerDashboardData(
     total_pause_seconds: number | null;
     daily_summary: string | null;
   }>;
-  const salesOrders = (salesOrdersRes.data ?? []) as SalesOrderRow[];
+  let salesOrders: SalesOrderRow[] = [];
+  if (
+    salesOrdersRes.error &&
+    String(salesOrdersRes.error.message ?? "")
+      .toLowerCase()
+      .includes("could not find the table 'public.crm_orders_enriched'")
+  ) {
+    const fallbackSalesOrdersRes = await admin
+      .from("orders")
+      .select("id,manager_id,amount,status,due_date,updated_at")
+      .eq("business_id", input.businessId);
+    if (fallbackSalesOrdersRes.error) throw fallbackSalesOrdersRes.error;
+    salesOrders = (fallbackSalesOrdersRes.data ?? []) as SalesOrderRow[];
+  } else {
+    salesOrders = ((salesOrdersRes.data ?? []) as SalesOrderEnrichedRow[]).map((row) => ({
+      id: row.order_id,
+      manager_id: row.legacy_order_manager_id,
+      amount: row.amount,
+      status: row.status,
+      due_date: row.due_date,
+      updated_at: row.updated_at,
+    }));
+  }
   const salesTargets = (salesTargetsRes.data ?? []) as SalesTargetRow[];
 
   const managerNameById = new Map<string, string>();

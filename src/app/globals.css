@@ -159,10 +159,13 @@ body {
 
 input,
 select,
-textarea,
-button {
+textarea {
   font-size: var(--font-body);
   color: inherit;
+}
+
+button {
+  font-size: var(--font-body);
 }
 
 h1 {

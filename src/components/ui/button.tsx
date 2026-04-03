@@ -10,9 +10,9 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-[var(--brand-600)] text-white hover:bg-[var(--brand-700)] disabled:bg-[var(--neutral-200)] disabled:text-[var(--neutral-500)] disabled:hover:bg-[var(--neutral-200)]",
+          "bg-[var(--brand-600)] !text-white hover:bg-[var(--brand-700)] disabled:bg-[var(--neutral-200)] disabled:!text-[var(--neutral-500)] disabled:hover:bg-[var(--neutral-200)]",
         destructive:
-          "bg-[var(--error-500)] text-white hover:bg-[#D13535] disabled:bg-[var(--neutral-200)] disabled:text-[var(--neutral-500)] disabled:hover:bg-[var(--neutral-200)]",
+          "bg-[var(--error-500)] !text-white hover:bg-[#D13535] disabled:bg-[var(--neutral-200)] disabled:!text-[var(--neutral-500)] disabled:hover:bg-[var(--neutral-200)]",
         "destructive-outline":
           "bg-transparent border border-[var(--error-500)] text-[var(--error-500)] hover:bg-[var(--error-50)] disabled:border-[var(--neutral-200)] disabled:text-[var(--neutral-500)] disabled:hover:bg-transparent",
         outline:
