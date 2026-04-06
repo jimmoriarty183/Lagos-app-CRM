@@ -28,6 +28,40 @@ type MatchResponse = {
   possible: MatchCandidate[];
 };
 
+function normalizeMatchResponse(input: unknown): MatchResponse | null {
+  if (!input || typeof input !== "object") return null;
+  const raw = input as Partial<MatchResponse> & { state?: unknown };
+  const state =
+    raw.state === "exact_match" ||
+    raw.state === "possible_duplicate" ||
+    raw.state === "no_match"
+      ? raw.state
+      : "no_match";
+
+  const exact = Array.isArray(raw.exact) ? raw.exact : [];
+  const possible = Array.isArray(raw.possible) ? raw.possible : [];
+
+  return {
+    state,
+    exact: exact.filter((item): item is MatchCandidate => {
+      return Boolean(
+        item &&
+          typeof item === "object" &&
+          typeof (item as MatchCandidate).clientId === "string" &&
+          typeof (item as MatchCandidate).displayName === "string",
+      );
+    }),
+    possible: possible.filter((item): item is MatchCandidate => {
+      return Boolean(
+        item &&
+          typeof item === "object" &&
+          typeof (item as MatchCandidate).clientId === "string" &&
+          typeof (item as MatchCandidate).displayName === "string",
+      );
+    }),
+  };
+}
+
 type Props = {
   businessId: string;
   businessSlug: string;
@@ -191,14 +225,24 @@ export function ClientOrderForm({ businessId, businessSlug, actors = [], compact
           body: JSON.stringify(payload),
           signal: controller.signal,
         });
-        const data = (await res.json().catch(() => ({}))) as MatchResponse & { error?: string };
+        const rawData = (await res.json().catch(() => ({}))) as unknown;
         if (!res.ok) {
           setMatchResult(null);
           setSelectedExistingClientId("");
           return;
         }
-        setMatchResult(data);
-        const firstExact = data.exact?.[0]?.clientId ?? "";
+        const normalized = normalizeMatchResponse(rawData);
+        if (!normalized) {
+          setMatchResult({
+            state: "no_match",
+            exact: [],
+            possible: [],
+          });
+          setSelectedExistingClientId("");
+          return;
+        }
+        setMatchResult(normalized);
+        const firstExact = normalized.exact[0]?.clientId ?? "";
         if (firstExact) setSelectedExistingClientId(firstExact);
       } catch {
         if (!controller.signal.aborted) {
@@ -393,7 +437,8 @@ export function ClientOrderForm({ businessId, businessSlug, actors = [], compact
           <div className="text-sm font-semibold text-[#1F2937]">
             {matchResult ? stateBadgeText(matchResult.state) : "Enter identifiers to start matching"}
           </div>
-          {matchResult && (matchResult.exact.length > 0 || matchResult.possible.length > 0) ? (
+          {matchResult &&
+          (matchResult.exact.length > 0 || matchResult.possible.length > 0) ? (
             <div className="mt-2 space-y-2">
               {[...matchResult.exact, ...matchResult.possible].slice(0, 5).map((candidate) => (
                 <label key={candidate.clientId} className="flex cursor-pointer items-start gap-2 rounded-lg border border-[#E5E7EB] bg-white p-2.5">
