@@ -3,7 +3,6 @@
 import { headers } from "next/headers";
 import { supabaseServer } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
-import { isBusinessSegment } from "@/lib/business-segments";
 
 type State = { ok: boolean; error: string; next: string };
 const initial: State = { ok: false, error: "", next: "" };
@@ -288,7 +287,6 @@ export async function registerOwnerAction(
     const email = String(formData.get("email") || "").trim().toLowerCase();
     const password = String(formData.get("password") || "");
     const passwordConfirm = String(formData.get("password_confirm") || "");
-    const businessSegment = String(formData.get("business_segment") || "").trim();
 
     const firstName = String(formData.get("first_name") || "").trim();
     const lastName = String(formData.get("last_name") || "").trim();
@@ -305,10 +303,6 @@ export async function registerOwnerAction(
     if (!lastName) return { ok: false, error: "Last name is required", next: "" };
     if (agree !== "on")
       return { ok: false, error: "Please accept Terms & Privacy Policy", next: "" };
-
-    if (businessSegment && !isBusinessSegment(businessSegment)) {
-      return { ok: false, error: "Select a valid business segment", next: "" };
-    }
 
     const fullName = `${firstName} ${lastName}`.trim();
 
@@ -471,14 +465,26 @@ export async function createBusinessOnboardingAction(
     if (businessIds.length > 0) {
       const { data: businessRows, error: businessErr } = await admin
         .from("businesses")
-        .select("id, slug")
+        .select("id, slug, name")
         .in("id", businessIds);
       if (businessErr) return { ok: false, error: businessErr.message, next: "" };
 
-      const hasLinkedBusiness = (businessRows ?? []).some(
+      const linkedBusiness = (businessRows ?? []).find(
         (business) => String(business.slug ?? "").trim().length > 0,
       );
-      if (hasLinkedBusiness) {
+      if (linkedBusiness) {
+        const linkedBusinessId = String(linkedBusiness.id ?? "").trim();
+        const currentName = String(linkedBusiness.name ?? "").trim();
+        if (linkedBusinessId && currentName !== businessName) {
+          // Idempotent overwrite protects against accidental concatenation/duplication.
+          const { error: updateNameErr } = await admin
+            .from("businesses")
+            .update({ name: businessName })
+            .eq("id", linkedBusinessId);
+          if (updateNameErr && !isMissingColumnError(updateNameErr.message)) {
+            return { ok: false, error: updateNameErr.message, next: "" };
+          }
+        }
         return { ok: true, error: "", next: "/app/crm" };
       }
     }

@@ -8,7 +8,6 @@ import {
   registerOwnerAction,
   forgotPasswordAction,
 } from "@/app/actions/auth";
-import { BUSINESS_SEGMENTS } from "@/lib/business-segments";
 import { Spinner } from "@/components/ui/spinner";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -83,46 +82,6 @@ function Input({
         onChange={(e) => onChange?.(e.target.value)}
         className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-[var(--brand-600)] focus:ring-4 focus:ring-[rgba(91,91,179,0.14)]"
       />
-    </label>
-  );
-}
-
-function Select({
-  label,
-  name,
-  required,
-  value,
-  onChange,
-  options,
-  placeholder,
-}: {
-  label: string;
-  name: string;
-  required?: boolean;
-  value?: string;
-  onChange?: (v: string) => void;
-  options: readonly string[];
-  placeholder: string;
-}) {
-  return (
-    <label className="block">
-      <div className="mb-1.5 text-[13px] font-semibold text-slate-700">
-        {label}
-      </div>
-      <select
-        name={name}
-        required={required}
-        value={value}
-        onChange={(e) => onChange?.(e.target.value)}
-        className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition hover:border-slate-300 focus:border-[var(--brand-600)] focus:ring-4 focus:ring-[rgba(91,91,179,0.14)]"
-      >
-        <option value="">{placeholder}</option>
-        {options.map((option) => (
-          <option key={option} value={option}>
-            {option}
-          </option>
-        ))}
-      </select>
     </label>
   );
 }
@@ -220,8 +179,6 @@ export default function LoginUI({
   const inviteId = sp.get("invite_id") || "";
   const checkEmail = sp.get("check_email") === "1";
 
-  const [businessName, setBusinessName] = React.useState("");
-  const [businessSegment, setBusinessSegment] = React.useState("");
   const [firstName, setFirstName] = React.useState("");
   const [lastName, setLastName] = React.useState("");
   const [emailReg, setEmailReg] = React.useState("");
@@ -459,31 +416,6 @@ export default function LoginUI({
           >
             <input type="hidden" name="invite_id" value={inviteId} />
             <input type="hidden" name="agree" value={agree ? "on" : ""} />
-
-            {!inviteId && (
-              <>
-                <Input
-                  label="Business name"
-                  name="business_name"
-                  placeholder="Acme Operations"
-                  value={businessName}
-                  onChange={setBusinessName}
-                />
-
-                <Select
-                  label="Business segment"
-                  name="business_segment"
-                  value={businessSegment}
-                  onChange={setBusinessSegment}
-                  options={BUSINESS_SEGMENTS}
-                  placeholder="Select your business segment"
-                />
-                <Hint>
-                  Recommended for setup. Everything else can be added later in
-                  business settings.
-                </Hint>
-              </>
-            )}
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Input

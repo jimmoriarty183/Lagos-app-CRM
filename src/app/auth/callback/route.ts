@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
     if (!error) {
       return NextResponse.redirect(
         new URL(
-          inviteId ? `/invite?invite_id=${encodeURIComponent(inviteId)}` : "/",
+          inviteId ? `/invite?invite_id=${encodeURIComponent(inviteId)}` : "/app/crm",
           url.origin,
         ),
       );
