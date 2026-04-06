@@ -164,6 +164,7 @@ export function EndOfDayDialog({
           .from("work_days")
           .select("*")
           .eq("business_id", businessId)
+          .eq("user_id", user?.id ?? "")
           .eq("work_date", todayDate)
           .maybeSingle(),
         supabase

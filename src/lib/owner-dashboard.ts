@@ -843,8 +843,17 @@ export async function loadOwnerDashboardData(
 
   const reports: ManagerDailyReport[] = reportsRows
     .filter((row) => {
-      const status = String(row.status ?? "").toLowerCase();
-      return status === "finished" || Boolean(String(row.daily_summary ?? "").trim());
+      const status = String(row.status ?? "")
+        .trim()
+        .toLowerCase();
+      const hasSummary = Boolean(String(row.daily_summary ?? "").trim());
+      const hasFinishTime = Boolean(String(row.finished_at ?? "").trim());
+      const isFinishedLike =
+        status === "finished" ||
+        status === "done" ||
+        status === "closed" ||
+        status === "completed";
+      return isFinishedLike || hasFinishTime || hasSummary;
     })
     .map((row) => {
       const reportDate = row.work_date;

@@ -135,12 +135,23 @@ export function WorkDayControls({
     setIsLoading(true);
     setErrorMessage(null);
     try {
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
+      if (authError || !user?.id) {
+        setErrorMessage(formatWorkDayError(authError ?? new Error("Not authenticated")));
+        setWorkDay(null);
+        return;
+      }
+
       const controller = new AbortController();
       const timeoutId = window.setTimeout(() => controller.abort(), 8000);
       const { data, error } = await supabase
         .from("work_days")
         .select("*")
         .eq("business_id", businessId)
+        .eq("user_id", user.id)
         .eq("work_date", getTodayDateOnly())
         .abortSignal(controller.signal)
         .maybeSingle();
