@@ -1,13 +1,17 @@
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 
+import ClientPeriodForm from "./ClientPeriodForm";
 import DesktopLeftRail from "@/app/b/[slug]/_components/Desktop/DesktopLeftRail";
 import OwnerAnalyticsPanel from "@/app/b/[slug]/_components/Desktop/OwnerAnalyticsPanel";
 import type { BusinessOption } from "@/app/b/[slug]/_components/topbar/BusinessSwitcher";
 import TopBar from "@/app/b/[slug]/_components/topbar/TopBar";
 import { getAdminUsersPath, isAdminEmail } from "@/lib/admin-access";
 import { getTodayDateOnly } from "@/lib/follow-ups";
-import { loadOwnerDashboardData } from "@/lib/owner-dashboard";
+import {
+  loadOwnerDashboardData,
+  type OwnerDashboardData,
+} from "@/lib/owner-dashboard";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { supabaseServerReadOnly } from "@/lib/supabase/server";
 import { resolveUserDisplay } from "@/lib/user-display";
@@ -148,6 +152,61 @@ function parseDateOnly(value: string | undefined) {
   return /^\d{4}-\d{2}-\d{2}$/.test(text) ? text : "";
 }
 
+function createEmptyOwnerDashboardData(): OwnerDashboardData {
+  const today = getTodayDateOnly();
+  return {
+    summary: {
+      active_tasks: 0,
+      overdue_tasks: 0,
+      due_7d: 0,
+      on_time_completion_pct: null,
+      team_workload_pct: 0,
+      managers_at_risk: 0,
+      generated_at: new Date().toISOString(),
+    },
+    deadline_control: {
+      traffic_bar: {
+        on_track: 0,
+        at_risk: 0,
+        overdue: 0,
+        no_deadline: 0,
+      },
+      top_overdue_tasks: [],
+    },
+    managers: [],
+    alerts: [],
+    reports: [],
+    productivity: {
+      period: "week",
+      start_date: today,
+      end_date: today,
+      team_closed_orders: 0,
+      team_closed_followups: 0,
+      team_total_closed: 0,
+      managers: [],
+    },
+    sales: {
+      period: "month",
+      start_date: today,
+      end_date: today,
+      days_elapsed: 0,
+      days_total: 0,
+      selected_manager_id: null,
+      team_plan_amount: 0,
+      team_actual_amount: 0,
+      team_forecast_amount: 0,
+      team_plan_closed_orders: 0,
+      team_closed_orders: 0,
+      team_forecast_closed_orders: 0,
+      achievement_pct: 0,
+      forecast_achievement_pct: 0,
+      forecast_gap_pct: 0,
+      avg_deal_size: 0,
+      managers: [],
+    },
+  };
+}
+
 const ANALYTICS_TABS = [
   { key: "overview", label: "Overview" },
   { key: "managers", label: "Managers" },
@@ -210,16 +269,14 @@ export default async function OwnerAnalyticsPage({
     tabRaw === "sales" ||
     tabRaw === "client-managers" ||
     tabRaw === "clients"
-      ? (tabRaw === "client-managers"
-          ? "clientManagers"
-          : tabRaw) as
+      ? ((tabRaw === "client-managers" ? "clientManagers" : tabRaw) as
           | "managers"
           | "alerts"
           | "reports"
           | "productivity"
           | "sales"
           | "clientManagers"
-          | "clients"
+          | "clients")
       : "overview";
   const productivityPeriod: "day" | "week" | "month" =
     periodRaw === "day" || periodRaw === "month"
@@ -356,7 +413,10 @@ export default async function OwnerAnalyticsPage({
   }) => {
     const params = new URLSearchParams();
     if (phoneRaw) params.set("u", phoneRaw);
-    params.set("tab", analyticsView === "clients" ? "clients" : "client-managers");
+    params.set(
+      "tab",
+      analyticsView === "clients" ? "clients" : "client-managers",
+    );
     const mode = overrides.mode ?? clientMode;
     params.set("cmode", mode);
     const monthValue = overrides.month ?? String(parsedClientMonth);
@@ -407,26 +467,40 @@ export default async function OwnerAnalyticsPage({
   const todayCount = Number(todayCountRaw ?? 0);
   const todoCount = overdueCount + todayCount;
 
-  const analyticsData = await loadOwnerDashboardData(admin, {
-    businessId: String(currentBusiness.id),
-    fromDate: null,
-    toDate: null,
-    asOfDate: getTodayDateOnly(),
-    capacityPointsPerDay: 8,
-    limitAlerts: 50,
-    productivityPeriod,
-    reportFromDate: reportFromDate || null,
-    reportToDate: reportToDate || null,
-    reportManagerId: reportManagerId || null,
-    salesMonth: salesMonth || null,
-    salesManagerId: salesManagerId || null,
-  });
+  let analyticsData: OwnerDashboardData;
+  try {
+    analyticsData = await loadOwnerDashboardData(admin, {
+      businessId: String(currentBusiness.id),
+      fromDate: null,
+      toDate: null,
+      asOfDate: getTodayDateOnly(),
+      capacityPointsPerDay: 8,
+      limitAlerts: 50,
+      productivityPeriod,
+      reportFromDate: reportFromDate || null,
+      reportToDate: reportToDate || null,
+      reportManagerId: reportManagerId || null,
+      salesMonth: salesMonth || null,
+      salesManagerId: salesManagerId || null,
+    });
+  } catch (error) {
+    console.error("[analytics] failed to load owner dashboard data", {
+      businessId: String(currentBusiness.id),
+      error,
+    });
+    analyticsData = createEmptyOwnerDashboardData();
+  }
 
   const memberRolesRes = await admin
     .from("memberships")
     .select("user_id, role")
     .eq("business_id", String(currentBusiness.id));
-  if (memberRolesRes.error) throw memberRolesRes.error;
+  if (memberRolesRes.error) {
+    console.error("[analytics] memberships roles query failed", {
+      businessId: String(currentBusiness.id),
+      error: memberRolesRes.error.message,
+    });
+  }
 
   const memberRoles = ((memberRolesRes.data ?? []) as MemberRoleRow[]).filter(
     (row) => {
@@ -435,11 +509,7 @@ export default async function OwnerAnalyticsPage({
     },
   );
   const memberIds = Array.from(
-    new Set(
-      memberRoles
-        .map((row) => cleanText(row.user_id))
-        .filter(Boolean),
-    ),
+    new Set(memberRoles.map((row) => cleanText(row.user_id)).filter(Boolean)),
   );
   let memberProfiles: ProfileLookupRow[] = [];
   if (memberIds.length > 0) {
@@ -447,13 +517,20 @@ export default async function OwnerAnalyticsPage({
       .from("profiles")
       .select("id, full_name, first_name, last_name, email")
       .in("id", memberIds);
-    if (profilesRes.error) throw profilesRes.error;
-    memberProfiles = (profilesRes.data ?? []) as ProfileLookupRow[];
+    if (profilesRes.error) {
+      console.error("[analytics] profiles lookup failed", {
+        businessId: String(currentBusiness.id),
+        error: profilesRes.error.message,
+      });
+    } else {
+      memberProfiles = (profilesRes.data ?? []) as ProfileLookupRow[];
+    }
   }
   const profileById = new Map(
     memberProfiles.map((row) => {
       const fullName = cleanText(row.full_name);
-      const composed = `${cleanText(row.first_name)} ${cleanText(row.last_name)}`.trim();
+      const composed =
+        `${cleanText(row.first_name)} ${cleanText(row.last_name)}`.trim();
       const fallback = cleanText(row.email) || row.id;
       return [row.id, fullName || composed || fallback];
     }),
@@ -464,14 +541,18 @@ export default async function OwnerAnalyticsPage({
     .select("month_start, manager_id, plan_amount, plan_closed_orders")
     .eq("business_id", String(currentBusiness.id))
     .in("month_start", [currentMonthStart, nextMonthStart]);
-  if (targetsRes.error) throw targetsRes.error;
+  if (targetsRes.error) {
+    console.error("[analytics] sales month targets query failed", {
+      businessId: String(currentBusiness.id),
+      error: targetsRes.error.message,
+    });
+  }
   const targets = (targetsRes.data ?? []) as SalesMonthTargetRow[];
   const buildParticipantsForMonth = (monthStart: string) => {
     const targetByManagerId = new Map(
       targets
         .filter(
-          (row) =>
-            row.month_start === monthStart && cleanText(row.manager_id),
+          (row) => row.month_start === monthStart && cleanText(row.manager_id),
         )
         .map((row) => [String(row.manager_id), row]),
     );
@@ -502,30 +583,54 @@ export default async function OwnerAnalyticsPage({
   };
 
   const now = new Date();
-  const parsedClientMonth = Number(clientMonthRaw || now.getMonth() + 1);
-  const parsedClientYear = Number(clientYearRaw || now.getFullYear());
+  const parsedClientMonthCandidate = Number(clientMonthRaw || now.getMonth() + 1);
+  const parsedClientYearCandidate = Number(clientYearRaw || now.getFullYear());
+  const parsedClientMonth =
+    Number.isFinite(parsedClientMonthCandidate) &&
+    parsedClientMonthCandidate >= 1 &&
+    parsedClientMonthCandidate <= 12
+      ? Math.floor(parsedClientMonthCandidate)
+      : now.getMonth() + 1;
+  const parsedClientYear =
+    Number.isFinite(parsedClientYearCandidate) &&
+    parsedClientYearCandidate >= 2000 &&
+    parsedClientYearCandidate <= 2100
+      ? Math.floor(parsedClientYearCandidate)
+      : now.getFullYear();
   const clientMode = clientModeRaw === "custom" ? "custom" : "month";
   const defaultStart = new Date(parsedClientYear, parsedClientMonth - 1, 1);
   const defaultEndExclusive = new Date(parsedClientYear, parsedClientMonth, 1);
   const customFrom = parseDateOnly(clientFromRaw);
   const customTo = parseDateOnly(clientToRaw);
   const clientRangeStartIso =
-    clientMode === "custom" && customFrom ? `${customFrom}T00:00:00.000Z` : defaultStart.toISOString();
+    clientMode === "custom" && customFrom
+      ? `${customFrom}T00:00:00.000Z`
+      : defaultStart.toISOString();
   const clientRangeEndIso =
     clientMode === "custom" && customTo
-      ? new Date(new Date(`${customTo}T00:00:00.000Z`).getTime() + 24 * 60 * 60 * 1000).toISOString()
+      ? new Date(
+          new Date(`${customTo}T00:00:00.000Z`).getTime() + 24 * 60 * 60 * 1000,
+        ).toISOString()
       : defaultEndExclusive.toISOString();
   const clientRangeLabel =
     clientMode === "custom" && customFrom && customTo
       ? `${customFrom} — ${customTo}`
-      : defaultStart.toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+      : defaultStart.toLocaleDateString("en-GB", {
+          month: "long",
+          year: "numeric",
+        });
 
   const clientsRes = await admin
     .from("clients")
     .select("id, client_type, display_name, is_archived")
     .eq("business_id", String(currentBusiness.id))
     .eq("is_archived", false);
-  if (clientsRes.error) throw clientsRes.error;
+  if (clientsRes.error) {
+    console.error("[analytics] clients query failed", {
+      businessId: String(currentBusiness.id),
+      error: clientsRes.error.message,
+    });
+  }
   const clients = (clientsRes.data ?? []) as ClientRow[];
   const clientIds = clients.map((entry) => entry.id);
   const [indProfilesRes, compProfilesRes, assignmentsRes] = await Promise.all([
@@ -549,25 +654,51 @@ export default async function OwnerAnalyticsPage({
           .in("client_id", clientIds)
       : Promise.resolve({ data: [], error: null }),
   ]);
-  if (indProfilesRes.error) throw indProfilesRes.error;
-  if (compProfilesRes.error) throw compProfilesRes.error;
-  if (assignmentsRes.error) throw assignmentsRes.error;
+  if (indProfilesRes.error) {
+    console.error("[analytics] individual profiles query failed", {
+      businessId: String(currentBusiness.id),
+      error: indProfilesRes.error.message,
+    });
+  }
+  if (compProfilesRes.error) {
+    console.error("[analytics] company profiles query failed", {
+      businessId: String(currentBusiness.id),
+      error: compProfilesRes.error.message,
+    });
+  }
+  if (assignmentsRes.error) {
+    console.error("[analytics] client assignments query failed", {
+      businessId: String(currentBusiness.id),
+      error: assignmentsRes.error.message,
+    });
+  }
 
   const individualByClientId = new Map(
-    ((indProfilesRes.data ?? []) as IndividualProfileRow[]).map((entry) => [entry.client_id, entry]),
+    ((indProfilesRes.data ?? []) as IndividualProfileRow[]).map((entry) => [
+      entry.client_id,
+      entry,
+    ]),
   );
   const companyByClientId = new Map(
-    ((compProfilesRes.data ?? []) as CompanyProfileRow[]).map((entry) => [entry.client_id, entry]),
+    ((compProfilesRes.data ?? []) as CompanyProfileRow[]).map((entry) => [
+      entry.client_id,
+      entry,
+    ]),
   );
   const assignmentByClientId = new Map(
-    ((assignmentsRes.data ?? []) as CurrentAssignmentRow[]).map((entry) => [entry.client_id, entry]),
+    ((assignmentsRes.data ?? []) as CurrentAssignmentRow[]).map((entry) => [
+      entry.client_id,
+      entry,
+    ]),
   );
 
   const scopedClientRows = clients
     .map((client) => {
       const assignment = assignmentByClientId.get(client.id) ?? null;
       const managerId = cleanText(assignment?.manager_id) || null;
-      const managerName = managerId ? profileById.get(managerId) || managerId : "Unassigned";
+      const managerName = managerId
+        ? profileById.get(managerId) || managerId
+        : "Unassigned";
       const individual = individualByClientId.get(client.id) ?? null;
       const company = companyByClientId.get(client.id) ?? null;
       const displayName =
@@ -596,7 +727,12 @@ export default async function OwnerAnalyticsPage({
           .gte("created_at", clientRangeStartIso)
           .lt("created_at", clientRangeEndIso)
       : { data: [], error: null };
-  if (clientOrdersRes.error) throw clientOrdersRes.error;
+  if (clientOrdersRes.error) {
+    console.error("[analytics] client orders query failed", {
+      businessId: String(currentBusiness.id),
+      error: clientOrdersRes.error.message,
+    });
+  }
   const clientOrders = (clientOrdersRes.data ?? []) as ClientOrderRow[];
   const ordersByClientId = new Map<string, ClientOrderRow[]>();
   for (const order of clientOrders) {
@@ -610,7 +746,10 @@ export default async function OwnerAnalyticsPage({
 
   const clientMetrics = scopedClientRows.map((entry) => {
     const linked = ordersByClientId.get(entry.id) ?? [];
-    const turnover = linked.reduce((sum, row) => sum + Number(row.amount ?? 0), 0);
+    const turnover = linked.reduce(
+      (sum, row) => sum + Number(row.amount ?? 0),
+      0,
+    );
     const ordersCount = linked.length;
     const averageCheck = ordersCount > 0 ? turnover / ordersCount : 0;
     const lastOrderDate =
@@ -626,25 +765,43 @@ export default async function OwnerAnalyticsPage({
     };
   });
 
-  const totalClientTurnover = clientMetrics.reduce((sum, entry) => sum + entry.turnover, 0);
-  const totalClientOrders = clientMetrics.reduce((sum, entry) => sum + entry.ordersCount, 0);
+  const totalClientTurnover = clientMetrics.reduce(
+    (sum, entry) => sum + entry.turnover,
+    0,
+  );
+  const totalClientOrders = clientMetrics.reduce(
+    (sum, entry) => sum + entry.ordersCount,
+    0,
+  );
   const clientAverageOrderValue =
     totalClientOrders > 0 ? totalClientTurnover / totalClientOrders : 0;
   const totalClientsCount = clientMetrics.length;
-  const totalCompanyCount = clientMetrics.filter((entry) => entry.type === "company").length;
-  const totalIndividualCount = clientMetrics.filter((entry) => entry.type === "individual").length;
+  const totalCompanyCount = clientMetrics.filter(
+    (entry) => entry.type === "company",
+  ).length;
+  const totalIndividualCount = clientMetrics.filter(
+    (entry) => entry.type === "individual",
+  ).length;
 
   const managerClientMetrics = Array.from(
-    new Set(clientMetrics.map((entry) => cleanText(entry.managerId)).filter(Boolean)),
+    new Set(
+      clientMetrics.map((entry) => cleanText(entry.managerId)).filter(Boolean),
+    ),
   ).map((managerId) => {
-    const items = clientMetrics.filter((entry) => cleanText(entry.managerId) === managerId);
+    const items = clientMetrics.filter(
+      (entry) => cleanText(entry.managerId) === managerId,
+    );
     const turnover = items.reduce((sum, entry) => sum + entry.turnover, 0);
-    const ordersCount = items.reduce((sum, entry) => sum + entry.ordersCount, 0);
+    const ordersCount = items.reduce(
+      (sum, entry) => sum + entry.ordersCount,
+      0,
+    );
     return {
       managerId,
       managerName: profileById.get(managerId) || managerId,
       totalClients: items.length,
-      individualClients: items.filter((entry) => entry.type === "individual").length,
+      individualClients: items.filter((entry) => entry.type === "individual")
+        .length,
       companyClients: items.filter((entry) => entry.type === "company").length,
       ordersCount,
       turnover,
@@ -666,98 +823,31 @@ export default async function OwnerAnalyticsPage({
     };
   });
   const thisYear = new Date().getFullYear();
-  const clientYearOptions = [thisYear - 2, thisYear - 1, thisYear, thisYear + 1];
+  const clientYearOptions = [
+    thisYear - 2,
+    thisYear - 1,
+    thisYear,
+    thisYear + 1,
+  ];
 
   const renderClientPeriodControls = (): ReactNode => (
-    <div className="rounded-xl border border-[#E5E7EB] bg-white p-4">
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold text-[#111827]">Period</h3>
-        <div className="text-xs text-[#6B7280]">{clientRangeLabel}</div>
-      </div>
-      <form className="grid gap-3 md:grid-cols-5" method="get">
-        {phoneRaw ? <input type="hidden" name="u" value={phoneRaw} /> : null}
-        <input
-          type="hidden"
-          name="tab"
-          value={analyticsView === "clients" ? "clients" : "client-managers"}
-        />
-        <label className="grid gap-1 text-xs font-medium text-[#475467]">
-          Mode
-          <select
-            name="cmode"
-            defaultValue={clientMode}
-            className="h-10 rounded-lg border border-[#D0D5DD] bg-white px-3 text-sm text-[#111827]"
-          >
-            <option value="month">Month</option>
-            <option value="custom">Custom range</option>
-          </select>
-        </label>
-        <label className="grid gap-1 text-xs font-medium text-[#475467]">
-          Month
-          <select
-            name="cmonth"
-            defaultValue={String(parsedClientMonth)}
-            className="h-10 rounded-lg border border-[#D0D5DD] bg-white px-3 text-sm text-[#111827]"
-          >
-            {clientMonthOptions.map((month) => (
-              <option key={month.value} value={month.value}>
-                {month.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="grid gap-1 text-xs font-medium text-[#475467]">
-          Year
-          <select
-            name="cyear"
-            defaultValue={String(parsedClientYear)}
-            className="h-10 rounded-lg border border-[#D0D5DD] bg-white px-3 text-sm text-[#111827]"
-          >
-            {clientYearOptions.map((year) => (
-              <option key={year} value={year}>
-                {year}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="grid gap-1 text-xs font-medium text-[#475467]">
-          From
-          <input
-            type="date"
-            name="cfrom"
-            defaultValue={customFrom}
-            className="h-10 rounded-lg border border-[#D0D5DD] bg-white px-3 text-sm text-[#111827]"
-          />
-        </label>
-        <label className="grid gap-1 text-xs font-medium text-[#475467]">
-          To
-          <input
-            type="date"
-            name="cto"
-            defaultValue={customTo}
-            className="h-10 rounded-lg border border-[#D0D5DD] bg-white px-3 text-sm text-[#111827]"
-          />
-        </label>
-        <div className="md:col-span-5 flex items-center justify-end gap-2">
-          <a
-            href={makeClientAnalyticsHref({
-              mode: "month",
-              month: String(new Date().getMonth() + 1),
-              year: String(new Date().getFullYear()),
-            })}
-            className="rounded-lg border border-[#D0D5DD] px-3 py-2 text-sm font-medium text-[#344054]"
-          >
-            Current month
-          </a>
-          <button
-            type="submit"
-            className="rounded-lg bg-[var(--brand-600)] px-3 py-2 text-sm font-semibold text-white"
-          >
-            Apply
-          </button>
-        </div>
-      </form>
-    </div>
+    <ClientPeriodForm
+      phoneRaw={phoneRaw}
+      tab={analyticsView === "clients" ? "clients" : "client-managers"}
+      initialMode={clientMode}
+      parsedClientMonth={parsedClientMonth}
+      parsedClientYear={parsedClientYear}
+      clientMonthOptions={clientMonthOptions}
+      clientYearOptions={clientYearOptions}
+      customFrom={customFrom}
+      customTo={customTo}
+      clientRangeLabel={clientRangeLabel}
+      currentMonthHref={makeClientAnalyticsHref({
+        mode: "month",
+        month: String(new Date().getMonth() + 1),
+        year: String(new Date().getFullYear()),
+      })}
+    />
   );
 
   const renderClientManagersAnalytics = (): ReactNode => {
@@ -770,12 +860,20 @@ export default async function OwnerAnalyticsPage({
         {renderClientPeriodControls()}
         <div className="grid gap-3 md:grid-cols-4">
           <div className="rounded-xl border border-[#E5E7EB] bg-white p-4">
-            <div className="text-xs font-medium text-[#667085]">Managers with clients</div>
-            <div className="mt-1 text-xl font-semibold text-[#111827]">{managersWithClients}</div>
+            <div className="text-xs font-medium text-[#667085]">
+              Managers with clients
+            </div>
+            <div className="mt-1 text-xl font-semibold text-[#111827]">
+              {managersWithClients}
+            </div>
           </div>
           <div className="rounded-xl border border-[#E5E7EB] bg-white p-4">
-            <div className="text-xs font-medium text-[#667085]">Total assigned clients</div>
-            <div className="mt-1 text-xl font-semibold text-[#111827]">{totalClientsCount}</div>
+            <div className="text-xs font-medium text-[#667085]">
+              Total assigned clients
+            </div>
+            <div className="mt-1 text-xl font-semibold text-[#111827]">
+              {totalClientsCount}
+            </div>
           </div>
           <div className="rounded-xl border border-[#E5E7EB] bg-white p-4">
             <div className="text-xs font-medium text-[#667085]">Turnover</div>
@@ -784,7 +882,9 @@ export default async function OwnerAnalyticsPage({
             </div>
           </div>
           <div className="rounded-xl border border-[#E5E7EB] bg-white p-4">
-            <div className="text-xs font-medium text-[#667085]">Average order value</div>
+            <div className="text-xs font-medium text-[#667085]">
+              Average order value
+            </div>
             <div className="mt-1 text-xl font-semibold text-[#111827]">
               {formatMoney(clientAverageOrderValue)}
             </div>
@@ -807,19 +907,37 @@ export default async function OwnerAnalyticsPage({
               <tbody>
                 {managersSorted.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-4 py-8 text-center text-[#667085]">
+                    <td
+                      colSpan={7}
+                      className="px-4 py-8 text-center text-[#667085]"
+                    >
                       No manager/client data for selected period.
                     </td>
                   </tr>
                 ) : (
                   managersSorted.map((entry) => (
-                    <tr key={entry.managerId} className="border-t border-[#E5E7EB]">
-                      <td className="px-4 py-3 font-medium text-[#111827]">{entry.managerName}</td>
-                      <td className="px-4 py-3 text-[#111827]">{entry.totalClients}</td>
-                      <td className="px-4 py-3 text-[#111827]">{entry.individualClients}</td>
-                      <td className="px-4 py-3 text-[#111827]">{entry.companyClients}</td>
-                      <td className="px-4 py-3 text-[#111827]">{entry.ordersCount}</td>
-                      <td className="px-4 py-3 text-[#111827]">{formatMoney(entry.turnover)}</td>
+                    <tr
+                      key={entry.managerId}
+                      className="border-t border-[#E5E7EB]"
+                    >
+                      <td className="px-4 py-3 font-medium text-[#111827]">
+                        {entry.managerName}
+                      </td>
+                      <td className="px-4 py-3 text-[#111827]">
+                        {entry.totalClients}
+                      </td>
+                      <td className="px-4 py-3 text-[#111827]">
+                        {entry.individualClients}
+                      </td>
+                      <td className="px-4 py-3 text-[#111827]">
+                        {entry.companyClients}
+                      </td>
+                      <td className="px-4 py-3 text-[#111827]">
+                        {entry.ordersCount}
+                      </td>
+                      <td className="px-4 py-3 text-[#111827]">
+                        {formatMoney(entry.turnover)}
+                      </td>
                       <td className="px-4 py-3 text-[#111827]">
                         {formatMoney(entry.averageCheck)}
                       </td>
@@ -843,16 +961,24 @@ export default async function OwnerAnalyticsPage({
         {renderClientPeriodControls()}
         <div className="grid gap-3 md:grid-cols-5">
           <div className="rounded-xl border border-[#E5E7EB] bg-white p-4">
-            <div className="text-xs font-medium text-[#667085]">Total clients</div>
-            <div className="mt-1 text-xl font-semibold text-[#111827]">{totalClientsCount}</div>
+            <div className="text-xs font-medium text-[#667085]">
+              Total clients
+            </div>
+            <div className="mt-1 text-xl font-semibold text-[#111827]">
+              {totalClientsCount}
+            </div>
           </div>
           <div className="rounded-xl border border-[#E5E7EB] bg-white p-4">
             <div className="text-xs font-medium text-[#667085]">Individual</div>
-            <div className="mt-1 text-xl font-semibold text-[#111827]">{totalIndividualCount}</div>
+            <div className="mt-1 text-xl font-semibold text-[#111827]">
+              {totalIndividualCount}
+            </div>
           </div>
           <div className="rounded-xl border border-[#E5E7EB] bg-white p-4">
             <div className="text-xs font-medium text-[#667085]">Company</div>
-            <div className="mt-1 text-xl font-semibold text-[#111827]">{totalCompanyCount}</div>
+            <div className="mt-1 text-xl font-semibold text-[#111827]">
+              {totalCompanyCount}
+            </div>
           </div>
           <div className="rounded-xl border border-[#E5E7EB] bg-white p-4">
             <div className="text-xs font-medium text-[#667085]">Turnover</div>
@@ -861,7 +987,9 @@ export default async function OwnerAnalyticsPage({
             </div>
           </div>
           <div className="rounded-xl border border-[#E5E7EB] bg-white p-4">
-            <div className="text-xs font-medium text-[#667085]">Average order value</div>
+            <div className="text-xs font-medium text-[#667085]">
+              Average order value
+            </div>
             <div className="mt-1 text-xl font-semibold text-[#111827]">
               {formatMoney(clientAverageOrderValue)}
             </div>
@@ -870,7 +998,9 @@ export default async function OwnerAnalyticsPage({
 
         <div className="grid gap-4 lg:grid-cols-2">
           <div className="rounded-xl border border-[#E5E7EB] bg-white p-4">
-            <h3 className="text-sm font-semibold text-[#111827]">Client type distribution</h3>
+            <h3 className="text-sm font-semibold text-[#111827]">
+              Client type distribution
+            </h3>
             <div className="mt-4 space-y-3 text-sm">
               <div>
                 <div className="mb-1 flex items-center justify-between text-[#475467]">
@@ -903,10 +1033,14 @@ export default async function OwnerAnalyticsPage({
             </div>
           </div>
           <div className="rounded-xl border border-[#E5E7EB] bg-white p-4">
-            <h3 className="text-sm font-semibold text-[#111827]">Top clients by turnover</h3>
+            <h3 className="text-sm font-semibold text-[#111827]">
+              Top clients by turnover
+            </h3>
             <div className="mt-3 space-y-2">
               {topClients.length === 0 ? (
-                <div className="text-sm text-[#667085]">No data for selected period.</div>
+                <div className="text-sm text-[#667085]">
+                  No data for selected period.
+                </div>
               ) : (
                 topClients.map((client, index) => (
                   <div
@@ -917,7 +1051,9 @@ export default async function OwnerAnalyticsPage({
                       <div className="truncate text-sm font-medium text-[#111827]">
                         {index + 1}. {client.displayName}
                       </div>
-                      <div className="text-xs text-[#667085]">{client.managerName}</div>
+                      <div className="text-xs text-[#667085]">
+                        {client.managerName}
+                      </div>
                     </div>
                     <div className="text-sm font-semibold text-[#111827]">
                       {formatMoney(client.turnover)}
@@ -948,24 +1084,37 @@ export default async function OwnerAnalyticsPage({
                   .sort((a, b) => b.turnover - a.turnover)
                   .map((entry) => (
                     <tr key={entry.id} className="border-t border-[#E5E7EB]">
-                      <td className="px-4 py-3 font-medium text-[#111827]">{entry.displayName}</td>
+                      <td className="px-4 py-3 font-medium text-[#111827]">
+                        {entry.displayName}
+                      </td>
                       <td className="px-4 py-3 text-[#111827]">
                         {entry.type === "company" ? "Company" : "Individual"}
                       </td>
-                      <td className="px-4 py-3 text-[#111827]">{entry.managerName}</td>
-                      <td className="px-4 py-3 text-[#111827]">{entry.ordersCount}</td>
-                      <td className="px-4 py-3 text-[#111827]">{formatMoney(entry.turnover)}</td>
+                      <td className="px-4 py-3 text-[#111827]">
+                        {entry.managerName}
+                      </td>
+                      <td className="px-4 py-3 text-[#111827]">
+                        {entry.ordersCount}
+                      </td>
+                      <td className="px-4 py-3 text-[#111827]">
+                        {formatMoney(entry.turnover)}
+                      </td>
                       <td className="px-4 py-3 text-[#111827]">
                         {formatMoney(entry.averageCheck)}
                       </td>
                       <td className="px-4 py-3 text-[#111827]">
-                        {entry.lastOrderDate ? formatDate(entry.lastOrderDate) : "-"}
+                        {entry.lastOrderDate
+                          ? formatDate(entry.lastOrderDate)
+                          : "-"}
                       </td>
                     </tr>
                   ))}
                 {clientMetrics.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-4 py-8 text-center text-[#667085]">
+                    <td
+                      colSpan={7}
+                      className="px-4 py-8 text-center text-[#667085]"
+                    >
                       No client data for selected period.
                     </td>
                   </tr>
@@ -1046,67 +1195,70 @@ export default async function OwnerAnalyticsPage({
                 </a>
               ))}
             </div>
-            {analyticsView === "clientManagers"
-              ? renderClientManagersAnalytics()
-              : analyticsView === "clients"
-                ? renderClientsAnalytics()
-                : (
-                    <OwnerAnalyticsPanel
-                      data={analyticsData}
-                      businessSlug={slug}
-                      phoneRaw={phoneRaw}
-                      view={oldAnalyticsView}
-                      managerBaseHref={managerBaseHref}
-                      reportFilter={{
-                        fromDate: reportFromDate,
-                        toDate: reportToDate,
-                        managerId: reportManagerId,
-                      }}
-                      productivityHrefs={{
-                        day: makeProductivityHref("day"),
-                        week: makeProductivityHref("week"),
-                        month: makeProductivityHref("month"),
-                      }}
-                      salesFilter={{
-                        month: salesMonth,
-                        managerId: salesManagerId,
-                      }}
-                      salesPlanEditor={{
-                        businessId: String(currentBusiness.id),
-                        selectedMonthStart: selectedSalesMonth,
-                        sections: [
-                          {
-                            key: "current",
-                            label: "This month plan",
-                            monthStart: currentMonthStart,
-                            returnHref: (() => {
-                              const params = new URLSearchParams();
-                              if (phoneRaw) params.set("u", phoneRaw);
-                              params.set("tab", "sales");
-                              params.set("smonth", currentMonthStart);
-                              if (salesManagerId) params.set("smanager", salesManagerId);
-                              return `/b/${slug}/analytics?${params.toString()}`;
-                            })(),
-                            participants: buildParticipantsForMonth(currentMonthStart),
-                          },
-                          {
-                            key: "next",
-                            label: "Next month plan",
-                            monthStart: nextMonthStart,
-                            returnHref: (() => {
-                              const params = new URLSearchParams();
-                              if (phoneRaw) params.set("u", phoneRaw);
-                              params.set("tab", "sales");
-                              params.set("smonth", nextMonthStart);
-                              if (salesManagerId) params.set("smanager", salesManagerId);
-                              return `/b/${slug}/analytics?${params.toString()}`;
-                            })(),
-                            participants: buildParticipantsForMonth(nextMonthStart),
-                          },
-                        ],
-                      }}
-                    />
-                  )}
+            {analyticsView === "clientManagers" ? (
+              renderClientManagersAnalytics()
+            ) : analyticsView === "clients" ? (
+              renderClientsAnalytics()
+            ) : (
+              <OwnerAnalyticsPanel
+                data={analyticsData}
+                businessSlug={slug}
+                phoneRaw={phoneRaw}
+                view={oldAnalyticsView}
+                managerBaseHref={managerBaseHref}
+                reportFilter={{
+                  fromDate: reportFromDate,
+                  toDate: reportToDate,
+                  managerId: reportManagerId,
+                }}
+                productivityHrefs={{
+                  day: makeProductivityHref("day"),
+                  week: makeProductivityHref("week"),
+                  month: makeProductivityHref("month"),
+                }}
+                salesFilter={{
+                  month: salesMonth,
+                  managerId: salesManagerId,
+                }}
+                salesPlanEditor={{
+                  businessId: String(currentBusiness.id),
+                  selectedMonthStart: selectedSalesMonth,
+                  sections: [
+                    {
+                      key: "current",
+                      label: "This month plan",
+                      monthStart: currentMonthStart,
+                      returnHref: (() => {
+                        const params = new URLSearchParams();
+                        if (phoneRaw) params.set("u", phoneRaw);
+                        params.set("tab", "sales");
+                        params.set("smonth", currentMonthStart);
+                        if (salesManagerId)
+                          params.set("smanager", salesManagerId);
+                        return `/b/${slug}/analytics?${params.toString()}`;
+                      })(),
+                      participants:
+                        buildParticipantsForMonth(currentMonthStart),
+                    },
+                    {
+                      key: "next",
+                      label: "Next month plan",
+                      monthStart: nextMonthStart,
+                      returnHref: (() => {
+                        const params = new URLSearchParams();
+                        if (phoneRaw) params.set("u", phoneRaw);
+                        params.set("tab", "sales");
+                        params.set("smonth", nextMonthStart);
+                        if (salesManagerId)
+                          params.set("smanager", salesManagerId);
+                        return `/b/${slug}/analytics?${params.toString()}`;
+                      })(),
+                      participants: buildParticipantsForMonth(nextMonthStart),
+                    },
+                  ],
+                }}
+              />
+            )}
           </div>
         </div>
 
@@ -1127,67 +1279,69 @@ export default async function OwnerAnalyticsPage({
               </a>
             ))}
           </div>
-          {analyticsView === "clientManagers"
-            ? renderClientManagersAnalytics()
-            : analyticsView === "clients"
-              ? renderClientsAnalytics()
-              : (
-                  <OwnerAnalyticsPanel
-                    data={analyticsData}
-                    businessSlug={slug}
-                    phoneRaw={phoneRaw}
-                    view={oldAnalyticsView}
-                    managerBaseHref={managerBaseHref}
-                    reportFilter={{
-                      fromDate: reportFromDate,
-                      toDate: reportToDate,
-                      managerId: reportManagerId,
-                    }}
-                    productivityHrefs={{
-                      day: makeProductivityHref("day"),
-                      week: makeProductivityHref("week"),
-                      month: makeProductivityHref("month"),
-                    }}
-                    salesFilter={{
-                      month: salesMonth,
-                      managerId: salesManagerId,
-                    }}
-                    salesPlanEditor={{
-                      businessId: String(currentBusiness.id),
-                      selectedMonthStart: selectedSalesMonth,
-                      sections: [
-                        {
-                          key: "current",
-                          label: "This month plan",
-                          monthStart: currentMonthStart,
-                          returnHref: (() => {
-                            const params = new URLSearchParams();
-                            if (phoneRaw) params.set("u", phoneRaw);
-                            params.set("tab", "sales");
-                            params.set("smonth", currentMonthStart);
-                            if (salesManagerId) params.set("smanager", salesManagerId);
-                            return `/b/${slug}/analytics?${params.toString()}`;
-                          })(),
-                          participants: buildParticipantsForMonth(currentMonthStart),
-                        },
-                        {
-                          key: "next",
-                          label: "Next month plan",
-                          monthStart: nextMonthStart,
-                          returnHref: (() => {
-                            const params = new URLSearchParams();
-                            if (phoneRaw) params.set("u", phoneRaw);
-                            params.set("tab", "sales");
-                            params.set("smonth", nextMonthStart);
-                            if (salesManagerId) params.set("smanager", salesManagerId);
-                            return `/b/${slug}/analytics?${params.toString()}`;
-                          })(),
-                          participants: buildParticipantsForMonth(nextMonthStart),
-                        },
-                      ],
-                    }}
-                  />
-                )}
+          {analyticsView === "clientManagers" ? (
+            renderClientManagersAnalytics()
+          ) : analyticsView === "clients" ? (
+            renderClientsAnalytics()
+          ) : (
+            <OwnerAnalyticsPanel
+              data={analyticsData}
+              businessSlug={slug}
+              phoneRaw={phoneRaw}
+              view={oldAnalyticsView}
+              managerBaseHref={managerBaseHref}
+              reportFilter={{
+                fromDate: reportFromDate,
+                toDate: reportToDate,
+                managerId: reportManagerId,
+              }}
+              productivityHrefs={{
+                day: makeProductivityHref("day"),
+                week: makeProductivityHref("week"),
+                month: makeProductivityHref("month"),
+              }}
+              salesFilter={{
+                month: salesMonth,
+                managerId: salesManagerId,
+              }}
+              salesPlanEditor={{
+                businessId: String(currentBusiness.id),
+                selectedMonthStart: selectedSalesMonth,
+                sections: [
+                  {
+                    key: "current",
+                    label: "This month plan",
+                    monthStart: currentMonthStart,
+                    returnHref: (() => {
+                      const params = new URLSearchParams();
+                      if (phoneRaw) params.set("u", phoneRaw);
+                      params.set("tab", "sales");
+                      params.set("smonth", currentMonthStart);
+                      if (salesManagerId)
+                        params.set("smanager", salesManagerId);
+                      return `/b/${slug}/analytics?${params.toString()}`;
+                    })(),
+                    participants: buildParticipantsForMonth(currentMonthStart),
+                  },
+                  {
+                    key: "next",
+                    label: "Next month plan",
+                    monthStart: nextMonthStart,
+                    returnHref: (() => {
+                      const params = new URLSearchParams();
+                      if (phoneRaw) params.set("u", phoneRaw);
+                      params.set("tab", "sales");
+                      params.set("smonth", nextMonthStart);
+                      if (salesManagerId)
+                        params.set("smanager", salesManagerId);
+                      return `/b/${slug}/analytics?${params.toString()}`;
+                    })(),
+                    participants: buildParticipantsForMonth(nextMonthStart),
+                  },
+                ],
+              }}
+            />
+          )}
         </div>
       </main>
     </div>
