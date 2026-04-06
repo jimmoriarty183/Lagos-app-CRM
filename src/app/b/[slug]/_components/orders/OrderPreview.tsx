@@ -44,6 +44,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import { ClientErrorBoundary } from "@/components/ui/client-error-boundary";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -1370,16 +1371,24 @@ export function OrderPreview({
             </div>
             <ScrollArea className="min-h-0 flex-1">
               <div className="space-y-4 px-5 py-5 sm:px-6">
-                <ClientOrderForm
-                  businessId={businessId}
-                  businessSlug={businessSlug}
-                  actors={managerOptions}
-                  compact
-                  onCreated={() => {
-                    router.refresh();
-                    onClose();
-                  }}
-                />
+                <ClientErrorBoundary
+                  fallback={
+                    <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+                      Create order form failed to render. Please reload the page.
+                    </div>
+                  }
+                >
+                  <ClientOrderForm
+                    businessId={businessId}
+                    businessSlug={businessSlug}
+                    actors={managerOptions}
+                    compact
+                    onCreated={() => {
+                      router.refresh();
+                      onClose();
+                    }}
+                  />
+                </ClientErrorBoundary>
               </div>
             </ScrollArea>
           </div>
