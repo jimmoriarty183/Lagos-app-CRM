@@ -70,6 +70,8 @@ type Props = {
   onCreated?: () => void;
 };
 
+const LIVE_DUPLICATE_CHECK_ENABLED = false;
+
 function cleanText(value: unknown) {
   return String(value ?? "").trim();
 }
@@ -212,6 +214,13 @@ export function ClientOrderForm({ businessId, businessSlug, actors = [], compact
   }, [clientType, company.email, company.phone, company.registrationNumber, company.vatNumber, individual.email, individual.inn, individual.phone]);
 
   React.useEffect(() => {
+    if (!LIVE_DUPLICATE_CHECK_ENABLED) {
+      setIsMatching(false);
+      setMatchResult(null);
+      setSelectedExistingClientId("");
+      return;
+    }
+
     const controller = new AbortController();
     const timeout = window.setTimeout(async () => {
       if (!strongSignalsForMatch) {
@@ -449,7 +458,11 @@ export function ClientOrderForm({ businessId, businessSlug, actors = [], compact
         <div className="flex items-center justify-between gap-3">
           <div>
             <div className="text-sm font-semibold text-[#111827]">Duplicate check</div>
-            <div className="text-xs text-[#667085]">Live lookup by strong identifiers</div>
+            <div className="text-xs text-[#667085]">
+              {LIVE_DUPLICATE_CHECK_ENABLED
+                ? "Live lookup by strong identifiers"
+                : "Temporarily disabled for stability"}
+            </div>
           </div>
           {isMatching ? <div className="text-xs font-medium text-[#667085]">Checking…</div> : null}
         </div>
