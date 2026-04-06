@@ -133,6 +133,23 @@ type OverviewAttachmentRow = {
   created_at: string | null;
 };
 
+function normalizeActors(input: TeamActor[]): TeamActor[] {
+  const map = new Map<string, TeamActor>();
+  for (const actor of Array.isArray(input) ? input : []) {
+    const id = String(actor?.id ?? "").trim();
+    if (!id) continue;
+    const label = String(actor?.label ?? "").trim() || "No name";
+    const kind = actor?.kind === "OWNER" ? "OWNER" : "MANAGER";
+    map.set(id, {
+      id,
+      label,
+      kind,
+      avatar_url: actor?.avatar_url ?? null,
+    });
+  }
+  return Array.from(map.values()).sort((a, b) => a.label.localeCompare(b.label));
+}
+
 function getSuggestedLabelsStorageKey(businessId: string) {
   return `order-label-suggestions:${businessId}`;
 }
@@ -1065,10 +1082,7 @@ export function OrderPreview({
     full_name: previewOrder?.client_full_name,
   });
   const displayName = client.fullName;
-  const managerOptions = React.useMemo(
-    () => actors.slice().sort((a, b) => a.label.localeCompare(b.label)),
-    [actors],
-  );
+  const managerOptions = React.useMemo(() => normalizeActors(actors), [actors]);
 
   React.useEffect(() => {
     setDraft({

@@ -88,7 +88,27 @@ function stateBadgeText(state: MatchResponse["state"]) {
   return "No existing client found";
 }
 
+function normalizeActors(input: TeamActor[] | undefined): TeamActor[] {
+  const source = Array.isArray(input) ? input : [];
+  const map = new Map<string, TeamActor>();
+
+  for (const actor of source) {
+    const id = cleanText((actor as TeamActor | null | undefined)?.id);
+    if (!id) continue;
+    const label = cleanText((actor as TeamActor | null | undefined)?.label) || "No name";
+    const kind = actor?.kind === "OWNER" ? "OWNER" : "MANAGER";
+    map.set(id, {
+      id,
+      label,
+      kind,
+    });
+  }
+
+  return Array.from(map.values()).sort((a, b) => a.label.localeCompare(b.label));
+}
+
 export function ClientOrderForm({ businessId, businessSlug, actors = [], compact = false, onCreated }: Props) {
+  const normalizedActors = React.useMemo(() => normalizeActors(actors), [actors]);
   const [clientType, setClientType] = React.useState<"individual" | "company">("individual");
   const [pendingType, setPendingType] = React.useState<"individual" | "company" | null>(null);
   const [typeSwitchDialogOpen, setTypeSwitchDialogOpen] = React.useState(false);
@@ -96,7 +116,7 @@ export function ClientOrderForm({ businessId, businessSlug, actors = [], compact
   const [isMatching, setIsMatching] = React.useState(false);
   const [errorText, setErrorText] = React.useState<string | null>(null);
   const [validationErrors, setValidationErrors] = React.useState<Record<string, string>>({});
-  const [managerOptions, setManagerOptions] = React.useState<TeamActor[]>(actors);
+  const [managerOptions, setManagerOptions] = React.useState<TeamActor[]>(normalizedActors);
   const [matchResult, setMatchResult] = React.useState<MatchResponse | null>(null);
   const [selectedExistingClientId, setSelectedExistingClientId] = React.useState<string>("");
 
@@ -137,8 +157,8 @@ export function ClientOrderForm({ businessId, businessSlug, actors = [], compact
   const contactRoleOptions = ["Accountant", "Director", "Procurement", "Manager", "Logistics", "Owner", "Other"];
 
   React.useEffect(() => {
-    if (actors.length > 0) {
-      setManagerOptions(actors.slice().sort((a, b) => a.label.localeCompare(b.label)));
+    if (normalizedActors.length > 0) {
+      setManagerOptions(normalizedActors);
       return;
     }
     let alive = true;
@@ -177,7 +197,7 @@ export function ClientOrderForm({ businessId, businessSlug, actors = [], compact
     return () => {
       alive = false;
     };
-  }, [actors, businessId]);
+  }, [businessId, normalizedActors]);
 
   const strongSignalsForMatch = React.useMemo(() => {
     if (clientType === "individual") {
