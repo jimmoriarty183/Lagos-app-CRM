@@ -3,7 +3,6 @@
 import * as React from "react";
 import { AlertCircle, Building2, UserRound } from "lucide-react";
 import { createOrderFromClientPayload, type CreateOrderClientPayloadInput } from "@/app/b/[slug]/actions";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 
 type TeamActor = {
@@ -112,8 +111,6 @@ function normalizeActors(input: TeamActor[] | undefined): TeamActor[] {
 export function ClientOrderForm({ businessId, businessSlug, actors = [], compact = false, onCreated }: Props) {
   const normalizedActors = React.useMemo(() => normalizeActors(actors), [actors]);
   const [clientType, setClientType] = React.useState<"individual" | "company">("individual");
-  const [pendingType, setPendingType] = React.useState<"individual" | "company" | null>(null);
-  const [typeSwitchDialogOpen, setTypeSwitchDialogOpen] = React.useState(false);
   const [isSaving, startSaving] = React.useTransition();
   const [isMatching, setIsMatching] = React.useState(false);
   const [errorText, setErrorText] = React.useState<string | null>(null);
@@ -303,60 +300,12 @@ export function ClientOrderForm({ businessId, businessSlug, actors = [], compact
     strongSignalsForMatch,
   ]);
 
-  function requestTypeSwitch(nextType: "individual" | "company") {
+  function switchClientType(nextType: "individual" | "company") {
     if (nextType === clientType) return;
-    setPendingType(nextType);
-    setTypeSwitchDialogOpen(true);
-  }
-
-  function applyTypeSwitch(keepData: boolean) {
-    const target = pendingType;
-    setTypeSwitchDialogOpen(false);
-    setPendingType(null);
-    if (!target) return;
-
-    if (!keepData) {
-      if (target === "individual") {
-        setIndividual({
-          firstName: "",
-          lastName: "",
-          phone: "",
-          email: "",
-          address: "",
-          postcode: "",
-          inn: "",
-        });
-      } else {
-        setContact({
-          firstName: "",
-          lastName: "",
-          email: "",
-          phone: "",
-          jobTitle: "",
-          isPrimary: true,
-        });
-      }
-    } else if (clientType === "individual" && target === "company") {
-      setContact((prev) => ({
-        ...prev,
-        firstName: prev.firstName || individual.firstName,
-        lastName: prev.lastName || individual.lastName,
-        email: prev.email || individual.email,
-        phone: prev.phone || individual.phone,
-      }));
-    } else if (clientType === "company" && target === "individual") {
-      setIndividual((prev) => ({
-        ...prev,
-        firstName: prev.firstName || contact.firstName,
-        lastName: prev.lastName || contact.lastName,
-        email: prev.email || contact.email,
-        phone: prev.phone || contact.phone,
-      }));
-    }
-
     setMatchResult(null);
     setSelectedExistingClientId("");
-    setClientType(target);
+    setValidationErrors({});
+    setClientType(nextType);
   }
 
   function validateForm() {
@@ -427,7 +376,7 @@ export function ClientOrderForm({ businessId, businessSlug, actors = [], compact
         <div className="mt-2 grid grid-cols-2 gap-2">
           <button
             type="button"
-            onClick={() => requestTypeSwitch("individual")}
+            onClick={() => switchClientType("individual")}
             className={[
               "inline-flex h-10 items-center justify-center gap-2 rounded-xl border text-sm font-semibold transition",
               clientType === "individual"
@@ -440,7 +389,7 @@ export function ClientOrderForm({ businessId, businessSlug, actors = [], compact
           </button>
           <button
             type="button"
-            onClick={() => requestTypeSwitch("company")}
+            onClick={() => switchClientType("company")}
             className={[
               "inline-flex h-10 items-center justify-center gap-2 rounded-xl border text-sm font-semibold transition",
               clientType === "company"
@@ -662,20 +611,6 @@ export function ClientOrderForm({ businessId, businessSlug, actors = [], compact
         </Button>
       </div>
 
-      <AlertDialog open={typeSwitchDialogOpen} onOpenChange={setTypeSwitchDialogOpen}>
-        <AlertDialogContent className="rounded-2xl border-[#E5E7EB]">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Switch client type?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Existing contact fields can be mapped to the target type. Choose whether to preserve mapped data.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => applyTypeSwitch(false)}>Switch and clear</AlertDialogCancel>
-            <AlertDialogAction onClick={() => applyTypeSwitch(true)}>Switch and keep mapped data</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }
