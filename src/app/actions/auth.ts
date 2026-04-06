@@ -21,6 +21,21 @@ function isMissingColumnError(message: string) {
   return lowered.includes("column") && (lowered.includes("does not exist") || lowered.includes("schema cache"));
 }
 
+function isConfirmationEmailDeliveryError(message: string) {
+  const lowered = message.toLowerCase();
+  return (
+    lowered.includes("error sending confirmation email") ||
+    (lowered.includes("confirmation") &&
+      lowered.includes("email") &&
+      lowered.includes("error sending"))
+  );
+}
+
+function isEmailNotConfirmedError(message: string) {
+  const lowered = message.toLowerCase();
+  return lowered.includes("email not confirmed") || lowered.includes("email_not_confirmed");
+}
+
 function isDuplicateValueError(message: string) {
   const lowered = message.toLowerCase();
   return (
@@ -36,20 +51,6 @@ function isBrokenRpcTriggerError(message: string) {
   return lowered.includes("record \"new\" has no field \"business_id\"");
 }
 
-function isConfirmationEmailDeliveryError(message: string) {
-  const lowered = message.toLowerCase();
-  return (
-    lowered.includes("error sending confirmation email") ||
-    (lowered.includes("confirmation") &&
-      lowered.includes("email") &&
-      lowered.includes("error sending"))
-  );
-}
-
-function isEmailNotConfirmedError(message: string) {
-  const lowered = message.toLowerCase();
-  return lowered.includes("email not confirmed") || lowered.includes("email_not_confirmed");
-}
 
 // ✅ генерация slug из названия
 function slugify(input: string) {
@@ -312,12 +313,41 @@ export async function registerOwnerAction(
     const fullName = `${firstName} ${lastName}`.trim();
 
     const supabase = await supabaseServer();
+    const h = await headers();
+    const origin =
+      h.get("origin") ||
+      (() => {
+        const proto = h.get("x-forwarded-proto");
+        const host = h.get("x-forwarded-host");
+        if (!proto || !host) return "";
+        return `${proto}://${host}`;
+      })();
+    const redirectBase =
+      origin ||
+      process.env.NEXT_PUBLIC_SITE_URL ||
+      process.env.NEXT_PUBLIC_APP_URL ||
+      "";
+    const emailRedirectTo = (() => {
+      if (!redirectBase) return undefined;
+      try {
+        return new URL("/auth/callback", redirectBase).toString();
+      } catch {
+        return undefined;
+      }
+    })();
+
+    const signUpOptions: {
+      data: { first_name: string; last_name: string; full_name: string };
+      emailRedirectTo?: string;
+    } = {
+      data: { first_name: firstName, last_name: lastName, full_name: fullName },
+    };
+    if (emailRedirectTo) signUpOptions.emailRedirectTo = emailRedirectTo;
+
     const { error: signUpErr } = await supabase.auth.signUp({
       email,
       password,
-      options: {
-        data: { first_name: firstName, last_name: lastName, full_name: fullName },
-      },
+      options: signUpOptions,
     });
 
     if (signUpErr) {
