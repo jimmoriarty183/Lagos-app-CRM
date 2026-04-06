@@ -13,6 +13,8 @@ type ClientsPageSearchParams = {
   manager?: string;
   type?: string;
   u?: string;
+  page?: string;
+  perPage?: string;
 };
 
 type ClientRow = {
@@ -104,6 +106,30 @@ function normalizeTypeFilter(value: string | undefined) {
   return "all";
 }
 
+const PAGE_SIZE_OPTIONS = [20, 50, 100, 500] as const;
+
+function normalizePageSize(value: string | undefined) {
+  const parsed = Number.parseInt(String(value ?? ""), 10);
+  return PAGE_SIZE_OPTIONS.includes(
+    parsed as (typeof PAGE_SIZE_OPTIONS)[number],
+  )
+    ? parsed
+    : 20;
+}
+
+function normalizePageNumber(value: string | undefined) {
+  const parsed = Number.parseInt(String(value ?? ""), 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+}
+
+function logClientsQueryError(scope: string, error: unknown) {
+  const message =
+    error && typeof error === "object" && "message" in error
+      ? String((error as { message?: string }).message ?? "")
+      : String(error ?? "");
+  console.error(`[clients-page] ${scope} query failed`, { message });
+}
+
 export default async function ClientsPage({
   params,
   searchParams,
@@ -118,6 +144,8 @@ export default async function ClientsPage({
   const query = cleanText(sp?.q).toLowerCase();
   const managerFilter = normalizeManagerFilter(sp?.manager);
   const typeFilter = normalizeTypeFilter(sp?.type);
+  const perPage = normalizePageSize(sp?.perPage);
+  const requestedPage = normalizePageNumber(sp?.page);
   const phoneRaw = cleanText(sp?.u);
 
   const context = await getBusinessClientsContext(slug, `/b/${slug}/clients`);
@@ -138,59 +166,71 @@ export default async function ClientsPage({
   const todayHref = `/b/${slug}/today`;
   const settingsHref = `/b/${slug}/settings`;
   const supportHref = `/b/${slug}/support`;
-  const adminHref = isAdminEmail(context.user.email) ? getAdminUsersPath() : undefined;
+  const adminHref = isAdminEmail(context.user.email)
+    ? getAdminUsersPath()
+    : undefined;
 
   const { data: clientsData, error: clientsError } = await supabase
     .from("clients")
-    .select("id, business_id, client_type, display_name, primary_email, primary_phone, postcode, city, is_archived, created_at, updated_at")
+    .select(
+      "id, business_id, client_type, display_name, primary_email, primary_phone, postcode, city, is_archived, created_at, updated_at",
+    )
     .eq("business_id", context.business.id)
     .eq("is_archived", false)
     .order("updated_at", { ascending: false });
 
   if (clientsError) {
-    throw new Error(clientsError.message);
+    logClientsQueryError("clients", clientsError);
   }
 
   const clients = (clientsData ?? []) as ClientRow[];
   const clientIds = clients.map((row) => row.id);
 
-  const [individualProfilesRes, companyProfilesRes, assignmentsRes, membershipsRes] =
-    await Promise.all([
-      clientIds.length > 0
-        ? supabase
-            .from("client_individual_profiles")
-            .select("client_id, full_name, email, phone, postcode")
-            .in("client_id", clientIds)
-        : Promise.resolve({ data: [], error: null }),
-      clientIds.length > 0
-        ? supabase
-            .from("client_company_profiles")
-            .select("client_id, company_name, registration_number, vat_number, email, phone, postcode")
-            .in("client_id", clientIds)
-        : Promise.resolve({ data: [], error: null }),
-      clientIds.length > 0
-        ? supabase
-            .from("client_manager_assignments")
-            .select("client_id, manager_id, assigned_at")
-            .is("unassigned_at", null)
-            .in("client_id", clientIds)
-        : Promise.resolve({ data: [], error: null }),
-      supabase
-        .from("memberships")
-        .select("user_id, role")
-        .eq("business_id", context.business.id),
-    ]);
+  const [
+    individualProfilesRes,
+    companyProfilesRes,
+    assignmentsRes,
+    membershipsRes,
+  ] = await Promise.all([
+    clientIds.length > 0
+      ? supabase
+          .from("client_individual_profiles")
+          .select("client_id, full_name, email, phone, postcode")
+          .in("client_id", clientIds)
+      : Promise.resolve({ data: [], error: null }),
+    clientIds.length > 0
+      ? supabase
+          .from("client_company_profiles")
+          .select(
+            "client_id, company_name, registration_number, vat_number, email, phone, postcode",
+          )
+          .in("client_id", clientIds)
+      : Promise.resolve({ data: [], error: null }),
+    clientIds.length > 0
+      ? supabase
+          .from("client_manager_assignments")
+          .select("client_id, manager_id, assigned_at")
+          .is("unassigned_at", null)
+          .in("client_id", clientIds)
+      : Promise.resolve({ data: [], error: null }),
+    supabase
+      .from("memberships")
+      .select("user_id, role")
+      .eq("business_id", context.business.id),
+  ]);
 
-  if (individualProfilesRes.error) throw new Error(individualProfilesRes.error.message);
-  if (companyProfilesRes.error) throw new Error(companyProfilesRes.error.message);
-  if (assignmentsRes.error) throw new Error(assignmentsRes.error.message);
-  if (membershipsRes.error) throw new Error(membershipsRes.error.message);
+  if (individualProfilesRes.error)
+    logClientsQueryError("client_individual_profiles", individualProfilesRes.error);
+  if (companyProfilesRes.error)
+    logClientsQueryError("client_company_profiles", companyProfilesRes.error);
+  if (assignmentsRes.error)
+    logClientsQueryError("client_manager_assignments", assignmentsRes.error);
+  if (membershipsRes.error) logClientsQueryError("memberships", membershipsRes.error);
 
   const individualByClientId = new Map(
-    ((individualProfilesRes.data ?? []) as IndividualProfileRow[]).map((row) => [
-      row.client_id,
-      row,
-    ]),
+    ((individualProfilesRes.data ?? []) as IndividualProfileRow[]).map(
+      (row) => [row.client_id, row],
+    ),
   );
   const companyByClientId = new Map(
     ((companyProfilesRes.data ?? []) as CompanyProfileRow[]).map((row) => [
@@ -224,12 +264,13 @@ export default async function ClientsPage({
           .select("id, full_name, first_name, last_name, email")
           .in("id", managerIds)
       : { data: [], error: null };
-  if (managerProfilesError) throw new Error(managerProfilesError.message);
+  if (managerProfilesError) logClientsQueryError("profiles", managerProfilesError);
 
   const managerNameById = new Map(
     ((managerProfilesData ?? []) as ProfileRow[]).map((row) => {
       const fullName = cleanText(row.full_name);
-      const composed = `${cleanText(row.first_name)} ${cleanText(row.last_name)}`.trim();
+      const composed =
+        `${cleanText(row.first_name)} ${cleanText(row.last_name)}`.trim();
       const fallback = cleanText(row.email) || row.id;
       return [row.id, fullName || composed || fallback];
     }),
@@ -251,8 +292,8 @@ export default async function ClientsPage({
           .in("client_id", clientIds)
       : Promise.resolve({ data: [], error: null }),
   ]);
-  if (contactsRes.error) throw new Error(contactsRes.error.message);
-  if (orderLinksRes.error) throw new Error(orderLinksRes.error.message);
+  if (contactsRes.error) logClientsQueryError("client_contacts", contactsRes.error);
+  if (orderLinksRes.error) logClientsQueryError("orders", orderLinksRes.error);
 
   const contactCountByClientId = new Map<string, number>();
   for (const contact of (contactsRes.data ?? []) as ContactRow[]) {
@@ -270,8 +311,14 @@ export default async function ClientsPage({
     const clientId = cleanText(row.client_id);
     if (!clientId) continue;
     if (!isTurnoverEligibleStatus(cleanText(row.status))) continue;
-    ordersCountByClientId.set(clientId, (ordersCountByClientId.get(clientId) ?? 0) + 1);
-    turnoverByClientId.set(clientId, (turnoverByClientId.get(clientId) ?? 0) + Number(row.amount ?? 0));
+    ordersCountByClientId.set(
+      clientId,
+      (ordersCountByClientId.get(clientId) ?? 0) + 1,
+    );
+    turnoverByClientId.set(
+      clientId,
+      (turnoverByClientId.get(clientId) ?? 0) + Number(row.amount ?? 0),
+    );
 
     const createdAt = cleanText(row.created_at);
     if (!createdAt) continue;
@@ -285,85 +332,96 @@ export default async function ClientsPage({
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
   const thirtyDaysAgoIso = thirtyDaysAgo.toISOString();
 
-  const allRows = clients
-    .map((client) => {
-      const individual = individualByClientId.get(client.id) ?? null;
-      const company = companyByClientId.get(client.id) ?? null;
-      const assignment = currentAssignmentByClientId.get(client.id) ?? null;
-      const currentManagerId = cleanText(assignment?.manager_id) || null;
-      const currentManagerName = currentManagerId
-        ? managerNameById.get(currentManagerId) ?? currentManagerId
-        : null;
+  const allRows = clients.map((client) => {
+    const individual = individualByClientId.get(client.id) ?? null;
+    const company = companyByClientId.get(client.id) ?? null;
+    const assignment = currentAssignmentByClientId.get(client.id) ?? null;
+    const currentManagerId = cleanText(assignment?.manager_id) || null;
+    const currentManagerName = currentManagerId
+      ? (managerNameById.get(currentManagerId) ?? currentManagerId)
+      : null;
 
-      const resolvedName =
-        (client.client_type === "company"
-          ? cleanText(company?.company_name)
-          : cleanText(individual?.full_name)) || cleanText(client.display_name);
+    const resolvedName =
+      (client.client_type === "company"
+        ? cleanText(company?.company_name)
+        : cleanText(individual?.full_name)) || cleanText(client.display_name);
 
-      const resolvedEmail =
-        cleanText(individual?.email) ||
-        cleanText(company?.email) ||
-        cleanText(client.primary_email) ||
-        null;
-      const resolvedPhone =
-        cleanText(individual?.phone) ||
-        cleanText(company?.phone) ||
-        cleanText(client.primary_phone) ||
-        null;
-      const resolvedPostcode =
-        cleanText(individual?.postcode) ||
-        cleanText(company?.postcode) ||
-        cleanText(client.postcode) ||
-        null;
-      const searchBlob = [
-        resolvedName,
-        resolvedEmail,
-        resolvedPhone,
-        resolvedPostcode,
-        cleanText(company?.registration_number),
-        cleanText(company?.vat_number),
-        currentManagerName ?? "",
-      ]
-        .join(" ")
-        .toLowerCase();
+    const resolvedEmail =
+      cleanText(individual?.email) ||
+      cleanText(company?.email) ||
+      cleanText(client.primary_email) ||
+      null;
+    const resolvedPhone =
+      cleanText(individual?.phone) ||
+      cleanText(company?.phone) ||
+      cleanText(client.primary_phone) ||
+      null;
+    const resolvedPostcode =
+      cleanText(individual?.postcode) ||
+      cleanText(company?.postcode) ||
+      cleanText(client.postcode) ||
+      null;
+    const searchBlob = [
+      resolvedName,
+      resolvedEmail,
+      resolvedPhone,
+      resolvedPostcode,
+      cleanText(company?.registration_number),
+      cleanText(company?.vat_number),
+      currentManagerName ?? "",
+    ]
+      .join(" ")
+      .toLowerCase();
 
-      return {
-        ...client,
-        resolved_name: resolvedName || "Unnamed client",
-        resolved_email: resolvedEmail,
-        resolved_phone: resolvedPhone,
-        resolved_postcode: resolvedPostcode,
-        current_manager_id: currentManagerId,
-        current_manager_name: currentManagerName,
-        contacts_count: contactCountByClientId.get(client.id) ?? 0,
-        orders_count: ordersCountByClientId.get(client.id) ?? 0,
-        turnover_total: turnoverByClientId.get(client.id) ?? 0,
-        last_order_at: lastOrderAtByClientId.get(client.id) ?? null,
-        created_recently: cleanText(client.created_at) >= thirtyDaysAgoIso,
-        search_blob: searchBlob,
-      };
-    });
+    return {
+      ...client,
+      resolved_name: resolvedName || "Unnamed client",
+      resolved_email: resolvedEmail,
+      resolved_phone: resolvedPhone,
+      resolved_postcode: resolvedPostcode,
+      current_manager_id: currentManagerId,
+      current_manager_name: currentManagerName,
+      contacts_count:
+        (contactCountByClientId.get(client.id) ?? 0) +
+        (client.client_type === "individual" && (resolvedPhone || resolvedEmail)
+          ? 1
+          : 0),
+      orders_count: ordersCountByClientId.get(client.id) ?? 0,
+      turnover_total: turnoverByClientId.get(client.id) ?? 0,
+      last_order_at: lastOrderAtByClientId.get(client.id) ?? null,
+      created_recently: cleanText(client.created_at) >= thirtyDaysAgoIso,
+      search_blob: searchBlob,
+    };
+  });
 
   const scopedRows =
     context.role === "MANAGER"
       ? allRows.filter((row) => row.current_manager_id === context.user.id)
       : allRows;
 
-  const rows = scopedRows
-    .filter((row) => {
-      if (typeFilter !== "all" && row.client_type !== typeFilter) return false;
-      if (managerFilter.startsWith("user:")) {
-        const targetManagerId = managerFilter.slice(5);
-        if (row.current_manager_id !== targetManagerId) return false;
-      }
-      if (query && !row.search_blob.includes(query)) return false;
-      return true;
-    });
+  const filteredRows = scopedRows.filter((row) => {
+    if (typeFilter !== "all" && row.client_type !== typeFilter) return false;
+    if (managerFilter.startsWith("user:")) {
+      const targetManagerId = managerFilter.slice(5);
+      if (row.current_manager_id !== targetManagerId) return false;
+    }
+    if (query && !row.search_blob.includes(query)) return false;
+    return true;
+  });
 
-  const totalClients = rows.length;
-  const clientsWithOrders = rows.filter((row) => row.orders_count > 0).length;
-  const newLast30d = rows.filter((row) => row.created_recently).length;
-  const totalTurnover = rows.reduce((sum, row) => sum + Number(row.turnover_total ?? 0), 0);
+  const totalClients = filteredRows.length;
+  const clientsWithOrders = filteredRows.filter(
+    (row) => row.orders_count > 0,
+  ).length;
+  const newLast30d = filteredRows.filter((row) => row.created_recently).length;
+  const totalTurnover = filteredRows.reduce(
+    (sum, row) => sum + Number(row.turnover_total ?? 0),
+    0,
+  );
+  const totalPages = Math.max(1, Math.ceil(totalClients / perPage));
+  const currentPage = Math.min(requestedPage, totalPages);
+  const pageStart = (currentPage - 1) * perPage;
+  const rows = filteredRows.slice(pageStart, pageStart + perPage);
 
   const managerOptions = managerIds
     .map((id) => ({
@@ -397,7 +455,9 @@ export default async function ClientsPage({
         supportHref={supportHref}
         adminHref={adminHref}
         clearHref={clientsHref}
-        hasActiveFilters={Boolean(query) || managerFilter !== "all" || typeFilter !== "all"}
+        hasActiveFilters={
+          Boolean(query) || managerFilter !== "all" || typeFilter !== "all"
+        }
       />
 
       <main className="mx-auto max-w-[1220px] overflow-x-hidden px-4 pb-8 pt-20 sm:px-6">
@@ -438,24 +498,42 @@ export default async function ClientsPage({
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <div className="product-page-kicker">CRM Clients</div>
-                  <h1 className="product-page-title mt-1.5">Client Directory</h1>
+                  <h1 className="product-page-title mt-1.5">
+                    Client Directory
+                  </h1>
                   <p className="product-page-subtitle mt-1.5">
-                    Normalized clients with manager ownership and turnover visibility.
+                    Normalized clients with manager ownership and turnover
+                    visibility.
                   </p>
                 </div>
               </div>
 
               <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 <MetricCard label="Clients" value={String(totalClients)} />
-                <MetricCard label="With orders" value={String(clientsWithOrders)} />
+                <MetricCard
+                  label="With orders"
+                  value={String(clientsWithOrders)}
+                />
                 <MetricCard label="New (30d)" value={String(newLast30d)} />
                 <MetricCard
                   label="Total turnover"
-                  value={new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP", maximumFractionDigits: 0 }).format(totalTurnover)}
+                  value={new Intl.NumberFormat("en-GB", {
+                    style: "currency",
+                    currency: "GBP",
+                    maximumFractionDigits: 0,
+                  }).format(totalTurnover)}
                 />
               </div>
 
-              <form action={clientsHref} className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_220px_180px_auto]">
+              <form
+                action={clientsHref}
+                className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_220px_180px_auto]"
+              >
+                {phoneRaw ? (
+                  <input type="hidden" name="u" value={phoneRaw} />
+                ) : null}
+                <input type="hidden" name="page" value="1" />
+                <input type="hidden" name="perPage" value={String(perPage)} />
                 <input
                   type="text"
                   name="q"
@@ -488,13 +566,27 @@ export default async function ClientsPage({
                   <option value="individual">Individuals</option>
                   <option value="company">Companies</option>
                 </select>
-                <Button type="submit" className="h-10 rounded-xl px-4 text-sm font-semibold">
+                <Button
+                  type="submit"
+                  className="h-10 rounded-xl px-4 text-sm font-semibold"
+                >
                   Apply
                 </Button>
               </form>
             </div>
 
-            <ClientDirectoryList rows={rows} slug={slug} businessId={context.business.id} />
+            <ClientDirectoryList
+              rows={rows}
+              slug={slug}
+              businessId={context.business.id}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              perPage={perPage}
+              q={query}
+              manager={managerFilter}
+              type={typeFilter}
+              phoneRaw={phoneRaw}
+            />
           </section>
         </div>
 
@@ -506,7 +598,19 @@ export default async function ClientsPage({
               {totalClients} clients in current scope.
             </p>
           </section>
-          <ClientDirectoryList rows={rows} slug={slug} businessId={context.business.id} mobileOnly />
+          <ClientDirectoryList
+            rows={rows}
+            slug={slug}
+            businessId={context.business.id}
+            mobileOnly
+            currentPage={currentPage}
+            totalPages={totalPages}
+            perPage={perPage}
+            q={query}
+            manager={managerFilter}
+            type={typeFilter}
+            phoneRaw={phoneRaw}
+          />
         </div>
       </main>
     </div>
@@ -521,5 +625,3 @@ function MetricCard({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
-
-

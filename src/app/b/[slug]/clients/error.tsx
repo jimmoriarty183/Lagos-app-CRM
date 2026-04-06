@@ -48,8 +48,8 @@ export default function ClientsPageError({ error, reset }: ClientsPageErrorProps
       <EmptyState
         className="w-full rounded-[24px] border border-[#E5E7EB] bg-white p-8 shadow-[0_1px_2px_rgba(16,24,40,0.04)]"
         icon={<AlertIcon />}
-        title="Не удалось загрузить клиентов"
-        description="Произошла ошибка при открытии страницы. Попробуйте обновить данные или вернуться в CRM."
+        title="Unable to load clients"
+        description="Something went wrong while opening this page. Try reloading the data."
         action={
           <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
             <Button
@@ -57,14 +57,14 @@ export default function ClientsPageError({ error, reset }: ClientsPageErrorProps
               className="h-10 rounded-xl px-4 text-sm font-semibold"
               onClick={reset}
             >
-              Попробовать снова
+              Try again
             </Button>
             <Button
               asChild
               variant="outline"
               className="h-10 rounded-xl px-4 text-sm font-semibold"
             >
-              <Link href={backHref}>Вернуться в CRM</Link>
+              <Link href={backHref}>Back to CRM</Link>
             </Button>
           </div>
         }
