@@ -218,6 +218,7 @@ export default function LoginUI({
 
   const sp = useSearchParams();
   const inviteId = sp.get("invite_id") || "";
+  const checkEmail = sp.get("check_email") === "1";
 
   const [businessName, setBusinessName] = React.useState("");
   const [businessSegment, setBusinessSegment] = React.useState("");
@@ -395,6 +396,9 @@ export default function LoginUI({
       <div className="space-y-4 px-6 pb-6 pt-5 sm:px-7 sm:pb-7">
         <ErrorBox text={localError} />
         <ErrorBox text={activeState?.error} />
+        {mode === "login" && checkEmail ? (
+          <SuccessBox text="We sent a confirmation link to your email. Please confirm your email before signing in." />
+        ) : null}
 
         {mode === "reset" && resetState?.ok ? (
           <SuccessBox text="If this email exists in our system, we sent a reset link. Please check your inbox and Spam folder." />

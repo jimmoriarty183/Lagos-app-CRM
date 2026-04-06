@@ -36,6 +36,21 @@ function isBrokenRpcTriggerError(message: string) {
   return lowered.includes("record \"new\" has no field \"business_id\"");
 }
 
+function isConfirmationEmailDeliveryError(message: string) {
+  const lowered = message.toLowerCase();
+  return (
+    lowered.includes("error sending confirmation email") ||
+    (lowered.includes("confirmation") &&
+      lowered.includes("email") &&
+      lowered.includes("error sending"))
+  );
+}
+
+function isEmailNotConfirmedError(message: string) {
+  const lowered = message.toLowerCase();
+  return lowered.includes("email not confirmed") || lowered.includes("email_not_confirmed");
+}
+
 // ✅ генерация slug из названия
 function slugify(input: string) {
   const base = String(input || "")
@@ -202,7 +217,16 @@ export async function loginAction(
       email,
       password,
     });
-    if (signInErr) return { ok: false, error: signInErr.message, next: "" };
+    if (signInErr) {
+      if (isEmailNotConfirmedError(signInErr.message)) {
+        return {
+          ok: false,
+          error: "Email is not confirmed. Please open the confirmation link in your inbox and then sign in.",
+          next: "",
+        };
+      }
+      return { ok: false, error: signInErr.message, next: "" };
+    }
 
     // 2) get user
     const { data: userData, error: userErr } = await supabase.auth.getUser();
@@ -263,14 +287,12 @@ export async function registerOwnerAction(
     const email = String(formData.get("email") || "").trim().toLowerCase();
     const password = String(formData.get("password") || "");
     const passwordConfirm = String(formData.get("password_confirm") || "");
-    const businessName = String(formData.get("business_name") || "").trim();
     const businessSegment = String(formData.get("business_segment") || "").trim();
 
     const firstName = String(formData.get("first_name") || "").trim();
     const lastName = String(formData.get("last_name") || "").trim();
 
     const agree = String(formData.get("agree") || ""); // expected: "on"
-    const inviteId = String(formData.get("invite_id") || "").trim();
 
     // ✅ validations
     if (!email) return { ok: false, error: "Email is required", next: "" };
@@ -290,9 +312,6 @@ export async function registerOwnerAction(
     const fullName = `${firstName} ${lastName}`.trim();
 
     const supabase = await supabaseServer();
-    const admin = supabaseAdmin();
-
-    // 1) sign up
     const { error: signUpErr } = await supabase.auth.signUp({
       email,
       password,
@@ -300,57 +319,21 @@ export async function registerOwnerAction(
         data: { first_name: firstName, last_name: lastName, full_name: fullName },
       },
     });
-    if (signUpErr) return { ok: false, error: signUpErr.message, next: "" };
 
-    // 2) sign in (sets cookies)
-    const { error: signInErr } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    if (signInErr) return { ok: false, error: signInErr.message, next: "" };
-
-    // 3) ✅ ensure profiles row exists (NO trigger needed)
-    const { data: u, error: uErr } = await supabase.auth.getUser();
-    if (uErr) return { ok: false, error: uErr.message, next: "" };
-
-    const user = u?.user;
-    if (!user) return { ok: false, error: "No user after sign in", next: "" };
-
-    const { error: profErr } = await admin.from("profiles").upsert(
-      {
-        id: user.id,
-        email,
-        first_name: firstName,
-        last_name: lastName,
-        full_name: fullName,
-      },
-      { onConflict: "id" },
-    );
-    if (profErr) return { ok: false, error: profErr.message, next: "" };
-
-    // 4) invite flow
-    if (inviteId) {
-      return {
-        ok: true,
-        error: "",
-        next: `/invite?invite_id=${encodeURIComponent(inviteId)}`,
-      };
+    if (signUpErr) {
+      if (isConfirmationEmailDeliveryError(signUpErr.message)) {
+        return {
+          ok: false,
+          error: "Could not send confirmation email. Please try again in a minute or contact support.",
+          next: "",
+        };
+      }
+      return { ok: false, error: signUpErr.message, next: "" };
     }
 
-    if (!businessName) {
-      return { ok: true, error: "", next: "/onboarding/business" };
-    }
+    // Access is allowed only after email confirmation.
+    return { ok: true, error: "", next: "/login?check_email=1" };
 
-    const createResult = await createBusinessWithFallback({
-      supabase,
-      admin,
-      userId: user.id,
-      businessName,
-      businessSegment,
-    });
-    if (!createResult.ok) return { ok: false, error: createResult.error, next: "" };
-
-    return { ok: true, error: "", next: "/app/crm" };
   } catch (e) {
     return { ok: false, error: msg(e), next: "" };
   }
@@ -483,3 +466,4 @@ export async function createBusinessOnboardingAction(
     return { ok: false, error: msg(e), next: "" };
   }
 }
+
