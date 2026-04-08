@@ -402,6 +402,25 @@ export type CreateOrderClientPayloadInput = {
   } | null;
 };
 
+export type CreateOrderFromClientPayloadResult =
+  | {
+      ok: true;
+      orderId: string;
+      clientId: string;
+      contactId: string | null;
+      createdNewClient: boolean;
+    }
+  | {
+      ok: false;
+      error: string;
+    };
+
+function getActionErrorMessage(error: unknown) {
+  if (error instanceof Error) return error.message || "Failed to create order";
+  if (typeof error === "string") return error;
+  return "Failed to create order";
+}
+
 async function resolveIndividualClientForCreate(input: {
   admin: ReturnType<typeof supabaseAdmin>;
   businessId: string;
@@ -661,7 +680,10 @@ async function resolveCompanyContactForOrder(input: {
   return String((inserted as { id: string }).id);
 }
 
-export async function createOrderFromClientPayload(input: CreateOrderClientPayloadInput) {
+export async function createOrderFromClientPayload(
+  input: CreateOrderClientPayloadInput,
+): Promise<CreateOrderFromClientPayloadResult> {
+  try {
   const { admin, userId } = await requireBusinessManagerAccess(input.businessId);
   const amount = Number(input.amount);
   if (!Number.isFinite(amount) || amount <= 0) throw new Error("Amount must be greater than 0");
@@ -821,12 +843,26 @@ export async function createOrderFromClientPayload(input: CreateOrderClientPaylo
   if (clientId) revalidatePath(`/b/${input.businessSlug}/clients/${clientId}`);
   revalidatePath(`/b/${input.businessSlug}/today`);
 
-  return {
-    orderId: String((insertedOrder as { id: string }).id),
-    clientId,
-    contactId,
-    createdNewClient,
-  };
+    return {
+      ok: true,
+      orderId: String((insertedOrder as { id: string }).id),
+      clientId,
+      contactId,
+      createdNewClient,
+    };
+  } catch (error: unknown) {
+    const message = getActionErrorMessage(error);
+    console.error("[createOrderFromClientPayload] failed", {
+      businessId: input.businessId,
+      businessSlug: input.businessSlug,
+      clientType: input.clientType,
+      message,
+    });
+    return {
+      ok: false,
+      error: message,
+    };
+  }
 }
 
 function isMissingClientModelError(error: unknown) {

@@ -355,7 +355,11 @@ export function ClientOrderForm({ businessId, businessSlug, actors = [], compact
 
     startSaving(async () => {
       try {
-        await createOrderFromClientPayload(payload);
+        const result = await createOrderFromClientPayload(payload);
+        if (!result.ok) {
+          setErrorText(result.error || "Failed to create order");
+          return;
+        }
         onCreated?.();
       } catch (error) {
         setErrorText(error instanceof Error ? error.message : "Failed to create order");
