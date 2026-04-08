@@ -1397,6 +1397,11 @@ export function OrderPreview({
                           {error.message}
                         </div>
                       ) : null}
+                      {error?.stack ? (
+                        <pre className="max-h-28 overflow-auto rounded-lg border border-rose-200 bg-white/70 p-2 text-[11px] text-rose-900">
+                          {error.stack}
+                        </pre>
+                      ) : null}
                       <div className="flex gap-2">
                         <button
                           type="button"

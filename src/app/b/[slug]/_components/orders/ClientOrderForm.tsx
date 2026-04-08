@@ -449,25 +449,25 @@ export function ClientOrderForm({ businessId, businessSlug, actors = [], compact
           <div className="text-sm font-semibold text-[#111827]">Client</div>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             <Field label="First name">
-              <input value={individual.firstName} onChange={(e) => { const value = e.currentTarget.value; setIndividual((v) => ({ ...v, firstName: value })); }} className={inputCls} />
+              <input value={individual.firstName} onChange={(e) => { const value = e.currentTarget?.value ?? ""; setIndividual((v) => ({ ...v, firstName: value })); }} className={inputCls} />
             </Field>
             <Field label="Last name">
-              <input value={individual.lastName} onChange={(e) => { const value = e.currentTarget.value; setIndividual((v) => ({ ...v, lastName: value })); }} className={inputCls} />
+              <input value={individual.lastName} onChange={(e) => { const value = e.currentTarget?.value ?? ""; setIndividual((v) => ({ ...v, lastName: value })); }} className={inputCls} />
             </Field>
             <Field label="Phone">
-              <input value={individual.phone} onChange={(e) => { const value = e.currentTarget.value; setIndividual((v) => ({ ...v, phone: value })); }} className={inputCls} />
+              <input value={individual.phone} onChange={(e) => { const value = e.currentTarget?.value ?? ""; setIndividual((v) => ({ ...v, phone: value })); }} className={inputCls} />
             </Field>
             <Field label="Email">
-              <input value={individual.email} onChange={(e) => { const value = e.currentTarget.value; setIndividual((v) => ({ ...v, email: value })); }} className={inputCls} />
+              <input value={individual.email} onChange={(e) => { const value = e.currentTarget?.value ?? ""; setIndividual((v) => ({ ...v, email: value })); }} className={inputCls} />
             </Field>
             <Field label="Tax ID / INN">
-              <input value={individual.inn} onChange={(e) => { const value = e.currentTarget.value; setIndividual((v) => ({ ...v, inn: value })); }} className={inputCls} />
+              <input value={individual.inn} onChange={(e) => { const value = e.currentTarget?.value ?? ""; setIndividual((v) => ({ ...v, inn: value })); }} className={inputCls} />
             </Field>
             <Field label="Postcode">
-              <input value={individual.postcode} onChange={(e) => { const value = e.currentTarget.value; setIndividual((v) => ({ ...v, postcode: value })); }} className={inputCls} />
+              <input value={individual.postcode} onChange={(e) => { const value = e.currentTarget?.value ?? ""; setIndividual((v) => ({ ...v, postcode: value })); }} className={inputCls} />
             </Field>
             <Field label="Address" className="sm:col-span-2">
-              <input value={individual.address} onChange={(e) => { const value = e.currentTarget.value; setIndividual((v) => ({ ...v, address: value })); }} className={inputCls} />
+              <input value={individual.address} onChange={(e) => { const value = e.currentTarget?.value ?? ""; setIndividual((v) => ({ ...v, address: value })); }} className={inputCls} />
             </Field>
           </div>
           {validationErrors.individual_name || validationErrors.individual_strong || validationErrors.individual_email ? (
@@ -482,28 +482,28 @@ export function ClientOrderForm({ businessId, businessSlug, actors = [], compact
             <div className="text-sm font-semibold text-[#111827]">Company</div>
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
               <Field label="Company name">
-                <input value={company.companyName} onChange={(e) => { const value = e.currentTarget.value; setCompany((v) => ({ ...v, companyName: value })); }} className={inputCls} />
+                <input value={company.companyName} onChange={(e) => { const value = e.currentTarget?.value ?? ""; setCompany((v) => ({ ...v, companyName: value })); }} className={inputCls} />
               </Field>
               <Field label="Registration number">
-                <input value={company.registrationNumber} onChange={(e) => { const value = e.currentTarget.value; setCompany((v) => ({ ...v, registrationNumber: value })); }} className={inputCls} />
+                <input value={company.registrationNumber} onChange={(e) => { const value = e.currentTarget?.value ?? ""; setCompany((v) => ({ ...v, registrationNumber: value })); }} className={inputCls} />
               </Field>
               <Field label="VAT / Tax number">
-                <input value={company.vatNumber} onChange={(e) => { const value = e.currentTarget.value; setCompany((v) => ({ ...v, vatNumber: value })); }} className={inputCls} />
+                <input value={company.vatNumber} onChange={(e) => { const value = e.currentTarget?.value ?? ""; setCompany((v) => ({ ...v, vatNumber: value })); }} className={inputCls} />
               </Field>
               <Field label="Company phone">
-                <input value={company.phone} onChange={(e) => { const value = e.currentTarget.value; setCompany((v) => ({ ...v, phone: value })); }} className={inputCls} />
+                <input value={company.phone} onChange={(e) => { const value = e.currentTarget?.value ?? ""; setCompany((v) => ({ ...v, phone: value })); }} className={inputCls} />
               </Field>
               <Field label="Company email">
-                <input value={company.email} onChange={(e) => { const value = e.currentTarget.value; setCompany((v) => ({ ...v, email: value })); }} className={inputCls} />
+                <input value={company.email} onChange={(e) => { const value = e.currentTarget?.value ?? ""; setCompany((v) => ({ ...v, email: value })); }} className={inputCls} />
               </Field>
               <Field label="Postcode">
-                <input value={company.postcode} onChange={(e) => { const value = e.currentTarget.value; setCompany((v) => ({ ...v, postcode: value })); }} className={inputCls} />
+                <input value={company.postcode} onChange={(e) => { const value = e.currentTarget?.value ?? ""; setCompany((v) => ({ ...v, postcode: value })); }} className={inputCls} />
               </Field>
               <Field label="Legal / registered address" className="sm:col-span-2">
-                <input value={company.legalAddress} onChange={(e) => { const value = e.currentTarget.value; setCompany((v) => ({ ...v, legalAddress: value })); }} className={inputCls} />
+                <input value={company.legalAddress} onChange={(e) => { const value = e.currentTarget?.value ?? ""; setCompany((v) => ({ ...v, legalAddress: value })); }} className={inputCls} />
               </Field>
               <Field label="Actual address" className="sm:col-span-2">
-                <input value={company.actualAddress} onChange={(e) => { const value = e.currentTarget.value; setCompany((v) => ({ ...v, actualAddress: value })); }} className={inputCls} />
+                <input value={company.actualAddress} onChange={(e) => { const value = e.currentTarget?.value ?? ""; setCompany((v) => ({ ...v, actualAddress: value })); }} className={inputCls} />
               </Field>
             </div>
             {validationErrors.company_name || validationErrors.company_strong || validationErrors.company_email ? (
@@ -517,22 +517,22 @@ export function ClientOrderForm({ businessId, businessSlug, actors = [], compact
             <div className="text-sm font-semibold text-[#111827]">Contact person</div>
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
               <Field label="First name">
-                <input value={contact.firstName} onChange={(e) => { const value = e.currentTarget.value; setContact((v) => ({ ...v, firstName: value })); }} className={inputCls} />
+                <input value={contact.firstName} onChange={(e) => { const value = e.currentTarget?.value ?? ""; setContact((v) => ({ ...v, firstName: value })); }} className={inputCls} />
               </Field>
               <Field label="Last name">
-                <input value={contact.lastName} onChange={(e) => { const value = e.currentTarget.value; setContact((v) => ({ ...v, lastName: value })); }} className={inputCls} />
+                <input value={contact.lastName} onChange={(e) => { const value = e.currentTarget?.value ?? ""; setContact((v) => ({ ...v, lastName: value })); }} className={inputCls} />
               </Field>
               <Field label="Email">
-                <input value={contact.email} onChange={(e) => { const value = e.currentTarget.value; setContact((v) => ({ ...v, email: value })); }} className={inputCls} />
+                <input value={contact.email} onChange={(e) => { const value = e.currentTarget?.value ?? ""; setContact((v) => ({ ...v, email: value })); }} className={inputCls} />
               </Field>
               <Field label="Phone">
-                <input value={contact.phone} onChange={(e) => { const value = e.currentTarget.value; setContact((v) => ({ ...v, phone: value })); }} className={inputCls} />
+                <input value={contact.phone} onChange={(e) => { const value = e.currentTarget?.value ?? ""; setContact((v) => ({ ...v, phone: value })); }} className={inputCls} />
               </Field>
               <Field label="Role / job title">
                 <select
                   value={contactRoleOptions.includes(contact.jobTitle) ? contact.jobTitle : "Other"}
                   onChange={(e) => {
-                    const next = e.currentTarget.value;
+                    const next = e.currentTarget?.value ?? "";
                     setContact((v) => ({ ...v, jobTitle: next === "Other" ? "" : next }));
                   }}
                   className={inputCls}
@@ -546,7 +546,7 @@ export function ClientOrderForm({ businessId, businessSlug, actors = [], compact
               </Field>
               {!contactRoleOptions.includes(contact.jobTitle) || !contact.jobTitle ? (
                 <Field label="Custom role">
-                  <input value={contact.jobTitle} onChange={(e) => { const value = e.currentTarget.value; setContact((v) => ({ ...v, jobTitle: value })); }} className={inputCls} />
+                  <input value={contact.jobTitle} onChange={(e) => { const value = e.currentTarget?.value ?? ""; setContact((v) => ({ ...v, jobTitle: value })); }} className={inputCls} />
                 </Field>
               ) : null}
             </div>
@@ -554,7 +554,7 @@ export function ClientOrderForm({ businessId, businessSlug, actors = [], compact
               <input
                 type="checkbox"
                 checked={contact.isPrimary}
-                onChange={(e) => { const checked = e.currentTarget.checked; setContact((v) => ({ ...v, isPrimary: checked })); }}
+                onChange={(e) => { const checked = Boolean(e.currentTarget?.checked); setContact((v) => ({ ...v, isPrimary: checked })); }}
                 className="h-4 w-4 rounded border-slate-300"
               />
               Set as primary contact
@@ -567,7 +567,7 @@ export function ClientOrderForm({ businessId, businessSlug, actors = [], compact
         <div className="text-sm font-semibold text-[#111827]">Order details</div>
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
           <Field label="Manager">
-            <select value={order.managerId} onChange={(e) => { const value = e.currentTarget.value; setOrder((v) => ({ ...v, managerId: value })); }} className={inputCls}>
+            <select value={order.managerId} onChange={(e) => { const value = e.currentTarget?.value ?? ""; setOrder((v) => ({ ...v, managerId: value })); }} className={inputCls}>
               <option value="">Select manager</option>
               {managerOptions.map((actor) => (
                 <option key={actor.id} value={actor.id}>
@@ -577,13 +577,13 @@ export function ClientOrderForm({ businessId, businessSlug, actors = [], compact
             </select>
           </Field>
           <Field label="Amount">
-            <input inputMode="decimal" value={order.amount} onChange={(e) => { const value = e.currentTarget.value; setOrder((v) => ({ ...v, amount: value })); }} className={inputCls} />
+            <input inputMode="decimal" value={order.amount} onChange={(e) => { const value = e.currentTarget?.value ?? ""; setOrder((v) => ({ ...v, amount: value })); }} className={inputCls} />
           </Field>
           <Field label="Due date">
-            <input type="date" value={order.dueDate} onChange={(e) => { const value = e.currentTarget.value; setOrder((v) => ({ ...v, dueDate: value })); }} className={inputCls} />
+            <input type="date" value={order.dueDate} onChange={(e) => { const value = e.currentTarget?.value ?? ""; setOrder((v) => ({ ...v, dueDate: value })); }} className={inputCls} />
           </Field>
           <Field label="Description" className="sm:col-span-2">
-            <textarea value={order.description} onChange={(e) => { const value = e.currentTarget.value; setOrder((v) => ({ ...v, description: value })); }} className={textareaCls} />
+            <textarea value={order.description} onChange={(e) => { const value = e.currentTarget?.value ?? ""; setOrder((v) => ({ ...v, description: value })); }} className={textareaCls} />
           </Field>
         </div>
         {validationErrors.managerId || validationErrors.amount ? (
