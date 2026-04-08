@@ -413,7 +413,7 @@ export function ClientOrderForm({ businessId, businessSlug, actors = [], compact
                 : "Temporarily disabled for stability"}
             </div>
           </div>
-          {isMatching ? <div className="text-xs font-medium text-[#667085]">Checking…</div> : null}
+          {isMatching ? <div className="text-xs font-medium text-[#667085]">Checking...</div> : null}
         </div>
         <div className="mt-2 rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] p-3">
           <div className="text-sm font-semibold text-[#1F2937]">

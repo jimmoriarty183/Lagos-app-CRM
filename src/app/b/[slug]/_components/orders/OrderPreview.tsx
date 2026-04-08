@@ -1386,11 +1386,38 @@ export function OrderPreview({
             <ScrollArea className="min-h-0 flex-1">
               <div className="space-y-4 px-5 py-5 sm:px-6">
                 <ClientErrorBoundary
-                  fallback={
-                    <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
-                      Create order form failed to render. Please reload the page.
+                  resetKeys={[open, businessId, businessSlug]}
+                  fallback={({ error, reset }) => (
+                    <div className="space-y-3 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+                      <div className="font-medium">
+                        Create order form failed to render.
+                      </div>
+                      {error?.message ? (
+                        <div className="break-words text-xs text-rose-800">
+                          {error.message}
+                        </div>
+                      ) : null}
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={reset}
+                          className="inline-flex h-9 items-center justify-center rounded-lg border border-rose-300 bg-white px-3 text-xs font-semibold text-rose-700 hover:bg-rose-100"
+                        >
+                          Try again
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            reset();
+                            router.refresh();
+                          }}
+                          className="inline-flex h-9 items-center justify-center rounded-lg border border-rose-300 bg-white px-3 text-xs font-semibold text-rose-700 hover:bg-rose-100"
+                        >
+                          Refresh data
+                        </button>
+                      </div>
                     </div>
-                  }
+                  )}
                 >
                   <ClientOrderForm
                     businessId={businessId}
