@@ -1326,6 +1326,7 @@ export async function createFollowUp(input: {
 
   revalidatePath(`/b/${input.businessSlug}`);
   revalidatePath(`/b/${input.businessSlug}/today`);
+  revalidatePath(`/b/${input.businessSlug}/analytics`);
 
   return data;
 }
@@ -1469,6 +1470,7 @@ export async function completeFollowUp(input: {
 
   revalidatePath(`/b/${input.businessSlug}`);
   revalidatePath(`/b/${input.businessSlug}/today`);
+  revalidatePath(`/b/${input.businessSlug}/analytics`);
 
   return {
     completed: data,
@@ -1540,6 +1542,7 @@ export async function updateFollowUpStatus(input: {
 
   revalidatePath(`/b/${input.businessSlug}`);
   revalidatePath(`/b/${input.businessSlug}/today`);
+  revalidatePath(`/b/${input.businessSlug}/analytics`);
 
   return data;
 }
@@ -1607,6 +1610,7 @@ export async function rescheduleFollowUp(input: {
 
   revalidatePath(`/b/${input.businessSlug}`);
   revalidatePath(`/b/${input.businessSlug}/today`);
+  revalidatePath(`/b/${input.businessSlug}/analytics`);
 
   return data;
 }
