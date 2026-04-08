@@ -1,7 +1,5 @@
 "use client";
 
-import Link from "next/link";
-import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 
@@ -39,17 +37,13 @@ function AlertIcon() {
 }
 
 export default function ClientsPageError({ error, reset }: ClientsPageErrorProps) {
-  const params = useParams<{ slug?: string }>();
-  const slug = typeof params?.slug === "string" ? params.slug : "";
-  const backHref = slug ? `/b/${slug}` : "/app/crm";
-
   return (
     <main className="mx-auto flex min-h-screen max-w-[1220px] items-center px-4 py-20 sm:px-6">
       <EmptyState
         className="w-full rounded-[24px] border border-[#E5E7EB] bg-white p-8 shadow-[0_1px_2px_rgba(16,24,40,0.04)]"
         icon={<AlertIcon />}
-        title="Unable to load clients"
-        description="Something went wrong while opening this page. Try reloading the data."
+        title="No clients created yet"
+        description="There are no clients in this workspace yet. Create your first order to add one."
         action={
           <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
             <Button
@@ -57,14 +51,7 @@ export default function ClientsPageError({ error, reset }: ClientsPageErrorProps
               className="h-10 rounded-xl px-4 text-sm font-semibold"
               onClick={reset}
             >
-              Try again
-            </Button>
-            <Button
-              asChild
-              variant="outline"
-              className="h-10 rounded-xl px-4 text-sm font-semibold"
-            >
-              <Link href={backHref}>Back to CRM</Link>
+              Refresh
             </Button>
           </div>
         }
