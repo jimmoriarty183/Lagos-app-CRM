@@ -406,7 +406,7 @@ export type CreateOrderFromClientPayloadResult =
   | {
       ok: true;
       orderId: string;
-      clientId: string;
+      clientId: string | null;
       contactId: string | null;
       createdNewClient: boolean;
     }
@@ -699,7 +699,7 @@ export async function createOrderFromClientPayload(
     throw new Error("Client type is required");
   }
 
-  let clientId: string;
+  let clientId: string | null = null;
   let createdNewClient = false;
   let contactId: string | null = null;
   let legacyFirstName: string | null = null;
@@ -721,23 +721,28 @@ export async function createOrderFromClientPayload(
     }
     if (!firstName && !lastName) throw new Error("At least one name field is required");
 
-    await findIndividualMatches(admin, input.businessId, {
-      firstName,
-      lastName,
-      phone,
-      email,
-      inn,
-    });
-    {
+    try {
+      await findIndividualMatches(admin, input.businessId, {
+        firstName,
+        lastName,
+        phone,
+        email,
+        inn,
+      });
       const result = await resolveIndividualClientForCreate({
-      admin,
-      businessId: input.businessId,
-      userId,
-      existingClientId,
-      fields,
-    });
+        admin,
+        businessId: input.businessId,
+        userId,
+        existingClientId,
+        fields,
+      });
       clientId = result.clientId;
       createdNewClient = result.created;
+    } catch (error: unknown) {
+      if (!isMissingClientModelError(error)) throw error;
+      // Fallback: legacy schema without clients table is still supported.
+      clientId = null;
+      createdNewClient = false;
     }
 
     legacyFirstName = firstName || null;
@@ -763,33 +768,40 @@ export async function createOrderFromClientPayload(
       throw new Error("At least one strong identifier is required: registration number, VAT/tax, phone, or email");
     }
 
-    await findCompanyMatches(admin, input.businessId, {
-      companyName,
-      registrationNumber,
-      vatNumber,
-      phone,
-      email,
-    });
+    try {
+      await findCompanyMatches(admin, input.businessId, {
+        companyName,
+        registrationNumber,
+        vatNumber,
+        phone,
+        email,
+      });
 
-    {
       const result = await resolveCompanyClientForCreate({
-      admin,
-      businessId: input.businessId,
-      userId,
-      existingClientId,
-      fields,
-    });
+        admin,
+        businessId: input.businessId,
+        userId,
+        existingClientId,
+        fields,
+      });
       clientId = result.clientId;
       createdNewClient = result.created;
+
+      contactId = await resolveCompanyContactForOrder({
+        admin,
+        businessId: input.businessId,
+        clientId,
+        existingContactId,
+        contact: input.contact,
+        userId,
+      });
+    } catch (error: unknown) {
+      if (!isMissingClientModelError(error)) throw error;
+      // Fallback: create order without clients/contact links on legacy DB schema.
+      clientId = null;
+      contactId = null;
+      createdNewClient = false;
     }
-    contactId = await resolveCompanyContactForOrder({
-      admin,
-      businessId: input.businessId,
-      clientId,
-      existingContactId,
-      contact: input.contact,
-      userId,
-    });
 
     legacyClientName = companyName || null;
     legacyFullName = companyName || null;
