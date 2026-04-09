@@ -568,12 +568,6 @@ export default async function TodayFollowUpsPage({
   const todayHref = buildScopedHref(`/b/${slug}/today`, phoneRaw);
   const supportHref = buildScopedHref(`/b/${slug}/support`, phoneRaw);
   const analyticsHref = buildScopedHref(`/b/${slug}/analytics`, phoneRaw);
-  const createOrderHref = (() => {
-    const params = new URLSearchParams();
-    if (phoneRaw) params.set("u", phoneRaw);
-    params.set("createOrder", "1");
-    return `/b/${slug}?${params.toString()}`;
-  })();
   const adminHref = isAdminEmail(user.email) ? getAdminUsersPath() : undefined;
   const todoCount = items.filter(
     (item) => compareDateOnly(item.due_date, getTodayDateOnly()) <= 0,
@@ -771,7 +765,6 @@ export default async function TodayFollowUpsPage({
             <TodoWorkspaceView
               businessId={String(currentBusiness.id)}
               businessSlug={currentBusiness.slug}
-              createOrderHref={createOrderHref}
               canManage={canManage}
               initialItems={items}
               calendarItems={calendarItems}
@@ -786,7 +779,6 @@ export default async function TodayFollowUpsPage({
           <TodoWorkspaceView
             businessId={String(currentBusiness.id)}
             businessSlug={currentBusiness.slug}
-            createOrderHref={createOrderHref}
             canManage={canManage}
             initialItems={items}
             calendarItems={calendarItems}

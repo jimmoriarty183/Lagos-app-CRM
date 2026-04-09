@@ -2,10 +2,10 @@
 
 import * as React from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
 import { CalendarPlus, Plus } from "lucide-react";
 
 import { createFollowUp } from "@/app/b/[slug]/actions";
+import { ClientOrderForm } from "@/app/b/[slug]/_components/orders/ClientOrderForm";
 import {
   type TodayFollowUpItem,
   type ManagerMonthlyPlanProgress,
@@ -35,6 +35,7 @@ import {
 import { TodoViewModeSwitch } from "@/app/b/[slug]/today/todo-calendar/TodoViewModeSwitch";
 import { TodoWeekView } from "@/app/b/[slug]/today/todo-calendar/TodoWeekView";
 import { Button } from "@/components/ui/button";
+import { ClientErrorBoundary } from "@/components/ui/client-error-boundary";
 import {
   Dialog,
   DialogContent,
@@ -68,7 +69,6 @@ function toIsoDateTime(dateOnly: string, timeOnly: string) {
 export function TodoWorkspaceView({
   businessId,
   businessSlug,
-  createOrderHref,
   canManage,
   initialItems,
   calendarItems,
@@ -78,7 +78,6 @@ export function TodoWorkspaceView({
 }: {
   businessId: string;
   businessSlug: string;
-  createOrderHref: string;
   canManage: boolean;
   initialItems: TodayFollowUpItem[];
   calendarItems: TodoCalendarItem[];
@@ -95,6 +94,7 @@ export function TodoWorkspaceView({
   const [anchorDate, setAnchorDate] = React.useState(() => new Date());
   const [detailsCollapsed, setDetailsCollapsed] = React.useState(false);
   const [createOpen, setCreateOpen] = React.useState(false);
+  const [createOrderOpen, setCreateOrderOpen] = React.useState(false);
   const [createKind, setCreateKind] = React.useState<FollowUpCreateKind>("task");
   const [createTitle, setCreateTitle] = React.useState("");
   const [createDate, setCreateDate] = React.useState(() => toDateKey(new Date()));
@@ -349,13 +349,11 @@ export function TodoWorkspaceView({
                   </Button>
                   <Button
                     type="button"
-                    asChild
                     className="h-10 rounded-[14px] bg-[var(--brand-600)] px-3.5 text-[13px] font-semibold !text-white shadow-[0_6px_18px_rgba(79,70,229,0.26)] hover:bg-[var(--brand-700)] hover:!text-white"
+                    onClick={() => setCreateOrderOpen(true)}
                   >
-                    <Link href={createOrderHref}>
-                      <Plus className="mr-1.5 h-4 w-4" />
-                      Order
-                    </Link>
+                    <Plus className="mr-1.5 h-4 w-4" />
+                    Order
                   </Button>
                 </>
               ) : null
@@ -559,6 +557,66 @@ export function TodoWorkspaceView({
                 {createSaving ? "Creating..." : "Create follow-up"}
               </Button>
             </DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
+      <Dialog
+        open={createOrderOpen}
+        onOpenChange={(nextOpen) => {
+          setCreateOrderOpen(nextOpen);
+        }}
+      >
+        <DialogContent className="max-w-[760px] rounded-[24px] border border-[#E5E7EB] bg-white p-0 shadow-[0_24px_64px_rgba(15,23,42,0.18)]">
+          <div className="space-y-4 px-5 py-5">
+            <DialogHeader className="space-y-1 text-left">
+              <DialogTitle className="text-[19px] font-semibold text-[#111827]">
+                Create order
+              </DialogTitle>
+              <DialogDescription className="text-sm leading-6 text-[#6B7280]">
+                Type-driven creation with live duplicate checking
+              </DialogDescription>
+            </DialogHeader>
+
+            <ClientErrorBoundary
+              resetKeys={[createOrderOpen, businessId, businessSlug]}
+              fallback={({ error, reset }) => (
+                <div className="space-y-3 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+                  <div className="font-medium">Create order form failed to render.</div>
+                  {error?.message ? (
+                    <div className="break-words text-xs text-rose-800">{error.message}</div>
+                  ) : null}
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={reset}
+                      className="inline-flex h-9 items-center justify-center rounded-lg border border-rose-300 bg-white px-3 text-xs font-semibold text-rose-700 hover:bg-rose-100"
+                    >
+                      Try again
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        reset();
+                        router.refresh();
+                      }}
+                      className="inline-flex h-9 items-center justify-center rounded-lg border border-rose-300 bg-white px-3 text-xs font-semibold text-rose-700 hover:bg-rose-100"
+                    >
+                      Refresh data
+                    </button>
+                  </div>
+                </div>
+              )}
+            >
+              <ClientOrderForm
+                businessId={businessId}
+                businessSlug={businessSlug}
+                compact
+                onCreated={() => {
+                  router.refresh();
+                  setCreateOrderOpen(false);
+                }}
+              />
+            </ClientErrorBoundary>
           </div>
         </DialogContent>
       </Dialog>
