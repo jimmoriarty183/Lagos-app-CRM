@@ -62,8 +62,16 @@ export default async function InvitesPage({
   const tabs = [
     { href: `/b/${business.slug}/settings`, label: "Business", active: false },
     { href: `/b/${business.slug}/settings/team`, label: "Team", active: false },
-    { href: `/b/${business.slug}/settings/invites`, label: "Invites", active: true },
-    { href: `/b/${business.slug}/settings/statuses`, label: "Statuses", active: false },
+    {
+      href: `/b/${business.slug}/settings/invites`,
+      label: "Invites",
+      active: true,
+    },
+    {
+      href: `/b/${business.slug}/settings/statuses`,
+      label: "Statuses",
+      active: false,
+    },
   ];
 
   return (
@@ -108,14 +116,11 @@ export default async function InvitesPage({
 
           <section className="w-full min-w-0 max-w-full rounded-[20px] border border-[#E5E7EB] bg-white p-3.5 pb-5 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:rounded-[26px] sm:p-5">
             <div className="mb-4">
-              <div className="product-page-kicker">
-                Settings
-              </div>
-              <h1 className="product-page-title mt-1.5">
-                Invites
-              </h1>
+              <div className="product-page-kicker">Settings</div>
+              <h1 className="product-page-title mt-1.5">Invites</h1>
               <p className="product-page-subtitle mt-1.5">
-                Manage sent invites and incoming access requests for <span className="font-semibold">{business.slug}</span>
+                Manage sent invites and incoming access requests for{" "}
+                <span className="font-semibold">{business.slug}</span>
               </p>
             </div>
 
@@ -131,14 +136,11 @@ export default async function InvitesPage({
         <div className="mx-auto w-full max-w-[920px] min-w-0 lg:hidden">
           <section className="w-full min-w-0 max-w-full rounded-[20px] border border-[#E5E7EB] bg-white p-3.5 pb-5 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:rounded-[26px] sm:p-5">
             <div className="mb-4">
-              <div className="product-page-kicker">
-                Settings
-              </div>
-              <h1 className="product-page-title mt-1.5">
-                Invites
-              </h1>
+              <div className="product-page-kicker">Settings</div>
+              <h1 className="product-page-title mt-1.5">Invites</h1>
               <p className="product-page-subtitle mt-1.5">
-                Manage sent invites and incoming access requests for <span className="font-semibold">{business.slug}</span>
+                Manage sent invites and incoming access requests for{" "}
+                <span className="font-semibold">{business.slug}</span>
               </p>
             </div>
 

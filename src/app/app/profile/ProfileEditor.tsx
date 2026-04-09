@@ -31,6 +31,7 @@ export default function ProfileEditor({ initial, workspace }: Props) {
   const [displayName, setDisplayName] = useState(initial.displayName);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [message, setMessage] = useState<{ type: "ok" | "error"; text: string } | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
 
@@ -112,11 +113,21 @@ export default function ProfileEditor({ initial, workspace }: Props) {
           <div className="mt-6 flex flex-wrap items-start gap-4">
             <div className="relative">
               {avatarUrl ? (
-                <img
-                  src={avatarUrl}
-                  alt="Profile photo"
-                  className="h-16 w-16 rounded-2xl border border-[#E5E7EB] object-cover"
-                />
+                <button
+                  type="button"
+                  onClick={() => setIsPreviewOpen(true)}
+                  className="group relative block overflow-hidden rounded-2xl border border-[#E5E7EB] focus:outline-none focus:ring-2 focus:ring-[#A4BCFD]"
+                  title="View photo"
+                >
+                  <img
+                    src={avatarUrl}
+                    alt="Profile photo"
+                    className="h-16 w-16 object-cover transition group-hover:brightness-90"
+                  />
+                  <span className="absolute inset-0 flex items-center justify-center bg-black/0 transition group-hover:bg-black/20">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white opacity-0 drop-shadow transition group-hover:opacity-100" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-4.553M15 10H9m6 0V4M9 14l-4.553 4.553M9 14H3m6 0v6" /></svg>
+                  </span>
+                </button>
               ) : (
                 <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-[#111827] text-lg font-semibold text-white">
                   {fallbackInitial}
@@ -154,7 +165,55 @@ export default function ProfileEditor({ initial, workspace }: Props) {
                 {isUploading ? "Uploading..." : "Upload photo"}
               </button>
             </div>
+
+            {/* Large avatar preview — top-right of header */}
+            {avatarUrl && (
+              <button
+                type="button"
+                onClick={() => setIsPreviewOpen(true)}
+                className="group relative ml-auto hidden overflow-hidden rounded-3xl border border-[#E5E7EB] shadow-md focus:outline-none focus:ring-2 focus:ring-[#A4BCFD] sm:block"
+                title="View photo"
+              >
+                <img
+                  src={avatarUrl}
+                  alt="Profile photo large"
+                  className="h-[110px] w-[110px] object-cover transition group-hover:brightness-90"
+                />
+                <span className="absolute inset-0 flex items-center justify-center bg-black/0 transition group-hover:bg-black/25">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-white opacity-0 drop-shadow-lg transition group-hover:opacity-100" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><circle cx="11" cy="11" r="8"/><path strokeLinecap="round" d="M21 21l-4.35-4.35"/><path strokeLinecap="round" strokeLinejoin="round" d="M11 8v6M8 11h6"/></svg>
+                </span>
+              </button>
+            )}
           </div>
+
+          {/* Lightbox */}
+          {isPreviewOpen && avatarUrl && (
+            <div
+              role="dialog"
+              aria-modal="true"
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
+              onClick={() => setIsPreviewOpen(false)}
+            >
+              <div
+                className="relative max-h-[90vh] max-w-[90vw] overflow-hidden rounded-2xl shadow-2xl"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <img
+                  src={avatarUrl}
+                  alt="Profile photo preview"
+                  className="max-h-[80vh] max-w-[80vw] object-contain"
+                />
+                <button
+                  type="button"
+                  onClick={() => setIsPreviewOpen(false)}
+                  className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70"
+                  aria-label="Close preview"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+              </div>
+            </div>
+          )}
 
           {message ? (
             <div

@@ -364,10 +364,9 @@ export async function registerOwnerAction(
 }
 
 /** ✅ FORGOT PASSWORD:
- * Отправляем email со ссылкой на /reset-password
- * ВАЖНО: в Supabase должны быть разрешены Redirect URLs:
- *  - http://localhost:3000/reset-password
- *  - https://your-domain/reset-password
+ * Отправляем email со ссылкой на /auth/confirm, где recovery token
+ * провалидаируется серверно через verifyOtp(), а потом идёт редирект
+ * на /reset-password с уже установленной recovery session.
  */
 export async function forgotPasswordAction(
   _prev: State = initial,
@@ -386,7 +385,7 @@ export async function forgotPasswordAction(
       return { ok: false, error: "Не удалось определить origin", next: "" };
     }
 
-    const redirectTo = `${origin}/reset-password`;
+    const redirectTo = `${origin}/auth/confirm?next=%2Freset-password`;
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo,
@@ -421,6 +420,16 @@ export async function updatePasswordAction(
     }
 
     const supabase = await supabaseServer();
+
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError) return { ok: false, error: sessionError.message, next: "" };
+    if (!sessionData.session) {
+      return {
+        ok: false,
+        error: "Recovery session is missing or expired. Open the reset link from the latest email and try again.",
+        next: "",
+      };
+    }
 
     const { error } = await supabase.auth.updateUser({ password });
     if (error) return { ok: false, error: error.message, next: "" };

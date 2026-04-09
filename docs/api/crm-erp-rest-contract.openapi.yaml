@@ -1,0 +1,779 @@
+openapi: 3.1.0
+info:
+  title: CRM/ERP Core Contract
+  version: 1.0.0
+  description: REST contract aligned to existing CRM/ERP schema and statuses.
+servers:
+  - url: /api/v1
+paths:
+  /orders/{orderId}:
+    get:
+      summary: Get order aggregate
+      operationId: getOrderById
+      parameters:
+        - $ref: "#/components/parameters/OrderId"
+      responses:
+        "200":
+          description: Order aggregate
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderAggregate"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /orders/{orderId}/confirm:
+    post:
+      summary: Confirm order (atomic)
+      operationId: confirmOrder
+      parameters:
+        - $ref: "#/components/parameters/OrderId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConfirmOrderRequest"
+      responses:
+        "200":
+          description: Order confirmed with generated artifacts
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConfirmOrderResponse"
+        "409":
+          description: Business rule conflict (invalid status, insufficient stock, stale version)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation failure
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /orders/{orderId}/reservations:
+    post:
+      summary: Reserve inventory for product lines
+      operationId: reserveInventoryForOrder
+      parameters:
+        - $ref: "#/components/parameters/OrderId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReserveInventoryRequest"
+      responses:
+        "200":
+          description: Reservation result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReserveInventoryResponse"
+        "409":
+          description: Not enough available quantity
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /orders/{orderId}/service-requests/generate:
+    post:
+      summary: Generate service requests for service lines
+      operationId: generateServiceRequests
+      parameters:
+        - $ref: "#/components/parameters/OrderId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateServiceRequestsRequest"
+      responses:
+        "200":
+          description: Generated service requests
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenerateServiceRequestsResponse"
+
+  /orders/{orderId}/cancel:
+    post:
+      summary: Cancel order and rollback generated reservations/service requests
+      operationId: cancelOrder
+      parameters:
+        - $ref: "#/components/parameters/OrderId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CancelOrderRequest"
+      responses:
+        "200":
+          description: Order cancelled and rollback completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CancelOrderResponse"
+        "409":
+          description: Conflict (already fulfilled/closed lines)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  parameters:
+    OrderId:
+      name: orderId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  responses:
+    NotFound:
+      description: Entity not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+  schemas:
+    ErrorResponse:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+
+    ConfirmOrderRequest:
+      type: object
+      required: [expectedVersion, actorId, reservationPolicy]
+      properties:
+        expectedVersion:
+          type: integer
+          minimum: 1
+        actorId:
+          type: string
+          format: uuid
+        reservationPolicy:
+          type: string
+          enum: [FULL_ONLY, ALLOW_PARTIAL]
+        warehouseId:
+          type: string
+          format: uuid
+          description: Optional explicit warehouse for product reservations.
+        correlationId:
+          type: string
+          format: uuid
+
+    ConfirmOrderResponse:
+      type: object
+      required: [order, reservations, serviceRequests, events]
+      properties:
+        order:
+          $ref: "#/components/schemas/Order"
+        reservations:
+          type: array
+          items:
+            $ref: "#/components/schemas/InventoryReservation"
+        serviceRequests:
+          type: array
+          items:
+            $ref: "#/components/schemas/ServiceRequest"
+        events:
+          type: array
+          items:
+            $ref: "#/components/schemas/EntityEventLog"
+
+    ReserveInventoryRequest:
+      type: object
+      required: [actorId, reservationMode]
+      properties:
+        actorId:
+          type: string
+          format: uuid
+        reservationMode:
+          type: string
+          enum: [FULL_ONLY, ALLOW_PARTIAL]
+        warehouseId:
+          type: string
+          format: uuid
+        correlationId:
+          type: string
+          format: uuid
+
+    ReserveInventoryResponse:
+      type: object
+      required: [orderId, reservations, movementIds]
+      properties:
+        orderId:
+          type: string
+          format: uuid
+        reservations:
+          type: array
+          items:
+            $ref: "#/components/schemas/InventoryReservation"
+        movementIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    GenerateServiceRequestsRequest:
+      type: object
+      required: [actorId]
+      properties:
+        actorId:
+          type: string
+          format: uuid
+        defaultPriority:
+          $ref: "#/components/schemas/ServiceRequestPriority"
+        correlationId:
+          type: string
+          format: uuid
+
+    GenerateServiceRequestsResponse:
+      type: object
+      required: [orderId, serviceRequests]
+      properties:
+        orderId:
+          type: string
+          format: uuid
+        serviceRequests:
+          type: array
+          items:
+            $ref: "#/components/schemas/ServiceRequest"
+
+    CancelOrderRequest:
+      type: object
+      required: [actorId, expectedVersion, reason]
+      properties:
+        actorId:
+          type: string
+          format: uuid
+        expectedVersion:
+          type: integer
+          minimum: 1
+        reason:
+          type: string
+          minLength: 3
+        rollbackReservations:
+          type: boolean
+          default: true
+        cancelOpenServiceRequests:
+          type: boolean
+          default: true
+        correlationId:
+          type: string
+          format: uuid
+
+    CancelOrderResponse:
+      type: object
+      required:
+        [order, releasedReservationIds, cancelledServiceRequestIds, events]
+      properties:
+        order:
+          $ref: "#/components/schemas/Order"
+        releasedReservationIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+        cancelledServiceRequestIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+        events:
+          type: array
+          items:
+            $ref: "#/components/schemas/EntityEventLog"
+
+    OrderAggregate:
+      type: object
+      required: [order, lines, statusHistory]
+      properties:
+        order:
+          $ref: "#/components/schemas/Order"
+        lines:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrderLine"
+        statusHistory:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrderStatusHistory"
+        lineStatusHistory:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrderLineStatusHistory"
+        reservations:
+          type: array
+          items:
+            $ref: "#/components/schemas/InventoryReservation"
+        serviceRequests:
+          type: array
+          items:
+            $ref: "#/components/schemas/ServiceRequest"
+
+    Order:
+      type: object
+      required:
+        - id
+        - orderNo
+        - customerId
+        - status
+        - currencyCode
+        - subtotalAmount
+        - discountAmount
+        - taxAmount
+        - totalAmount
+        - version
+      properties:
+        id:
+          type: string
+          format: uuid
+        orderNo:
+          type: string
+        customerId:
+          type: string
+          format: uuid
+        status:
+          $ref: "#/components/schemas/OrderStatus"
+        orderDate:
+          type: string
+          format: date-time
+        currencyCode:
+          type: string
+          pattern: "^[A-Z]{3}$"
+        subtotalAmount:
+          type: string
+          description: Numeric(18,4) represented as string.
+        discountAmount:
+          type: string
+        taxAmount:
+          type: string
+        totalAmount:
+          type: string
+        confirmedAt:
+          type: string
+          format: date-time
+          nullable: true
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+        cancelledAt:
+          type: string
+          format: date-time
+          nullable: true
+        cancelReason:
+          type: string
+          nullable: true
+        metadata:
+          type: object
+          additionalProperties: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        version:
+          type: integer
+
+    OrderLine:
+      type: object
+      required:
+        - id
+        - orderId
+        - lineNo
+        - status
+        - lineType
+        - sourceType
+        - nameSnapshot
+        - qty
+        - unitPrice
+        - lineNetAmount
+        - lineGrossAmount
+      properties:
+        id:
+          type: string
+          format: uuid
+        orderId:
+          type: string
+          format: uuid
+        lineNo:
+          type: integer
+        parentLineId:
+          type: string
+          format: uuid
+          nullable: true
+        status:
+          $ref: "#/components/schemas/OrderLineStatus"
+        lineType:
+          $ref: "#/components/schemas/LineType"
+        sourceType:
+          $ref: "#/components/schemas/LineSourceType"
+        catalogProductId:
+          type: string
+          format: uuid
+          nullable: true
+        catalogServiceId:
+          type: string
+          format: uuid
+          nullable: true
+        offerId:
+          type: string
+          format: uuid
+          nullable: true
+        offerComponentId:
+          type: string
+          format: uuid
+          nullable: true
+        isCustom:
+          type: boolean
+        nameSnapshot:
+          type: string
+        descriptionSnapshot:
+          type: string
+          nullable: true
+        uomCode:
+          type: string
+          nullable: true
+        qty:
+          type: string
+        unitPrice:
+          type: string
+        discountPercent:
+          type: string
+        discountAmount:
+          type: string
+        taxRate:
+          type: string
+        taxAmount:
+          type: string
+        lineNetAmount:
+          type: string
+        lineGrossAmount:
+          type: string
+        reservationRequiredQty:
+          type: string
+        reservedQty:
+          type: string
+        fulfilledQty:
+          type: string
+
+    InventoryReservation:
+      type: object
+      required:
+        - id
+        - orderId
+        - orderLineId
+        - warehouseId
+        - productId
+        - status
+        - reservedQty
+        - releasedQty
+        - consumedQty
+        - outstandingQty
+      properties:
+        id:
+          type: string
+          format: uuid
+        orderId:
+          type: string
+          format: uuid
+        orderLineId:
+          type: string
+          format: uuid
+        warehouseId:
+          type: string
+          format: uuid
+        productId:
+          type: string
+          format: uuid
+        status:
+          $ref: "#/components/schemas/InventoryReservationStatus"
+        reservedQty:
+          type: string
+        releasedQty:
+          type: string
+        consumedQty:
+          type: string
+        outstandingQty:
+          type: string
+        reservedAt:
+          type: string
+          format: date-time
+        releasedAt:
+          type: string
+          format: date-time
+          nullable: true
+        consumedAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    ServiceRequest:
+      type: object
+      required:
+        - id
+        - requestNo
+        - customerId
+        - nameSnapshot
+        - status
+        - priority
+      properties:
+        id:
+          type: string
+          format: uuid
+        requestNo:
+          type: string
+        orderId:
+          type: string
+          format: uuid
+          nullable: true
+        orderLineId:
+          type: string
+          format: uuid
+          nullable: true
+        customerId:
+          type: string
+          format: uuid
+        catalogServiceId:
+          type: string
+          format: uuid
+          nullable: true
+        nameSnapshot:
+          type: string
+        status:
+          $ref: "#/components/schemas/ServiceRequestStatus"
+        priority:
+          $ref: "#/components/schemas/ServiceRequestPriority"
+        plannedStartAt:
+          type: string
+          format: date-time
+          nullable: true
+        plannedEndAt:
+          type: string
+          format: date-time
+          nullable: true
+        actualStartAt:
+          type: string
+          format: date-time
+          nullable: true
+        actualEndAt:
+          type: string
+          format: date-time
+          nullable: true
+        assigneeId:
+          type: string
+          format: uuid
+          nullable: true
+        slaDueAt:
+          type: string
+          format: date-time
+          nullable: true
+        resolutionNote:
+          type: string
+          nullable: true
+
+    EntityEventLog:
+      type: object
+      required:
+        - id
+        - entityType
+        - entityId
+        - eventType
+        - operation
+        - payload
+        - occurredAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        businessId:
+          type: string
+          format: uuid
+          nullable: true
+        entityType:
+          type: string
+        entityId:
+          type: string
+          format: uuid
+        eventType:
+          type: string
+        operation:
+          $ref: "#/components/schemas/AuditOperation"
+        orderId:
+          type: string
+          format: uuid
+          nullable: true
+        orderLineId:
+          type: string
+          format: uuid
+          nullable: true
+        serviceRequestId:
+          type: string
+          format: uuid
+          nullable: true
+        reservationId:
+          type: string
+          format: uuid
+          nullable: true
+        movementId:
+          type: string
+          format: uuid
+          nullable: true
+        actorId:
+          type: string
+          format: uuid
+        correlationId:
+          type: string
+          format: uuid
+          nullable: true
+        payload:
+          type: object
+          additionalProperties: true
+        occurredAt:
+          type: string
+          format: date-time
+        source:
+          type: string
+          nullable: true
+
+    OrderStatusHistory:
+      type: object
+      required: [id, orderId, toStatus, changedAt, changedBy]
+      properties:
+        id:
+          type: string
+          format: uuid
+        orderId:
+          type: string
+          format: uuid
+        fromStatus:
+          $ref: "#/components/schemas/OrderStatus"
+          nullable: true
+        toStatus:
+          $ref: "#/components/schemas/OrderStatus"
+        reason:
+          type: string
+          nullable: true
+        changedAt:
+          type: string
+          format: date-time
+        changedBy:
+          type: string
+          format: uuid
+
+    OrderLineStatusHistory:
+      type: object
+      required: [id, orderLineId, toStatus, changedAt, changedBy]
+      properties:
+        id:
+          type: string
+          format: uuid
+        orderLineId:
+          type: string
+          format: uuid
+        fromStatus:
+          $ref: "#/components/schemas/OrderLineStatus"
+          nullable: true
+        toStatus:
+          $ref: "#/components/schemas/OrderLineStatus"
+        reason:
+          type: string
+          nullable: true
+        changedAt:
+          type: string
+          format: date-time
+        changedBy:
+          type: string
+          format: uuid
+
+    OrderStatus:
+      type: string
+      enum:
+        - DRAFT
+        - READY_FOR_CONFIRMATION
+        - CONFIRMED
+        - PARTIALLY_FULFILLED
+        - FULFILLED
+        - COMPLETED
+        - CANCELLED
+
+    OrderLineStatus:
+      type: string
+      enum:
+        - DRAFT
+        - CONFIRMED
+        - RESERVED
+        - IN_SERVICE
+        - FULFILLED
+        - CANCELLED
+
+    ServiceRequestStatus:
+      type: string
+      enum:
+        - NEW
+        - PLANNED
+        - ASSIGNED
+        - IN_PROGRESS
+        - DONE
+        - FAILED
+        - CANCELLED
+
+    ServiceRequestPriority:
+      type: string
+      enum:
+        - LOW
+        - NORMAL
+        - HIGH
+        - URGENT
+
+    InventoryReservationStatus:
+      type: string
+      enum:
+        - ACTIVE
+        - PARTIALLY_RELEASED
+        - RELEASED
+        - CONSUMED
+        - CANCELLED
+
+    LineType:
+      type: string
+      enum:
+        - PRODUCT
+        - SERVICE
+        - OFFER
+
+    LineSourceType:
+      type: string
+      enum:
+        - CATALOG_PRODUCT
+        - CATALOG_SERVICE
+        - CUSTOM_PRODUCT
+        - CUSTOM_SERVICE
+        - OFFER_PARENT
+        - OFFER_COMPONENT
+
+    AuditOperation:
+      type: string
+      enum:
+        - INSERT
+        - UPDATE
+        - DELETE

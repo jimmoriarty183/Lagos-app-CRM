@@ -91,6 +91,7 @@ export default async function SettingsPage({
             activeFiltersCount={0}
             clearHref={`/app/crm`}
             businessHref={`/app/crm`}
+            catalogHref={`/b/${business.slug}/catalog/products`}
             analyticsHref={`/b/${business.slug}/analytics`}
             supportHref={`/b/${business.slug}/support`}
             settingsHref={`/app/settings`}
@@ -102,23 +103,36 @@ export default async function SettingsPage({
 
           <section className="w-full min-w-0 max-w-full rounded-[20px] border border-[#E5E7EB] bg-white p-3.5 pb-6 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:rounded-[26px] sm:p-5">
             <div className="mb-4">
-              <div className="product-page-kicker">
-                Settings
-              </div>
-              <h1 className="product-page-title mt-1.5">
-                Business
-              </h1>
+              <div className="product-page-kicker">Settings</div>
+              <h1 className="product-page-title mt-1.5">Business</h1>
               <p className="product-page-subtitle mt-1.5">
-                Core workspace context for <span className="font-semibold">{business.slug}</span>
+                Core workspace context for{" "}
+                <span className="font-semibold">{business.slug}</span>
               </p>
             </div>
 
             <SettingsTabs
               tabs={[
-                { href: `/b/${business.slug}/settings`, label: "Business", active: true },
-                { href: `/b/${business.slug}/settings/team`, label: "Team", active: false },
-                { href: `/b/${business.slug}/settings/invites`, label: "Invites", active: false },
-                { href: `/b/${business.slug}/settings/statuses`, label: "Statuses", active: false },
+                {
+                  href: `/b/${business.slug}/settings`,
+                  label: "Business",
+                  active: true,
+                },
+                {
+                  href: `/b/${business.slug}/settings/team`,
+                  label: "Team",
+                  active: false,
+                },
+                {
+                  href: `/b/${business.slug}/settings/invites`,
+                  label: "Invites",
+                  active: false,
+                },
+                {
+                  href: `/b/${business.slug}/settings/statuses`,
+                  label: "Statuses",
+                  active: false,
+                },
               ]}
             />
 
@@ -138,23 +152,36 @@ export default async function SettingsPage({
         <div className="mx-auto w-full max-w-[920px] min-w-0 lg:hidden">
           <section className="w-full min-w-0 max-w-full rounded-[20px] border border-[#E5E7EB] bg-white p-3.5 pb-6 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:rounded-[26px] sm:p-5">
             <div className="mb-4">
-              <div className="product-page-kicker">
-                Settings
-              </div>
-              <h1 className="product-page-title mt-1.5">
-                Business
-              </h1>
+              <div className="product-page-kicker">Settings</div>
+              <h1 className="product-page-title mt-1.5">Business</h1>
               <p className="product-page-subtitle mt-1.5">
-                Core workspace context for <span className="font-semibold">{business.slug}</span>
+                Core workspace context for{" "}
+                <span className="font-semibold">{business.slug}</span>
               </p>
             </div>
 
             <SettingsTabs
               tabs={[
-                { href: `/b/${business.slug}/settings`, label: "Business", active: true },
-                { href: `/b/${business.slug}/settings/team`, label: "Team", active: false },
-                { href: `/b/${business.slug}/settings/invites`, label: "Invites", active: false },
-                { href: `/b/${business.slug}/settings/statuses`, label: "Statuses", active: false },
+                {
+                  href: `/b/${business.slug}/settings`,
+                  label: "Business",
+                  active: true,
+                },
+                {
+                  href: `/b/${business.slug}/settings/team`,
+                  label: "Team",
+                  active: false,
+                },
+                {
+                  href: `/b/${business.slug}/settings/invites`,
+                  label: "Invites",
+                  active: false,
+                },
+                {
+                  href: `/b/${business.slug}/settings/statuses`,
+                  label: "Statuses",
+                  active: false,
+                },
               ]}
             />
 

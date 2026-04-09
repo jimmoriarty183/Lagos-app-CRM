@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
   BarChart3,
+  Boxes,
   BriefcaseBusiness,
   CalendarDays,
   LifeBuoy,
@@ -19,6 +20,7 @@ type Props = {
   canManage: boolean;
   businessHref: string;
   clientsHref: string;
+  catalogHref?: string;
   todayHref: string;
   supportHref: string;
   clearHref: string;
@@ -34,6 +36,7 @@ export default function MobileTopbarMenu({
   canManage,
   businessHref,
   clientsHref,
+  catalogHref,
   todayHref,
   supportHref,
   clearHref,
@@ -124,6 +127,15 @@ export default function MobileTopbarMenu({
           >
             <Users className="h-4 w-4 text-[#6B7280]" />
             <span>Clients</span>
+          </a>
+
+          <a
+            href={catalogHref ?? `/b/${businessSlug}/catalog/products`}
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-[#1F2937] transition-colors hover:bg-[#F9FAFB]"
+          >
+            <Boxes className="h-4 w-4 text-[#6B7280]" />
+            <span>Catalog</span>
           </a>
 
           <a

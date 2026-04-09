@@ -2,6 +2,7 @@
 
 import React from "react";
 import { useActionState } from "react";
+import { useSearchParams } from "next/navigation";
 import { updatePasswordAction } from "@/app/actions/auth";
 import { LoginBrand } from "@/components/Brand";
 import { createClient } from "@/lib/supabase/client";
@@ -64,17 +65,9 @@ function PasswordInput({
   );
 }
 
-function parseHashTokens(hash: string) {
-  const params = new URLSearchParams((hash || "").replace(/^#/, ""));
-  return {
-    accessToken: params.get("access_token") || "",
-    refreshToken: params.get("refresh_token") || "",
-    type: params.get("type") || "",
-  };
-}
-
 export default function ResetPasswordUI() {
   const supabase = React.useMemo(() => createClient(), []);
+  const searchParams = useSearchParams();
   const [state, submit, pending] = useActionState(
     updatePasswordAction as never,
     initialState,
@@ -89,25 +82,14 @@ export default function ResetPasswordUI() {
     let active = true;
 
     async function initRecoverySession() {
-      if (typeof window === "undefined") return;
-
-      const { accessToken, refreshToken, type } = parseHashTokens(window.location.hash);
-
-      if (accessToken && refreshToken && type === "recovery") {
-        const { error } = await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken,
-        });
-
-        if (error) {
-          if (active) {
-            setLocalError("Recovery link is invalid or expired. Please request a new reset email.");
-            setBooting(false);
-          }
-          return;
+      if (searchParams.get("error") === "recovery_link_invalid") {
+        if (active) {
+          setLocalError(
+            "Recovery link is invalid or expired. Please request a new reset email.",
+          );
+          setBooting(false);
         }
-
-        window.history.replaceState({}, document.title, window.location.pathname);
+        return;
       }
 
       const { data } = await supabase.auth.getSession();
@@ -125,7 +107,7 @@ export default function ResetPasswordUI() {
     return () => {
       active = false;
     };
-  }, [supabase]);
+  }, [searchParams, supabase]);
 
   React.useEffect(() => {
     if (state?.ok && state.next) {
@@ -152,9 +134,12 @@ export default function ResetPasswordUI() {
     <div className="w-full overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
       <div className="border-b border-gray-100 p-4">
         <LoginBrand variant="dark" height={24} />
-        <div className="mt-1 text-xl font-bold text-gray-900">Create a new password</div>
+        <div className="mt-1 text-xl font-bold text-gray-900">
+          Create a new password
+        </div>
         <div className="mt-0.5 text-xs text-gray-600">
-          Set a new password for your account and continue to your Ordo workspace.
+          Set a new password for your account and continue to your Ordo
+          workspace.
         </div>
       </div>
 
@@ -184,11 +169,14 @@ export default function ResetPasswordUI() {
             disabled={pending || booting}
             className="w-full rounded-xl bg-gray-900 px-4 py-2 text-sm font-semibold !text-white hover:bg-black disabled:opacity-60 disabled:!text-white"
           >
-            {booting ? "Checking link..." : pending ? "Saving..." : "Save password"}
+            {booting
+              ? "Checking link..."
+              : pending
+                ? "Saving..."
+                : "Save password"}
           </button>
         </form>
       </div>
     </div>
   );
 }
-

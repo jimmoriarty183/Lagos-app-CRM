@@ -22,6 +22,7 @@ type Props = {
   businessId?: string;
   businessHref?: string;
   clientsHref?: string;
+  catalogHref?: string;
   todayHref?: string;
   supportHref?: string;
   settingsHref?: string;
@@ -42,6 +43,7 @@ export default function TopBar({
   businessId,
   businessHref,
   clientsHref,
+  catalogHref,
   todayHref,
   supportHref,
   settingsHref,
@@ -99,6 +101,7 @@ export default function TopBar({
               canManage={canManage}
               businessHref={businessHref ?? dashboardHref}
               clientsHref={clientsHref ?? `/b/${businessSlug}/clients`}
+              catalogHref={catalogHref ?? `/b/${businessSlug}/catalog/products`}
               todayHref={todayHref ?? businessHref ?? dashboardHref}
               supportHref={supportHref ?? `/b/${businessSlug}/support`}
               clearHref={clearHref ?? dashboardHref}

@@ -80,10 +80,13 @@ export default async function TeamPage({
   const roleRows = (ownerManagerMems ?? []) as MembershipRow[];
 
   const ownerId =
-    roleRows.find((row) => String(row.role).toUpperCase() === "OWNER")?.user_id ?? null;
+    roleRows.find((row) => String(row.role).toUpperCase() === "OWNER")
+      ?.user_id ?? null;
   const managerId =
-    roleRows.find((row) => String(row.role).toUpperCase() === "MANAGER")?.user_id ?? null;
-  const isOwnerManager = !!ownerId && !!managerId && String(ownerId) === String(managerId);
+    roleRows.find((row) => String(row.role).toUpperCase() === "MANAGER")
+      ?.user_id ?? null;
+  const isOwnerManager =
+    !!ownerId && !!managerId && String(ownerId) === String(managerId);
 
   const { data: pendingInvites } = await supabase
     .from("business_invites")
@@ -135,23 +138,36 @@ export default async function TeamPage({
 
           <section className="w-full min-w-0 max-w-full rounded-[20px] border border-[#E5E7EB] bg-white p-3.5 pb-6 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:rounded-[26px] sm:p-5">
             <div className="mb-4">
-              <div className="product-page-kicker">
-                Settings
-              </div>
-              <h1 className="product-page-title mt-1.5">
-                Team &amp; Access
-              </h1>
+              <div className="product-page-kicker">Settings</div>
+              <h1 className="product-page-title mt-1.5">Team &amp; Access</h1>
               <p className="product-page-subtitle mt-1.5">
-                Manage who can access <span className="font-semibold">{business.slug}</span>
+                Manage who can access{" "}
+                <span className="font-semibold">{business.slug}</span>
               </p>
             </div>
 
             <SettingsTabs
               tabs={[
-                { href: `/b/${business.slug}/settings`, label: "Business", active: false },
-                { href: `/b/${business.slug}/settings/team`, label: "Team", active: true },
-                { href: `/b/${business.slug}/settings/invites`, label: "Invites", active: false },
-                { href: `/b/${business.slug}/settings/statuses`, label: "Statuses", active: false },
+                {
+                  href: `/b/${business.slug}/settings`,
+                  label: "Business",
+                  active: false,
+                },
+                {
+                  href: `/b/${business.slug}/settings/team`,
+                  label: "Team",
+                  active: true,
+                },
+                {
+                  href: `/b/${business.slug}/settings/invites`,
+                  label: "Invites",
+                  active: false,
+                },
+                {
+                  href: `/b/${business.slug}/settings/statuses`,
+                  label: "Statuses",
+                  active: false,
+                },
               ]}
             />
 
@@ -160,7 +176,9 @@ export default async function TeamPage({
               businessSlug={business.slug}
               role={role}
               isOwnerManager={isOwnerManager}
-              pendingInvites={((pendingInvites ?? []) as PendingInviteRow[]) ?? []}
+              pendingInvites={
+                ((pendingInvites ?? []) as PendingInviteRow[]) ?? []
+              }
               currentUserId={user.id}
               mode="teamOnly"
             />
@@ -170,23 +188,36 @@ export default async function TeamPage({
         <div className="mx-auto w-full max-w-[920px] min-w-0 lg:hidden">
           <section className="w-full min-w-0 max-w-full rounded-[20px] border border-[#E5E7EB] bg-white p-3.5 pb-6 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:rounded-[26px] sm:p-5">
             <div className="mb-4">
-              <div className="product-page-kicker">
-                Settings
-              </div>
-              <h1 className="product-page-title mt-1.5">
-                Team &amp; Access
-              </h1>
+              <div className="product-page-kicker">Settings</div>
+              <h1 className="product-page-title mt-1.5">Team &amp; Access</h1>
               <p className="product-page-subtitle mt-1.5">
-                Manage who can access <span className="font-semibold">{business.slug}</span>
+                Manage who can access{" "}
+                <span className="font-semibold">{business.slug}</span>
               </p>
             </div>
 
             <SettingsTabs
               tabs={[
-                { href: `/b/${business.slug}/settings`, label: "Business", active: false },
-                { href: `/b/${business.slug}/settings/team`, label: "Team", active: true },
-                { href: `/b/${business.slug}/settings/invites`, label: "Invites", active: false },
-                { href: `/b/${business.slug}/settings/statuses`, label: "Statuses", active: false },
+                {
+                  href: `/b/${business.slug}/settings`,
+                  label: "Business",
+                  active: false,
+                },
+                {
+                  href: `/b/${business.slug}/settings/team`,
+                  label: "Team",
+                  active: true,
+                },
+                {
+                  href: `/b/${business.slug}/settings/invites`,
+                  label: "Invites",
+                  active: false,
+                },
+                {
+                  href: `/b/${business.slug}/settings/statuses`,
+                  label: "Statuses",
+                  active: false,
+                },
               ]}
             />
 
@@ -195,7 +226,9 @@ export default async function TeamPage({
               businessSlug={business.slug}
               role={role}
               isOwnerManager={isOwnerManager}
-              pendingInvites={((pendingInvites ?? []) as PendingInviteRow[]) ?? []}
+              pendingInvites={
+                ((pendingInvites ?? []) as PendingInviteRow[]) ?? []
+              }
               currentUserId={user.id}
               mode="teamOnly"
             />

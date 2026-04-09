@@ -1,0 +1,189 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { supabaseAdmin } from "@/lib/supabase/admin";
+import { supabaseServer } from "@/lib/supabase/server";
+
+function cleanText(value: unknown) {
+  return String(value ?? "").trim();
+}
+
+function upperRole(value: unknown) {
+  return cleanText(value).toUpperCase();
+}
+
+function normalizeCatalogError(error: unknown) {
+  const message = error instanceof Error ? error.message : "Catalog operation failed";
+  if (
+    message.includes("Could not find the table") ||
+    message.includes("schema cache")
+  ) {
+    return "Catalog tables are missing in the current Supabase API schema cache. Apply the CRM/ERP migrations to the same project used by the app and refresh PostgREST.";
+  }
+  return message;
+}
+
+async function requireCatalogManagerAccess(businessSlug: string) {
+  const supabase = await supabaseServer();
+  const admin = supabaseAdmin();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error("Not authenticated");
+  }
+
+  const { data: business, error: businessError } = await admin
+    .from("businesses")
+    .select("id, slug")
+    .eq("slug", businessSlug)
+    .maybeSingle();
+
+  if (businessError) throw new Error(businessError.message);
+  if (!business?.id) throw new Error("Business not found");
+
+  const { data: membership, error: membershipError } = await admin
+    .from("memberships")
+    .select("role")
+    .eq("business_id", business.id)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (membershipError) throw new Error(membershipError.message);
+
+  const role = upperRole(membership?.role);
+  if (role !== "OWNER" && role !== "MANAGER") {
+    throw new Error("Forbidden");
+  }
+
+  return { admin, businessId: String(business.id), userId: user.id };
+}
+
+export async function createCatalogProduct(input: {
+  businessSlug: string;
+  sku: string;
+  name: string;
+  description?: string | null;
+  uomCode: string;
+  isStockManaged: boolean;
+  defaultUnitPrice: number;
+  defaultTaxRate: number;
+  currencyCode: string;
+}) {
+  try {
+    const { admin, userId } = await requireCatalogManagerAccess(input.businessSlug);
+
+    const payload = {
+      sku: cleanText(input.sku),
+      name: cleanText(input.name),
+      description: cleanText(input.description) || null,
+      uom_code: cleanText(input.uomCode).toUpperCase(),
+      is_stock_managed: Boolean(input.isStockManaged),
+      default_unit_price: Number(input.defaultUnitPrice),
+      default_tax_rate: Number(input.defaultTaxRate),
+      currency_code: cleanText(input.currencyCode).toUpperCase(),
+      status: "ACTIVE",
+      created_by: userId,
+      updated_by: userId,
+    };
+
+    if (!payload.sku || !payload.name || !payload.uom_code || !payload.currency_code) {
+      throw new Error("SKU, name, UOM and currency are required");
+    }
+
+    const { error } = await admin.from("catalog_products").insert(payload);
+    if (error) throw new Error(error.message);
+
+    revalidatePath(`/b/${input.businessSlug}/catalog/products`);
+    revalidatePath(`/b/${input.businessSlug}/settings/catalog/products`);
+    return { ok: true as const };
+  } catch (error) {
+    return { ok: false as const, error: normalizeCatalogError(error) };
+  }
+}
+
+export async function setCatalogProductStatus(input: {
+  businessSlug: string;
+  productId: string;
+  status: "ACTIVE" | "INACTIVE";
+}) {
+  try {
+    const { admin, userId } = await requireCatalogManagerAccess(input.businessSlug);
+    const { error } = await admin
+      .from("catalog_products")
+      .update({ status: input.status, updated_by: userId })
+      .eq("id", input.productId);
+    if (error) throw new Error(error.message);
+    revalidatePath(`/b/${input.businessSlug}/catalog/products`);
+    revalidatePath(`/b/${input.businessSlug}/settings/catalog/products`);
+    return { ok: true as const };
+  } catch (error) {
+    return { ok: false as const, error: normalizeCatalogError(error) };
+  }
+}
+
+export async function createCatalogService(input: {
+  businessSlug: string;
+  serviceCode: string;
+  name: string;
+  description?: string | null;
+  defaultUnitPrice: number;
+  defaultTaxRate: number;
+  currencyCode: string;
+  defaultSlaMinutes?: number | null;
+  defaultDurationMinutes?: number | null;
+  requiresAssignee: boolean;
+}) {
+  try {
+    const { admin, userId } = await requireCatalogManagerAccess(input.businessSlug);
+
+    const payload = {
+      service_code: cleanText(input.serviceCode),
+      name: cleanText(input.name),
+      description: cleanText(input.description) || null,
+      default_unit_price: Number(input.defaultUnitPrice),
+      default_tax_rate: Number(input.defaultTaxRate),
+      currency_code: cleanText(input.currencyCode).toUpperCase(),
+      default_sla_minutes: input.defaultSlaMinutes == null || Number.isNaN(Number(input.defaultSlaMinutes)) ? null : Number(input.defaultSlaMinutes),
+      default_duration_minutes: input.defaultDurationMinutes == null || Number.isNaN(Number(input.defaultDurationMinutes)) ? null : Number(input.defaultDurationMinutes),
+      requires_assignee: Boolean(input.requiresAssignee),
+      status: "ACTIVE",
+      created_by: userId,
+      updated_by: userId,
+    };
+
+    if (!payload.service_code || !payload.name || !payload.currency_code) {
+      throw new Error("Service code, name and currency are required");
+    }
+
+    const { error } = await admin.from("catalog_services").insert(payload);
+    if (error) throw new Error(error.message);
+
+    revalidatePath(`/b/${input.businessSlug}/catalog/services`);
+    revalidatePath(`/b/${input.businessSlug}/settings/catalog/services`);
+    return { ok: true as const };
+  } catch (error) {
+    return { ok: false as const, error: normalizeCatalogError(error) };
+  }
+}
+
+export async function setCatalogServiceStatus(input: {
+  businessSlug: string;
+  serviceId: string;
+  status: "ACTIVE" | "INACTIVE";
+}) {
+  try {
+    const { admin, userId } = await requireCatalogManagerAccess(input.businessSlug);
+    const { error } = await admin
+      .from("catalog_services")
+      .update({ status: input.status, updated_by: userId })
+      .eq("id", input.serviceId);
+    if (error) throw new Error(error.message);
+    revalidatePath(`/b/${input.businessSlug}/catalog/services`);
+    revalidatePath(`/b/${input.businessSlug}/settings/catalog/services`);
+    return { ok: true as const };
+  } catch (error) {
+    return { ok: false as const, error: normalizeCatalogError(error) };
+  }
+}

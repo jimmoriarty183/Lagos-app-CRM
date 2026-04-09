@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import {
   Shield,
   BarChart3,
+  Boxes,
   BriefcaseBusiness,
   CalendarDays,
   CheckSquare,
@@ -58,6 +59,7 @@ type Props = {
   clearHref: string;
   businessHref: string;
   clientsHref?: string;
+  catalogHref?: string;
   analyticsHref?: string;
   todayHref?: string;
   settingsHref: string;
@@ -69,6 +71,7 @@ type Props = {
     | "crm"
     | "analytics"
     | "clients"
+    | "catalog"
     | "today"
     | "support"
     | "settings"
@@ -259,6 +262,7 @@ export default function DesktopLeftRail({
   clearHref,
   businessHref,
   clientsHref,
+  catalogHref,
   analyticsHref,
   todayHref,
   settingsHref,
@@ -367,6 +371,11 @@ export default function DesktopLeftRail({
     clientsHref ??
     (settingsHref.startsWith("/b/") && settingsHref.includes("/settings")
       ? settingsHref.replace(/\/settings(?:\/.*)?$/, "/clients")
+      : undefined);
+  const inferredCatalogHref =
+    catalogHref ??
+    (settingsHref.startsWith("/b/") && settingsHref.includes("/settings")
+      ? settingsHref.replace(/\/settings(?:\/.*)?$/, "/catalog/products")
       : undefined);
 
   return (
@@ -511,6 +520,16 @@ export default function DesktopLeftRail({
                     expanded={expanded}
                     href={inferredClientsHref}
                     active={activeSection === "clients"}
+                  />
+                ) : null}
+                {inferredCatalogHref ? (
+                  <RailLink
+                    icon={<Boxes className="h-5 w-5" />}
+                    label="Catalog"
+                    description="Products and services"
+                    expanded={expanded}
+                    href={inferredCatalogHref}
+                    active={activeSection === "catalog"}
                   />
                 ) : null}
                 {supportHref ? (
