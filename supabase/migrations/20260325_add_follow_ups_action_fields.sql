@@ -1,4 +1,4 @@
-﻿alter table public.follow_ups
+alter table public.follow_ups
   add column if not exists action_type text null,
   add column if not exists action_payload jsonb null default '{}'::jsonb;
 do $$

@@ -1,4 +1,4 @@
-﻿-- Keep schema in sync with production campaign delivery tracking.
+-- Keep schema in sync with production campaign delivery tracking.
 
 create table if not exists public.user_campaign_states (
   campaign_id uuid not null,

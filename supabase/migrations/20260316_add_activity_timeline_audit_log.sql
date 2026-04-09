@@ -1,4 +1,4 @@
-create or replace function public.is_business_member(target_business_id uuid)
+create or replace function public.is_business_member(bid uuid)
 returns boolean
 language sql
 stable
@@ -8,7 +8,7 @@ as $$
   select exists (
     select 1
     from public.memberships m
-    where m.business_id = target_business_id
+    where m.business_id = bid
       and m.user_id = auth.uid()
   );
 $$;
@@ -102,6 +102,31 @@ alter table public.comments
   alter column is_edited set default false,
   alter column created_at set not null,
   alter column created_at set default now();
+
+-- Legacy databases may contain activity rows that violate newer checks.
+-- Normalize them before adding constraints so migration is idempotent.
+update public.activity_events
+set actor_type = 'user'
+where actor_type not in ('user', 'system');
+
+update public.activity_events
+set visibility = 'internal'
+where visibility not in ('internal', 'public');
+
+update public.activity_events
+set entity_type = 'order'
+where btrim(coalesce(entity_type, '')) = '';
+
+update public.activity_events
+set event_type = 'order.updated'
+where event_type is null
+   or btrim(event_type) = ''
+   or event_type !~ '^[a-z0-9]+(\.[a-z0-9_]+)+$';
+
+update public.activity_events
+set payload = '{}'::jsonb
+where jsonb_typeof(payload) <> 'object';
+
 do $$
 begin
   if not exists (
