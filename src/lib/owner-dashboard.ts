@@ -100,6 +100,27 @@ function isMissingRelationError(error: unknown, objectNames: string[] = []) {
   return objectNames.some((name) => message.includes(name.toLowerCase()));
 }
 
+function isMissingColumnError(error: unknown, columnNames: string[] = []) {
+  const message = getErrorMessage(error).toLowerCase();
+  if (!message) return false;
+
+  const genericMissing =
+    message.includes("column") && message.includes("does not exist") ||
+    message.includes("could not find the") && message.includes("in the schema cache");
+
+  if (!genericMissing) return false;
+  if (columnNames.length === 0) return true;
+
+  return columnNames.some((name) => message.includes(name.toLowerCase()));
+}
+
+function isSchemaMismatchError(error: unknown, objectNames: string[] = []) {
+  return (
+    isMissingRelationError(error, objectNames) ||
+    isMissingColumnError(error, objectNames)
+  );
+}
+
 export type OwnerDashboardSummary = {
   active_tasks: number;
   overdue_tasks: number;
@@ -552,43 +573,43 @@ export async function loadOwnerDashboardData(
 
   if (
     tasksRes.error &&
-    !isMissingRelationError(tasksRes.error, ["mv_owner_order_task_facts"])
+    !isSchemaMismatchError(tasksRes.error, ["mv_owner_order_task_facts", "task_id", "base_effort_points"])
   ) {
     throw tasksRes.error;
   }
   if (
     followupsRes.error &&
-    !isMissingRelationError(followupsRes.error, ["mv_owner_followup_facts"])
+    !isSchemaMismatchError(followupsRes.error, ["mv_owner_followup_facts", "followup_id", "due_date_effective"])
   ) {
     throw followupsRes.error;
   }
   if (
     rosterRes.error &&
-    !isMissingRelationError(rosterRes.error, ["mv_owner_manager_roster"])
+    !isSchemaMismatchError(rosterRes.error, ["mv_owner_manager_roster", "manager_name"])
   ) {
     throw rosterRes.error;
   }
   if (
     capacityRes.error &&
-    !isMissingRelationError(capacityRes.error, ["mv_owner_manager_capacity_baseline"])
+    !isSchemaMismatchError(capacityRes.error, ["mv_owner_manager_capacity_baseline", "daily_capacity_hours"])
   ) {
     throw capacityRes.error;
   }
   if (
     reportsRes.error &&
-    !isMissingRelationError(reportsRes.error, ["work_days"])
+    !isSchemaMismatchError(reportsRes.error, ["work_days", "total_pause_seconds", "daily_summary"])
   ) {
     throw reportsRes.error;
   }
   if (
     salesOrdersRes.error &&
-    !isMissingRelationError(salesOrdersRes.error, ["crm_orders_enriched"])
+    !isSchemaMismatchError(salesOrdersRes.error, ["crm_orders_enriched", "legacy_order_manager_id", "order_id"])
   ) {
     throw salesOrdersRes.error;
   }
   if (
     salesTargetsRes.error &&
-    !isMissingRelationError(salesTargetsRes.error, ["sales_month_targets"])
+    !isSchemaMismatchError(salesTargetsRes.error, ["sales_month_targets", "plan_closed_orders", "month_start"])
   ) {
     throw salesTargetsRes.error;
   }
@@ -611,9 +632,12 @@ export async function loadOwnerDashboardData(
   let salesOrders: SalesOrderRow[] = [];
   if (
     salesOrdersRes.error &&
-    String(salesOrdersRes.error.message ?? "")
-      .toLowerCase()
-      .includes("could not find the table 'public.crm_orders_enriched'")
+    isSchemaMismatchError(salesOrdersRes.error, [
+      "crm_orders_enriched",
+      "legacy_order_manager_id",
+      "order_id",
+      "business_id",
+    ])
   ) {
     const fallbackSalesOrdersRes = await admin
       .from("orders")
