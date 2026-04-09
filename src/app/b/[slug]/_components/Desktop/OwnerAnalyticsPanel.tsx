@@ -294,6 +294,12 @@ export default function OwnerAnalyticsPanel({
       ? `/b/${businessSlug}/analytics?u=${encodeURIComponent(phoneRaw)}&tab=sales`
       : `/b/${businessSlug}/analytics?tab=sales`
     : "#";
+  const selectedSalesPlanSection = salesPlanEditor?.sections.find(
+    (section) => section.monthStart === salesPlanEditor.selectedMonthStart,
+  );
+  const salesPlanHintTarget = selectedSalesPlanSection
+    ? `${selectedSalesPlanSection.label} (${selectedSalesPlanSection.monthStart})`
+    : null;
   const buildManagerHref = (managerId: string) => {
     if (!managerBaseHref) return null;
     return `${managerBaseHref}#manager-${encodeURIComponent(managerId)}`;
@@ -1121,6 +1127,12 @@ export default function OwnerAnalyticsPanel({
                   Checked = included in plan, unchecked + Save row = excluded.
                 </div>
               </div>
+              {salesPlanHintTarget ? (
+                <div className="rounded-lg border border-[#D6E4FF] bg-[#EFF4FF] px-2.5 py-2 text-[12px] text-[#1D4ED8]">
+                  Open <span className="font-semibold">{salesPlanHintTarget}</span> to fill the
+                  plan values.
+                </div>
+              ) : null}
 
               <div className="space-y-2">
                 {salesPlanEditor.sections.map((section) => {
@@ -1130,7 +1142,6 @@ export default function OwnerAnalyticsPanel({
                   return (
                     <details
                       key={`plan-section-${section.key}`}
-                      open={salesPlanEditor.selectedMonthStart === section.monthStart}
                       className="rounded-lg border border-[#E5E7EB] bg-[#FCFCFD]"
                     >
                       <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-3 py-2 text-[13px] font-semibold text-[#111827]">

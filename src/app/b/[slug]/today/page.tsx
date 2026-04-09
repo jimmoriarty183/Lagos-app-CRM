@@ -65,6 +65,11 @@ type OrderLookupRow = {
   created_at?: string;
 };
 
+type CalendarOrderOption = {
+  id: string;
+  label: string;
+};
+
 type WorkDayLookupRow = {
   status: string | null;
 };
@@ -432,6 +437,39 @@ export default async function TodayFollowUpsPage({
     orderLookup.set(order.id, order);
   }
 
+  const createOrderOptionsResultEnriched = await supabase
+    .from("crm_orders_enriched")
+    .select(
+      "id:order_id, order_number, client_name:legacy_client_name, resolved_client_display_name, status, created_at",
+    )
+    .eq("business_id", currentBusiness.id)
+    .order("created_at", { ascending: false })
+    .limit(200);
+
+  const createOrderOptionsResult =
+    createOrderOptionsResultEnriched.error &&
+    isSchemaMissingError(createOrderOptionsResultEnriched.error)
+      ? await supabase
+          .from("orders")
+          .select("id, order_number, client_name, status, created_at")
+          .eq("business_id", currentBusiness.id)
+          .order("created_at", { ascending: false })
+          .limit(200)
+      : createOrderOptionsResultEnriched;
+
+  if (createOrderOptionsResult.error) {
+    logTodayPageError("orders options query failed", createOrderOptionsResult.error);
+  }
+
+  const calendarOrderOptions: CalendarOrderOption[] = (
+    (createOrderOptionsResult.data ?? []) as OrderLookupRow[]
+  )
+    .filter((row) => row.id && !isTerminalStatus(String(row.status ?? "")))
+    .map((row) => ({
+      id: row.id,
+      label: buildOrderReferenceLabel(row) ?? `Order ${row.order_number ?? ""}`.trim(),
+    }));
+
   const items: TodayFollowUpItem[] = followUpRows.map((entry) => {
     const linkedOrder = entry.order_id
       ? (orderLookup.get(entry.order_id) ?? null)
@@ -530,6 +568,12 @@ export default async function TodayFollowUpsPage({
   const todayHref = buildScopedHref(`/b/${slug}/today`, phoneRaw);
   const supportHref = buildScopedHref(`/b/${slug}/support`, phoneRaw);
   const analyticsHref = buildScopedHref(`/b/${slug}/analytics`, phoneRaw);
+  const createOrderHref = (() => {
+    const params = new URLSearchParams();
+    if (phoneRaw) params.set("u", phoneRaw);
+    params.set("createOrder", "1");
+    return `/b/${slug}?${params.toString()}`;
+  })();
   const adminHref = isAdminEmail(user.email) ? getAdminUsersPath() : undefined;
   const todoCount = items.filter(
     (item) => compareDateOnly(item.due_date, getTodayDateOnly()) <= 0,
@@ -725,10 +769,13 @@ export default async function TodayFollowUpsPage({
 
           <div className="min-w-0 w-full space-y-4 pl-2">
             <TodoWorkspaceView
+              businessId={String(currentBusiness.id)}
               businessSlug={currentBusiness.slug}
+              createOrderHref={createOrderHref}
               canManage={canManage}
               initialItems={items}
               calendarItems={calendarItems}
+              orderOptions={calendarOrderOptions}
               initialMode={initialMode}
               managerPlanProgress={managerPlanProgress}
             />
@@ -737,10 +784,13 @@ export default async function TodayFollowUpsPage({
 
         <div className="space-y-4 lg:hidden">
           <TodoWorkspaceView
+            businessId={String(currentBusiness.id)}
             businessSlug={currentBusiness.slug}
+            createOrderHref={createOrderHref}
             canManage={canManage}
             initialItems={items}
             calendarItems={calendarItems}
+            orderOptions={calendarOrderOptions}
             initialMode={initialMode}
             managerPlanProgress={managerPlanProgress}
           />

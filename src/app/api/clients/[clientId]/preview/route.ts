@@ -163,7 +163,10 @@ export async function GET(
       updatedAt: client.updated_at,
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Failed to load client preview";
+    const raw = error instanceof Error ? error.message : "Failed to load client preview";
+    // Never leak HTML error pages (e.g. Cloudflare 502) into the JSON response.
+    const looksLikeHtml = raw.trimStart().startsWith("<") || raw.includes("<!DOCTYPE") || raw.includes("<html");
+    const message = looksLikeHtml ? "Upstream server error. Please try again." : raw;
     const status = message === "Not authenticated" ? 401 : message === "Forbidden" ? 403 : 500;
     return NextResponse.json({ error: message }, { status });
   }

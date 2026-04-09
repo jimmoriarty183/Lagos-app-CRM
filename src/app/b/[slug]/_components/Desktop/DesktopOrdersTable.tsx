@@ -163,6 +163,7 @@ type Props = {
   currentUserId: string | null;
   currentUserName: string;
   initialOpenOrderId?: string | null;
+  initialCreateOrderOpen?: boolean;
 };
 
 function fmtAmount(n: number) {
@@ -830,6 +831,7 @@ export default function DesktopOrdersTable({
   currentUserId,
   currentUserName,
   initialOpenOrderId = null,
+  initialCreateOrderOpen = false,
 }: Props) {
   const router = useRouter();
   const { customStatuses, statuses } = useBusinessStatuses(businessId);
@@ -974,12 +976,29 @@ export default function DesktopOrdersTable({
     router.replace(nextHref, { scroll: false });
   }, [router]);
 
+  const clearCreateOrderParam = React.useCallback(() => {
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    if (!url.searchParams.has("createOrder")) return;
+    url.searchParams.delete("createOrder");
+    const nextSearch = url.searchParams.toString();
+    const nextHref = `${url.pathname}${nextSearch ? `?${nextSearch}` : ""}`;
+    router.replace(nextHref, { scroll: false });
+  }, [router]);
+
   React.useEffect(() => {
     if (!initialOpenOrderId) return;
     if (!boardRows.some((order) => order.id === initialOpenOrderId)) return;
     setOpenId(initialOpenOrderId);
     clearFocusOrderParam();
   }, [boardRows, clearFocusOrderParam, initialOpenOrderId]);
+
+  React.useEffect(() => {
+    if (!initialCreateOrderOpen) return;
+    setOpenId(null);
+    setCreatePreviewOpen(true);
+    clearCreateOrderParam();
+  }, [clearCreateOrderParam, initialCreateOrderOpen]);
   const statusOptions = useMemo(
     () => [
       ...statuses.map((status) => ({

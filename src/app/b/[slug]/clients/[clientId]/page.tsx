@@ -2,11 +2,15 @@ import Link from "next/link";
 import type { BusinessOption } from "@/app/b/[slug]/_components/topbar/BusinessSwitcher";
 import TopBar from "@/app/b/[slug]/_components/topbar/TopBar";
 import DesktopLeftRail from "@/app/b/[slug]/_components/Desktop/DesktopLeftRail";
+import { ClientBillingPaymentEditor } from "@/app/b/[slug]/clients/[clientId]/ClientBillingPaymentEditor";
+import { ClientStickyContextBar } from "@/app/b/[slug]/clients/[clientId]/ClientStickyContextBar";
 import { ClientTypeEditor } from "@/app/b/[slug]/clients/[clientId]/ClientTypeEditor";
 import { RelatedOrdersPreview } from "@/app/b/[slug]/clients/[clientId]/RelatedOrdersPreview";
 import { Button } from "@/components/ui/button";
 import {
   deactivateClientContact,
+  saveClientLocation,
+  saveClientProfileData,
   saveClientContact,
   setClientCurrentManager,
 } from "@/app/b/[slug]/clients/actions";
@@ -76,8 +80,32 @@ type ClientContactRow = {
   email: string | null;
   phone: string | null;
   is_primary: boolean;
+  is_billing_contact: boolean;
+  is_decision_maker: boolean;
   is_active: boolean;
   created_at: string;
+};
+
+type ClientBillingProfileRow = {
+  id: string;
+  legal_entity_name: string | null;
+  registration_number: string | null;
+  vat_number: string | null;
+  tax_id: string | null;
+  legal_address: string | null;
+  postcode: string | null;
+  same_as_company_profile: boolean;
+  bank_name: string | null;
+  account_number: string | null;
+  swift_bic: string | null;
+  currency_code: string | null;
+  payment_method: string | null;
+  payment_terms: string | null;
+  payment_terms_custom: string | null;
+  primary_email: string | null;
+  primary_email_source: string | null;
+  invoice_email: string | null;
+  invoice_email_source: string | null;
 };
 
 type ClientAssignmentRow = {
@@ -115,6 +143,31 @@ type MembershipRow = {
 
 function cleanText(value: unknown) {
   return String(value ?? "").trim();
+}
+
+function isMissingRelationError(
+  error: { message?: string } | null | undefined,
+  relationName: string,
+) {
+  const message = cleanText(error?.message).toLowerCase();
+  if (!message) return false;
+  return (
+    message.includes(`could not find the table 'public.${relationName}'`) ||
+    message.includes(`relation \"public.${relationName}\" does not exist`) ||
+    message.includes(`relation \"${relationName}\" does not exist`)
+  );
+}
+
+function isMissingColumnError(
+  error: { message?: string } | null | undefined,
+  columnName: string,
+) {
+  const message = cleanText(error?.message).toLowerCase();
+  if (!message) return false;
+  return (
+    message.includes(`column \"${columnName.toLowerCase()}\"`) &&
+    message.includes("does not exist")
+  );
 }
 
 function upperRole(value: unknown): "OWNER" | "MANAGER" | "GUEST" {
@@ -171,11 +224,15 @@ export default async function ClientDetailPage({
   const todayHref = `/b/${slug}/today`;
   const settingsHref = `/b/${slug}/settings`;
   const supportHref = `/b/${slug}/support`;
-  const adminHref = isAdminEmail(context.user.email) ? getAdminUsersPath() : undefined;
+  const adminHref = isAdminEmail(context.user.email)
+    ? getAdminUsersPath()
+    : undefined;
 
   const { data: clientData, error: clientError } = await supabase
     .from("clients")
-    .select("id, business_id, client_type, display_name, primary_email, primary_phone, postcode, city, country_code, created_at, updated_at")
+    .select(
+      "id, business_id, client_type, display_name, primary_email, primary_phone, postcode, city, country_code, created_at, updated_at",
+    )
     .eq("id", clientId)
     .eq("business_id", context.business.id)
     .maybeSingle();
@@ -183,61 +240,129 @@ export default async function ClientDetailPage({
   if (!clientData) notFound();
   const client = clientData as ClientRow;
 
-  const [individualRes, companyRes, contactsRes, assignmentsRes, ordersRes, membershipsRes] =
-    await Promise.all([
-      supabase
-        .from("client_individual_profiles")
-        .select("client_id, full_name, first_name, last_name, email, phone, address_line1, address_line2, city, county, postcode")
+  const [
+    individualRes,
+    companyRes,
+    billingProfileRes,
+    contactsRes,
+    assignmentsRes,
+    ordersRes,
+    membershipsRes,
+  ] = await Promise.all([
+    supabase
+      .from("client_individual_profiles")
+      .select(
+        "client_id, full_name, first_name, last_name, email, phone, address_line1, address_line2, city, county, postcode",
+      )
+      .eq("client_id", client.id)
+      .maybeSingle(),
+    supabase
+      .from("client_company_profiles")
+      .select(
+        "client_id, company_name, registration_number, vat_number, email, phone, website, address_line1, address_line2, city, county, postcode",
+      )
+      .eq("client_id", client.id)
+      .maybeSingle(),
+    (async () => {
+      const response = await supabase
+        .from("client_billing_profiles")
+        .select(
+          "id, legal_entity_name, registration_number, vat_number, tax_id, legal_address, postcode, same_as_company_profile, bank_name, account_number, swift_bic, currency_code, payment_method, payment_terms, payment_terms_custom, primary_email, primary_email_source, invoice_email, invoice_email_source",
+        )
         .eq("client_id", client.id)
-        .maybeSingle(),
-      supabase
-        .from("client_company_profiles")
-        .select("client_id, company_name, registration_number, vat_number, email, phone, website, address_line1, address_line2, city, county, postcode")
-        .eq("client_id", client.id)
-        .maybeSingle(),
-      supabase
+        .eq("is_default", true)
+        .maybeSingle();
+
+      if (
+        response.error &&
+        isMissingRelationError(response.error, "client_billing_profiles")
+      ) {
+        return { data: null, error: null };
+      }
+      return response;
+    })(),
+    (async () => {
+      const response = await supabase
         .from("client_contacts")
-        .select("id, first_name, last_name, full_name, job_title, email, phone, is_primary, is_active, created_at")
+        .select(
+          "id, first_name, last_name, full_name, job_title, email, phone, is_primary, is_billing_contact, is_decision_maker, is_active, created_at",
+        )
         .eq("client_id", client.id)
         .order("is_primary", { ascending: false })
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("client_manager_assignments")
-        .select("id, manager_id, assigned_by, assigned_at, unassigned_at, note")
-        .eq("client_id", client.id)
-        .order("assigned_at", { ascending: false }),
-      supabase
-        .from("orders")
-        .select("id, order_number, amount, status, due_date, created_at, updated_at, contact_id")
-        .eq("business_id", context.business.id)
-        .eq("client_id", client.id)
-        .order("created_at", { ascending: false })
-        .limit(50),
-      supabase
-        .from("memberships")
-        .select("user_id, role")
-        .eq("business_id", context.business.id),
-    ]);
+        .order("created_at", { ascending: false });
+
+      if (
+        response.error &&
+        (isMissingColumnError(response.error, "is_billing_contact") ||
+          isMissingColumnError(response.error, "is_decision_maker"))
+      ) {
+        const fallback = await supabase
+          .from("client_contacts")
+          .select(
+            "id, first_name, last_name, full_name, job_title, email, phone, is_primary, is_active, created_at",
+          )
+          .eq("client_id", client.id)
+          .order("is_primary", { ascending: false })
+          .order("created_at", { ascending: false });
+
+        if (fallback.error) return fallback;
+
+        return {
+          data: (fallback.data ?? []).map((row) => ({
+            ...row,
+            is_billing_contact: false,
+            is_decision_maker: false,
+          })),
+          error: null,
+        };
+      }
+
+      return response;
+    })(),
+    supabase
+      .from("client_manager_assignments")
+      .select("id, manager_id, assigned_by, assigned_at, unassigned_at, note")
+      .eq("client_id", client.id)
+      .order("assigned_at", { ascending: false }),
+    supabase
+      .from("orders")
+      .select(
+        "id, order_number, amount, status, due_date, created_at, updated_at, contact_id",
+      )
+      .eq("business_id", context.business.id)
+      .eq("client_id", client.id)
+      .order("created_at", { ascending: false })
+      .limit(50),
+    supabase
+      .from("memberships")
+      .select("user_id, role")
+      .eq("business_id", context.business.id),
+  ]);
 
   if (individualRes.error) throw new Error(individualRes.error.message);
   if (companyRes.error) throw new Error(companyRes.error.message);
+  if (billingProfileRes.error) throw new Error(billingProfileRes.error.message);
   if (contactsRes.error) throw new Error(contactsRes.error.message);
   if (assignmentsRes.error) throw new Error(assignmentsRes.error.message);
   if (ordersRes.error) throw new Error(ordersRes.error.message);
   if (membershipsRes.error) throw new Error(membershipsRes.error.message);
 
-  const { data: activityEventsData, error: activityEventsError } = await supabase
-    .from("activity_events")
-    .select("id, event_type, actor_id, payload, created_at")
-    .eq("business_id", context.business.id)
-    .eq("entity_type", "client")
-    .eq("entity_id", client.id)
-    .order("created_at", { ascending: false })
-    .limit(30);
+  const { data: activityEventsData, error: activityEventsError } =
+    await supabase
+      .from("activity_events")
+      .select("id, event_type, actor_id, payload, created_at")
+      .eq("business_id", context.business.id)
+      .eq("entity_type", "client")
+      .eq("entity_id", client.id)
+      .order("created_at", { ascending: false })
+      .limit(30);
   if (activityEventsError) throw new Error(activityEventsError.message);
 
-  const individual = (individualRes.data as IndividualProfileRow | null) ?? null;
+  const individual =
+    (individualRes.data as IndividualProfileRow | null) ?? null;
   const company = (companyRes.data as CompanyProfileRow | null) ?? null;
+  const billingProfile =
+    (billingProfileRes.data as ClientBillingProfileRow | null) ?? null;
   const contacts = (contactsRes.data ?? []) as ClientContactRow[];
   const assignments = (assignmentsRes.data ?? []) as ClientAssignmentRow[];
   const orders = (ordersRes.data ?? []) as OrderRow[];
@@ -278,7 +403,8 @@ export default async function ClientDetailPage({
   const profileNameById = new Map(
     profileRows.map((row) => {
       const fullName = cleanText(row.full_name);
-      const composed = `${cleanText(row.first_name)} ${cleanText(row.last_name)}`.trim();
+      const composed =
+        `${cleanText(row.first_name)} ${cleanText(row.last_name)}`.trim();
       const fallback = cleanText(row.email) || row.id;
       return [row.id, fullName || composed || fallback];
     }),
@@ -291,9 +417,15 @@ export default async function ClientDetailPage({
     }))
     .sort((a, b) => a.label.localeCompare(b.label));
 
-  const activeOrders = orders.filter((order) => isTurnoverEligibleStatus(cleanText(order.status)));
-  const totalTurnover = activeOrders.reduce((sum, order) => sum + Number(order.amount ?? 0), 0);
+  const activeOrders = orders.filter((order) =>
+    isTurnoverEligibleStatus(cleanText(order.status)),
+  );
+  const totalTurnover = activeOrders.reduce(
+    (sum, order) => sum + Number(order.amount ?? 0),
+    0,
+  );
   const orderCount = activeOrders.length;
+  const averageOrderValue = orderCount > 0 ? totalTurnover / orderCount : 0;
   const lastOrderDate =
     activeOrders.length > 0
       ? activeOrders
@@ -320,9 +452,155 @@ export default async function ClientDetailPage({
     cleanText(company?.postcode) ||
     cleanText(client.postcode) ||
     "—";
+  const primaryContact =
+    contacts.find((contact) => contact.is_active && contact.is_primary) ?? null;
+  const primaryContactEmail = cleanText(primaryContact?.email);
+  const communicationEmailSource =
+    cleanText(billingProfile?.primary_email_source) === "primary_contact"
+      ? "primary_contact"
+      : "custom";
+  const invoiceEmailSource =
+    cleanText(billingProfile?.invoice_email_source) === "primary_contact"
+      ? "primary_contact"
+      : "custom";
+  const currentManagerName = cleanText(currentAssignment?.manager_id)
+    ? profileNameById.get(cleanText(currentAssignment?.manager_id)) ||
+      cleanText(currentAssignment?.manager_id)
+    : "Unassigned";
+  const primaryContactName = primaryContact
+    ? cleanText(primaryContact.full_name) ||
+      `${cleanText(primaryContact.first_name)} ${cleanText(primaryContact.last_name)}`.trim() ||
+      "Unnamed contact"
+    : "Not set";
+  const revenueFormatted = new Intl.NumberFormat("en-GB", {
+    style: "currency",
+    currency: "GBP",
+    maximumFractionDigits: 0,
+  }).format(totalTurnover);
+  const averageOrderFormatted = new Intl.NumberFormat("en-GB", {
+    style: "currency",
+    currency: "GBP",
+    maximumFractionDigits: 0,
+  }).format(averageOrderValue);
+  const lastOrderFormatted = formatDateTime(lastOrderDate);
+  const profileData =
+    client.client_type === "company"
+      ? [
+          {
+            label: "Company name",
+            value:
+              cleanText(company?.company_name) ||
+              cleanText(client.display_name) ||
+              "—",
+          },
+          {
+            label: "Registration number",
+            value: cleanText(company?.registration_number) || "—",
+          },
+          { label: "VAT number", value: cleanText(company?.vat_number) || "—" },
+          { label: "Website", value: cleanText(company?.website) || "—" },
+          {
+            label: "Phone",
+            value:
+              cleanText(company?.phone) ||
+              cleanText(client.primary_phone) ||
+              "—",
+          },
+          {
+            label: "Email",
+            value:
+              cleanText(company?.email) ||
+              cleanText(client.primary_email) ||
+              "—",
+          },
+          {
+            label: "Address line 1",
+            value: cleanText(company?.address_line1) || "—",
+          },
+          {
+            label: "Address line 2",
+            value: cleanText(company?.address_line2) || "—",
+          },
+          {
+            label: "County / Region",
+            value: cleanText(company?.county) || "—",
+          },
+          {
+            label: "City",
+            value: cleanText(client.city) || cleanText(company?.city) || "—",
+          },
+          {
+            label: "Postcode",
+            value:
+              cleanText(client.postcode) || cleanText(company?.postcode) || "—",
+          },
+          {
+            label: "Country code",
+            value: cleanText(client.country_code) || "GB",
+          },
+        ]
+      : [
+          {
+            label: "Full name",
+            value:
+              cleanText(individual?.full_name) ||
+              cleanText(client.display_name) ||
+              "—",
+          },
+          {
+            label: "First name",
+            value: cleanText(individual?.first_name) || "—",
+          },
+          {
+            label: "Last name",
+            value: cleanText(individual?.last_name) || "—",
+          },
+          {
+            label: "Phone",
+            value:
+              cleanText(individual?.phone) ||
+              cleanText(client.primary_phone) ||
+              "—",
+          },
+          {
+            label: "Email",
+            value:
+              cleanText(individual?.email) ||
+              cleanText(client.primary_email) ||
+              "—",
+          },
+          {
+            label: "Address line 1",
+            value: cleanText(individual?.address_line1) || "—",
+          },
+          {
+            label: "Address line 2",
+            value: cleanText(individual?.address_line2) || "—",
+          },
+          {
+            label: "County / Region",
+            value: cleanText(individual?.county) || "—",
+          },
+          {
+            label: "City",
+            value: cleanText(client.city) || cleanText(individual?.city) || "—",
+          },
+          {
+            label: "Postcode",
+            value:
+              cleanText(client.postcode) ||
+              cleanText(individual?.postcode) ||
+              "—",
+          },
+          {
+            label: "Country code",
+            value: cleanText(client.country_code) || "GB",
+          },
+        ];
 
   if (context.role === "MANAGER") {
-    const managerOwnsClient = cleanText(currentAssignment?.manager_id) === context.user.id;
+    const managerOwnsClient =
+      cleanText(currentAssignment?.manager_id) === context.user.id;
     if (!managerOwnsClient) notFound();
   }
   const visibleActivityEvents = activityEvents.filter((entry) => {
@@ -386,298 +664,745 @@ export default async function ClientDetailPage({
             />
           </div>
 
-          <section className="min-w-0 space-y-4">
-            <div className="rounded-[24px] border border-[#E5E7EB] bg-white p-5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
+          <section id="client-main-content" className="min-w-0 space-y-3">
+            <div
+              id="client-hero-card"
+              className="rounded-[24px] border border-[#E5E7EB] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]"
+            >
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div className="min-w-0">
                   <div className="product-page-kicker">Client Detail</div>
-                  <h1 className="product-page-title mt-1.5">{resolvedName || "Unnamed client"}</h1>
-                  <p className="product-page-subtitle mt-1.5">
-                    {client.client_type.toUpperCase()} • {resolvedEmail} • {resolvedPhone}
-                  </p>
-                  <div className="mt-2">
-                    <ClientTypeEditor
-                      clientId={client.id}
-                      businessSlug={slug}
-                      currentType={client.client_type}
-                      companyNameHint={cleanText(company?.company_name) || cleanText(client.display_name)}
-                      hasPrimaryContact={contacts.some((contact) => contact.is_active && contact.is_primary)}
-                      compact
-                    />
+                  <h1 className="mt-1 text-[30px] font-semibold leading-tight tracking-tight text-slate-900">
+                    {resolvedName || "Unnamed client"}
+                  </h1>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <span className="inline-flex items-center rounded-full border border-[var(--brand-200)] bg-[var(--brand-50)] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--brand-700)]">
+                      {client.client_type}
+                    </span>
+                    <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
+                      Manager: {currentManagerName}
+                    </span>
+                    {client.client_type === "company" ? (
+                      <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
+                        Primary contact: {primaryContactName}
+                      </span>
+                    ) : null}
                   </div>
+                  <p className="mt-2 text-sm text-slate-500">
+                    {resolvedEmail} • {resolvedPhone}
+                  </p>
                 </div>
-                <Link
-                  href={clientsHref}
-                  className="inline-flex h-10 items-center rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
-                >
-                  Back to clients
-                </Link>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <Link
+                    href="#profile-data"
+                    className="inline-flex h-9 items-center rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400"
+                  >
+                    Edit
+                  </Link>
+                  <ClientTypeEditor
+                    clientId={client.id}
+                    businessSlug={slug}
+                    currentType={client.client_type}
+                    companyNameHint={
+                      cleanText(company?.company_name) ||
+                      cleanText(client.display_name)
+                    }
+                    hasPrimaryContact={contacts.some(
+                      (contact) => contact.is_active && contact.is_primary,
+                    )}
+                    compact
+                    showTypeBadge={false}
+                    compactLabel="Change client type"
+                  />
+                  <Link
+                    href={clientsHref}
+                    className="inline-flex h-9 items-center rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400"
+                  >
+                    Back
+                  </Link>
+                </div>
               </div>
 
-              <dl className="mt-4 grid gap-2 text-sm sm:grid-cols-2 xl:grid-cols-4">
+              <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-2 xl:grid-cols-4">
                 <InfoRow label="Postcode" value={resolvedPostcode} />
                 <InfoRow label="City" value={cleanText(client.city) || "—"} />
-                <InfoRow label="Country" value={cleanText(client.country_code) || "GB"} />
-                <InfoRow label="Updated" value={formatDateTime(client.updated_at)} />
+                <InfoRow
+                  label="Country"
+                  value={cleanText(client.country_code) || "GB"}
+                />
+                <InfoRow
+                  label="Updated"
+                  value={formatDateTime(client.updated_at)}
+                />
               </dl>
             </div>
 
-            <div className="grid gap-4 xl:grid-cols-2">
-              <section className="rounded-[24px] border border-[#E5E7EB] bg-white p-5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
-                <h2 className="text-sm font-semibold text-slate-900">Current manager</h2>
-                <p className="mt-1 text-xs text-slate-500">
-                  One active owner/manager per client, with history below.
-                </p>
+            <ClientStickyContextBar
+              targetId="client-hero-card"
+              containerId="client-main-content"
+              minContainerWidth={1080}
+              clientName={resolvedName || "Unnamed client"}
+              clientType={client.client_type}
+              managerName={currentManagerName}
+              revenueValue={revenueFormatted}
+              ordersValue={String(orderCount)}
+              averageValue={averageOrderFormatted}
+              lastOrderValue={lastOrderFormatted}
+            />
 
-                <form
-                  action={async (formData) => {
-                    "use server";
-                    const managerIdRaw = cleanText(formData.get("manager_id"));
-                    await setClientCurrentManager({
-                      clientId: client.id,
-                      businessSlug: slug,
-                      managerId: managerIdRaw || null,
-                      note: cleanText(formData.get("note")) || null,
-                    });
-                  }}
-                  className="mt-3 grid gap-2"
+            <div className="grid gap-3 xl:grid-cols-[minmax(0,1.85fr)_minmax(0,1fr)]">
+              <div className="space-y-3">
+                <section className="rounded-[24px] border border-[var(--brand-200)] bg-[var(--brand-50)]/70 p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                  <h2 className="text-sm font-semibold text-slate-900">
+                    Revenue
+                  </h2>
+                  <dl className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                    <MetricStat
+                      label="Total revenue"
+                      value={revenueFormatted}
+                    />
+                    <MetricStat
+                      label="Orders count"
+                      value={String(orderCount)}
+                    />
+                    <MetricStat
+                      label="Average order"
+                      value={averageOrderFormatted}
+                    />
+                    <MetricStat label="Last order" value={lastOrderFormatted} />
+                  </dl>
+                </section>
+
+                <section
+                  id="profile-data"
+                  className="rounded-[24px] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]"
                 >
-                  <select
-                    name="manager_id"
-                    defaultValue={cleanText(currentAssignment?.manager_id)}
-                    className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
-                  >
-                    {!cleanText(currentAssignment?.manager_id) ? (
-                      <option value="" disabled>
-                        Select manager
-                      </option>
-                    ) : null}
-                    {managerOptions.map((option) => (
-                      <option key={option.id} value={option.id}>
-                        {option.label}
-                      </option>
+                  <h2 className="text-sm font-semibold text-slate-900">
+                    Profile data
+                  </h2>
+                  <dl className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                    {profileData.map((item) => (
+                      <InfoRow
+                        key={item.label}
+                        label={item.label}
+                        value={item.value}
+                      />
                     ))}
-                  </select>
-                  <input
-                    name="note"
-                    placeholder="Optional note"
-                    className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
-                  />
-                  <Button type="submit" className="h-10 rounded-xl px-4 text-sm font-semibold">
-                    Save manager
-                  </Button>
-                </form>
+                  </dl>
+                  <details className="mt-3 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-3">
+                    <summary className="cursor-pointer list-none text-sm font-semibold text-slate-800">
+                      Edit profile data
+                    </summary>
 
-                <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm">
-                  <div className="text-xs text-slate-500">Current assignee</div>
-                  <div className="mt-1 font-semibold text-slate-900">
-                    {cleanText(currentAssignment?.manager_id)
-                      ? profileNameById.get(cleanText(currentAssignment?.manager_id)) ||
-                        cleanText(currentAssignment?.manager_id)
-                      : "Unassigned"}
-                  </div>
-                </div>
+                    <form
+                      action={async (formData) => {
+                        "use server";
+                        await saveClientProfileData({
+                          clientId: client.id,
+                          businessSlug: slug,
+                          clientType: client.client_type,
+                          companyName:
+                            cleanText(formData.get("company_name")) || null,
+                          registrationNumber:
+                            cleanText(formData.get("registration_number")) ||
+                            null,
+                          vatNumber:
+                            cleanText(formData.get("vat_number")) || null,
+                          website: cleanText(formData.get("website")) || null,
+                          addressLine1:
+                            cleanText(formData.get("address_line1")) || null,
+                          addressLine2:
+                            cleanText(formData.get("address_line2")) || null,
+                          county: cleanText(formData.get("county")) || null,
+                          firstName:
+                            cleanText(formData.get("first_name")) || null,
+                          lastName:
+                            cleanText(formData.get("last_name")) || null,
+                          fullName:
+                            cleanText(formData.get("full_name")) || null,
+                          phone: cleanText(formData.get("phone")) || null,
+                          email: cleanText(formData.get("email")) || null,
+                        });
 
-              </section>
+                        await saveClientLocation({
+                          clientId: client.id,
+                          businessSlug: slug,
+                          clientType: client.client_type,
+                          city: cleanText(formData.get("city")) || null,
+                          postcode: cleanText(formData.get("postcode")) || null,
+                          countryCode:
+                            cleanText(formData.get("country_code")) || null,
+                        });
+                      }}
+                      className="mt-3 grid gap-2 md:grid-cols-2"
+                    >
+                      {client.client_type === "company" ? (
+                        <>
+                          <input
+                            name="company_name"
+                            defaultValue={
+                              cleanText(company?.company_name) ||
+                              cleanText(client.display_name)
+                            }
+                            placeholder="Company name"
+                            className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none"
+                          />
+                          <input
+                            name="registration_number"
+                            defaultValue={cleanText(
+                              company?.registration_number,
+                            )}
+                            placeholder="Registration number"
+                            className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none"
+                          />
+                          <input
+                            name="vat_number"
+                            defaultValue={cleanText(company?.vat_number)}
+                            placeholder="VAT number"
+                            className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none"
+                          />
+                          <input
+                            name="website"
+                            defaultValue={cleanText(company?.website)}
+                            placeholder="Website"
+                            className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none"
+                          />
+                        </>
+                      ) : (
+                        <>
+                          <input
+                            name="full_name"
+                            defaultValue={
+                              cleanText(individual?.full_name) ||
+                              cleanText(client.display_name)
+                            }
+                            placeholder="Full name"
+                            className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none md:col-span-2"
+                          />
+                          <input
+                            name="first_name"
+                            defaultValue={cleanText(individual?.first_name)}
+                            placeholder="First name"
+                            className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none"
+                          />
+                          <input
+                            name="last_name"
+                            defaultValue={cleanText(individual?.last_name)}
+                            placeholder="Last name"
+                            className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none"
+                          />
+                          <input
+                            name="phone"
+                            type="tel"
+                            defaultValue={
+                              cleanText(individual?.phone) ||
+                              cleanText(client.primary_phone)
+                            }
+                            placeholder="Phone"
+                            className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none"
+                          />
+                          <input
+                            name="email"
+                            type="email"
+                            defaultValue={
+                              cleanText(individual?.email) ||
+                              cleanText(client.primary_email)
+                            }
+                            placeholder="Email"
+                            className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none"
+                          />
+                        </>
+                      )}
 
-              <section className="rounded-[24px] border border-[#E5E7EB] bg-white p-5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
-                <h2 className="text-sm font-semibold text-slate-900">Profile data</h2>
+                      <input
+                        name="address_line1"
+                        defaultValue={
+                          client.client_type === "company"
+                            ? cleanText(company?.address_line1)
+                            : cleanText(individual?.address_line1)
+                        }
+                        placeholder="Address line 1"
+                        className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none md:col-span-2"
+                      />
+                      <input
+                        name="address_line2"
+                        defaultValue={
+                          client.client_type === "company"
+                            ? cleanText(company?.address_line2)
+                            : cleanText(individual?.address_line2)
+                        }
+                        placeholder="Address line 2"
+                        className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none"
+                      />
+                      <input
+                        name="county"
+                        defaultValue={
+                          client.client_type === "company"
+                            ? cleanText(company?.county)
+                            : cleanText(individual?.county)
+                        }
+                        placeholder="County / Region"
+                        className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none"
+                      />
+                      <input
+                        name="city"
+                        defaultValue={
+                          cleanText(client.city) ||
+                          (client.client_type === "company"
+                            ? cleanText(company?.city)
+                            : cleanText(individual?.city))
+                        }
+                        placeholder="City"
+                        className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none"
+                      />
+                      <input
+                        name="postcode"
+                        defaultValue={
+                          cleanText(client.postcode) ||
+                          (client.client_type === "company"
+                            ? cleanText(company?.postcode)
+                            : cleanText(individual?.postcode))
+                        }
+                        placeholder="Postcode"
+                        className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none"
+                      />
+                      <div className="md:col-span-2">
+                        <input
+                          name="country_code"
+                          defaultValue={cleanText(client.country_code) || "GB"}
+                          placeholder="Country code (ISO), e.g. GB"
+                          className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm uppercase outline-none"
+                        />
+                        <p className="mt-1 text-xs text-slate-500">
+                          Country code is not currency. Currency is configured
+                          in Billing &amp; Payment.
+                        </p>
+                      </div>
+
+                      <Button
+                        type="submit"
+                        className="h-10 rounded-lg px-4 text-sm font-semibold md:col-span-2"
+                      >
+                        Save profile data
+                      </Button>
+                    </form>
+                  </details>
+                </section>
+
                 {client.client_type === "company" ? (
-                  <dl className="mt-3 grid gap-2 text-sm">
-                    <InfoRow label="Company name" value={cleanText(company?.company_name) || cleanText(client.display_name) || "—"} />
-                    <InfoRow label="Registration number" value={cleanText(company?.registration_number) || "—"} />
-                    <InfoRow label="VAT number" value={cleanText(company?.vat_number) || "—"} />
-                    <InfoRow label="Website" value={cleanText(company?.website) || "—"} />
-                    <InfoRow label="Address" value={[cleanText(company?.address_line1), cleanText(company?.address_line2), cleanText(company?.city), cleanText(company?.county), cleanText(company?.postcode)].filter(Boolean).join(", ") || "—"} />
-                  </dl>
-                ) : (
-                  <dl className="mt-3 grid gap-2 text-sm">
-                    <InfoRow label="Full name" value={cleanText(individual?.full_name) || cleanText(client.display_name) || "—"} />
-                    <InfoRow label="First name" value={cleanText(individual?.first_name) || "—"} />
-                    <InfoRow label="Last name" value={cleanText(individual?.last_name) || "—"} />
-                    <InfoRow label="Address" value={[cleanText(individual?.address_line1), cleanText(individual?.address_line2), cleanText(individual?.city), cleanText(individual?.county), cleanText(individual?.postcode)].filter(Boolean).join(", ") || "—"} />
-                  </dl>
-                )}
-              </section>
-            </div>
+                  <ClientBillingPaymentEditor
+                    clientId={client.id}
+                    businessSlug={slug}
+                    companyProfile={{
+                      companyName: cleanText(company?.company_name),
+                      registrationNumber: cleanText(
+                        company?.registration_number,
+                      ),
+                      vatNumber: cleanText(company?.vat_number),
+                      address: [
+                        cleanText(company?.address_line1),
+                        cleanText(company?.address_line2),
+                        cleanText(company?.city),
+                        cleanText(company?.county),
+                      ]
+                        .filter(Boolean)
+                        .join(", "),
+                      postcode: cleanText(company?.postcode),
+                    }}
+                    billingProfile={{
+                      legalEntityName: cleanText(
+                        billingProfile?.legal_entity_name,
+                      ),
+                      registrationNumber: cleanText(
+                        billingProfile?.registration_number,
+                      ),
+                      vatNumber: cleanText(billingProfile?.vat_number),
+                      taxId: cleanText(billingProfile?.tax_id),
+                      legalAddress: cleanText(billingProfile?.legal_address),
+                      postcode: cleanText(billingProfile?.postcode),
+                      sameAsCompanyProfile: Boolean(
+                        billingProfile?.same_as_company_profile,
+                      ),
+                      bankName: cleanText(billingProfile?.bank_name),
+                      accountNumber: cleanText(billingProfile?.account_number),
+                      swiftBic: cleanText(billingProfile?.swift_bic),
+                      currencyCode:
+                        cleanText(billingProfile?.currency_code) === "GBP"
+                          ? "GBP"
+                          : cleanText(billingProfile?.currency_code) === "EUR"
+                            ? "EUR"
+                            : cleanText(billingProfile?.currency_code) === "USD"
+                              ? "USD"
+                              : "GBP",
+                      paymentMethod:
+                        cleanText(billingProfile?.payment_method) === "cash"
+                          ? "cash"
+                          : cleanText(billingProfile?.payment_method) === "card"
+                            ? "card"
+                            : "bank_transfer",
+                      paymentTerms:
+                        cleanText(billingProfile?.payment_terms) === "net_7"
+                          ? "net_7"
+                          : cleanText(billingProfile?.payment_terms) ===
+                              "net_14"
+                            ? "net_14"
+                            : cleanText(billingProfile?.payment_terms) ===
+                                "net_30"
+                              ? "net_30"
+                              : cleanText(billingProfile?.payment_terms) ===
+                                  "custom"
+                                ? "custom"
+                                : "prepaid",
+                      paymentTermsCustom: cleanText(
+                        billingProfile?.payment_terms_custom,
+                      ),
+                      primaryEmailSource: communicationEmailSource,
+                      primaryEmail: cleanText(billingProfile?.primary_email),
+                      invoiceEmailSource,
+                      invoiceEmail: cleanText(billingProfile?.invoice_email),
+                    }}
+                    primaryContactEmail={primaryContactEmail}
+                  />
+                ) : null}
 
-            {client.client_type === "company" ? (
-            <section className="rounded-[24px] border border-[#E5E7EB] bg-white p-5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
-              <div className="flex items-center justify-between gap-3">
-                <h2 className="text-sm font-semibold text-slate-900">Company contacts</h2>
-                <span className="text-xs text-slate-500">{contacts.filter((c) => c.is_active).length} active</span>
+                {client.client_type === "company" ? (
+                  <section className="rounded-[24px] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                    <div className="flex items-center justify-between gap-3">
+                      <h2 className="text-sm font-semibold text-slate-900">
+                        Company contacts
+                      </h2>
+                      <span className="text-xs text-slate-500">
+                        {contacts.filter((c) => c.is_active).length} active
+                      </span>
+                    </div>
+
+                    {contacts.length === 0 ? (
+                      <p className="mt-3 text-sm text-slate-500">
+                        No contacts yet.
+                      </p>
+                    ) : (
+                      <div className="mt-3 space-y-2">
+                        {contacts.map((contact) => (
+                          <div
+                            key={contact.id}
+                            className="rounded-xl bg-slate-50 p-3"
+                          >
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <div>
+                                <div className="text-sm font-semibold text-slate-900">
+                                  {cleanText(contact.full_name) ||
+                                    `${cleanText(contact.first_name)} ${cleanText(contact.last_name)}`.trim() ||
+                                    "Unnamed contact"}
+                                  {contact.is_primary ? (
+                                    <span className="ml-2 inline-flex items-center rounded-full border border-[var(--brand-200)] bg-[var(--brand-50)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--brand-700)]">
+                                      Primary
+                                    </span>
+                                  ) : null}
+                                  {contact.is_billing_contact ? (
+                                    <span className="ml-2 inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-emerald-700">
+                                      Billing
+                                    </span>
+                                  ) : null}
+                                </div>
+                                <div className="mt-1 text-xs text-slate-500">
+                                  {[
+                                    cleanText(contact.job_title),
+                                    cleanText(contact.email),
+                                    cleanText(contact.phone),
+                                  ]
+                                    .filter(Boolean)
+                                    .join(" • ") || "No contact details"}
+                                </div>
+                              </div>
+                              {contact.is_active ? (
+                                <form
+                                  action={async () => {
+                                    "use server";
+                                    await deactivateClientContact({
+                                      contactId: contact.id,
+                                      businessSlug: slug,
+                                    });
+                                  }}
+                                >
+                                  <Button
+                                    type="submit"
+                                    variant="destructive-outline"
+                                    className="h-8 rounded-lg px-3 text-xs font-semibold"
+                                  >
+                                    Deactivate
+                                  </Button>
+                                </form>
+                              ) : null}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    <details className="mt-3 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-3">
+                      <summary className="cursor-pointer list-none text-sm font-semibold text-slate-800">
+                        + Add contact
+                      </summary>
+                      <form
+                        action={async (formData) => {
+                          "use server";
+                          await saveClientContact({
+                            clientId: client.id,
+                            businessSlug: slug,
+                            firstName:
+                              cleanText(formData.get("first_name")) || null,
+                            lastName:
+                              cleanText(formData.get("last_name")) || null,
+                            fullName:
+                              cleanText(formData.get("full_name")) || null,
+                            email: cleanText(formData.get("email")) || null,
+                            phone: cleanText(formData.get("phone")) || null,
+                            jobTitle:
+                              cleanText(formData.get("job_title")) || null,
+                            isPrimary:
+                              cleanText(formData.get("is_primary")) === "on",
+                            isBillingContact:
+                              cleanText(formData.get("is_billing_contact")) ===
+                              "on",
+                            isDecisionMaker:
+                              cleanText(formData.get("is_decision_maker")) ===
+                              "on",
+                            isActive: true,
+                          });
+                        }}
+                        className="mt-3 grid gap-2 md:grid-cols-2"
+                      >
+                        <input
+                          name="first_name"
+                          placeholder="First name"
+                          className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none"
+                        />
+                        <input
+                          name="last_name"
+                          placeholder="Last name"
+                          className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none"
+                        />
+                        <input
+                          name="full_name"
+                          placeholder="Full name (optional)"
+                          className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none md:col-span-2"
+                        />
+                        <input
+                          name="email"
+                          placeholder="Email"
+                          className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none"
+                        />
+                        <input
+                          name="phone"
+                          placeholder="Phone"
+                          className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none"
+                        />
+                        <input
+                          name="job_title"
+                          placeholder="Job title"
+                          className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none md:col-span-2"
+                        />
+                        <label className="inline-flex items-center gap-2 text-sm text-slate-700 md:col-span-2">
+                          <input
+                            type="checkbox"
+                            name="is_primary"
+                            className="h-4 w-4 rounded border-slate-300"
+                          />
+                          Set as primary contact
+                        </label>
+                        <label className="inline-flex items-center gap-2 text-sm text-slate-700 md:col-span-2">
+                          <input
+                            type="checkbox"
+                            name="is_billing_contact"
+                            className="h-4 w-4 rounded border-slate-300"
+                          />
+                          Mark as billing contact
+                        </label>
+                        <label className="inline-flex items-center gap-2 text-sm text-slate-700 md:col-span-2">
+                          <input
+                            type="checkbox"
+                            name="is_decision_maker"
+                            className="h-4 w-4 rounded border-slate-300"
+                          />
+                          Mark as decision maker
+                        </label>
+                        <Button
+                          type="submit"
+                          className="h-10 rounded-lg px-4 text-sm font-semibold md:col-span-2"
+                        >
+                          Add contact
+                        </Button>
+                      </form>
+                    </details>
+                  </section>
+                ) : null}
+
+                <section className="rounded-[24px] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                  <h2 className="text-sm font-semibold text-slate-900">
+                    Related orders
+                  </h2>
+                  <RelatedOrdersPreview
+                    orders={orders}
+                    slug={slug}
+                    businessId={context.business.id}
+                  />
+                </section>
               </div>
 
-              {contacts.length === 0 ? (
-                <p className="mt-3 text-sm text-slate-500">No contacts yet.</p>
-              ) : (
-                <div className="mt-3 space-y-3">
-                  {contacts.map((contact) => (
-                    <div key={contact.id} className="rounded-xl border border-slate-200 p-3">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div>
-                          <div className="text-sm font-semibold text-slate-900">
-                            {cleanText(contact.full_name) ||
-                              `${cleanText(contact.first_name)} ${cleanText(contact.last_name)}`.trim() ||
-                              "Unnamed contact"}
-                            {contact.is_primary ? (
-                              <span className="ml-2 inline-flex items-center rounded-full border border-[var(--brand-200)] bg-[var(--brand-50)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--brand-700)]">
-                                Primary
-                              </span>
-                            ) : null}
-                            {!contact.is_active ? (
-                              <span className="ml-2 inline-flex items-center rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-rose-700">
-                                Inactive
-                              </span>
-                            ) : null}
+              <aside className="space-y-3 xl:sticky xl:top-[88px] xl:self-start">
+                <section className="rounded-[24px] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                  <h2 className="text-sm font-semibold text-slate-900">
+                    Manager
+                  </h2>
+                  <p className="mt-1 text-xs text-slate-500">
+                    One active owner/manager per client.
+                  </p>
+                  <form
+                    action={async (formData) => {
+                      "use server";
+                      const managerIdRaw = cleanText(
+                        formData.get("manager_id"),
+                      );
+                      await setClientCurrentManager({
+                        clientId: client.id,
+                        businessSlug: slug,
+                        managerId: managerIdRaw || null,
+                        note: cleanText(formData.get("note")) || null,
+                      });
+                    }}
+                    className="mt-3 grid gap-2"
+                  >
+                    <select
+                      name="manager_id"
+                      defaultValue={cleanText(currentAssignment?.manager_id)}
+                      className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
+                    >
+                      {!cleanText(currentAssignment?.manager_id) ? (
+                        <option value="" disabled>
+                          Select manager
+                        </option>
+                      ) : null}
+                      {managerOptions.map((option) => (
+                        <option key={option.id} value={option.id}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      name="note"
+                      placeholder="Optional note"
+                      className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
+                    />
+                    <Button
+                      type="submit"
+                      className="h-10 rounded-xl px-4 text-sm font-semibold"
+                    >
+                      Save manager
+                    </Button>
+                  </form>
+                </section>
+
+                <section className="rounded-[24px] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                  <h2 className="text-sm font-semibold text-slate-900">
+                    Assignment history
+                  </h2>
+                  {assignments.length === 0 ? (
+                    <p className="mt-3 text-sm text-slate-500">
+                      No assignment history yet.
+                    </p>
+                  ) : (
+                    <ul className="mt-3 space-y-2">
+                      {assignments.map((row) => (
+                        <li
+                          key={row.id}
+                          className="rounded-xl bg-slate-50 p-3 text-sm"
+                        >
+                          <div className="font-semibold text-slate-900">
+                            {cleanText(row.manager_id)
+                              ? profileNameById.get(
+                                  cleanText(row.manager_id),
+                                ) || cleanText(row.manager_id)
+                              : "Unassigned"}
                           </div>
                           <div className="mt-1 text-xs text-slate-500">
-                            {[cleanText(contact.job_title), cleanText(contact.email), cleanText(contact.phone)]
-                              .filter(Boolean)
-                              .join(" • ") || "No contact details"}
+                            {formatDateTime(row.assigned_at)}
+                            {row.unassigned_at
+                              ? ` → ${formatDateTime(row.unassigned_at)}`
+                              : " → active"}
                           </div>
-                        </div>
-                        {contact.is_active ? (
-                          <form
-                            action={async () => {
-                              "use server";
-                              await deactivateClientContact({
-                                contactId: contact.id,
-                                businessSlug: slug,
-                              });
-                            }}
+                          <div className="mt-1 text-xs text-slate-500">
+                            by{" "}
+                            {cleanText(row.assigned_by)
+                              ? profileNameById.get(
+                                  cleanText(row.assigned_by),
+                                ) || cleanText(row.assigned_by)
+                              : "system"}
+                          </div>
+                          {cleanText(row.note) ? (
+                            <div className="mt-1 text-xs text-slate-600">
+                              {cleanText(row.note)}
+                            </div>
+                          ) : null}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </section>
+
+                {visibleActivityEvents.length > 0 ? (
+                  <section className="rounded-[24px] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                    <h2 className="text-sm font-semibold text-slate-900">
+                      Client activity
+                    </h2>
+                    <ul className="mt-3 space-y-2">
+                      {visibleActivityEvents.map((event) => {
+                        const payload = (event.payload ?? {}) as Record<
+                          string,
+                          unknown
+                        >;
+                        const previousType = cleanText(payload.previous_type);
+                        const newType = cleanText(payload.new_type);
+                        const actorName = cleanText(event.actor_id)
+                          ? profileNameById.get(cleanText(event.actor_id)) ||
+                            cleanText(event.actor_id)
+                          : "system";
+                        const message =
+                          event.event_type === "client.type_changed"
+                            ? `Client type changed from ${previousType || "unknown"} to ${newType || "unknown"}`
+                            : event.event_type;
+
+                        return (
+                          <li
+                            key={event.id}
+                            className="rounded-xl bg-slate-50 p-3 text-sm"
                           >
-                            <Button
-                              type="submit"
-                              variant="destructive-outline"
-                              className="h-8 rounded-lg px-3 text-xs font-semibold"
-                            >
-                              Deactivate
-                            </Button>
-                          </form>
-                        ) : null}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <form
-                action={async (formData) => {
-                  "use server";
-                  await saveClientContact({
-                    clientId: client.id,
-                    businessSlug: slug,
-                    firstName: cleanText(formData.get("first_name")) || null,
-                    lastName: cleanText(formData.get("last_name")) || null,
-                    fullName: cleanText(formData.get("full_name")) || null,
-                    email: cleanText(formData.get("email")) || null,
-                    phone: cleanText(formData.get("phone")) || null,
-                    jobTitle: cleanText(formData.get("job_title")) || null,
-                    isPrimary: cleanText(formData.get("is_primary")) === "on",
-                    isActive: true,
-                  });
-                }}
-                className="mt-4 grid gap-2 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-3 md:grid-cols-2"
-              >
-                <input name="first_name" placeholder="First name" className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none" />
-                <input name="last_name" placeholder="Last name" className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none" />
-                <input name="full_name" placeholder="Full name (optional)" className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none md:col-span-2" />
-                <input name="email" placeholder="Email" className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none" />
-                <input name="phone" placeholder="Phone" className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none" />
-                <input name="job_title" placeholder="Job title" className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none md:col-span-2" />
-                <label className="inline-flex items-center gap-2 text-sm text-slate-700 md:col-span-2">
-                  <input type="checkbox" name="is_primary" className="h-4 w-4 rounded border-slate-300" />
-                  Set as primary contact
-                </label>
-                <Button type="submit" className="h-10 rounded-lg px-4 text-sm font-semibold md:col-span-2">
-                  Add contact
-                </Button>
-              </form>
-            </section>
-            ) : null}
-
-            <div className="grid gap-4 xl:grid-cols-2">
-              <section className="rounded-[24px] border border-[#E5E7EB] bg-white p-5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
-                <h2 className="text-sm font-semibold text-slate-900">Revenue summary</h2>
-                <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-3">
-                  <InfoRow label="Total turnover" value={new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP", maximumFractionDigits: 0 }).format(totalTurnover)} />
-                  <InfoRow label="Order count" value={String(orderCount)} />
-                  <InfoRow label="Last order date" value={formatDateTime(lastOrderDate)} />
-                </dl>
-              </section>
-
-              <section className="rounded-[24px] border border-[#E5E7EB] bg-white p-5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
-                <h2 className="text-sm font-semibold text-slate-900">Assignment history</h2>
-                {assignments.length === 0 ? (
-                  <p className="mt-3 text-sm text-slate-500">No assignment history yet.</p>
-                ) : (
-                  <ul className="mt-3 space-y-2">
-                    {assignments.map((row) => (
-                      <li key={row.id} className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm">
-                        <div className="font-semibold text-slate-900">
-                          {cleanText(row.manager_id)
-                            ? profileNameById.get(cleanText(row.manager_id)) || cleanText(row.manager_id)
-                            : "Unassigned"}
-                        </div>
-                        <div className="mt-1 text-xs text-slate-500">
-                          {formatDateTime(row.assigned_at)}
-                          {row.unassigned_at ? ` → ${formatDateTime(row.unassigned_at)}` : " → active"}
-                        </div>
-                        <div className="mt-1 text-xs text-slate-500">
-                          by {cleanText(row.assigned_by) ? profileNameById.get(cleanText(row.assigned_by)) || cleanText(row.assigned_by) : "system"}
-                        </div>
-                        {cleanText(row.note) ? (
-                          <div className="mt-1 text-xs text-slate-600">{cleanText(row.note)}</div>
-                        ) : null}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </section>
-
-              <section className="rounded-[24px] border border-[#E5E7EB] bg-white p-5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
-                <h2 className="text-sm font-semibold text-slate-900">Related orders</h2>
-                <RelatedOrdersPreview orders={orders} slug={slug} businessId={context.business.id} />
-              </section>
+                            <div className="font-semibold text-slate-900">
+                              {message}
+                            </div>
+                            <div className="mt-1 text-xs text-slate-500">
+                              by {actorName} •{" "}
+                              {formatDateTime(event.created_at)}
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </section>
+                ) : null}
+              </aside>
             </div>
-
-            {visibleActivityEvents.length > 0 ? (
-            <section className="rounded-[24px] border border-[#E5E7EB] bg-white p-5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
-              <h2 className="text-sm font-semibold text-slate-900">Client activity</h2>
-                <ul className="mt-3 space-y-2">
-                  {visibleActivityEvents.map((event) => {
-                    const payload = (event.payload ?? {}) as Record<string, unknown>;
-                    const previousType = cleanText(payload.previous_type);
-                    const newType = cleanText(payload.new_type);
-                    const actorName = cleanText(event.actor_id)
-                      ? profileNameById.get(cleanText(event.actor_id)) || cleanText(event.actor_id)
-                      : "system";
-                    const message =
-                      event.event_type === "client.type_changed"
-                        ? `Client type changed from ${previousType || "unknown"} to ${newType || "unknown"}`
-                        : event.event_type;
-
-                    return (
-                      <li key={event.id} className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm">
-                        <div className="font-semibold text-slate-900">{message}</div>
-                        <div className="mt-1 text-xs text-slate-500">
-                          by {actorName} • {formatDateTime(event.created_at)}
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-            </section>
-            ) : null}
           </section>
         </div>
 
         <div className="space-y-4 lg:hidden">
           <section className="rounded-[24px] border border-[#E5E7EB] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
-            <div className="text-sm font-semibold text-slate-900">{resolvedName}</div>
+            <div className="text-sm font-semibold text-slate-900">
+              {resolvedName}
+            </div>
             <div className="mt-1 text-xs text-slate-500">
-              {client.client_type.toUpperCase()} • {resolvedEmail} • {resolvedPhone}
+              {client.client_type.toUpperCase()} • {resolvedEmail} •{" "}
+              {resolvedPhone}
             </div>
             <Link
               href={clientsHref}
@@ -701,4 +1426,15 @@ function InfoRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-
+function MetricStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl bg-white/90 p-3">
+      <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+        {label}
+      </div>
+      <div className="mt-1 text-lg font-semibold tracking-tight text-slate-900">
+        {value}
+      </div>
+    </div>
+  );
+}

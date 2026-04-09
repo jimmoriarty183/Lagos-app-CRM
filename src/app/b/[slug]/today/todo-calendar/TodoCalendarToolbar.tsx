@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import * as React from "react";
 
 import type { TodoCalendarView } from "@/app/b/[slug]/today/todo-calendar/types";
 import { TodoViewModeSwitch } from "@/app/b/[slug]/today/todo-calendar/TodoViewModeSwitch";
@@ -12,6 +13,7 @@ export function TodoCalendarToolbar({
   onToday,
   onPrevious,
   onNext,
+  actions,
 }: {
   periodLabel: string;
   view: TodoCalendarView;
@@ -19,6 +21,7 @@ export function TodoCalendarToolbar({
   onToday: () => void;
   onPrevious: () => void;
   onNext: () => void;
+  actions?: React.ReactNode;
 }) {
   return (
     <div className="flex flex-col gap-3 rounded-[24px] border border-[#DDE3F1] bg-[linear-gradient(125deg,#FFFFFF_0%,#F8FAFF_55%,#F1F5FF_100%)] px-4 py-4 shadow-[0_16px_34px_rgba(15,23,42,0.08)] lg:flex-row lg:items-center lg:justify-between">
@@ -56,16 +59,19 @@ export function TodoCalendarToolbar({
         </div>
       </div>
 
-      <TodoViewModeSwitch
-        value={view}
-        size="sm"
-        onChange={onViewChange}
-        options={[
-          { value: "month", label: "Month" },
-          { value: "week", label: "Week" },
-          { value: "day", label: "Day" },
-        ]}
-      />
+      <div className="flex flex-wrap items-center gap-2">
+        {actions}
+        <TodoViewModeSwitch
+          value={view}
+          size="sm"
+          onChange={onViewChange}
+          options={[
+            { value: "month", label: "Month" },
+            { value: "week", label: "Week" },
+            { value: "day", label: "Day" },
+          ]}
+        />
+      </div>
     </div>
   );
 }

@@ -9,6 +9,25 @@ function cleanText(value: unknown) {
   return String(value ?? "").trim();
 }
 
+function isMissingRelationError(error: { message?: string } | null | undefined, relationName: string) {
+  const message = cleanText(error?.message).toLowerCase();
+  if (!message) return false;
+  return (
+    message.includes(`could not find the table 'public.${relationName}'`) ||
+    message.includes(`relation \"public.${relationName}\" does not exist`) ||
+    message.includes(`relation \"${relationName}\" does not exist`)
+  );
+}
+
+function isMissingColumnError(error: { message?: string } | null | undefined, columnName: string) {
+  const message = cleanText(error?.message).toLowerCase();
+  if (!message) return false;
+  return (
+    message.includes(`column \"${columnName.toLowerCase()}\"`) &&
+    message.includes("does not exist")
+  );
+}
+
 function upperRole(value: unknown) {
   return cleanText(value).toUpperCase();
 }
@@ -148,6 +167,129 @@ export async function setClientCurrentManager(input: {
   revalidatePath(`/b/${input.businessSlug}/analytics`);
 }
 
+export async function saveClientLocation(input: {
+  clientId: string;
+  businessSlug: string;
+  clientType: "individual" | "company";
+  city?: string | null;
+  postcode?: string | null;
+  countryCode?: string | null;
+}) {
+  const access = await requireClientManagerAccess(input.clientId);
+  const city = cleanText(input.city) || null;
+  const postcode = cleanText(input.postcode) || null;
+  const countryCode = cleanText(input.countryCode).toUpperCase() || "GB";
+
+  const { error: clientError } = await access.admin
+    .from("clients")
+    .update({
+      city,
+      postcode,
+      country_code: countryCode,
+    })
+    .eq("id", access.clientId);
+  if (clientError) throw new Error(clientError.message);
+
+  if (input.clientType === "company") {
+    const { error: profileError } = await access.admin
+      .from("client_company_profiles")
+      .update({ city, postcode, country_code: countryCode })
+      .eq("client_id", access.clientId);
+    if (profileError) throw new Error(profileError.message);
+  } else {
+    const { error: profileError } = await access.admin
+      .from("client_individual_profiles")
+      .update({ city, postcode, country_code: countryCode })
+      .eq("client_id", access.clientId);
+    if (profileError) throw new Error(profileError.message);
+  }
+
+  const baseClientsPath = `/b/${input.businessSlug}/clients`;
+  revalidatePath(baseClientsPath);
+  revalidatePath(`${baseClientsPath}/${access.clientId}`);
+}
+
+export async function saveClientProfileData(input: {
+  clientId: string;
+  businessSlug: string;
+  clientType: "individual" | "company";
+  companyName?: string | null;
+  registrationNumber?: string | null;
+  vatNumber?: string | null;
+  website?: string | null;
+  addressLine1?: string | null;
+  addressLine2?: string | null;
+  county?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  fullName?: string | null;
+  phone?: string | null;
+  email?: string | null;
+}) {
+  const access = await requireClientManagerAccess(input.clientId);
+
+  if (input.clientType === "company") {
+    const companyName = cleanText(input.companyName) || "Company client";
+    const { error: profileError } = await access.admin
+      .from("client_company_profiles")
+      .update({
+        company_name: companyName,
+        registration_number: cleanText(input.registrationNumber) || null,
+        vat_number: cleanText(input.vatNumber) || null,
+        website: cleanText(input.website) || null,
+        address_line1: cleanText(input.addressLine1) || null,
+        address_line2: cleanText(input.addressLine2) || null,
+        county: cleanText(input.county) || null,
+      })
+      .eq("client_id", access.clientId);
+    if (profileError) throw new Error(profileError.message);
+
+    const { error: clientError } = await access.admin
+      .from("clients")
+      .update({ display_name: companyName })
+      .eq("id", access.clientId);
+    if (clientError) throw new Error(clientError.message);
+  } else {
+    const firstName = cleanText(input.firstName) || null;
+    const lastName = cleanText(input.lastName) || null;
+    const fullName =
+      cleanText(input.fullName) ||
+      [firstName, lastName].filter(Boolean).join(" ").trim() ||
+      "Individual client";
+
+    const { error: profileError } = await access.admin
+      .from("client_individual_profiles")
+      .update({
+        first_name: firstName,
+        last_name: lastName,
+        full_name: fullName,
+        phone: cleanText(input.phone) || null,
+        email: cleanText(input.email) || null,
+        address_line1: cleanText(input.addressLine1) || null,
+        address_line2: cleanText(input.addressLine2) || null,
+        county: cleanText(input.county) || null,
+      })
+      .eq("client_id", access.clientId);
+    if (profileError) throw new Error(profileError.message);
+
+    const phone = cleanText(input.phone) || null;
+    const email = cleanText(input.email) || null;
+    const { error: clientError } = await access.admin
+      .from("clients")
+      .update({
+        display_name: fullName,
+        ...(phone ? { primary_phone: phone } : {}),
+        ...(email ? { primary_email: email } : {}),
+      })
+      .eq("id", access.clientId);
+    if (clientError) throw new Error(clientError.message);
+  }
+
+  const baseClientsPath = `/b/${input.businessSlug}/clients`;
+  revalidatePath(baseClientsPath);
+  revalidatePath(`${baseClientsPath}/${access.clientId}`);
+}
+
 export async function saveClientContact(input: {
   clientId: string;
   businessSlug: string;
@@ -159,6 +301,8 @@ export async function saveClientContact(input: {
   phone?: string | null;
   jobTitle?: string | null;
   isPrimary?: boolean;
+  isBillingContact?: boolean;
+  isDecisionMaker?: boolean;
   isActive?: boolean;
 }) {
   const { admin, userId, clientId } = await requireClientManagerAccess(input.clientId);
@@ -180,9 +324,21 @@ export async function saveClientContact(input: {
     phone: cleanText(input.phone) || null,
     job_title: cleanText(input.jobTitle) || null,
     is_primary: Boolean(input.isPrimary),
+    is_billing_contact: Boolean(input.isBillingContact),
+    is_decision_maker: Boolean(input.isDecisionMaker),
     is_active: input.isActive === false ? false : true,
     created_by: userId,
   };
+
+  if (payload.is_primary && payload.is_active) {
+    const { error: clearPrimaryError } = await admin
+      .from("client_contacts")
+      .update({ is_primary: false })
+      .eq("client_id", clientId)
+      .eq("is_active", true)
+      .eq("is_primary", true);
+    if (clearPrimaryError) throw new Error(clearPrimaryError.message);
+  }
 
   const normalizedContactId = cleanText(input.contactId);
   if (normalizedContactId) {
@@ -196,14 +352,60 @@ export async function saveClientContact(input: {
         phone: payload.phone,
         job_title: payload.job_title,
         is_primary: payload.is_primary,
+        is_billing_contact: payload.is_billing_contact,
+        is_decision_maker: payload.is_decision_maker,
         is_active: payload.is_active,
       })
       .eq("id", normalizedContactId)
       .eq("client_id", clientId);
-    if (error) throw new Error(error.message);
+    if (error) {
+      if (
+        isMissingColumnError(error, "is_billing_contact") ||
+        isMissingColumnError(error, "is_decision_maker")
+      ) {
+        const { error: fallbackError } = await admin
+          .from("client_contacts")
+          .update({
+            first_name: payload.first_name,
+            last_name: payload.last_name,
+            full_name: payload.full_name,
+            email: payload.email,
+            phone: payload.phone,
+            job_title: payload.job_title,
+            is_primary: payload.is_primary,
+            is_active: payload.is_active,
+          })
+          .eq("id", normalizedContactId)
+          .eq("client_id", clientId);
+        if (fallbackError) throw new Error(fallbackError.message);
+      } else {
+        throw new Error(error.message);
+      }
+    }
   } else {
     const { error } = await admin.from("client_contacts").insert(payload);
-    if (error) throw new Error(error.message);
+    if (error) {
+      if (
+        isMissingColumnError(error, "is_billing_contact") ||
+        isMissingColumnError(error, "is_decision_maker")
+      ) {
+        const { error: fallbackError } = await admin.from("client_contacts").insert({
+          client_id: payload.client_id,
+          first_name: payload.first_name,
+          last_name: payload.last_name,
+          full_name: payload.full_name,
+          email: payload.email,
+          phone: payload.phone,
+          job_title: payload.job_title,
+          is_primary: payload.is_primary,
+          is_active: payload.is_active,
+          created_by: payload.created_by,
+        });
+        if (fallbackError) throw new Error(fallbackError.message);
+      } else {
+        throw new Error(error.message);
+      }
+    }
   }
 
   const baseClientsPath = `/b/${input.businessSlug}/clients`;
@@ -221,13 +423,198 @@ export async function deactivateClientContact(input: {
 
   const { error } = await access.admin
     .from("client_contacts")
-    .update({ is_active: false, is_primary: false })
+    .update({ is_active: false, is_primary: false, is_billing_contact: false })
     .eq("id", normalizedContactId);
-  if (error) throw new Error(error.message);
+  if (error) {
+    if (isMissingColumnError(error, "is_billing_contact")) {
+      const { error: fallbackError } = await access.admin
+        .from("client_contacts")
+        .update({ is_active: false, is_primary: false })
+        .eq("id", normalizedContactId);
+      if (fallbackError) throw new Error(fallbackError.message);
+    } else {
+      throw new Error(error.message);
+    }
+  }
 
   const baseClientsPath = `/b/${input.businessSlug}/clients`;
   revalidatePath(baseClientsPath);
   revalidatePath(`${baseClientsPath}/${access.clientId}`);
+}
+
+export async function saveClientBillingProfile(input: {
+  clientId: string;
+  businessSlug: string;
+  legalEntityName?: string | null;
+  registrationNumber?: string | null;
+  vatNumber?: string | null;
+  taxId?: string | null;
+  legalAddress?: string | null;
+  postcode?: string | null;
+  sameAsCompanyProfile?: boolean;
+  bankName?: string | null;
+  accountNumber?: string | null;
+  swiftBic?: string | null;
+  currencyCode?: string | null;
+  paymentMethod?: string | null;
+  paymentTerms?: string | null;
+  paymentTermsCustom?: string | null;
+  primaryEmailSource?: "primary_contact" | "custom";
+  primaryEmail?: string | null;
+  invoiceEmailSource?: "primary_contact" | "custom";
+  invoiceEmail?: string | null;
+}) {
+  const access = await requireClientManagerAccess(input.clientId);
+
+  const [{ data: clientRow, error: clientError }, { data: companyRow, error: companyError }, { data: primaryContactRow, error: primaryContactError }] = await Promise.all([
+    access.admin
+      .from("clients")
+      .select("id, client_type")
+      .eq("id", access.clientId)
+      .maybeSingle(),
+    access.admin
+      .from("client_company_profiles")
+      .select("company_name, registration_number, vat_number, address_line1, address_line2, city, county, postcode")
+      .eq("client_id", access.clientId)
+      .maybeSingle(),
+    access.admin
+      .from("client_contacts")
+      .select("email")
+      .eq("client_id", access.clientId)
+      .eq("is_active", true)
+      .eq("is_primary", true)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
+
+  if (clientError) throw new Error(clientError.message);
+  if (companyError) throw new Error(companyError.message);
+  if (primaryContactError) throw new Error(primaryContactError.message);
+  if (!clientRow?.id) throw new Error("Client not found");
+  if (String(clientRow.client_type) !== "company") {
+    throw new Error("Billing profile is available only for company clients");
+  }
+
+  const sameAsCompanyProfile = Boolean(input.sameAsCompanyProfile);
+  const companyAddress = [
+    cleanText(companyRow?.address_line1),
+    cleanText(companyRow?.address_line2),
+    cleanText(companyRow?.city),
+    cleanText(companyRow?.county),
+  ]
+    .filter(Boolean)
+    .join(", ");
+
+  const legalEntityName = sameAsCompanyProfile
+    ? cleanText(companyRow?.company_name) || null
+    : cleanText(input.legalEntityName) || null;
+  const registrationNumber = sameAsCompanyProfile
+    ? cleanText(companyRow?.registration_number) || null
+    : cleanText(input.registrationNumber) || null;
+  const vatNumber = sameAsCompanyProfile
+    ? cleanText(companyRow?.vat_number) || null
+    : cleanText(input.vatNumber) || null;
+  const legalAddress = sameAsCompanyProfile
+    ? companyAddress || null
+    : cleanText(input.legalAddress) || null;
+  const postcode = sameAsCompanyProfile
+    ? cleanText(companyRow?.postcode) || null
+    : cleanText(input.postcode) || null;
+
+  const normalizedCurrency = cleanText(input.currencyCode).toUpperCase();
+  const currencyCode = ["GBP", "UAH", "EUR", "USD"].includes(normalizedCurrency)
+    ? normalizedCurrency
+    : "GBP";
+
+  const normalizedPaymentMethod = cleanText(input.paymentMethod).toLowerCase();
+  const paymentMethod = ["bank_transfer", "cash", "card"].includes(normalizedPaymentMethod)
+    ? normalizedPaymentMethod
+    : "bank_transfer";
+
+  const normalizedPaymentTerms = cleanText(input.paymentTerms).toLowerCase();
+  const paymentTerms = ["prepaid", "net_7", "net_14", "net_30", "custom"].includes(
+    normalizedPaymentTerms,
+  )
+    ? normalizedPaymentTerms
+    : "prepaid";
+
+  const primaryContactEmail = cleanText(primaryContactRow?.email) || null;
+  const primaryEmailSource = input.primaryEmailSource === "primary_contact" ? "primary_contact" : "custom";
+  const invoiceEmailSource = input.invoiceEmailSource === "primary_contact" ? "primary_contact" : "custom";
+
+  const resolvedPrimaryEmail =
+    primaryEmailSource === "primary_contact"
+      ? primaryContactEmail || cleanText(input.primaryEmail) || null
+      : cleanText(input.primaryEmail) || null;
+  const resolvedInvoiceEmail =
+    invoiceEmailSource === "primary_contact"
+      ? primaryContactEmail || cleanText(input.invoiceEmail) || null
+      : cleanText(input.invoiceEmail) || null;
+
+  const payload = {
+    client_id: access.clientId,
+    profile_name: "Default",
+    is_default: true,
+    legal_entity_name: legalEntityName,
+    registration_number: registrationNumber,
+    vat_number: vatNumber,
+    tax_id: cleanText(input.taxId) || null,
+    legal_address: legalAddress,
+    postcode,
+    same_as_company_profile: sameAsCompanyProfile,
+    bank_name: cleanText(input.bankName) || null,
+    account_number: cleanText(input.accountNumber) || null,
+    swift_bic: cleanText(input.swiftBic) || null,
+    currency_code: currencyCode,
+    payment_method: paymentMethod,
+    payment_terms: paymentTerms,
+    payment_terms_custom: paymentTerms === "custom" ? cleanText(input.paymentTermsCustom) || null : null,
+    primary_email: resolvedPrimaryEmail,
+    primary_email_source: primaryEmailSource,
+    invoice_email: resolvedInvoiceEmail,
+    invoice_email_source: invoiceEmailSource,
+  };
+
+  const { data: existingDefault, error: existingError } = await access.admin
+    .from("client_billing_profiles")
+    .select("id")
+    .eq("client_id", access.clientId)
+    .eq("is_default", true)
+    .maybeSingle();
+  if (existingError) {
+    if (isMissingRelationError(existingError, "client_billing_profiles")) {
+      throw new Error(
+        "Billing profiles are not available yet in this environment. Apply the latest Supabase migrations and try again.",
+      );
+    }
+    throw new Error(existingError.message);
+  }
+
+  if (existingDefault?.id) {
+    const { error: updateError } = await access.admin
+      .from("client_billing_profiles")
+      .update(payload)
+      .eq("id", existingDefault.id)
+      .eq("client_id", access.clientId);
+    if (updateError) throw new Error(updateError.message);
+  } else {
+    const { error: insertError } = await access.admin
+      .from("client_billing_profiles")
+      .insert(payload);
+    if (insertError) throw new Error(insertError.message);
+  }
+
+  const { error: updateClientError } = await access.admin
+    .from("clients")
+    .update({ primary_email: resolvedPrimaryEmail })
+    .eq("id", access.clientId);
+  if (updateClientError) throw new Error(updateClientError.message);
+
+  const baseClientsPath = `/b/${input.businessSlug}/clients`;
+  revalidatePath(baseClientsPath);
+  revalidatePath(`${baseClientsPath}/${access.clientId}`);
+  revalidatePath(`/b/${input.businessSlug}`);
 }
 
 export async function convertClientType(input: {

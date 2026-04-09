@@ -131,6 +131,7 @@ type PageProps = {
     statusMode?: string;
     sort?: string;
     focusOrder?: string;
+    createOrder?: string;
   };
 };
 
@@ -626,6 +627,9 @@ export default async function Page({ params, searchParams }: PageProps) {
   const todayCount = Number(todayCountRaw ?? 0);
   const todoCount = overdueCount + todayCount;
   const initialOpenOrderId = cleanText(sp.focusOrder);
+  const initialCreateOrderOpen = ["1", "true", "yes"].includes(
+    cleanText(sp.createOrder).toLowerCase(),
+  );
 
   const makeSummaryHref = (nextSummaryRange: DashboardRange) => {
     const params = new URLSearchParams();
@@ -1465,6 +1469,7 @@ export default async function Page({ params, searchParams }: PageProps) {
               currentUserId={currentUserId}
               currentUserName={currentUserName}
               initialOpenOrderId={initialOpenOrderId || null}
+              initialCreateOrderOpen={initialCreateOrderOpen}
             />
           </div>
         </div>
