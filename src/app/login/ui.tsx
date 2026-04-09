@@ -178,6 +178,8 @@ export default function LoginUI({
   const sp = useSearchParams();
   const inviteId = sp.get("invite_id") || "";
   const checkEmail = sp.get("check_email") === "1";
+  const demoUnavailable = sp.get("demo_unavailable") === "1";
+  const demoError = sp.get("demo_error") === "1";
 
   const [firstName, setFirstName] = React.useState("");
   const [lastName, setLastName] = React.useState("");
@@ -353,6 +355,12 @@ export default function LoginUI({
       <div className="space-y-4 px-6 pb-6 pt-5 sm:px-7 sm:pb-7">
         <ErrorBox text={localError} />
         <ErrorBox text={activeState?.error} />
+        {mode === "login" && demoUnavailable ? (
+          <ErrorBox text="Demo account is not configured yet. Please contact support or sign in with your own account." />
+        ) : null}
+        {mode === "login" && demoError ? (
+          <ErrorBox text="We could not sign in to the demo account right now. Please try again in a moment." />
+        ) : null}
         {mode === "login" && checkEmail ? (
           <SuccessBox text="We sent a confirmation link to your email. Please confirm your email before signing in." />
         ) : null}
@@ -407,6 +415,18 @@ export default function LoginUI({
             >
               Sign in
             </button>
+
+            <a
+              href="/demo?next=%2Fapp%2Fcrm"
+              className="flex h-11 w-full items-center justify-center rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-white"
+            >
+              Continue with demo account
+            </a>
+
+            <Hint>
+              Instant access without registration. Demo data is shared and may
+              reset at any time.
+            </Hint>
           </form>
         ) : mode === "register" ? (
           <form
