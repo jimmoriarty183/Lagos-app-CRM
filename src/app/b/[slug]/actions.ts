@@ -251,6 +251,22 @@ async function insertActivityEvent(input: {
   createdAt?: string | null;
 }) {
   const admin = supabaseAdmin();
+  let actorId: string | null = input.actorId ?? null;
+
+  // Some environments can have auth users without matching profile rows.
+  // Activity stream should never block core business actions.
+  if (actorId) {
+    const { data: actorProfile, error: actorLookupError } = await admin
+      .from("profiles")
+      .select("id")
+      .eq("id", actorId)
+      .maybeSingle();
+
+    if (actorLookupError || !actorProfile?.id) {
+      actorId = null;
+    }
+  }
+
   const workspaceId = await ensureWorkspaceForBusiness(
     admin,
     input.workspaceId ?? input.businessId,
@@ -261,8 +277,8 @@ async function insertActivityEvent(input: {
     entity_type: input.entityType,
     entity_id: input.entityId,
     order_id: input.orderId ?? null,
-    actor_id: input.actorId ?? null,
-    actor_type: input.actorId ? "user" : "system",
+    actor_id: actorId,
+    actor_type: actorId ? "user" : "system",
     event_type: input.eventType,
     follow_up_id: input.followUpId ?? null,
     checklist_item_id: input.checklistItemId ?? null,
@@ -272,7 +288,22 @@ async function insertActivityEvent(input: {
     created_at: input.createdAt ?? new Date().toISOString(),
   });
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    const msg = String(error.message ?? "").toLowerCase();
+    const isNonBlockingActivityError =
+      msg.includes("activity_events") ||
+      msg.includes("activity event") ||
+      msg.includes("relation \"public.activity_events\"") ||
+      msg.includes("foreign key") ||
+      msg.includes("profiles");
+
+    if (isNonBlockingActivityError) {
+      console.warn("[activity_events] insert skipped:", error.message);
+      return;
+    }
+
+    throw new Error(error.message);
+  }
 }
 
 function getTrackedWorkSeconds(workDay: {
