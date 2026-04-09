@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { AuthHashHandler } from "@/components/AuthHashHandler";
 import { useCookieBotCleanup } from "@/lib/use-cookiebot-cleanup";
 
 /**
@@ -18,5 +19,10 @@ export function RootLayoutClient({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  return <>{children}</>;
+  return (
+    <>
+      <AuthHashHandler />
+      {children}
+    </>
+  );
 }
