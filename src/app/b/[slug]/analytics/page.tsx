@@ -484,9 +484,15 @@ export default async function OwnerAnalyticsPage({
       salesManagerId: salesManagerId || null,
     });
   } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : typeof error === "string"
+          ? error
+          : String((error as { message?: unknown } | null)?.message ?? "unknown");
     console.error("[analytics] failed to load owner dashboard data", {
       businessId: String(currentBusiness.id),
-      error,
+      error: message,
     });
     analyticsData = createEmptyOwnerDashboardData();
   }

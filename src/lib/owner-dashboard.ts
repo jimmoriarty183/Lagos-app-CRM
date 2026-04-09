@@ -75,6 +75,31 @@ type SalesTargetRow = {
   plan_closed_orders: number | string | null;
 };
 
+function getErrorMessage(error: unknown) {
+  if (!error) return "";
+  if (typeof error === "string") return error;
+  if (error instanceof Error) return error.message || "";
+  if (typeof error === "object" && "message" in error) {
+    return String((error as { message?: unknown }).message ?? "");
+  }
+  return "";
+}
+
+function isMissingRelationError(error: unknown, objectNames: string[] = []) {
+  const message = getErrorMessage(error).toLowerCase();
+  if (!message) return false;
+
+  const genericMissing =
+    message.includes("could not find the table") ||
+    message.includes("relation") && message.includes("does not exist") ||
+    message.includes("schema cache");
+
+  if (!genericMissing) return false;
+  if (objectNames.length === 0) return true;
+
+  return objectNames.some((name) => message.includes(name.toLowerCase()));
+}
+
 export type OwnerDashboardSummary = {
   active_tasks: number;
   overdue_tasks: number;
@@ -525,26 +550,54 @@ export async function loadOwnerDashboardData(
       .eq("month_start", salesMonthStart),
   ]);
 
-  if (tasksRes.error) throw tasksRes.error;
-  if (followupsRes.error) throw followupsRes.error;
-  if (rosterRes.error) throw rosterRes.error;
-  if (capacityRes.error) throw capacityRes.error;
-  if (reportsRes.error) throw reportsRes.error;
+  if (
+    tasksRes.error &&
+    !isMissingRelationError(tasksRes.error, ["mv_owner_order_task_facts"])
+  ) {
+    throw tasksRes.error;
+  }
+  if (
+    followupsRes.error &&
+    !isMissingRelationError(followupsRes.error, ["mv_owner_followup_facts"])
+  ) {
+    throw followupsRes.error;
+  }
+  if (
+    rosterRes.error &&
+    !isMissingRelationError(rosterRes.error, ["mv_owner_manager_roster"])
+  ) {
+    throw rosterRes.error;
+  }
+  if (
+    capacityRes.error &&
+    !isMissingRelationError(capacityRes.error, ["mv_owner_manager_capacity_baseline"])
+  ) {
+    throw capacityRes.error;
+  }
+  if (
+    reportsRes.error &&
+    !isMissingRelationError(reportsRes.error, ["work_days"])
+  ) {
+    throw reportsRes.error;
+  }
   if (
     salesOrdersRes.error &&
-    !String(salesOrdersRes.error.message ?? "")
-      .toLowerCase()
-      .includes("could not find the table 'public.crm_orders_enriched'")
+    !isMissingRelationError(salesOrdersRes.error, ["crm_orders_enriched"])
   ) {
     throw salesOrdersRes.error;
   }
-  if (salesTargetsRes.error) throw salesTargetsRes.error;
+  if (
+    salesTargetsRes.error &&
+    !isMissingRelationError(salesTargetsRes.error, ["sales_month_targets"])
+  ) {
+    throw salesTargetsRes.error;
+  }
 
-  const tasks = (tasksRes.data ?? []) as OrderTaskFactRow[];
-  const followups = (followupsRes.data ?? []) as FollowupFactRow[];
-  const rosterRows = (rosterRes.data ?? []) as ManagerRosterRow[];
-  const capacityRows = (capacityRes.data ?? []) as ManagerCapacityRow[];
-  const reportsRows = (reportsRes.data ?? []) as Array<{
+  const tasks = (tasksRes.error ? [] : tasksRes.data ?? []) as OrderTaskFactRow[];
+  const followups = (followupsRes.error ? [] : followupsRes.data ?? []) as FollowupFactRow[];
+  const rosterRows = (rosterRes.error ? [] : rosterRes.data ?? []) as ManagerRosterRow[];
+  const capacityRows = (capacityRes.error ? [] : capacityRes.data ?? []) as ManagerCapacityRow[];
+  const reportsRows = (reportsRes.error ? [] : reportsRes.data ?? []) as Array<{
     id: string;
     business_id: string;
     user_id: string;
