@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { supabaseServer } from "@/lib/supabase/server";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 
 const DEFAULT_NEXT = "/app/crm";
 
@@ -16,32 +16,28 @@ export async function GET(request: NextRequest) {
   const nextPath = resolveNextPath(request.nextUrl.searchParams.get("next"));
 
   const demoEmail = process.env.DEMO_ACCOUNT_EMAIL?.trim().toLowerCase() || "";
-  const demoPassword = process.env.DEMO_ACCOUNT_PASSWORD?.trim() || "";
 
-  if (!demoEmail || !demoPassword) {
+  if (!demoEmail) {
     return NextResponse.redirect(new URL("/login?demo_unavailable=1", request.url));
   }
 
-  const supabase = await supabaseServer();
+  const callbackUrl = new URL("/auth/callback", request.url);
+  callbackUrl.searchParams.set("next", nextPath);
+  callbackUrl.searchParams.set("demo", "1");
 
-  // Always reset previous session to guarantee deterministic demo login.
-  await supabase.auth.signOut();
-
-  const { error } = await supabase.auth.signInWithPassword({
+  const admin = supabaseAdmin();
+  const { data, error } = await admin.auth.admin.generateLink({
+    type: "magiclink",
     email: demoEmail,
-    password: demoPassword,
+    options: {
+      redirectTo: callbackUrl.toString(),
+    },
   });
 
-  if (error) {
+  const actionLink = data?.properties?.action_link;
+  if (error || !actionLink) {
     return NextResponse.redirect(new URL("/login?demo_error=1", request.url));
   }
 
-  const { data: userData, error: userError } = await supabase.auth.getUser();
-  const signedInEmail = userData.user?.email?.trim().toLowerCase() || "";
-  if (userError || signedInEmail !== demoEmail) {
-    await supabase.auth.signOut();
-    return NextResponse.redirect(new URL("/login?demo_error=1", request.url));
-  }
-
-  return NextResponse.redirect(new URL(nextPath, request.url));
+  return NextResponse.redirect(actionLink);
 }
