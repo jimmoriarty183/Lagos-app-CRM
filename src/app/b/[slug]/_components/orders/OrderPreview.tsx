@@ -11,6 +11,7 @@ import {
   FileText,
   Maximize2,
   Minimize2,
+  MoreHorizontal,
   Plus,
   Paperclip,
   Tag,
@@ -1082,6 +1083,15 @@ export function OrderPreview({
     full_name: previewOrder?.client_full_name,
   });
   const displayName = client.fullName;
+  const hasIndividualName = Boolean(
+    (previewOrder?.client_first_name?.trim() || client.firstName || "") ||
+      (previewOrder?.client_last_name?.trim() || client.lastName || ""),
+  );
+  const clientTypeLabel = hasIndividualName ? "individual" : "company";
+  const clientTypeBadgeClass =
+    clientTypeLabel === "company"
+      ? "border-violet-200 bg-violet-50 text-violet-700"
+      : "border-teal-200 bg-teal-50 text-teal-700";
   const managerOptions = React.useMemo(() => normalizeActors(actors), [actors]);
 
   React.useEffect(() => {
@@ -1342,10 +1352,10 @@ export function OrderPreview({
         className={[
           "h-auto w-[calc(100vw-24px)] overflow-hidden border border-[#E5E7EB] bg-white p-0 transition-[max-width] duration-200",
           // Normal mode: stick to right
-          !isWideLayout && "top-3 right-3 bottom-3 sm:max-w-[720px]",
+          !isWideLayout && "top-3 right-3 bottom-3 sm:max-w-[700px]",
           // Wide mode: center on screen
           isWideLayout &&
-            "top-3 bottom-3 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:max-w-[1120px] sm:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)]",
+            "top-3 bottom-3 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:max-w-[1024px] sm:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)]",
           // Both modes
           "sm:rounded-[28px]",
         ].join(" ")}
@@ -1480,6 +1490,25 @@ export function OrderPreview({
                     >
                       {displayName}
                     </div>
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      <span className="inline-flex max-w-full items-center rounded-full border border-[#C7D2FE] bg-[#EEF2FF] px-2.5 py-1 text-[11px] font-semibold text-[#3730A3]">
+                        Client: {displayName || "Unknown client"}
+                      </span>
+                      {labels.length > 0 ? (
+                        labels.map((label) => (
+                          <span
+                            key={label}
+                            className="inline-flex items-center rounded-full border border-[#E5E7EB] bg-[#F9FAFB] px-2.5 py-1 text-[11px] font-semibold text-[#6B7280]"
+                          >
+                            {label}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-xs text-[#9CA3AF]">
+                          No labels yet
+                        </span>
+                      )}
+                    </div>
                     {!isUltraCompactTop ? (
                       <div
                         className={[
@@ -1535,24 +1564,6 @@ export function OrderPreview({
                       </div>
                     ) : null}
 
-                    {!isCompactTop ? (
-                      <div className="mt-3 flex flex-wrap gap-1.5">
-                        {labels.length > 0 ? (
-                          labels.map((label) => (
-                            <span
-                              key={label}
-                              className="inline-flex items-center rounded-full border border-[#E5E7EB] bg-[#F9FAFB] px-2.5 py-1 text-[11px] font-semibold text-[#6B7280]"
-                            >
-                              {label}
-                            </span>
-                          ))
-                        ) : (
-                          <span className="text-xs text-[#9CA3AF]">
-                            No labels yet
-                          </span>
-                        )}
-                      </div>
-                    ) : null}
                   </div>
 
                   <div className="flex items-center gap-2">
@@ -1657,13 +1668,22 @@ export function OrderPreview({
                   isUltraCompactTop ? "pt-0.5" : "pt-1",
                 ].join(" ")}
               >
-                <TabsContent value="overview" className="mt-0">
+                <div className="grid gap-3 lg:grid-cols-[minmax(0,4fr)_minmax(220px,1fr)]">
+                  <div className="min-w-0 space-y-3">
+                    <TabsContent value="overview" className="mt-0">
                   <div className="space-y-3">
                     {canManage ? (
                       <div className="flex flex-wrap items-center justify-between gap-3 rounded-[20px] border border-[#F3F4F6] bg-white px-4 py-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
                         <div>
-                          <div className="text-sm font-semibold text-[#1F2937]">
-                            Overview
+                          <div className="flex flex-wrap items-center gap-2">
+                            <div className="text-sm font-semibold text-[#1F2937]">
+                              Overview
+                            </div>
+                            <span
+                              className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold uppercase tracking-[0.08em] ${clientTypeBadgeClass}`}
+                            >
+                              {clientTypeLabel}
+                            </span>
                           </div>
                           <p className="text-xs text-[#6B7280]">
                             {isEditingOverview
@@ -1990,29 +2010,42 @@ export function OrderPreview({
                               </Button>
                             </>
                           ) : (
-                            <>
-                              {canUploadFiles ? (
-                                <Button
+                            <DropdownMenu modal={false}>
+                              <DropdownMenuTrigger asChild>
+                                <button
                                   type="button"
-                                  variant="outline"
-                                  className="h-11 rounded-[18px] border-[#E5E7EB] bg-white px-5 text-[#374151] shadow-[0_1px_2px_rgba(16,24,40,0.04)] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
-                                  onClick={openOverviewFilePicker}
-                                  disabled={isUploadingOverviewFiles}
+                                  className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#E5E7EB] bg-white text-[#6B7280] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]"
+                                  aria-label="Overview actions"
                                 >
-                                  {isUploadingOverviewFiles
-                                    ? "Uploading..."
-                                    : "Add file"}
-                                </Button>
-                              ) : null}
-                              <Button
-                                type="button"
-                                variant="outline"
-                                className="h-11 rounded-[18px] border-[#E5E7EB] bg-white px-5 text-[#374151] shadow-[0_1px_2px_rgba(16,24,40,0.04)] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
-                                onClick={() => setIsEditingOverview(true)}
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent
+                                align="end"
+                                className="z-[120] w-44 rounded-xl border-[#E5E7EB] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
                               >
-                                Edit overview
-                              </Button>
-                            </>
+                                <DropdownMenuItem
+                                  className="rounded-lg px-3 py-2 text-sm font-medium text-[#1F2937] focus:bg-[#F9FAFB] focus:text-[#1F2937]"
+                                  onSelect={(event) => {
+                                    event.preventDefault();
+                                    setIsEditingOverview(true);
+                                  }}
+                                >
+                                  Edit overview
+                                </DropdownMenuItem>
+                                {canUploadFiles ? (
+                                  <DropdownMenuItem
+                                    className="rounded-lg px-3 py-2 text-sm font-medium text-[#1F2937] focus:bg-[#F9FAFB] focus:text-[#1F2937]"
+                                    onSelect={(event) => {
+                                      event.preventDefault();
+                                      openOverviewFilePicker();
+                                    }}
+                                  >
+                                    Add file
+                                  </DropdownMenuItem>
+                                ) : null}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           )}
                         </div>
                       </div>
@@ -2174,43 +2207,6 @@ export function OrderPreview({
                           )
                         }
                       />
-                      <MetaItem
-                        label="Status"
-                        value={
-                          <DrawerStatusSelect
-                            orderId={currentOrder.id}
-                            businessSlug={businessSlug}
-                            value={currentOrder.status}
-                            canManage={canManage}
-                            businessId={businessId}
-                            currentUserName={currentUserName}
-                            userRole={userRole}
-                            onCommitted={(nextStatus, reason) =>
-                              setPreviewOrder((prev) =>
-                                prev
-                                  ? {
-                                      ...prev,
-                                      status: nextStatus,
-                                      status_reason:
-                                        nextStatus === "CANCELED"
-                                          ? (reason ??
-                                            prev.status_reason ??
-                                            null)
-                                          : null,
-                                    }
-                                  : prev,
-                              )
-                            }
-                          />
-                        }
-                      />
-                      {currentOrder.status === "CANCELED" &&
-                      currentOrder.status_reason?.trim() ? (
-                        <MetaItem
-                          label="Cancel reason"
-                          value={currentOrder.status_reason.trim()}
-                        />
-                      ) : null}
                     </div>
 
                     <div className="rounded-[20px] border border-[#F3F4F6] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
@@ -2236,6 +2232,132 @@ export function OrderPreview({
                         </p>
                       )}
                     </div>
+                  </div>
+                    </TabsContent>
+
+                    <TabsContent value="followups" className="mt-0">
+                      <OrderFollowUpsCard
+                        businessId={businessId}
+                        businessSlug={businessSlug}
+                        orderId={currentOrder.id}
+                        canManage={canManage}
+                        supabase={supabase}
+                        currentUserName={currentUserName}
+                        userRole={userRole}
+                      />
+                    </TabsContent>
+
+                    <TabsContent value="checklist" className="mt-0">
+                      <OrderChecklist
+                        order={{ id: currentOrder.id, business_id: businessId }}
+                        supabase={supabase}
+                      />
+                    </TabsContent>
+
+                    <TabsContent value="activity" className="mt-0">
+                      <OrderActivitySection
+                        order={currentOrder}
+                        businessId={businessId}
+                        supabase={supabase}
+                        phoneRaw={phoneRaw}
+                        currentUserId={currentUserId}
+                        currentUserName={currentUserName}
+                        userRole={userRole}
+                        actors={actors}
+                        ownerName={
+                          actors.find((actor) => actor.kind === "OWNER")?.label ??
+                          null
+                        }
+                        managerName={
+                          currentOrder.manager_name?.trim() ||
+                          actors.find((actor) => actor.kind === "MANAGER")?.label ||
+                          null
+                        }
+                        compact
+                      />
+                    </TabsContent>
+
+                    <TabsContent value="notes" className="mt-0">
+                      <OrderNotesPanel
+                        orderId={currentOrder.id}
+                        notes={currentNotes}
+                        canManage={canManage}
+                        onCreateNote={handleCreateNote}
+                        onUpdateNote={handleUpdateNote}
+                        onDeleteNote={handleDeleteNote}
+                      />
+                    </TabsContent>
+
+                    <TabsContent value="files" className="mt-0">
+                      <FilesSection
+                        files={overviewFiles}
+                        loading={isLoadingOverviewFiles}
+                        uploading={isUploadingOverviewFiles}
+                        canUpload={canUploadFiles}
+                        successMessage={overviewUploadSuccess}
+                        onAddFiles={openOverviewFilePicker}
+                      />
+                    </TabsContent>
+                  </div>
+                  <aside className="space-y-3">
+                    <div className="rounded-[20px] border border-[#F3F4F6] bg-white p-3.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                      <div className="text-xs font-semibold uppercase tracking-[0.04em] text-[#6B7280]">
+                        Status
+                      </div>
+                      <div className="mt-2">
+                        <DrawerStatusSelect
+                          orderId={currentOrder.id}
+                          businessSlug={businessSlug}
+                          value={currentOrder.status}
+                          canManage={canManage}
+                          businessId={businessId}
+                          currentUserName={currentUserName}
+                          userRole={userRole}
+                          onCommitted={(nextStatus, reason) =>
+                            setPreviewOrder((prev) =>
+                              prev
+                                ? {
+                                    ...prev,
+                                    status: nextStatus,
+                                    status_reason:
+                                      nextStatus === "CANCELED"
+                                        ? (reason ?? prev.status_reason ?? null)
+                                        : null,
+                                  }
+                                : prev,
+                            )
+                          }
+                        />
+                      </div>
+                      {currentOrder.status === "CANCELED" &&
+                      currentOrder.status_reason?.trim() ? (
+                        <div className="mt-2 rounded-xl border border-[#f3d1cd] bg-[#fff6f5] px-3 py-2 text-xs text-[#7a271a]">
+                          <span className="font-semibold">Canceled:</span>{" "}
+                          {currentOrder.status_reason.trim()}
+                        </div>
+                      ) : null}
+                    </div>
+
+                    <div className="rounded-[20px] border border-[#F3F4F6] bg-white p-3.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                      <div className="text-xs font-semibold uppercase tracking-[0.04em] text-[#6B7280]">
+                        Client
+                      </div>
+                      <div className="mt-2 space-y-1.5 text-sm text-[#374151]">
+                        <div className="font-medium text-[#1F2937]">
+                          {displayName || "Unknown client"}
+                        </div>
+                        <div className="text-[#6B7280]">
+                          {currentOrder.client_phone?.trim() || "No phone number"}
+                        </div>
+                        <div className="inline-flex items-center gap-1.5 text-xs text-[#6B7280]">
+                          <ActorAvatar
+                            label={currentOrder.manager_name?.trim() || "Unassigned"}
+                          />
+                          {currentOrder.manager_name?.trim() || "Unassigned"}
+                        </div>
+                      </div>
+                    </div>
+
                     <LabelsSection
                       businessId={businessId}
                       orderId={currentOrder.id}
@@ -2244,72 +2366,29 @@ export function OrderPreview({
                       value={labels}
                       onChange={setLabels}
                     />
-                  </div>
-                </TabsContent>
 
-                <TabsContent value="followups" className="mt-0">
-                  <OrderFollowUpsCard
-                    businessId={businessId}
-                    businessSlug={businessSlug}
-                    orderId={currentOrder.id}
-                    canManage={canManage}
-                    supabase={supabase}
-                    currentUserName={currentUserName}
-                    userRole={userRole}
-                  />
-                </TabsContent>
-
-                <TabsContent value="checklist" className="mt-0">
-                  <OrderChecklist
-                    order={{ id: currentOrder.id, business_id: businessId }}
-                    supabase={supabase}
-                  />
-                </TabsContent>
-
-                <TabsContent value="activity" className="mt-0">
-                  <OrderActivitySection
-                    order={currentOrder}
-                    businessId={businessId}
-                    supabase={supabase}
-                    phoneRaw={phoneRaw}
-                    currentUserId={currentUserId}
-                    currentUserName={currentUserName}
-                    userRole={userRole}
-                    actors={actors}
-                    ownerName={
-                      actors.find((actor) => actor.kind === "OWNER")?.label ??
-                      null
-                    }
-                    managerName={
-                      currentOrder.manager_name?.trim() ||
-                      actors.find((actor) => actor.kind === "MANAGER")?.label ||
-                      null
-                    }
-                    compact
-                  />
-                </TabsContent>
-
-                <TabsContent value="notes" className="mt-0">
-                  <OrderNotesPanel
-                    orderId={currentOrder.id}
-                    notes={currentNotes}
-                    canManage={canManage}
-                    onCreateNote={handleCreateNote}
-                    onUpdateNote={handleUpdateNote}
-                    onDeleteNote={handleDeleteNote}
-                  />
-                </TabsContent>
-
-                <TabsContent value="files" className="mt-0">
-                  <FilesSection
-                    files={overviewFiles}
-                    loading={isLoadingOverviewFiles}
-                    uploading={isUploadingOverviewFiles}
-                    canUpload={canUploadFiles}
-                    successMessage={overviewUploadSuccess}
-                    onAddFiles={openOverviewFilePicker}
-                  />
-                </TabsContent>
+                    {canUploadFiles && activeTab === "overview" ? (
+                      <div className="rounded-[20px] border border-[#F3F4F6] bg-white p-3.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                        <div className="text-xs font-semibold uppercase tracking-[0.04em] text-[#6B7280]">
+                          Quick Actions
+                        </div>
+                        <div className="mt-2.5 space-y-2">
+                          {canUploadFiles ? (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              className="h-10 w-full rounded-xl border-[#E5E7EB] bg-white px-3 text-sm font-semibold text-[#374151] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
+                              onClick={openOverviewFilePicker}
+                              disabled={isUploadingOverviewFiles}
+                            >
+                              {isUploadingOverviewFiles ? "Uploading..." : "Add file"}
+                            </Button>
+                          ) : null}
+                        </div>
+                      </div>
+                    ) : null}
+                  </aside>
+                </div>
                 <input
                   ref={overviewFileInputRef}
                   type="file"
