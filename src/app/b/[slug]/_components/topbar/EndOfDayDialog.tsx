@@ -223,7 +223,7 @@ export function EndOfDayDialog({
 
   async function handleSubmit() {
     const trimmedSummary = dailySummary.trim();
-    if (!trimmedSummary || isSaving) return;
+    if (isSaving) return;
 
     setIsSaving(true);
     setErrorMessage(null);
@@ -467,7 +467,7 @@ export function EndOfDayDialog({
               type="button"
               className="rounded-[16px]"
               onClick={() => void handleSubmit()}
-              disabled={isLoading || isSaving || !dailySummary.trim()}
+              disabled={isLoading || isSaving}
             >
               {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
               Save and finish day

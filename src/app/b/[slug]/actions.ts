@@ -2573,8 +2573,7 @@ export async function completeWorkDay(input: {
   tomorrowItems: Array<{ title: string; note?: string | null; orderId?: string | null }>;
 }) {
   const { userId } = await requireBusinessManagerAccess(input.businessId);
-  const summary = cleanText(input.dailySummary);
-  if (!summary) throw new Error("Daily summary is required");
+  const summary = cleanText(input.dailySummary) ?? "";
 
   const row = await upsertWorkDayRecord({
     businessId: input.businessId,

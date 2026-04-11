@@ -3,7 +3,8 @@
 import React from "react";
 import Link from "next/link";
 import { CalendarDays, CheckSquare } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { getVisiblePlatformModules } from "@/config/modules";
 
 import { BrandIcon, BrandLockup } from "@/components/Brand";
 import BusinessSwitcher, { BusinessOption } from "./BusinessSwitcher";
@@ -57,6 +58,7 @@ export default function TopBar({
   todayCount,
 }: Props) {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const dashboardQuery = searchParams.toString();
   const dashboardHref = dashboardQuery ? `/app/crm?${dashboardQuery}` : "/app/crm";
@@ -82,6 +84,17 @@ export default function TopBar({
     params.set("date", "today");
     return `${basePath}?${params.toString()}`;
   }, [todayHref]);
+  const moduleTabs = React.useMemo(() => {
+    const modules = getVisiblePlatformModules();
+    return modules.map((module) => {
+      const href = module.key === "crm" ? dashboardHref : module.href;
+      const active =
+        module.key === "crm"
+          ? Boolean(pathname?.startsWith("/app/crm") || pathname?.startsWith("/b/"))
+          : Boolean(pathname?.startsWith(module.href));
+      return { key: module.key, label: module.name, href, active };
+    });
+  }, [dashboardHref, pathname]);
 
   const handleSelect = (slug: string) => {
     document.cookie = `active_business_slug=${encodeURIComponent(slug)}; path=/; max-age=${60 * 60 * 24 * 365}`;
@@ -141,6 +154,22 @@ export default function TopBar({
                 </div>
               )}
             </div>
+            <nav className="hidden items-center rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] p-1 lg:inline-flex">
+              {moduleTabs.map((tab) => (
+                <Link
+                  key={tab.key}
+                  href={tab.href}
+                  className={[
+                    "inline-flex h-7 items-center rounded-md px-3 text-[12px] font-semibold transition",
+                    tab.active
+                      ? "bg-white text-[#3645A0] shadow-[0_1px_2px_rgba(16,24,40,0.08)]"
+                      : "text-[#6B7280] hover:bg-white hover:text-[#1F2937]",
+                  ].join(" ")}
+                >
+                  {tab.label}
+                </Link>
+              ))}
+            </nav>
           </div>
 
           <div className="min-w-0 flex-1 sm:hidden">

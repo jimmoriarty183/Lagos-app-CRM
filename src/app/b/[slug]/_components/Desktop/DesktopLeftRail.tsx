@@ -6,9 +6,7 @@ import {
   Shield,
   BarChart3,
   Boxes,
-  BriefcaseBusiness,
   CalendarDays,
-  CheckSquare,
   ChevronsLeft,
   ChevronsRight,
   GraduationCap,
@@ -116,6 +114,7 @@ function RailLink({
   badgeCount = 0,
   onClick,
   className,
+  tooltipSide = "right",
 }: {
   icon: ReactNode;
   label: string;
@@ -127,6 +126,7 @@ function RailLink({
   badgeCount?: number;
   onClick?: () => void;
   className?: string;
+  tooltipSide?: "left" | "right";
 }) {
   const hoverable = !disabled;
   const cls = [
@@ -217,7 +217,10 @@ function RailLink({
           <span className="sr-only">{label}</span>
           <span
             className={[
-              "pointer-events-none absolute left-[calc(100%+10px)] top-1/2 z-20 hidden -translate-y-1/2 whitespace-nowrap rounded-xl border bg-white px-2.5 py-1.5 text-xs font-medium shadow-sm transition-colors",
+              "pointer-events-none absolute top-1/2 z-[80] hidden -translate-y-1/2 whitespace-nowrap rounded-xl border bg-white px-2.5 py-1.5 text-xs font-medium shadow-sm transition-colors",
+              tooltipSide === "left"
+                ? "right-[calc(100%+10px)]"
+                : "left-[calc(100%+10px)]",
               hoverable ? "group-hover:block group-focus-visible:block" : "",
               active
                 ? "border-[var(--brand-200)] text-[var(--brand-600)]"
@@ -370,9 +373,13 @@ export default function DesktopLeftRail({
   }, [filtersOpen]);
 
   const platformNavigation = getPlatformSidebarNavigation();
+  const secondaryModules = platformNavigation.filter(
+    (item) => item.key !== "crm" && item.key !== "tasks" && item.key !== "settings",
+  );
+  const settingsModule = platformNavigation.find(
+    (item) => item.key === "settings",
+  );
   const navIconByKey = {
-    crm: <BriefcaseBusiness className="h-5 w-5" />,
-    tasks: <CheckSquare className="h-5 w-5" />,
     academy: <GraduationCap className="h-5 w-5" />,
     settings: <Settings className="h-5 w-5" />,
   } as const;
@@ -393,6 +400,28 @@ export default function DesktopLeftRail({
     ? "flex flex-col items-stretch gap-1.5"
     : "grid grid-cols-2 items-stretch gap-1.5";
   const collapsedFullRowClass = expanded ? undefined : "col-span-2";
+  const topSectionOrder = [
+    showFilters ? "filters" : null,
+    canSeeAnalytics ? "analytics" : null,
+    todayHref ? "today" : null,
+  ].filter((value): value is string => Boolean(value));
+  const middleSectionOrder = [
+    ...secondaryModules.map((item) => `secondary:${item.key}`),
+    inferredClientsHref ? "clients" : null,
+    inferredCatalogHref ? "catalog" : null,
+    supportHref ? "support" : null,
+    adminHref ? "admin" : null,
+  ].filter((value): value is string => Boolean(value));
+  const tooltipSideByKey = new Map([
+    ...topSectionOrder.map((key, index) => [
+      key,
+      expanded ? ("right" as const) : index % 2 === 0 ? ("left" as const) : ("right" as const),
+    ]),
+    ...middleSectionOrder.map((key, index) => [
+      key,
+      expanded ? ("right" as const) : index % 2 === 0 ? ("left" as const) : ("right" as const),
+    ]),
+  ]);
 
   return (
     <div
@@ -429,7 +458,10 @@ export default function DesktopLeftRail({
           ) : (
             <div
               className={[
-                "max-h-[calc(100vh-136px)] overflow-x-hidden overflow-y-auto overscroll-contain rounded-[26px] border border-[#E5E7EB] bg-[#F9FAFB]/96 p-1.5 shadow-[0_10px_34px_rgba(15,23,42,0.06)] backdrop-blur transition-all",
+                "max-h-[calc(100vh-136px)] rounded-[26px] border border-[#E5E7EB] bg-[#F9FAFB]/96 p-1.5 shadow-[0_10px_34px_rgba(15,23,42,0.06)] backdrop-blur transition-all",
+                expanded
+                  ? "overflow-x-hidden overflow-y-auto overscroll-contain"
+                  : "overflow-visible",
                 expanded ? expandedPanelWidth : collapsedPanelWidth,
               ].join(" ")}
             >
@@ -484,6 +516,7 @@ export default function DesktopLeftRail({
                     active={filtersOpen}
                     badgeCount={activeFiltersCount}
                     onClick={toggleFiltersPanel}
+                    tooltipSide={tooltipSideByKey.get("filters") ?? "right"}
                   />
                 ) : null}
 
@@ -495,6 +528,7 @@ export default function DesktopLeftRail({
                     expanded={expanded}
                     href={analyticsTarget}
                     active={activeSection === "analytics"}
+                    tooltipSide={tooltipSideByKey.get("analytics") ?? "right"}
                   />
                 ) : null}
 
@@ -506,16 +540,17 @@ export default function DesktopLeftRail({
                     expanded={expanded}
                     href={todayHref}
                     active={activeSection === "today"}
+                    tooltipSide={tooltipSideByKey.get("today") ?? "right"}
                   />
                 ) : null}
 
-                {platformNavigation.map((item) => {
-                  const href =
-                    item.key === "crm"
-                      ? businessHref
-                      : item.key === "settings"
-                        ? settingsHref
-                        : item.href;
+                {expanded ? (
+                  <div className="my-1 h-px bg-[#E5E7EB]" />
+                ) : (
+                  <div className="col-span-2 my-0.5 h-px bg-[#E5E7EB]" />
+                )}
+                {secondaryModules.map((item) => {
+                  const href = item.href;
 
                   return (
                     <RailLink
@@ -526,6 +561,7 @@ export default function DesktopLeftRail({
                       expanded={expanded}
                       href={href}
                       active={activeSection === item.key}
+                      tooltipSide={tooltipSideByKey.get(`secondary:${item.key}`) ?? "right"}
                     />
                   );
                 })}
@@ -537,6 +573,7 @@ export default function DesktopLeftRail({
                     expanded={expanded}
                     href={inferredClientsHref}
                     active={activeSection === "clients"}
+                    tooltipSide={tooltipSideByKey.get("clients") ?? "right"}
                   />
                 ) : null}
                 {inferredCatalogHref ? (
@@ -547,6 +584,7 @@ export default function DesktopLeftRail({
                     expanded={expanded}
                     href={inferredCatalogHref}
                     active={activeSection === "catalog"}
+                    tooltipSide={tooltipSideByKey.get("catalog") ?? "right"}
                   />
                 ) : null}
                 {supportHref ? (
@@ -557,6 +595,7 @@ export default function DesktopLeftRail({
                     expanded={expanded}
                     href={supportHref}
                     active={activeSection === "support"}
+                    tooltipSide={tooltipSideByKey.get("support") ?? "right"}
                   />
                 ) : null}
                 {adminHref ? (
@@ -567,7 +606,26 @@ export default function DesktopLeftRail({
                     expanded={expanded}
                     href={adminHref}
                     active={activeSection === "admin"}
+                    tooltipSide={tooltipSideByKey.get("admin") ?? "right"}
                   />
+                ) : null}
+                {settingsModule ? (
+                  <>
+                    {expanded ? (
+                      <div className="mt-1 h-px bg-[#E5E7EB]" />
+                    ) : (
+                      <div className="col-span-2 mt-0.5 h-px bg-[#E5E7EB]" />
+                    )}
+                    <RailLink
+                      icon={navIconByKey.settings}
+                      label={settingsModule.label}
+                      description={settingsModule.description}
+                      expanded={expanded}
+                      href={settingsHref}
+                      active={activeSection === "settings"}
+                      className={collapsedFullRowClass}
+                    />
+                  </>
                 ) : null}
               </div>
             </div>

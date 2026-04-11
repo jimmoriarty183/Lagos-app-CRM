@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   ArrowLeftCircle,
@@ -118,13 +118,12 @@ export function AdminShell({
   workspaceHref: string;
   children: React.ReactNode;
 }) {
-  const [navCollapsed, setNavCollapsed] = useState<boolean>(() => {
-    if (typeof window === "undefined") return true;
+  const [navCollapsed, setNavCollapsed] = useState<boolean>(true);
+
+  useEffect(() => {
     const stored = window.localStorage.getItem("admin-nav-collapsed");
-    if (stored === "0") return false;
-    if (stored === "1") return true;
-    return true;
-  });
+    if (stored === "0") setNavCollapsed(false);
+  }, []);
 
   function handleToggleNav() {
     const next = !navCollapsed;
@@ -135,7 +134,9 @@ export function AdminShell({
   return (
     <div className="min-h-[100svh] bg-[#f6f8fb] text-slate-900">
       <div className="mx-auto max-w-[1320px] px-3 py-4 sm:px-4 sm:py-5 xl:px-8 2xl:px-10">
-        <div className={`grid gap-4 ${navCollapsed ? "xl:grid-cols-[92px_minmax(0,1fr)]" : "xl:grid-cols-[250px_minmax(0,1fr)]"}`}>
+        <div
+          className={`grid gap-4 ${navCollapsed ? "xl:grid-cols-[92px_minmax(0,1fr)]" : "xl:grid-cols-[250px_minmax(0,1fr)]"}`}
+        >
           <aside className="xl:sticky xl:top-4 xl:self-start">
             <div className="rounded-[22px] border border-white/70 bg-white/80 p-2.5 shadow-[0_20px_60px_-35px_rgba(15,23,42,0.35)] backdrop-blur-md xl:p-2">
               <div className="mb-2 hidden xl:flex xl:justify-end">
@@ -146,7 +147,11 @@ export function AdminShell({
                   title={navCollapsed ? "Expand menu" : "Collapse menu"}
                   className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
                 >
-                  {navCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+                  {navCollapsed ? (
+                    <ChevronRight className="h-4 w-4" />
+                  ) : (
+                    <ChevronLeft className="h-4 w-4" />
+                  )}
                 </button>
               </div>
               <Link
@@ -162,7 +167,9 @@ export function AdminShell({
                   <div className="truncate text-sm font-semibold tracking-tight text-slate-900">
                     Ordo Admin
                   </div>
-                  <div className="hidden text-[11px] text-slate-500 xl:block">Перейти во внутренний кабинет</div>
+                  <div className="hidden text-[11px] text-slate-500 xl:block">
+                    Перейти во внутренний кабинет
+                  </div>
                 </div>
               </Link>
 
@@ -177,7 +184,9 @@ export function AdminShell({
                       title={item.label}
                       className={[
                         "flex items-center gap-2.5 rounded-xl border px-2.5 py-2.5 transition",
-                        navCollapsed ? "xl:justify-center xl:px-2" : "xl:px-2.5",
+                        navCollapsed
+                          ? "xl:justify-center xl:px-2"
+                          : "xl:px-2.5",
                         active
                           ? "border-[#bfd0ea] bg-[#eef5ff] shadow-sm"
                           : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50",
@@ -186,14 +195,22 @@ export function AdminShell({
                       <span
                         className={[
                           "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg xl:mt-0.5",
-                          active ? "bg-white text-[#1d4ed8]" : "bg-slate-100 text-slate-500",
+                          active
+                            ? "bg-white text-[#1d4ed8]"
+                            : "bg-slate-100 text-slate-500",
                         ].join(" ")}
                       >
                         {item.icon}
                       </span>
-                      <div className={`min-w-0 ${navCollapsed ? "xl:hidden" : ""}`}>
-                        <div className="truncate text-xs font-semibold text-slate-900 sm:text-sm">{item.label}</div>
-                        <div className="mt-0.5 hidden text-[11px] leading-4 text-slate-500 xl:block">{item.description}</div>
+                      <div
+                        className={`min-w-0 ${navCollapsed ? "xl:hidden" : ""}`}
+                      >
+                        <div className="truncate text-xs font-semibold text-slate-900 sm:text-sm">
+                          {item.label}
+                        </div>
+                        <div className="mt-0.5 hidden text-[11px] leading-4 text-slate-500 xl:block">
+                          {item.description}
+                        </div>
                       </div>
                     </Link>
                   );
@@ -213,9 +230,12 @@ export function AdminShell({
                     <ArrowLeftCircle className="h-4 w-4" />
                   </span>
                   <div className={navCollapsed ? "xl:hidden" : ""}>
-                    <div className="truncate text-xs font-semibold text-slate-900 sm:text-sm">Назад в приложение</div>
+                    <div className="truncate text-xs font-semibold text-slate-900 sm:text-sm">
+                      Назад в приложение
+                    </div>
                     <div className="mt-0.5 hidden text-[11px] leading-4 text-slate-500 xl:block">
-                      Выйти из режима администрирования и вернуться в рабочее пространство
+                      Выйти из режима администрирования и вернуться в рабочее
+                      пространство
                     </div>
                   </div>
                 </Link>
@@ -227,13 +247,17 @@ export function AdminShell({
             <section className="rounded-[22px] border border-white/70 bg-white/80 p-3 shadow-[0_20px_60px_-35px_rgba(15,23,42,0.35)] backdrop-blur-md sm:p-5 xl:p-6">
               <div className="flex flex-col gap-3 border-b border-slate-200 pb-4 lg:flex-row lg:items-end lg:justify-between">
                 <div className="min-w-0">
-                  <div className="product-page-kicker">
-                    Администрирование
-                  </div>
+                  <div className="product-page-kicker">Администрирование</div>
                   <h1 className="product-page-title mt-1">{title}</h1>
-                  <p className="product-page-subtitle mt-1 max-w-4xl">{description}</p>
+                  <p className="product-page-subtitle mt-1 max-w-4xl">
+                    {description}
+                  </p>
                 </div>
-                {actions ? <div className="flex flex-wrap items-center gap-3">{actions}</div> : null}
+                {actions ? (
+                  <div className="flex flex-wrap items-center gap-3">
+                    {actions}
+                  </div>
+                ) : null}
               </div>
 
               <div className="mt-4">{children}</div>
@@ -244,9 +268,3 @@ export function AdminShell({
     </div>
   );
 }
-
-
-
-
-
-
