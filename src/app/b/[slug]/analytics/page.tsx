@@ -1269,21 +1269,23 @@ export default async function OwnerAnalyticsPage({
         </div>
 
         <div className="space-y-4 lg:hidden">
-          <div className="inline-flex rounded-lg border border-[#E5E7EB] bg-white p-1">
-            {ANALYTICS_TABS.map((tab) => (
-              <a
-                key={tab.key}
-                href={makeTabHref(tab.key)}
-                className={[
-                  "rounded-md px-3 py-1.5 text-[12px] font-semibold transition",
-                  analyticsView === tab.key
-                    ? "bg-[var(--brand-600)] text-white"
-                    : "text-[#6B7280] hover:bg-[#F9FAFB] hover:text-[#1F2937]",
-                ].join(" ")}
-              >
-                {tab.label}
-              </a>
-            ))}
+          <div className="-mx-1 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="inline-flex min-w-max rounded-lg border border-[#E5E7EB] bg-white p-1">
+              {ANALYTICS_TABS.map((tab) => (
+                <a
+                  key={tab.key}
+                  href={makeTabHref(tab.key)}
+                  className={[
+                    "shrink-0 whitespace-nowrap rounded-md px-3 py-1.5 text-[12px] font-semibold transition",
+                    analyticsView === tab.key
+                      ? "bg-[var(--brand-600)] text-white"
+                      : "text-[#6B7280] hover:bg-[#F9FAFB] hover:text-[#1F2937]",
+                  ].join(" ")}
+                >
+                  {tab.label}
+                </a>
+              ))}
+            </div>
           </div>
           {analyticsView === "clientManagers" ? (
             renderClientManagersAnalytics()
