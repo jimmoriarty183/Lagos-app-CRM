@@ -39,9 +39,7 @@ function normalizeCatalogError(error: unknown) {
 }
 
 function buildAutoWarehouseCode() {
-  const stamp = new Date().toISOString().replace(/[-:.TZ]/g, "").slice(0, 14);
-  const rand = Math.random().toString(36).slice(2, 6).toUpperCase();
-  return `AUTO-${stamp}-${rand}`.slice(0, 50);
+  return "MAIN";
 }
 
 async function requireCatalogManagerAccess(businessSlug: string) {
@@ -144,15 +142,29 @@ export async function createCatalogProduct(input: {
           .from("warehouses")
           .insert({
             warehouse_code: buildAutoWarehouseCode(),
-            name: "Default Warehouse",
+            name: "Main Warehouse",
             status: "ACTIVE",
             created_by: userId,
             updated_by: userId,
           })
           .select("id")
           .single();
-        if (createWarehouseError) throw new Error(createWarehouseError.message);
-        warehouse = createdWarehouse;
+
+        if (createWarehouseError) {
+          // If MAIN already exists (race/legacy), resolve it instead of creating another warehouse.
+          const { data: existingMain, error: existingMainError } = await admin
+            .from("warehouses")
+            .select("id")
+            .eq("warehouse_code", buildAutoWarehouseCode())
+            .eq("is_deleted", false)
+            .limit(1)
+            .maybeSingle();
+          if (existingMainError) throw new Error(existingMainError.message);
+          if (!existingMain?.id) throw new Error(createWarehouseError.message);
+          warehouse = existingMain;
+        } else {
+          warehouse = createdWarehouse;
+        }
       }
 
       const { error: inventoryError } = await admin
