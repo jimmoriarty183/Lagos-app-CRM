@@ -38,8 +38,10 @@ function normalizeCatalogError(error: unknown) {
   return message;
 }
 
-function buildAutoWarehouseCode() {
-  return "MAIN";
+function buildWarehouseCodeForBusiness(businessId: string) {
+  const normalized = cleanText(businessId).replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+  const suffix = normalized.slice(0, 12) || "DEFAULT";
+  return `MAIN-${suffix}`.slice(0, 50);
 }
 
 async function requireCatalogManagerAccess(businessSlug: string) {
@@ -92,7 +94,7 @@ export async function createCatalogProduct(input: {
   currencyCode: string;
 }) {
   try {
-    const { admin, userId } = await requireCatalogManagerAccess(input.businessSlug);
+    const { admin, userId, businessId } = await requireCatalogManagerAccess(input.businessSlug);
     const defaultUnitPrice = parseRequiredNumber(input.defaultUnitPrice);
     const defaultTaxRate = parseRequiredNumber(input.defaultTaxRate);
     const initialStockQty = Math.max(0, parseFiniteNumber(input.initialStockQty) ?? 0);
@@ -126,12 +128,12 @@ export async function createCatalogProduct(input: {
     if (error) throw new Error(error.message);
 
     if (payload.is_stock_managed) {
+      const warehouseCode = buildWarehouseCodeForBusiness(businessId);
       const { data: warehouseCandidate, error: warehouseError } = await admin
         .from("warehouses")
         .select("id")
-        .eq("status", "ACTIVE")
+        .eq("warehouse_code", warehouseCode)
         .eq("is_deleted", false)
-        .order("created_at", { ascending: true })
         .limit(1)
         .maybeSingle();
       let warehouse = warehouseCandidate;
@@ -141,7 +143,7 @@ export async function createCatalogProduct(input: {
         const { data: createdWarehouse, error: createWarehouseError } = await admin
           .from("warehouses")
           .insert({
-            warehouse_code: buildAutoWarehouseCode(),
+            warehouse_code: warehouseCode,
             name: "Main Warehouse",
             status: "ACTIVE",
             created_by: userId,
@@ -155,7 +157,7 @@ export async function createCatalogProduct(input: {
           const { data: existingMain, error: existingMainError } = await admin
             .from("warehouses")
             .select("id")
-            .eq("warehouse_code", buildAutoWarehouseCode())
+            .eq("warehouse_code", warehouseCode)
             .eq("is_deleted", false)
             .limit(1)
             .maybeSingle();
