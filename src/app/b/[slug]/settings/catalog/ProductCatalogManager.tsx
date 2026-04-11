@@ -145,17 +145,21 @@ export default function ProductCatalogManager({
             className="h-11 rounded-xl border border-[#E5E7EB] px-3 text-sm"
           />
           {form.isStockManaged ? (
-            <input
-              value={form.initialStockQty}
-              onChange={(e) =>
-                setForm((s) => ({ ...s, initialStockQty: e.target.value }))
-              }
-              placeholder="Qty (e.g. 10)"
-              type="number"
-              step="0.0001"
-              min="0"
-              className="h-11 rounded-xl border border-[#E5E7EB] px-3 text-sm"
-            />
+            <label className="flex flex-col gap-1 text-[11px] font-medium text-[#6B7280]">
+              Quantity (stock)
+              <input
+                value={form.initialStockQty}
+                onChange={(e) =>
+                  setForm((s) => ({ ...s, initialStockQty: e.target.value }))
+                }
+                placeholder="e.g. 10"
+                aria-label="Quantity"
+                type="number"
+                step="0.0001"
+                min="0"
+                className="h-11 rounded-xl border border-[#E5E7EB] px-3 text-sm text-[#111827]"
+              />
+            </label>
           ) : null}
           <input
             value={form.defaultUnitPrice}
