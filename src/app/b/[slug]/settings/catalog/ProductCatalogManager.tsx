@@ -39,11 +39,11 @@ export default function ProductCatalogManager({
     sku: "",
     name: "",
     description: "",
-    uomCode: "EA",
+    uomCode: "",
     isStockManaged: true,
-    defaultUnitPrice: "0",
-    defaultTaxRate: "0.20",
-    currencyCode: "GBP",
+    defaultUnitPrice: "",
+    defaultTaxRate: "",
+    currencyCode: "",
   });
 
   function submit() {
@@ -70,11 +70,11 @@ export default function ProductCatalogManager({
         sku: "",
         name: "",
         description: "",
-        uomCode: "EA",
+        uomCode: "",
         isStockManaged: true,
-        defaultUnitPrice: "0",
-        defaultTaxRate: "0.20",
-        currencyCode: "GBP",
+        defaultUnitPrice: "",
+        defaultTaxRate: "",
+        currencyCode: "",
       });
       router.refresh();
     });
@@ -130,7 +130,7 @@ export default function ProductCatalogManager({
             onChange={(e) =>
               setForm((s) => ({ ...s, uomCode: e.target.value }))
             }
-            placeholder="UOM"
+            placeholder="UOM (e.g. EA)"
             className="h-11 rounded-xl border border-[#E5E7EB] px-3 text-sm"
           />
           <input
@@ -138,7 +138,7 @@ export default function ProductCatalogManager({
             onChange={(e) =>
               setForm((s) => ({ ...s, currencyCode: e.target.value }))
             }
-            placeholder="Currency"
+            placeholder="Currency (e.g. GBP)"
             className="h-11 rounded-xl border border-[#E5E7EB] px-3 text-sm"
           />
           <input
@@ -146,7 +146,7 @@ export default function ProductCatalogManager({
             onChange={(e) =>
               setForm((s) => ({ ...s, defaultUnitPrice: e.target.value }))
             }
-            placeholder="Unit price"
+            placeholder="Unit price (e.g. 0.00)"
             type="number"
             step="0.0001"
             className="h-11 rounded-xl border border-[#E5E7EB] px-3 text-sm"
@@ -156,7 +156,7 @@ export default function ProductCatalogManager({
             onChange={(e) =>
               setForm((s) => ({ ...s, defaultTaxRate: e.target.value }))
             }
-            placeholder="Tax rate (0..1)"
+            placeholder="Tax rate (e.g. 0.20)"
             type="number"
             step="0.0001"
             className="h-11 rounded-xl border border-[#E5E7EB] px-3 text-sm"

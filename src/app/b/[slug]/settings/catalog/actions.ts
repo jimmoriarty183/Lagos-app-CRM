@@ -12,6 +12,11 @@ function upperRole(value: unknown) {
   return cleanText(value).toUpperCase();
 }
 
+function parseFiniteNumber(value: unknown) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 function normalizeCatalogError(error: unknown) {
   const message = error instanceof Error ? error.message : "Catalog operation failed";
   if (
@@ -67,12 +72,14 @@ export async function createCatalogProduct(input: {
   description?: string | null;
   uomCode: string;
   isStockManaged: boolean;
-  defaultUnitPrice: number;
-  defaultTaxRate: number;
+  defaultUnitPrice: number | string;
+  defaultTaxRate: number | string;
   currencyCode: string;
 }) {
   try {
     const { admin, userId } = await requireCatalogManagerAccess(input.businessSlug);
+    const defaultUnitPrice = parseFiniteNumber(input.defaultUnitPrice);
+    const defaultTaxRate = parseFiniteNumber(input.defaultTaxRate);
 
     const payload = {
       sku: cleanText(input.sku),
@@ -80,8 +87,8 @@ export async function createCatalogProduct(input: {
       description: cleanText(input.description) || null,
       uom_code: cleanText(input.uomCode).toUpperCase(),
       is_stock_managed: Boolean(input.isStockManaged),
-      default_unit_price: Number(input.defaultUnitPrice),
-      default_tax_rate: Number(input.defaultTaxRate),
+      default_unit_price: defaultUnitPrice,
+      default_tax_rate: defaultTaxRate,
       currency_code: cleanText(input.currencyCode).toUpperCase(),
       status: "ACTIVE",
       created_by: userId,
@@ -90,6 +97,9 @@ export async function createCatalogProduct(input: {
 
     if (!payload.sku || !payload.name || !payload.uom_code || !payload.currency_code) {
       throw new Error("SKU, name, UOM and currency are required");
+    }
+    if (payload.default_unit_price === null || payload.default_tax_rate === null) {
+      throw new Error("Unit price and tax rate are required");
     }
 
     const { error } = await admin.from("catalog_products").insert(payload);
@@ -128,8 +138,8 @@ export async function createCatalogService(input: {
   serviceCode: string;
   name: string;
   description?: string | null;
-  defaultUnitPrice: number;
-  defaultTaxRate: number;
+  defaultUnitPrice: number | string;
+  defaultTaxRate: number | string;
   currencyCode: string;
   defaultSlaMinutes?: number | null;
   defaultDurationMinutes?: number | null;
@@ -137,13 +147,15 @@ export async function createCatalogService(input: {
 }) {
   try {
     const { admin, userId } = await requireCatalogManagerAccess(input.businessSlug);
+    const defaultUnitPrice = parseFiniteNumber(input.defaultUnitPrice);
+    const defaultTaxRate = parseFiniteNumber(input.defaultTaxRate);
 
     const payload = {
       service_code: cleanText(input.serviceCode),
       name: cleanText(input.name),
       description: cleanText(input.description) || null,
-      default_unit_price: Number(input.defaultUnitPrice),
-      default_tax_rate: Number(input.defaultTaxRate),
+      default_unit_price: defaultUnitPrice,
+      default_tax_rate: defaultTaxRate,
       currency_code: cleanText(input.currencyCode).toUpperCase(),
       default_sla_minutes: input.defaultSlaMinutes == null || Number.isNaN(Number(input.defaultSlaMinutes)) ? null : Number(input.defaultSlaMinutes),
       default_duration_minutes: input.defaultDurationMinutes == null || Number.isNaN(Number(input.defaultDurationMinutes)) ? null : Number(input.defaultDurationMinutes),
@@ -155,6 +167,9 @@ export async function createCatalogService(input: {
 
     if (!payload.service_code || !payload.name || !payload.currency_code) {
       throw new Error("Service code, name and currency are required");
+    }
+    if (payload.default_unit_price === null || payload.default_tax_rate === null) {
+      throw new Error("Unit price and tax rate are required");
     }
 
     const { error } = await admin.from("catalog_services").insert(payload);

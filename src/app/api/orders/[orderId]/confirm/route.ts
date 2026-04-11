@@ -67,6 +67,98 @@ async function requireBusinessMemberAccess(businessId: string, userId: string) {
   return { admin };
 }
 
+async function syncStockReservationQuantities(input: {
+  admin: ReturnType<typeof supabaseAdmin>;
+  orderId: string;
+  actorId: string;
+}) {
+  const { admin, orderId, actorId } = input;
+  const { data: lines, error: linesError } = await admin
+    .from("order_lines")
+    .select("id, catalog_product_id, qty, reservation_required_qty, reserved_qty, line_type")
+    .eq("order_id", orderId)
+    .eq("line_type", "PRODUCT");
+
+  if (linesError) {
+    throw new Error(linesError.message);
+  }
+
+  const productIds = Array.from(
+    new Set(
+      (lines ?? [])
+        .map((line) => cleanText((line as { catalog_product_id?: string | null }).catalog_product_id))
+        .filter(Boolean),
+    ),
+  );
+
+  const stockManagedByProductId = new Map<string, boolean>();
+  if (productIds.length > 0) {
+    const { data: products, error: productsError } = await admin
+      .from("catalog_products")
+      .select("id, is_stock_managed")
+      .in("id", productIds);
+
+    if (productsError) {
+      throw new Error(productsError.message);
+    }
+
+    for (const product of products ?? []) {
+      const id = cleanText((product as { id?: string | null }).id);
+      if (!id) continue;
+      stockManagedByProductId.set(
+        id,
+        Boolean((product as { is_stock_managed?: boolean | null }).is_stock_managed),
+      );
+    }
+  }
+
+  for (const line of lines ?? []) {
+    const lineId = cleanText((line as { id?: string | null }).id);
+    const productId = cleanText(
+      (line as { catalog_product_id?: string | null }).catalog_product_id,
+    );
+    if (!lineId || !productId) continue;
+
+    const qtyRaw = Number((line as { qty?: number | string | null }).qty ?? 0);
+    const currentRequiredRaw = Number(
+      (line as { reservation_required_qty?: number | string | null })
+        .reservation_required_qty ?? 0,
+    );
+    const currentReservedRaw = Number(
+      (line as { reserved_qty?: number | string | null }).reserved_qty ?? 0,
+    );
+
+    const qty = Number.isFinite(qtyRaw) ? Math.max(0, qtyRaw) : 0;
+    const currentRequired = Number.isFinite(currentRequiredRaw)
+      ? Math.max(0, currentRequiredRaw)
+      : 0;
+    const currentReserved = Number.isFinite(currentReservedRaw)
+      ? Math.max(0, currentReservedRaw)
+      : 0;
+
+    const isStockManaged = stockManagedByProductId.get(productId) ?? false;
+    const nextRequired = isStockManaged ? qty : 0;
+    const nextReserved = Math.min(currentReserved, nextRequired);
+
+    if (nextRequired === currentRequired && nextReserved === currentReserved) {
+      continue;
+    }
+
+    const { error: updateError } = await admin
+      .from("order_lines")
+      .update({
+        reservation_required_qty: nextRequired,
+        reserved_qty: nextReserved,
+        updated_by: actorId,
+      })
+      .eq("id", lineId);
+
+    if (updateError) {
+      throw new Error(updateError.message);
+    }
+  }
+}
+
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ orderId: string }> },
@@ -145,6 +237,14 @@ export async function POST(
         version: existingOrder.version,
       });
     }
+
+    // Keep reservation quantities in sync with stock policy before TX confirm.
+    // Stock-managed products reserve qty from warehouse; non-stock products skip warehouse logic.
+    await syncStockReservationQuantities({
+      admin,
+      orderId: orderIdNormalized,
+      actorId: user.id,
+    });
 
     // Transaction-safe path: delegate to DB transaction function.
     const { data: txResult, error: txError } = await admin.rpc("confirm_order_tx", {
