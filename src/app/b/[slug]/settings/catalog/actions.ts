@@ -32,6 +32,9 @@ function normalizeCatalogError(error: unknown) {
   ) {
     return "Catalog tables are missing in the current Supabase API schema cache. Apply the CRM/ERP migrations to the same project used by the app and refresh PostgREST.";
   }
+  if (message.toLowerCase().includes("permission denied for schema app")) {
+    return "Database permissions for schema `app` are missing. Product was created, but stock initialization could not be completed. Grant USAGE on schema app and EXECUTE on app functions for your API roles.";
+  }
   return message;
 }
 
@@ -145,7 +148,12 @@ export async function createCatalogProduct(input: {
           updated_by: userId,
         });
 
-      if (inventoryError) throw new Error(inventoryError.message);
+      if (inventoryError) {
+        const message = String(inventoryError.message ?? "");
+        if (!message.toLowerCase().includes("permission denied for schema app")) {
+          throw new Error(message);
+        }
+      }
     }
 
     revalidatePath(`/b/${input.businessSlug}/catalog/products`);
