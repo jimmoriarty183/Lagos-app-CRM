@@ -6,6 +6,13 @@ import { Button } from "@/components/ui/button";
 type BusinessLimitPaywallStateProps = {
   currentUsage: number | null;
   limit: number | null;
+  recommendedPlan?: string | null;
+  nextLimit?: number | null;
+  upgradePending?: boolean;
+  continuePending?: boolean;
+  statusMessage?: string | null;
+  onUpgrade?: () => void;
+  onContinue?: () => void;
 };
 
 function formatLimit(limit: number | null) {
@@ -13,22 +20,38 @@ function formatLimit(limit: number | null) {
   return `${limit}`;
 }
 
+function formatPlanName(plan: string | null | undefined) {
+  const trimmed = String(plan ?? "").trim();
+  if (!trimmed) return "the next plan";
+  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+}
+
 export function BusinessLimitPaywallState({
   currentUsage,
   limit,
+  recommendedPlan = null,
+  nextLimit = null,
+  upgradePending = false,
+  continuePending = false,
+  statusMessage = null,
+  onUpgrade,
+  onContinue,
 }: BusinessLimitPaywallStateProps) {
+  const planName = formatPlanName(recommendedPlan);
+  const nextLimitLabel = formatLimit(nextLimit);
+
   return (
     <section className="w-full overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-[0_20px_60px_-42px_rgba(15,23,42,0.35)]">
       <div className="border-b border-slate-200 px-6 py-6">
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
-          Workspace limit reached
+          Business limit reached
         </p>
         <h1 className="mt-2 text-[1.55rem] font-semibold tracking-tight text-slate-900">
-          Upgrade to add another business
+          You have reached your business limit
         </h1>
         <p className="mt-2 text-sm leading-6 text-slate-600">
-          You have reached the workspace cap on your current plan. Upgrade now to
-          create more businesses and keep scaling.
+          Upgrade to {planName} to create up to {nextLimitLabel} businesses and keep
+          expanding without interruption.
         </p>
       </div>
 
@@ -52,8 +75,29 @@ export function BusinessLimitPaywallState({
           </div>
         </div>
 
-        <Button asChild className="h-11 w-full rounded-xl text-sm font-semibold">
-          <Link href="/pricing">Upgrade plan</Link>
+        {statusMessage ? (
+          <div className="rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-700">
+            {statusMessage}
+          </div>
+        ) : null}
+
+        <Button
+          type="button"
+          onClick={onUpgrade}
+          disabled={upgradePending}
+          className="h-11 w-full rounded-xl text-sm font-semibold"
+        >
+          {upgradePending ? "Starting upgrade..." : "Upgrade plan"}
+        </Button>
+
+        <Button
+          type="button"
+          onClick={onContinue}
+          disabled={continuePending}
+          variant="outline"
+          className="h-11 w-full rounded-xl text-sm font-semibold"
+        >
+          {continuePending ? "Checking upgrade..." : "Continue after upgrade"}
         </Button>
 
         <Button

@@ -130,7 +130,7 @@ export async function resolveMaxBusinessesEntitlement(
   };
 }
 
-type PlanLimitRow = {
+export type PlanLimitRow = {
   plan_code: string;
   limit_value: number | null;
 };
@@ -144,6 +144,24 @@ function sortPlanLimits(rows: PlanLimitRow[]) {
     if (right === null) return -1;
     return left - right || a.plan_code.localeCompare(b.plan_code);
   });
+}
+
+export function pickNextMaxBusinessesRecommendation(
+  rows: PlanLimitRow[],
+  currentLimit: number | null,
+): BusinessLimitUpgradeRecommendation {
+  if (currentLimit === null) return null;
+  const sorted = sortPlanLimits(rows);
+  const next = sorted.find((row) => {
+    if (row.limit_value === null) return true;
+    return row.limit_value > currentLimit;
+  });
+
+  if (!next) return null;
+  return {
+    recommendedPlan: next.plan_code,
+    nextLimit: next.limit_value,
+  };
 }
 
 export async function resolveMaxBusinessesUpgradeRecommendation(
@@ -186,17 +204,7 @@ export async function resolveMaxBusinessesUpgradeRecommendation(
     })
     .filter((row): row is PlanLimitRow => Boolean(row));
 
-  const sorted = sortPlanLimits(rows);
-  const next = sorted.find((row) => {
-    if (row.limit_value === null) return true;
-    return row.limit_value > currentLimit;
-  });
-
-  if (!next) return null;
-  return {
-    recommendedPlan: next.plan_code,
-    nextLimit: next.limit_value,
-  };
+  return pickNextMaxBusinessesRecommendation(rows, currentLimit);
 }
 
 export async function checkOwnerCanCreateBusiness(

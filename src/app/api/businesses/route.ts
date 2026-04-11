@@ -69,8 +69,26 @@ export async function POST(req: Request) {
           ok: false,
           code: createResult.error.code,
           message: createResult.error.message,
-          current_usage: createResult.error.current_usage ?? null,
-          limit: createResult.error.limit ?? null,
+          current_usage:
+            createResult.error.code === "BUSINESS_LIMIT_REACHED"
+              ? createResult.error.current_usage ?? null
+              : null,
+          limit:
+            createResult.error.code === "BUSINESS_LIMIT_REACHED"
+              ? createResult.error.limit ?? null
+              : null,
+          upgrade_required:
+            createResult.error.code === "BUSINESS_LIMIT_REACHED"
+              ? createResult.error.upgrade_required ?? true
+              : false,
+          recommended_plan:
+            createResult.error.code === "BUSINESS_LIMIT_REACHED"
+              ? createResult.error.recommended_plan ?? null
+              : null,
+          next_limit:
+            createResult.error.code === "BUSINESS_LIMIT_REACHED"
+              ? createResult.error.next_limit ?? null
+              : null,
         },
         { status: createResult.status },
       );

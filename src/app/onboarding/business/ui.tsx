@@ -4,6 +4,14 @@ import React from "react";
 import { Spinner } from "@/components/ui/spinner";
 import { BUSINESS_LIMIT_REACHED_CODE } from "@/lib/businesses/errors";
 import { BusinessLimitPaywallState } from "@/components/businesses/BusinessLimitPaywallState";
+import { openCheckout } from "@/components/BuyButton";
+import {
+  clearCreateBusinessIntent,
+  markCreateBusinessIntentUpgradeStarted,
+  markCreateBusinessIntentRetry,
+  readCreateBusinessIntent,
+  saveCreateBusinessIntent,
+} from "@/lib/businesses/create-business-intent";
 
 type CreateBusinessApiError = {
   ok: false;
@@ -11,6 +19,59 @@ type CreateBusinessApiError = {
   message: string;
   current_usage?: number | null;
   limit?: number | null;
+  upgrade_required?: boolean;
+  recommended_plan?: string | null;
+  next_limit?: number | null;
+};
+
+type UpgradeStartResponse =
+  | {
+      ok: true;
+      mode: "change_plan_requested";
+      message: string;
+      next_paddle_price_id?: string | null;
+      recommended_plan?: string | null;
+      next_limit?: number | null;
+    }
+  | {
+      ok: true;
+      mode: "checkout_required";
+      message: string;
+      next_paddle_price_id?: string | null;
+      recommended_plan?: string | null;
+      next_limit?: number | null;
+    }
+  | {
+      ok: false;
+      code: string;
+      message: string;
+      upgrade_required?: boolean;
+      recommended_plan?: string | null;
+      next_limit?: number | null;
+    };
+
+type LimitStatusResponse =
+  | {
+      ok: true;
+      can_create: boolean;
+      current_usage: number;
+      limit: number | null;
+      upgrade_required: boolean;
+      recommended_plan: string | null;
+      next_limit: number | null;
+    }
+  | {
+      ok: false;
+      code: string;
+      message: string;
+    };
+
+type LimitErrorState = {
+  currentUsage: number | null;
+  limit: number | null;
+  upgradeRequired: boolean;
+  recommendedPlan: string | null;
+  nextLimit: number | null;
 };
 
 function ErrorBox({ text }: { text?: string }) {
@@ -22,19 +83,70 @@ function ErrorBox({ text }: { text?: string }) {
   );
 }
 
+function toLimitErrorState(payload: Partial<CreateBusinessApiError>): LimitErrorState {
+  return {
+    currentUsage: payload.current_usage ?? null,
+    limit: payload.limit ?? null,
+    upgradeRequired: payload.upgrade_required ?? true,
+    recommendedPlan: payload.recommended_plan ?? null,
+    nextLimit: payload.next_limit ?? null,
+  };
+}
+
 export function OnboardingBusinessForm() {
   const [pending, setPending] = React.useState(false);
+  const [upgradePending, setUpgradePending] = React.useState(false);
+  const [continuePending, setContinuePending] = React.useState(false);
   const [businessName, setBusinessName] = React.useState("");
   const [localError, setLocalError] = React.useState("");
-  const [limitError, setLimitError] = React.useState<{
-    currentUsage: number | null;
-    limit: number | null;
-  } | null>(null);
+  const [statusMessage, setStatusMessage] = React.useState<string | null>(null);
+  const [limitError, setLimitError] = React.useState<LimitErrorState | null>(null);
+
+  const submitCreation = React.useCallback(
+    async (
+      draft: { business_name: string },
+      options?: { preservePaywall?: boolean; fromResume?: boolean },
+    ) => {
+      setLocalError("");
+      if (!options?.preservePaywall) {
+        setLimitError(null);
+      }
+
+      const response = await fetch("/api/businesses", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(draft),
+      });
+
+      const payload = (await response.json().catch(() => ({}))) as
+        | { ok: true; business?: { slug?: string } }
+        | CreateBusinessApiError;
+
+      if (response.ok && payload.ok) {
+        clearCreateBusinessIntent();
+        window.location.href = "/app/crm";
+        return;
+      }
+
+      const errorPayload = payload as Partial<CreateBusinessApiError>;
+      if (errorPayload.code === BUSINESS_LIMIT_REACHED_CODE) {
+        saveCreateBusinessIntent({ business_name: draft.business_name });
+        setLimitError(toLimitErrorState(errorPayload));
+        if (options?.fromResume) {
+          setStatusMessage("Upgrade is still processing. We saved your draft and will keep it ready.");
+        }
+        return;
+      }
+
+      setLocalError(errorPayload.message || "Failed to create business");
+    },
+    [],
+  );
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    setStatusMessage(null);
     setLocalError("");
-    setLimitError(null);
 
     if (!businessName.trim()) {
       setLocalError("Enter your business name");
@@ -43,33 +155,7 @@ export function OnboardingBusinessForm() {
 
     setPending(true);
     try {
-      const response = await fetch("/api/businesses", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          business_name: businessName.trim(),
-        }),
-      });
-
-      const payload = (await response.json().catch(() => ({}))) as
-        | { ok: true; business?: { slug?: string } }
-        | CreateBusinessApiError;
-
-      if (response.ok && payload.ok) {
-        window.location.href = "/app/crm";
-        return;
-      }
-
-      const errorPayload = payload as Partial<CreateBusinessApiError>;
-      if (errorPayload.code === BUSINESS_LIMIT_REACHED_CODE) {
-        setLimitError({
-          currentUsage: errorPayload.current_usage ?? null,
-          limit: errorPayload.limit ?? null,
-        });
-        return;
-      }
-
-      setLocalError(errorPayload.message || "Failed to create business");
+      await submitCreation({ business_name: businessName.trim() });
     } catch {
       setLocalError("Network error. Please try again.");
     } finally {
@@ -77,11 +163,124 @@ export function OnboardingBusinessForm() {
     }
   }
 
+  const checkLimitAndContinue = React.useCallback(async () => {
+    const intent = readCreateBusinessIntent();
+    if (!intent?.draft?.business_name) {
+      setStatusMessage("Your saved draft expired. Enter business details and continue.");
+      clearCreateBusinessIntent();
+      setLimitError(null);
+      return;
+    }
+
+    const now = Date.now();
+    if (intent.last_retry_at && now - intent.last_retry_at < 4000) {
+      setStatusMessage("Still syncing your upgrade. Retry in a few seconds.");
+      return;
+    }
+
+    setContinuePending(true);
+    try {
+      const response = await fetch("/api/businesses/limit-status", {
+        method: "GET",
+        cache: "no-store",
+      });
+      const payload = (await response.json().catch(() => ({}))) as LimitStatusResponse;
+      if (!response.ok || !payload.ok) {
+        setStatusMessage(
+          "We could not confirm your upgrade yet. Please refresh and try again.",
+        );
+        return;
+      }
+
+      if (!payload.can_create) {
+        setLimitError({
+          currentUsage: payload.current_usage,
+          limit: payload.limit,
+          upgradeRequired: payload.upgrade_required,
+          recommendedPlan: payload.recommended_plan,
+          nextLimit: payload.next_limit,
+        });
+        markCreateBusinessIntentRetry();
+        setStatusMessage(
+          "Upgrade received, but access is still syncing. Retry in a few seconds.",
+        );
+        return;
+      }
+
+      setBusinessName(intent.draft.business_name);
+      setStatusMessage("Upgrade confirmed. Finishing your business creation...");
+      await submitCreation(
+        { business_name: intent.draft.business_name },
+        { preservePaywall: true, fromResume: true },
+      );
+    } catch {
+      setStatusMessage("Network error while checking upgrade status. Please try again.");
+    } finally {
+      setContinuePending(false);
+    }
+  }, [submitCreation]);
+
+  const handleUpgrade = React.useCallback(async () => {
+    if (upgradePending) return;
+    const currentDraft = businessName.trim();
+    if (currentDraft) {
+      saveCreateBusinessIntent({ business_name: currentDraft });
+    }
+
+    setUpgradePending(true);
+    setStatusMessage(null);
+    try {
+      const response = await fetch("/api/billing/upgrade/business-limit", {
+        method: "POST",
+      });
+      const payload = (await response.json().catch(() => ({}))) as UpgradeStartResponse;
+
+      if (!response.ok || !payload.ok) {
+        setStatusMessage(
+          payload.message || "We could not start the upgrade flow. Please try again.",
+        );
+        return;
+      }
+
+      if (payload.mode === "checkout_required") {
+        const paddlePriceId = String(payload.next_paddle_price_id ?? "").trim();
+        if (!paddlePriceId) {
+          setStatusMessage("Upgrade checkout is unavailable right now. Please contact support.");
+          return;
+        }
+        const opened = await openCheckout(paddlePriceId);
+        if (!opened) {
+          setStatusMessage("Could not open checkout. Please allow popups and try again.");
+          return;
+        }
+        markCreateBusinessIntentUpgradeStarted();
+        setStatusMessage("Complete checkout, then click Continue after upgrade.");
+        return;
+      }
+
+      markCreateBusinessIntentUpgradeStarted();
+      setStatusMessage(payload.message || "Upgrade requested. We are waiting for confirmation.");
+    } catch {
+      setStatusMessage("Network error while starting upgrade. Please try again.");
+    } finally {
+      setUpgradePending(false);
+    }
+  }, [businessName, upgradePending]);
+
   if (limitError) {
     return (
       <BusinessLimitPaywallState
         currentUsage={limitError.currentUsage}
         limit={limitError.limit}
+        recommendedPlan={limitError.recommendedPlan}
+        nextLimit={limitError.nextLimit}
+        upgradePending={upgradePending}
+        continuePending={continuePending}
+        statusMessage={statusMessage}
+        onUpgrade={handleUpgrade}
+        onContinue={() => {
+          void checkLimitAndContinue();
+        }}
       />
     );
   }

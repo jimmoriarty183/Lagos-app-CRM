@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   evaluateBusinessCreationLimit,
+  pickNextMaxBusinessesRecommendation,
 } from "@/lib/businesses/business-limits-service";
 import { BUSINESS_LIMIT_REACHED_CODE } from "@/lib/businesses/errors";
 
@@ -21,6 +22,40 @@ test("starter user with 2 existing businesses can create", () => {
 test("pro user with unlimited businesses can create", () => {
   const error = evaluateBusinessCreationLimit(null, 10_000);
   assert.equal(error, null);
+});
+
+test("recommendation ladder moves from 1 to starter 3", () => {
+  const recommendation = pickNextMaxBusinessesRecommendation(
+    [
+      { plan_code: "solo", limit_value: 1 },
+      { plan_code: "starter", limit_value: 3 },
+      { plan_code: "business", limit_value: 10 },
+      { plan_code: "pro", limit_value: null },
+    ],
+    1,
+  );
+
+  assert.deepEqual(recommendation, {
+    recommendedPlan: "starter",
+    nextLimit: 3,
+  });
+});
+
+test("recommendation ladder moves from 10 to unlimited", () => {
+  const recommendation = pickNextMaxBusinessesRecommendation(
+    [
+      { plan_code: "solo", limit_value: 1 },
+      { plan_code: "starter", limit_value: 3 },
+      { plan_code: "business", limit_value: 10 },
+      { plan_code: "pro", limit_value: null },
+    ],
+    10,
+  );
+
+  assert.deepEqual(recommendation, {
+    recommendedPlan: "pro",
+    nextLimit: null,
+  });
 });
 
 test("concurrent create requests allow only one when limit is one", async () => {
