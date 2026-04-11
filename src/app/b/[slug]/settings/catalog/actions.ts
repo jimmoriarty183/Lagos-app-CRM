@@ -120,6 +120,20 @@ export async function createCatalogProduct(input: {
       throw new Error("Unit price and tax rate are required");
     }
 
+    const normalizedSku = cleanText(payload.sku).toUpperCase();
+    const { data: existingSkuRows, error: existingSkuError } = await admin
+      .from("catalog_products")
+      .select("id, sku")
+      .limit(2000);
+    if (existingSkuError) throw new Error(existingSkuError.message);
+    const skuExists = (existingSkuRows ?? []).some((row) => {
+      const rowSku = cleanText((row as { sku?: string | null }).sku).toUpperCase();
+      return rowSku === normalizedSku;
+    });
+    if (skuExists) {
+      throw new Error("SKU already exists");
+    }
+
     const { data: createdProduct, error } = await admin
       .from("catalog_products")
       .insert(payload)
