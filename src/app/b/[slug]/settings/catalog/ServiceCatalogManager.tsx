@@ -2,7 +2,43 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { createCatalogService, setCatalogServiceStatus } from "./actions";
+
+const CURRENCY_OPTIONS = ["GBP", "USD", "EUR"];
+const TAX_RATE_OPTIONS = [
+  { value: "0", label: "0%" },
+  { value: "7", label: "7%" },
+  { value: "20", label: "20%" },
+  { value: "custom", label: "Custom" },
+] as const;
+const SLA_MINUTE_OPTIONS = [15, 30, 45, 60, 90, 120];
+const DURATION_MINUTE_OPTIONS = [15, 30, 45, 60, 90, 120, 180];
+
+function percentToDecimalString(value: string) {
+  const normalized = value.trim();
+  if (!normalized) return "";
+  const parsed = Number(normalized);
+  if (!Number.isFinite(parsed)) return "";
+  return String(parsed / 100);
+}
+
+function decimalToPercentString(value: string) {
+  const normalized = value.trim();
+  if (!normalized) return "";
+  const parsed = Number(normalized);
+  if (!Number.isFinite(parsed)) return "";
+  return String(parsed * 100);
+}
 
 type ServiceRow = {
   id: string;
@@ -42,11 +78,15 @@ export default function ServiceCatalogManager({
     description: "",
     defaultUnitPrice: "",
     defaultTaxRate: "",
-    currencyCode: "",
+    currencyCode: "GBP",
     defaultSlaMinutes: "",
     defaultDurationMinutes: "",
     requiresAssignee: true,
   });
+  const [taxRateMode, setTaxRateMode] = useState<"" | "0" | "7" | "20" | "custom">("");
+  const [customTaxRatePercent, setCustomTaxRatePercent] = useState("");
+  const [slaModeIsCustom, setSlaModeIsCustom] = useState(false);
+  const [durationModeIsCustom, setDurationModeIsCustom] = useState(false);
 
   function submit() {
     setErrorText(null);
@@ -79,11 +119,15 @@ export default function ServiceCatalogManager({
         description: "",
         defaultUnitPrice: "",
         defaultTaxRate: "",
-        currencyCode: "",
+        currencyCode: "GBP",
         defaultSlaMinutes: "",
         defaultDurationMinutes: "",
         requiresAssignee: true,
       });
+      setTaxRateMode("");
+      setCustomTaxRatePercent("");
+      setSlaModeIsCustom(false);
+      setDurationModeIsCustom(false);
       router.refresh();
     });
   }
@@ -121,95 +165,275 @@ export default function ServiceCatalogManager({
           </p>
         </div>
 
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          <input
-            value={form.serviceCode}
-            onChange={(e) =>
-              setForm((s) => ({ ...s, serviceCode: e.target.value }))
-            }
-            placeholder="Service code"
-            className="h-11 rounded-xl border border-[#E5E7EB] px-3 text-sm"
-          />
-          <input
-            value={form.name}
-            onChange={(e) => setForm((s) => ({ ...s, name: e.target.value }))}
-            placeholder="Name"
-            className="h-11 rounded-xl border border-[#E5E7EB] px-3 text-sm"
-          />
-          <input
-            value={form.currencyCode}
-            onChange={(e) =>
-              setForm((s) => ({ ...s, currencyCode: e.target.value }))
-            }
-            placeholder="Currency (e.g. GBP)"
-            className="h-11 rounded-xl border border-[#E5E7EB] px-3 text-sm"
-          />
-          <input
-            value={form.defaultUnitPrice}
-            onChange={(e) =>
-              setForm((s) => ({ ...s, defaultUnitPrice: e.target.value }))
-            }
-            placeholder="Unit price (e.g. 0.00)"
-            type="number"
-            step="0.0001"
-            className="h-11 rounded-xl border border-[#E5E7EB] px-3 text-sm"
-          />
-          <input
-            value={form.defaultTaxRate}
-            onChange={(e) =>
-              setForm((s) => ({ ...s, defaultTaxRate: e.target.value }))
-            }
-            placeholder="Tax rate (e.g. 0.20)"
-            type="number"
-            step="0.0001"
-            className="h-11 rounded-xl border border-[#E5E7EB] px-3 text-sm"
-          />
-          <input
-            value={form.defaultSlaMinutes}
-            onChange={(e) =>
-              setForm((s) => ({ ...s, defaultSlaMinutes: e.target.value }))
-            }
-            placeholder="SLA minutes"
-            type="number"
-            step="1"
-            className="h-11 rounded-xl border border-[#E5E7EB] px-3 text-sm"
-          />
-          <input
-            value={form.defaultDurationMinutes}
-            onChange={(e) =>
-              setForm((s) => ({ ...s, defaultDurationMinutes: e.target.value }))
-            }
-            placeholder="Duration minutes"
-            type="number"
-            step="1"
-            className="h-11 rounded-xl border border-[#E5E7EB] px-3 text-sm"
-          />
-          <label className="inline-flex h-11 items-center gap-2 rounded-xl border border-[#E5E7EB] px-3 text-sm text-[#344054]">
-            <input
-              checked={form.requiresAssignee}
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="svc-code" className="text-sm font-medium text-[#344054]">
+              Service code
+            </Label>
+            <Input
+              id="svc-code"
+              value={form.serviceCode}
               onChange={(e) =>
-                setForm((s) => ({ ...s, requiresAssignee: e.target.checked }))
+                setForm((s) => ({ ...s, serviceCode: e.target.value }))
               }
-              type="checkbox"
+              placeholder="e.g. SVC-001"
+              className="h-11 rounded-xl border-[#E5E7EB] px-3.5 text-sm"
             />
-            Requires assignee
-          </label>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="svc-name" className="text-sm font-medium text-[#344054]">
+              Name
+            </Label>
+            <Input
+              id="svc-name"
+              value={form.name}
+              onChange={(e) => setForm((s) => ({ ...s, name: e.target.value }))}
+              placeholder="e.g. Consulting hour"
+              className="h-11 rounded-xl border-[#E5E7EB] px-3.5 text-sm"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="svc-currency" className="text-sm font-medium text-[#344054]">
+              Currency
+            </Label>
+            <Select
+              value={form.currencyCode}
+              onValueChange={(value) =>
+                setForm((s) => ({ ...s, currencyCode: value }))
+              }
+            >
+              <SelectTrigger id="svc-currency" className="h-11 rounded-xl border-[#E5E7EB] px-3.5 text-sm">
+                <SelectValue placeholder="Select currency" />
+              </SelectTrigger>
+              <SelectContent>
+                {CURRENCY_OPTIONS.map((option) => (
+                  <SelectItem key={option} value={option}>
+                    {option}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="svc-unit-price" className="text-sm font-medium text-[#344054]">
+              Unit price
+            </Label>
+            <Input
+              id="svc-unit-price"
+              value={form.defaultUnitPrice}
+              onChange={(e) =>
+                setForm((s) => ({ ...s, defaultUnitPrice: e.target.value }))
+              }
+              placeholder="0.00"
+              type="number"
+              min="0"
+              step="0.01"
+              className="h-11 rounded-xl border-[#E5E7EB] px-3.5 text-sm"
+            />
+          </div>
+
+          <div className="space-y-1.5 xl:col-span-2">
+            <Label htmlFor="svc-tax-rate" className="text-sm font-medium text-[#344054]">
+              Tax rate
+            </Label>
+            <div className="grid gap-3 sm:grid-cols-[minmax(0,220px)_minmax(0,1fr)]">
+              <Select
+                value={taxRateMode}
+                onValueChange={(value: "0" | "7" | "20" | "custom") => {
+                  setTaxRateMode(value);
+                  if (value === "custom") {
+                    setCustomTaxRatePercent(
+                      (current) =>
+                        current || decimalToPercentString(form.defaultTaxRate),
+                    );
+                    return;
+                  }
+                  setCustomTaxRatePercent("");
+                  setForm((s) => ({
+                    ...s,
+                    defaultTaxRate:
+                      value === "0" ? "0" : value === "7" ? "0.07" : "0.20",
+                  }));
+                }}
+              >
+                <SelectTrigger id="svc-tax-rate" className="h-11 rounded-xl border-[#E5E7EB] px-3.5 text-sm">
+                  <SelectValue placeholder="Select tax rate" />
+                </SelectTrigger>
+                <SelectContent>
+                  {TAX_RATE_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {taxRateMode === "custom" ? (
+                <Input
+                  id="svc-tax-rate-custom"
+                  value={customTaxRatePercent}
+                  onChange={(e) => {
+                    const percentValue = e.target.value;
+                    setCustomTaxRatePercent(percentValue);
+                    setForm((s) => ({
+                      ...s,
+                      defaultTaxRate: percentToDecimalString(percentValue),
+                    }));
+                  }}
+                  placeholder="e.g. 12.5"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  className="h-11 rounded-xl border-[#E5E7EB] px-3.5 text-sm"
+                />
+              ) : (
+                <div className="hidden sm:block" aria-hidden="true" />
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-1.5 xl:col-span-2">
+            <Label htmlFor="svc-sla" className="text-sm font-medium text-[#344054]">
+              SLA minutes
+            </Label>
+            <div className="grid gap-3 sm:grid-cols-[minmax(0,220px)_minmax(0,1fr)]">
+              <Select
+                value={slaModeIsCustom ? "custom" : (form.defaultSlaMinutes || "")}
+                onValueChange={(value) => {
+                  if (value === "custom") {
+                    setSlaModeIsCustom(true);
+                    setForm((s) => ({ ...s, defaultSlaMinutes: "" }));
+                    return;
+                  }
+                  setSlaModeIsCustom(false);
+                  setForm((s) => ({ ...s, defaultSlaMinutes: value }));
+                }}
+              >
+                <SelectTrigger id="svc-sla" className="h-11 rounded-xl border-[#E5E7EB] px-3.5 text-sm">
+                  <SelectValue placeholder="Select SLA" />
+                </SelectTrigger>
+                <SelectContent>
+                  {SLA_MINUTE_OPTIONS.map((min) => (
+                    <SelectItem key={min} value={String(min)}>
+                      {min} min
+                    </SelectItem>
+                  ))}
+                  <SelectItem value="custom">Custom</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {slaModeIsCustom ? (
+                <Input
+                  id="svc-sla-custom"
+                  value={form.defaultSlaMinutes}
+                  onChange={(e) =>
+                    setForm((s) => ({ ...s, defaultSlaMinutes: e.target.value }))
+                  }
+                  placeholder="e.g. 75"
+                  type="number"
+                  min="1"
+                  step="1"
+                  className="h-11 rounded-xl border-[#E5E7EB] px-3.5 text-sm"
+                />
+              ) : (
+                <div className="hidden sm:block" aria-hidden="true" />
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-1.5 xl:col-span-2">
+            <Label htmlFor="svc-duration" className="text-sm font-medium text-[#344054]">
+              Duration minutes
+            </Label>
+            <div className="grid gap-3 sm:grid-cols-[minmax(0,220px)_minmax(0,1fr)]">
+              <Select
+                value={durationModeIsCustom ? "custom" : (form.defaultDurationMinutes || "")}
+                onValueChange={(value) => {
+                  if (value === "custom") {
+                    setDurationModeIsCustom(true);
+                    setForm((s) => ({ ...s, defaultDurationMinutes: "" }));
+                    return;
+                  }
+                  setDurationModeIsCustom(false);
+                  setForm((s) => ({ ...s, defaultDurationMinutes: value }));
+                }}
+              >
+                <SelectTrigger id="svc-duration" className="h-11 rounded-xl border-[#E5E7EB] px-3.5 text-sm">
+                  <SelectValue placeholder="Select duration" />
+                </SelectTrigger>
+                <SelectContent>
+                  {DURATION_MINUTE_OPTIONS.map((min) => (
+                    <SelectItem key={min} value={String(min)}>
+                      {min} min
+                    </SelectItem>
+                  ))}
+                  <SelectItem value="custom">Custom</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {durationModeIsCustom ? (
+                <Input
+                  id="svc-duration-custom"
+                  value={form.defaultDurationMinutes}
+                  onChange={(e) =>
+                    setForm((s) => ({
+                      ...s,
+                      defaultDurationMinutes: e.target.value,
+                    }))
+                  }
+                  placeholder="e.g. 150"
+                  type="number"
+                  min="1"
+                  step="1"
+                  className="h-11 rounded-xl border-[#E5E7EB] px-3.5 text-sm"
+                />
+              ) : (
+                <div className="hidden sm:block" aria-hidden="true" />
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="svc-requires-assignee" className="text-sm font-medium text-[#344054]">
+              Assignee
+            </Label>
+            <label className="inline-flex h-11 w-full items-center gap-2 rounded-xl border border-[#E5E7EB] bg-white px-3.5 text-sm text-[#344054]">
+              <input
+                id="svc-requires-assignee"
+                checked={form.requiresAssignee}
+                onChange={(e) =>
+                  setForm((s) => ({ ...s, requiresAssignee: e.target.checked }))
+                }
+                type="checkbox"
+              />
+              Requires assignee
+            </label>
+          </div>
         </div>
 
-        <textarea
-          value={form.description}
-          onChange={(e) =>
-            setForm((s) => ({ ...s, description: e.target.value }))
-          }
-          placeholder="Description"
-          className="mt-3 min-h-[92px] w-full rounded-xl border border-[#E5E7EB] px-3 py-3 text-sm"
-        />
-        <div className="mt-3 flex justify-end">
+        <div className="mt-4 space-y-1.5">
+          <Label htmlFor="svc-description" className="text-sm font-medium text-[#344054]">
+            Description
+          </Label>
+          <Textarea
+            id="svc-description"
+            value={form.description}
+            onChange={(e) =>
+              setForm((s) => ({ ...s, description: e.target.value }))
+            }
+            placeholder="e.g. Service notes or scope details"
+            className="min-h-[92px] rounded-xl border-[#E5E7EB] px-3.5 py-3 text-sm"
+          />
+        </div>
+        <div className="mt-3 flex justify-start xl:justify-end">
           <button
             type="button"
             onClick={submit}
             disabled={isPending || Boolean(schemaWarning)}
-            className="inline-flex h-11 items-center justify-center rounded-xl bg-[var(--brand-600)] px-4 text-sm font-semibold text-white disabled:opacity-60"
+            className="inline-flex h-11 w-full items-center justify-center rounded-xl bg-[var(--brand-600)] px-4 text-sm font-semibold text-white disabled:opacity-60 sm:w-auto sm:min-w-[240px]"
           >
             {isPending ? "Saving..." : "Create service"}
           </button>
