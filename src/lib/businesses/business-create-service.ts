@@ -2,11 +2,13 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabaseServer } from "@/lib/supabase/server";
 import {
   BUSINESS_LIMIT_REACHED_CODE,
+  businessLimitReachedError,
   type BusinessErrorPayload,
 } from "@/lib/businesses/errors";
 import {
   checkOwnerCanCreateBusiness,
   resolveMaxBusinessesEntitlement,
+  resolveMaxBusinessesUpgradeRecommendation,
 } from "@/lib/businesses/business-limits-service";
 
 function isMissingColumnError(message: string) {
@@ -196,19 +198,42 @@ function toBusinessErrorPayload(
 ): BusinessErrorPayload {
   const normalizedCode = String(code ?? "").trim();
   if (normalizedCode === BUSINESS_LIMIT_REACHED_CODE) {
-    return {
-      code: BUSINESS_LIMIT_REACHED_CODE,
-      message:
-        message?.trim() ||
-        "You have reached the maximum number of businesses for your plan",
-      current_usage: input?.currentUsage ?? null,
+    return businessLimitReachedError({
+      currentUsage: input?.currentUsage ?? null,
       limit: input?.limit ?? null,
-    };
+    });
   }
   return {
     code: "BUSINESS_CREATE_FAILED",
     message: message?.trim() || "Failed to create business",
   };
+}
+
+async function attachUpgradeRecommendation(
+  admin: SupabaseClient,
+  payload: BusinessErrorPayload,
+): Promise<BusinessErrorPayload> {
+  if (payload.code !== BUSINESS_LIMIT_REACHED_CODE) {
+    return payload;
+  }
+
+  try {
+    const recommendation = await resolveMaxBusinessesUpgradeRecommendation(
+      admin,
+      payload.limit ?? null,
+    );
+    return businessLimitReachedError({
+      currentUsage: payload.current_usage ?? null,
+      limit: payload.limit ?? null,
+      recommendedPlan: recommendation?.recommendedPlan ?? null,
+      nextLimit: recommendation?.nextLimit ?? null,
+    });
+  } catch {
+    return businessLimitReachedError({
+      currentUsage: payload.current_usage ?? null,
+      limit: payload.limit ?? null,
+    });
+  }
 }
 
 export async function createBusinessForOwner(params: {
@@ -253,10 +278,13 @@ export async function createBusinessForOwner(params: {
     }
 
     if (!row.ok) {
-      const payload = toBusinessErrorPayload(row.error_code, row.error_message, {
-        currentUsage: row.current_usage,
-        limit: row.limit_value,
-      });
+      const payload = await attachUpgradeRecommendation(
+        admin,
+        toBusinessErrorPayload(row.error_code, row.error_message, {
+          currentUsage: row.current_usage,
+          limit: row.limit_value,
+        }),
+      );
       return {
         ok: false,
         error: payload,
@@ -303,9 +331,9 @@ export async function createBusinessForOwner(params: {
   // Legacy fallback (non-atomic): keep explicit limit check for safety in older DBs.
   const limitCheck = await checkOwnerCanCreateBusiness(admin, userId);
   if (!limitCheck.allowed) {
-    return {
-      ok: false,
-      error: toBusinessErrorPayload(
+    const payload = await attachUpgradeRecommendation(
+      admin,
+      toBusinessErrorPayload(
         BUSINESS_LIMIT_REACHED_CODE,
         limitCheck.error?.message ??
           "You have reached the maximum number of businesses for your plan",
@@ -314,6 +342,10 @@ export async function createBusinessForOwner(params: {
           limit: limitCheck.maxBusinesses,
         },
       ),
+    );
+    return {
+      ok: false,
+      error: payload,
       status: 403,
     };
   }
