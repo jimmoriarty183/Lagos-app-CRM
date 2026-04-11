@@ -18,6 +18,7 @@ type Props = {
   businessId?: string;
   businessSlug: string;
   canManage: boolean;
+  analyticsHref?: string;
   businessHref: string;
   clientsHref: string;
   catalogHref?: string;
@@ -34,6 +35,7 @@ export default function MobileTopbarMenu({
   businessId,
   businessSlug,
   canManage,
+  analyticsHref,
   businessHref,
   clientsHref,
   catalogHref,
@@ -88,18 +90,14 @@ export default function MobileTopbarMenu({
           </div>
 
           {canSeeAnalytics ? (
-            <div className="mt-2 flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm font-semibold text-slate-500">
-              <BarChart3 className="h-4 w-4 text-slate-400" />
-              <div className="min-w-0 flex-1">
-                <div>Analytics</div>
-                <div className="text-[11px] font-medium text-slate-400">
-                  Coming soon
-                </div>
-              </div>
-              <span className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">
-                Soon
-              </span>
-            </div>
+            <a
+              href={analyticsHref ?? `/b/${businessSlug}/analytics`}
+              onClick={() => setOpen(false)}
+              className="mt-2 flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-[#1F2937] transition-colors hover:bg-[#F9FAFB]"
+            >
+              <BarChart3 className="h-4 w-4 text-[#6B7280]" />
+              <span>Analytics</span>
+            </a>
           ) : null}
 
           <button
