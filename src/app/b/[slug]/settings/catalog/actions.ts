@@ -38,6 +38,12 @@ function normalizeCatalogError(error: unknown) {
   return message;
 }
 
+function buildAutoWarehouseCode() {
+  const stamp = new Date().toISOString().replace(/[-:.TZ]/g, "").slice(0, 14);
+  const rand = Math.random().toString(36).slice(2, 6).toUpperCase();
+  return `AUTO-${stamp}-${rand}`.slice(0, 50);
+}
+
 async function requireCatalogManagerAccess(businessSlug: string) {
   const supabase = await supabaseServer();
   const admin = supabaseAdmin();
@@ -122,7 +128,7 @@ export async function createCatalogProduct(input: {
     if (error) throw new Error(error.message);
 
     if (payload.is_stock_managed) {
-      const { data: warehouse, error: warehouseError } = await admin
+      const { data: warehouseCandidate, error: warehouseError } = await admin
         .from("warehouses")
         .select("id")
         .eq("status", "ACTIVE")
@@ -130,10 +136,23 @@ export async function createCatalogProduct(input: {
         .order("created_at", { ascending: true })
         .limit(1)
         .maybeSingle();
+      let warehouse = warehouseCandidate;
 
       if (warehouseError) throw new Error(warehouseError.message);
       if (!warehouse?.id) {
-        throw new Error("No active warehouse found for stock-managed product");
+        const { data: createdWarehouse, error: createWarehouseError } = await admin
+          .from("warehouses")
+          .insert({
+            warehouse_code: buildAutoWarehouseCode(),
+            name: "Default Warehouse",
+            status: "ACTIVE",
+            created_by: userId,
+            updated_by: userId,
+          })
+          .select("id")
+          .single();
+        if (createWarehouseError) throw new Error(createWarehouseError.message);
+        warehouse = createdWarehouse;
       }
 
       const { error: inventoryError } = await admin
