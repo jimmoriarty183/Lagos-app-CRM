@@ -27,9 +27,12 @@ import {
   type OrderNote,
 } from "@/app/b/[slug]/_components/orders/OrderNotesPanel";
 import {
+  addOrderLineToExistingOrder,
+  getCatalogOrderLineOptions,
   setOrderManager,
   setOrderStatus,
   updateOrder,
+  type CatalogOrderLineOption,
 } from "@/app/b/[slug]/actions";
 import { CANCELED_REASONS } from "@/app/b/[slug]/order-status-reasons";
 import {
@@ -148,7 +151,9 @@ function normalizeActors(input: TeamActor[]): TeamActor[] {
       avatar_url: actor?.avatar_url ?? null,
     });
   }
-  return Array.from(map.values()).sort((a, b) => a.label.localeCompare(b.label));
+  return Array.from(map.values()).sort((a, b) =>
+    a.label.localeCompare(b.label),
+  );
 }
 
 function getSuggestedLabelsStorageKey(businessId: string) {
@@ -1007,6 +1012,30 @@ export function OrderPreview({
     React.useState(false);
   const [isUploadingOverviewFiles, setIsUploadingOverviewFiles] =
     React.useState(false);
+  const [showAddLineCard, setShowAddLineCard] = React.useState(false);
+  const [isLoadingCatalogOptions, setIsLoadingCatalogOptions] =
+    React.useState(false);
+  const [isAddingLine, startAddingLine] = React.useTransition();
+  const [catalogOptions, setCatalogOptions] = React.useState<{
+    products: CatalogOrderLineOption[];
+    services: CatalogOrderLineOption[];
+  }>({ products: [], services: [] });
+  const [lineTypeDraft, setLineTypeDraft] = React.useState<
+    "PRODUCT" | "SERVICE"
+  >("PRODUCT");
+  const [lineItemIdDraft, setLineItemIdDraft] = React.useState("");
+  const [lineQtyDraft, setLineQtyDraft] = React.useState("1");
+  const [lineUnitPriceDraft, setLineUnitPriceDraft] = React.useState("");
+  const [lineNewProductCodeDraft, setLineNewProductCodeDraft] =
+    React.useState("");
+  const [lineNewProductNameDraft, setLineNewProductNameDraft] =
+    React.useState("");
+  const [lineActionError, setLineActionError] = React.useState<string | null>(
+    null,
+  );
+  const [lineActionSuccess, setLineActionSuccess] = React.useState<
+    string | null
+  >(null);
   const [overviewUploadSuccess, setOverviewUploadSuccess] = React.useState<
     string | null
   >(null);
@@ -1084,8 +1113,12 @@ export function OrderPreview({
   });
   const displayName = client.fullName;
   const hasIndividualName = Boolean(
-    (previewOrder?.client_first_name?.trim() || client.firstName || "") ||
-      (previewOrder?.client_last_name?.trim() || client.lastName || ""),
+    previewOrder?.client_first_name?.trim() ||
+    client.firstName ||
+    "" ||
+    previewOrder?.client_last_name?.trim() ||
+    client.lastName ||
+    "",
   );
   const clientTypeLabel = hasIndividualName ? "individual" : "company";
   const clientTypeBadgeClass =
@@ -1167,6 +1200,59 @@ export function OrderPreview({
     }, 3500);
     return () => window.clearTimeout(timeout);
   }, [overviewUploadSuccess]);
+
+  React.useEffect(() => {
+    if (!showAddLineCard || !open || isCreateMode) return;
+
+    let cancelled = false;
+    setIsLoadingCatalogOptions(true);
+    setLineActionError(null);
+
+    void getCatalogOrderLineOptions({ businessId })
+      .then((result) => {
+        if (cancelled) return;
+        if (!result.ok) {
+          setLineActionError(result.error || "Failed to load catalog items.");
+          setCatalogOptions({ products: [], services: [] });
+          return;
+        }
+        setCatalogOptions({
+          products: result.products,
+          services: result.services,
+        });
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        setLineActionError(
+          error instanceof Error
+            ? error.message
+            : "Failed to load catalog items.",
+        );
+        setCatalogOptions({ products: [], services: [] });
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsLoadingCatalogOptions(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [businessId, isCreateMode, open, showAddLineCard]);
+
+  const activeLineOptions = React.useMemo(
+    () =>
+      lineTypeDraft === "PRODUCT"
+        ? catalogOptions.products
+        : catalogOptions.services,
+    [catalogOptions.products, catalogOptions.services, lineTypeDraft],
+  );
+
+  const selectedLineOption = React.useMemo(
+    () => activeLineOptions.find((item) => item.id === lineItemIdDraft) ?? null,
+    [activeLineOptions, lineItemIdDraft],
+  );
 
   const openOverviewFilePicker = React.useCallback(() => {
     overviewFileInputRef.current?.click();
@@ -1344,6 +1430,16 @@ export function OrderPreview({
     });
   }
 
+  function resetAddLineDraft(nextType: "PRODUCT" | "SERVICE" = "PRODUCT") {
+    setLineTypeDraft(nextType);
+    setLineItemIdDraft("");
+    setLineQtyDraft("1");
+    setLineUnitPriceDraft("");
+    setLineNewProductCodeDraft("");
+    setLineNewProductNameDraft("");
+    setLineActionError(null);
+  }
+
   return (
     <Sheet open={open} onOpenChange={(next) => (!next ? onClose() : undefined)}>
       <SheetContent
@@ -1378,19 +1474,44 @@ export function OrderPreview({
             <div className="sticky top-0 z-20 border-b border-[#E5E7EB] bg-white/95 backdrop-blur">
               <div className="flex items-start justify-between gap-4 px-5 py-4 sm:px-6">
                 <div>
-                  <div className="text-lg font-semibold text-[#1F2937]">Create order</div>
+                  <div className="text-lg font-semibold text-[#1F2937]">
+                    Create order
+                  </div>
                   <div className="mt-1 text-sm text-[#6B7280]">
                     Type-driven creation with live duplicate checking
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-[18px] border border-[#E5E7EB] bg-white text-[#374151] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]"
-                  aria-label="Close order preview"
-                >
-                  <X className="h-4 w-4" />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setLayoutMode((current) =>
+                        current === "wide" ? "default" : "wide",
+                      )
+                    }
+                    className="inline-flex h-10 items-center gap-1.5 rounded-[18px] border border-[#E5E7EB] bg-white px-4 text-sm font-semibold text-[#1F2937] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
+                    aria-label={
+                      isWideLayout
+                        ? "Use default order preview width"
+                        : "Use wide order preview width"
+                    }
+                  >
+                    {isWideLayout ? (
+                      <Minimize2 className="h-3.5 w-3.5" />
+                    ) : (
+                      <Maximize2 className="h-3.5 w-3.5" />
+                    )}
+                    {isWideLayout ? "Default width" : "Expand"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-[18px] border border-[#E5E7EB] bg-white text-[#374151] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]"
+                    aria-label="Close order preview"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
             </div>
             <ScrollArea className="min-h-0 flex-1">
@@ -1474,7 +1595,11 @@ export function OrderPreview({
                               : "text-[15px] sm:text-[16px]",
                         ].join(" ")}
                       >
-                        Order {formatDisplayOrderNumber({ orderNumber: currentOrder.order_number, orderId: currentOrder.id })}
+                        Order{" "}
+                        {formatDisplayOrderNumber({
+                          orderNumber: currentOrder.order_number,
+                          orderId: currentOrder.id,
+                        })}
                       </div>
                     </div>
 
@@ -1563,7 +1688,6 @@ export function OrderPreview({
                         </span>
                       </div>
                     ) : null}
-
                   </div>
 
                   <div className="flex items-center gap-2">
@@ -1671,568 +1795,939 @@ export function OrderPreview({
                 <div className="grid gap-3 lg:grid-cols-[minmax(0,4fr)_minmax(220px,1fr)]">
                   <div className="min-w-0 space-y-3">
                     <TabsContent value="overview" className="mt-0">
-                  <div className="space-y-3">
-                    {canManage ? (
-                      <div className="flex flex-wrap items-center justify-between gap-3 rounded-[20px] border border-[#F3F4F6] bg-white px-4 py-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
-                        <div>
-                          <div className="flex flex-wrap items-center gap-2">
-                            <div className="text-sm font-semibold text-[#1F2937]">
-                              Overview
+                      <div className="space-y-3">
+                        {canManage ? (
+                          <div className="flex flex-wrap items-center justify-between gap-3 rounded-[20px] border border-[#F3F4F6] bg-white px-4 py-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                            <div>
+                              <div className="flex flex-wrap items-center gap-2">
+                                <div className="text-sm font-semibold text-[#1F2937]">
+                                  Overview
+                                </div>
+                                <span
+                                  className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold uppercase tracking-[0.08em] ${clientTypeBadgeClass}`}
+                                >
+                                  {clientTypeLabel}
+                                </span>
+                              </div>
+                              <p className="text-xs text-[#6B7280]">
+                                {isEditingOverview
+                                  ? "Editing order details."
+                                  : "Customer, manager, amount, due date, and description."}
+                              </p>
+                              {overviewUploadSuccess ? (
+                                <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-[#b7ebc6] bg-[#ecfdf3] px-3 py-1 text-xs font-semibold text-[#067647]">
+                                  <Check className="h-3.5 w-3.5" />
+                                  <span>{overviewUploadSuccess}</span>
+                                </div>
+                              ) : null}
                             </div>
-                            <span
-                              className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold uppercase tracking-[0.08em] ${clientTypeBadgeClass}`}
-                            >
-                              {clientTypeLabel}
-                            </span>
-                          </div>
-                          <p className="text-xs text-[#6B7280]">
-                            {isEditingOverview
-                              ? "Editing order details."
-                              : "Customer, manager, amount, due date, and description."}
-                          </p>
-                          {overviewUploadSuccess ? (
-                            <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-[#b7ebc6] bg-[#ecfdf3] px-3 py-1 text-xs font-semibold text-[#067647]">
-                              <Check className="h-3.5 w-3.5" />
-                              <span>{overviewUploadSuccess}</span>
-                            </div>
-                          ) : null}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {isEditingOverview ? (
-                            <>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                className="h-10 min-w-24 rounded-xl border-[#E5E7EB] bg-white px-5 text-sm font-semibold text-[#374151] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
-                                onClick={() => {
-                                  setIsEditingOverview(false);
-                                  setDraft({
-                                    firstName:
-                                      currentOrder.client_first_name?.trim() ||
-                                      client.firstName ||
-                                      "",
-                                    lastName:
-                                      currentOrder.client_last_name?.trim() ||
-                                      client.lastName ||
-                                      "",
-                                    phone:
-                                      currentOrder.client_phone?.trim() || "",
-                                    managerId: currentOrder.manager_id || "",
-                                    amount: String(currentOrder.amount ?? ""),
-                                    dueDate: currentOrder.due_date
-                                      ? String(currentOrder.due_date).slice(
-                                          0,
-                                          10,
-                                        )
-                                      : "",
-                                    description:
-                                      currentOrder.description?.trim() || "",
-                                  });
-                                }}
-                              >
-                                Cancel
-                              </Button>
-                              <Button
-                                type="button"
-                                variant="default"
-                                disabled={isSavingOverview}
-                                className="h-10 min-w-24 rounded-xl px-5 text-sm font-semibold text-white hover:text-white shadow-[0_1px_2px_rgba(16,24,40,0.12)] disabled:opacity-60"
-                                onClick={() => {
-                                  if (!draft.firstName.trim()) {
-                                    window.alert("First name is required.");
-                                    return;
-                                  }
-                                  const nextFirstName = draft.firstName.trim();
-                                  const nextLastName = draft.lastName.trim();
-                                  const nextPhone = draft.phone.trim() || null;
-                                  const nextDescription =
-                                    draft.description.trim() || null;
-                                  const nextAmount = Number(draft.amount || 0);
-                                  const nextDueDate = draft.dueDate || null;
-                                  const nextManagerId = draft.managerId || null;
-                                  const managerChanged =
-                                    (currentOrder.manager_id || null) !==
-                                    nextManagerId;
-                                  const overviewChanges: Array<{
-                                    type: LocalActivityEvent["type"];
-                                    description: string;
-                                    payload: NonNullable<
-                                      LocalActivityEvent["payload"]
-                                    >;
-                                  }> = [];
-
-                                  if (
-                                    (currentOrder.client_first_name?.trim() ||
-                                      client.firstName ||
-                                      "") !== nextFirstName
-                                  ) {
-                                    overviewChanges.push({
-                                      type: "order_updated",
-                                      description: `changed first name from "${currentOrder.client_first_name?.trim() || client.firstName || "Unknown"}" to "${nextFirstName}"`,
-                                      payload: {
-                                        field: "first_name",
-                                        from:
+                            <div className="flex items-center gap-2">
+                              {isEditingOverview ? (
+                                <>
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="h-10 min-w-24 rounded-xl border-[#E5E7EB] bg-white px-5 text-sm font-semibold text-[#374151] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
+                                    onClick={() => {
+                                      setIsEditingOverview(false);
+                                      setDraft({
+                                        firstName:
                                           currentOrder.client_first_name?.trim() ||
                                           client.firstName ||
-                                          "Unknown",
-                                        to: nextFirstName,
-                                      },
-                                    });
-                                  }
-
-                                  if (
-                                    (currentOrder.client_last_name?.trim() ||
-                                      client.lastName ||
-                                      "") !== nextLastName
-                                  ) {
-                                    overviewChanges.push({
-                                      type: "order_updated",
-                                      description: `changed last name from "${currentOrder.client_last_name?.trim() || client.lastName || "Not provided"}" to "${nextLastName || "Not provided"}"`,
-                                      payload: {
-                                        field: "last_name",
-                                        from:
+                                          "",
+                                        lastName:
                                           currentOrder.client_last_name?.trim() ||
                                           client.lastName ||
-                                          "Not provided",
-                                        to: nextLastName || "Not provided",
-                                      },
-                                    });
-                                  }
-
-                                  if (
-                                    (currentOrder.client_phone?.trim() ||
-                                      null) !== nextPhone
-                                  ) {
-                                    overviewChanges.push({
-                                      type: "order_updated",
-                                      description: `changed phone from "${formatPhoneValue(currentOrder.client_phone || null)}" to "${formatPhoneValue(nextPhone)}"`,
-                                      payload: {
-                                        field: "phone",
-                                        from: formatPhoneValue(
-                                          currentOrder.client_phone || null,
+                                          "",
+                                        phone:
+                                          currentOrder.client_phone?.trim() ||
+                                          "",
+                                        managerId:
+                                          currentOrder.manager_id || "",
+                                        amount: String(
+                                          currentOrder.amount ?? "",
                                         ),
-                                        to: formatPhoneValue(nextPhone),
-                                      },
-                                    });
-                                  }
-
-                                  if (
-                                    String(currentOrder.amount ?? 0) !==
-                                    String(nextAmount)
-                                  ) {
-                                    overviewChanges.push({
-                                      type: "order_updated",
-                                      description: `changed amount from "${formatAmountValue(currentOrder.amount)}" to "${formatAmountValue(nextAmount)}"`,
-                                      payload: {
-                                        field: "amount",
-                                        from: currentOrder.amount,
-                                        to: nextAmount,
-                                        fromLabel: formatAmountValue(
-                                          currentOrder.amount,
-                                        ),
-                                        toLabel: formatAmountValue(nextAmount),
-                                      },
-                                    });
-                                  }
-
-                                  if (
-                                    (currentOrder.due_date
-                                      ? String(currentOrder.due_date).slice(
-                                          0,
-                                          10,
-                                        )
-                                      : null) !== nextDueDate
-                                  ) {
-                                    overviewChanges.push({
-                                      type: "order_updated",
-                                      description: `changed due date from "${formatDate(currentOrder.due_date)}" to "${formatDate(nextDueDate)}"`,
-                                      payload: {
-                                        field: "due_date",
-                                        from: currentOrder.due_date || null,
-                                        to: nextDueDate || null,
-                                        fromLabel: formatDate(
-                                          currentOrder.due_date,
-                                        ),
-                                        toLabel: formatDate(nextDueDate),
-                                      },
-                                    });
-                                  }
-
-                                  if (
-                                    (currentOrder.description?.trim() ||
-                                      null) !== nextDescription
-                                  ) {
-                                    overviewChanges.push({
-                                      type: "order_updated",
-                                      description: `changed description from ${formatDescriptionValue(currentOrder.description)} to ${formatDescriptionValue(nextDescription)}`,
-                                      payload: {
-                                        field: "description",
-                                        from:
+                                        dueDate: currentOrder.due_date
+                                          ? String(currentOrder.due_date).slice(
+                                              0,
+                                              10,
+                                            )
+                                          : "",
+                                        description:
                                           currentOrder.description?.trim() ||
-                                          null,
-                                        to: nextDescription,
-                                        fromLabel: formatDescriptionValue(
-                                          currentOrder.description,
-                                        ),
-                                        toLabel:
-                                          formatDescriptionValue(
-                                            nextDescription,
-                                          ),
-                                      },
-                                    });
-                                  }
-
-                                  startSavingOverview(async () => {
-                                    try {
-                                      await updateOrder({
-                                        orderId: currentOrder.id,
-                                        businessSlug,
-                                        clientName: [
-                                          nextFirstName,
-                                          nextLastName,
-                                        ]
-                                          .filter(Boolean)
-                                          .join(" "),
-                                        firstName: nextFirstName,
-                                        lastName: nextLastName,
-                                        clientPhone: nextPhone,
-                                        description: nextDescription,
-                                        amount: nextAmount,
-                                        dueDate: nextDueDate,
+                                          "",
                                       });
+                                    }}
+                                  >
+                                    Cancel
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    variant="default"
+                                    disabled={isSavingOverview}
+                                    className="h-10 min-w-24 rounded-xl px-5 text-sm font-semibold text-white hover:text-white shadow-[0_1px_2px_rgba(16,24,40,0.12)] disabled:opacity-60"
+                                    onClick={() => {
+                                      if (!draft.firstName.trim()) {
+                                        window.alert("First name is required.");
+                                        return;
+                                      }
+                                      const nextFirstName =
+                                        draft.firstName.trim();
+                                      const nextLastName =
+                                        draft.lastName.trim();
+                                      const nextPhone =
+                                        draft.phone.trim() || null;
+                                      const nextDescription =
+                                        draft.description.trim() || null;
+                                      const nextAmount = Number(
+                                        draft.amount || 0,
+                                      );
+                                      const nextDueDate = draft.dueDate || null;
+                                      const nextManagerId =
+                                        draft.managerId || null;
+                                      const managerChanged =
+                                        (currentOrder.manager_id || null) !==
+                                        nextManagerId;
+                                      const overviewChanges: Array<{
+                                        type: LocalActivityEvent["type"];
+                                        description: string;
+                                        payload: NonNullable<
+                                          LocalActivityEvent["payload"]
+                                        >;
+                                      }> = [];
 
-                                      if (managerChanged) {
-                                        await setOrderManager({
-                                          orderId: currentOrder.id,
-                                          businessSlug,
-                                          managerId: nextManagerId,
+                                      if (
+                                        (currentOrder.client_first_name?.trim() ||
+                                          client.firstName ||
+                                          "") !== nextFirstName
+                                      ) {
+                                        overviewChanges.push({
+                                          type: "order_updated",
+                                          description: `changed first name from "${currentOrder.client_first_name?.trim() || client.firstName || "Unknown"}" to "${nextFirstName}"`,
+                                          payload: {
+                                            field: "first_name",
+                                            from:
+                                              currentOrder.client_first_name?.trim() ||
+                                              client.firstName ||
+                                              "Unknown",
+                                            to: nextFirstName,
+                                          },
                                         });
+                                      }
+
+                                      if (
+                                        (currentOrder.client_last_name?.trim() ||
+                                          client.lastName ||
+                                          "") !== nextLastName
+                                      ) {
+                                        overviewChanges.push({
+                                          type: "order_updated",
+                                          description: `changed last name from "${currentOrder.client_last_name?.trim() || client.lastName || "Not provided"}" to "${nextLastName || "Not provided"}"`,
+                                          payload: {
+                                            field: "last_name",
+                                            from:
+                                              currentOrder.client_last_name?.trim() ||
+                                              client.lastName ||
+                                              "Not provided",
+                                            to: nextLastName || "Not provided",
+                                          },
+                                        });
+                                      }
+
+                                      if (
+                                        (currentOrder.client_phone?.trim() ||
+                                          null) !== nextPhone
+                                      ) {
+                                        overviewChanges.push({
+                                          type: "order_updated",
+                                          description: `changed phone from "${formatPhoneValue(currentOrder.client_phone || null)}" to "${formatPhoneValue(nextPhone)}"`,
+                                          payload: {
+                                            field: "phone",
+                                            from: formatPhoneValue(
+                                              currentOrder.client_phone || null,
+                                            ),
+                                            to: formatPhoneValue(nextPhone),
+                                          },
+                                        });
+                                      }
+
+                                      if (
+                                        String(currentOrder.amount ?? 0) !==
+                                        String(nextAmount)
+                                      ) {
+                                        overviewChanges.push({
+                                          type: "order_updated",
+                                          description: `changed amount from "${formatAmountValue(currentOrder.amount)}" to "${formatAmountValue(nextAmount)}"`,
+                                          payload: {
+                                            field: "amount",
+                                            from: currentOrder.amount,
+                                            to: nextAmount,
+                                            fromLabel: formatAmountValue(
+                                              currentOrder.amount,
+                                            ),
+                                            toLabel:
+                                              formatAmountValue(nextAmount),
+                                          },
+                                        });
+                                      }
+
+                                      if (
+                                        (currentOrder.due_date
+                                          ? String(currentOrder.due_date).slice(
+                                              0,
+                                              10,
+                                            )
+                                          : null) !== nextDueDate
+                                      ) {
+                                        overviewChanges.push({
+                                          type: "order_updated",
+                                          description: `changed due date from "${formatDate(currentOrder.due_date)}" to "${formatDate(nextDueDate)}"`,
+                                          payload: {
+                                            field: "due_date",
+                                            from: currentOrder.due_date || null,
+                                            to: nextDueDate || null,
+                                            fromLabel: formatDate(
+                                              currentOrder.due_date,
+                                            ),
+                                            toLabel: formatDate(nextDueDate),
+                                          },
+                                        });
+                                      }
+
+                                      if (
+                                        (currentOrder.description?.trim() ||
+                                          null) !== nextDescription
+                                      ) {
+                                        overviewChanges.push({
+                                          type: "order_updated",
+                                          description: `changed description from ${formatDescriptionValue(currentOrder.description)} to ${formatDescriptionValue(nextDescription)}`,
+                                          payload: {
+                                            field: "description",
+                                            from:
+                                              currentOrder.description?.trim() ||
+                                              null,
+                                            to: nextDescription,
+                                            fromLabel: formatDescriptionValue(
+                                              currentOrder.description,
+                                            ),
+                                            toLabel:
+                                              formatDescriptionValue(
+                                                nextDescription,
+                                              ),
+                                          },
+                                        });
+                                      }
+
+                                      startSavingOverview(async () => {
+                                        try {
+                                          await updateOrder({
+                                            orderId: currentOrder.id,
+                                            businessSlug,
+                                            clientName: [
+                                              nextFirstName,
+                                              nextLastName,
+                                            ]
+                                              .filter(Boolean)
+                                              .join(" "),
+                                            firstName: nextFirstName,
+                                            lastName: nextLastName,
+                                            clientPhone: nextPhone,
+                                            description: nextDescription,
+                                            amount: nextAmount,
+                                            dueDate: nextDueDate,
+                                          });
+
+                                          if (managerChanged) {
+                                            await setOrderManager({
+                                              orderId: currentOrder.id,
+                                              businessSlug,
+                                              managerId: nextManagerId,
+                                            });
+                                            appendLocalActivityEvent(
+                                              businessId,
+                                              currentOrder.id,
+                                              {
+                                                id: makeLocalActivityEventId(
+                                                  "manager",
+                                                ),
+                                                type: "manager_changed",
+                                                actorName:
+                                                  currentUserName || "Manager",
+                                                actorRole: userRole,
+                                                description: nextManagerId
+                                                  ? `changed manager from "${currentOrder.manager_name?.trim() || "Unassigned"}" to "${managerOptions.find((actor) => actor.id === nextManagerId)?.label || "Manager"}"`
+                                                  : `changed manager from "${currentOrder.manager_name?.trim() || "Unassigned"}" to "Unassigned"`,
+                                                ts: new Date().toISOString(),
+                                                payload: {
+                                                  field: "manager_id",
+                                                  from: currentOrder.manager_id,
+                                                  to: nextManagerId,
+                                                  fromLabel:
+                                                    currentOrder.manager_name?.trim() ||
+                                                    "Unassigned",
+                                                  toLabel: nextManagerId
+                                                    ? managerOptions.find(
+                                                        (actor) =>
+                                                          actor.id ===
+                                                          nextManagerId,
+                                                      )?.label || "Manager"
+                                                    : "Unassigned",
+                                                },
+                                              },
+                                            );
+                                          }
+
+                                          for (const change of overviewChanges) {
+                                            appendLocalActivityEvent(
+                                              businessId,
+                                              currentOrder.id,
+                                              {
+                                                id: makeLocalActivityEventId(
+                                                  "order-updated",
+                                                ),
+                                                type: change.type,
+                                                actorName:
+                                                  currentUserName || "Manager",
+                                                actorRole: userRole,
+                                                description: change.description,
+                                                ts: new Date().toISOString(),
+                                                payload: change.payload,
+                                              },
+                                            );
+                                          }
+
+                                          setPreviewOrder((prev) =>
+                                            prev
+                                              ? {
+                                                  ...prev,
+                                                  client_name:
+                                                    [
+                                                      nextFirstName,
+                                                      nextLastName,
+                                                    ]
+                                                      .filter(Boolean)
+                                                      .join(" ") ||
+                                                    prev.client_name,
+                                                  client_first_name:
+                                                    nextFirstName,
+                                                  client_last_name:
+                                                    nextLastName,
+                                                  client_full_name: [
+                                                    nextFirstName,
+                                                    nextLastName,
+                                                  ]
+                                                    .filter(Boolean)
+                                                    .join(" "),
+                                                  client_phone: nextPhone,
+                                                  manager_id: nextManagerId,
+                                                  manager_name: nextManagerId
+                                                    ? managerOptions.find(
+                                                        (actor) =>
+                                                          actor.id ===
+                                                          nextManagerId,
+                                                      )?.label ||
+                                                      prev.manager_name
+                                                    : null,
+                                                  amount: nextAmount,
+                                                  due_date: nextDueDate,
+                                                  description: nextDescription,
+                                                }
+                                              : prev,
+                                          );
+                                          setIsEditingOverview(false);
+                                          router.refresh();
+                                        } catch (error) {
+                                          window.alert(
+                                            error instanceof Error
+                                              ? error.message
+                                              : "Failed to update order.",
+                                          );
+                                        }
+                                      });
+                                    }}
+                                  >
+                                    <span className="whitespace-nowrap leading-none text-white">
+                                      {isSavingOverview ? "Saving..." : "Save"}
+                                    </span>
+                                  </Button>
+                                </>
+                              ) : (
+                                <DropdownMenu modal={false}>
+                                  <DropdownMenuTrigger asChild>
+                                    <button
+                                      type="button"
+                                      className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#E5E7EB] bg-white text-[#6B7280] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]"
+                                      aria-label="Overview actions"
+                                    >
+                                      <MoreHorizontal className="h-4 w-4" />
+                                    </button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent
+                                    align="end"
+                                    className="z-[120] w-44 rounded-xl border-[#E5E7EB] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
+                                  >
+                                    <DropdownMenuItem
+                                      className="rounded-lg px-3 py-2 text-sm font-medium text-[#1F2937] focus:bg-[#F9FAFB] focus:text-[#1F2937]"
+                                      onSelect={(event) => {
+                                        event.preventDefault();
+                                        setIsEditingOverview(true);
+                                      }}
+                                    >
+                                      Edit overview
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      className="rounded-lg px-3 py-2 text-sm font-medium text-[#1F2937] focus:bg-[#F9FAFB] focus:text-[#1F2937]"
+                                      onSelect={(event) => {
+                                        event.preventDefault();
+                                        setShowAddLineCard(true);
+                                        setLineActionSuccess(null);
+                                        setLineActionError(null);
+                                      }}
+                                    >
+                                      Add product/service
+                                    </DropdownMenuItem>
+                                    {canUploadFiles ? (
+                                      <DropdownMenuItem
+                                        className="rounded-lg px-3 py-2 text-sm font-medium text-[#1F2937] focus:bg-[#F9FAFB] focus:text-[#1F2937]"
+                                        onSelect={(event) => {
+                                          event.preventDefault();
+                                          openOverviewFilePicker();
+                                        }}
+                                      >
+                                        Add file
+                                      </DropdownMenuItem>
+                                    ) : null}
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              )}
+                            </div>
+                          </div>
+                        ) : null}
+
+                        <div className="grid gap-2.5 sm:grid-cols-2">
+                          <MetaItem
+                            label="First Name"
+                            value={
+                              isEditingOverview ? (
+                                <input
+                                  value={draft.firstName}
+                                  onChange={(event) => {
+                                    const nextValue = event.currentTarget.value;
+                                    setDraft((prev) => ({
+                                      ...prev,
+                                      firstName: nextValue,
+                                    }));
+                                  }}
+                                  className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
+                                />
+                              ) : (
+                                currentOrder.client_first_name?.trim() ||
+                                client.firstName ||
+                                "Unknown"
+                              )
+                            }
+                          />
+                          <MetaItem
+                            label="Last Name"
+                            value={
+                              isEditingOverview ? (
+                                <input
+                                  value={draft.lastName}
+                                  onChange={(event) => {
+                                    const nextValue = event.currentTarget.value;
+                                    setDraft((prev) => ({
+                                      ...prev,
+                                      lastName: nextValue,
+                                    }));
+                                  }}
+                                  className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
+                                />
+                              ) : (
+                                currentOrder.client_last_name?.trim() ||
+                                client.lastName ||
+                                "Not provided"
+                              )
+                            }
+                          />
+                          <MetaItem
+                            label="Phone"
+                            value={
+                              isEditingOverview ? (
+                                <input
+                                  value={draft.phone}
+                                  onChange={(event) => {
+                                    const nextValue = event.currentTarget.value;
+                                    setDraft((prev) => ({
+                                      ...prev,
+                                      phone: nextValue,
+                                    }));
+                                  }}
+                                  className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
+                                />
+                              ) : (
+                                currentOrder.client_phone?.trim() ||
+                                "No phone number"
+                              )
+                            }
+                          />
+                          <MetaItem
+                            label="Manager"
+                            value={
+                              isEditingOverview ? (
+                                <Select
+                                  value={draft.managerId || "__unassigned__"}
+                                  onValueChange={(value) =>
+                                    setDraft((prev) => ({
+                                      ...prev,
+                                      managerId:
+                                        value === "__unassigned__" ? "" : value,
+                                    }))
+                                  }
+                                >
+                                  <SelectTrigger className="h-10 w-full rounded-xl border-[#E5E7EB] bg-white text-sm shadow-none focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent className="z-[120] rounded-2xl border-[#E5E7EB] bg-white shadow-[0_16px_40px_rgba(15,23,42,0.18)]">
+                                    <SelectItem value="__unassigned__">
+                                      Unassigned
+                                    </SelectItem>
+                                    {managerOptions.map((actor) => (
+                                      <SelectItem
+                                        key={actor.id}
+                                        value={actor.id}
+                                      >
+                                        {actor.label}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              ) : (
+                                <span className="inline-flex items-center gap-2">
+                                  <ActorAvatar
+                                    label={
+                                      currentOrder.manager_name?.trim() ||
+                                      "Unassigned"
+                                    }
+                                  />
+                                  <span>
+                                    {currentOrder.manager_name?.trim() ||
+                                      "Unassigned"}
+                                  </span>
+                                </span>
+                              )
+                            }
+                          />
+                          <MetaItem
+                            label="Created"
+                            value={formatDateTime(currentOrder.created_at)}
+                          />
+                          <MetaItem
+                            label="Due date"
+                            value={
+                              isEditingOverview ? (
+                                <input
+                                  type="date"
+                                  value={draft.dueDate}
+                                  onChange={(event) => {
+                                    const nextValue = event.currentTarget.value;
+                                    setDraft((prev) => ({
+                                      ...prev,
+                                      dueDate: nextValue,
+                                    }));
+                                  }}
+                                  className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
+                                />
+                              ) : (
+                                formatDate(currentOrder.due_date)
+                              )
+                            }
+                          />
+                          <MetaItem
+                            label="Amount"
+                            value={
+                              isEditingOverview ? (
+                                <input
+                                  inputMode="decimal"
+                                  value={draft.amount}
+                                  onChange={(event) => {
+                                    const nextValue = event.currentTarget.value;
+                                    setDraft((prev) => ({
+                                      ...prev,
+                                      amount: nextValue,
+                                    }));
+                                  }}
+                                  className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
+                                />
+                              ) : (
+                                `$${fmtAmount(currentOrder.amount)}`
+                              )
+                            }
+                          />
+                        </div>
+
+                        <div className="rounded-[20px] border border-[#F3F4F6] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                          <div className="text-sm font-semibold text-[#1F2937]">
+                            Description
+                          </div>
+                          {isEditingOverview ? (
+                            <textarea
+                              value={draft.description}
+                              onChange={(event) => {
+                                const nextValue = event.currentTarget.value;
+                                setDraft((prev) => ({
+                                  ...prev,
+                                  description: nextValue,
+                                }));
+                              }}
+                              className="mt-2 min-h-24 w-full rounded-[18px] border border-[#E5E7EB] bg-white px-4 py-3 text-sm leading-6 text-[#1F2937] outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
+                            />
+                          ) : (
+                            <p className="mt-2 whitespace-pre-wrap text-sm leading-5 text-[#4B5563]">
+                              {currentOrder.description?.trim() ||
+                                "No description provided yet."}
+                            </p>
+                          )}
+                        </div>
+
+                        {canManage ? (
+                          <div className="rounded-[20px] border border-[#F3F4F6] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <div>
+                                <div className="text-sm font-semibold text-[#1F2937]">
+                                  Products and services
+                                </div>
+                                <p className="text-xs text-[#6B7280]">
+                                  Add a line item to this existing order.
+                                </p>
+                              </div>
+                              {!showAddLineCard ? (
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  className="h-9 rounded-xl border-[#E5E7EB] bg-white px-3 text-sm font-semibold text-[#374151] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
+                                  onClick={() => {
+                                    setShowAddLineCard(true);
+                                    setLineActionError(null);
+                                    setLineActionSuccess(null);
+                                  }}
+                                >
+                                  <Plus className="mr-1.5 h-3.5 w-3.5" />
+                                  Add line
+                                </Button>
+                              ) : null}
+                            </div>
+
+                            {lineActionSuccess ? (
+                              <div className="mt-2 rounded-xl border border-[#b7ebc6] bg-[#ecfdf3] px-3 py-2 text-xs font-semibold text-[#067647]">
+                                {lineActionSuccess}
+                              </div>
+                            ) : null}
+
+                            {showAddLineCard ? (
+                              <div className="mt-3 space-y-3 rounded-2xl border border-[#E5E7EB] bg-[#F9FAFB] p-3">
+                                <div className="grid gap-2 sm:grid-cols-2">
+                                  <label className="space-y-1">
+                                    <span className="text-xs font-semibold uppercase tracking-[0.04em] text-[#6B7280]">
+                                      Type
+                                    </span>
+                                    <select
+                                      value={lineTypeDraft}
+                                      onChange={(event) => {
+                                        const nextType =
+                                          event.currentTarget.value ===
+                                          "SERVICE"
+                                            ? "SERVICE"
+                                            : "PRODUCT";
+                                        resetAddLineDraft(nextType);
+                                      }}
+                                      className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
+                                    >
+                                      <option value="PRODUCT">Product</option>
+                                      <option value="SERVICE">Service</option>
+                                    </select>
+                                  </label>
+
+                                  <label className="space-y-1">
+                                    <span className="text-xs font-semibold uppercase tracking-[0.04em] text-[#6B7280]">
+                                      Item
+                                    </span>
+                                    <select
+                                      value={lineItemIdDraft}
+                                      onChange={(event) => {
+                                        const nextId =
+                                          event.currentTarget.value;
+                                        setLineItemIdDraft(nextId);
+                                        if (
+                                          lineTypeDraft === "PRODUCT" &&
+                                          nextId === "__new_product__"
+                                        ) {
+                                          setLineUnitPriceDraft("");
+                                          setLineActionError(null);
+                                          return;
+                                        }
+                                        const option = activeLineOptions.find(
+                                          (item) => item.id === nextId,
+                                        );
+                                        setLineUnitPriceDraft(
+                                          option
+                                            ? String(option.unitPrice ?? 0)
+                                            : "",
+                                        );
+                                        setLineActionError(null);
+                                      }}
+                                      disabled={
+                                        isLoadingCatalogOptions ||
+                                        activeLineOptions.length === 0
+                                      }
+                                      className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15 disabled:bg-[#F3F4F6]"
+                                    >
+                                      <option value="">
+                                        {isLoadingCatalogOptions
+                                          ? "Loading catalog..."
+                                          : activeLineOptions.length > 0
+                                            ? "Select item"
+                                            : "No active items"}
+                                      </option>
+                                      {lineTypeDraft === "PRODUCT" ? (
+                                        <option value="__new_product__">
+                                          + New product
+                                        </option>
+                                      ) : null}
+                                      {activeLineOptions.map((item) => (
+                                        <option key={item.id} value={item.id}>
+                                          {item.code
+                                            ? `${item.code} - ${item.name}`
+                                            : item.name}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  </label>
+                                </div>
+
+                                {lineTypeDraft === "PRODUCT" &&
+                                lineItemIdDraft === "__new_product__" ? (
+                                  <div className="grid gap-2 sm:grid-cols-2">
+                                    <label className="space-y-1">
+                                      <span className="text-xs font-semibold uppercase tracking-[0.04em] text-[#6B7280]">
+                                        New product code
+                                      </span>
+                                      <input
+                                        value={lineNewProductCodeDraft}
+                                        onChange={(event) => {
+                                          setLineNewProductCodeDraft(
+                                            event.currentTarget.value,
+                                          );
+                                          setLineActionError(null);
+                                        }}
+                                        placeholder="e.g. SKU-100"
+                                        className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
+                                      />
+                                    </label>
+                                    <label className="space-y-1">
+                                      <span className="text-xs font-semibold uppercase tracking-[0.04em] text-[#6B7280]">
+                                        New product name
+                                      </span>
+                                      <input
+                                        value={lineNewProductNameDraft}
+                                        onChange={(event) => {
+                                          setLineNewProductNameDraft(
+                                            event.currentTarget.value,
+                                          );
+                                          setLineActionError(null);
+                                        }}
+                                        placeholder="e.g. Installation kit"
+                                        className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
+                                      />
+                                    </label>
+                                  </div>
+                                ) : null}
+
+                                <div className="grid gap-2 sm:grid-cols-2">
+                                  <label className="space-y-1">
+                                    <span className="text-xs font-semibold uppercase tracking-[0.04em] text-[#6B7280]">
+                                      Qty
+                                    </span>
+                                    <input
+                                      inputMode="decimal"
+                                      value={lineQtyDraft}
+                                      onChange={(event) => {
+                                        setLineQtyDraft(
+                                          event.currentTarget.value,
+                                        );
+                                        setLineActionError(null);
+                                      }}
+                                      className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
+                                    />
+                                  </label>
+
+                                  <label className="space-y-1">
+                                    <span className="text-xs font-semibold uppercase tracking-[0.04em] text-[#6B7280]">
+                                      Unit price
+                                    </span>
+                                    <input
+                                      inputMode="decimal"
+                                      value={lineUnitPriceDraft}
+                                      onChange={(event) => {
+                                        setLineUnitPriceDraft(
+                                          event.currentTarget.value,
+                                        );
+                                        setLineActionError(null);
+                                      }}
+                                      className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
+                                    />
+                                  </label>
+                                </div>
+
+                                {selectedLineOption ? (
+                                  <div className="rounded-xl border border-[#E5E7EB] bg-white px-3 py-2 text-xs text-[#6B7280]">
+                                    Default price: $
+                                    {fmtAmount(selectedLineOption.unitPrice)}
+                                    {selectedLineOption.currencyCode
+                                      ? ` ${selectedLineOption.currencyCode}`
+                                      : ""}
+                                  </div>
+                                ) : null}
+
+                                {lineActionError ? (
+                                  <div className="rounded-xl border border-[#fecaca] bg-[#fef2f2] px-3 py-2 text-xs text-[#b42318]">
+                                    {lineActionError}
+                                  </div>
+                                ) : null}
+
+                                <div className="flex flex-wrap items-center justify-end gap-2">
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="h-9 rounded-xl border-[#E5E7EB] bg-white px-3 text-sm font-semibold text-[#374151] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
+                                    onClick={() => {
+                                      setShowAddLineCard(false);
+                                      resetAddLineDraft();
+                                    }}
+                                  >
+                                    Cancel
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    variant="default"
+                                    disabled={
+                                      isAddingLine || isLoadingCatalogOptions
+                                    }
+                                    className="h-9 rounded-xl px-3 text-sm font-semibold text-white hover:text-white disabled:opacity-60"
+                                    onClick={() => {
+                                      if (!currentOrder) return;
+
+                                      const qty = Number(lineQtyDraft);
+                                      const unitPrice =
+                                        Number(lineUnitPriceDraft);
+                                      if (!lineItemIdDraft) {
+                                        setLineActionError(
+                                          "Select product or service.",
+                                        );
+                                        return;
+                                      }
+                                      if (
+                                        lineTypeDraft === "PRODUCT" &&
+                                        lineItemIdDraft === "__new_product__"
+                                      ) {
+                                        const nextCode =
+                                          lineNewProductCodeDraft.trim();
+                                        const nextName =
+                                          lineNewProductNameDraft.trim();
+                                        if (!nextCode || !nextName) {
+                                          setLineActionError(
+                                            "New product requires code and name.",
+                                          );
+                                          return;
+                                        }
+                                      }
+                                      if (!Number.isFinite(qty) || qty <= 0) {
+                                        setLineActionError(
+                                          "Quantity must be greater than 0.",
+                                        );
+                                        return;
+                                      }
+                                      if (
+                                        !Number.isFinite(unitPrice) ||
+                                        unitPrice < 0
+                                      ) {
+                                        setLineActionError(
+                                          "Unit price must be 0 or greater.",
+                                        );
+                                        return;
+                                      }
+
+                                      setLineActionError(null);
+                                      startAddingLine(async () => {
+                                        const result =
+                                          await addOrderLineToExistingOrder({
+                                            orderId: currentOrder.id,
+                                            businessSlug,
+                                            lineType: lineTypeDraft,
+                                            catalogItemId:
+                                              lineTypeDraft === "PRODUCT" &&
+                                              lineItemIdDraft ===
+                                                "__new_product__"
+                                                ? ""
+                                                : lineItemIdDraft,
+                                            qty,
+                                            unitPrice,
+                                            newProduct:
+                                              lineTypeDraft === "PRODUCT" &&
+                                              lineItemIdDraft ===
+                                                "__new_product__"
+                                                ? {
+                                                    sku: lineNewProductCodeDraft.trim(),
+                                                    name: lineNewProductNameDraft.trim(),
+                                                  }
+                                                : null,
+                                          });
+
+                                        if (!result.ok) {
+                                          setLineActionError(
+                                            result.error ||
+                                              "Failed to add order line.",
+                                          );
+                                          return;
+                                        }
+
                                         appendLocalActivityEvent(
                                           businessId,
                                           currentOrder.id,
                                           {
                                             id: makeLocalActivityEventId(
-                                              "manager",
+                                              "order-line-added",
                                             ),
-                                            type: "manager_changed",
+                                            type: "order_updated",
                                             actorName:
                                               currentUserName || "Manager",
                                             actorRole: userRole,
-                                            description: nextManagerId
-                                              ? `changed manager from "${currentOrder.manager_name?.trim() || "Unassigned"}" to "${managerOptions.find((actor) => actor.id === nextManagerId)?.label || "Manager"}"`
-                                              : `changed manager from "${currentOrder.manager_name?.trim() || "Unassigned"}" to "Unassigned"`,
+                                            description: `added ${lineTypeDraft === "PRODUCT" ? "product" : "service"} "${result.line.nameSnapshot}" x${result.line.qty}`,
                                             ts: new Date().toISOString(),
                                             payload: {
-                                              field: "manager_id",
-                                              from: currentOrder.manager_id,
-                                              to: nextManagerId,
-                                              fromLabel:
-                                                currentOrder.manager_name?.trim() ||
-                                                "Unassigned",
-                                              toLabel: nextManagerId
-                                                ? managerOptions.find(
-                                                    (actor) =>
-                                                      actor.id ===
-                                                      nextManagerId,
-                                                  )?.label || "Manager"
-                                                : "Unassigned",
+                                              field: "order_lines",
+                                              to: result.line.id,
+                                              toLabel: result.line.nameSnapshot,
                                             },
                                           },
                                         );
-                                      }
 
-                                      for (const change of overviewChanges) {
-                                        appendLocalActivityEvent(
-                                          businessId,
-                                          currentOrder.id,
-                                          {
-                                            id: makeLocalActivityEventId(
-                                              "order-updated",
-                                            ),
-                                            type: change.type,
-                                            actorName:
-                                              currentUserName || "Manager",
-                                            actorRole: userRole,
-                                            description: change.description,
-                                            ts: new Date().toISOString(),
-                                            payload: change.payload,
-                                          },
+                                        setLineActionSuccess(
+                                          `${lineTypeDraft === "PRODUCT" ? "Product" : "Service"} added: ${result.line.nameSnapshot}`,
                                         );
-                                      }
-
-                                      setPreviewOrder((prev) =>
-                                        prev
-                                          ? {
-                                              ...prev,
-                                              client_name:
-                                                [nextFirstName, nextLastName]
-                                                  .filter(Boolean)
-                                                  .join(" ") ||
-                                                prev.client_name,
-                                              client_first_name: nextFirstName,
-                                              client_last_name: nextLastName,
-                                              client_full_name: [
-                                                nextFirstName,
-                                                nextLastName,
-                                              ]
-                                                .filter(Boolean)
-                                                .join(" "),
-                                              client_phone: nextPhone,
-                                              manager_id: nextManagerId,
-                                              manager_name: nextManagerId
-                                                ? managerOptions.find(
-                                                    (actor) =>
-                                                      actor.id ===
-                                                      nextManagerId,
-                                                  )?.label || prev.manager_name
-                                                : null,
-                                              amount: nextAmount,
-                                              due_date: nextDueDate,
-                                              description: nextDescription,
-                                            }
-                                          : prev,
-                                      );
-                                      setIsEditingOverview(false);
-                                      router.refresh();
-                                    } catch (error) {
-                                      window.alert(
-                                        error instanceof Error
-                                          ? error.message
-                                          : "Failed to update order.",
-                                      );
-                                    }
-                                  });
-                                }}
-                              >
-                                <span className="whitespace-nowrap leading-none text-white">
-                                  {isSavingOverview ? "Saving..." : "Save"}
-                                </span>
-                              </Button>
-                            </>
-                          ) : (
-                            <DropdownMenu modal={false}>
-                              <DropdownMenuTrigger asChild>
-                                <button
-                                  type="button"
-                                  className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#E5E7EB] bg-white text-[#6B7280] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]"
-                                  aria-label="Overview actions"
-                                >
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent
-                                align="end"
-                                className="z-[120] w-44 rounded-xl border-[#E5E7EB] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
-                              >
-                                <DropdownMenuItem
-                                  className="rounded-lg px-3 py-2 text-sm font-medium text-[#1F2937] focus:bg-[#F9FAFB] focus:text-[#1F2937]"
-                                  onSelect={(event) => {
-                                    event.preventDefault();
-                                    setIsEditingOverview(true);
-                                  }}
-                                >
-                                  Edit overview
-                                </DropdownMenuItem>
-                                {canUploadFiles ? (
-                                  <DropdownMenuItem
-                                    className="rounded-lg px-3 py-2 text-sm font-medium text-[#1F2937] focus:bg-[#F9FAFB] focus:text-[#1F2937]"
-                                    onSelect={(event) => {
-                                      event.preventDefault();
-                                      openOverviewFilePicker();
+                                        setShowAddLineCard(false);
+                                        resetAddLineDraft(lineTypeDraft);
+                                        router.refresh();
+                                      });
                                     }}
                                   >
-                                    Add file
-                                  </DropdownMenuItem>
-                                ) : null}
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          )}
-                        </div>
+                                    {isAddingLine ? "Adding..." : "Add line"}
+                                  </Button>
+                                </div>
+                              </div>
+                            ) : null}
+                          </div>
+                        ) : null}
                       </div>
-                    ) : null}
-
-                    <div className="grid gap-2.5 sm:grid-cols-2">
-                      <MetaItem
-                        label="First Name"
-                        value={
-                          isEditingOverview ? (
-                            <input
-                              value={draft.firstName}
-                              onChange={(event) => {
-                                const nextValue = event.currentTarget.value;
-                                setDraft((prev) => ({
-                                  ...prev,
-                                  firstName: nextValue,
-                                }));
-                              }}
-                              className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
-                            />
-                          ) : (
-                            currentOrder.client_first_name?.trim() ||
-                            client.firstName ||
-                            "Unknown"
-                          )
-                        }
-                      />
-                      <MetaItem
-                        label="Last Name"
-                        value={
-                          isEditingOverview ? (
-                            <input
-                              value={draft.lastName}
-                              onChange={(event) => {
-                                const nextValue = event.currentTarget.value;
-                                setDraft((prev) => ({
-                                  ...prev,
-                                  lastName: nextValue,
-                                }));
-                              }}
-                              className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
-                            />
-                          ) : (
-                            currentOrder.client_last_name?.trim() ||
-                            client.lastName ||
-                            "Not provided"
-                          )
-                        }
-                      />
-                      <MetaItem
-                        label="Phone"
-                        value={
-                          isEditingOverview ? (
-                            <input
-                              value={draft.phone}
-                              onChange={(event) => {
-                                const nextValue = event.currentTarget.value;
-                                setDraft((prev) => ({
-                                  ...prev,
-                                  phone: nextValue,
-                                }));
-                              }}
-                              className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
-                            />
-                          ) : (
-                            currentOrder.client_phone?.trim() ||
-                            "No phone number"
-                          )
-                        }
-                      />
-                      <MetaItem
-                        label="Manager"
-                        value={
-                          isEditingOverview ? (
-                            <Select
-                              value={draft.managerId || "__unassigned__"}
-                              onValueChange={(value) =>
-                                setDraft((prev) => ({
-                                  ...prev,
-                                  managerId:
-                                    value === "__unassigned__" ? "" : value,
-                                }))
-                              }
-                            >
-                              <SelectTrigger className="h-10 w-full rounded-xl border-[#E5E7EB] bg-white text-sm shadow-none focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent className="z-[120] rounded-2xl border-[#E5E7EB] bg-white shadow-[0_16px_40px_rgba(15,23,42,0.18)]">
-                                <SelectItem value="__unassigned__">
-                                  Unassigned
-                                </SelectItem>
-                                {managerOptions.map((actor) => (
-                                  <SelectItem key={actor.id} value={actor.id}>
-                                    {actor.label}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          ) : (
-                            <span className="inline-flex items-center gap-2">
-                              <ActorAvatar
-                                label={
-                                  currentOrder.manager_name?.trim() ||
-                                  "Unassigned"
-                                }
-                              />
-                              <span>
-                                {currentOrder.manager_name?.trim() ||
-                                  "Unassigned"}
-                              </span>
-                            </span>
-                          )
-                        }
-                      />
-                      <MetaItem
-                        label="Created"
-                        value={formatDateTime(currentOrder.created_at)}
-                      />
-                      <MetaItem
-                        label="Due date"
-                        value={
-                          isEditingOverview ? (
-                            <input
-                              type="date"
-                              value={draft.dueDate}
-                              onChange={(event) => {
-                                const nextValue = event.currentTarget.value;
-                                setDraft((prev) => ({
-                                  ...prev,
-                                  dueDate: nextValue,
-                                }));
-                              }}
-                              className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
-                            />
-                          ) : (
-                            formatDate(currentOrder.due_date)
-                          )
-                        }
-                      />
-                      <MetaItem
-                        label="Amount"
-                        value={
-                          isEditingOverview ? (
-                            <input
-                              inputMode="decimal"
-                              value={draft.amount}
-                              onChange={(event) => {
-                                const nextValue = event.currentTarget.value;
-                                setDraft((prev) => ({
-                                  ...prev,
-                                  amount: nextValue,
-                                }));
-                              }}
-                              className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
-                            />
-                          ) : (
-                            `$${fmtAmount(currentOrder.amount)}`
-                          )
-                        }
-                      />
-                    </div>
-
-                    <div className="rounded-[20px] border border-[#F3F4F6] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
-                      <div className="text-sm font-semibold text-[#1F2937]">
-                        Description
-                      </div>
-                      {isEditingOverview ? (
-                        <textarea
-                          value={draft.description}
-                          onChange={(event) => {
-                            const nextValue = event.currentTarget.value;
-                            setDraft((prev) => ({
-                              ...prev,
-                              description: nextValue,
-                            }));
-                          }}
-                          className="mt-2 min-h-24 w-full rounded-[18px] border border-[#E5E7EB] bg-white px-4 py-3 text-sm leading-6 text-[#1F2937] outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
-                        />
-                      ) : (
-                        <p className="mt-2 whitespace-pre-wrap text-sm leading-5 text-[#4B5563]">
-                          {currentOrder.description?.trim() ||
-                            "No description provided yet."}
-                        </p>
-                      )}
-                    </div>
-                  </div>
                     </TabsContent>
 
                     <TabsContent value="followups" className="mt-0">
@@ -2265,12 +2760,13 @@ export function OrderPreview({
                         userRole={userRole}
                         actors={actors}
                         ownerName={
-                          actors.find((actor) => actor.kind === "OWNER")?.label ??
-                          null
+                          actors.find((actor) => actor.kind === "OWNER")
+                            ?.label ?? null
                         }
                         managerName={
                           currentOrder.manager_name?.trim() ||
-                          actors.find((actor) => actor.kind === "MANAGER")?.label ||
+                          actors.find((actor) => actor.kind === "MANAGER")
+                            ?.label ||
                           null
                         }
                         compact
@@ -2347,11 +2843,14 @@ export function OrderPreview({
                           {displayName || "Unknown client"}
                         </div>
                         <div className="text-[#6B7280]">
-                          {currentOrder.client_phone?.trim() || "No phone number"}
+                          {currentOrder.client_phone?.trim() ||
+                            "No phone number"}
                         </div>
                         <div className="inline-flex items-center gap-1.5 text-xs text-[#6B7280]">
                           <ActorAvatar
-                            label={currentOrder.manager_name?.trim() || "Unassigned"}
+                            label={
+                              currentOrder.manager_name?.trim() || "Unassigned"
+                            }
                           />
                           {currentOrder.manager_name?.trim() || "Unassigned"}
                         </div>
@@ -2381,7 +2880,9 @@ export function OrderPreview({
                               onClick={openOverviewFilePicker}
                               disabled={isUploadingOverviewFiles}
                             >
-                              {isUploadingOverviewFiles ? "Uploading..." : "Add file"}
+                              {isUploadingOverviewFiles
+                                ? "Uploading..."
+                                : "Add file"}
                             </Button>
                           ) : null}
                         </div>

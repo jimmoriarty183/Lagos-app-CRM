@@ -140,6 +140,16 @@ export default function ProductCatalogManager({
     });
   }
 
+  const filledCustomTaxPct =
+    taxRateMode === "custom" &&
+    customTaxRatePercent.trim() &&
+    Number.isFinite(Number(customTaxRatePercent.trim()))
+      ? customTaxRatePercent.trim()
+      : null;
+  const taxSelectValue = filledCustomTaxPct
+    ? `custom:${filledCustomTaxPct}`
+    : taxRateMode;
+
   return (
     <div className="space-y-5">
       <section className="rounded-[20px] border border-[#E5E7EB] bg-[#FCFCFD] p-4 sm:p-5">
@@ -285,7 +295,7 @@ export default function ProductCatalogManager({
               step="0.0001"
               min="0"
               disabled={!form.isStockManaged}
-              className="h-11 rounded-xl border-[#E5E7EB] px-3.5 text-sm"
+              className="h-11 rounded-xl border-[#E5E7EB] px-3.5 text-sm [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
             />
           </div>
 
@@ -306,7 +316,7 @@ export default function ProductCatalogManager({
               type="number"
               min="0"
               step="0.01"
-              className="h-11 rounded-xl border-[#E5E7EB] px-3.5 text-sm"
+              className="h-11 rounded-xl border-[#E5E7EB] px-3.5 text-sm [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
             />
           </div>
 
@@ -319,26 +329,23 @@ export default function ProductCatalogManager({
             </Label>
             <div className="grid gap-3 sm:grid-cols-[minmax(0,220px)_minmax(0,1fr)]">
               <Select
-                value={taxRateMode}
-                onValueChange={(value: "0" | "7" | "20" | "custom") => {
-                  setTaxRateMode(value);
-                  if (value === "custom") {
+                value={taxSelectValue}
+                onValueChange={(value) => {
+                  if (value.startsWith("custom:")) return;
+                  const v = value as "0" | "7" | "20" | "custom";
+                  setTaxRateMode(v);
+                  if (v === "custom") {
                     setCustomTaxRatePercent(
                       (current) =>
                         current || decimalToPercentString(form.defaultTaxRate),
                     );
-                    setForm((s) => ({
-                      ...s,
-                      defaultTaxRate: s.defaultTaxRate,
-                    }));
                     return;
                   }
-
                   setCustomTaxRatePercent("");
                   setForm((s) => ({
                     ...s,
                     defaultTaxRate:
-                      value === "0" ? "0" : value === "7" ? "0.07" : "0.20",
+                      v === "0" ? "0" : v === "7" ? "0.07" : "0.20",
                   }));
                 }}
               >
@@ -349,6 +356,11 @@ export default function ProductCatalogManager({
                   <SelectValue placeholder="Select tax rate" />
                 </SelectTrigger>
                 <SelectContent>
+                  {filledCustomTaxPct ? (
+                    <SelectItem value={`custom:${filledCustomTaxPct}`}>
+                      {filledCustomTaxPct}% (custom)
+                    </SelectItem>
+                  ) : null}
                   {TAX_RATE_OPTIONS.map((option) => (
                     <SelectItem key={option.value} value={option.value}>
                       {option.label}

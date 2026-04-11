@@ -156,6 +156,7 @@ async function runOrdersMutation<T>(
       "status_reason",
       "client_id",
       "contact_id",
+      "due_at",
     ]
       .find((column) => !stripped.has(column) && isMissingColumnError(result.error, column));
 
@@ -401,6 +402,7 @@ export type CreateOrderClientPayloadInput = {
   managerId?: string | null;
   amount: number;
   dueDate?: string | null;
+  dueAt?: string | null;
   description?: string | null;
   existingClientId?: string | null;
   existingContactId?: string | null;
@@ -431,6 +433,16 @@ export type CreateOrderClientPayloadInput = {
     jobTitle?: string | null;
     isPrimary?: boolean;
   } | null;
+  orderLines?: Array<{
+    lineType: "PRODUCT" | "SERVICE";
+    catalogItemId: string;
+    qty: number;
+    unitPrice: number;
+    newProduct?: {
+      sku: string;
+      name: string;
+    } | null;
+  }> | null;
 };
 
 export type CreateOrderFromClientPayloadResult =
@@ -445,11 +457,87 @@ export type CreateOrderFromClientPayloadResult =
       ok: false;
       error: string;
     };
-
 function getActionErrorMessage(error: unknown) {
   if (error instanceof Error) return error.message || "Failed to create order";
   if (typeof error === "string") return error;
   return "Failed to create order";
+}
+
+export type CatalogOrderLineOption = {
+  id: string;
+  code: string;
+  name: string;
+  lineType: "PRODUCT" | "SERVICE";
+  unitPrice: number;
+  taxRate: number;
+  currencyCode: string;
+  uomCode?: string | null;
+};
+
+export async function getCatalogOrderLineOptions(input: { businessId: string }) {
+  try {
+    const { admin } = await requireBusinessManagerAccess(input.businessId);
+
+    const [{ data: products, error: productsError }, { data: services, error: servicesError }] =
+      await Promise.all([
+        admin
+          .from("catalog_products")
+          .select("id, sku, name, default_unit_price, default_tax_rate, currency_code, uom_code")
+          .eq("status", "ACTIVE")
+          .eq("is_deleted", false)
+          .order("name", { ascending: true })
+          .limit(500),
+        admin
+          .from("catalog_services")
+          .select("id, service_code, name, default_unit_price, default_tax_rate, currency_code")
+          .eq("status", "ACTIVE")
+          .eq("is_deleted", false)
+          .order("name", { ascending: true })
+          .limit(500),
+      ]);
+
+    if (productsError) throw new Error(productsError.message);
+    if (servicesError) throw new Error(servicesError.message);
+
+    const productOptions: CatalogOrderLineOption[] = (products ?? []).map((row) => ({
+      id: String((row as { id: string }).id),
+      code: cleanText((row as { sku?: string | null }).sku),
+      name: cleanText((row as { name?: string | null }).name) || "Product",
+      lineType: "PRODUCT",
+      unitPrice: Number((row as { default_unit_price?: number | string }).default_unit_price ?? 0),
+      taxRate: Number((row as { default_tax_rate?: number | string }).default_tax_rate ?? 0),
+      currencyCode: cleanText((row as { currency_code?: string | null }).currency_code).toUpperCase(),
+      uomCode: cleanText((row as { uom_code?: string | null }).uom_code) || null,
+    }));
+
+    const serviceOptions: CatalogOrderLineOption[] = (services ?? []).map((row) => ({
+      id: String((row as { id: string }).id),
+      code: cleanText((row as { service_code?: string | null }).service_code),
+      name: cleanText((row as { name?: string | null }).name) || "Service",
+      lineType: "SERVICE",
+      unitPrice: Number((row as { default_unit_price?: number | string }).default_unit_price ?? 0),
+      taxRate: Number((row as { default_tax_rate?: number | string }).default_tax_rate ?? 0),
+      currencyCode: cleanText((row as { currency_code?: string | null }).currency_code).toUpperCase(),
+      uomCode: null,
+    }));
+
+    return {
+      ok: true as const,
+      products: productOptions.filter(
+        (item) => Number.isFinite(item.unitPrice) && Number.isFinite(item.taxRate),
+      ),
+      services: serviceOptions.filter(
+        (item) => Number.isFinite(item.unitPrice) && Number.isFinite(item.taxRate),
+      ),
+    };
+  } catch (error) {
+    return {
+      ok: false as const,
+      error: getActionErrorMessage(error),
+      products: [] as CatalogOrderLineOption[],
+      services: [] as CatalogOrderLineOption[],
+    };
+  }
 }
 
 async function resolveIndividualClientForCreate(input: {
@@ -721,7 +809,18 @@ export async function createOrderFromClientPayload(
 
   const managerId = cleanText(input.managerId);
   if (!managerId) throw new Error("Manager is required");
+  const inputOrderLines = Array.isArray(input.orderLines) ? input.orderLines : [];
+  if (inputOrderLines.length > 0) {
+    const { error: orderLinesSchemaError } = await admin
+      .from("order_lines")
+      .select("id")
+      .limit(1);
+    if (orderLinesSchemaError) {
+      throw new Error("Order lines are not available in the current schema. Apply CRM/ERP migrations first.");
+    }
+  }
   const dueDate = cleanText(input.dueDate) || null;
+  const dueAt = input.dueAt ? normalizeDateTime(input.dueAt) : null;
   const description = cleanText(input.description) || null;
   const existingClientId = cleanText(input.existingClientId) || null;
   const existingContactId = cleanText(input.existingContactId) || null;
@@ -857,6 +956,7 @@ export async function createOrderFromClientPayload(
       client_phone: legacyPhone,
       amount,
       due_date: dueDate,
+      due_at: dueAt,
       description,
       status: "NEW",
       paid: false,
@@ -870,6 +970,252 @@ export async function createOrderFromClientPayload(
   if (orderError) throw new Error(orderError.message);
   if (!insertedOrder || !(insertedOrder as { id?: string }).id) {
     throw new Error("Failed to create order");
+  }
+  const createdOrderId = String((insertedOrder as { id: string }).id);
+
+  if (inputOrderLines.length > 0) {
+    const normalizedInputLines = inputOrderLines.map((line, index) => {
+      const qty = Number(line.qty);
+      const unitPrice = Number(line.unitPrice);
+      if (!Number.isFinite(qty) || qty <= 0) {
+        throw new Error(`Line ${index + 1}: quantity must be greater than 0`);
+      }
+      if (!Number.isFinite(unitPrice) || unitPrice < 0) {
+        throw new Error(`Line ${index + 1}: unit price must be 0 or greater`);
+      }
+      const lineType = line.lineType === "SERVICE" ? "SERVICE" : "PRODUCT";
+      const catalogItemId = cleanText(line.catalogItemId);
+      const newProductSku = cleanText(line.newProduct?.sku).toUpperCase();
+      const newProductName = cleanText(line.newProduct?.name);
+      const hasQuickNewProduct = lineType === "PRODUCT" && (newProductSku || newProductName);
+
+      if (hasQuickNewProduct) {
+        if (!newProductSku || !newProductName) {
+          throw new Error(`Line ${index + 1}: new product requires code and name`);
+        }
+        return {
+          lineType,
+          catalogItemId: "",
+          qty,
+          unitPrice,
+          newProduct: {
+            sku: newProductSku,
+            name: newProductName,
+          },
+        };
+      }
+
+      if (!catalogItemId) {
+        throw new Error(`Line ${index + 1}: item is required`);
+      }
+      return {
+        lineType,
+        catalogItemId,
+        qty,
+        unitPrice,
+        newProduct: null,
+      };
+    });
+
+    const productIds = normalizedInputLines
+      .filter((line) => line.lineType === "PRODUCT" && !line.newProduct)
+      .map((line) => line.catalogItemId);
+    const serviceIds = normalizedInputLines
+      .filter((line) => line.lineType === "SERVICE")
+      .map((line) => line.catalogItemId);
+
+    const quickProductLines = normalizedInputLines.filter(
+      (line): line is (typeof normalizedInputLines)[number] & {
+        lineType: "PRODUCT";
+        newProduct: { sku: string; name: string };
+      } => line.lineType === "PRODUCT" && Boolean(line.newProduct),
+    );
+
+    const quickProductBySku = new Map<
+      string,
+      {
+        id: string;
+        name: string;
+        description: string | null;
+        uomCode: string | null;
+        defaultTaxRate: number;
+      }
+    >();
+
+    for (const line of quickProductLines) {
+      const sku = line.newProduct.sku;
+      if (quickProductBySku.has(sku)) continue;
+
+      const { data: existingQuickProduct, error: existingQuickProductError } = await admin
+        .from("catalog_products")
+        .select("id, name, description, uom_code, default_tax_rate")
+        .eq("sku", sku)
+        .eq("is_deleted", false)
+        .limit(1)
+        .maybeSingle();
+      if (existingQuickProductError) throw new Error(existingQuickProductError.message);
+
+      if (existingQuickProduct?.id) {
+        quickProductBySku.set(sku, {
+          id: String(existingQuickProduct.id),
+          name: cleanText(existingQuickProduct.name) || line.newProduct.name,
+          description: cleanText(existingQuickProduct.description) || null,
+          uomCode: cleanText(existingQuickProduct.uom_code) || null,
+          defaultTaxRate: Number(existingQuickProduct.default_tax_rate ?? 0),
+        });
+        continue;
+      }
+
+      const { data: createdQuickProduct, error: createQuickProductError } = await admin
+        .from("catalog_products")
+        .insert({
+          sku,
+          name: line.newProduct.name,
+          description: null,
+          uom_code: "EA",
+          is_stock_managed: false,
+          default_unit_price: line.unitPrice,
+          default_tax_rate: 0,
+          currency_code: "GBP",
+          status: "ACTIVE",
+          created_by: userId,
+          updated_by: userId,
+        })
+        .select("id, name, description, uom_code, default_tax_rate")
+        .single();
+      if (createQuickProductError) throw new Error(createQuickProductError.message);
+
+      quickProductBySku.set(sku, {
+        id: String(createdQuickProduct.id),
+        name: cleanText(createdQuickProduct.name) || line.newProduct.name,
+        description: cleanText(createdQuickProduct.description) || null,
+        uomCode: cleanText(createdQuickProduct.uom_code) || "EA",
+        defaultTaxRate: Number(createdQuickProduct.default_tax_rate ?? 0),
+      });
+    }
+
+    const [productsRes, servicesRes] = await Promise.all([
+      productIds.length > 0
+        ? admin
+            .from("catalog_products")
+            .select("id, name, description, uom_code, default_tax_rate")
+            .in("id", productIds)
+            .eq("is_deleted", false)
+        : Promise.resolve({ data: [], error: null }),
+      serviceIds.length > 0
+        ? admin
+            .from("catalog_services")
+            .select("id, name, description, default_tax_rate")
+            .in("id", serviceIds)
+            .eq("is_deleted", false)
+        : Promise.resolve({ data: [], error: null }),
+    ]);
+
+    if (productsRes.error) throw new Error(productsRes.error.message);
+    if (servicesRes.error) throw new Error(servicesRes.error.message);
+
+    const productById = new Map(
+      (productsRes.data ?? []).map((row) => [
+        String((row as { id: string }).id),
+        row as {
+          id: string;
+          name?: string | null;
+          description?: string | null;
+          uom_code?: string | null;
+          default_tax_rate?: number | null;
+        },
+      ]),
+    );
+    const serviceById = new Map(
+      (servicesRes.data ?? []).map((row) => [
+        String((row as { id: string }).id),
+        row as {
+          id: string;
+          name?: string | null;
+          description?: string | null;
+          default_tax_rate?: number | null;
+        },
+      ]),
+    );
+
+    const linesPayload = normalizedInputLines.map((line, index) => {
+      const resolveTaxRate = (raw: number | null | undefined) => {
+        const normalized = Number(raw ?? 0);
+        if (!Number.isFinite(normalized) || normalized < 0 || normalized > 1) {
+          return 0;
+        }
+        return normalized;
+      };
+
+      const lineNetAmount = Number((line.qty * line.unitPrice).toFixed(4));
+
+      if (line.lineType === "PRODUCT") {
+        const item = line.newProduct
+          ? quickProductBySku.get(line.newProduct.sku)
+          : productById.get(line.catalogItemId);
+        if (!item) throw new Error(`Line ${index + 1}: selected product not found`);
+        const taxRate = resolveTaxRate(
+          "defaultTaxRate" in item ? item.defaultTaxRate : item.default_tax_rate,
+        );
+        const taxAmount = Number((lineNetAmount * taxRate).toFixed(4));
+        const lineGrossAmount = Number((lineNetAmount + taxAmount).toFixed(4));
+        return {
+          order_id: createdOrderId,
+          line_no: index + 1,
+          line_type: "PRODUCT",
+          source_type: "CATALOG_PRODUCT",
+          catalog_product_id: line.newProduct
+            ? item.id
+            : line.catalogItemId,
+          name_snapshot: cleanText(item.name) || "Product",
+          description_snapshot: cleanText(item.description) || null,
+          uom_code:
+            "uomCode" in item
+              ? cleanText(item.uomCode) || null
+              : cleanText(item.uom_code) || null,
+          qty: line.qty,
+          unit_price: line.unitPrice,
+          discount_percent: 0,
+          discount_amount: 0,
+          tax_rate: taxRate,
+          tax_amount: taxAmount,
+          line_net_amount: lineNetAmount,
+          line_gross_amount: lineGrossAmount,
+          reservation_required_qty: line.qty,
+          created_by: userId,
+          updated_by: userId,
+        };
+      }
+
+      const item = serviceById.get(line.catalogItemId);
+      if (!item) throw new Error(`Line ${index + 1}: selected service not found`);
+      const taxRate = resolveTaxRate(item.default_tax_rate);
+      const taxAmount = Number((lineNetAmount * taxRate).toFixed(4));
+      const lineGrossAmount = Number((lineNetAmount + taxAmount).toFixed(4));
+      return {
+        order_id: createdOrderId,
+        line_no: index + 1,
+        line_type: "SERVICE",
+        source_type: "CATALOG_SERVICE",
+        catalog_service_id: line.catalogItemId,
+        name_snapshot: cleanText(item.name) || "Service",
+        description_snapshot: cleanText(item.description) || null,
+        qty: line.qty,
+        unit_price: line.unitPrice,
+        discount_percent: 0,
+        discount_amount: 0,
+        tax_rate: taxRate,
+        tax_amount: taxAmount,
+        line_net_amount: lineNetAmount,
+        line_gross_amount: lineGrossAmount,
+        reservation_required_qty: 0,
+        created_by: userId,
+        updated_by: userId,
+      };
+    });
+
+    const { error: insertLinesError } = await admin.from("order_lines").insert(linesPayload);
+    if (insertLinesError) throw new Error(insertLinesError.message);
   }
 
   if (createdNewClient) {
@@ -888,7 +1234,7 @@ export async function createOrderFromClientPayload(
 
     return {
       ok: true,
-      orderId: String((insertedOrder as { id: string }).id),
+      orderId: createdOrderId,
       clientId,
       contactId,
       createdNewClient,
@@ -1057,7 +1403,7 @@ export async function createOrder(input: {
   dueDate?: string;
   description?: string;
   status?: string;
-  managerId?: string | null;
+    orderId: createdOrderId,
 }) {
   const { admin, userId } = await requireBusinessManagerAccess(input.businessId);
 
@@ -1285,6 +1631,288 @@ export async function updateOrder(input: {
   });
 
   revalidatePath(`/b/${input.businessSlug}`);
+}
+
+export async function addOrderLineToExistingOrder(input: {
+  orderId: string;
+  businessSlug: string;
+  lineType: "PRODUCT" | "SERVICE";
+  catalogItemId: string;
+  qty: number;
+  unitPrice: number;
+  newProduct?: {
+    sku: string;
+    name: string;
+  } | null;
+}): Promise<
+  | {
+      ok: true;
+      line: {
+        id: string;
+        lineType: "PRODUCT" | "SERVICE";
+        nameSnapshot: string;
+        qty: number;
+        unitPrice: number;
+      };
+    }
+  | { ok: false; error: string }
+> {
+  try {
+    const { admin, userId } = await requireOrderManagerAccess(input.orderId);
+    const lineType = input.lineType === "SERVICE" ? "SERVICE" : "PRODUCT";
+    const catalogItemId = cleanText(input.catalogItemId);
+    const qty = Number(input.qty);
+    const unitPrice = Number(input.unitPrice);
+    const newProductSku = cleanText(input.newProduct?.sku).toUpperCase();
+    const newProductName = cleanText(input.newProduct?.name);
+    const hasQuickNewProduct =
+      lineType === "PRODUCT" && Boolean(newProductSku || newProductName);
+
+    if (!catalogItemId && !hasQuickNewProduct) {
+      throw new Error("Catalog item is required");
+    }
+    if (hasQuickNewProduct && (!newProductSku || !newProductName)) {
+      throw new Error("New product requires code and name");
+    }
+    if (!Number.isFinite(qty) || qty <= 0) {
+      throw new Error("Quantity must be greater than 0");
+    }
+    if (!Number.isFinite(unitPrice) || unitPrice < 0) {
+      throw new Error("Unit price must be 0 or greater");
+    }
+
+    const { data: orderRow, error: orderError } = await admin
+      .from("orders")
+      .select("id, business_id, status")
+      .eq("id", input.orderId)
+      .maybeSingle();
+    if (orderError) throw new Error(orderError.message);
+    if (!orderRow?.id || !orderRow.business_id) throw new Error("Order not found");
+
+    const orderStatus = cleanText(orderRow.status).toUpperCase();
+    if (orderStatus === "DONE" || orderStatus === "CANCELED") {
+      throw new Error("Cannot add items to a closed order");
+    }
+
+    const { data: lastLine, error: lastLineError } = await admin
+      .from("order_lines")
+      .select("line_no")
+      .eq("order_id", input.orderId)
+      .order("line_no", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (lastLineError) {
+      const message = String(lastLineError.message ?? "").toLowerCase();
+      if (message.includes("order_lines") && message.includes("schema")) {
+        throw new Error("Order lines are not available in the current schema. Apply CRM/ERP migrations first.");
+      }
+      throw new Error(lastLineError.message);
+    }
+
+    const lineNo = Number((lastLine as { line_no?: number | null } | null)?.line_no ?? 0) + 1;
+    const lineNetAmount = Number((qty * unitPrice).toFixed(4));
+
+    const normalizeTaxRate = (raw: number | null | undefined) => {
+      const value = Number(raw ?? 0);
+      if (!Number.isFinite(value) || value < 0 || value > 1) return 0;
+      return value;
+    };
+
+    let payload: Record<string, unknown>;
+    let displayName = "";
+    let resolvedCatalogItemId = catalogItemId;
+
+    if (lineType === "PRODUCT") {
+      let product:
+        | {
+            id: string;
+            name?: string | null;
+            description?: string | null;
+            uom_code?: string | null;
+            default_tax_rate?: number | null;
+          }
+        | null = null;
+
+      if (hasQuickNewProduct) {
+        const { data: existingProduct, error: existingProductError } =
+          await admin
+            .from("catalog_products")
+            .select("id, name, description, uom_code, default_tax_rate")
+            .eq("sku", newProductSku)
+            .eq("is_deleted", false)
+            .limit(1)
+            .maybeSingle();
+        if (existingProductError) throw new Error(existingProductError.message);
+
+        if (existingProduct?.id) {
+          product = existingProduct as {
+            id: string;
+            name?: string | null;
+            description?: string | null;
+            uom_code?: string | null;
+            default_tax_rate?: number | null;
+          };
+        } else {
+          const { data: createdProduct, error: createProductError } =
+            await admin
+              .from("catalog_products")
+              .insert({
+                sku: newProductSku,
+                name: newProductName,
+                description: null,
+                uom_code: "EA",
+                is_stock_managed: false,
+                default_unit_price: unitPrice,
+                default_tax_rate: 0,
+                currency_code: "GBP",
+                status: "ACTIVE",
+                created_by: userId,
+                updated_by: userId,
+              })
+              .select("id, name, description, uom_code, default_tax_rate")
+              .single();
+          if (createProductError) throw new Error(createProductError.message);
+
+          product = createdProduct as {
+            id: string;
+            name?: string | null;
+            description?: string | null;
+            uom_code?: string | null;
+            default_tax_rate?: number | null;
+          };
+        }
+      } else {
+        const { data: selectedProduct, error: productError } = await admin
+          .from("catalog_products")
+          .select("id, name, description, uom_code, default_tax_rate")
+          .eq("id", catalogItemId)
+          .eq("is_deleted", false)
+          .maybeSingle();
+        if (productError) throw new Error(productError.message);
+        if (!selectedProduct?.id) throw new Error("Selected product not found");
+        product = selectedProduct as {
+          id: string;
+          name?: string | null;
+          description?: string | null;
+          uom_code?: string | null;
+          default_tax_rate?: number | null;
+        };
+      }
+
+      if (!product?.id) throw new Error("Selected product not found");
+      resolvedCatalogItemId = String(product.id);
+
+      const taxRate = normalizeTaxRate(
+        (product as { default_tax_rate?: number | null }).default_tax_rate,
+      );
+      const taxAmount = Number((lineNetAmount * taxRate).toFixed(4));
+      const lineGrossAmount = Number((lineNetAmount + taxAmount).toFixed(4));
+      displayName = cleanText((product as { name?: string | null }).name) || "Product";
+
+      payload = {
+        order_id: input.orderId,
+        line_no: lineNo,
+        line_type: "PRODUCT",
+        source_type: "CATALOG_PRODUCT",
+        catalog_product_id: resolvedCatalogItemId,
+        name_snapshot: displayName,
+        description_snapshot: cleanText((product as { description?: string | null }).description) || null,
+        uom_code: cleanText((product as { uom_code?: string | null }).uom_code) || null,
+        qty,
+        unit_price: unitPrice,
+        discount_percent: 0,
+        discount_amount: 0,
+        tax_rate: taxRate,
+        tax_amount: taxAmount,
+        line_net_amount: lineNetAmount,
+        line_gross_amount: lineGrossAmount,
+        reservation_required_qty: qty,
+        created_by: userId,
+        updated_by: userId,
+      };
+    } else {
+      const { data: service, error: serviceError } = await admin
+        .from("catalog_services")
+        .select("id, name, description, default_tax_rate")
+        .eq("id", catalogItemId)
+        .eq("is_deleted", false)
+        .maybeSingle();
+      if (serviceError) throw new Error(serviceError.message);
+      if (!service?.id) throw new Error("Selected service not found");
+
+      const taxRate = normalizeTaxRate(
+        (service as { default_tax_rate?: number | null }).default_tax_rate,
+      );
+      const taxAmount = Number((lineNetAmount * taxRate).toFixed(4));
+      const lineGrossAmount = Number((lineNetAmount + taxAmount).toFixed(4));
+      displayName = cleanText((service as { name?: string | null }).name) || "Service";
+
+      payload = {
+        order_id: input.orderId,
+        line_no: lineNo,
+        line_type: "SERVICE",
+        source_type: "CATALOG_SERVICE",
+        catalog_service_id: catalogItemId,
+        name_snapshot: displayName,
+        description_snapshot: cleanText((service as { description?: string | null }).description) || null,
+        qty,
+        unit_price: unitPrice,
+        discount_percent: 0,
+        discount_amount: 0,
+        tax_rate: taxRate,
+        tax_amount: taxAmount,
+        line_net_amount: lineNetAmount,
+        line_gross_amount: lineGrossAmount,
+        reservation_required_qty: 0,
+        created_by: userId,
+        updated_by: userId,
+      };
+    }
+
+    const { data: insertedLine, error: insertError } = await admin
+      .from("order_lines")
+      .insert(payload)
+      .select("id, line_type, name_snapshot, qty, unit_price")
+      .single();
+    if (insertError) throw new Error(insertError.message);
+
+    await insertActivityEvent({
+      businessId: String(orderRow.business_id),
+      entityType: "order",
+      entityId: input.orderId,
+      orderId: input.orderId,
+      actorId: userId,
+      eventType: "order_line_added",
+      payload: {
+        lineType,
+        catalogItemId: resolvedCatalogItemId,
+        qty,
+        unitPrice,
+        name: displayName,
+      },
+    });
+
+    revalidatePath(`/b/${input.businessSlug}`);
+
+    return {
+      ok: true,
+      line: {
+        id: String((insertedLine as { id?: string | null })?.id ?? ""),
+        lineType,
+        nameSnapshot:
+          cleanText(
+            (insertedLine as { name_snapshot?: string | null })?.name_snapshot,
+          ) || displayName,
+        qty: Number((insertedLine as { qty?: number | null })?.qty ?? qty),
+        unitPrice: Number(
+          (insertedLine as { unit_price?: number | null })?.unit_price ??
+            unitPrice,
+        ),
+      },
+    };
+  } catch (error) {
+    return { ok: false, error: getActionErrorMessage(error) };
+  }
 }
 
 export async function setOrderManager(input: {

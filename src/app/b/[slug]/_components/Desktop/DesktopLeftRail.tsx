@@ -115,6 +115,7 @@ function RailLink({
   active = false,
   badgeCount = 0,
   onClick,
+  className,
 }: {
   icon: ReactNode;
   label: string;
@@ -125,6 +126,7 @@ function RailLink({
   active?: boolean;
   badgeCount?: number;
   onClick?: () => void;
+  className?: string;
 }) {
   const hoverable = !disabled;
   const cls = [
@@ -137,6 +139,7 @@ function RailLink({
       : disabled
         ? "cursor-not-allowed border-[#E5E7EB] bg-[#F9FAFB] text-[#9CA3AF] opacity-90"
         : "cursor-pointer border-[#E5E7EB] bg-white text-[#6B7280] hover:-translate-y-[1px] hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937] hover:shadow-[0_10px_24px_rgba(15,23,42,0.08)]",
+    className ?? "",
   ].join(" ");
 
   const body = (
@@ -166,7 +169,16 @@ function RailLink({
       {expanded ? (
         <span className="min-w-0 flex-1 pt-0.5 text-left">
           <span className="flex items-center gap-2">
-            <span className="block text-sm font-semibold leading-5">
+            <span
+              className={[
+                "block text-sm font-semibold leading-5 transition-colors",
+                active
+                  ? "text-[#334155]"
+                  : disabled
+                    ? "text-[#9CA3AF]"
+                    : "text-[#374151] group-hover:text-[var(--brand-700)]",
+              ].join(" ")}
+            >
               {label}
             </span>
             {badgeCount > 0 ? (
@@ -205,13 +217,13 @@ function RailLink({
           <span className="sr-only">{label}</span>
           <span
             className={[
-              "pointer-events-none absolute left-[calc(100%+10px)] top-1/2 z-20 hidden -translate-y-1/2 whitespace-nowrap rounded-xl border bg-white px-2.5 py-1.5 text-xs font-medium shadow-sm",
+              "pointer-events-none absolute left-[calc(100%+10px)] top-1/2 z-20 hidden -translate-y-1/2 whitespace-nowrap rounded-xl border bg-white px-2.5 py-1.5 text-xs font-medium shadow-sm transition-colors",
               hoverable ? "group-hover:block group-focus-visible:block" : "",
               active
                 ? "border-[var(--brand-200)] text-[var(--brand-600)]"
                 : disabled
                   ? "border-[#E5E7EB] text-[#9CA3AF]"
-                  : "border-[#E5E7EB] text-[#374151]",
+                  : "border-[#E5E7EB] text-[#374151] group-hover:border-[var(--brand-200)] group-hover:bg-[var(--brand-50)] group-hover:text-[var(--brand-700)]",
             ].join(" ")}
           >
             {label}
@@ -286,10 +298,10 @@ export default function DesktopLeftRail({
     isKanban && !effectiveKanbanPeekOpen && !expanded && !filtersOpen
       ? "w-0"
       : isKanban
-        ? "w-[60px]"
-        : "w-[72px]";
+        ? "w-[96px]"
+        : "w-[104px]";
   const expandedRailWidth = isKanban ? "w-[208px]" : "w-[232px]";
-  const collapsedPanelWidth = isKanban ? "w-[60px]" : "w-[68px]";
+  const collapsedPanelWidth = isKanban ? "w-[88px]" : "w-[96px]";
   const expandedPanelWidth = isKanban ? "w-[192px]" : "w-[216px]";
   const topOffset =
     layoutMode === "kanban"
@@ -377,6 +389,10 @@ export default function DesktopLeftRail({
     (settingsHref.startsWith("/b/") && settingsHref.includes("/settings")
       ? settingsHref.replace(/\/settings(?:\/.*)?$/, "/catalog/products")
       : undefined);
+  const railItemsClass = expanded
+    ? "flex flex-col items-stretch gap-1.5"
+    : "grid grid-cols-2 items-stretch gap-1.5";
+  const collapsedFullRowClass = expanded ? undefined : "col-span-2";
 
   return (
     <div
@@ -417,13 +433,13 @@ export default function DesktopLeftRail({
                 expanded ? expandedPanelWidth : collapsedPanelWidth,
               ].join(" ")}
             >
-              <div className="flex flex-col items-stretch gap-1.5">
+              <div className={railItemsClass}>
 
                 {isKanban && !expanded ? (
                   <button
                     type="button"
                     onClick={closeCollapsedRail}
-                    className="inline-flex h-12 w-full items-center justify-center rounded-2xl border border-[#E5E7EB] bg-white text-[#6B7280] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]"
+                    className="col-span-2 inline-flex h-12 w-full items-center justify-center rounded-2xl border border-[#E5E7EB] bg-white text-[#6B7280] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]"
                     aria-label="Hide rail menu"
                     title="Hide menu"
                   >
@@ -435,7 +451,7 @@ export default function DesktopLeftRail({
                   <button
                     type="button"
                     onClick={toggleExpanded}
-                    className="inline-flex h-12 w-full items-center justify-center rounded-2xl border border-[#E5E7EB] bg-white text-[#6B7280] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]"
+                    className="col-span-2 inline-flex h-12 w-full items-center justify-center rounded-2xl border border-[#E5E7EB] bg-white text-[#6B7280] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]"
                     aria-label="Open full menu"
                     title="Open full menu"
                   >
@@ -454,6 +470,7 @@ export default function DesktopLeftRail({
                     }
                     label={expanded ? "Collapse menu" : "Expand menu"}
                     expanded={expanded}
+                    className={collapsedFullRowClass}
                     onClick={toggleExpanded}
                   />
                 ) : null}

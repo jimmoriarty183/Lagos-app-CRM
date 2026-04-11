@@ -81,9 +81,10 @@ export default function ServiceCatalogManager({
     currencyCode: "GBP",
     defaultSlaMinutes: "",
     defaultDurationMinutes: "",
-    requiresAssignee: true,
   });
-  const [taxRateMode, setTaxRateMode] = useState<"" | "0" | "7" | "20" | "custom">("");
+  const [taxRateMode, setTaxRateMode] = useState<
+    "" | "0" | "7" | "20" | "custom"
+  >("");
   const [customTaxRatePercent, setCustomTaxRatePercent] = useState("");
   const [slaModeIsCustom, setSlaModeIsCustom] = useState(false);
   const [durationModeIsCustom, setDurationModeIsCustom] = useState(false);
@@ -105,7 +106,7 @@ export default function ServiceCatalogManager({
         defaultDurationMinutes: form.defaultDurationMinutes
           ? Number(form.defaultDurationMinutes)
           : null,
-        requiresAssignee: form.requiresAssignee,
+        requiresAssignee: true,
       });
 
       if (!result.ok) {
@@ -122,7 +123,6 @@ export default function ServiceCatalogManager({
         currencyCode: "GBP",
         defaultSlaMinutes: "",
         defaultDurationMinutes: "",
-        requiresAssignee: true,
       });
       setTaxRateMode("");
       setCustomTaxRatePercent("");
@@ -148,6 +148,40 @@ export default function ServiceCatalogManager({
     });
   }
 
+  const filledCustomTaxPct =
+    taxRateMode === "custom" &&
+    customTaxRatePercent.trim() &&
+    Number.isFinite(Number(customTaxRatePercent.trim()))
+      ? customTaxRatePercent.trim()
+      : null;
+  const taxSelectValue = filledCustomTaxPct
+    ? `custom:${filledCustomTaxPct}`
+    : taxRateMode;
+
+  const filledCustomSlaMins =
+    slaModeIsCustom &&
+    form.defaultSlaMinutes.trim() &&
+    Number.isFinite(Number(form.defaultSlaMinutes.trim()))
+      ? form.defaultSlaMinutes.trim()
+      : null;
+  const slaSelectValue = filledCustomSlaMins
+    ? `custom:${filledCustomSlaMins}`
+    : slaModeIsCustom
+      ? "custom"
+      : form.defaultSlaMinutes || "";
+
+  const filledCustomDurationMins =
+    durationModeIsCustom &&
+    form.defaultDurationMinutes.trim() &&
+    Number.isFinite(Number(form.defaultDurationMinutes.trim()))
+      ? form.defaultDurationMinutes.trim()
+      : null;
+  const durationSelectValue = filledCustomDurationMins
+    ? `custom:${filledCustomDurationMins}`
+    : durationModeIsCustom
+      ? "custom"
+      : form.defaultDurationMinutes || "";
+
   return (
     <div className="space-y-5">
       <section className="rounded-[20px] border border-[#E5E7EB] bg-[#FCFCFD] p-4 sm:p-5">
@@ -167,7 +201,10 @@ export default function ServiceCatalogManager({
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <div className="space-y-1.5">
-            <Label htmlFor="svc-code" className="text-sm font-medium text-[#344054]">
+            <Label
+              htmlFor="svc-code"
+              className="text-sm font-medium text-[#344054]"
+            >
               Service code
             </Label>
             <Input
@@ -182,7 +219,10 @@ export default function ServiceCatalogManager({
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="svc-name" className="text-sm font-medium text-[#344054]">
+            <Label
+              htmlFor="svc-name"
+              className="text-sm font-medium text-[#344054]"
+            >
               Name
             </Label>
             <Input
@@ -195,7 +235,10 @@ export default function ServiceCatalogManager({
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="svc-currency" className="text-sm font-medium text-[#344054]">
+            <Label
+              htmlFor="svc-currency"
+              className="text-sm font-medium text-[#344054]"
+            >
               Currency
             </Label>
             <Select
@@ -204,7 +247,10 @@ export default function ServiceCatalogManager({
                 setForm((s) => ({ ...s, currencyCode: value }))
               }
             >
-              <SelectTrigger id="svc-currency" className="h-11 rounded-xl border-[#E5E7EB] px-3.5 text-sm">
+              <SelectTrigger
+                id="svc-currency"
+                className="h-11 rounded-xl border-[#E5E7EB] px-3.5 text-sm"
+              >
                 <SelectValue placeholder="Select currency" />
               </SelectTrigger>
               <SelectContent>
@@ -218,7 +264,10 @@ export default function ServiceCatalogManager({
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="svc-unit-price" className="text-sm font-medium text-[#344054]">
+            <Label
+              htmlFor="svc-unit-price"
+              className="text-sm font-medium text-[#344054]"
+            >
               Unit price
             </Label>
             <Input
@@ -231,20 +280,25 @@ export default function ServiceCatalogManager({
               type="number"
               min="0"
               step="0.01"
-              className="h-11 rounded-xl border-[#E5E7EB] px-3.5 text-sm"
+              className="h-11 rounded-xl border-[#E5E7EB] px-3.5 text-sm [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
             />
           </div>
 
           <div className="space-y-1.5 xl:col-span-2">
-            <Label htmlFor="svc-tax-rate" className="text-sm font-medium text-[#344054]">
+            <Label
+              htmlFor="svc-tax-rate"
+              className="text-sm font-medium text-[#344054]"
+            >
               Tax rate
             </Label>
             <div className="grid gap-3 sm:grid-cols-[minmax(0,220px)_minmax(0,1fr)]">
               <Select
-                value={taxRateMode}
-                onValueChange={(value: "0" | "7" | "20" | "custom") => {
-                  setTaxRateMode(value);
-                  if (value === "custom") {
+                value={taxSelectValue}
+                onValueChange={(value) => {
+                  if (value.startsWith("custom:")) return;
+                  const v = value as "0" | "7" | "20" | "custom";
+                  setTaxRateMode(v);
+                  if (v === "custom") {
                     setCustomTaxRatePercent(
                       (current) =>
                         current || decimalToPercentString(form.defaultTaxRate),
@@ -255,14 +309,22 @@ export default function ServiceCatalogManager({
                   setForm((s) => ({
                     ...s,
                     defaultTaxRate:
-                      value === "0" ? "0" : value === "7" ? "0.07" : "0.20",
+                      v === "0" ? "0" : v === "7" ? "0.07" : "0.20",
                   }));
                 }}
               >
-                <SelectTrigger id="svc-tax-rate" className="h-11 rounded-xl border-[#E5E7EB] px-3.5 text-sm">
+                <SelectTrigger
+                  id="svc-tax-rate"
+                  className="h-11 rounded-xl border-[#E5E7EB] px-3.5 text-sm"
+                >
                   <SelectValue placeholder="Select tax rate" />
                 </SelectTrigger>
                 <SelectContent>
+                  {filledCustomTaxPct ? (
+                    <SelectItem value={`custom:${filledCustomTaxPct}`}>
+                      {filledCustomTaxPct}% (custom)
+                    </SelectItem>
+                  ) : null}
                   {TAX_RATE_OPTIONS.map((option) => (
                     <SelectItem key={option.value} value={option.value}>
                       {option.label}
@@ -296,13 +358,17 @@ export default function ServiceCatalogManager({
           </div>
 
           <div className="space-y-1.5 xl:col-span-2">
-            <Label htmlFor="svc-sla" className="text-sm font-medium text-[#344054]">
+            <Label
+              htmlFor="svc-sla"
+              className="text-sm font-medium text-[#344054]"
+            >
               SLA minutes
             </Label>
             <div className="grid gap-3 sm:grid-cols-[minmax(0,220px)_minmax(0,1fr)]">
               <Select
-                value={slaModeIsCustom ? "custom" : (form.defaultSlaMinutes || "")}
+                value={slaSelectValue}
                 onValueChange={(value) => {
+                  if (value.startsWith("custom:")) return;
                   if (value === "custom") {
                     setSlaModeIsCustom(true);
                     setForm((s) => ({ ...s, defaultSlaMinutes: "" }));
@@ -312,10 +378,18 @@ export default function ServiceCatalogManager({
                   setForm((s) => ({ ...s, defaultSlaMinutes: value }));
                 }}
               >
-                <SelectTrigger id="svc-sla" className="h-11 rounded-xl border-[#E5E7EB] px-3.5 text-sm">
+                <SelectTrigger
+                  id="svc-sla"
+                  className="h-11 rounded-xl border-[#E5E7EB] px-3.5 text-sm"
+                >
                   <SelectValue placeholder="Select SLA" />
                 </SelectTrigger>
                 <SelectContent>
+                  {filledCustomSlaMins ? (
+                    <SelectItem value={`custom:${filledCustomSlaMins}`}>
+                      {filledCustomSlaMins} min (custom)
+                    </SelectItem>
+                  ) : null}
                   {SLA_MINUTE_OPTIONS.map((min) => (
                     <SelectItem key={min} value={String(min)}>
                       {min} min
@@ -330,7 +404,10 @@ export default function ServiceCatalogManager({
                   id="svc-sla-custom"
                   value={form.defaultSlaMinutes}
                   onChange={(e) =>
-                    setForm((s) => ({ ...s, defaultSlaMinutes: e.target.value }))
+                    setForm((s) => ({
+                      ...s,
+                      defaultSlaMinutes: e.target.value,
+                    }))
                   }
                   placeholder="e.g. 75"
                   type="number"
@@ -345,13 +422,17 @@ export default function ServiceCatalogManager({
           </div>
 
           <div className="space-y-1.5 xl:col-span-2">
-            <Label htmlFor="svc-duration" className="text-sm font-medium text-[#344054]">
+            <Label
+              htmlFor="svc-duration"
+              className="text-sm font-medium text-[#344054]"
+            >
               Duration minutes
             </Label>
             <div className="grid gap-3 sm:grid-cols-[minmax(0,220px)_minmax(0,1fr)]">
               <Select
-                value={durationModeIsCustom ? "custom" : (form.defaultDurationMinutes || "")}
+                value={durationSelectValue}
                 onValueChange={(value) => {
+                  if (value.startsWith("custom:")) return;
                   if (value === "custom") {
                     setDurationModeIsCustom(true);
                     setForm((s) => ({ ...s, defaultDurationMinutes: "" }));
@@ -361,10 +442,18 @@ export default function ServiceCatalogManager({
                   setForm((s) => ({ ...s, defaultDurationMinutes: value }));
                 }}
               >
-                <SelectTrigger id="svc-duration" className="h-11 rounded-xl border-[#E5E7EB] px-3.5 text-sm">
+                <SelectTrigger
+                  id="svc-duration"
+                  className="h-11 rounded-xl border-[#E5E7EB] px-3.5 text-sm"
+                >
                   <SelectValue placeholder="Select duration" />
                 </SelectTrigger>
                 <SelectContent>
+                  {filledCustomDurationMins ? (
+                    <SelectItem value={`custom:${filledCustomDurationMins}`}>
+                      {filledCustomDurationMins} min (custom)
+                    </SelectItem>
+                  ) : null}
                   {DURATION_MINUTE_OPTIONS.map((min) => (
                     <SelectItem key={min} value={String(min)}>
                       {min} min
@@ -395,27 +484,13 @@ export default function ServiceCatalogManager({
               )}
             </div>
           </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="svc-requires-assignee" className="text-sm font-medium text-[#344054]">
-              Assignee
-            </Label>
-            <label className="inline-flex h-11 w-full items-center gap-2 rounded-xl border border-[#E5E7EB] bg-white px-3.5 text-sm text-[#344054]">
-              <input
-                id="svc-requires-assignee"
-                checked={form.requiresAssignee}
-                onChange={(e) =>
-                  setForm((s) => ({ ...s, requiresAssignee: e.target.checked }))
-                }
-                type="checkbox"
-              />
-              Requires assignee
-            </label>
-          </div>
         </div>
 
         <div className="mt-4 space-y-1.5">
-          <Label htmlFor="svc-description" className="text-sm font-medium text-[#344054]">
+          <Label
+            htmlFor="svc-description"
+            className="text-sm font-medium text-[#344054]"
+          >
             Description
           </Label>
           <Textarea

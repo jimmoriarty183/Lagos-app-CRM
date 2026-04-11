@@ -23,8 +23,8 @@ export const PLATFORM_MODULES: Record<PlatformModuleKey, PlatformModule> = {
     name: "Tasks",
     description: "Coordinate team tasks and execution workflows.",
     href: "/app/tasks",
-    enabled: false,
-    visible: false,
+    enabled: true,
+    visible: true,
   },
   academy: {
     key: "academy",
