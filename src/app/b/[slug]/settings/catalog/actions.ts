@@ -17,6 +17,13 @@ function parseFiniteNumber(value: unknown) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+function parseRequiredNumber(value: unknown) {
+  const text = cleanText(value);
+  if (!text) return null;
+  const parsed = Number(text);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 function normalizeCatalogError(error: unknown) {
   const message = error instanceof Error ? error.message : "Catalog operation failed";
   if (
@@ -72,14 +79,16 @@ export async function createCatalogProduct(input: {
   description?: string | null;
   uomCode: string;
   isStockManaged: boolean;
+  initialStockQty?: number | string | null;
   defaultUnitPrice: number | string;
   defaultTaxRate: number | string;
   currencyCode: string;
 }) {
   try {
     const { admin, userId } = await requireCatalogManagerAccess(input.businessSlug);
-    const defaultUnitPrice = parseFiniteNumber(input.defaultUnitPrice);
-    const defaultTaxRate = parseFiniteNumber(input.defaultTaxRate);
+    const defaultUnitPrice = parseRequiredNumber(input.defaultUnitPrice);
+    const defaultTaxRate = parseRequiredNumber(input.defaultTaxRate);
+    const initialStockQty = Math.max(0, parseFiniteNumber(input.initialStockQty) ?? 0);
 
     const payload = {
       sku: cleanText(input.sku),
@@ -102,8 +111,42 @@ export async function createCatalogProduct(input: {
       throw new Error("Unit price and tax rate are required");
     }
 
-    const { error } = await admin.from("catalog_products").insert(payload);
+    const { data: createdProduct, error } = await admin
+      .from("catalog_products")
+      .insert(payload)
+      .select("id")
+      .single();
     if (error) throw new Error(error.message);
+
+    if (payload.is_stock_managed) {
+      const { data: warehouse, error: warehouseError } = await admin
+        .from("warehouses")
+        .select("id")
+        .eq("status", "ACTIVE")
+        .eq("is_deleted", false)
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+
+      if (warehouseError) throw new Error(warehouseError.message);
+      if (!warehouse?.id) {
+        throw new Error("No active warehouse found for stock-managed product");
+      }
+
+      const { error: inventoryError } = await admin
+        .from("inventory_balances")
+        .insert({
+          warehouse_id: warehouse.id,
+          product_id: createdProduct.id,
+          on_hand_qty: initialStockQty,
+          reserved_qty: 0,
+          available_qty: initialStockQty,
+          created_by: userId,
+          updated_by: userId,
+        });
+
+      if (inventoryError) throw new Error(inventoryError.message);
+    }
 
     revalidatePath(`/b/${input.businessSlug}/catalog/products`);
     revalidatePath(`/b/${input.businessSlug}/settings/catalog/products`);
@@ -147,8 +190,8 @@ export async function createCatalogService(input: {
 }) {
   try {
     const { admin, userId } = await requireCatalogManagerAccess(input.businessSlug);
-    const defaultUnitPrice = parseFiniteNumber(input.defaultUnitPrice);
-    const defaultTaxRate = parseFiniteNumber(input.defaultTaxRate);
+    const defaultUnitPrice = parseRequiredNumber(input.defaultUnitPrice);
+    const defaultTaxRate = parseRequiredNumber(input.defaultTaxRate);
 
     const payload = {
       service_code: cleanText(input.serviceCode),

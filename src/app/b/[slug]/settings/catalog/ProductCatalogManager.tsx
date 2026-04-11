@@ -41,6 +41,7 @@ export default function ProductCatalogManager({
     description: "",
     uomCode: "",
     isStockManaged: true,
+    initialStockQty: "",
     defaultUnitPrice: "",
     defaultTaxRate: "",
     currencyCode: "",
@@ -56,8 +57,9 @@ export default function ProductCatalogManager({
         description: form.description,
         uomCode: form.uomCode,
         isStockManaged: form.isStockManaged,
-        defaultUnitPrice: Number(form.defaultUnitPrice),
-        defaultTaxRate: Number(form.defaultTaxRate),
+        initialStockQty: form.initialStockQty,
+        defaultUnitPrice: form.defaultUnitPrice,
+        defaultTaxRate: form.defaultTaxRate,
         currencyCode: form.currencyCode,
       });
 
@@ -72,6 +74,7 @@ export default function ProductCatalogManager({
         description: "",
         uomCode: "",
         isStockManaged: true,
+        initialStockQty: "",
         defaultUnitPrice: "",
         defaultTaxRate: "",
         currencyCode: "",
@@ -141,6 +144,19 @@ export default function ProductCatalogManager({
             placeholder="Currency (e.g. GBP)"
             className="h-11 rounded-xl border border-[#E5E7EB] px-3 text-sm"
           />
+          {form.isStockManaged ? (
+            <input
+              value={form.initialStockQty}
+              onChange={(e) =>
+                setForm((s) => ({ ...s, initialStockQty: e.target.value }))
+              }
+              placeholder="Qty (e.g. 10)"
+              type="number"
+              step="0.0001"
+              min="0"
+              className="h-11 rounded-xl border border-[#E5E7EB] px-3 text-sm"
+            />
+          ) : null}
           <input
             value={form.defaultUnitPrice}
             onChange={(e) =>

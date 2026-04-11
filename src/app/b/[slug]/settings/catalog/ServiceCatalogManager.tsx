@@ -56,8 +56,8 @@ export default function ServiceCatalogManager({
         serviceCode: form.serviceCode,
         name: form.name,
         description: form.description,
-        defaultUnitPrice: Number(form.defaultUnitPrice),
-        defaultTaxRate: Number(form.defaultTaxRate),
+        defaultUnitPrice: form.defaultUnitPrice,
+        defaultTaxRate: form.defaultTaxRate,
         currencyCode: form.currencyCode,
         defaultSlaMinutes: form.defaultSlaMinutes
           ? Number(form.defaultSlaMinutes)
