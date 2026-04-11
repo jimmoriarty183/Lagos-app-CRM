@@ -1,12 +1,17 @@
 "use client";
 
 import React from "react";
-import { useActionState } from "react";
-import { createBusinessOnboardingAction } from "@/app/actions/auth";
 import { Spinner } from "@/components/ui/spinner";
+import { BUSINESS_LIMIT_REACHED_CODE } from "@/lib/businesses/errors";
+import { BusinessLimitPaywallState } from "@/components/businesses/BusinessLimitPaywallState";
 
-type State = { ok: boolean; error: string; next: string };
-const initialState: State = { ok: false, error: "", next: "" };
+type CreateBusinessApiError = {
+  ok: false;
+  code: string;
+  message: string;
+  current_usage?: number | null;
+  limit?: number | null;
+};
 
 function ErrorBox({ text }: { text?: string }) {
   if (!text) return null;
@@ -18,25 +23,67 @@ function ErrorBox({ text }: { text?: string }) {
 }
 
 export function OnboardingBusinessForm() {
-  const [state, submit, pending] = useActionState(
-    createBusinessOnboardingAction as never,
-    initialState,
-  );
+  const [pending, setPending] = React.useState(false);
   const [businessName, setBusinessName] = React.useState("");
   const [localError, setLocalError] = React.useState("");
+  const [limitError, setLimitError] = React.useState<{
+    currentUsage: number | null;
+    limit: number | null;
+  } | null>(null);
 
-  React.useEffect(() => {
-    if (state?.ok && state.next) {
-      window.location.href = state.next;
-    }
-  }, [state]);
-
-  function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
     setLocalError("");
+    setLimitError(null);
+
     if (!businessName.trim()) {
-      e.preventDefault();
       setLocalError("Enter your business name");
+      return;
     }
+
+    setPending(true);
+    try {
+      const response = await fetch("/api/businesses", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          business_name: businessName.trim(),
+        }),
+      });
+
+      const payload = (await response.json().catch(() => ({}))) as
+        | { ok: true; business?: { slug?: string } }
+        | CreateBusinessApiError;
+
+      if (response.ok && payload.ok) {
+        window.location.href = "/app/crm";
+        return;
+      }
+
+      const errorPayload = payload as Partial<CreateBusinessApiError>;
+      if (errorPayload.code === BUSINESS_LIMIT_REACHED_CODE) {
+        setLimitError({
+          currentUsage: errorPayload.current_usage ?? null,
+          limit: errorPayload.limit ?? null,
+        });
+        return;
+      }
+
+      setLocalError(errorPayload.message || "Failed to create business");
+    } catch {
+      setLocalError("Network error. Please try again.");
+    } finally {
+      setPending(false);
+    }
+  }
+
+  if (limitError) {
+    return (
+      <BusinessLimitPaywallState
+        currentUsage={limitError.currentUsage}
+        limit={limitError.limit}
+      />
+    );
   }
 
   return (
@@ -53,9 +100,8 @@ export function OnboardingBusinessForm() {
         </p>
       </div>
 
-      <form action={submit} onSubmit={onSubmit} className="space-y-3 px-6 py-6">
+      <form onSubmit={onSubmit} className="space-y-3 px-6 py-6">
         <ErrorBox text={localError} />
-        <ErrorBox text={state?.error} />
 
         <label className="block">
           <div className="mb-1.5 text-[13px] font-semibold text-slate-700">Business name</div>

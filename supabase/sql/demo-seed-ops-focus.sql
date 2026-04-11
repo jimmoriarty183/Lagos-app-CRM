@@ -20,15 +20,28 @@ set search_path = public, app;
 
 do $$
 declare
+  -- Hardcoded target business for this demo run (user-provided)
+  v_target_business_id uuid := '29bf09b1-68cb-4a7b-a010-92884bbb59e4';
   v_business_id uuid;
   v_workspace_id uuid;
   v_manager_ids uuid[];
   v_manager_count int;
 
+  v_businesses_has_last_activity_at boolean;
+  v_businesses_has_created_at boolean;
+  v_businesses_has_slug boolean;
+  v_businesses_has_name boolean;
+  v_workspaces_exists boolean;
+  v_memberships_exists boolean;
+  v_memberships_has_role boolean;
+  v_customers_exists boolean;
+  v_orders_exists boolean;
+
   v_orders_has_business_id boolean;
   v_orders_has_manager_id boolean;
   v_orders_has_due_date boolean;
   v_orders_has_status boolean;
+  v_orders_has_order_no boolean;
 
   v_followups_has_workspace_id boolean;
   v_followups_has_created_by boolean;
@@ -58,44 +71,155 @@ declare
 
   v_follow_up_id uuid;
   v_checklist_item_id uuid;
+  v_seed_customer_id uuid;
+  v_seed_order_no text;
+  v_seed_created_orders int := 0;
 begin
+  if v_target_business_id is not null then
+    if exists (select 1 from public.businesses b where b.id = v_target_business_id) then
+      v_business_id := v_target_business_id;
+    else
+      raise notice '[DEMO OPS] Target business % not found. Falling back to auto-detection.', v_target_business_id;
+    end if;
+  end if;
+
+  select exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'businesses' and column_name = 'last_activity_at'
+  ) into v_businesses_has_last_activity_at;
+
+  select exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'businesses' and column_name = 'created_at'
+  ) into v_businesses_has_created_at;
+
+  select exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'businesses' and column_name = 'slug'
+  ) into v_businesses_has_slug;
+
+  select exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'businesses' and column_name = 'name'
+  ) into v_businesses_has_name;
+
+  select exists (
+    select 1 from information_schema.tables
+    where table_schema = 'public' and table_name = 'workspaces'
+  ) into v_workspaces_exists;
+
+  select exists (
+    select 1 from information_schema.tables
+    where table_schema = 'public' and table_name = 'memberships'
+  ) into v_memberships_exists;
+
+  select exists (
+    select 1 from information_schema.tables
+    where table_schema = 'public' and table_name = 'customers'
+  ) into v_customers_exists;
+
+  select exists (
+    select 1 from information_schema.tables
+    where table_schema = 'public' and table_name = 'orders'
+  ) into v_orders_exists;
+
+  if v_memberships_exists then
+    select exists (
+      select 1 from information_schema.columns
+      where table_schema = 'public' and table_name = 'memberships' and column_name = 'role'
+    ) into v_memberships_has_role;
+  else
+    v_memberships_has_role := false;
+  end if;
+
   -- -----------------------------------------------------
   -- Resolve business/workspace and manager stubs
   -- -----------------------------------------------------
-  select b.id
-  into v_business_id
-  from public.businesses b
-  order by coalesce(b.last_activity_at, b.created_at, now()) desc
-  limit 1;
+  if v_business_id is null and v_businesses_has_slug and v_businesses_has_name then
+    select b.id
+    into v_business_id
+    from public.businesses b
+    where lower(coalesce(b.slug, '')) in ('demo-field', 'demofield', 'demo')
+       or lower(coalesce(b.name, '')) like '%demo%'
+    order by coalesce(b.last_activity_at, b.created_at, now()) desc
+    limit 1;
+  elsif v_business_id is null and v_businesses_has_slug then
+    select b.id
+    into v_business_id
+    from public.businesses b
+    where lower(coalesce(b.slug, '')) in ('demo-field', 'demofield', 'demo')
+       or lower(coalesce(b.slug, '')) like '%demo%'
+    order by coalesce(b.last_activity_at, b.created_at, now()) desc
+    limit 1;
+  elsif v_business_id is null and v_businesses_has_name then
+    select b.id
+    into v_business_id
+    from public.businesses b
+    where lower(coalesce(b.name, '')) like '%demo%'
+    order by coalesce(b.last_activity_at, b.created_at, now()) desc
+    limit 1;
+  end if;
+
+  if v_business_id is null and v_businesses_has_last_activity_at and v_businesses_has_created_at then
+    select b.id
+    into v_business_id
+    from public.businesses b
+    order by coalesce(b.last_activity_at, b.created_at, now()) desc
+    limit 1;
+  elsif v_businesses_has_created_at then
+    select b.id
+    into v_business_id
+    from public.businesses b
+    order by coalesce(b.created_at, now()) desc
+    limit 1;
+  else
+    select b.id
+    into v_business_id
+    from public.businesses b
+    order by b.id
+    limit 1;
+  end if;
 
   if v_business_id is null then
     raise notice '[DEMO OPS] No business found. Seed skipped.';
     return;
   end if;
 
-  select w.id
-  into v_workspace_id
-  from public.workspaces w
-  where w.id = v_business_id
-  limit 1;
+  if v_workspaces_exists then
+    select w.id
+    into v_workspace_id
+    from public.workspaces w
+    where w.id = v_business_id
+    limit 1;
+  else
+    v_workspace_id := null;
+  end if;
 
   if v_workspace_id is null then
     v_workspace_id := v_business_id;
   end if;
 
-  select array_agg(x.user_id)
-  into v_manager_ids
-  from (
-    select distinct m.user_id
-    from public.memberships m
-    where m.business_id = v_business_id
-      and m.user_id is not null
-      and upper(coalesce(m.role, '')) in ('OWNER', 'MANAGER')
-    order by m.user_id
-    limit 6
-  ) x;
+  if v_memberships_exists then
+    if v_memberships_has_role then
+      select array_agg(x.user_id)
+      into v_manager_ids
+      from (
+        select distinct m.user_id
+        from public.memberships m
+        where m.business_id = v_business_id
+          and m.user_id is not null
+          and upper(coalesce(m.role, '')) in ('OWNER', 'MANAGER')
+        order by m.user_id
+        limit 6
+      ) x;
+    else
+      v_manager_ids := null;
+    end if;
+  else
+    v_manager_ids := null;
+  end if;
 
-  if coalesce(array_length(v_manager_ids, 1), 0) = 0 then
+  if v_memberships_exists and coalesce(array_length(v_manager_ids, 1), 0) = 0 then
     select array_agg(x.user_id)
     into v_manager_ids
     from (
@@ -152,6 +276,11 @@ begin
     select 1 from information_schema.columns
     where table_schema = 'public' and table_name = 'orders' and column_name = 'status'
   ) into v_orders_has_status;
+
+  select exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'orders' and column_name = 'order_no'
+  ) into v_orders_has_order_no;
 
   if v_follow_ups_exists then
     select exists (
@@ -232,7 +361,7 @@ begin
   if v_orders_has_business_id and v_orders_has_status then
     create temporary table tmp_demo_ops_orders on commit drop as
     select o.id,
-           row_number() over (order by coalesce(o.updated_at, o.created_at, now()) desc) as rn
+           cast(row_number() over (order by coalesce(o.updated_at, o.created_at, now()) desc) as int) as rn
     from public.orders o
     where o.business_id = v_business_id
       and upper(coalesce(o.status, '')) not in ('CANCELLED', 'COMPLETED', 'DONE', 'ARCHIVED')
@@ -241,7 +370,7 @@ begin
   elsif v_orders_has_business_id then
     create temporary table tmp_demo_ops_orders on commit drop as
     select o.id,
-           row_number() over (order by coalesce(o.updated_at, o.created_at, now()) desc) as rn
+           cast(row_number() over (order by coalesce(o.updated_at, o.created_at, now()) desc) as int) as rn
     from public.orders o
     where o.business_id = v_business_id
     order by coalesce(o.updated_at, o.created_at, now()) desc
@@ -249,7 +378,7 @@ begin
   elsif v_orders_has_status then
     create temporary table tmp_demo_ops_orders on commit drop as
     select o.id,
-           row_number() over (order by coalesce(o.updated_at, o.created_at, now()) desc) as rn
+           cast(row_number() over (order by coalesce(o.updated_at, o.created_at, now()) desc) as int) as rn
     from public.orders o
     where upper(coalesce(o.status, '')) not in ('CANCELLED', 'COMPLETED', 'DONE', 'ARCHIVED')
     order by coalesce(o.updated_at, o.created_at, now()) desc
@@ -257,22 +386,209 @@ begin
   else
     create temporary table tmp_demo_ops_orders on commit drop as
     select o.id,
-           row_number() over (order by coalesce(o.updated_at, o.created_at, now()) desc) as rn
+           cast(row_number() over (order by coalesce(o.updated_at, o.created_at, now()) desc) as int) as rn
     from public.orders o
     order by coalesce(o.updated_at, o.created_at, now()) desc
     limit 8;
   end if;
 
   if not exists (select 1 from tmp_demo_ops_orders) then
-    raise notice '[DEMO OPS] No orders found. Seed skipped.';
-    return;
+    raise notice '[DEMO OPS] No orders found. Trying to create demo base orders...';
+
+    if v_customers_exists then
+      begin
+        for v_i in 1..5 loop
+          if not exists (
+            select 1
+            from public.customers c
+            where c.customer_code = format('DEMO-OPS-C%02s', v_i)
+          ) then
+            insert into public.customers (
+              customer_code,
+              customer_type,
+              name,
+              email,
+              phone,
+              status,
+              metadata,
+              created_at,
+              updated_at
+            )
+            values (
+              format('DEMO-OPS-C%02s', v_i),
+              'COMPANY',
+              format('Demo Ops Client %s', v_i),
+              format('demo-ops-%s@example.com', v_i),
+              format('+380000000%02s', v_i),
+              'ACTIVE',
+              jsonb_build_object('source', 'demo_seed_ops'),
+              now(),
+              now()
+            );
+          end if;
+        end loop;
+      exception when others then
+        raise notice '[DEMO OPS] Customer auto-seed skipped due to schema mismatch: %', sqlerrm;
+      end;
+    end if;
+
+    if v_orders_exists then
+      for v_i in 1..8 loop
+        select c.id
+        into v_seed_customer_id
+        from public.customers c
+        order by c.id
+        offset ((v_i - 1) % 5)
+        limit 1;
+
+        if v_seed_customer_id is not null then
+          v_seed_order_no := format('DEMO-OPS-%s-%03s', to_char(current_date, 'YYYYMMDD'), v_i);
+
+          begin
+            if v_orders_has_business_id then
+              insert into public.orders (
+                business_id,
+                order_no,
+                customer_id,
+                status,
+                order_date,
+                currency_code,
+                subtotal_amount,
+                discount_amount,
+                tax_amount,
+                total_amount,
+                metadata,
+                created_at,
+                updated_at
+              )
+              values (
+                v_business_id,
+                v_seed_order_no,
+                v_seed_customer_id,
+                case when v_i % 4 = 0 then 'CONFIRMED' else 'READY_FOR_CONFIRMATION' end,
+                now() - make_interval(days => (v_i % 6)),
+                'USD',
+                100 + (v_i * 25),
+                0,
+                round(((100 + (v_i * 25)) * 0.1)::numeric, 4),
+                round(((100 + (v_i * 25)) * 1.1)::numeric, 4),
+                jsonb_build_object('source', 'demo_seed_ops', 'stage', 'auto-created'),
+                now(),
+                now()
+              );
+            else
+              insert into public.orders (
+                order_no,
+                customer_id,
+                status,
+                order_date,
+                currency_code,
+                subtotal_amount,
+                discount_amount,
+                tax_amount,
+                total_amount,
+                metadata,
+                created_at,
+                updated_at
+              )
+              values (
+                v_seed_order_no,
+                v_seed_customer_id,
+                case when v_i % 4 = 0 then 'CONFIRMED' else 'READY_FOR_CONFIRMATION' end,
+                now() - make_interval(days => (v_i % 6)),
+                'USD',
+                100 + (v_i * 25),
+                0,
+                round(((100 + (v_i * 25)) * 0.1)::numeric, 4),
+                round(((100 + (v_i * 25)) * 1.1)::numeric, 4),
+                jsonb_build_object('source', 'demo_seed_ops', 'stage', 'auto-created'),
+                now(),
+                now()
+              );
+            end if;
+            v_seed_created_orders := v_seed_created_orders + 1;
+          exception
+            when unique_violation then
+              null;
+            when others then
+              begin
+                insert into public.orders (
+                  business_id,
+                  status,
+                  created_at,
+                  updated_at
+                )
+                values (
+                  v_business_id,
+                  'open',
+                  now(),
+                  now()
+                );
+                v_seed_created_orders := v_seed_created_orders + 1;
+              exception when others then
+                null;
+              end;
+          end;
+        end if;
+      end loop;
+    end if;
+
+    drop table if exists tmp_demo_ops_orders;
+
+    if v_orders_has_business_id and v_orders_has_status then
+      create temporary table tmp_demo_ops_orders on commit drop as
+      select o.id,
+             cast(row_number() over (order by coalesce(o.updated_at, o.created_at, now()) desc) as int) as rn
+      from public.orders o
+      where o.business_id = v_business_id
+        and upper(coalesce(o.status, '')) not in ('CANCELLED', 'COMPLETED', 'DONE', 'ARCHIVED')
+      order by coalesce(o.updated_at, o.created_at, now()) desc
+      limit 8;
+    elsif v_orders_has_business_id then
+      create temporary table tmp_demo_ops_orders on commit drop as
+      select o.id,
+             cast(row_number() over (order by coalesce(o.updated_at, o.created_at, now()) desc) as int) as rn
+      from public.orders o
+      where o.business_id = v_business_id
+      order by coalesce(o.updated_at, o.created_at, now()) desc
+      limit 8;
+    elsif v_orders_has_status then
+      create temporary table tmp_demo_ops_orders on commit drop as
+      select o.id,
+             cast(row_number() over (order by coalesce(o.updated_at, o.created_at, now()) desc) as int) as rn
+      from public.orders o
+      where upper(coalesce(o.status, '')) not in ('CANCELLED', 'COMPLETED', 'DONE', 'ARCHIVED')
+      order by coalesce(o.updated_at, o.created_at, now()) desc
+      limit 8;
+    else
+      create temporary table tmp_demo_ops_orders on commit drop as
+      select o.id,
+             cast(row_number() over (order by coalesce(o.updated_at, o.created_at, now()) desc) as int) as rn
+      from public.orders o
+      order by coalesce(o.updated_at, o.created_at, now()) desc
+      limit 8;
+    end if;
+
+    if not exists (select 1 from tmp_demo_ops_orders) then
+      raise notice '[DEMO OPS] No orders found even after auto-seed. Created orders: %', v_seed_created_orders;
+      return;
+    end if;
+
+    if v_orders_has_business_id and v_orders_has_order_no then
+      update public.orders
+      set business_id = v_business_id
+      where business_id is null
+        and order_no like 'DEMO-OPS-%';
+    end if;
+
+    raise notice '[DEMO OPS] Auto-created demo orders: %', v_seed_created_orders;
   end if;
 
   -- -----------------------------------------------------
   -- Enrich orders: manager + due_date
   -- -----------------------------------------------------
   for v_order in select id, rn from tmp_demo_ops_orders order by rn loop
-    v_due_date := current_date + (1 + (v_order.rn % 9));
+    v_due_date := current_date + ((1 + (v_order.rn % 9))::int);
 
     if v_manager_count > 0 then
       v_manager_id := v_manager_ids[((v_order.rn - 1) % v_manager_count) + 1];
@@ -299,7 +615,7 @@ begin
   -- -----------------------------------------------------
   if v_checklist_exists then
     for v_order in select id, rn from tmp_demo_ops_orders order by rn loop
-      v_due_date := current_date + (v_order.rn % 7);
+      v_due_date := current_date + ((v_order.rn % 7)::int);
       if v_manager_count > 0 then
         v_manager_id := v_manager_ids[((v_order.rn - 1) % v_manager_count) + 1];
       else
@@ -441,7 +757,7 @@ begin
   -- -----------------------------------------------------
   if v_follow_ups_exists then
     for v_order in select id, rn from tmp_demo_ops_orders order by rn loop
-      v_due_date := current_date + (v_order.rn % 10);
+      v_due_date := current_date + ((v_order.rn % 10)::int);
       if v_manager_count > 0 then
         v_manager_id := v_manager_ids[((v_order.rn - 1) % v_manager_count) + 1];
       else
@@ -498,7 +814,7 @@ begin
 
         if v_followups_has_action_type then
           update public.follow_ups
-          set action_type = coalesce(action_type, 'call')
+          set action_type = coalesce(action_type, 'manual')
           where id = v_follow_up_id;
         end if;
 
@@ -529,7 +845,7 @@ begin
             v_order.id,
             v_manager_id,
             case when v_manager_id is null then 'system' else 'user' end,
-            'follow_up.created',
+            'followup.created',
             jsonb_build_object('title', '[DEMO OPS] Call client and confirm next milestone', 'due_date', v_due_date),
             'internal',
             'demo_seed_ops',

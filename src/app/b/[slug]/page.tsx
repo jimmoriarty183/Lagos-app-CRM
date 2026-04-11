@@ -321,8 +321,12 @@ function debugLog(message: string, payload?: Record<string, unknown>) {
 }
 
 function isMissingEnrichedOrdersViewError(error: unknown) {
-  const message = String((error as { message?: string } | null)?.message ?? "").toLowerCase();
-  return message.includes("could not find the table 'public.crm_orders_enriched'");
+  const message = String(
+    (error as { message?: string } | null)?.message ?? "",
+  ).toLowerCase();
+  return message.includes(
+    "could not find the table 'public.crm_orders_enriched'",
+  );
 }
 
 function normalizeOrderSort(value: string | undefined): OrderSort {
@@ -345,9 +349,7 @@ export default async function Page({ params, searchParams }: PageProps) {
 
   const { data: userData } = await supabase.auth.getUser();
   const user = userData.user;
-  const sessionData = SUPABASE_DEBUG
-    ? await supabase.auth.getSession()
-    : null;
+  const sessionData = SUPABASE_DEBUG ? await supabase.auth.getSession() : null;
   if (!user && !bypassUser) redirect("/login");
 
   const bypassMode = !user && Boolean(bypassUser);
@@ -378,7 +380,10 @@ export default async function Page({ params, searchParams }: PageProps) {
       .eq("user_id", user.id);
 
     if (memErr) {
-      debugLog("memberships query failed", { error: memErr.message, userId: user.id });
+      debugLog("memberships query failed", {
+        error: memErr.message,
+        userId: user.id,
+      });
       throw memErr;
     }
     memberships = membershipsData ?? [];
@@ -434,7 +439,10 @@ export default async function Page({ params, searchParams }: PageProps) {
     await ensureWorkspaceForBusiness(admin, String(currentBusiness.id));
   } else {
     // TODO(security): this path always uses service_role. Confirm it is required and safe for this page.
-    await ensureWorkspaceForBusiness(supabaseAdmin(), String(currentBusiness.id));
+    await ensureWorkspaceForBusiness(
+      supabaseAdmin(),
+      String(currentBusiness.id),
+    );
   }
   debugLog("workspace ensured", {
     businessId: String(currentBusiness.id),
@@ -460,7 +468,9 @@ export default async function Page({ params, searchParams }: PageProps) {
     })),
     defaultVisibleStatuses,
     defaultVisibleStatusFilters,
-    hasDELInCustomStatuses: customStatuses.some((status) => status.value === "DEL"),
+    hasDELInCustomStatuses: customStatuses.some(
+      (status) => status.value === "DEL",
+    ),
     hasDELInDefaultVisibleStatuses: defaultVisibleStatuses.includes("DEL"),
   });
 
@@ -503,7 +513,9 @@ export default async function Page({ params, searchParams }: PageProps) {
       });
 
       currentUserName = currentUserDisplay.primary;
-      currentUserAvatarUrl = cleanText((currentProfile as { avatar_url?: string | null } | null)?.avatar_url);
+      currentUserAvatarUrl = cleanText(
+        (currentProfile as { avatar_url?: string | null } | null)?.avatar_url,
+      );
     } catch {
       currentUserName =
         user.email ??
@@ -823,7 +835,7 @@ export default async function Page({ params, searchParams }: PageProps) {
 
       if (!email) {
         try {
-      const { data: authLookup } =
+          const { data: authLookup } =
             await adminClient.auth.admin.getUserById(id);
           email = cleanText(authLookup?.user?.email);
         } catch {
@@ -1345,6 +1357,7 @@ export default async function Page({ params, searchParams }: PageProps) {
         businesses={businessOptions}
         businessId={String(currentBusiness.id)}
         businessHref={businessHref}
+        catalogHref={`/b/${slug}/catalog/products`}
         todayHref={todayHref}
         supportHref={supportHref}
         settingsHref={settingsHref}
@@ -1367,7 +1380,9 @@ export default async function Page({ params, searchParams }: PageProps) {
       >
         <div
           className={`hidden items-start lg:grid lg:grid-cols-[auto_minmax(0,1fr)] ${
-            viewMode === "kanban" ? "lg:h-[calc(100vh-100px)] lg:gap-3" : "lg:gap-5"
+            viewMode === "kanban"
+              ? "lg:h-[calc(100vh-100px)] lg:gap-3"
+              : "lg:gap-5"
           }`}
         >
           <div className="relative shrink-0">
@@ -1391,6 +1406,7 @@ export default async function Page({ params, searchParams }: PageProps) {
               clearHref={clearHref}
               businessHref={businessHref}
               clientsHref={`/b/${slug}/clients`}
+              catalogHref={`/b/${slug}/catalog/products`}
               analyticsHref={analyticsHref}
               todayHref={todayHref}
               supportHref={supportHref}

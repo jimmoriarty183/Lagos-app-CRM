@@ -46,25 +46,119 @@ CREATE TABLE IF NOT EXISTS public.orders (
     )
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS uq_orders_order_no
-  ON public.orders (order_no);
+-- Compatibility for projects where orders table existed earlier with order_number.
+ALTER TABLE public.orders
+  ADD COLUMN IF NOT EXISTS order_no varchar(50);
 
-CREATE INDEX IF NOT EXISTS ix_orders_customer_date
-  ON public.orders (customer_id, order_date DESC);
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'orders'
+      AND column_name = 'order_number'
+  ) THEN
+    EXECUTE '
+      UPDATE public.orders
+      SET order_no = COALESCE(order_no, order_number::text)
+      WHERE order_no IS NULL
+        AND order_number IS NOT NULL
+    ';
+  END IF;
+END $$;
 
-CREATE INDEX IF NOT EXISTS ix_orders_status_date
-  ON public.orders (status, order_date DESC);
+DO $$
+DECLARE
+  v_has_duplicates boolean := false;
+BEGIN
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.orders
+    WHERE order_no IS NOT NULL
+    GROUP BY order_no
+    HAVING COUNT(*) > 1
+    LIMIT 1
+  )
+  INTO v_has_duplicates;
 
-CREATE INDEX IF NOT EXISTS ix_orders_confirmed_at
-  ON public.orders (confirmed_at DESC)
-  WHERE confirmed_at IS NOT NULL;
+  IF v_has_duplicates THEN
+    EXECUTE '
+      CREATE INDEX IF NOT EXISTS ix_orders_order_no
+      ON public.orders (order_no)
+      WHERE order_no IS NOT NULL
+    ';
+  ELSE
+    EXECUTE '
+      CREATE UNIQUE INDEX IF NOT EXISTS uq_orders_order_no
+      ON public.orders (order_no)
+      WHERE order_no IS NOT NULL
+    ';
+  END IF;
+END $$;
 
-CREATE INDEX IF NOT EXISTS ix_orders_completed_at
-  ON public.orders (completed_at DESC)
-  WHERE completed_at IS NOT NULL;
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'orders' AND column_name = 'customer_id'
+  ) AND EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'orders' AND column_name = 'order_date'
+  ) THEN
+    EXECUTE 'CREATE INDEX IF NOT EXISTS ix_orders_customer_date ON public.orders (customer_id, order_date DESC)';
+  END IF;
+END $$;
 
-CREATE INDEX IF NOT EXISTS ix_orders_created_at
-  ON public.orders (created_at DESC);
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'orders' AND column_name = 'status'
+  ) AND EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'orders' AND column_name = 'order_date'
+  ) THEN
+    EXECUTE 'CREATE INDEX IF NOT EXISTS ix_orders_status_date ON public.orders (status, order_date DESC)';
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'orders' AND column_name = 'confirmed_at'
+  ) THEN
+    EXECUTE 'CREATE INDEX IF NOT EXISTS ix_orders_confirmed_at ON public.orders (confirmed_at DESC) WHERE confirmed_at IS NOT NULL';
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'orders' AND column_name = 'completed_at'
+  ) THEN
+    EXECUTE 'CREATE INDEX IF NOT EXISTS ix_orders_completed_at ON public.orders (completed_at DESC) WHERE completed_at IS NOT NULL';
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'orders' AND column_name = 'created_at'
+  ) THEN
+    EXECUTE 'CREATE INDEX IF NOT EXISTS ix_orders_created_at ON public.orders (created_at DESC)';
+  END IF;
+END $$;
 
 DROP TRIGGER IF EXISTS trg_orders_set_audit_fields ON public.orders;
 CREATE TRIGGER trg_orders_set_audit_fields

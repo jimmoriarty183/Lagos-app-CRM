@@ -3,9 +3,11 @@
 import { headers } from "next/headers";
 import { supabaseServer } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { createBusinessForOwner } from "@/lib/businesses/business-create-service";
+import { BUSINESS_LIMIT_REACHED_CODE } from "@/lib/businesses/errors";
 
-type State = { ok: boolean; error: string; next: string };
-const initial: State = { ok: false, error: "", next: "" };
+type State = { ok: boolean; error: string; errorCode?: string; next: string };
+const initial: State = { ok: false, error: "", errorCode: undefined, next: "" };
 
 function msg(e: unknown) {
   if (e && typeof e === "object") {
@@ -33,167 +35,6 @@ function isConfirmationEmailDeliveryError(message: string) {
 function isEmailNotConfirmedError(message: string) {
   const lowered = message.toLowerCase();
   return lowered.includes("email not confirmed") || lowered.includes("email_not_confirmed");
-}
-
-function isDuplicateValueError(message: string) {
-  const lowered = message.toLowerCase();
-  return (
-    lowered.includes("duplicate key") ||
-    lowered.includes("already exists") ||
-    lowered.includes("unique constraint") ||
-    lowered.includes("violates unique")
-  );
-}
-
-function isBrokenRpcTriggerError(message: string) {
-  const lowered = message.toLowerCase();
-  return lowered.includes("record \"new\" has no field \"business_id\"");
-}
-
-
-// ✅ генерация slug из названия
-function slugify(input: string) {
-  const base = String(input || "")
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, "-")
-    .replace(/[^a-z0-9-]/g, "")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
-
-  return base || `biz-${Date.now()}`;
-}
-
-type BusinessCreateResult =
-  | { ok: true; slug: string }
-  | { ok: false; error: string };
-
-async function updateBusinessMetadata(
-  admin: ReturnType<typeof supabaseAdmin>,
-  slug: string,
-  input: { businessName?: string; businessSegment?: string },
-) {
-  const name = String(input.businessName ?? "").trim();
-  const segment = String(input.businessSegment ?? "").trim();
-
-  if (name) {
-    const { error } = await admin
-      .from("businesses")
-      .update({ name })
-      .eq("slug", slug);
-    if (error && !isMissingColumnError(error.message)) {
-      return { ok: false as const, error: error.message };
-    }
-  }
-
-  if (segment) {
-    const { error } = await admin
-      .from("businesses")
-      .update({ business_segment: segment })
-      .eq("slug", slug);
-    if (error && !isMissingColumnError(error.message)) {
-      return { ok: false as const, error: error.message };
-    }
-  }
-
-  return { ok: true as const };
-}
-
-async function createBusinessWithFallback(params: {
-  supabase: Awaited<ReturnType<typeof supabaseServer>>;
-  admin: ReturnType<typeof supabaseAdmin>;
-  userId: string;
-  businessName: string;
-  businessSegment?: string;
-}): Promise<BusinessCreateResult> {
-  const { supabase, admin, userId, businessName, businessSegment } = params;
-  const baseSlug = slugify(businessName);
-
-  for (let attempt = 0; attempt < 7; attempt += 1) {
-    const slugCandidate = attempt === 0 ? baseSlug : `${baseSlug}-${attempt + 2}`;
-    const { error: rpcErr } = await supabase.rpc("create_business_with_owner", {
-      p_slug: slugCandidate,
-      p_owner_phone: null,
-      p_manager_phone: null,
-    });
-
-    if (!rpcErr) {
-      const updateResult = await updateBusinessMetadata(admin, slugCandidate, {
-        businessName,
-        businessSegment,
-      });
-      if (!updateResult.ok) return { ok: false, error: updateResult.error };
-      return { ok: true, slug: slugCandidate };
-    }
-
-    if (rpcErr.code === "23505" || isDuplicateValueError(rpcErr.message)) {
-      continue;
-    }
-
-    if (!isBrokenRpcTriggerError(rpcErr.message)) {
-      return { ok: false, error: rpcErr.message };
-    }
-
-    // Fallback for broken DB RPC/trigger: create business and membership directly.
-    const { data: createdBusiness, error: createBusinessErr } = await admin
-      .from("businesses")
-      .insert({ slug: slugCandidate, name: businessName, created_by: userId })
-      .select("id, slug")
-      .single();
-
-    if (createBusinessErr) {
-      if (createBusinessErr.code === "23505" || isDuplicateValueError(createBusinessErr.message)) {
-        continue;
-      }
-      if (isMissingColumnError(createBusinessErr.message)) {
-        const { data: fallbackBusiness, error: fallbackErr } = await admin
-          .from("businesses")
-          .insert({ slug: slugCandidate, created_by: userId })
-          .select("id, slug")
-          .single();
-        if (fallbackErr) return { ok: false, error: fallbackErr.message };
-
-        const businessId = String(fallbackBusiness?.id ?? "").trim();
-        if (!businessId) return { ok: false, error: "Business created without id" };
-
-        const { error: membershipErr } = await admin.from("memberships").upsert(
-          { business_id: businessId, user_id: userId, role: "OWNER" },
-          { onConflict: "business_id,user_id" },
-        );
-        if (membershipErr) return { ok: false, error: membershipErr.message };
-
-        const updateResult = await updateBusinessMetadata(admin, slugCandidate, {
-          businessName,
-          businessSegment,
-        });
-        if (!updateResult.ok) return { ok: false, error: updateResult.error };
-        return { ok: true, slug: slugCandidate };
-      }
-      return { ok: false, error: createBusinessErr.message };
-    }
-
-    const businessId = String(createdBusiness?.id ?? "").trim();
-    if (!businessId) return { ok: false, error: "Business created without id" };
-
-    const { error: membershipErr } = await admin.from("memberships").upsert(
-      { business_id: businessId, user_id: userId, role: "OWNER" },
-      { onConflict: "business_id,user_id" },
-    );
-    if (membershipErr) return { ok: false, error: membershipErr.message };
-
-    const updateResult = await updateBusinessMetadata(admin, slugCandidate, {
-      businessName,
-      businessSegment,
-    });
-    if (!updateResult.ok) return { ok: false, error: updateResult.error };
-
-    return { ok: true, slug: slugCandidate };
-  }
-
-  return {
-    ok: false,
-    error: "Could not create business. Try a slightly different name.",
-  };
 }
 
 /** ✅ LOGIN (multi-business):
@@ -498,17 +339,28 @@ export async function createBusinessOnboardingAction(
       }
     }
 
-    const createResult = await createBusinessWithFallback({
+    const createResult = await createBusinessForOwner({
       supabase,
       admin,
       userId: user.id,
       businessName,
     });
-    if (!createResult.ok) return { ok: false, error: createResult.error, next: "" };
+    if (!createResult.ok) {
+      return {
+        ok: false,
+        error: createResult.error.message,
+        errorCode:
+          createResult.error.code === BUSINESS_LIMIT_REACHED_CODE
+            ? BUSINESS_LIMIT_REACHED_CODE
+            : undefined,
+        next: "",
+      };
+    }
 
     return { ok: true, error: "", next: "/app/crm" };
   } catch (e) {
     return { ok: false, error: msg(e), next: "" };
   }
 }
+
 
