@@ -23,6 +23,29 @@ type ProductRow = {
   updated_at: string;
 };
 
+function asProductRow(row: Record<string, unknown>): ProductRow {
+  const statusRaw = String(row.status ?? "").toUpperCase();
+  const status: "ACTIVE" | "INACTIVE" =
+    statusRaw === "INACTIVE" ? "INACTIVE" : "ACTIVE";
+
+  return {
+    id: String(row.id ?? ""),
+    sku: String(row.sku ?? ""),
+    name: String(row.name ?? ""),
+    description:
+      row.description === null || row.description === undefined
+        ? null
+        : String(row.description),
+    uom_code: String(row.uom_code ?? "EA"),
+    is_stock_managed: Boolean(row.is_stock_managed ?? true),
+    default_unit_price: Number(row.default_unit_price ?? 0),
+    default_tax_rate: Number(row.default_tax_rate ?? 0),
+    currency_code: String(row.currency_code ?? "USD"),
+    status,
+    updated_at: String(row.updated_at ?? ""),
+  };
+}
+
 function upperRole(r: unknown): Role {
   const s = String(r ?? "").toUpperCase();
   if (s === "OWNER") return "OWNER";
@@ -86,9 +109,7 @@ export default async function CatalogProductsPage({
 
   const { data: productsData, error: productsError } = await admin
     .from("catalog_products")
-    .select(
-      "id, sku, name, description, uom_code, is_stock_managed, default_unit_price, default_tax_rate, currency_code, status, updated_at",
-    )
+    .select("*")
     .eq("business_id", business.id)
     .order("updated_at", { ascending: false })
     .limit(100);
@@ -101,7 +122,9 @@ export default async function CatalogProductsPage({
   }
 
   const adminHref = isAdminEmail(user.email) ? getAdminUsersPath() : undefined;
-  const rows = (productsData ?? []) as ProductRow[];
+  const rows = ((productsData ?? []) as Record<string, unknown>[])
+    .map(asProductRow)
+    .filter((row) => row.id);
 
   return (
     <div className="min-h-[100svh] overflow-x-clip bg-transparent text-[#1F2937]">

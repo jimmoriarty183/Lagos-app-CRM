@@ -24,6 +24,37 @@ type ServiceRow = {
   updated_at: string;
 };
 
+function asServiceRow(row: Record<string, unknown>): ServiceRow {
+  const statusRaw = String(row.status ?? "").toUpperCase();
+  const status: "ACTIVE" | "INACTIVE" =
+    statusRaw === "INACTIVE" ? "INACTIVE" : "ACTIVE";
+
+  return {
+    id: String(row.id ?? ""),
+    service_code: String(row.service_code ?? ""),
+    name: String(row.name ?? ""),
+    description:
+      row.description === null || row.description === undefined
+        ? null
+        : String(row.description),
+    default_unit_price: Number(row.default_unit_price ?? 0),
+    default_tax_rate: Number(row.default_tax_rate ?? 0),
+    currency_code: String(row.currency_code ?? "USD"),
+    default_sla_minutes:
+      row.default_sla_minutes === null || row.default_sla_minutes === undefined
+        ? null
+        : Number(row.default_sla_minutes),
+    default_duration_minutes:
+      row.default_duration_minutes === null ||
+      row.default_duration_minutes === undefined
+        ? null
+        : Number(row.default_duration_minutes),
+    requires_assignee: Boolean(row.requires_assignee ?? false),
+    status,
+    updated_at: String(row.updated_at ?? ""),
+  };
+}
+
 function upperRole(r: unknown): Role {
   const s = String(r ?? "").toUpperCase();
   if (s === "OWNER") return "OWNER";
@@ -87,9 +118,7 @@ export default async function CatalogServicesPage({
 
   const { data: servicesData, error: servicesError } = await admin
     .from("catalog_services")
-    .select(
-      "id, service_code, name, description, default_unit_price, default_tax_rate, currency_code, default_sla_minutes, default_duration_minutes, requires_assignee, status, updated_at",
-    )
+    .select("*")
     .eq("business_id", business.id)
     .order("updated_at", { ascending: false })
     .limit(100);
@@ -102,7 +131,9 @@ export default async function CatalogServicesPage({
   }
 
   const adminHref = isAdminEmail(user.email) ? getAdminUsersPath() : undefined;
-  const rows = (servicesData ?? []) as ServiceRow[];
+  const rows = ((servicesData ?? []) as Record<string, unknown>[])
+    .map(asServiceRow)
+    .filter((row) => row.id);
 
   return (
     <div className="min-h-[100svh] overflow-x-clip bg-transparent text-[#1F2937]">
