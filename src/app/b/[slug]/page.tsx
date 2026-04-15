@@ -1482,7 +1482,6 @@ export default async function Page({ params, searchParams }: PageProps) {
               canManage={canManage}
               canEdit={canEdit}
               userRole={userRole}
-              canSwitchView={isAdminUser}
               actors={teamActors}
               currentUserId={currentUserId}
               currentUserName={currentUserName}
@@ -1545,7 +1544,6 @@ export default async function Page({ params, searchParams }: PageProps) {
             canManage={canManage}
             canEdit={canEdit}
             userRole={userRole}
-            canSwitchView={isAdminUser}
             actors={teamActors}
             currentUserId={currentUserId}
             currentUserName={currentUserName}

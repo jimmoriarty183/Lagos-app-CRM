@@ -156,7 +156,6 @@ type Props = {
     done: number;
     canceled: number;
   };
-  canSwitchView: boolean;
   canManage: boolean;
   canEdit: boolean;
   userRole: UserRole;
@@ -825,7 +824,6 @@ export default function DesktopOrdersTable({
   perPage,
   totalPages,
   hiddenKanbanCounts,
-  canSwitchView,
   canManage,
   canEdit,
   userRole,
@@ -1768,47 +1766,40 @@ export default function DesktopOrdersTable({
               </a>
             ) : null}
 
-            {canSwitchView ? (
-              <div className="inline-flex items-center rounded-xl border border-[var(--brand-200)] bg-[var(--brand-50)] p-1">
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (viewMode === "list") return;
-                    setViewMode("list");
-                    navigateWithFallback(viewHref("list"));
-                  }}
-                  className={[
-                    "inline-flex h-9 items-center gap-2 rounded-lg px-3.5 text-[15px] font-medium transition",
-                    viewMode === "list"
-                      ? "border border-[var(--brand-200)] bg-white text-[#1F2937] shadow-[0_8px_18px_rgba(91,91,179,0.12)]"
-                      : "border border-transparent text-[#6B7280] hover:text-[#1F2937]",
-                  ].join(" ")}
-                >
-                  <List className="h-[15px] w-[15px]" />
-                  List
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    navigateToKanbanWithBanner();
-                  }}
-                  className={[
-                    "inline-flex h-9 items-center gap-2 rounded-lg px-3.5 text-[15px] font-medium transition",
-                    viewMode === "kanban"
-                      ? "border border-[var(--brand-200)] bg-white text-[#1F2937] shadow-[0_8px_18px_rgba(91,91,179,0.12)]"
-                      : "border border-transparent text-[#6B7280] hover:text-[#1F2937]",
-                  ].join(" ")}
-                >
-                  <Columns3 className="h-[15px] w-[15px]" />
-                  Kanban
-                </button>
-              </div>
-            ) : (
-              <div className="inline-flex h-10 items-center gap-2 rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] px-3.5 text-[13px] font-medium text-[#4B5563]">
-                <Eye className="h-4 w-4 text-[#6B7280]" />
-                View only: {viewMode === "kanban" ? "Kanban" : "List"}
-              </div>
-            )}
+            <div className="inline-flex items-center rounded-xl border border-[var(--brand-200)] bg-[var(--brand-50)] p-1">
+              <button
+                type="button"
+                onClick={() => {
+                  if (viewMode === "list") return;
+                  setViewMode("list");
+                  navigateWithFallback(viewHref("list"));
+                }}
+                className={[
+                  "inline-flex h-9 items-center gap-2 rounded-lg px-3.5 text-[15px] font-medium transition",
+                  viewMode === "list"
+                    ? "border border-[var(--brand-200)] bg-white text-[#1F2937] shadow-[0_8px_18px_rgba(91,91,179,0.12)]"
+                    : "border border-transparent text-[#6B7280] hover:text-[#1F2937]",
+                ].join(" ")}
+              >
+                <List className="h-[15px] w-[15px]" />
+                List
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  navigateToKanbanWithBanner();
+                }}
+                className={[
+                  "inline-flex h-9 items-center gap-2 rounded-lg px-3.5 text-[15px] font-medium transition",
+                  viewMode === "kanban"
+                    ? "border border-[var(--brand-200)] bg-white text-[#1F2937] shadow-[0_8px_18px_rgba(91,91,179,0.12)]"
+                    : "border border-transparent text-[#6B7280] hover:text-[#1F2937]",
+                ].join(" ")}
+              >
+                <Columns3 className="h-[15px] w-[15px]" />
+                Kanban
+              </button>
+            </div>
           </div>
         </div>
 

@@ -68,6 +68,7 @@ export default function TopBar({
   const resolvedSettingsHref = settingsHref ?? "/app/settings";
   const profileHref = "/app/profile";
   const canManage = role === "OWNER" || role === "MANAGER";
+  const isAdminUser = Boolean(adminHref);
   const hasSplitTodoCounters =
     typeof overdueCount === "number" || typeof todayCount === "number";
   const overdueCounter = Math.max(0, Number(overdueCount ?? 0));
@@ -85,7 +86,9 @@ export default function TopBar({
     return `${basePath}?${params.toString()}`;
   }, [todayHref]);
   const moduleTabs = React.useMemo(() => {
-    const modules = getVisiblePlatformModules();
+    const modules = getVisiblePlatformModules().filter(
+      (module) => module.key !== "tasks" || isAdminUser,
+    );
     return modules.map((module) => {
       const href = module.key === "crm" ? dashboardHref : module.href;
       const active =
@@ -94,7 +97,7 @@ export default function TopBar({
           : Boolean(pathname?.startsWith(module.href));
       return { key: module.key, label: module.name, href, active };
     });
-  }, [dashboardHref, pathname]);
+  }, [dashboardHref, isAdminUser, pathname]);
 
   const handleSelect = (slug: string) => {
     document.cookie = `active_business_slug=${encodeURIComponent(slug)}; path=/; max-age=${60 * 60 * 24 * 365}`;
