@@ -127,7 +127,7 @@ export default async function CatalogProductsPage({
     productsResult.error &&
     isMissingBusinessIdColumnError(productsResult.error.message)
   ) {
-    productsResult = await baseProductsQuery();
+    productsResult = await baseProductsQuery().eq("created_by", user.id);
   }
   const { data: productsData, error: productsError } = productsResult;
 
@@ -148,7 +148,9 @@ export default async function CatalogProductsPage({
       <TeamAccessTopBar
         ordersHref="/app/crm"
         userLabel={user.email || user.phone || "User"}
+        roleLabel={role.toLowerCase()}
         adminHref={adminHref}
+        userAvatarUrl={String(user.user_metadata?.avatar_url ?? "") || undefined}
         profileHref={
           user.phone
             ? `/m/${encodeURIComponent(user.phone)}`

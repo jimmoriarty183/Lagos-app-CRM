@@ -145,6 +145,7 @@ export async function createCatalogProduct(input: {
       existingSkuResult = await admin
         .from("catalog_products")
         .select("id, sku")
+        .eq("created_by", userId)
         .limit(2000);
     }
     if (existingSkuResult.error) throw new Error(existingSkuResult.error.message);
@@ -264,7 +265,8 @@ export async function setCatalogProductStatus(input: {
       updateResult = await admin
         .from("catalog_products")
         .update({ status: input.status, updated_by: userId })
-        .eq("id", input.productId);
+        .eq("id", input.productId)
+        .eq("created_by", userId);
     }
     if (updateResult.error) throw new Error(updateResult.error.message);
     revalidatePath(`/b/${input.businessSlug}/catalog/products`);
@@ -351,7 +353,8 @@ export async function setCatalogServiceStatus(input: {
       updateResult = await admin
         .from("catalog_services")
         .update({ status: input.status, updated_by: userId })
-        .eq("id", input.serviceId);
+        .eq("id", input.serviceId)
+        .eq("created_by", userId);
     }
     if (updateResult.error) throw new Error(updateResult.error.message);
     revalidatePath(`/b/${input.businessSlug}/catalog/services`);
