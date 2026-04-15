@@ -100,6 +100,7 @@ export async function createCatalogProduct(input: {
     const initialStockQty = Math.max(0, parseFiniteNumber(input.initialStockQty) ?? 0);
 
     const payload = {
+      business_id: businessId,
       sku: cleanText(input.sku),
       name: cleanText(input.name),
       description: cleanText(input.description) || null,
@@ -124,6 +125,7 @@ export async function createCatalogProduct(input: {
     const { data: existingSkuRows, error: existingSkuError } = await admin
       .from("catalog_products")
       .select("id, sku")
+      .eq("business_id", businessId)
       .limit(2000);
     if (existingSkuError) throw new Error(existingSkuError.message);
     const skuExists = (existingSkuRows ?? []).some((row) => {
@@ -217,11 +219,12 @@ export async function setCatalogProductStatus(input: {
   status: "ACTIVE" | "INACTIVE";
 }) {
   try {
-    const { admin, userId } = await requireCatalogManagerAccess(input.businessSlug);
+    const { admin, userId, businessId } = await requireCatalogManagerAccess(input.businessSlug);
     const { error } = await admin
       .from("catalog_products")
       .update({ status: input.status, updated_by: userId })
-      .eq("id", input.productId);
+      .eq("id", input.productId)
+      .eq("business_id", businessId);
     if (error) throw new Error(error.message);
     revalidatePath(`/b/${input.businessSlug}/catalog/products`);
     revalidatePath(`/b/${input.businessSlug}/settings/catalog/products`);
@@ -244,11 +247,12 @@ export async function createCatalogService(input: {
   requiresAssignee: boolean;
 }) {
   try {
-    const { admin, userId } = await requireCatalogManagerAccess(input.businessSlug);
+    const { admin, userId, businessId } = await requireCatalogManagerAccess(input.businessSlug);
     const defaultUnitPrice = parseRequiredNumber(input.defaultUnitPrice);
     const defaultTaxRate = parseRequiredNumber(input.defaultTaxRate);
 
     const payload = {
+      business_id: businessId,
       service_code: cleanText(input.serviceCode),
       name: cleanText(input.name),
       description: cleanText(input.description) || null,
@@ -287,11 +291,12 @@ export async function setCatalogServiceStatus(input: {
   status: "ACTIVE" | "INACTIVE";
 }) {
   try {
-    const { admin, userId } = await requireCatalogManagerAccess(input.businessSlug);
+    const { admin, userId, businessId } = await requireCatalogManagerAccess(input.businessSlug);
     const { error } = await admin
       .from("catalog_services")
       .update({ status: input.status, updated_by: userId })
-      .eq("id", input.serviceId);
+      .eq("id", input.serviceId)
+      .eq("business_id", businessId);
     if (error) throw new Error(error.message);
     revalidatePath(`/b/${input.businessSlug}/catalog/services`);
     revalidatePath(`/b/${input.businessSlug}/settings/catalog/services`);

@@ -483,6 +483,7 @@ export async function getCatalogOrderLineOptions(input: { businessId: string }) 
         admin
           .from("catalog_products")
           .select("id, sku, name, default_unit_price, default_tax_rate, currency_code, uom_code")
+          .eq("business_id", input.businessId)
           .eq("status", "ACTIVE")
           .eq("is_deleted", false)
           .order("name", { ascending: true })
@@ -490,6 +491,7 @@ export async function getCatalogOrderLineOptions(input: { businessId: string }) 
         admin
           .from("catalog_services")
           .select("id, service_code, name, default_unit_price, default_tax_rate, currency_code")
+          .eq("business_id", input.businessId)
           .eq("status", "ACTIVE")
           .eq("is_deleted", false)
           .order("name", { ascending: true })
@@ -1049,6 +1051,7 @@ export async function createOrderFromClientPayload(
       const { data: existingQuickProduct, error: existingQuickProductError } = await admin
         .from("catalog_products")
         .select("id, name, description, uom_code, default_tax_rate")
+        .eq("business_id", businessId)
         .eq("sku", sku)
         .eq("is_deleted", false)
         .limit(1)
@@ -1069,6 +1072,7 @@ export async function createOrderFromClientPayload(
       const { data: createdQuickProduct, error: createQuickProductError } = await admin
         .from("catalog_products")
         .insert({
+          business_id: businessId,
           sku,
           name: line.newProduct.name,
           description: null,
@@ -1099,6 +1103,7 @@ export async function createOrderFromClientPayload(
         ? admin
             .from("catalog_products")
             .select("id, name, description, uom_code, default_tax_rate")
+            .eq("business_id", businessId)
             .in("id", productIds)
             .eq("is_deleted", false)
         : Promise.resolve({ data: [], error: null }),
@@ -1106,6 +1111,7 @@ export async function createOrderFromClientPayload(
         ? admin
             .from("catalog_services")
             .select("id, name, description, default_tax_rate")
+            .eq("business_id", businessId)
             .in("id", serviceIds)
             .eq("is_deleted", false)
         : Promise.resolve({ data: [], error: null }),
@@ -1738,6 +1744,7 @@ export async function addOrderLineToExistingOrder(input: {
           await admin
             .from("catalog_products")
             .select("id, name, description, uom_code, default_tax_rate")
+            .eq("business_id", businessId)
             .eq("sku", newProductSku)
             .eq("is_deleted", false)
             .limit(1)
@@ -1757,6 +1764,7 @@ export async function addOrderLineToExistingOrder(input: {
             await admin
               .from("catalog_products")
               .insert({
+                business_id: businessId,
                 sku: newProductSku,
                 name: newProductName,
                 description: null,
@@ -1785,6 +1793,7 @@ export async function addOrderLineToExistingOrder(input: {
         const { data: selectedProduct, error: productError } = await admin
           .from("catalog_products")
           .select("id, name, description, uom_code, default_tax_rate")
+          .eq("business_id", businessId)
           .eq("id", catalogItemId)
           .eq("is_deleted", false)
           .maybeSingle();
@@ -1834,6 +1843,7 @@ export async function addOrderLineToExistingOrder(input: {
       const { data: service, error: serviceError } = await admin
         .from("catalog_services")
         .select("id, name, description, default_tax_rate")
+        .eq("business_id", businessId)
         .eq("id", catalogItemId)
         .eq("is_deleted", false)
         .maybeSingle();

@@ -89,6 +89,7 @@ export default async function CatalogProductsPage({
     .select(
       "id, sku, name, description, uom_code, is_stock_managed, default_unit_price, default_tax_rate, currency_code, status, updated_at",
     )
+    .eq("business_id", business.id)
     .order("updated_at", { ascending: false })
     .limit(100);
 

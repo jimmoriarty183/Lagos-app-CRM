@@ -69,10 +69,11 @@ async function requireBusinessMemberAccess(businessId: string, userId: string) {
 
 async function syncStockReservationQuantities(input: {
   admin: ReturnType<typeof supabaseAdmin>;
+  businessId: string;
   orderId: string;
   actorId: string;
 }) {
-  const { admin, orderId, actorId } = input;
+  const { admin, businessId, orderId, actorId } = input;
   const { data: lines, error: linesError } = await admin
     .from("order_lines")
     .select("id, catalog_product_id, qty, reservation_required_qty, reserved_qty, line_type")
@@ -96,6 +97,7 @@ async function syncStockReservationQuantities(input: {
     const { data: products, error: productsError } = await admin
       .from("catalog_products")
       .select("id, is_stock_managed")
+      .eq("business_id", businessId)
       .in("id", productIds);
 
     if (productsError) {
@@ -242,6 +244,7 @@ export async function POST(
     // Stock-managed products reserve qty from warehouse; non-stock products skip warehouse logic.
     await syncStockReservationQuantities({
       admin,
+      businessId,
       orderId: orderIdNormalized,
       actorId: user.id,
     });

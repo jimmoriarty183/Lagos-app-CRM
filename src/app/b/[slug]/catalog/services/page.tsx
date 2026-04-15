@@ -90,6 +90,7 @@ export default async function CatalogServicesPage({
     .select(
       "id, service_code, name, description, default_unit_price, default_tax_rate, currency_code, default_sla_minutes, default_duration_minutes, requires_assignee, status, updated_at",
     )
+    .eq("business_id", business.id)
     .order("updated_at", { ascending: false })
     .limit(100);
 

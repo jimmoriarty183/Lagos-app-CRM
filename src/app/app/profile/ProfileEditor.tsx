@@ -16,12 +16,17 @@ type Props = {
     avatarUrl: string;
   };
   workspace: {
+    id: string;
     name: string;
     slug: string;
   };
+  identities: {
+    userId: string;
+    businessId: string;
+  };
 };
 
-export default function ProfileEditor({ initial, workspace }: Props) {
+export default function ProfileEditor({ initial, workspace, identities }: Props) {
   const [firstName, setFirstName] = useState(initial.firstName);
   const [lastName, setLastName] = useState(initial.lastName);
   const [phone, setPhone] = useState(initial.phone);
@@ -344,6 +349,20 @@ export default function ProfileEditor({ initial, workspace }: Props) {
             >
               Open workspace settings
             </Link>
+          </div>
+
+          <div className="mt-4 rounded-[22px] border border-[#E5E7EB] bg-[#F9FAFB] p-5">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]">
+              Account identifiers
+            </div>
+            <div className="mt-2 text-sm text-[#6B7280]">business_id</div>
+            <div className="mt-1 break-all rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 font-mono text-xs text-[#111827]">
+              {identities.businessId}
+            </div>
+            <div className="mt-3 text-sm text-[#6B7280]">user_id</div>
+            <div className="mt-1 break-all rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 font-mono text-xs text-[#111827]">
+              {identities.userId}
+            </div>
           </div>
         </div>
       </div>

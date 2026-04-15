@@ -38,8 +38,13 @@ export default async function ProfilePage() {
         avatarUrl: String(profile?.avatar_url ?? "").trim(),
       }}
       workspace={{
+        id: workspace.id,
         name: workspace.name || workspace.slug,
         slug: workspace.slug,
+      }}
+      identities={{
+        userId: user.id,
+        businessId: workspace.id,
       }}
     />
   );

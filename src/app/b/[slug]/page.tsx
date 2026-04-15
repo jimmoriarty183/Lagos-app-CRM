@@ -482,7 +482,8 @@ export default async function Page({ params, searchParams }: PageProps) {
   const canManage = userRole === "OWNER" || userRole === "MANAGER";
   const canEdit = canManage;
   const canSeeAnalyticsNav = userRole === "OWNER";
-  const adminHref = isAdminEmail(user?.email) ? getAdminUsersPath() : undefined;
+  const isAdminUser = isAdminEmail(user?.email);
+  const adminHref = isAdminUser ? getAdminUsersPath() : undefined;
   const currentUserId = user?.id ?? null;
   let currentUserName =
     bypassUser && !user
@@ -885,7 +886,7 @@ export default async function Page({ params, searchParams }: PageProps) {
         slug: String(b.slug),
         name: String(b.name ?? b.slug),
         role: upperRole(roleForBiz),
-        isAdmin: isAdminEmail(user?.email),
+        isAdmin: isAdminUser,
       };
     })
     .sort((a: any, b: any) => a.name.localeCompare(b.name));
@@ -1481,6 +1482,7 @@ export default async function Page({ params, searchParams }: PageProps) {
               canManage={canManage}
               canEdit={canEdit}
               userRole={userRole}
+              canSwitchView={isAdminUser}
               actors={teamActors}
               currentUserId={currentUserId}
               currentUserName={currentUserName}
@@ -1543,6 +1545,7 @@ export default async function Page({ params, searchParams }: PageProps) {
             canManage={canManage}
             canEdit={canEdit}
             userRole={userRole}
+            canSwitchView={isAdminUser}
             actors={teamActors}
             currentUserId={currentUserId}
             currentUserName={currentUserName}

@@ -267,6 +267,7 @@ export default function MobileOrdersList({
   canManage,
   canEdit,
   userRole,
+  canSwitchView,
   actors,
   currentUserId,
   currentUserName,
@@ -295,6 +296,7 @@ export default function MobileOrdersList({
   canManage: boolean;
   canEdit: boolean;
   userRole: UserRole;
+  canSwitchView: boolean;
   actors: TeamActor[];
   currentUserId: string | null;
   currentUserName: string;
@@ -767,38 +769,45 @@ export default function MobileOrdersList({
 
         <div className="mt-4 grid gap-3">
           <div className="flex flex-wrap items-center gap-2">
-            <div className="inline-flex flex-1 items-center rounded-xl border border-[#C7D2FE] bg-[#EEF2FF] p-1">
-              <button
-                type="button"
-                onClick={() => {
-                  handleViewModeChange("list");
-                }}
-                className={[
-                  "inline-flex h-9 flex-1 items-center justify-center gap-2 rounded-lg text-sm font-medium transition",
-                  viewMode === "list"
-                    ? "border border-[var(--brand-200)] bg-white text-[#1F2937] shadow-[0_8px_18px_rgba(91,91,179,0.12)]"
-                    : "border border-transparent text-[#6B7280] hover:text-[#1F2937]",
-                ].join(" ")}
-              >
-                <List className="h-4 w-4" />
-                List
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  handleViewModeChange("kanban");
-                }}
-                className={[
-                  "inline-flex h-9 flex-1 items-center justify-center gap-2 rounded-lg text-sm font-medium transition",
-                  viewMode === "kanban"
-                    ? "border border-[var(--brand-200)] bg-white text-[#1F2937] shadow-[0_8px_18px_rgba(91,91,179,0.12)]"
-                    : "border border-transparent text-[#6B7280] hover:text-[#1F2937]",
-                ].join(" ")}
-              >
-                <Columns3 className="h-4 w-4" />
-                Kanban
-              </button>
-            </div>
+            {canSwitchView ? (
+              <div className="inline-flex flex-1 items-center rounded-xl border border-[#C7D2FE] bg-[#EEF2FF] p-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleViewModeChange("list");
+                  }}
+                  className={[
+                    "inline-flex h-9 flex-1 items-center justify-center gap-2 rounded-lg text-sm font-medium transition",
+                    viewMode === "list"
+                      ? "border border-[var(--brand-200)] bg-white text-[#1F2937] shadow-[0_8px_18px_rgba(91,91,179,0.12)]"
+                      : "border border-transparent text-[#6B7280] hover:text-[#1F2937]",
+                  ].join(" ")}
+                >
+                  <List className="h-4 w-4" />
+                  List
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleViewModeChange("kanban");
+                  }}
+                  className={[
+                    "inline-flex h-9 flex-1 items-center justify-center gap-2 rounded-lg text-sm font-medium transition",
+                    viewMode === "kanban"
+                      ? "border border-[var(--brand-200)] bg-white text-[#1F2937] shadow-[0_8px_18px_rgba(91,91,179,0.12)]"
+                      : "border border-transparent text-[#6B7280] hover:text-[#1F2937]",
+                  ].join(" ")}
+                >
+                  <Columns3 className="h-4 w-4" />
+                  Kanban
+                </button>
+              </div>
+            ) : (
+              <div className="inline-flex h-11 items-center gap-2 rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] px-3.5 text-sm font-medium text-[#4B5563]">
+                <Eye className="h-4 w-4 text-[#6B7280]" />
+                View only: {viewMode === "kanban" ? "Kanban" : "List"}
+              </div>
+            )}
             <button
               type="button"
               onClick={openFilters}
