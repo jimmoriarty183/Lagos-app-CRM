@@ -72,6 +72,14 @@ function getCatalogSchemaWarning(message: string) {
   return null;
 }
 
+function isMissingBusinessIdColumnError(message: string) {
+  const normalized = String(message).toLowerCase();
+  return (
+    normalized.includes("column catalog_services.business_id does not exist") ||
+    normalized.includes("column business_id does not exist")
+  );
+}
+
 export default async function CatalogServicesPage({
   params,
 }: {
@@ -116,12 +124,21 @@ export default async function CatalogServicesPage({
     redirect(`/login?next=${encodeURIComponent(nextPath)}`);
   }
 
-  const { data: servicesData, error: servicesError } = await admin
-    .from("catalog_services")
-    .select("*")
-    .eq("business_id", business.id)
-    .order("updated_at", { ascending: false })
-    .limit(100);
+  const baseServicesQuery = () =>
+    admin
+      .from("catalog_services")
+      .select("*")
+      .order("updated_at", { ascending: false })
+      .limit(100);
+
+  let servicesResult = await baseServicesQuery().eq("business_id", business.id);
+  if (
+    servicesResult.error &&
+    isMissingBusinessIdColumnError(servicesResult.error.message)
+  ) {
+    servicesResult = await baseServicesQuery();
+  }
+  const { data: servicesData, error: servicesError } = servicesResult;
 
   const schemaWarning = servicesError
     ? getCatalogSchemaWarning(servicesError.message)

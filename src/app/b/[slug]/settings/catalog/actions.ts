@@ -38,6 +38,17 @@ function normalizeCatalogError(error: unknown) {
   return message;
 }
 
+function isMissingBusinessIdColumnError(
+  message: string,
+  table: "catalog_products" | "catalog_services",
+) {
+  const normalized = String(message).toLowerCase();
+  return (
+    normalized.includes(`column ${table}.business_id does not exist`) ||
+    normalized.includes("column business_id does not exist")
+  );
+}
+
 function buildWarehouseCodeForBusiness(businessId: string) {
   const normalized = cleanText(businessId).replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
   const suffix = normalized.slice(0, 12) || "DEFAULT";
@@ -99,8 +110,7 @@ export async function createCatalogProduct(input: {
     const defaultTaxRate = parseRequiredNumber(input.defaultTaxRate);
     const initialStockQty = Math.max(0, parseFiniteNumber(input.initialStockQty) ?? 0);
 
-    const payload = {
-      business_id: businessId,
+    const payloadBase = {
       sku: cleanText(input.sku),
       name: cleanText(input.name),
       description: cleanText(input.description) || null,
@@ -113,21 +123,32 @@ export async function createCatalogProduct(input: {
       created_by: userId,
       updated_by: userId,
     };
+    const payloadWithBusiness = { ...payloadBase, business_id: businessId };
 
-    if (!payload.sku || !payload.name || !payload.uom_code || !payload.currency_code) {
+    if (!payloadBase.sku || !payloadBase.name || !payloadBase.uom_code || !payloadBase.currency_code) {
       throw new Error("SKU, name, UOM and currency are required");
     }
-    if (payload.default_unit_price === null || payload.default_tax_rate === null) {
+    if (payloadBase.default_unit_price === null || payloadBase.default_tax_rate === null) {
       throw new Error("Unit price and tax rate are required");
     }
 
-    const normalizedSku = cleanText(payload.sku).toUpperCase();
-    const { data: existingSkuRows, error: existingSkuError } = await admin
+    const normalizedSku = cleanText(payloadBase.sku).toUpperCase();
+    let existingSkuResult = await admin
       .from("catalog_products")
       .select("id, sku")
       .eq("business_id", businessId)
       .limit(2000);
-    if (existingSkuError) throw new Error(existingSkuError.message);
+    if (
+      existingSkuResult.error &&
+      isMissingBusinessIdColumnError(existingSkuResult.error.message, "catalog_products")
+    ) {
+      existingSkuResult = await admin
+        .from("catalog_products")
+        .select("id, sku")
+        .limit(2000);
+    }
+    if (existingSkuResult.error) throw new Error(existingSkuResult.error.message);
+    const existingSkuRows = existingSkuResult.data;
     const skuExists = (existingSkuRows ?? []).some((row) => {
       const rowSku = cleanText((row as { sku?: string | null }).sku).toUpperCase();
       return rowSku === normalizedSku;
@@ -136,14 +157,25 @@ export async function createCatalogProduct(input: {
       throw new Error("SKU already exists");
     }
 
-    const { data: createdProduct, error } = await admin
+    let createdProductResult = await admin
       .from("catalog_products")
-      .insert(payload)
+      .insert(payloadWithBusiness)
       .select("id")
       .single();
-    if (error) throw new Error(error.message);
+    if (
+      createdProductResult.error &&
+      isMissingBusinessIdColumnError(createdProductResult.error.message, "catalog_products")
+    ) {
+      createdProductResult = await admin
+        .from("catalog_products")
+        .insert(payloadBase)
+        .select("id")
+        .single();
+    }
+    if (createdProductResult.error) throw new Error(createdProductResult.error.message);
+    const createdProduct = createdProductResult.data;
 
-    if (payload.is_stock_managed) {
+    if (payloadBase.is_stock_managed) {
       const warehouseCode = buildWarehouseCodeForBusiness(businessId);
       const { data: warehouseCandidate, error: warehouseError } = await admin
         .from("warehouses")
@@ -220,12 +252,21 @@ export async function setCatalogProductStatus(input: {
 }) {
   try {
     const { admin, userId, businessId } = await requireCatalogManagerAccess(input.businessSlug);
-    const { error } = await admin
+    let updateResult = await admin
       .from("catalog_products")
       .update({ status: input.status, updated_by: userId })
       .eq("id", input.productId)
       .eq("business_id", businessId);
-    if (error) throw new Error(error.message);
+    if (
+      updateResult.error &&
+      isMissingBusinessIdColumnError(updateResult.error.message, "catalog_products")
+    ) {
+      updateResult = await admin
+        .from("catalog_products")
+        .update({ status: input.status, updated_by: userId })
+        .eq("id", input.productId);
+    }
+    if (updateResult.error) throw new Error(updateResult.error.message);
     revalidatePath(`/b/${input.businessSlug}/catalog/products`);
     revalidatePath(`/b/${input.businessSlug}/settings/catalog/products`);
     return { ok: true as const };
@@ -251,8 +292,7 @@ export async function createCatalogService(input: {
     const defaultUnitPrice = parseRequiredNumber(input.defaultUnitPrice);
     const defaultTaxRate = parseRequiredNumber(input.defaultTaxRate);
 
-    const payload = {
-      business_id: businessId,
+    const payloadBase = {
       service_code: cleanText(input.serviceCode),
       name: cleanText(input.name),
       description: cleanText(input.description) || null,
@@ -266,16 +306,23 @@ export async function createCatalogService(input: {
       created_by: userId,
       updated_by: userId,
     };
+    const payloadWithBusiness = { ...payloadBase, business_id: businessId };
 
-    if (!payload.service_code || !payload.name || !payload.currency_code) {
+    if (!payloadBase.service_code || !payloadBase.name || !payloadBase.currency_code) {
       throw new Error("Service code, name and currency are required");
     }
-    if (payload.default_unit_price === null || payload.default_tax_rate === null) {
+    if (payloadBase.default_unit_price === null || payloadBase.default_tax_rate === null) {
       throw new Error("Unit price and tax rate are required");
     }
 
-    const { error } = await admin.from("catalog_services").insert(payload);
-    if (error) throw new Error(error.message);
+    let insertResult = await admin.from("catalog_services").insert(payloadWithBusiness);
+    if (
+      insertResult.error &&
+      isMissingBusinessIdColumnError(insertResult.error.message, "catalog_services")
+    ) {
+      insertResult = await admin.from("catalog_services").insert(payloadBase);
+    }
+    if (insertResult.error) throw new Error(insertResult.error.message);
 
     revalidatePath(`/b/${input.businessSlug}/catalog/services`);
     revalidatePath(`/b/${input.businessSlug}/settings/catalog/services`);
@@ -292,12 +339,21 @@ export async function setCatalogServiceStatus(input: {
 }) {
   try {
     const { admin, userId, businessId } = await requireCatalogManagerAccess(input.businessSlug);
-    const { error } = await admin
+    let updateResult = await admin
       .from("catalog_services")
       .update({ status: input.status, updated_by: userId })
       .eq("id", input.serviceId)
       .eq("business_id", businessId);
-    if (error) throw new Error(error.message);
+    if (
+      updateResult.error &&
+      isMissingBusinessIdColumnError(updateResult.error.message, "catalog_services")
+    ) {
+      updateResult = await admin
+        .from("catalog_services")
+        .update({ status: input.status, updated_by: userId })
+        .eq("id", input.serviceId);
+    }
+    if (updateResult.error) throw new Error(updateResult.error.message);
     revalidatePath(`/b/${input.businessSlug}/catalog/services`);
     revalidatePath(`/b/${input.businessSlug}/settings/catalog/services`);
     return { ok: true as const };

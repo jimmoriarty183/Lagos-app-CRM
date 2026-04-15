@@ -63,6 +63,14 @@ function getCatalogSchemaWarning(message: string) {
   return null;
 }
 
+function isMissingBusinessIdColumnError(message: string) {
+  const normalized = String(message).toLowerCase();
+  return (
+    normalized.includes("column catalog_products.business_id does not exist") ||
+    normalized.includes("column business_id does not exist")
+  );
+}
+
 export default async function CatalogProductsPage({
   params,
 }: {
@@ -107,12 +115,21 @@ export default async function CatalogProductsPage({
     redirect(`/login?next=${encodeURIComponent(nextPath)}`);
   }
 
-  const { data: productsData, error: productsError } = await admin
-    .from("catalog_products")
-    .select("*")
-    .eq("business_id", business.id)
-    .order("updated_at", { ascending: false })
-    .limit(100);
+  const baseProductsQuery = () =>
+    admin
+      .from("catalog_products")
+      .select("*")
+      .order("updated_at", { ascending: false })
+      .limit(100);
+
+  let productsResult = await baseProductsQuery().eq("business_id", business.id);
+  if (
+    productsResult.error &&
+    isMissingBusinessIdColumnError(productsResult.error.message)
+  ) {
+    productsResult = await baseProductsQuery();
+  }
+  const { data: productsData, error: productsError } = productsResult;
 
   const schemaWarning = productsError
     ? getCatalogSchemaWarning(productsError.message)
