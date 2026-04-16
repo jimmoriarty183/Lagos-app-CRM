@@ -77,7 +77,7 @@ export async function resolveOwnerAccountId(
     .from("memberships")
     .select("business_id")
     .eq("user_id", ownerUserId)
-    .or("role.eq.OWNER,role.eq.owner")
+    .eq("role", "owner")
     .limit(20);
   if (membershipsResult.error) {
     throw membershipsResult.error;
@@ -142,7 +142,7 @@ export async function countOwnerBusinesses(
     .from("memberships")
     .select("business_id", { count: "exact", head: true })
     .eq("user_id", ownerUserId)
-    .or("role.eq.OWNER,role.eq.owner");
+    .eq("role", "owner");
 
   if (error) throw error;
 

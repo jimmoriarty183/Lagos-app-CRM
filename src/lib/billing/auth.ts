@@ -40,7 +40,7 @@ async function isAccountOwnedByUser(
         .select("id")
         .eq("business_id", businessId)
         .eq("user_id", userId)
-        .or("role.eq.OWNER,role.eq.owner")
+        .eq("role", "owner")
         .maybeSingle();
       if (membership.error && !isNoRowsError(membership.error)) throw membership.error;
       if (membership.data) return true;
