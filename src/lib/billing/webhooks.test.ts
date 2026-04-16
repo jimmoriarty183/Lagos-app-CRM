@@ -63,3 +63,30 @@ test("normalize paddle webhook normalizes underscore event types", () => {
   assert.equal(normalized.paddlePriceId, "pri_456");
 });
 
+test("normalize paddle webhook parses JSON string custom_data", () => {
+  const normalized = normalizePaddleWebhookEvent({
+    event_id: "evt_3",
+    event_type: "subscription_created",
+    data: {
+      id: "sub_789",
+      customer_id: "ctm_789",
+      status: "trialing",
+      current_billing_period: {
+        starts_at: "2026-04-01T00:00:00Z",
+        ends_at: "2026-05-01T00:00:00Z",
+      },
+      custom_data: JSON.stringify({ account_id: "acc_789", owner_user_id: "user_789" }),
+      items: [
+        {
+          price: { id: "pri_789" },
+          product: { id: "pro_789" },
+        },
+      ],
+    },
+  });
+
+  assert.equal(normalized.accountId, "acc_789");
+  assert.equal(normalized.ownerUserId, "user_789");
+  assert.equal(normalized.paddlePriceId, "pri_789");
+});
+
