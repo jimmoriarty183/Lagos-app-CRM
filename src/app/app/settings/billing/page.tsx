@@ -188,7 +188,7 @@ export default async function BillingSettingsPage({
     normalizedSubscriptionStatus !== "canceled" &&
     normalizedSubscriptionStatus !== "expired";
   const statusLabel = hasScheduledCancellation
-    ? "Cancellation scheduled"
+    ? "Canceled"
     : subscription?.status
       ? toTitle(subscription.status)
       : "No active subscription";

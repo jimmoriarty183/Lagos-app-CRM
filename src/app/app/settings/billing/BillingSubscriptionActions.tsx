@@ -83,7 +83,7 @@ export default function BillingSubscriptionActions(
         {isTerminalStatus
           ? "Already canceled"
           : props.cancelAtPeriodEnd
-          ? "Cancellation scheduled"
+          ? "Canceled"
           : loading
             ? "Requesting..."
             : "Cancel subscription"}
