@@ -37,3 +37,29 @@ test("normalize paddle webhook extracts key billing fields", () => {
   assert.equal(normalized.accountId, "acc_123");
 });
 
+test("normalize paddle webhook normalizes underscore event types", () => {
+  const normalized = normalizePaddleWebhookEvent({
+    event_id: "evt_2",
+    event_type: "subscription_created",
+    data: {
+      id: "sub_456",
+      customer_id: "ctm_456",
+      status: "trialing",
+      current_billing_period: {
+        starts_at: "2026-04-01T00:00:00Z",
+        ends_at: "2026-04-08T00:00:00Z",
+      },
+      custom_data: { account_id: "acc_456" },
+      items: [
+        {
+          price: { id: "pri_456" },
+          product: { id: "pro_456" },
+        },
+      ],
+    },
+  });
+
+  assert.equal(normalized.eventType, "subscription.created");
+  assert.equal(normalized.paddlePriceId, "pri_456");
+});
+

@@ -66,20 +66,35 @@ export function isDuplicateWebhookInsertError(error: { code?: string } | null) {
   return String(error?.code ?? "") === "23505";
 }
 
+function normalizePaddleEventType(rawEventType: string | null | undefined) {
+  const value = String(rawEventType ?? "").trim().toLowerCase();
+  if (!value) return "unknown";
+  if (value.startsWith("subscription_")) {
+    return value.replace(/^subscription_/, "subscription.");
+  }
+  return value;
+}
+
 export function normalizePaddleWebhookEvent(
   payload: Record<string, unknown>,
 ): NormalizedSubscriptionEvent {
   const envelope = payload as PaddleEnvelope;
   const data = asObject(envelope.data);
-  const firstItem = Array.isArray(data.items)
-    ? (data.items[0] as Record<string, unknown> | undefined)
+  const items = Array.isArray(data.items) ? data.items : undefined;
+  const subscriptionItems = Array.isArray(data.subscription_items)
+    ? data.subscription_items
+    : undefined;
+  const firstItem = (items ?? subscriptionItems) && Array.isArray(items ?? subscriptionItems)
+    ? ((items ?? subscriptionItems)[0] as Record<string, unknown> | undefined)
     : undefined;
 
   return {
     externalEventId:
       String(envelope.event_id ?? "").trim() ||
       String(payload.notification_id ?? "").trim(),
-    eventType: String(envelope.event_type ?? payload.event_type ?? "unknown").trim(),
+    eventType: normalizePaddleEventType(
+      String(envelope.event_type ?? payload.event_type ?? "unknown").trim(),
+    ),
     paddleSubscriptionId:
       readString(data, ["id"]) ??
       readString(data, ["subscription_id"]) ??
@@ -647,6 +662,11 @@ export async function processNormalizedSubscriptionEvent(
   return subscription;
 }
 
+function isSubscriptionWebhookEvent(eventType: string) {
+  const normalized = String(eventType ?? "").trim().toLowerCase();
+  return normalized.startsWith("subscription.") || normalized.startsWith("subscription_");
+}
+
 export async function processWebhookEventRow(
   admin: SupabaseClient,
   event: BillingWebhookEventRow,
@@ -668,6 +688,7 @@ export async function processWebhookEventRow(
     const normalized = normalizePaddleWebhookEvent(event.payload);
     billingLog("debug", "[billing-webhook] normalized", {
       eventId: event.id,
+      eventType: normalized.eventType,
       paddleSubscriptionId: normalized.paddleSubscriptionId,
       paddleCustomerId: normalized.paddleCustomerId,
       accountId: normalized.accountId,
@@ -680,11 +701,11 @@ export async function processWebhookEventRow(
     );
 
     const terminalStatus =
-      normalized.eventType.startsWith("subscription.")
+      isSubscriptionWebhookEvent(normalized.eventType)
         ? "processed"
         : "ignored";
     
-    if (normalized.eventType.startsWith("subscription.") && !relatedSubscription) {
+    if (isSubscriptionWebhookEvent(normalized.eventType) && !relatedSubscription) {
       billingLog("warn", "[billing-webhook] subscription_event_without_result", {
         eventId: event.id,
         eventType: normalized.eventType,
