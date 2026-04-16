@@ -34,6 +34,7 @@ type Props = {
   todoCount?: number;
   overdueCount?: number;
   todayCount?: number;
+  billingHref?: string;
 };
 
 export default function TopBar({
@@ -50,6 +51,7 @@ export default function TopBar({
   supportHref,
   analyticsHref,
   settingsHref,
+  billingHref,
   adminHref,
   clearHref,
   hasActiveFilters = false,
@@ -61,12 +63,16 @@ export default function TopBar({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const dashboardQuery = searchParams.toString();
-  const dashboardHref = dashboardQuery ? `/app/crm?${dashboardQuery}` : "/app/crm";
+  const dashboardHref = dashboardQuery
+    ? `/app/crm?${dashboardQuery}`
+    : "/app/crm";
   const showSwitcher = !!businesses && businesses.length >= 1;
   const userLabel = currentUserName?.trim() || "User";
-  const roleLabel = role === "OWNER" ? "owner" : role === "MANAGER" ? "manager" : "guest";
+  const roleLabel =
+    role === "OWNER" ? "owner" : role === "MANAGER" ? "manager" : "guest";
   const resolvedSettingsHref = settingsHref ?? "/app/settings";
   const profileHref = "/app/profile";
+  const resolvedBillingHref = billingHref ?? "/app/settings/billing";
   const canManage = role === "OWNER" || role === "MANAGER";
   const isAdminUser = Boolean(adminHref);
   const hasSplitTodoCounters =
@@ -93,7 +99,9 @@ export default function TopBar({
       const href = module.key === "crm" ? dashboardHref : module.href;
       const active =
         module.key === "crm"
-          ? Boolean(pathname?.startsWith("/app/crm") || pathname?.startsWith("/b/"))
+          ? Boolean(
+              pathname?.startsWith("/app/crm") || pathname?.startsWith("/b/"),
+            )
           : Boolean(pathname?.startsWith(module.href));
       return { key: module.key, label: module.name, href, active };
     });
@@ -138,7 +146,11 @@ export default function TopBar({
               <span className="sm:hidden">
                 <BrandIcon size={38} />
               </span>
-              <BrandLockup iconSize={34} textClassName="text-[1.75rem]" className="hidden sm:flex" />
+              <BrandLockup
+                iconSize={34}
+                textClassName="text-[1.75rem]"
+                className="hidden sm:flex"
+              />
             </Link>
 
             <div className="hidden min-w-0 sm:block">
@@ -187,7 +199,9 @@ export default function TopBar({
               />
             ) : (
               <div className="flex h-10 min-w-0 items-center rounded-xl border border-[#E5E7EB] bg-white px-3 shadow-sm">
-                <span className="truncate text-sm font-semibold text-[#1F2937]">{businessSlug}</span>
+                <span className="truncate text-sm font-semibold text-[#1F2937]">
+                  {businessSlug}
+                </span>
               </div>
             )}
           </div>
@@ -243,12 +257,16 @@ export default function TopBar({
             ) : null}
 
             <div className="flex items-center gap-2">
-              <InviteInbox businessId={businessId} currentBusinessSlug={businessSlug} />
+              <InviteInbox
+                businessId={businessId}
+                currentBusinessSlug={businessSlug}
+              />
               <UserMenu
                 userLabel={userLabel}
                 roleLabel={roleLabel}
                 profileHref={profileHref}
                 settingsHref={resolvedSettingsHref}
+                billingHref={resolvedBillingHref}
                 adminHref={adminHref}
                 userAvatarUrl={currentUserAvatarUrl}
               />
@@ -256,13 +274,17 @@ export default function TopBar({
           </div>
 
           <div className="flex shrink-0 items-center gap-2 sm:hidden">
-            <InviteInbox businessId={businessId} currentBusinessSlug={businessSlug} />
+            <InviteInbox
+              businessId={businessId}
+              currentBusinessSlug={businessSlug}
+            />
             <UserMenu
               compact
               userLabel={userLabel}
               roleLabel={roleLabel}
               profileHref={profileHref}
               settingsHref={resolvedSettingsHref}
+              billingHref={resolvedBillingHref}
               adminHref={adminHref}
               userAvatarUrl={currentUserAvatarUrl}
             />

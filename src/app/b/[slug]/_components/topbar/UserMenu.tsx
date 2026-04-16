@@ -2,7 +2,14 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ChevronDown, LogOut, Settings, Shield, UserCircle2 } from "lucide-react";
+import {
+  ChevronDown,
+  CreditCard,
+  LogOut,
+  Settings,
+  Shield,
+  UserCircle2,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import {
@@ -19,6 +26,7 @@ export function UserMenu({
   roleLabel,
   profileHref,
   settingsHref,
+  billingHref,
   adminHref,
   userAvatarUrl,
   compact = false,
@@ -27,6 +35,7 @@ export function UserMenu({
   roleLabel: string;
   profileHref: string;
   settingsHref: string;
+  billingHref?: string;
   adminHref?: string;
   userAvatarUrl?: string;
   compact?: boolean;
@@ -111,33 +120,54 @@ export function UserMenu({
         </button>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent
-        align="end"
-        sideOffset={10}
-        className="w-[220px]"
-      >
+      <DropdownMenuContent align="end" sideOffset={10} className="w-[220px]">
         <DropdownMenuLabel className="px-3 py-2">
-          <div className="truncate text-sm font-semibold text-[#1F2937]">{userLabel}</div>
-          <div className="pt-0.5 text-[11px] font-medium capitalize text-[#9CA3AF]">{roleLabel}</div>
+          <div className="truncate text-sm font-semibold text-[#1F2937]">
+            {userLabel}
+          </div>
+          <div className="pt-0.5 text-[11px] font-medium capitalize text-[#9CA3AF]">
+            {roleLabel}
+          </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
 
-        <DropdownMenuItem asChild className="rounded-xl px-3 py-2 text-sm font-medium text-[#374151]">
+        <DropdownMenuItem
+          asChild
+          className="rounded-xl px-3 py-2 text-sm font-medium text-[#374151]"
+        >
           <Link href={profileHref}>
             <UserCircle2 className="h-4 w-4" />
             Profile
           </Link>
         </DropdownMenuItem>
 
-        <DropdownMenuItem asChild className="rounded-xl px-3 py-2 text-sm font-medium text-[#374151]">
+        <DropdownMenuItem
+          asChild
+          className="rounded-xl px-3 py-2 text-sm font-medium text-[#374151]"
+        >
           <Link href={settingsHref}>
             <Settings className="h-4 w-4" />
             Settings
           </Link>
         </DropdownMenuItem>
 
+        {billingHref ? (
+          <DropdownMenuItem
+            asChild
+            className="rounded-xl px-3 py-2 text-sm font-medium text-[#374151]"
+          >
+            <Link href={billingHref}>
+              <CreditCard className="h-4 w-4" />
+              Billing
+            </Link>
+          </DropdownMenuItem>
+        ) : null}
+
         {adminHref ? (
-          <DropdownMenuItem asChild className="rounded-xl px-3 py-2 text-sm font-medium text-[#374151]">
+          <DropdownMenuItem
+            asChild
+            className="rounded-xl px-3 py-2 text-sm font-medium text-[#374151]"
+          >
             <Link href={adminHref}>
               <Shield className="h-4 w-4" />
               Admin

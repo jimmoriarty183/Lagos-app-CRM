@@ -10,6 +10,7 @@ type Props = {
   userLabel: string;
   profileHref: string;
   adminHref?: string;
+  billingHref?: string;
   roleLabel?: string;
   userAvatarUrl?: string;
 };
@@ -19,6 +20,7 @@ export default function TeamAccessTopBar({
   userLabel,
   profileHref,
   adminHref,
+  billingHref,
   roleLabel = "member",
   userAvatarUrl,
 }: Props) {
@@ -55,6 +57,7 @@ export default function TeamAccessTopBar({
               roleLabel={roleLabel}
               profileHref={profileHref}
               settingsHref="/app/settings"
+              billingHref={billingHref ?? "/app/settings/billing"}
               adminHref={adminHref}
               userAvatarUrl={userAvatarUrl}
             />
