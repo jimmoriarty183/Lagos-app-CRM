@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAccountAccess } from "@/lib/billing/auth";
 import { requestCancel } from "@/lib/billing/paddle-service";
+import { PaddleApiError } from "@/lib/billing/paddle-client";
 
 export async function POST(req: Request) {
   try {
@@ -34,6 +35,25 @@ export async function POST(req: Request) {
       upstream,
     });
   } catch (error: unknown) {
+    if (error instanceof PaddleApiError) {
+      const detail = String(error.detail ?? "").toLowerCase();
+      const unauthorizedCancel =
+        (error.status === 401 || error.status === 403) &&
+        detail.includes("not authorized") &&
+        detail.includes("subscription-cancel");
+
+      if (unauthorizedCancel) {
+        return NextResponse.json(
+          {
+            error:
+              "Paddle key does not have permission to cancel subscriptions. Update PADDLE_API_KEY to a key with subscription cancel scope, then retry.",
+            code: "paddle_permission_error",
+          },
+          { status: 403 },
+        );
+      }
+    }
+
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Failed to cancel subscription" },
       { status: 500 },

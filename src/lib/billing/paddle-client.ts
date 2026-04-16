@@ -1,5 +1,26 @@
 type PaddleMethod = "GET" | "POST" | "PATCH";
 
+export class PaddleApiError extends Error {
+  status: number;
+  method: PaddleMethod;
+  path: string;
+  detail: string;
+
+  constructor(input: {
+    status: number;
+    method: PaddleMethod;
+    path: string;
+    detail: string;
+  }) {
+    super(`Paddle API ${input.method} ${input.path} failed: ${input.detail}`);
+    this.name = "PaddleApiError";
+    this.status = input.status;
+    this.method = input.method;
+    this.path = input.path;
+    this.detail = input.detail;
+  }
+}
+
 function getPaddleConfig() {
   const apiKey = process.env.PADDLE_API_KEY || "";
   const baseUrl = process.env.PADDLE_API_BASE_URL || "https://api.paddle.com";
@@ -33,7 +54,12 @@ async function paddleRequest<T>(
   if (!response.ok) {
     const detail =
       payload?.error?.detail || payload?.error?.message || response.statusText;
-    throw new Error(`Paddle API ${method} ${path} failed: ${detail}`);
+    throw new PaddleApiError({
+      status: response.status,
+      method,
+      path,
+      detail,
+    });
   }
 
   return payload;
