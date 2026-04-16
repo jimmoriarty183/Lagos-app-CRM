@@ -467,6 +467,25 @@ export default function PricingPage() {
             </div>
           </section>
 
+          <section className="card planOverview" aria-label="Package overview">
+            <h3>Packages at a glance</h3>
+            <div className="overviewGrid">
+              {plans.map((plan) => (
+                <article key={plan.name}>
+                  <h4>{plan.name}</h4>
+                  <p className="overviewPrice">
+                    Launch price{" "}
+                    {billingCycle === "monthly"
+                      ? `£${plan.launchAmount}/month`
+                      : `£${plan.launchAmount}/year`}
+                  </p>
+                  <p className="overviewText">{plan.description}</p>
+                  <p className="overviewNote">{plan.priceNote[billingCycle]}</p>
+                </article>
+              ))}
+            </div>
+          </section>
+
           <section className="pricingGrid" aria-label="Pricing plans">
             {plans.map((plan) => (
               <article
@@ -493,10 +512,13 @@ export default function PricingPage() {
                   </span>
                   <div className="priceStack" aria-hidden>
                     <div className="oldPrice">
-                      <span className="oldCurrency">£</span>
-                      <span className="oldAmount">{plan.regularAmount}</span>
-                      <span className="oldPeriod">
-                        / {billingCycle === "monthly" ? "month" : "year"}
+                      <span className="oldLabel">Regular</span>
+                      <span className="oldAmountRow">
+                        <span className="oldCurrency">£</span>
+                        <span className="oldAmount">{plan.regularAmount}</span>
+                        <span className="oldPeriod">
+                          / {billingCycle === "monthly" ? "month" : "year"}
+                        </span>
                       </span>
                     </div>
                     <span className="price">
@@ -525,7 +547,11 @@ export default function PricingPage() {
                 </ul>
                 <div className="planCta">
                   <BuyButton
-                    priceId={billingCycle === "monthly" ? plan.priceIdMonthly : plan.priceIdYearly}
+                    priceId={
+                      billingCycle === "monthly"
+                        ? plan.priceIdMonthly
+                        : plan.priceIdYearly
+                    }
                     label={plan.cta}
                     className={plan.highlight ? "primary" : "secondary"}
                     redirectTo={`/app/settings/billing?plan=${encodeURIComponent(
@@ -1004,6 +1030,44 @@ export default function PricingPage() {
             gap: 16px;
             margin-top: 2px;
           }
+          .planOverview {
+            padding: 22px;
+          }
+          .planOverview h3 {
+            margin: 0 0 18px;
+          }
+          .overviewGrid {
+            display: grid;
+            gap: 16px;
+            grid-template-columns: repeat(1, minmax(0, 1fr));
+          }
+          .overviewGrid article {
+            padding: 18px;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            background: #f8fbff;
+          }
+          .overviewGrid h4 {
+            margin: 0 0 6px;
+            font-size: 17px;
+          }
+          .overviewPrice {
+            margin: 0 8px 8px;
+            font-size: 16px;
+            font-weight: 700;
+            color: #0f172a;
+          }
+          .overviewText {
+            margin: 0 0 8px;
+            color: #475569;
+            line-height: 1.5;
+          }
+          .overviewNote {
+            margin: 0;
+            font-size: 13px;
+            color: #64748b;
+            font-weight: 600;
+          }
           .plan {
             padding: 22px;
             position: relative;
@@ -1073,14 +1137,25 @@ export default function PricingPage() {
             gap: 6px;
           }
           .oldPrice {
+            display: grid;
+            gap: 4px;
+            color: #94a3b8;
+            line-height: 1.1;
+          }
+          .oldLabel {
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.08em;
+            font-weight: 700;
+            color: #64748b;
+          }
+          .oldAmountRow {
             display: inline-flex;
             align-items: baseline;
             gap: 4px;
-            color: #94a3b8;
             text-decoration: line-through;
             text-decoration-thickness: 2px;
             text-decoration-color: #cbd5e1;
-            line-height: 1;
           }
           .oldCurrency {
             font-size: 16px;
