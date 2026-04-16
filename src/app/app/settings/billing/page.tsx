@@ -15,6 +15,7 @@ import {
 import { resolveCurrentWorkspace } from "@/lib/platform/workspace";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { supabaseServerReadOnly } from "@/lib/supabase/server";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 type Role = "OWNER" | "MANAGER" | "GUEST";
 
@@ -97,22 +98,58 @@ export default async function BillingSettingsPage() {
   let ownerBusinessesUsed: number | null = null;
   let maxBusinesses: number | null = null;
   let loadError: string | null = null;
+  let accountLookupFailed = false;
+  let partialSummary = false;
+  let billingReader: SupabaseClient = supabase;
 
   if (ownerUserId) {
     try {
-      const admin = supabaseAdmin();
-      accountId = await resolveOwnerAccountId(admin, ownerUserId);
-      if (accountId) {
-        const [snapshot, entitlements, usedBusinesses] = await Promise.all([
-          getSubscriptionSnapshot(admin, accountId),
-          listEntitlements(admin, accountId),
-          countOwnerBusinesses(admin, ownerUserId),
-        ]);
-        subscription = snapshot;
-        ownerBusinessesUsed = usedBusinesses;
-        maxBusinesses = resolveMaxBusinesses(entitlements);
+      billingReader = supabaseAdmin();
+    } catch (error) {
+      // Keep page functional even if service-role env is unavailable in runtime.
+      console.error("[settings/billing] failed to init admin client", error);
+    }
+
+    try {
+      accountId = await resolveOwnerAccountId(billingReader, ownerUserId);
+    } catch (error) {
+      accountLookupFailed = true;
+      console.error("[settings/billing] failed to resolve owner account", error);
+      loadError = "Billing summary is temporarily unavailable.";
+    }
+
+    if (accountId) {
+      const [snapshotResult, entitlementsResult, usageResult] = await Promise.allSettled([
+        getSubscriptionSnapshot(billingReader, accountId),
+        listEntitlements(billingReader, accountId),
+        countOwnerBusinesses(billingReader, ownerUserId),
+      ]);
+
+      if (snapshotResult.status === "fulfilled") {
+        subscription = snapshotResult.value;
+      } else {
+        partialSummary = true;
+        console.error("[settings/billing] failed to load subscription snapshot", snapshotResult.reason);
       }
-    } catch {
+
+      if (entitlementsResult.status === "fulfilled") {
+        maxBusinesses = resolveMaxBusinesses(entitlementsResult.value);
+      } else {
+        partialSummary = true;
+        console.error("[settings/billing] failed to load entitlements", entitlementsResult.reason);
+      }
+
+      if (usageResult.status === "fulfilled") {
+        ownerBusinessesUsed = usageResult.value;
+      } else {
+        partialSummary = true;
+        console.error("[settings/billing] failed to load owner usage", usageResult.reason);
+      }
+    }
+
+    if (!accountId && !accountLookupFailed) {
+      loadError = null;
+    } else if (partialSummary && !loadError) {
       loadError = "Billing summary is temporarily unavailable.";
     }
   }
@@ -162,7 +199,7 @@ export default async function BillingSettingsPage() {
         </div>
       ) : null}
 
-      {!accountId ? (
+      {!accountId && !accountLookupFailed ? (
         <div className="mt-6 rounded-[22px] border border-[#E5E7EB] bg-[#F9FAFB] p-5">
           <div className="text-base font-semibold text-[#111827]">Billing account not configured</div>
           <div className="mt-2 text-sm leading-6 text-[#6B7280]">
