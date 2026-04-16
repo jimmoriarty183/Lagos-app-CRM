@@ -63,7 +63,7 @@ async function initPaddle() {
   return paddleInitPromise;
 }
 
-export async function openCheckout(priceId = FALLBACK_PRICE_ID) {
+export async function openCheckout(priceId = FALLBACK_PRICE_ID, options = {}) {
   if (typeof window === 'undefined') {
     console.error('[Paddle] Checkout can only be opened in browser');
     return false;
@@ -83,6 +83,13 @@ export async function openCheckout(priceId = FALLBACK_PRICE_ID) {
   }
 
   try {
+    const customerEmail = String(options.customerEmail || '').trim();
+    const customData =
+      options.customData && typeof options.customData === 'object'
+        ? options.customData
+        : undefined;
+    const successUrl = String(options.successUrl || '').trim();
+
     await instance.Checkout.open({
       items: [
         {
@@ -90,6 +97,9 @@ export async function openCheckout(priceId = FALLBACK_PRICE_ID) {
           quantity: 1,
         },
       ],
+      customer: customerEmail ? { email: customerEmail } : undefined,
+      customData,
+      successUrl: successUrl || undefined,
     });
     return true;
   } catch (error) {
@@ -116,6 +126,7 @@ export default function BuyButton({
   priceId = FALLBACK_PRICE_ID,
   label = 'Buy Now',
   className = '',
+  redirectTo = '',
   onSuccess = null,
   onError = null,
 }) {
@@ -129,6 +140,12 @@ export default function BuyButton({
    */
   const handleBuyClick = async () => {
     try {
+      const href = String(redirectTo || '').trim();
+      if (href) {
+        window.location.href = href;
+        return;
+      }
+
       if (!priceId) {
         console.error('[Paddle] No priceId provided');
         onError?.('Price ID is required');

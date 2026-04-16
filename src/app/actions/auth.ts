@@ -50,6 +50,9 @@ export async function loginAction(
     const email = String(formData.get("email") || "").trim();
     const password = String(formData.get("password") || "");
     const inviteId = String(formData.get("invite_id") || "").trim();
+    const next = String(formData.get("next") || "").trim();
+    const safeNext =
+      next.startsWith("/") && !next.startsWith("//") ? next : "";
 
     const supabase = await supabaseServer();
 
@@ -81,6 +84,10 @@ export async function loginAction(
         error: "",
         next: `/invite?invite_id=${encodeURIComponent(inviteId)}`,
       };
+    }
+
+    if (safeNext) {
+      return { ok: true, error: "", next: safeNext };
     }
 
     // 3) load memberships
@@ -133,6 +140,9 @@ export async function registerOwnerAction(
     const lastName = String(formData.get("last_name") || "").trim();
 
     const agree = String(formData.get("agree") || ""); // expected: "on"
+    const next = String(formData.get("next") || "").trim();
+    const safeNext =
+      next.startsWith("/") && !next.startsWith("//") ? next : "";
 
     // ✅ validations
     if (!email) return { ok: false, error: "Email is required", next: "" };
@@ -196,8 +206,20 @@ export async function registerOwnerAction(
       return { ok: false, error: signUpErr.message, next: "" };
     }
 
-    // Access is allowed only after email confirmation.
-    return { ok: true, error: "", next: "/login?check_email=1" };
+    const { data: signedInData } = await supabase.auth.getUser();
+    if (signedInData.user) {
+      return {
+        ok: true,
+        error: "",
+        next: safeNext || "/onboarding/business",
+      };
+    }
+
+    // Access may require email confirmation in some environments.
+    const loginRedirect = safeNext
+      ? `/login?check_email=1&next=${encodeURIComponent(safeNext)}`
+      : "/login?check_email=1";
+    return { ok: true, error: "", next: loginRedirect };
 
   } catch (e) {
     return { ok: false, error: msg(e), next: "" };

@@ -177,6 +177,7 @@ export default function LoginUI({
 
   const sp = useSearchParams();
   const inviteId = sp.get("invite_id") || "";
+  const nextPath = sp.get("next") || "";
   const checkEmail = sp.get("check_email") === "1";
   const demoUnavailable = sp.get("demo_unavailable") === "1";
   const demoError = sp.get("demo_error") === "1";
@@ -372,6 +373,7 @@ export default function LoginUI({
         {mode === "login" ? (
           <form action={loginSubmit} className="space-y-4">
             <input type="hidden" name="invite_id" value={inviteId} />
+            <input type="hidden" name="next" value={nextPath} />
 
             <Input
               label="Email"
@@ -435,6 +437,7 @@ export default function LoginUI({
             className="space-y-4"
           >
             <input type="hidden" name="invite_id" value={inviteId} />
+            <input type="hidden" name="next" value={nextPath} />
             <input type="hidden" name="agree" value={agree ? "on" : ""} />
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

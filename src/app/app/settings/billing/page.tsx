@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowLeft, CreditCard, Sparkles } from "lucide-react";
+import { ArrowLeft, Sparkles } from "lucide-react";
 
 import TeamAccessTopBar from "@/app/b/[slug]/settings/team/TeamAccessTopBar";
 import DesktopLeftRail from "@/app/b/[slug]/_components/Desktop/DesktopLeftRail";
@@ -16,6 +16,7 @@ import { resolveCurrentWorkspace } from "@/lib/platform/workspace";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { supabaseServerReadOnly } from "@/lib/supabase/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import BillingCheckoutModal from "@/app/app/settings/billing/BillingCheckoutModal";
 
 type Role = "OWNER" | "MANAGER" | "GUEST";
 
@@ -61,14 +62,28 @@ function SummaryItem({ label, value }: { label: string; value: string }) {
   );
 }
 
-export default async function BillingSettingsPage() {
+export default async function BillingSettingsPage({
+  searchParams,
+}: {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const resolvedSearchParams = (await searchParams) ?? {};
+  const requestedPlan = String(resolvedSearchParams.plan ?? "").trim();
+  const requestedInterval = String(resolvedSearchParams.interval ?? "").trim();
+  const nextPath = (() => {
+    const params = new URLSearchParams();
+    if (requestedPlan) params.set("plan", requestedPlan);
+    if (requestedInterval) params.set("interval", requestedInterval);
+    const query = params.toString();
+    return query ? `/app/settings/billing?${query}` : "/app/settings/billing";
+  })();
   const [{ user, workspace }, supabase] = await Promise.all([
     resolveCurrentWorkspace(),
     supabaseServerReadOnly(),
   ]);
 
   if (!user) {
-    redirect("/login?next=%2Fapp%2Fsettings%2Fbilling");
+    redirect(`/login?next=${encodeURIComponent(nextPath)}`);
   }
 
   if (!workspace) {
@@ -229,18 +244,25 @@ export default async function BillingSettingsPage() {
 
       <div className="mt-6 flex flex-wrap items-center gap-3">
         {role === "OWNER" ? (
-          <Link
-            href="/pricing"
-            className="inline-flex items-center gap-2 rounded-full border border-[#111827] bg-[#111827] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#1F2937]"
-          >
-            <CreditCard className="h-4 w-4" />
-            Upgrade plan
-          </Link>
+          <BillingCheckoutModal
+            isOwner={role === "OWNER"}
+            customerEmail={String(user.email ?? "").trim()}
+            accountId={accountId}
+            ownerUserId={ownerUserId}
+            workspaceId={workspace.id}
+            workspaceSlug={workspace.slug}
+            initialPlan={requestedPlan}
+            initialInterval={requestedInterval}
+          />
         ) : (
-          <span className="inline-flex cursor-not-allowed items-center gap-2 rounded-full border border-[#E5E7EB] bg-[#F9FAFB] px-4 py-2 text-sm font-semibold text-[#9CA3AF]">
-            <CreditCard className="h-4 w-4" />
-            Upgrade plan (owner only)
-          </span>
+          <BillingCheckoutModal
+            isOwner={false}
+            customerEmail={String(user.email ?? "").trim()}
+            accountId={accountId}
+            ownerUserId={ownerUserId}
+            workspaceId={workspace.id}
+            workspaceSlug={workspace.slug}
+          />
         )}
         <Link
           href="/app/settings"

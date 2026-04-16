@@ -528,6 +528,11 @@ export default function PricingPage() {
                     priceId={billingCycle === "monthly" ? plan.priceIdMonthly : plan.priceIdYearly}
                     label={plan.cta}
                     className={plan.highlight ? "primary" : "secondary"}
+                    redirectTo={`/app/settings/billing?plan=${encodeURIComponent(
+                      plan.name.toLowerCase(),
+                    )}&interval=${encodeURIComponent(
+                      billingCycle === "monthly" ? "monthly" : "yearly",
+                    )}`}
                   />
                 </div>
               </article>
