@@ -313,6 +313,22 @@ async function findSubscriptionByExternalId(
   return (byId.data as SubscriptionRow | null) ?? null;
 }
 
+async function findOpenSubscriptionForAccount(
+  admin: SupabaseClient,
+  accountId: string,
+) {
+  const { data, error } = await admin
+    .from("subscriptions")
+    .select("*")
+    .eq("account_id", accountId)
+    .in("status", ["active", "trialing", "past_due", "paused"])
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  return (data as SubscriptionRow | null) ?? null;
+}
+
 async function safeInsertSubscription(admin: SupabaseClient, row: Record<string, unknown>) {
   const { data, error } = await admin.from("subscriptions").insert(row).select("*").single();
   if (error) return { data: null, error };
@@ -450,6 +466,12 @@ export async function processNormalizedSubscriptionEvent(
   const endedAt = deriveEndedAt(status, normalized.currentPeriodEnd, normalized.canceledAt);
 
   if (!subscription) {
+    // Guard for schemas that enforce a single open subscription per account.
+    // If no external-id mapping exists yet, re-use the currently open row.
+    subscription = await findOpenSubscriptionForAccount(admin, accountId);
+  }
+
+  if (!subscription) {
     const { data, error } = await safeInsertSubscription(admin, {
       account_id: accountId,
       plan_price_id: planPrice.id,
@@ -464,8 +486,17 @@ export async function processNormalizedSubscriptionEvent(
       last_billing_sync_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     });
-    if (error) throw error;
-    subscription = data as SubscriptionRow;
+    if (error) {
+      if (String(error.code ?? "") === "23505") {
+        const existingOpen = await findOpenSubscriptionForAccount(admin, accountId);
+        if (!existingOpen) throw error;
+        subscription = existingOpen;
+      } else {
+        throw error;
+      }
+    } else {
+      subscription = data as SubscriptionRow;
+    }
   } else {
     const { data, error } = await safeUpdateSubscription(admin, subscription.id, {
       plan_price_id: planPrice.id,
