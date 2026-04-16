@@ -2,6 +2,24 @@ import { NextResponse } from "next/server";
 import { requireAccountAccess } from "@/lib/billing/auth";
 import { getSubscriptionSnapshot } from "@/lib/billing/subscriptions";
 
+function asObject(input: unknown): Record<string, unknown> {
+  if (input && typeof input === "object" && !Array.isArray(input)) {
+    return input as Record<string, unknown>;
+  }
+  return {};
+}
+
+function readRawPaddlePriceId(rawPayload: unknown) {
+  const payload = asObject(rawPayload);
+  const data = asObject(payload.data);
+  const items = Array.isArray(data.items) ? data.items : [];
+  const first = asObject(items[0]);
+  const price = asObject(first.price);
+  const direct = String(first.price_id ?? "").trim();
+  const nested = String(price.id ?? "").trim();
+  return nested || direct || null;
+}
+
 export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
@@ -46,8 +64,8 @@ export async function GET(req: Request) {
         subscription_id:
           (paddleSubscription?.paddle_subscription_id as string | undefined) ??
           subscription.externalSubscriptionId,
-        price_id: (paddleSubscription?.paddle_price_id as string | undefined) ?? null,
-        product_id: (paddleSubscription?.paddle_product_id as string | undefined) ?? null,
+        price_id: readRawPaddlePriceId(paddleSubscription?.raw_payload),
+        product_id: null,
       },
     });
   } catch (error: unknown) {

@@ -13,26 +13,46 @@ async function isAccountOwnedByUser(
   admin: SupabaseClient,
   accountId: string,
   userId: string,
+  userEmail: string | null,
 ): Promise<boolean> {
-  const ownerColumns = ["owner_user_id", "owner_id", "created_by"] as const;
+  const account = await admin
+    .from("accounts")
+    .select("id, slug")
+    .eq("id", accountId)
+    .maybeSingle();
+  if (account.error) throw account.error;
+  const slug = String((account.data as { slug?: string } | null)?.slug ?? "").trim();
 
-  for (const ownerColumn of ownerColumns) {
-    const result = await admin
-      .from("accounts")
+  if (slug) {
+    const business = await admin
+      .from("businesses")
       .select("id")
-      .eq("id", accountId)
-      .eq(ownerColumn, userId)
+      .eq("slug", slug)
       .maybeSingle();
-
-    if (!result.error) {
-      return Boolean(result.data);
+    if (business.error) throw business.error;
+    const businessId = String((business.data as { id?: string } | null)?.id ?? "").trim();
+    if (businessId) {
+      const membership = await admin
+        .from("memberships")
+        .select("id")
+        .eq("business_id", businessId)
+        .eq("user_id", userId)
+        .or("role.eq.OWNER,role.eq.owner")
+        .maybeSingle();
+      if (membership.error) throw membership.error;
+      if (membership.data) return true;
     }
+  }
 
-    if (String((result.error as { code?: string } | null)?.code ?? "") === "42703") {
-      continue;
-    }
-
-    throw result.error;
+  if (userEmail) {
+    const customer = await admin
+      .from("paddle_customers")
+      .select("id")
+      .eq("account_id", accountId)
+      .ilike("email", userEmail)
+      .limit(1);
+    if (customer.error) throw customer.error;
+    if ((customer.data ?? []).length > 0) return true;
   }
 
   return false;
@@ -72,7 +92,12 @@ export async function requireAccountAccess(
 
   let isOwner = false;
   try {
-    isOwner = await isAccountOwnedByUser(admin, normalizedAccountId, user.id);
+    isOwner = await isAccountOwnedByUser(
+      admin,
+      normalizedAccountId,
+      user.id,
+      user.email ?? null,
+    );
   } catch (error) {
     return {
       ok: false,

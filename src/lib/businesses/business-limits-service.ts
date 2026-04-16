@@ -73,6 +73,46 @@ export async function resolveOwnerAccountId(
     throw error;
   }
 
+  const membershipsResult = await admin
+    .from("memberships")
+    .select("business_id")
+    .eq("user_id", ownerUserId)
+    .or("role.eq.OWNER,role.eq.owner")
+    .limit(20);
+  if (membershipsResult.error) {
+    throw membershipsResult.error;
+  }
+  const businessIds = (membershipsResult.data ?? [])
+    .map((row) => String((row as { business_id?: string }).business_id ?? "").trim())
+    .filter(Boolean);
+  if (businessIds.length === 0) return null;
+
+  const businessesResult = await admin
+    .from("businesses")
+    .select("slug")
+    .in("id", businessIds)
+    .limit(20);
+  if (businessesResult.error) {
+    throw businessesResult.error;
+  }
+
+  const slugs = (businessesResult.data ?? [])
+    .map((row) => String((row as { slug?: string }).slug ?? "").trim())
+    .filter(Boolean);
+  if (slugs.length === 0) return null;
+
+  const accountsResult = await admin
+    .from("accounts")
+    .select("id")
+    .in("slug", slugs)
+    .order("created_at", { ascending: true })
+    .limit(1);
+  if (accountsResult.error) {
+    throw accountsResult.error;
+  }
+  const accountId = String((accountsResult.data ?? [])[0]?.id ?? "").trim();
+  if (accountId) return accountId;
+
   return null;
 }
 

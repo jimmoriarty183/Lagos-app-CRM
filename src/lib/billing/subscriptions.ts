@@ -61,6 +61,19 @@ export async function getSubscriptionSnapshot(
     plan = (planData as PlanRow | null) ?? null;
   }
 
+  let externalSubscriptionId: string | null = null;
+  if (subscription.id) {
+    const { data: mirrorData, error: mirrorError } = await admin
+      .from("paddle_subscriptions")
+      .select("paddle_subscription_id")
+      .eq("subscription_id", subscription.id)
+      .maybeSingle();
+    if (mirrorError) throw mirrorError;
+    externalSubscriptionId =
+      String((mirrorData as { paddle_subscription_id?: string } | null)?.paddle_subscription_id ?? "")
+        .trim() || null;
+  }
+
   return {
     subscriptionId: subscription.id,
     accountId,
@@ -79,7 +92,7 @@ export async function getSubscriptionSnapshot(
       end: subscription.trial_end,
     },
     cancelAtPeriodEnd: Boolean(subscription.cancel_at_period_end),
-    externalSubscriptionId: subscription.external_subscription_id,
+    externalSubscriptionId,
   };
 }
 

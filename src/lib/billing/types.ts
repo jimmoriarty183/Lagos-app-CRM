@@ -16,8 +16,9 @@ export type FeatureValue = boolean | number | string | null;
 
 export type AccountRow = {
   id: string;
+  slug: string;
   name: string;
-  owner_user_id: string | null;
+  status: string;
   created_at: string;
   updated_at: string;
 };
@@ -71,17 +72,14 @@ export type SubscriptionRow = {
   account_id: string;
   plan_price_id: string;
   status: SubscriptionStatus;
-  source: string;
-  external_subscription_id: string | null;
   current_period_start: string | null;
   current_period_end: string | null;
   cancel_at_period_end: boolean;
   canceled_at: string | null;
   trial_start: string | null;
   trial_end: string | null;
-  started_at: string | null;
   ended_at: string | null;
-  metadata: Record<string, unknown> | null;
+  last_billing_sync_at: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -108,8 +106,9 @@ export type PaddleCustomerRow = {
   account_id: string;
   paddle_customer_id: string;
   email: string | null;
+  full_name: string | null;
   status: string | null;
-  payload: Record<string, unknown> | null;
+  raw_payload: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
 };
@@ -117,13 +116,15 @@ export type PaddleCustomerRow = {
 export type PaddleSubscriptionRow = {
   id: string;
   subscription_id: string;
+  account_id: string;
   paddle_subscription_id: string;
   paddle_customer_id: string | null;
-  paddle_price_id: string | null;
-  paddle_product_id: string | null;
   status: string | null;
   next_billed_at: string | null;
+  paused_at: string | null;
+  canceled_at: string | null;
   raw_payload: Record<string, unknown> | null;
+  last_synced_at: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -131,18 +132,16 @@ export type PaddleSubscriptionRow = {
 export type BillingWebhookEventRow = {
   id: string;
   provider: string;
-  external_event_id: string;
+  provider_event_id: string;
   event_type: string;
-  processing_status: "pending" | "processing" | "processed" | "failed" | "ignored";
+  processing_status: "received" | "processing" | "processed" | "failed" | "ignored";
+  occurred_at: string | null;
+  signature_valid: boolean;
   payload: Record<string, unknown>;
   received_at: string;
   processed_at: string | null;
   error_message: string | null;
-  retry_count: number;
-  related_account_id: string | null;
-  related_subscription_id: string | null;
-  created_at: string;
-  updated_at: string;
+  processing_attempts: number;
 };
 
 export type AuditLogRow = {

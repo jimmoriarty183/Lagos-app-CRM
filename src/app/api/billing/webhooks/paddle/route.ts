@@ -6,12 +6,52 @@ import {
   normalizePaddleWebhookEvent,
   processWebhookEventRow,
 } from "@/lib/billing/webhooks";
-import { billingLog } from "@/lib/billing/logging";
+import { billingLog, formatErrorForLog } from "@/lib/billing/logging";
+
+function collectPaddleEnvWarnings() {
+  const warnings: string[] = [];
+  const apiKey = String(process.env.PADDLE_API_KEY ?? "").trim().toLowerCase();
+  const clientToken = String(process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN ?? "")
+    .trim()
+    .toLowerCase();
+  const frontendEnvironment = String(process.env.NEXT_PUBLIC_PADDLE_ENVIRONMENT ?? "")
+    .trim()
+    .toLowerCase();
+
+  const apiLive = apiKey.startsWith("pdl_live_");
+  const apiTest = apiKey.startsWith("pdl_test_");
+  const tokenLive = clientToken.startsWith("live_");
+  const tokenTest = clientToken.startsWith("test_");
+
+  if (apiLive && tokenTest) {
+    warnings.push("PADDLE_API_KEY is live but NEXT_PUBLIC_PADDLE_CLIENT_TOKEN is test");
+  }
+  if (apiTest && tokenLive) {
+    warnings.push("PADDLE_API_KEY is test but NEXT_PUBLIC_PADDLE_CLIENT_TOKEN is live");
+  }
+  if (frontendEnvironment === "production" && tokenTest) {
+    warnings.push("NEXT_PUBLIC_PADDLE_ENVIRONMENT=production but client token is test_*");
+  }
+  if ((frontendEnvironment === "sandbox" || frontendEnvironment === "test") && tokenLive) {
+    warnings.push("NEXT_PUBLIC_PADDLE_ENVIRONMENT=sandbox but client token is live_*");
+  }
+
+  return warnings;
+}
 
 export async function POST(req: Request) {
   const admin = supabaseAdmin();
 
   try {
+    const envWarnings = collectPaddleEnvWarnings();
+    if (envWarnings.length > 0) {
+      billingLog("warn", "webhook.env_mismatch", {
+        warnings: envWarnings,
+        appUrl: process.env.NEXT_PUBLIC_APP_URL ?? null,
+        siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? null,
+      });
+    }
+
     const webhookSecret = process.env.PADDLE_WEBHOOK_SECRET || "";
     if (!webhookSecret) {
       billingLog("error", "webhook.no_secret", {});
@@ -45,9 +85,7 @@ export async function POST(req: Request) {
     try {
       payload = JSON.parse(rawBody) as Record<string, unknown>;
     } catch (parseError) {
-      billingLog("error", "webhook.parse_failed", {
-        error: parseError instanceof Error ? parseError.message : "Unknown parse error",
-      });
+      billingLog("error", "webhook.parse_failed", formatErrorForLog(parseError));
       return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
     }
 
@@ -74,14 +112,14 @@ export async function POST(req: Request) {
       provider: "paddle",
       externalEventId: normalized.externalEventId,
       eventType: normalized.eventType,
+      occurredAt: normalized.occurredAt,
       payload,
-      relatedAccountId: normalized.accountId,
     });
 
     if (!inserted.created || !inserted.event) {
       billingLog("info", "webhook.duplicate", {
         provider: "paddle",
-        external_event_id: normalized.externalEventId,
+        provider_event_id: normalized.externalEventId,
       });
       return NextResponse.json({ ok: true, duplicate: true });
     }
@@ -98,15 +136,10 @@ export async function POST(req: Request) {
     });
     return NextResponse.json({ ok: true });
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    const errorStack = error instanceof Error ? error.stack : undefined;
-    billingLog("error", "webhook.fatal", {
-      error: errorMessage,
-      errorType: error instanceof Error ? error.constructor.name : typeof error,
-      stack: errorStack,
-    });
+    const errorDetails = formatErrorForLog(error);
+    billingLog("error", "webhook.fatal", errorDetails);
     return NextResponse.json(
-      { error: errorMessage || "Webhook processing failed" },
+      { error: errorDetails.errorMessage || "Webhook processing failed" },
       { status: 500 },
     );
   }

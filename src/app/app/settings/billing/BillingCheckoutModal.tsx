@@ -83,7 +83,7 @@ export default function BillingCheckoutModal(props: BillingCheckoutModalProps) {
           billing_interval: interval,
           source: "crm_settings_billing",
         },
-        successUrl: `${window.location.origin}/app/settings/billing`,
+        successUrl: `${window.location.origin}/app/settings/billing?checkout=success&source=settings`,
       });
       if (!opened) {
         setError("Could not open checkout. Please try again.");

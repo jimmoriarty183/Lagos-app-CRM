@@ -21,14 +21,21 @@ export async function GET(req: Request) {
         access.value.admin
           .from("billing_webhook_events")
           .select("*")
-          .eq("related_account_id", access.value.accountId)
           .order("received_at", { ascending: false })
-          .limit(100),
+          .limit(300),
       ]);
 
     if (webhookHistoryResult.error) {
       throw webhookHistoryResult.error;
     }
+
+    const filteredWebhookHistory = ((webhookHistoryResult.data ?? []) as Array<{
+      payload?: Record<string, unknown>;
+    }>).filter((row) => {
+      const customData = (row.payload?.data as { custom_data?: { account_id?: string } } | undefined)
+        ?.custom_data;
+      return String(customData?.account_id ?? "").trim() === access.value.accountId;
+    });
 
     return NextResponse.json({
       account_id: access.value.accountId,
@@ -37,7 +44,7 @@ export async function GET(req: Request) {
       subscription,
       entitlements,
       overrides,
-      webhook_history: webhookHistoryResult.data ?? [],
+      webhook_history: filteredWebhookHistory,
     });
   } catch (error: unknown) {
     return NextResponse.json(

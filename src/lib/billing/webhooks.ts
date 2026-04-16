@@ -1,26 +1,24 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { billingLog } from "@/lib/billing/logging";
+import { billingLog, formatErrorForLog } from "@/lib/billing/logging";
 import { deriveEndedAt, normalizeSubscriptionStatus } from "@/lib/billing/subscription-lifecycle";
+import { paddleGetSubscription } from "@/lib/billing/paddle-client";
 import { resolveOwnerAccountId } from "@/lib/businesses/business-limits-service";
-import type {
-  BillingWebhookEventRow,
-  PlanPriceRow,
-  SubscriptionRow,
-} from "@/lib/billing/types";
+import type { BillingWebhookEventRow, PlanPriceRow, SubscriptionRow } from "@/lib/billing/types";
 
 type PaddleEnvelope = {
   event_id?: string;
   event_type?: string;
+  occurred_at?: string;
   data?: Record<string, unknown>;
 };
 
 type NormalizedSubscriptionEvent = {
   externalEventId: string;
   eventType: string;
+  occurredAt: string | null;
   paddleSubscriptionId: string | null;
   paddleCustomerId: string | null;
   paddlePriceId: string | null;
-  paddleProductId: string | null;
   status: string | null;
   currentPeriodStart: string | null;
   currentPeriodEnd: string | null;
@@ -69,20 +67,36 @@ function readString(input: unknown, path: string[]): string | null {
 
 function readBoolean(input: unknown, path: string[]): boolean {
   const value = readPath(input, path);
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    return normalized === "true" || normalized === "1" || normalized === "cancel";
+  }
   return Boolean(value);
 }
 
-export function isDuplicateWebhookInsertError(error: { code?: string } | null) {
-  return String(error?.code ?? "") === "23505";
+function extractSubscriptionIdFromPayload(payload: Record<string, unknown>): string | null {
+  return (
+    readString(payload, ["data", "subscription_id"]) ??
+    readString(payload, ["data", "subscription", "id"]) ??
+    readString(payload, ["subscription_id"])
+  );
 }
 
 function normalizePaddleEventType(rawEventType: string | null | undefined) {
   const value = String(rawEventType ?? "").trim().toLowerCase();
   if (!value) return "unknown";
-  if (value.startsWith("subscription_")) {
-    return value.replace(/^subscription_/, "subscription.");
-  }
+  if (value.startsWith("subscription_")) return value.replace(/^subscription_/, "subscription.");
+  if (value.startsWith("transaction_")) return value.replace(/^transaction_/, "transaction.");
   return value;
+}
+
+function slugify(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60);
 }
 
 export function normalizePaddleWebhookEvent(
@@ -94,20 +108,9 @@ export function normalizePaddleWebhookEvent(
   const subscriptionItems = Array.isArray(data.subscription_items)
     ? data.subscription_items
     : undefined;
-  const firstItem = (items ?? subscriptionItems) && Array.isArray(items ?? subscriptionItems)
-    ? ((items ?? subscriptionItems)[0] as Record<string, unknown> | undefined)
-    : undefined;
+  const firstItem = ((items ?? subscriptionItems)?.[0] as Record<string, unknown> | undefined) ?? {};
 
   const customDataObj = asObject(data.custom_data);
-  const accountId =
-    readString(customDataObj, ["account_id"]) ??
-    readString(asObject(payload.custom_data), ["account_id"]);
-  const ownerUserId =
-    readString(customDataObj, ["owner_user_id"]) ??
-    readString(asObject(payload.custom_data), ["owner_user_id"]);
-  const workspaceSlug =
-    readString(customDataObj, ["workspace_slug"]) ??
-    readString(asObject(payload.custom_data), ["workspace_slug"]);
 
   return {
     externalEventId:
@@ -116,6 +119,8 @@ export function normalizePaddleWebhookEvent(
     eventType: normalizePaddleEventType(
       String(envelope.event_type ?? payload.event_type ?? "unknown").trim(),
     ),
+    occurredAt:
+      String(envelope.occurred_at ?? payload.occurred_at ?? "").trim() || null,
     paddleSubscriptionId:
       readString(data, ["id"]) ??
       readString(data, ["subscription_id"]) ??
@@ -128,10 +133,6 @@ export function normalizePaddleWebhookEvent(
       readString(firstItem, ["price", "id"]) ??
       readString(firstItem, ["price_id"]) ??
       readString(data, ["price_id"]),
-    paddleProductId:
-      readString(firstItem, ["product", "id"]) ??
-      readString(firstItem, ["product_id"]) ??
-      readString(data, ["product_id"]),
     status: readString(data, ["status"]) ?? readString(payload, ["status"]),
     currentPeriodStart:
       readString(data, ["current_billing_period", "starts_at"]) ??
@@ -143,46 +144,36 @@ export function normalizePaddleWebhookEvent(
       readString(data, ["next_billed_at"]) ??
       readString(data, ["next_payment", "date"]),
     canceledAt: readString(data, ["canceled_at"]),
-    trialStart: readString(data, ["trial_dates", "starts_at"]) ?? readString(data, ["trial_start"]),
-    trialEnd: readString(data, ["trial_dates", "ends_at"]) ?? readString(data, ["trial_end"]),
-    cancelAtPeriodEnd: readBoolean(data, ["scheduled_change", "action"]),
-    accountId,
-    ownerUserId,
-    workspaceSlug,
+    trialStart:
+      readString(data, ["trial_dates", "starts_at"]) ??
+      readString(data, ["trial_start"]),
+    trialEnd:
+      readString(data, ["trial_dates", "ends_at"]) ??
+      readString(data, ["trial_end"]),
+    cancelAtPeriodEnd:
+      readBoolean(data, ["cancel_at_period_end"]) ||
+      readBoolean(data, ["scheduled_change", "action"]),
+    accountId:
+      readString(customDataObj, ["account_id"]) ??
+      readString(asObject(payload.custom_data), ["account_id"]),
+    ownerUserId:
+      readString(customDataObj, ["owner_user_id"]) ??
+      readString(asObject(payload.custom_data), ["owner_user_id"]),
+    workspaceSlug:
+      readString(customDataObj, ["workspace_slug"]) ??
+      readString(asObject(payload.custom_data), ["workspace_slug"]),
     payload,
   };
 }
 
-async function safeInsertWebhookEvent(
-  admin: SupabaseClient,
-  row: Record<string, unknown>,
-) {
-  const optionalColumns = ["related_account_id", "received_at"] as const;
-  const candidate = { ...row };
-
-  for (;;) {
-    const { data, error } = await admin
-      .from("billing_webhook_events")
-      .insert(candidate)
-      .select("*")
-      .single();
-
-    if (!error) {
-      return { data, error: null as null };
-    }
-
-    if (String((error as { code?: string } | null)?.code ?? "") !== "42703") {
-      return { data: null, error };
-    }
-
-    const missingColumn = optionalColumns.find((column) =>
-      String(error.message ?? "").includes(column),
-    );
-    if (!missingColumn) {
-      return { data: null, error };
-    }
-    delete candidate[missingColumn];
-  }
+async function safeInsertWebhookEvent(admin: SupabaseClient, row: Record<string, unknown>) {
+  const { data, error } = await admin
+    .from("billing_webhook_events")
+    .insert(row)
+    .select("*")
+    .single();
+  if (error) return { data: null, error };
+  return { data, error: null as null };
 }
 
 async function safeUpdateWebhookEvent(
@@ -190,26 +181,15 @@ async function safeUpdateWebhookEvent(
   eventId: string,
   patch: Record<string, unknown>,
 ) {
-  const candidate = { ...patch };
+  const { error } = await admin
+    .from("billing_webhook_events")
+    .update(patch)
+    .eq("id", eventId);
+  if (error) throw error;
+}
 
-  for (;;) {
-    const { error } = await admin
-      .from("billing_webhook_events")
-      .update(candidate)
-      .eq("id", eventId);
-
-    if (!error) return;
-
-    if (String((error as { code?: string } | null)?.code ?? "") !== "42703") {
-      throw error;
-    }
-
-    const missing = Object.keys(candidate).find((column) =>
-      String(error.message ?? "").includes(column),
-    );
-    if (!missing) throw error;
-    delete candidate[missing];
-  }
+export function isDuplicateWebhookInsertError(error: { code?: string } | null) {
+  return String(error?.code ?? "") === "23505";
 }
 
 export async function insertWebhookEvent(
@@ -218,31 +198,30 @@ export async function insertWebhookEvent(
     provider: string;
     externalEventId: string;
     eventType: string;
+    occurredAt?: string | null;
     payload: Record<string, unknown>;
-    relatedAccountId?: string | null;
   },
 ) {
   const { data, error } = await safeInsertWebhookEvent(admin, {
     provider: input.provider,
-    external_event_id: input.externalEventId,
+    provider_event_id: input.externalEventId,
     event_type: input.eventType,
-    processing_status: "pending",
-    payload: input.payload,
+    occurred_at: input.occurredAt ?? null,
     received_at: new Date().toISOString(),
-    related_account_id: input.relatedAccountId ?? null,
+    processing_status: "received",
+    processing_attempts: 0,
+    signature_valid: true,
+    payload: input.payload,
+    error_message: null,
+    processed_at: null,
   });
 
   if (error) {
-    if (isDuplicateWebhookInsertError(error)) {
-      return { created: false as const, event: null };
-    }
+    if (isDuplicateWebhookInsertError(error)) return { created: false as const, event: null };
     throw error;
   }
 
-  return {
-    created: true as const,
-    event: data as BillingWebhookEventRow,
-  };
+  return { created: true as const, event: data as BillingWebhookEventRow };
 }
 
 async function ensureAccountForOwner(
@@ -250,35 +229,45 @@ async function ensureAccountForOwner(
   ownerUserId: string,
   workspaceSlug: string | null,
 ) {
-  const baseName = workspaceSlug ? `Workspace ${workspaceSlug}` : "Workspace account";
-  const variants: Array<Record<string, unknown>> = [
-    { owner_user_id: ownerUserId, name: baseName },
-    { owner_id: ownerUserId, name: baseName },
-    { created_by: ownerUserId, name: baseName },
-    { owner_id: ownerUserId },
-    { created_by: ownerUserId },
-  ];
+  const ownerSlug = slugify(ownerUserId);
+  const slugBase = slugify(workspaceSlug || `owner-${ownerSlug}`) || `owner-${ownerSlug}`;
+  const slug = slugBase.slice(0, 62);
+  const name = workspaceSlug ? `Workspace ${workspaceSlug}` : "Workspace account";
 
-  for (const payload of variants) {
-    const { data, error } = await admin
-      .from("accounts")
-      .insert(payload)
-      .select("id")
-      .single();
-    if (!error) {
-      const createdId = String((data as { id?: string } | null)?.id ?? "").trim();
-      if (createdId) return createdId;
-      continue;
-    }
-
-    const code = String((error as { code?: string } | null)?.code ?? "");
-    if (code === "42703" || code === "23502" || code === "23505") {
-      continue;
-    }
-    throw error;
+  const existing = await admin.from("accounts").select("id").eq("slug", slug).maybeSingle();
+  if (!existing.error && existing.data) {
+    return String((existing.data as { id?: string } | null)?.id ?? "").trim() || null;
+  }
+  if (existing.error && String(existing.error.code ?? "") !== "PGRST116") {
+    // Ignore no rows errors only.
+    throw existing.error;
   }
 
-  return null;
+  const { data, error } = await admin
+    .from("accounts")
+    .insert({
+      slug,
+      name,
+      status: "active",
+    })
+    .select("id")
+    .single();
+  if (error) throw error;
+  return String((data as { id?: string } | null)?.id ?? "").trim() || null;
+}
+
+async function findAccountIdByWorkspaceSlug(
+  admin: SupabaseClient,
+  workspaceSlug: string | null,
+) {
+  if (!workspaceSlug) return null;
+  const { data, error } = await admin
+    .from("accounts")
+    .select("id")
+    .eq("slug", workspaceSlug)
+    .maybeSingle();
+  if (error) throw error;
+  return String((data as { id?: string } | null)?.id ?? "").trim() || null;
 }
 
 async function findAccountIdByPaddleCustomer(
@@ -295,10 +284,53 @@ async function findAccountIdByPaddleCustomer(
   return String((data as { account_id?: string } | null)?.account_id ?? "").trim() || null;
 }
 
-async function findPlanPriceByPaddlePriceId(
+async function findSubscriptionByExternalId(
   admin: SupabaseClient,
-  paddlePriceId: string | null,
+  externalSubscriptionId: string,
 ) {
+  const mirror = await admin
+    .from("paddle_subscriptions")
+    .select("subscription_id")
+    .eq("paddle_subscription_id", externalSubscriptionId)
+    .maybeSingle();
+  if (mirror.error) throw mirror.error;
+
+  const subscriptionId = String(
+    (mirror.data as { subscription_id?: string } | null)?.subscription_id ?? "",
+  ).trim();
+  if (!subscriptionId) return null;
+
+  const byId = await admin
+    .from("subscriptions")
+    .select("*")
+    .eq("id", subscriptionId)
+    .maybeSingle();
+  if (byId.error) throw byId.error;
+  return (byId.data as SubscriptionRow | null) ?? null;
+}
+
+async function safeInsertSubscription(admin: SupabaseClient, row: Record<string, unknown>) {
+  const { data, error } = await admin.from("subscriptions").insert(row).select("*").single();
+  if (error) return { data: null, error };
+  return { data, error: null as null };
+}
+
+async function safeUpdateSubscription(
+  admin: SupabaseClient,
+  subscriptionId: string,
+  patch: Record<string, unknown>,
+) {
+  const { data, error } = await admin
+    .from("subscriptions")
+    .update(patch)
+    .eq("id", subscriptionId)
+    .select("*")
+    .single();
+  if (error) return { data: null, error };
+  return { data, error: null as null };
+}
+
+async function findPlanPriceByPaddlePriceId(admin: SupabaseClient, paddlePriceId: string | null) {
   if (!paddlePriceId) return null;
   const { data, error } = await admin
     .from("plan_prices")
@@ -317,17 +349,17 @@ async function upsertPaddleCustomerMirror(
     payload: Record<string, unknown>;
   },
 ) {
-  const customerData = asObject(readPath(input.payload, ["data", "customer"]));
-  const email = String(customerData.email ?? "").trim() || null;
-  const status = String(customerData.status ?? "").trim() || null;
+  const customer = asObject(readPath(input.payload, ["data", "customer"]));
+  const fullName = String(customer.name ?? customer.full_name ?? "").trim() || null;
 
   const { error } = await admin.from("paddle_customers").upsert(
     {
       account_id: input.accountId,
       paddle_customer_id: input.paddleCustomerId,
-      email,
-      status,
-      payload: customerData,
+      email: String(customer.email ?? "").trim() || null,
+      full_name: fullName,
+      status: String(customer.status ?? "").trim() || null,
+      raw_payload: customer,
       updated_at: new Date().toISOString(),
     },
     { onConflict: "paddle_customer_id" },
@@ -338,115 +370,32 @@ async function upsertPaddleCustomerMirror(
 async function upsertPaddleSubscriptionMirror(
   admin: SupabaseClient,
   input: {
+    accountId: string;
     subscriptionId: string;
     paddleSubscriptionId: string;
     paddleCustomerId: string | null;
-    paddlePriceId: string | null;
-    paddleProductId: string | null;
     status: string | null;
     nextBilledAt: string | null;
+    canceledAt: string | null;
     payload: Record<string, unknown>;
   },
 ) {
   const { error } = await admin.from("paddle_subscriptions").upsert(
     {
       subscription_id: input.subscriptionId,
+      account_id: input.accountId,
       paddle_subscription_id: input.paddleSubscriptionId,
       paddle_customer_id: input.paddleCustomerId,
-      paddle_price_id: input.paddlePriceId,
-      paddle_product_id: input.paddleProductId,
       status: input.status,
       next_billed_at: input.nextBilledAt,
+      canceled_at: input.canceledAt,
       raw_payload: input.payload,
+      last_synced_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     },
     { onConflict: "paddle_subscription_id" },
   );
   if (error) throw error;
-}
-
-async function findSubscriptionByExternalId(
-  admin: SupabaseClient,
-  externalSubscriptionId: string,
-) {
-  const direct = await admin
-    .from("subscriptions")
-    .select("*")
-    .eq("external_subscription_id", externalSubscriptionId)
-    .maybeSingle();
-  if (!direct.error) {
-    return (direct.data as SubscriptionRow | null) ?? null;
-  }
-  if (String((direct.error as { code?: string } | null)?.code ?? "") !== "42703") {
-    throw direct.error;
-  }
-
-  const mirror = await admin
-    .from("paddle_subscriptions")
-    .select("subscription_id")
-    .eq("paddle_subscription_id", externalSubscriptionId)
-    .maybeSingle();
-  if (mirror.error) throw mirror.error;
-  const subscriptionId = String(
-    (mirror.data as { subscription_id?: string } | null)?.subscription_id ?? "",
-  ).trim();
-  if (!subscriptionId) return null;
-
-  const byId = await admin
-    .from("subscriptions")
-    .select("*")
-    .eq("id", subscriptionId)
-    .maybeSingle();
-  if (byId.error) throw byId.error;
-  return (byId.data as SubscriptionRow | null) ?? null;
-}
-
-async function safeInsertSubscription(
-  admin: SupabaseClient,
-  row: Record<string, unknown>,
-) {
-  const candidate = { ...row };
-  for (;;) {
-    const { data, error } = await admin
-      .from("subscriptions")
-      .insert(candidate)
-      .select("*")
-      .single();
-    if (!error) return { data, error: null as null };
-    if (String((error as { code?: string } | null)?.code ?? "") !== "42703") {
-      return { data: null, error };
-    }
-    const missing = Object.keys(candidate).find((column) =>
-      String(error.message ?? "").includes(column),
-    );
-    if (!missing) return { data: null, error };
-    delete candidate[missing];
-  }
-}
-
-async function safeUpdateSubscription(
-  admin: SupabaseClient,
-  subscriptionId: string,
-  patch: Record<string, unknown>,
-) {
-  const candidate = { ...patch };
-  for (;;) {
-    const { data, error } = await admin
-      .from("subscriptions")
-      .update(candidate)
-      .eq("id", subscriptionId)
-      .select("*")
-      .single();
-    if (!error) return { data, error: null as null };
-    if (String((error as { code?: string } | null)?.code ?? "") !== "42703") {
-      return { data: null, error };
-    }
-    const missing = Object.keys(candidate).find((column) =>
-      String(error.message ?? "").includes(column),
-    );
-    if (!missing) return { data: null, error };
-    delete candidate[missing];
-  }
 }
 
 export async function processNormalizedSubscriptionEvent(
@@ -455,158 +404,45 @@ export async function processNormalizedSubscriptionEvent(
 ) {
   const externalId = normalized.paddleSubscriptionId;
   if (!externalId) {
-    billingLog("warn", "[billing-webhook] missing_external_subscription_id", { payload: normalized.payload });
+    billingLog("warn", "[billing-webhook] missing_external_subscription_id", {});
     return null;
   }
 
   let subscription = await findSubscriptionByExternalId(admin, externalId);
-  billingLog("info", "[billing-webhook] subscription.lookup", {
-    externalId,
-    found: !!subscription,
-  });
 
-  // Strategy 1: account_id from webhook custom_data
   let accountId = normalized.accountId;
-  if (accountId) {
-    billingLog("debug", "[billing-webhook] account.found_custom_data", { accountId, externalId });
-  } else {
-    // Strategy 2: lookup by paddle_customer_id
+  if (!accountId) {
     accountId = await findAccountIdByPaddleCustomer(admin, normalized.paddleCustomerId);
-    if (accountId) {
-      billingLog("debug", "[billing-webhook] account.found_paddle_customer", {
-        paddleCustomerId: normalized.paddleCustomerId,
-        accountId,
-        externalId,
-      });
-    }
   }
-
-  // Strategy 3: lookup by owner_user_id (resolveOwnerAccountId)
-  if (!accountId && normalized.ownerUserId) {
-    try {
-      accountId = await resolveOwnerAccountId(admin, normalized.ownerUserId);
-      if (accountId) {
-        billingLog("debug", "[billing-webhook] account.found_owner_lookup", {
-          ownerUserId: normalized.ownerUserId,
-          accountId,
-          externalId,
-        });
-      }
-    } catch (error) {
-      billingLog("warn", "[billing-webhook] account.owner_lookup_failed", {
-        ownerUserId: normalized.ownerUserId,
-        error: error instanceof Error ? error.message : "Unknown error",
-        externalId,
-      });
-    }
+  if (!accountId && normalized.workspaceSlug) {
+    accountId = await findAccountIdByWorkspaceSlug(admin, normalized.workspaceSlug);
   }
-
-  // Strategy 4: create account for owner
   if (!accountId && normalized.ownerUserId) {
-    try {
-      accountId = await ensureAccountForOwner(
-        admin,
-        normalized.ownerUserId,
-        normalized.workspaceSlug,
-      );
-      if (accountId) {
-        billingLog("info", "[billing-webhook] account.created_for_owner", {
-          ownerUserId: normalized.ownerUserId,
-          accountId,
-          workspaceSlug: normalized.workspaceSlug,
-          externalId,
-        });
-      }
-    } catch (error) {
-      billingLog("warn", "[billing-webhook] account.creation_failed", {
-        ownerUserId: normalized.ownerUserId,
-        error: error instanceof Error ? error.message : "Unknown error",
-        externalId,
-      });
-    }
+    accountId = await resolveOwnerAccountId(admin, normalized.ownerUserId);
+  }
+  if (!accountId && normalized.ownerUserId) {
+    accountId = await ensureAccountForOwner(admin, normalized.ownerUserId, normalized.workspaceSlug);
   }
 
   const planPrice = await findPlanPriceByPaddlePriceId(admin, normalized.paddlePriceId);
-  if (planPrice) {
-    billingLog("debug", "[billing-webhook] plan_price.found", {
-      paddlePriceId: normalized.paddlePriceId,
-      planPriceId: planPrice.id,
-      externalId,
-    });
-  } else {
-    billingLog("error", "[billing-webhook] plan_price.not_found", {
-      paddlePriceId: normalized.paddlePriceId,
-      externalId,
-    });
-  }
-
   if (!accountId || !planPrice) {
     billingLog("error", "[billing-webhook] subscription.unresolvable", {
       externalId,
-      hasAccountId: !!accountId,
-      hasPlanPrice: !!planPrice,
-      paddleCustomerId: normalized.paddleCustomerId,
-      ownerUserId: normalized.ownerUserId,
+      accountId,
       paddlePriceId: normalized.paddlePriceId,
-      allCustomData: normalized.payload.data ? asObject((asObject(normalized.payload.data) as Record<string, unknown>).custom_data) : null,
+      paddleCustomerId: normalized.paddleCustomerId,
     });
     return null;
   }
 
-  const normalizedStatus = normalizeSubscriptionStatus(normalized.status);
-  const endedAt = deriveEndedAt(
-    normalizedStatus,
-    normalized.currentPeriodEnd,
-    normalized.canceledAt,
-  );
+  const status = normalizeSubscriptionStatus(normalized.status);
+  const endedAt = deriveEndedAt(status, normalized.currentPeriodEnd, normalized.canceledAt);
 
   if (!subscription) {
-    billingLog("info", "[billing-webhook] subscription.creating", {
-      externalId,
-      accountId,
-      planPriceId: planPrice.id,
-      status: normalizedStatus,
-    });
     const { data, error } = await safeInsertSubscription(admin, {
       account_id: accountId,
       plan_price_id: planPrice.id,
-      status: normalizedStatus,
-      source: "paddle",
-      external_subscription_id: externalId,
-      current_period_start: normalized.currentPeriodStart,
-      current_period_end: normalized.currentPeriodEnd,
-      cancel_at_period_end: normalized.cancelAtPeriodEnd,
-      canceled_at: normalized.canceledAt,
-      trial_start: normalized.trialStart,
-      trial_end: normalized.trialEnd,
-      started_at: normalized.currentPeriodStart ?? new Date().toISOString(),
-      ended_at: endedAt,
-      metadata: normalized.payload,
-    });
-    if (error) {
-      billingLog("error", "[billing-webhook] subscription.creation_failed", {
-        externalId,
-        accountId,
-        error: error.message,
-      });
-      throw error;
-    }
-    subscription = data as SubscriptionRow;
-    billingLog("info", "[billing-webhook] subscription.created", {
-      subscriptionId: subscription.id,
-      externalId,
-      accountId,
-    });
-  } else {
-    billingLog("info", "[billing-webhook] subscription.updating", {
-      subscriptionId: subscription.id,
-      externalId,
-      newStatus: normalizedStatus,
-      currentStatus: subscription.status,
-    });
-    const { data, error } = await safeUpdateSubscription(admin, subscription.id, {
-      plan_price_id: planPrice.id,
-      status: normalizedStatus,
+      status,
       current_period_start: normalized.currentPeriodStart,
       current_period_end: normalized.currentPeriodEnd,
       cancel_at_period_end: normalized.cancelAtPeriodEnd,
@@ -614,66 +450,47 @@ export async function processNormalizedSubscriptionEvent(
       trial_start: normalized.trialStart,
       trial_end: normalized.trialEnd,
       ended_at: endedAt,
-      metadata: normalized.payload,
+      last_billing_sync_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     });
-    if (error) {
-      billingLog("error", "[billing-webhook] subscription.update_failed", {
-        subscriptionId: subscription.id,
-        externalId,
-        error: error.message,
-      });
-      throw error;
-    }
+    if (error) throw error;
     subscription = data as SubscriptionRow;
-    billingLog("info", "[billing-webhook] subscription.updated", {
-      subscriptionId: subscription.id,
-      externalId,
-      newStatus: normalizedStatus,
+  } else {
+    const { data, error } = await safeUpdateSubscription(admin, subscription.id, {
+      plan_price_id: planPrice.id,
+      status,
+      current_period_start: normalized.currentPeriodStart,
+      current_period_end: normalized.currentPeriodEnd,
+      cancel_at_period_end: normalized.cancelAtPeriodEnd,
+      canceled_at: normalized.canceledAt,
+      trial_start: normalized.trialStart,
+      trial_end: normalized.trialEnd,
+      ended_at: endedAt,
+      last_billing_sync_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     });
+    if (error) throw error;
+    subscription = data as SubscriptionRow;
   }
 
   if (normalized.paddleCustomerId) {
-    billingLog("debug", "[billing-webhook] upserting_paddle_customer", {
-      paddleCustomerId: normalized.paddleCustomerId,
+    await upsertPaddleCustomerMirror(admin, {
       accountId,
-    });
-    try {
-      await upsertPaddleCustomerMirror(admin, {
-        accountId,
-        paddleCustomerId: normalized.paddleCustomerId,
-        payload: normalized.payload,
-      });
-    } catch (error) {
-      billingLog("warn", "[billing-webhook] paddle_customer_upsert_failed", {
-        paddleCustomerId: normalized.paddleCustomerId,
-        error: error instanceof Error ? error.message : "Unknown error",
-      });
-    }
-  }
-
-  try {
-    await upsertPaddleSubscriptionMirror(admin, {
-      subscriptionId: subscription.id,
-      paddleSubscriptionId: externalId,
       paddleCustomerId: normalized.paddleCustomerId,
-      paddlePriceId: normalized.paddlePriceId,
-      paddleProductId: normalized.paddleProductId,
-      status: normalized.status,
-      nextBilledAt: normalized.nextBilledAt,
       payload: normalized.payload,
     });
-    billingLog("debug", "[billing-webhook] paddle_subscription_upserted", {
-      subscriptionId: subscription.id,
-      paddleSubscriptionId: externalId,
-    });
-  } catch (error) {
-    billingLog("warn", "[billing-webhook] paddle_subscription_upsert_failed", {
-      subscriptionId: subscription.id,
-      paddleSubscriptionId: externalId,
-      error: error instanceof Error ? error.message : "Unknown error",
-    });
   }
+
+  await upsertPaddleSubscriptionMirror(admin, {
+    accountId,
+    subscriptionId: subscription.id,
+    paddleSubscriptionId: externalId,
+    paddleCustomerId: normalized.paddleCustomerId,
+    status: normalized.status,
+    nextBilledAt: normalized.nextBilledAt,
+    canceledAt: normalized.canceledAt,
+    payload: normalized.payload,
+  });
 
   return subscription;
 }
@@ -683,88 +500,60 @@ function isSubscriptionWebhookEvent(eventType: string) {
   return normalized.startsWith("subscription.") || normalized.startsWith("subscription_");
 }
 
-export async function processWebhookEventRow(
-  admin: SupabaseClient,
-  event: BillingWebhookEventRow,
-) {
-  billingLog("info", "[billing-webhook] processing_start", {
-    eventId: event.id,
-    provider: event.provider,
-    eventType: event.event_type,
-    externalEventId: event.external_event_id,
-  });
+function isTransactionWebhookEvent(eventType: string) {
+  const normalized = String(eventType ?? "").trim().toLowerCase();
+  return normalized.startsWith("transaction.") || normalized.startsWith("transaction_");
+}
 
+export async function processWebhookEventRow(admin: SupabaseClient, event: BillingWebhookEventRow) {
   await safeUpdateWebhookEvent(admin, event.id, {
     processing_status: "processing",
-    retry_count: Number(event.retry_count ?? 0) + 1,
-    updated_at: new Date().toISOString(),
+    processing_attempts: Number(event.processing_attempts ?? 0) + 1,
+    error_message: null,
   });
 
   try {
     const normalized = normalizePaddleWebhookEvent(event.payload);
-    billingLog("debug", "[billing-webhook] normalized", {
-      eventId: event.id,
-      eventType: normalized.eventType,
-      paddleSubscriptionId: normalized.paddleSubscriptionId,
-      paddleCustomerId: normalized.paddleCustomerId,
-      accountId: normalized.accountId,
-      ownerUserId: normalized.ownerUserId,
-    });
+    const isSubscriptionEvent = isSubscriptionWebhookEvent(normalized.eventType);
+    const isTransactionEvent = isTransactionWebhookEvent(normalized.eventType);
+    const hintedSubscriptionId = extractSubscriptionIdFromPayload(event.payload);
 
-    const relatedSubscription = await processNormalizedSubscriptionEvent(
-      admin,
-      normalized,
-    );
+    let relatedSubscription = await processNormalizedSubscriptionEvent(admin, normalized);
 
-    const terminalStatus =
-      isSubscriptionWebhookEvent(normalized.eventType)
-        ? "processed"
-        : "ignored";
-    
-    if (isSubscriptionWebhookEvent(normalized.eventType) && !relatedSubscription) {
-      billingLog("warn", "[billing-webhook] subscription_event_without_result", {
-        eventId: event.id,
-        eventType: normalized.eventType,
-        externalId: normalized.paddleSubscriptionId,
-      });
+    if (!relatedSubscription && isTransactionEvent && hintedSubscriptionId) {
+      const upstream = await paddleGetSubscription(hintedSubscriptionId);
+      const upstreamNormalized = normalizePaddleWebhookEvent(upstream);
+      upstreamNormalized.paddleSubscriptionId = hintedSubscriptionId;
+      upstreamNormalized.accountId = upstreamNormalized.accountId ?? normalized.accountId;
+      upstreamNormalized.workspaceSlug = upstreamNormalized.workspaceSlug ?? normalized.workspaceSlug;
+      upstreamNormalized.ownerUserId = upstreamNormalized.ownerUserId ?? normalized.ownerUserId;
+      relatedSubscription = await processNormalizedSubscriptionEvent(admin, upstreamNormalized);
     }
 
-    await safeUpdateWebhookEvent(admin, event.id, {
-      processing_status: terminalStatus,
-      processed_at: new Date().toISOString(),
-      error_message: null,
-      related_account_id:
-        normalized.accountId ?? event.related_account_id ?? null,
-      related_subscription_id: relatedSubscription?.id ?? null,
-      updated_at: new Date().toISOString(),
-    });
+    const requiresMaterialization =
+      isSubscriptionEvent || (isTransactionEvent && Boolean(hintedSubscriptionId));
+    const processingStatus: BillingWebhookEventRow["processing_status"] =
+      requiresMaterialization && !relatedSubscription ? "failed" : "processed";
 
-    billingLog("info", "[billing-webhook] processing_success", {
-      eventId: event.id,
-      status: terminalStatus,
-      subscriptionId: relatedSubscription?.id ?? null,
+    await safeUpdateWebhookEvent(admin, event.id, {
+      processing_status: processingStatus,
+      processed_at: new Date().toISOString(),
+      error_message:
+        processingStatus === "failed"
+          ? "Subscription materialization failed"
+          : null,
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown webhook error";
-    billingLog("error", "[billing-webhook] processing_failed", {
-      eventId: event.id,
-      error: message,
-      errorStack: error instanceof Error ? error.stack : undefined,
-    });
-
+    const details = formatErrorForLog(error);
     await safeUpdateWebhookEvent(admin, event.id, {
       processing_status: "failed",
-      error_message: message,
-      updated_at: new Date().toISOString(),
+      error_message: details.errorMessage,
     });
     throw error;
   }
 }
 
-export async function replayWebhookEventById(
-  admin: SupabaseClient,
-  eventId: string,
-) {
+export async function replayWebhookEventById(admin: SupabaseClient, eventId: string) {
   const { data, error } = await admin
     .from("billing_webhook_events")
     .select("*")
@@ -772,18 +561,14 @@ export async function replayWebhookEventById(
     .maybeSingle();
   if (error) throw error;
   if (!data) throw new Error("Webhook event not found");
-
   await processWebhookEventRow(admin, data as BillingWebhookEventRow);
 }
 
-export async function retryFailedWebhookEvents(
-  admin: SupabaseClient,
-  limit: number,
-) {
+export async function retryFailedWebhookEvents(admin: SupabaseClient, limit: number) {
   const { data, error } = await admin
     .from("billing_webhook_events")
     .select("*")
-    .in("processing_status", ["failed", "pending"])
+    .in("processing_status", ["failed", "received"])
     .order("received_at", { ascending: true })
     .limit(limit);
   if (error) throw error;
@@ -799,6 +584,5 @@ export async function retryFailedWebhookEvents(
       failed += 1;
     }
   }
-
   return { total: events.length, processed, failed };
 }

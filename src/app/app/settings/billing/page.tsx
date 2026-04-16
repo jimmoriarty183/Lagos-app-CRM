@@ -17,6 +17,7 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
 import { supabaseServerReadOnly } from "@/lib/supabase/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import BillingCheckoutModal from "@/app/app/settings/billing/BillingCheckoutModal";
+import BillingReturnWatcher from "@/app/app/settings/billing/BillingReturnWatcher";
 
 type Role = "OWNER" | "MANAGER" | "GUEST";
 
@@ -70,6 +71,7 @@ export default async function BillingSettingsPage({
   const resolvedSearchParams = (await searchParams) ?? {};
   const requestedPlan = String(resolvedSearchParams.plan ?? "").trim();
   const requestedInterval = String(resolvedSearchParams.interval ?? "").trim();
+  const checkoutState = String(resolvedSearchParams.checkout ?? "").trim().toLowerCase();
   const nextPath = (() => {
     const params = new URLSearchParams();
     if (requestedPlan) params.set("plan", requestedPlan);
@@ -127,6 +129,16 @@ export default async function BillingSettingsPage({
 
     try {
       accountId = await resolveOwnerAccountId(billingReader, ownerUserId);
+      if (!accountId && workspace.slug) {
+        const fallbackBySlug = await billingReader
+          .from("accounts")
+          .select("id")
+          .eq("slug", workspace.slug)
+          .maybeSingle();
+        if (!fallbackBySlug.error) {
+          accountId = String((fallbackBySlug.data as { id?: string } | null)?.id ?? "").trim() || null;
+        }
+      }
     } catch (error) {
       accountLookupFailed = true;
       console.error("[settings/billing] failed to resolve owner account", error);
@@ -212,6 +224,17 @@ export default async function BillingSettingsPage({
         <div className="mt-5 rounded-2xl border border-[#FECACA] bg-[#FEF2F2] p-4 text-sm text-[#991B1B]">
           {loadError}
         </div>
+      ) : null}
+
+      {accountId ? (
+        <BillingReturnWatcher
+          accountId={accountId}
+          enabled={
+            role === "OWNER" &&
+            checkoutState === "success" &&
+            !subscription?.subscriptionId
+          }
+        />
       ) : null}
 
       {!accountId && !accountLookupFailed ? (

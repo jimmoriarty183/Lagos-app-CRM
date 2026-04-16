@@ -37,6 +37,7 @@ type UpgradeStartResponse =
       ok: true;
       mode: "checkout_required";
       message: string;
+      account_id?: string | null;
       next_paddle_price_id?: string | null;
       recommended_plan?: string | null;
       next_limit?: number | null;
@@ -248,7 +249,14 @@ export function OnboardingBusinessForm() {
           setStatusMessage("Upgrade checkout is unavailable right now. Please contact support.");
           return;
         }
-        const opened = await openCheckout(paddlePriceId);
+        const accountId = String(payload.account_id ?? "").trim() || null;
+        const opened = await openCheckout(paddlePriceId, {
+          customData: {
+            account_id: accountId,
+            source: "onboarding_business_limit_upgrade",
+          },
+          successUrl: `${window.location.origin}/app/settings/billing?checkout=success&source=onboarding`,
+        });
         if (!opened) {
           setStatusMessage("Could not open checkout. Please allow popups and try again.");
           return;
