@@ -15,6 +15,9 @@ async function isAccountOwnedByUser(
   userId: string,
   userEmail: string | null,
 ): Promise<boolean> {
+  const isNoRowsError = (error: { code?: string } | null | undefined) =>
+    String(error?.code ?? "") === "PGRST116";
+
   const account = await admin
     .from("accounts")
     .select("id, slug")
@@ -29,7 +32,7 @@ async function isAccountOwnedByUser(
       .select("id")
       .eq("slug", slug)
       .maybeSingle();
-    if (business.error) throw business.error;
+    if (business.error && !isNoRowsError(business.error)) throw business.error;
     const businessId = String((business.data as { id?: string } | null)?.id ?? "").trim();
     if (businessId) {
       const membership = await admin
@@ -39,7 +42,7 @@ async function isAccountOwnedByUser(
         .eq("user_id", userId)
         .or("role.eq.OWNER,role.eq.owner")
         .maybeSingle();
-      if (membership.error) throw membership.error;
+      if (membership.error && !isNoRowsError(membership.error)) throw membership.error;
       if (membership.data) return true;
     }
   }
