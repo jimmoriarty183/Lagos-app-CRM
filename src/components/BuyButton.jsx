@@ -6,6 +6,7 @@ import { initializePaddle } from '@paddle/paddle-js';
 // Global Paddle instance + init promise (shared across all buttons/components)
 let paddle = null;
 let paddleInitPromise = null;
+let checkoutSuccessRedirectUrl = null;
 
 const PADDLE_CLIENT_TOKEN =
   process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN || 'REPLACE_WITH_CLIENT_TOKEN';
@@ -34,6 +35,17 @@ async function initPaddle() {
       eventCallback: (event) => {
         if (!event) return;
         const name = event?.name || 'unknown';
+        const normalizedName = String(name).toLowerCase();
+        const completed =
+          normalizedName.includes('checkout.completed') ||
+          normalizedName.includes('checkout_complete') ||
+          normalizedName.includes('payment.succeeded');
+        if (completed && checkoutSuccessRedirectUrl && typeof window !== 'undefined') {
+          const target = checkoutSuccessRedirectUrl;
+          checkoutSuccessRedirectUrl = null;
+          window.location.assign(target);
+          return;
+        }
         if (name.toLowerCase().includes('error')) {
           console.error('[Paddle] Event error:', event);
         } else {
@@ -89,7 +101,8 @@ export async function openCheckout(priceId = FALLBACK_PRICE_ID, options = {}) {
         ? options.customData
         : undefined;
     const successUrl = String(options.successUrl || '').trim();
-
+    checkoutSuccessRedirectUrl = successUrl || null;
+    const settings = successUrl ? { successUrl } : undefined;
     await instance.Checkout.open({
       items: [
         {
@@ -99,10 +112,11 @@ export async function openCheckout(priceId = FALLBACK_PRICE_ID, options = {}) {
       ],
       customer: customerEmail ? { email: customerEmail } : undefined,
       customData,
-      successUrl: successUrl || undefined,
+      settings,
     });
     return true;
   } catch (error) {
+    checkoutSuccessRedirectUrl = null;
     console.error('[Paddle] Checkout error:', {
       environment: PADDLE_ENVIRONMENT,
       priceId,
