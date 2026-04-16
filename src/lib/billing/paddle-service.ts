@@ -127,6 +127,20 @@ export async function requestCancel(
     effectiveFrom: "next_billing_period",
   });
 
+  // Do an immediate read-after-write sync so UI reflects scheduled cancellation
+  // without waiting for webhook delivery latency.
+  try {
+    const upstream = await paddleGetSubscription(externalSubscriptionId);
+    const normalized = normalizePaddleWebhookEvent(upstream);
+    normalized.paddleSubscriptionId = externalSubscriptionId;
+    await processNormalizedSubscriptionEvent(admin, normalized);
+  } catch (syncError) {
+    billingLog("warn", "subscription.cancel_post_sync_failed", {
+      subscription_id: subscription.id,
+      error: syncError instanceof Error ? syncError.message : "Unknown error",
+    });
+  }
+
   await admin.from("audit_logs").insert({
     actor_id: input.requestedBy ?? null,
     entity_type: "subscription",
