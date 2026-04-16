@@ -38,7 +38,7 @@ async function isAccountOwnedByUser(
     if (businessId) {
       const membership = await admin
         .from("memberships")
-        .select("id")
+        .select("user_id")
         .eq("business_id", businessId)
         .eq("user_id", userId)
         .in("role", ["owner", "OWNER"])
