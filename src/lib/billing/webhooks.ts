@@ -98,6 +98,17 @@ export function normalizePaddleWebhookEvent(
     ? ((items ?? subscriptionItems)[0] as Record<string, unknown> | undefined)
     : undefined;
 
+  const customDataObj = asObject(data.custom_data);
+  const accountId =
+    readString(customDataObj, ["account_id"]) ??
+    readString(asObject(payload.custom_data), ["account_id"]);
+  const ownerUserId =
+    readString(customDataObj, ["owner_user_id"]) ??
+    readString(asObject(payload.custom_data), ["owner_user_id"]);
+  const workspaceSlug =
+    readString(customDataObj, ["workspace_slug"]) ??
+    readString(asObject(payload.custom_data), ["workspace_slug"]);
+
   return {
     externalEventId:
       String(envelope.event_id ?? "").trim() ||
@@ -135,15 +146,9 @@ export function normalizePaddleWebhookEvent(
     trialStart: readString(data, ["trial_dates", "starts_at"]) ?? readString(data, ["trial_start"]),
     trialEnd: readString(data, ["trial_dates", "ends_at"]) ?? readString(data, ["trial_end"]),
     cancelAtPeriodEnd: readBoolean(data, ["scheduled_change", "action"]),
-    accountId:
-      readString(data, ["custom_data", "account_id"]) ??
-      readString(payload, ["custom_data", "account_id"]),
-    ownerUserId:
-      readString(data, ["custom_data", "owner_user_id"]) ??
-      readString(payload, ["custom_data", "owner_user_id"]),
-    workspaceSlug:
-      readString(data, ["custom_data", "workspace_slug"]) ??
-      readString(payload, ["custom_data", "workspace_slug"]),
+    accountId,
+    ownerUserId,
+    workspaceSlug,
     payload,
   };
 }
@@ -543,6 +548,7 @@ export async function processNormalizedSubscriptionEvent(
       paddleCustomerId: normalized.paddleCustomerId,
       ownerUserId: normalized.ownerUserId,
       paddlePriceId: normalized.paddlePriceId,
+      allCustomData: normalized.payload.data ? asObject((asObject(normalized.payload.data) as Record<string, unknown>).custom_data) : null,
     });
     return null;
   }
