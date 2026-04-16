@@ -50,17 +50,30 @@ export async function resolveOwnerAccountId(
   admin: SupabaseClient,
   ownerUserId: string,
 ): Promise<string | null> {
-  const { data, error } = await admin
-    .from("accounts")
-    .select("id")
-    .eq("owner_user_id", ownerUserId)
-    .order("created_at", { ascending: true })
-    .limit(1);
+  const ownerColumns = ["owner_user_id", "owner_id", "created_by"] as const;
 
-  if (error) throw error;
+  for (const ownerColumn of ownerColumns) {
+    const { data, error } = await admin
+      .from("accounts")
+      .select("id")
+      .eq(ownerColumn, ownerUserId)
+      .order("created_at", { ascending: true })
+      .limit(1);
 
-  const accountId = String((data ?? [])[0]?.id ?? "").trim();
-  return accountId || null;
+    if (!error) {
+      const accountId = String((data ?? [])[0]?.id ?? "").trim();
+      if (accountId) return accountId;
+      continue;
+    }
+
+    // Backward-compatibility: some environments don't have all owner columns.
+    if (String((error as { code?: string } | null)?.code ?? "") === "42703") {
+      continue;
+    }
+    throw error;
+  }
+
+  return null;
 }
 
 export async function countOwnerBusinesses(

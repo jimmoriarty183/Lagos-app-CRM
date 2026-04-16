@@ -9,6 +9,35 @@ export type AccountAccess = {
   accountId: string;
 };
 
+async function isAccountOwnedByUser(
+  admin: SupabaseClient,
+  accountId: string,
+  userId: string,
+): Promise<boolean> {
+  const ownerColumns = ["owner_user_id", "owner_id", "created_by"] as const;
+
+  for (const ownerColumn of ownerColumns) {
+    const result = await admin
+      .from("accounts")
+      .select("id")
+      .eq("id", accountId)
+      .eq(ownerColumn, userId)
+      .maybeSingle();
+
+    if (!result.error) {
+      return Boolean(result.data);
+    }
+
+    if (String((result.error as { code?: string } | null)?.code ?? "") === "42703") {
+      continue;
+    }
+
+    throw result.error;
+  }
+
+  return false;
+}
+
 export async function requireAccountAccess(
   accountId: string,
 ): Promise<
@@ -30,7 +59,7 @@ export async function requireAccountAccess(
   const admin = supabaseAdmin();
   const { data: account, error: accountError } = await admin
     .from("accounts")
-    .select("id, owner_user_id")
+    .select("id")
     .eq("id", normalizedAccountId)
     .maybeSingle();
 
@@ -41,7 +70,17 @@ export async function requireAccountAccess(
     return { ok: false, status: 404, error: "Account not found" };
   }
 
-  const isOwner = String(account.owner_user_id ?? "") === user.id;
+  let isOwner = false;
+  try {
+    isOwner = await isAccountOwnedByUser(admin, normalizedAccountId, user.id);
+  } catch (error) {
+    return {
+      ok: false,
+      status: 500,
+      error: error instanceof Error ? error.message : "Failed to verify account owner",
+    };
+  }
+
   const isAdmin = isAdminEmail(user.email ?? "");
   if (!isOwner && !isAdmin) {
     return { ok: false, status: 403, error: "Forbidden" };
