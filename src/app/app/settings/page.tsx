@@ -128,19 +128,7 @@ export default async function PlatformSettingsPage() {
                       </div>
                       <div className="mt-4 text-lg font-semibold text-[#111827]">Billing</div>
                       <div className="mt-1 text-sm leading-6 text-[#6B7280]">
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-                        View current plan, subscription renewal, and business usage limits.
-=======
                         Review current plan, renewal status, subscription interval, and business limits.
->>>>>>> theirs
-=======
-                        Review current plan, renewal status, subscription interval, and business limits.
->>>>>>> theirs
-=======
-                        Review current plan, renewal status, subscription interval, and business limits.
->>>>>>> theirs
                       </div>
                     </div>
                     <ChevronRight className="h-5 w-5 text-[#9CA3AF] transition group-hover:text-[#4B5563]" />
@@ -231,19 +219,7 @@ export default async function PlatformSettingsPage() {
                   </div>
                   <div className="mt-4 text-lg font-semibold text-[#111827]">Billing</div>
                   <div className="mt-1 text-sm leading-6 text-[#6B7280]">
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-                    View current plan, subscription renewal, and business usage limits.
-=======
                     Review current plan, renewal status, subscription interval, and business limits.
->>>>>>> theirs
-=======
-                    Review current plan, renewal status, subscription interval, and business limits.
->>>>>>> theirs
-=======
-                    Review current plan, renewal status, subscription interval, and business limits.
->>>>>>> theirs
                   </div>
                 </div>
                 <ChevronRight className="h-5 w-5 text-[#9CA3AF] transition group-hover:text-[#4B5563]" />

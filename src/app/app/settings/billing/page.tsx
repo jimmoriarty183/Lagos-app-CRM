@@ -1,26 +1,12 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
 import { ArrowLeft, CreditCard, Sparkles } from "lucide-react";
-=======
-import { ArrowLeft, Lock, Sparkles } from "lucide-react";
->>>>>>> theirs
-=======
-import { ArrowLeft, Lock, Sparkles } from "lucide-react";
->>>>>>> theirs
-=======
-import { ArrowLeft, Lock, Sparkles } from "lucide-react";
->>>>>>> theirs
 
 import TeamAccessTopBar from "@/app/b/[slug]/settings/team/TeamAccessTopBar";
 import DesktopLeftRail from "@/app/b/[slug]/_components/Desktop/DesktopLeftRail";
 import { getAdminUsersPath, isAdminEmail } from "@/lib/admin-access";
 import { listEntitlements } from "@/lib/billing/entitlements";
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
+import { getSubscriptionSnapshot } from "@/lib/billing/subscriptions";
 import type { SubscriptionSnapshot } from "@/lib/billing/types";
 import {
   countOwnerBusinesses,
@@ -29,38 +15,16 @@ import {
 import { resolveCurrentWorkspace } from "@/lib/platform/workspace";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { supabaseServerReadOnly } from "@/lib/supabase/server";
-import { getSubscriptionSnapshot } from "@/lib/billing/subscriptions";
 
 type Role = "OWNER" | "MANAGER" | "GUEST";
 
 function upperRole(value: string | null | undefined): Role {
-=======
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
-import { getSubscriptionSnapshot } from "@/lib/billing/subscriptions";
-import { countOwnerBusinesses, resolveOwnerAccountId } from "@/lib/businesses/business-limits-service";
-import { resolveCurrentWorkspace } from "@/lib/platform/workspace";
-import { supabaseAdmin } from "@/lib/supabase/admin";
-
-function upperRole(value: string | null | undefined): "OWNER" | "MANAGER" | "GUEST" {
-<<<<<<< ours
-<<<<<<< ours
->>>>>>> theirs
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
   const normalized = String(value ?? "").trim().toUpperCase();
   if (normalized === "OWNER") return "OWNER";
   if (normalized === "MANAGER") return "MANAGER";
   return "GUEST";
 }
 
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
 function toTitle(value: string | null | undefined, fallback = "Not available") {
   if (!value) return fallback;
   const normalized = value.replaceAll("_", " ").trim();
@@ -101,43 +65,6 @@ export default async function BillingSettingsPage() {
     resolveCurrentWorkspace(),
     supabaseServerReadOnly(),
   ]);
-=======
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
-function formatDateLabel(value: string | null) {
-  if (!value) return "—";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "—";
-  return new Intl.DateTimeFormat("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  }).format(date);
-}
-
-function labelStatus(value: string | null) {
-  const status = String(value ?? "").trim();
-  if (!status) return "No active subscription";
-  return status.replace(/_/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
-}
-
-function labelInterval(value: string | null) {
-  if (value === "month") return "Monthly";
-  if (value === "year") return "Yearly";
-  return "—";
-}
-
-export default async function BillingSettingsPage() {
-  const { user, workspace } = await resolveCurrentWorkspace();
-<<<<<<< ours
-<<<<<<< ours
->>>>>>> theirs
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
 
   if (!user) {
     redirect("/login?next=%2Fapp%2Fsettings%2Fbilling");
@@ -147,9 +74,6 @@ export default async function BillingSettingsPage() {
     redirect("/select-business");
   }
 
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
   const role = upperRole(workspace.role);
   const accountLabel = user.email || user.phone || "User";
   const adminHref = isAdminEmail(user.email) ? getAdminUsersPath() : undefined;
@@ -291,58 +215,6 @@ export default async function BillingSettingsPage() {
       </div>
     </div>
   );
-=======
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
-  const admin = supabaseAdmin();
-  const accountLabel = user.email || user.phone || "User";
-  const currentRole = upperRole(workspace.role);
-  const adminHref = isAdminEmail(user.email) ? getAdminUsersPath() : undefined;
-
-  const ownerMembershipResult = await admin
-    .from("memberships")
-    .select("user_id, role, created_at")
-    .eq("business_id", workspace.id)
-    .or("role.eq.OWNER,role.eq.owner")
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
-
-  if (ownerMembershipResult.error) {
-    throw ownerMembershipResult.error;
-  }
-
-  const ownerUserId = String(ownerMembershipResult.data?.user_id ?? "").trim();
-  const accountId = ownerUserId ? await resolveOwnerAccountId(admin, ownerUserId) : null;
-
-  const summary = accountId
-    ? await Promise.all([
-        getSubscriptionSnapshot(admin, accountId),
-        listEntitlements(admin, accountId),
-        ownerUserId ? countOwnerBusinesses(admin, ownerUserId) : Promise.resolve(0),
-      ])
-    : null;
-
-  const subscription = summary?.[0] ?? null;
-  const entitlements = summary?.[1] ?? [];
-  const usedBusinesses = summary?.[2] ?? 0;
-  const maxBusinessesEntitlement = entitlements.find(
-    (entitlement) => entitlement.featureCode === "max_businesses" && entitlement.valueType === "integer",
-  );
-  const maxBusinessesRaw = maxBusinessesEntitlement?.value;
-  const maxBusinesses =
-    maxBusinessesRaw === null || maxBusinessesRaw === undefined ? null : Number(maxBusinessesRaw);
-  const hasFiniteBusinessCap = Number.isFinite(maxBusinesses) && Number(maxBusinesses) >= 0;
-  const isOwner = currentRole === "OWNER";
-<<<<<<< ours
-<<<<<<< ours
->>>>>>> theirs
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
 
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#F8FAFC_0%,#EEF2FF_100%)] text-[#111827]">
@@ -377,255 +249,16 @@ export default async function BillingSettingsPage() {
             supportHref={`/b/${workspace.slug}/support`}
             settingsHref="/app/settings"
             adminHref={adminHref}
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
             canSeeAnalytics={role === "OWNER"}
-=======
-            canSeeAnalytics={isOwner}
->>>>>>> theirs
-=======
-            canSeeAnalytics={isOwner}
->>>>>>> theirs
-=======
-            canSeeAnalytics={isOwner}
->>>>>>> theirs
             showFilters={false}
             activeSection="settings"
             layoutMode="list"
           />
 
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
           <div className="w-full min-w-0">{content}</div>
         </div>
 
         <div className="mx-auto max-w-[920px] lg:hidden">{content}</div>
-=======
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
-          <div className="w-full min-w-0">
-            <section className="rounded-[28px] border border-[#E5E7EB] bg-white/92 p-6 shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur">
-              <div className="inline-flex items-center rounded-full border border-[#E5E7EB] bg-[#F9FAFB] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#6B7280]">
-                Billing overview
-              </div>
-              <h1 className="mt-4 text-[32px] font-semibold tracking-[-0.03em] text-[#111827]">
-                Billing & plan
-              </h1>
-              <p className="mt-2 max-w-[700px] text-sm leading-6 text-[#6B7280]">
-                Review your current package, subscription status, renewal timeline, and business capacity limits.
-              </p>
-
-              {!isOwner ? (
-                <div className="mt-5 rounded-[18px] border border-[#FDE68A] bg-[#FFFBEB] p-4 text-sm text-[#92400E]">
-                  Only the workspace owner can manage billing and upgrades. You can view current billing details in read-only mode.
-                </div>
-              ) : null}
-
-              {!accountId ? (
-                <div className="mt-6 rounded-[22px] border border-dashed border-[#D1D5DB] bg-[#F9FAFB] p-6">
-                  <div className="text-base font-semibold text-[#111827]">Billing account is not configured</div>
-                  <p className="mt-1 text-sm leading-6 text-[#6B7280]">
-                    We couldn&apos;t find a billing account for this workspace owner yet. You can continue using CRM and set up a plan from pricing.
-                  </p>
-                </div>
-              ) : (
-                <div className="mt-6 grid gap-4 md:grid-cols-2">
-                  <div className="rounded-[22px] border border-[#E5E7EB] bg-white p-5">
-                    <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]">Current plan</div>
-                    <div className="mt-2 text-lg font-semibold text-[#111827]">
-                      {subscription?.plan?.name ?? "No active plan"}
-                    </div>
-                    <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-                      <div className="rounded-2xl bg-[#F9FAFB] p-3">
-                        <div className="text-[#9CA3AF]">Status</div>
-                        <div className="mt-1 font-semibold text-[#111827]">{labelStatus(subscription?.status ?? null)}</div>
-                      </div>
-                      <div className="rounded-2xl bg-[#F9FAFB] p-3">
-                        <div className="text-[#9CA3AF]">Interval</div>
-                        <div className="mt-1 font-semibold text-[#111827]">
-                          {labelInterval(subscription?.billingInterval ?? null)}
-                        </div>
-                      </div>
-                      <div className="rounded-2xl bg-[#F9FAFB] p-3">
-                        <div className="text-[#9CA3AF]">Renewal</div>
-                        <div className="mt-1 font-semibold text-[#111827]">
-                          {formatDateLabel(subscription?.nextBillingAt ?? null)}
-                        </div>
-                      </div>
-                      <div className="rounded-2xl bg-[#F9FAFB] p-3">
-                        <div className="text-[#9CA3AF]">Auto-renew</div>
-                        <div className="mt-1 font-semibold text-[#111827]">
-                          {subscription ? (subscription.cancelAtPeriodEnd ? "Off" : "On") : "—"}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="rounded-[22px] border border-[#E5E7EB] bg-white p-5">
-                    <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]">
-                      Business capacity
-                    </div>
-                    <div className="mt-2 text-lg font-semibold text-[#111827]">
-                      {usedBusinesses} / {hasFiniteBusinessCap ? String(Math.floor(Number(maxBusinesses))) : "Unlimited"}
-                    </div>
-                    <p className="mt-1 text-sm leading-6 text-[#6B7280]">
-                      Active owner businesses compared to your max_businesses entitlement.
-                    </p>
-
-                    <div className="mt-4 rounded-2xl border border-[#E5E7EB] bg-[#F9FAFB] p-4 text-sm text-[#4B5563]">
-                      <div className="font-semibold text-[#111827]">Payment model</div>
-                      <p className="mt-1 leading-6">
-                        This plan uses recurring subscription billing with auto-renew enabled unless canceled before renewal.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <div className="mt-6 flex flex-wrap items-center gap-3">
-                {isOwner ? (
-                  <Link
-                    href="/pricing"
-                    className="inline-flex items-center gap-2 rounded-full bg-[#111827] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#1F2937]"
-                  >
-                    <Sparkles className="h-4 w-4" />
-                    Upgrade plan
-                  </Link>
-                ) : (
-                  <span className="inline-flex items-center gap-2 rounded-full border border-[#E5E7EB] bg-[#F9FAFB] px-4 py-2 text-sm font-semibold text-[#6B7280]">
-                    <Lock className="h-4 w-4" />
-                    Upgrade plan (owner only)
-                  </span>
-                )}
-
-                <Link
-                  href="/app/settings"
-                  className="inline-flex items-center gap-2 rounded-full border border-[#E5E7EB] bg-white px-4 py-2 text-sm font-semibold text-[#374151] transition hover:border-[#D6DAE1] hover:bg-[#FCFCFD]"
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                  Back to settings
-                </Link>
-              </div>
-            </section>
-          </div>
-        </div>
-
-        <div className="mx-auto max-w-[920px] lg:hidden">
-          <section className="rounded-[28px] border border-[#E5E7EB] bg-white/92 p-6 shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur">
-            <div className="inline-flex items-center rounded-full border border-[#E5E7EB] bg-[#F9FAFB] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#6B7280]">
-              Billing overview
-            </div>
-            <h1 className="mt-4 text-[32px] font-semibold tracking-[-0.03em] text-[#111827]">
-              Billing & plan
-            </h1>
-            <p className="mt-2 max-w-[700px] text-sm leading-6 text-[#6B7280]">
-              Review your current package, subscription status, renewal timeline, and business capacity limits.
-            </p>
-
-            {!isOwner ? (
-              <div className="mt-5 rounded-[18px] border border-[#FDE68A] bg-[#FFFBEB] p-4 text-sm text-[#92400E]">
-                Only the workspace owner can manage billing and upgrades. You can view current billing details in read-only mode.
-              </div>
-            ) : null}
-
-            {!accountId ? (
-              <div className="mt-6 rounded-[22px] border border-dashed border-[#D1D5DB] bg-[#F9FAFB] p-6">
-                <div className="text-base font-semibold text-[#111827]">Billing account is not configured</div>
-                <p className="mt-1 text-sm leading-6 text-[#6B7280]">
-                  We couldn&apos;t find a billing account for this workspace owner yet. You can continue using CRM and set up a plan from pricing.
-                </p>
-              </div>
-            ) : (
-              <div className="mt-6 grid gap-4">
-                <div className="rounded-[22px] border border-[#E5E7EB] bg-white p-5">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]">Current plan</div>
-                  <div className="mt-2 text-lg font-semibold text-[#111827]">
-                    {subscription?.plan?.name ?? "No active plan"}
-                  </div>
-                  <div className="mt-4 grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
-                    <div className="rounded-2xl bg-[#F9FAFB] p-3">
-                      <div className="text-[#9CA3AF]">Status</div>
-                      <div className="mt-1 font-semibold text-[#111827]">{labelStatus(subscription?.status ?? null)}</div>
-                    </div>
-                    <div className="rounded-2xl bg-[#F9FAFB] p-3">
-                      <div className="text-[#9CA3AF]">Interval</div>
-                      <div className="mt-1 font-semibold text-[#111827]">
-                        {labelInterval(subscription?.billingInterval ?? null)}
-                      </div>
-                    </div>
-                    <div className="rounded-2xl bg-[#F9FAFB] p-3">
-                      <div className="text-[#9CA3AF]">Renewal</div>
-                      <div className="mt-1 font-semibold text-[#111827]">
-                        {formatDateLabel(subscription?.nextBillingAt ?? null)}
-                      </div>
-                    </div>
-                    <div className="rounded-2xl bg-[#F9FAFB] p-3">
-                      <div className="text-[#9CA3AF]">Auto-renew</div>
-                      <div className="mt-1 font-semibold text-[#111827]">
-                        {subscription ? (subscription.cancelAtPeriodEnd ? "Off" : "On") : "—"}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="rounded-[22px] border border-[#E5E7EB] bg-white p-5">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]">
-                    Business capacity
-                  </div>
-                  <div className="mt-2 text-lg font-semibold text-[#111827]">
-                    {usedBusinesses} / {hasFiniteBusinessCap ? String(Math.floor(Number(maxBusinesses))) : "Unlimited"}
-                  </div>
-                  <p className="mt-1 text-sm leading-6 text-[#6B7280]">
-                    Active owner businesses compared to your max_businesses entitlement.
-                  </p>
-
-                  <div className="mt-4 rounded-2xl border border-[#E5E7EB] bg-[#F9FAFB] p-4 text-sm text-[#4B5563]">
-                    <div className="font-semibold text-[#111827]">Payment model</div>
-                    <p className="mt-1 leading-6">
-                      This plan uses recurring subscription billing with auto-renew enabled unless canceled before renewal.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <div className="mt-6 flex flex-wrap items-center gap-3">
-              {isOwner ? (
-                <Link
-                  href="/pricing"
-                  className="inline-flex items-center gap-2 rounded-full bg-[#111827] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#1F2937]"
-                >
-                  <Sparkles className="h-4 w-4" />
-                  Upgrade plan
-                </Link>
-              ) : (
-                <span className="inline-flex items-center gap-2 rounded-full border border-[#E5E7EB] bg-[#F9FAFB] px-4 py-2 text-sm font-semibold text-[#6B7280]">
-                  <Lock className="h-4 w-4" />
-                  Upgrade plan (owner only)
-                </span>
-              )}
-
-              <Link
-                href="/app/settings"
-                className="inline-flex items-center gap-2 rounded-full border border-[#E5E7EB] bg-white px-4 py-2 text-sm font-semibold text-[#374151] transition hover:border-[#D6DAE1] hover:bg-[#FCFCFD]"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Back to settings
-              </Link>
-            </div>
-          </section>
-        </div>
-<<<<<<< ours
-<<<<<<< ours
->>>>>>> theirs
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
       </div>
     </main>
   );
