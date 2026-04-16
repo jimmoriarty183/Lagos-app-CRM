@@ -191,11 +191,15 @@ export default async function BillingSettingsPage({
         ? "Yearly"
         : "Not set";
   const renewalDate = formatDate(subscription?.nextBillingAt);
-  const autoRenewLabel = subscription?.subscriptionId
-    ? subscription.cancelAtPeriodEnd
-      ? "Off"
-      : "On"
-    : "Not active";
+  const normalizedSubscriptionStatus = String(subscription?.status ?? "").toLowerCase();
+  const autoRenewLabel =
+    subscription?.subscriptionId &&
+    normalizedSubscriptionStatus !== "canceled" &&
+    normalizedSubscriptionStatus !== "expired"
+      ? subscription.cancelAtPeriodEnd
+        ? "Off"
+        : "On"
+      : "Not active";
   const usageLabel =
     ownerBusinessesUsed === null
       ? "Unavailable"
