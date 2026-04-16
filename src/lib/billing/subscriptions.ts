@@ -16,10 +16,33 @@ export async function getLatestSubscriptionForAccount(
     .select("*")
     .eq("account_id", accountId)
     .order("updated_at", { ascending: false })
-    .limit(1);
+    .limit(50);
 
   if (error) throw error;
-  return ((data ?? []) as SubscriptionRow[])[0] ?? null;
+  const rows = (data ?? []) as SubscriptionRow[];
+  if (rows.length === 0) return null;
+
+  const statusPriority = (status: string | null | undefined) => {
+    const normalized = String(status ?? "").trim().toLowerCase();
+    if (normalized === "active") return 0;
+    if (normalized === "trialing") return 1;
+    if (normalized === "past_due") return 2;
+    if (normalized === "paused") return 3;
+    if (normalized === "canceled" || normalized === "cancelled") return 4;
+    if (normalized === "expired") return 5;
+    return 6;
+  };
+
+  const sorted = [...rows].sort((left, right) => {
+    const statusDelta = statusPriority(left.status) - statusPriority(right.status);
+    if (statusDelta !== 0) return statusDelta;
+
+    const leftTime = new Date(left.updated_at ?? left.created_at ?? 0).getTime();
+    const rightTime = new Date(right.updated_at ?? right.created_at ?? 0).getTime();
+    return rightTime - leftTime;
+  });
+
+  return sorted[0] ?? null;
 }
 
 export async function getSubscriptionSnapshot(
