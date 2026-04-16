@@ -15,35 +15,36 @@ async function isAccountOwnedByUser(
   userId: string,
   userEmail: string | null,
 ): Promise<boolean> {
-  const isNoRowsError = (error: { code?: string } | null | undefined) =>
-    String(error?.code ?? "") === "PGRST116";
-
   const account = await admin
     .from("accounts")
-    .select("id, slug")
+    .select("slug")
     .eq("id", accountId)
-    .maybeSingle();
+    .limit(1);
   if (account.error) throw account.error;
-  const slug = String((account.data as { slug?: string } | null)?.slug ?? "").trim();
+  const slug = String(
+    ((account.data ?? [])[0] as { slug?: string } | undefined)?.slug ?? "",
+  ).trim();
 
   if (slug) {
     const business = await admin
       .from("businesses")
       .select("id")
       .eq("slug", slug)
-      .maybeSingle();
-    if (business.error && !isNoRowsError(business.error)) throw business.error;
-    const businessId = String((business.data as { id?: string } | null)?.id ?? "").trim();
+      .limit(1);
+    if (business.error) throw business.error;
+    const businessId = String(
+      ((business.data ?? [])[0] as { id?: string } | undefined)?.id ?? "",
+    ).trim();
     if (businessId) {
       const membership = await admin
         .from("memberships")
         .select("id")
         .eq("business_id", businessId)
         .eq("user_id", userId)
-        .eq("role", "owner")
-        .maybeSingle();
-      if (membership.error && !isNoRowsError(membership.error)) throw membership.error;
-      if (membership.data) return true;
+        .in("role", ["owner", "OWNER"])
+        .limit(1);
+      if (membership.error) throw membership.error;
+      if ((membership.data ?? []).length > 0) return true;
     }
   }
 
@@ -102,10 +103,16 @@ export async function requireAccountAccess(
       user.email ?? null,
     );
   } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : typeof error === "object" && error !== null && "message" in error
+          ? String((error as { message?: unknown }).message ?? "")
+          : "";
     return {
       ok: false,
       status: 500,
-      error: error instanceof Error ? error.message : "Failed to verify account owner",
+      error: message || "Failed to verify account owner",
     };
   }
 
