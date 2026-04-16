@@ -148,6 +148,7 @@ export async function resyncSubscriptions(admin: SupabaseClient, limit = 100) {
     .from("paddle_subscriptions")
     .select("subscription_id, account_id, paddle_subscription_id")
     .not("paddle_subscription_id", "is", null)
+    .like("paddle_subscription_id", "sub_%")
     .order("updated_at", { ascending: true })
     .limit(limit);
   if (error) throw error;

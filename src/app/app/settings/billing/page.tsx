@@ -116,7 +116,7 @@ export default async function BillingSettingsPage({
   let maxBusinesses: number | null = null;
   let loadError: string | null = null;
   let accountLookupFailed = false;
-  let partialSummary = false;
+  let snapshotFailed = false;
   let billingReader: SupabaseClient = supabase;
 
   if (ownerUserId) {
@@ -155,28 +155,26 @@ export default async function BillingSettingsPage({
       if (snapshotResult.status === "fulfilled") {
         subscription = snapshotResult.value;
       } else {
-        partialSummary = true;
+        snapshotFailed = true;
         console.error("[settings/billing] failed to load subscription snapshot", snapshotResult.reason);
       }
 
       if (entitlementsResult.status === "fulfilled") {
         maxBusinesses = resolveMaxBusinesses(entitlementsResult.value);
       } else {
-        partialSummary = true;
         console.error("[settings/billing] failed to load entitlements", entitlementsResult.reason);
       }
 
       if (usageResult.status === "fulfilled") {
         ownerBusinessesUsed = usageResult.value;
       } else {
-        partialSummary = true;
         console.error("[settings/billing] failed to load owner usage", usageResult.reason);
       }
     }
 
     if (!accountId && !accountLookupFailed) {
       loadError = null;
-    } else if (partialSummary && !loadError) {
+    } else if (snapshotFailed && !loadError) {
       loadError = "Billing summary is temporarily unavailable.";
     }
   }

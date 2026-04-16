@@ -104,6 +104,9 @@ export function normalizePaddleWebhookEvent(
 ): NormalizedSubscriptionEvent {
   const envelope = payload as PaddleEnvelope;
   const data = asObject(envelope.data);
+  const normalizedEventType = normalizePaddleEventType(
+    String(envelope.event_type ?? payload.event_type ?? "unknown").trim(),
+  );
   const items = Array.isArray(data.items) ? data.items : undefined;
   const subscriptionItems = Array.isArray(data.subscription_items)
     ? data.subscription_items
@@ -116,14 +119,15 @@ export function normalizePaddleWebhookEvent(
     externalEventId:
       String(envelope.event_id ?? "").trim() ||
       String(payload.notification_id ?? "").trim(),
-    eventType: normalizePaddleEventType(
-      String(envelope.event_type ?? payload.event_type ?? "unknown").trim(),
-    ),
+    eventType: normalizedEventType,
     occurredAt:
       String(envelope.occurred_at ?? payload.occurred_at ?? "").trim() || null,
     paddleSubscriptionId:
-      readString(data, ["id"]) ??
       readString(data, ["subscription_id"]) ??
+      readString(data, ["subscription", "id"]) ??
+      (normalizedEventType.startsWith("subscription.")
+        ? readString(data, ["id"])
+        : null) ??
       readString(payload, ["subscription_id"]),
     paddleCustomerId:
       readString(data, ["customer_id"]) ??
@@ -407,6 +411,13 @@ export async function processNormalizedSubscriptionEvent(
     billingLog("warn", "[billing-webhook] missing_external_subscription_id", {});
     return null;
   }
+  if (externalId.toLowerCase().startsWith("txn_")) {
+    billingLog("warn", "[billing-webhook] ignoring_transaction_id_as_subscription", {
+      externalId,
+      eventType: normalized.eventType,
+    });
+    return null;
+  }
 
   let subscription = await findSubscriptionByExternalId(admin, externalId);
 
@@ -518,9 +529,12 @@ export async function processWebhookEventRow(admin: SupabaseClient, event: Billi
     const isTransactionEvent = isTransactionWebhookEvent(normalized.eventType);
     const hintedSubscriptionId = extractSubscriptionIdFromPayload(event.payload);
 
-    let relatedSubscription = await processNormalizedSubscriptionEvent(admin, normalized);
+    let relatedSubscription: SubscriptionRow | null = null;
+    if (isSubscriptionEvent) {
+      relatedSubscription = await processNormalizedSubscriptionEvent(admin, normalized);
+    }
 
-    if (!relatedSubscription && isTransactionEvent && hintedSubscriptionId) {
+    if (isTransactionEvent && hintedSubscriptionId) {
       const upstream = await paddleGetSubscription(hintedSubscriptionId);
       const upstreamNormalized = normalizePaddleWebhookEvent(upstream);
       upstreamNormalized.paddleSubscriptionId = hintedSubscriptionId;
