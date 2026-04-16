@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ChevronRight, Settings, Shield, UserCircle2 } from "lucide-react";
+import { ChevronRight, CreditCard, Settings, Shield, UserCircle2 } from "lucide-react";
 
 import { resolveCurrentWorkspace } from "@/lib/platform/workspace";
 import { getAdminUsersPath, isAdminEmail } from "@/lib/admin-access";
@@ -116,6 +116,36 @@ export default async function PlatformSettingsPage() {
                     <ChevronRight className="h-5 w-5 text-[#9CA3AF] transition group-hover:text-[#4B5563]" />
                   </div>
                 </Link>
+
+                <Link
+                  href="/app/settings/billing"
+                  className="group col-12 sm:col-6 rounded-[22px] border border-[#E5E7EB] bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.04)] transition hover:border-[#D6DAE1] hover:bg-[#FCFCFD]"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-[#F3F4F6] text-[#4B5563]">
+                        <CreditCard className="h-5 w-5" />
+                      </div>
+                      <div className="mt-4 text-lg font-semibold text-[#111827]">Billing</div>
+                      <div className="mt-1 text-sm leading-6 text-[#6B7280]">
+<<<<<<< ours
+<<<<<<< ours
+<<<<<<< ours
+                        View current plan, subscription renewal, and business usage limits.
+=======
+                        Review current plan, renewal status, subscription interval, and business limits.
+>>>>>>> theirs
+=======
+                        Review current plan, renewal status, subscription interval, and business limits.
+>>>>>>> theirs
+=======
+                        Review current plan, renewal status, subscription interval, and business limits.
+>>>>>>> theirs
+                      </div>
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-[#9CA3AF] transition group-hover:text-[#4B5563]" />
+                  </div>
+                </Link>
               </div>
 
               <div className="mt-6 rounded-[22px] border border-[#E5E7EB] bg-[#F9FAFB] p-5">
@@ -184,6 +214,36 @@ export default async function PlatformSettingsPage() {
                   <div className="mt-4 text-lg font-semibold text-[#111827]">Workspace settings</div>
                   <div className="mt-1 text-sm leading-6 text-[#6B7280]">
                     Configure business details, team access, invites, and statuses for {workspace.name || workspace.slug}.
+                  </div>
+                </div>
+                <ChevronRight className="h-5 w-5 text-[#9CA3AF] transition group-hover:text-[#4B5563]" />
+              </div>
+            </Link>
+
+            <Link
+              href="/app/settings/billing"
+              className="group col-12 sm:col-6 rounded-[22px] border border-[#E5E7EB] bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.04)] transition hover:border-[#D6DAE1] hover:bg-[#FCFCFD]"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-[#F3F4F6] text-[#4B5563]">
+                    <CreditCard className="h-5 w-5" />
+                  </div>
+                  <div className="mt-4 text-lg font-semibold text-[#111827]">Billing</div>
+                  <div className="mt-1 text-sm leading-6 text-[#6B7280]">
+<<<<<<< ours
+<<<<<<< ours
+<<<<<<< ours
+                    View current plan, subscription renewal, and business usage limits.
+=======
+                    Review current plan, renewal status, subscription interval, and business limits.
+>>>>>>> theirs
+=======
+                    Review current plan, renewal status, subscription interval, and business limits.
+>>>>>>> theirs
+=======
+                    Review current plan, renewal status, subscription interval, and business limits.
+>>>>>>> theirs
                   </div>
                 </div>
                 <ChevronRight className="h-5 w-5 text-[#9CA3AF] transition group-hover:text-[#4B5563]" />
