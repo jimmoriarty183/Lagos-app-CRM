@@ -18,6 +18,7 @@ import { supabaseServerReadOnly } from "@/lib/supabase/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import BillingCheckoutModal from "@/app/app/settings/billing/BillingCheckoutModal";
 import BillingReturnWatcher from "@/app/app/settings/billing/BillingReturnWatcher";
+import BillingSubscriptionActions from "@/app/app/settings/billing/BillingSubscriptionActions";
 
 type Role = "OWNER" | "MANAGER" | "GUEST";
 
@@ -285,6 +286,13 @@ export default async function BillingSettingsPage({
             workspaceSlug={workspace.slug}
           />
         )}
+        <BillingSubscriptionActions
+          isOwner={role === "OWNER"}
+          accountId={accountId}
+          subscriptionId={subscription?.subscriptionId ?? null}
+          subscriptionStatus={subscription?.status ?? null}
+          cancelAtPeriodEnd={Boolean(subscription?.cancelAtPeriodEnd)}
+        />
         <Link
           href="/app/settings"
           className="inline-flex items-center gap-2 rounded-full border border-[#E5E7EB] bg-white px-4 py-2 text-sm font-semibold text-[#374151] transition hover:border-[#D6DAE1] hover:bg-[#FCFCFD]"
