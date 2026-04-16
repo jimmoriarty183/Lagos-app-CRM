@@ -103,7 +103,7 @@ export default async function BillingSettingsPage({
       .from("memberships")
       .select("user_id")
       .eq("business_id", workspace.id)
-      .or("role.eq.OWNER,role.eq.owner")
+      .eq("role", "owner")
       .order("created_at", { ascending: true })
       .limit(1);
     if (!ownerMembership.error) {
@@ -181,9 +181,17 @@ export default async function BillingSettingsPage({
   }
 
   const planName = subscription?.plan?.name ?? "No active plan";
-  const statusLabel = subscription?.status
-    ? toTitle(subscription.status)
-    : "No active subscription";
+  const normalizedSubscriptionStatus = String(subscription?.status ?? "").toLowerCase();
+  const hasScheduledCancellation =
+    Boolean(subscription?.subscriptionId) &&
+    Boolean(subscription?.cancelAtPeriodEnd) &&
+    normalizedSubscriptionStatus !== "canceled" &&
+    normalizedSubscriptionStatus !== "expired";
+  const statusLabel = hasScheduledCancellation
+    ? "Cancellation scheduled"
+    : subscription?.status
+      ? toTitle(subscription.status)
+      : "No active subscription";
   const intervalLabel =
     subscription?.billingInterval === "month"
       ? "Monthly"
@@ -191,7 +199,7 @@ export default async function BillingSettingsPage({
         ? "Yearly"
         : "Not set";
   const renewalDate = formatDate(subscription?.nextBillingAt);
-  const normalizedSubscriptionStatus = String(subscription?.status ?? "").toLowerCase();
+  const renewalLabel = hasScheduledCancellation ? "Access until" : "Renewal date";
   const autoRenewLabel =
     subscription?.subscriptionId &&
     normalizedSubscriptionStatus !== "canceled" &&
@@ -253,7 +261,7 @@ export default async function BillingSettingsPage({
         <SummaryItem label="Current plan" value={planName} />
         <SummaryItem label="Subscription status" value={statusLabel} />
         <SummaryItem label="Billing interval" value={intervalLabel} />
-        <SummaryItem label="Renewal date" value={renewalDate} />
+        <SummaryItem label={renewalLabel} value={renewalDate} />
         <SummaryItem label="Auto-renew" value={autoRenewLabel} />
         <SummaryItem label="Business capacity" value={usageLabel} />
       </div>
@@ -314,6 +322,7 @@ export default async function BillingSettingsPage({
         ordersHref="/app/crm"
         userLabel={accountLabel}
         profileHref="/app/profile"
+        currentPlan={subscription?.plan?.code ?? null}
         adminHref={adminHref}
       />
 
