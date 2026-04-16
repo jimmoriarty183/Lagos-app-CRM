@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { openCheckout } from "@/components/BuyButton";
 
@@ -13,16 +13,126 @@ type BillingCheckoutModalProps = {
   workspaceSlug: string;
   initialPlan?: string;
   initialInterval?: string;
+  currentPlan?: string | null;
+  currentInterval?: string | null;
 };
 
 type PlanCode = "solo" | "starter" | "business" | "pro";
 type BillingInterval = "monthly" | "yearly";
 
-const PLAN_OPTIONS: Array<{ code: PlanCode; label: string }> = [
-  { code: "solo", label: "Solo" },
-  { code: "starter", label: "Starter" },
-  { code: "business", label: "Business" },
-  { code: "pro", label: "Pro" },
+type PlanOption = {
+  code: PlanCode;
+  label: string;
+  description: string;
+  regularAmount: string;
+  launchAmount: string;
+  monthlyLaunchAmount: string;
+  features: string[];
+  cta: string;
+  note: {
+    monthly: string;
+    yearly: string;
+  };
+};
+
+const PLAN_OPTIONS: PlanOption[] = [
+  {
+    code: "solo",
+    label: "Solo",
+    description: "For individuals who need structure and follow-up discipline",
+    regularAmount: "12",
+    launchAmount: "8",
+    monthlyLaunchAmount: "8",
+    features: [
+      "CRM (orders + kanban)",
+      "Filters & search",
+      "Custom statuses",
+      "Basic inbox",
+      "Today & follow-ups",
+      "Limited team management",
+    ],
+    cta: "Start with Solo",
+    note: {
+      monthly: "+ £5 / extra user",
+      yearly: "+ £50 / extra user / year",
+    },
+  },
+  {
+    code: "starter",
+    label: "Starter",
+    description: "For small teams getting control over daily operations",
+    regularAmount: "49",
+    launchAmount: "39",
+    monthlyLaunchAmount: "39",
+    features: [
+      "CRM (orders + kanban)",
+      "Filters & search",
+      "Custom statuses",
+      "Full inbox",
+      "Today & follow-ups",
+      "Team management",
+      "Basic support workflow",
+    ],
+    cta: "Start with Starter",
+    note: {
+      monthly: "Includes up to 5 users",
+      yearly: "Includes up to 5 users",
+    },
+  },
+  {
+    code: "business",
+    label: "Business",
+    description: "For growing teams that need execution visibility and control",
+    regularAmount: "99",
+    launchAmount: "79",
+    monthlyLaunchAmount: "79",
+    features: [
+      "CRM (orders + kanban)",
+      "Filters & search",
+      "Custom statuses",
+      "Full inbox",
+      "Today & follow-ups",
+      "Team management",
+      "Manager dashboards",
+      "KPI tracking",
+      "Productivity analytics",
+      "Alerts",
+      "Basic support workflow",
+    ],
+    cta: "Upgrade to Business",
+    note: {
+      monthly: "Includes up to 10 users",
+      yearly: "Includes up to 10 users",
+    },
+  },
+  {
+    code: "pro",
+    label: "Pro",
+    description: "For teams that need full operational control and risk visibility",
+    regularAmount: "179",
+    launchAmount: "149",
+    monthlyLaunchAmount: "149",
+    features: [
+      "CRM (orders + kanban)",
+      "Filters & search",
+      "Custom statuses",
+      "Full inbox",
+      "Today & follow-ups",
+      "Team management",
+      "Manager dashboards",
+      "KPI tracking",
+      "Productivity analytics",
+      "Alerts",
+      "Risk score",
+      "Full support workflow",
+      "Priority support",
+    ],
+    cta: "Go Pro",
+    note: {
+      monthly: "Includes up to 20 users",
+      yearly: "Includes up to 20 users",
+    },
+  },
 ];
 
 const PRICE_IDS: Record<PlanCode, Record<BillingInterval, string>> = {
@@ -52,23 +162,93 @@ function normalizePlan(input: string | undefined): PlanCode {
   return "solo";
 }
 
+function normalizePlanOrNull(input: string | null | undefined): PlanCode | null {
+  const value = String(input ?? "").trim().toLowerCase();
+  if (!value) return null;
+  if (value === "solo") return "solo";
+  if (value === "starter") return "starter";
+  if (value === "business") return "business";
+  if (value === "pro") return "pro";
+  return null;
+}
+
 function normalizeInterval(input: string | undefined): BillingInterval {
   return String(input ?? "").trim().toLowerCase() === "yearly" ? "yearly" : "monthly";
 }
 
+function normalizeIntervalLoose(input: string | null | undefined): BillingInterval {
+  const value = String(input ?? "").trim().toLowerCase();
+  if (value === "yearly" || value === "year") return "yearly";
+  return "monthly";
+}
+
 export default function BillingCheckoutModal(props: BillingCheckoutModalProps) {
+  const [currentPlanCode, setCurrentPlanCode] = useState<PlanCode | null>(
+    normalizePlanOrNull(props.currentPlan),
+  );
+  const [currentInterval, setCurrentInterval] = useState<BillingInterval>(
+    normalizeIntervalLoose(props.currentInterval),
+  );
+  const preferredInitialPlan =
+    String(props.initialPlan ?? "").trim().length > 0
+      ? props.initialPlan
+      : currentPlanCode ?? "business";
+  const preferredInitialInterval =
+    String(props.initialInterval ?? "").trim().length > 0
+      ? props.initialInterval
+      : currentInterval;
+
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [plan, setPlan] = useState<PlanCode>(normalizePlan(props.initialPlan));
+  const [plan, setPlan] = useState<PlanCode>(normalizePlan(preferredInitialPlan));
   const [interval, setInterval] = useState<BillingInterval>(
-    normalizeInterval(props.initialInterval),
+    normalizeInterval(preferredInitialInterval),
   );
 
-  const priceId = useMemo(() => PRICE_IDS[plan][interval], [plan, interval]);
+  useEffect(() => {
+    if (!open || !props.accountId) return;
+    let cancelled = false;
 
-  const handleOpenCheckout = async () => {
+    const loadCurrentPlan = async () => {
+      try {
+        const response = await fetch(
+          `/api/billing/subscription?account_id=${encodeURIComponent(props.accountId ?? "")}`,
+        );
+        if (!response.ok) return;
+
+        const payload = (await response.json()) as {
+          plan?: { code?: string | null } | null;
+          billingInterval?: string | null;
+        };
+        const livePlanCode = normalizePlanOrNull(payload.plan?.code ?? null);
+        const liveInterval = normalizeIntervalLoose(payload.billingInterval);
+
+        if (cancelled) return;
+        setCurrentPlanCode(livePlanCode);
+        setCurrentInterval(liveInterval);
+
+        if (!String(props.initialPlan ?? "").trim() && livePlanCode) {
+          setPlan(livePlanCode);
+        }
+        if (!String(props.initialInterval ?? "").trim()) {
+          setInterval(liveInterval);
+        }
+      } catch {
+        // Keep modal functional even when subscription endpoint is temporarily unavailable.
+      }
+    };
+
+    void loadCurrentPlan();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open, props.accountId, props.initialInterval, props.initialPlan]);
+
+  const handleOpenCheckout = async (selectedPlan: PlanCode = plan) => {
     if (!props.isOwner || loading) return;
+    const priceId = PRICE_IDS[selectedPlan][interval];
     setLoading(true);
     setError("");
     try {
@@ -79,7 +259,7 @@ export default function BillingCheckoutModal(props: BillingCheckoutModalProps) {
           owner_user_id: props.ownerUserId,
           workspace_id: props.workspaceId,
           workspace_slug: props.workspaceSlug,
-          plan_code: plan,
+          plan_code: selectedPlan,
           billing_interval: interval,
           source: "crm_settings_billing",
         },
@@ -114,13 +294,81 @@ export default function BillingCheckoutModal(props: BillingCheckoutModalProps) {
       </button>
 
       {open ? (
-        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-[520px] rounded-2xl border border-[#E5E7EB] bg-white p-5 shadow-2xl">
+        <div
+          className="fixed inset-0 z-[80] flex items-center justify-center bg-black/45 p-3 sm:p-4"
+          onClick={() => setOpen(false)}
+        >
+          <div
+            className="max-h-[92vh] w-full max-w-[1120px] overflow-y-auto rounded-3xl border border-[#D6E0EC] bg-[#F7FAFF] p-4 shadow-2xl sm:p-5"
+            onClick={(event) => event.stopPropagation()}
+          >
             <div className="flex items-start justify-between gap-3">
-              <div>
-                <div className="text-base font-semibold text-[#111827]">Update plan</div>
-                <div className="mt-1 text-sm text-[#6B7280]">
-                  Select a plan in your workspace and continue to checkout.
+              <div className="rounded-2xl border border-[#D6E0EC] bg-white p-4 sm:p-6">
+                <div className="inline-flex items-center rounded-full border border-[#C7D2FE] bg-[#EEF2FF] px-3 py-1 text-[11px] font-semibold text-[#4F46E5]">
+                  UK launch pricing
+                </div>
+                <h3 className="mt-3 text-2xl font-semibold tracking-[-0.02em] text-[#0F172A] sm:text-[36px]">
+                  Control execution. Not just tasks.
+                </h3>
+                <p className="mt-2 max-w-[760px] text-sm text-[#475569] sm:text-base">
+                  A CRM built for real operations - track orders, manage follow-ups, and keep
+                  your team accountable with full visibility and control.
+                </p>
+
+                <div className="mt-4 inline-flex flex-wrap items-center gap-1 rounded-xl border border-[#D6E0EC] bg-[#F8FAFC] p-1">
+                  <button
+                    type="button"
+                    onClick={() => setInterval("monthly")}
+                    className={`rounded-lg px-3 py-1.5 text-sm font-semibold ${
+                      interval === "monthly"
+                        ? "bg-white text-[#111827] shadow-[0_1px_2px_rgba(15,23,42,0.08)]"
+                        : "text-[#64748B]"
+                    }`}
+                  >
+                    Monthly
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setInterval("yearly")}
+                    className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold ${
+                      interval === "yearly"
+                        ? "bg-white text-[#111827] shadow-[0_1px_2px_rgba(15,23,42,0.08)]"
+                        : "text-[#64748B]"
+                    }`}
+                  >
+                    Yearly
+                    <span className="rounded-full border border-[#C7D2FE] bg-[#EEF2FF] px-2 py-0.5 text-[10px] font-semibold text-[#4F46E5]">
+                      2 months free
+                    </span>
+                  </button>
+                </div>
+
+                <p className="mt-3 text-sm font-semibold text-[#4F46E5]">
+                  Founding launch pricing available for a limited period.
+                </p>
+
+                <div className="mt-4 flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleOpenCheckout(plan)}
+                    disabled={loading}
+                    className="rounded-xl border border-[#4F46E5] bg-[#4F46E5] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+                  >
+                    {loading ? "Opening..." : "Get started"}
+                  </button>
+                  <a
+                    href="/pricing"
+                    className="rounded-xl border border-[#CBD5E1] bg-white px-4 py-2 text-sm font-semibold text-[#0F172A]"
+                  >
+                    Compare plans
+                  </a>
+                </div>
+
+                <div className="mt-4 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2 text-xs text-[#475569]">
+                  Checkout email:{" "}
+                  <span className="font-semibold text-[#0F172A]">
+                    {props.customerEmail || "will be requested in checkout"}
+                  </span>
                 </div>
               </div>
               <button
@@ -133,55 +381,96 @@ export default function BillingCheckoutModal(props: BillingCheckoutModalProps) {
               </button>
             </div>
 
-            <div className="mt-4 grid grid-cols-2 gap-2">
+            <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
               {PLAN_OPTIONS.map((option) => (
-                <button
+                <article
                   key={option.code}
-                  type="button"
-                  onClick={() => setPlan(option.code)}
-                  className={`rounded-xl border px-3 py-2 text-sm font-semibold transition ${
+                  className={`relative flex flex-col rounded-2xl border bg-white p-4 transition ${
                     plan === option.code
-                      ? "border-[#111827] bg-[#111827] text-white"
-                      : "border-[#E5E7EB] bg-white text-[#374151] hover:bg-[#F9FAFB]"
+                      ? "border-[#818CF8] shadow-[0_6px_16px_rgba(79,70,229,0.08)]"
+                      : "border-[#E2E8F0]"
                   }`}
                 >
-                  {option.label}
-                </button>
+                  {currentPlanCode && option.code === currentPlanCode ? (
+                    <span className="absolute right-3 top-3 rounded-full border border-[#34D399] bg-[#ECFDF3] px-2 py-0.5 text-[10px] font-semibold text-[#047857]">
+                      Current plan
+                    </span>
+                  ) : null}
+                  {!currentPlanCode && option.code === "business" ? (
+                    <span className="absolute right-3 top-3 rounded-full border border-[#C7D2FE] bg-[#EEF2FF] px-2 py-0.5 text-[10px] font-semibold text-[#4F46E5]">
+                      Most popular
+                    </span>
+                  ) : null}
+
+                  <button
+                    type="button"
+                    onClick={() => setPlan(option.code)}
+                    className="text-left"
+                  >
+                    <h4 className="text-[28px] font-semibold tracking-[-0.02em] text-[#0F172A]">
+                      {option.label}
+                    </h4>
+                    <p className="mt-1 min-h-[48px] text-sm text-[#475569]">{option.description}</p>
+
+                    <div className="mt-3 flex items-center gap-2">
+                      <span className="rounded-full border border-[#C7D2FE] bg-[#EEF2FF] px-2 py-0.5 text-[10px] font-semibold text-[#4F46E5]">
+                        Launch price
+                      </span>
+                    </div>
+                    <p className="mt-1 text-xs font-semibold text-[#64748B]">
+                      Limited-time founding offer
+                    </p>
+
+                    <div className="mt-2">
+                      <div className="text-sm font-semibold text-[#94A3B8] line-through">
+                        £ {interval === "monthly" ? option.regularAmount : `${option.regularAmount}0`} /
+                        {interval === "monthly" ? "month" : "year"}
+                      </div>
+                      <div className="flex items-end gap-1 text-[#0F172A]">
+                        <span className="text-3xl font-semibold leading-none">£</span>
+                        <span className="text-[46px] font-semibold leading-none tracking-[-0.03em]">
+                          {interval === "monthly" ? option.launchAmount : `${option.launchAmount}0`}
+                        </span>
+                        <span className="pb-1 text-xl font-semibold text-[#334155]">
+                          / {interval === "monthly" ? "month" : "year"}
+                        </span>
+                      </div>
+                    </div>
+
+                    {interval === "yearly" ? (
+                      <p className="mt-1 text-xs font-semibold text-[#4F46E5]">
+                        Equivalent to £{option.monthlyLaunchAmount}/month, billed annually
+                      </p>
+                    ) : null}
+
+                    <p className="mt-1 text-sm font-semibold text-[#475569]">{option.note[interval]}</p>
+                  </button>
+
+                  <ul className="mt-3 flex-1 space-y-1 text-sm text-[#0F172A]">
+                    {option.features.map((feature) => (
+                      <li key={feature}>{feature}</li>
+                    ))}
+                  </ul>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPlan(option.code);
+                      void handleOpenCheckout(option.code);
+                    }}
+                    disabled={loading || option.code === currentPlanCode}
+                    className={`mt-4 rounded-xl border px-3 py-2 text-sm font-semibold ${
+                      option.code === currentPlanCode
+                        ? "cursor-not-allowed border-[#D1FAE5] bg-[#ECFDF3] text-[#047857]"
+                        : option.code === "business"
+                          ? "border-[#4F46E5] bg-[#4F46E5] text-white"
+                          : "border-[#CBD5E1] bg-white text-[#0F172A]"
+                    } disabled:opacity-60`}
+                  >
+                    {option.code === currentPlanCode ? "Current plan" : option.cta}
+                  </button>
+                </article>
               ))}
-            </div>
-
-            <div className="mt-3 inline-flex rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] p-1">
-              <button
-                type="button"
-                onClick={() => setInterval("monthly")}
-                className={`rounded-lg px-3 py-1.5 text-sm font-semibold ${
-                  interval === "monthly"
-                    ? "bg-white text-[#111827] shadow"
-                    : "text-[#6B7280]"
-                }`}
-              >
-                Monthly
-              </button>
-              <button
-                type="button"
-                onClick={() => setInterval("yearly")}
-                className={`rounded-lg px-3 py-1.5 text-sm font-semibold ${
-                  interval === "yearly"
-                    ? "bg-white text-[#111827] shadow"
-                    : "text-[#6B7280]"
-                }`}
-              >
-                Yearly
-              </button>
-            </div>
-
-            <div className="mt-4 rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] p-3 text-sm text-[#4B5563]">
-              <div>
-                Checkout email:{" "}
-                <span className="font-semibold text-[#111827]">
-                  {props.customerEmail || "will be requested in checkout"}
-                </span>
-              </div>
             </div>
 
             {error ? (
@@ -189,24 +478,6 @@ export default function BillingCheckoutModal(props: BillingCheckoutModalProps) {
                 {error}
               </div>
             ) : null}
-
-            <div className="mt-4 flex items-center justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                className="rounded-full border border-[#E5E7EB] bg-white px-4 py-2 text-sm font-semibold text-[#374151] hover:bg-[#F9FAFB]"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleOpenCheckout}
-                disabled={loading}
-                className="rounded-full border border-[#111827] bg-[#111827] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
-              >
-                {loading ? "Opening..." : "Continue to checkout"}
-              </button>
-            </div>
           </div>
         </div>
       ) : null}
