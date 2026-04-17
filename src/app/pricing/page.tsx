@@ -136,11 +136,7 @@ const whoIsThisFor = [
 const faqs = [
   {
     q: "How many users are included?",
-    a: "Starter includes up to 5 users, Business up to 10 users, and Pro up to 20 users.",
-  },
-  {
-    q: "How does extra user work in Solo?",
-    a: "Solo starts at £8/month for one user. You can add additional users for £5/month each.",
+    a: "Solo is for one user. Starter includes up to 5 users, Business up to 10 users, and Pro up to 20 users.",
   },
   {
     q: "Can I upgrade later?",
@@ -283,8 +279,8 @@ export default function PricingPage() {
       regularAmount: billingCycle === "monthly" ? "12" : "120",
       monthlyLaunchAmount: "8",
       priceNote: {
-        monthly: "+ £5 / extra user",
-        yearly: "+ £50 / extra user / year",
+        monthly: "1 user included",
+        yearly: "1 user included",
       },
       description:
         "For individuals who need structure and follow-up discipline",

@@ -53,8 +53,8 @@ const PLAN_OPTIONS: PlanOption[] = [
     ],
     cta: "Start with Solo",
     note: {
-      monthly: "+ £5 / extra user",
-      yearly: "+ £50 / extra user / year",
+      monthly: "1 user included",
+      yearly: "1 user included",
     },
   },
   {
