@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -81,6 +81,34 @@ export default function ProductCatalogManager({
     defaultTaxRate: "",
     currencyCode: "GBP",
   });
+  const [page, setPage] = useState(0);
+  const PAGE_SIZE = 20;
+  const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState<"name" | "price" | "updated">("updated");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    let list = q
+      ? rows.filter(
+          (r) =>
+            r.name.toLowerCase().includes(q) ||
+            r.sku.toLowerCase().includes(q),
+        )
+      : [...rows];
+
+    list.sort((a, b) => {
+      let cmp = 0;
+      if (sortBy === "name") cmp = a.name.localeCompare(b.name);
+      else if (sortBy === "price")
+        cmp = Number(a.default_unit_price) - Number(b.default_unit_price);
+      else cmp = a.updated_at.localeCompare(b.updated_at);
+      return sortDir === "asc" ? cmp : -cmp;
+    });
+
+    return list;
+  }, [rows, search, sortBy, sortDir]);
+
   const [taxRateMode, setTaxRateMode] = useState<
     "" | "0" | "7" | "20" | "custom"
   >("");
@@ -434,71 +462,124 @@ export default function ProductCatalogManager({
             <div className="product-section-label text-[#6B7280]">Catalog</div>
             <h2 className="product-section-title mt-1.5">Products</h2>
           </div>
-          <div className="text-sm text-[#667085]">{rows.length} items</div>
+          <div className="text-sm text-[#667085]">
+            {search.trim()
+              ? `${filtered.length} of ${rows.length}`
+              : `${rows.length} items`}
+          </div>
         </div>
 
-        <div className="space-y-3">
-          {rows.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-[#E5E7EB] bg-[#F9FAFB] px-4 py-6 text-sm text-[#667085]">
-              No products yet.
-            </div>
-          ) : (
-            rows.map((row) => (
-              <article
-                key={row.id}
-                className="rounded-2xl border border-[#E5E7EB] bg-[#FCFCFD] p-4"
-              >
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <div className="text-sm font-semibold text-[#101828]">
-                      {row.name}
-                    </div>
-                    <div className="mt-1 text-xs text-[#667085]">
-                      {row.sku} • {row.uom_code} • {row.currency_code}
-                    </div>
-                    {row.description ? (
-                      <div className="mt-2 text-sm text-[#475467]">
-                        {row.description}
-                      </div>
-                    ) : null}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={[
-                        "inline-flex h-8 items-center rounded-full px-3 text-xs font-semibold",
-                        row.status === "ACTIVE"
-                          ? "bg-emerald-50 text-emerald-700"
-                          : "bg-slate-100 text-slate-600",
-                      ].join(" ")}
-                    >
-                      {row.status}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => toggleStatus(row.id, row.status)}
-                      disabled={isPending || Boolean(schemaWarning)}
-                      className="inline-flex h-8 items-center rounded-full border border-[#D0D5DD] px-3 text-xs font-semibold text-[#344054] disabled:opacity-60"
-                    >
-                      {row.status === "ACTIVE" ? "Set inactive" : "Set active"}
-                    </button>
-                  </div>
-                </div>
-                <div className="mt-3 grid gap-2 text-sm text-[#475467] md:grid-cols-4">
-                  <div>Price: {fmtNumber(row.default_unit_price)}</div>
-                  <div>
-                    Tax: {fmtNumber(Number(row.default_tax_rate) * 100)}%
-                  </div>
-                  <div>
-                    Stock managed: {row.is_stock_managed ? "Yes" : "No"}
-                  </div>
-                  <div>
-                    Updated: {new Date(row.updated_at).toLocaleString()}
-                  </div>
-                </div>
-              </article>
-            ))
-          )}
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(0); }}
+            placeholder="Search by name or SKU..."
+            className="h-9 min-w-0 flex-1 rounded-lg border border-[#E5E7EB] bg-white px-3 text-sm text-[#344054] placeholder:text-[#9CA3AF] focus:border-[var(--brand-600)] focus:outline-none"
+          />
+          <select
+            value={`${sortBy}:${sortDir}`}
+            onChange={(e) => {
+              const [field, dir] = e.target.value.split(":") as [typeof sortBy, typeof sortDir];
+              setSortBy(field);
+              setSortDir(dir);
+              setPage(0);
+            }}
+            className="h-9 rounded-lg border border-[#E5E7EB] bg-white px-2.5 text-xs text-[#344054] focus:border-[var(--brand-600)] focus:outline-none"
+          >
+            <option value="updated:desc">Newest first</option>
+            <option value="updated:asc">Oldest first</option>
+            <option value="name:asc">Name A-Z</option>
+            <option value="name:desc">Name Z-A</option>
+            <option value="price:asc">Price low-high</option>
+            <option value="price:desc">Price high-low</option>
+          </select>
         </div>
+
+        {(() => {
+          const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+          const safeP = Math.min(page, totalPages - 1);
+          const start = safeP * PAGE_SIZE;
+          const pageRows = filtered.slice(start, start + PAGE_SIZE);
+
+          return (
+            <>
+              <div className="space-y-1.5">
+                {filtered.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-[#E5E7EB] bg-[#F9FAFB] px-4 py-6 text-sm text-[#667085]">
+                    {rows.length === 0 ? "No products yet." : "No products match your search."}
+                  </div>
+                ) : (
+                  pageRows.map((row, i) => (
+                    <article
+                      key={row.id}
+                      className="flex items-center gap-3 rounded-xl border border-[#E5E7EB] bg-[#FCFCFD] px-3.5 py-2.5"
+                    >
+                      <span className="w-6 shrink-0 text-xs font-medium text-[#9CA3AF] text-right">
+                        {start + i + 1}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-baseline gap-2">
+                          <span className="truncate text-sm font-semibold text-[#101828]">
+                            {row.name}
+                          </span>
+                          <span className="shrink-0 text-xs text-[#667085]">
+                            {row.sku}
+                          </span>
+                        </div>
+                        <div className="mt-0.5 text-xs text-[#667085]">
+                          {fmtNumber(row.default_unit_price)} {row.currency_code}
+                        </div>
+                      </div>
+                      <span
+                        className={[
+                          "inline-flex shrink-0 items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
+                          row.status === "ACTIVE"
+                            ? "bg-emerald-50 text-emerald-700"
+                            : "bg-slate-100 text-slate-600",
+                        ].join(" ")}
+                      >
+                        {row.status}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => toggleStatus(row.id, row.status)}
+                        disabled={isPending || Boolean(schemaWarning)}
+                        className="inline-flex shrink-0 items-center rounded-full border border-[#D0D5DD] px-2.5 py-1 text-xs font-medium text-[#344054] disabled:opacity-60"
+                      >
+                        {row.status === "ACTIVE" ? "Set inactive" : "Set active"}
+                      </button>
+                    </article>
+                  ))
+                )}
+              </div>
+
+              {totalPages > 1 && (
+                <div className="mt-4 flex items-center justify-center gap-2">
+                  <button
+                    type="button"
+                    disabled={safeP === 0}
+                    onClick={() => setPage((p) => Math.max(0, p - 1))}
+                    className="inline-flex h-8 items-center rounded-lg border border-[#D0D5DD] px-3 text-xs font-medium text-[#344054] disabled:opacity-40"
+                  >
+                    Prev
+                  </button>
+                  <span className="text-xs text-[#667085]">
+                    {safeP + 1} / {totalPages}
+                  </span>
+                  <button
+                    type="button"
+                    disabled={safeP >= totalPages - 1}
+                    onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+                    className="inline-flex h-8 items-center rounded-lg border border-[#D0D5DD] px-3 text-xs font-medium text-[#344054] disabled:opacity-40"
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
+            </>
+          );
+        })()}
       </section>
     </div>
   );
