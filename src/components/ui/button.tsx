@@ -26,10 +26,10 @@ const buttonVariants = cva(
         link: "text-[var(--brand-700)] underline-offset-4 hover:underline",
       },
       size: {
-        small: "px-4 py-2 text-[0.875rem]",
-        medium: "px-6 py-3 text-[1rem]",
-        large: "px-8 py-4 text-[1.125rem]",
-        default: "px-6 py-3 text-[1rem]",
+        small: "px-3 py-1.5 text-[0.8125rem]",
+        medium: "px-4 py-2 text-[0.8125rem]",
+        large: "px-6 py-2.5 text-[0.875rem]",
+        default: "px-4 py-2 text-[0.8125rem]",
       },
     },
     defaultVariants: {

@@ -5,6 +5,8 @@ import BusinessPeoplePanel from "@/app/b/[slug]/_components/BusinessPeoplePanel"
 import TeamAccessTopBar from "./TeamAccessTopBar";
 import SettingsTabs from "../SettingsTabs";
 import DesktopLeftRail from "@/app/b/[slug]/_components/Desktop/DesktopLeftRail";
+import { loadUserProfileSafe } from "@/lib/profile";
+import { resolveUserDisplay } from "@/lib/user-display";
 
 type Role = "OWNER" | "MANAGER" | "GUEST";
 type MembershipRow = {
@@ -47,7 +49,7 @@ export default async function TeamPage({
 
   const { data: business, error: bizErr } = await supabase
     .from("businesses")
-    .select("id,slug,owner_phone,manager_phone")
+    .select("id,slug,owner_phone,manager_phone,plan")
     .eq("slug", slug)
     .single();
 
@@ -71,6 +73,16 @@ export default async function TeamPage({
     redirect(`/login?next=${encodeURIComponent(nextPath)}`);
   }
   const adminHref = isAdminEmail(user.email) ? getAdminUsersPath() : undefined;
+  const profile = await loadUserProfileSafe(supabase, user.id);
+  const currentUserName = resolveUserDisplay({
+    full_name: profile?.full_name ?? String(user.user_metadata?.full_name ?? ""),
+    first_name: profile?.first_name ?? String(user.user_metadata?.first_name ?? ""),
+    last_name: profile?.last_name ?? String(user.user_metadata?.last_name ?? ""),
+    email: profile?.email ?? user.email ?? null,
+    phone: user.phone ?? null,
+  }).primary;
+  const currentUserAvatarUrl =
+    String(profile?.avatar_url ?? user.user_metadata?.avatar_url ?? "").trim() || undefined;
 
   const { data: ownerManagerMems } = await supabase
     .from("memberships")
@@ -100,8 +112,11 @@ export default async function TeamPage({
     <div className="min-h-[100svh] overflow-x-clip bg-transparent text-[#1F2937]">
       <TeamAccessTopBar
         ordersHref="/app/crm"
-        userLabel={user.email || user.phone || "User"}
+        userLabel={currentUserName}
+        currentPlan={business.plan}
+        businessId={String(business.id)}
         adminHref={adminHref}
+        userAvatarUrl={currentUserAvatarUrl}
         profileHref={
           user.phone
             ? `/m/${encodeURIComponent(user.phone)}`
@@ -109,7 +124,7 @@ export default async function TeamPage({
         }
       />
 
-      <div className="mx-auto max-w-[1220px] overflow-x-clip px-2 pb-[max(96px,env(safe-area-inset-bottom))] pt-[88px] sm:px-6 sm:pb-8 sm:pt-[88px]">
+      <div className="mx-auto max-w-[1220px] px-2 pb-[max(96px,env(safe-area-inset-bottom))] pt-[64px] sm:px-6 sm:pb-8 sm:pt-[64px]">
         <div className="hidden items-start lg:grid lg:grid-cols-[auto_minmax(0,1fr)] lg:gap-5">
           <DesktopLeftRail
             businessId={String(business.id)}
@@ -128,7 +143,11 @@ export default async function TeamPage({
             activeFiltersCount={0}
             clearHref={`/b/${business.slug}`}
             businessHref={`/b/${business.slug}/settings`}
+            clientsHref={`/b/${business.slug}/clients`}
+            catalogHref={`/b/${business.slug}/catalog/products`}
             analyticsHref={`/b/${business.slug}/analytics`}
+            todayHref={`/b/${business.slug}/today`}
+            supportHref={`/b/${business.slug}/support`}
             settingsHref={`/b/${business.slug}/settings/team`}
             adminHref={adminHref}
             canSeeAnalytics={role === "OWNER"}
@@ -136,11 +155,11 @@ export default async function TeamPage({
             activeSection="settings"
           />
 
-          <section className="w-full min-w-0 max-w-full rounded-[20px] border border-[#E5E7EB] bg-white p-3.5 pb-6 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:rounded-[26px] sm:p-5">
-            <div className="mb-4">
+          <section className="w-full min-w-0 max-w-full rounded-[16px] border border-[#E5E7EB] bg-white p-3 pb-4 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:rounded-[18px] sm:p-4">
+            <div className="mb-3">
               <div className="product-page-kicker">Settings</div>
-              <h1 className="product-page-title mt-1.5">Team &amp; Access</h1>
-              <p className="product-page-subtitle mt-1.5">
+              <h1 className="product-page-title mt-1">Team &amp; Access</h1>
+              <p className="product-page-subtitle mt-1">
                 Manage who can access{" "}
                 <span className="font-semibold">{business.slug}</span>
               </p>
@@ -186,11 +205,11 @@ export default async function TeamPage({
         </div>
 
         <div className="mx-auto w-full max-w-[920px] min-w-0 lg:hidden">
-          <section className="w-full min-w-0 max-w-full rounded-[20px] border border-[#E5E7EB] bg-white p-3.5 pb-6 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:rounded-[26px] sm:p-5">
-            <div className="mb-4">
+          <section className="w-full min-w-0 max-w-full rounded-[16px] border border-[#E5E7EB] bg-white p-3 pb-4 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:rounded-[18px] sm:p-4">
+            <div className="mb-3">
               <div className="product-page-kicker">Settings</div>
-              <h1 className="product-page-title mt-1.5">Team &amp; Access</h1>
-              <p className="product-page-subtitle mt-1.5">
+              <h1 className="product-page-title mt-1">Team &amp; Access</h1>
+              <p className="product-page-subtitle mt-1">
                 Manage who can access{" "}
                 <span className="font-semibold">{business.slug}</span>
               </p>

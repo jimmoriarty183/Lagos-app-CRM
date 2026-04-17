@@ -299,93 +299,93 @@ export default function BillingCheckoutModal(props: BillingCheckoutModalProps) {
           onClick={() => setOpen(false)}
         >
           <div
-            className="max-h-[92vh] w-full max-w-[1120px] overflow-y-auto rounded-3xl border border-[#D6E0EC] bg-[#F7FAFF] p-4 shadow-2xl sm:p-5"
+            className="max-h-[92vh] w-full max-w-[1120px] overflow-y-auto rounded-2xl border border-[#D6E0EC] bg-[#F7FAFF] p-3 shadow-2xl sm:p-4"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-3">
-              <div className="rounded-2xl border border-[#D6E0EC] bg-white p-4 sm:p-6">
+              <div>
                 <div className="inline-flex items-center rounded-full border border-[#C7D2FE] bg-[#EEF2FF] px-3 py-1 text-[11px] font-semibold text-[#4F46E5]">
                   UK launch pricing
                 </div>
-                <h3 className="mt-3 text-2xl font-semibold tracking-[-0.02em] text-[#0F172A] sm:text-[36px]">
+                <h3 className="mt-2 text-xl font-semibold tracking-[-0.02em] text-[#0F172A] sm:text-[26px]">
                   Control execution. Not just tasks.
                 </h3>
-                <p className="mt-2 max-w-[760px] text-sm text-[#475569] sm:text-base">
-                  A CRM built for real operations - track orders, manage follow-ups, and keep
+                <p className="mt-1.5 max-w-[640px] text-sm text-[#475569]">
+                  A CRM built for real operations — track orders, manage follow-ups, and keep
                   your team accountable with full visibility and control.
                 </p>
-
-                <div className="mt-4 inline-flex flex-wrap items-center gap-1 rounded-xl border border-[#D6E0EC] bg-[#F8FAFC] p-1">
-                  <button
-                    type="button"
-                    onClick={() => setInterval("monthly")}
-                    className={`rounded-lg px-3 py-1.5 text-sm font-semibold ${
-                      interval === "monthly"
-                        ? "bg-white text-[#111827] shadow-[0_1px_2px_rgba(15,23,42,0.08)]"
-                        : "text-[#64748B]"
-                    }`}
-                  >
-                    Monthly
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setInterval("yearly")}
-                    className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold ${
-                      interval === "yearly"
-                        ? "bg-white text-[#111827] shadow-[0_1px_2px_rgba(15,23,42,0.08)]"
-                        : "text-[#64748B]"
-                    }`}
-                  >
-                    Yearly
-                    <span className="rounded-full border border-[#C7D2FE] bg-[#EEF2FF] px-2 py-0.5 text-[10px] font-semibold text-[#4F46E5]">
-                      2 months free
-                    </span>
-                  </button>
-                </div>
-
-                <p className="mt-3 text-sm font-semibold text-[#4F46E5]">
-                  Founding launch pricing available for a limited period.
-                </p>
-
-                <div className="mt-4 flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleOpenCheckout(plan)}
-                    disabled={loading}
-                    className="rounded-xl border border-[#4F46E5] bg-[#4F46E5] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
-                  >
-                    {loading ? "Opening..." : "Get started"}
-                  </button>
-                  <a
-                    href="/pricing"
-                    className="rounded-xl border border-[#CBD5E1] bg-white px-4 py-2 text-sm font-semibold text-[#0F172A]"
-                  >
-                    Compare plans
-                  </a>
-                </div>
-
-                <div className="mt-4 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2 text-xs text-[#475569]">
-                  Checkout email:{" "}
-                  <span className="font-semibold text-[#0F172A]">
-                    {props.customerEmail || "will be requested in checkout"}
-                  </span>
-                </div>
               </div>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[#E5E7EB] text-[#6B7280] hover:bg-[#F9FAFB]"
+                className="flex-none inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[#E5E7EB] text-[#6B7280] hover:bg-[#F9FAFB]"
                 aria-label="Close"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
-            <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <div className="inline-flex flex-wrap items-center gap-1 rounded-xl border border-[#D6E0EC] bg-[#F8FAFC] p-1">
+                <button
+                  type="button"
+                  onClick={() => setInterval("monthly")}
+                  className={`rounded-lg px-3 py-1.5 text-sm font-semibold ${
+                    interval === "monthly"
+                      ? "bg-white text-[#111827] shadow-[0_1px_2px_rgba(15,23,42,0.08)]"
+                      : "text-[#64748B]"
+                  }`}
+                >
+                  Monthly
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setInterval("yearly")}
+                  className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold ${
+                    interval === "yearly"
+                      ? "bg-white text-[#111827] shadow-[0_1px_2px_rgba(15,23,42,0.08)]"
+                      : "text-[#64748B]"
+                  }`}
+                >
+                  Yearly
+                  <span className="rounded-full border border-[#C7D2FE] bg-[#EEF2FF] px-2 py-0.5 text-[10px] font-semibold text-[#4F46E5]">
+                    2 months free
+                  </span>
+                </button>
+              </div>
+              <p className="text-sm font-semibold text-[#4F46E5]">
+                Founding launch pricing available for a limited period.
+              </p>
+            </div>
+
+            <div className="mt-2 flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={() => handleOpenCheckout(plan)}
+                disabled={loading}
+                className="rounded-xl border border-[#4F46E5] bg-[#4F46E5] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+              >
+                {loading ? "Opening..." : "Get started"}
+              </button>
+              <a
+                href="/pricing"
+                className="rounded-xl border border-[#CBD5E1] bg-white px-4 py-2 text-sm font-semibold text-[#0F172A]"
+              >
+                Compare plans
+              </a>
+              <div className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2 text-xs text-[#475569]">
+                Checkout email:{" "}
+                <span className="font-semibold text-[#0F172A]">
+                  {props.customerEmail || "will be requested in checkout"}
+                </span>
+              </div>
+            </div>
+
+            <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-4">
               {PLAN_OPTIONS.map((option) => (
                 <article
                   key={option.code}
-                  className={`relative flex flex-col rounded-2xl border bg-white p-4 transition ${
+                  className={`relative flex flex-col rounded-xl border bg-white p-3 transition ${
                     plan === option.code
                       ? "border-[#818CF8] shadow-[0_6px_16px_rgba(79,70,229,0.08)]"
                       : "border-[#E2E8F0]"
@@ -407,7 +407,7 @@ export default function BillingCheckoutModal(props: BillingCheckoutModalProps) {
                     onClick={() => setPlan(option.code)}
                     className="text-left"
                   >
-                    <h4 className="text-[28px] font-semibold tracking-[-0.02em] text-[#0F172A]">
+                    <h4 className="text-[22px] font-semibold tracking-[-0.02em] text-[#0F172A]">
                       {option.label}
                     </h4>
                     <p className="mt-1 min-h-[48px] text-sm text-[#475569]">{option.description}</p>
@@ -446,7 +446,7 @@ export default function BillingCheckoutModal(props: BillingCheckoutModalProps) {
                     <p className="mt-1 text-sm font-semibold text-[#475569]">{option.note[interval]}</p>
                   </button>
 
-                  <ul className="mt-3 flex-1 space-y-1 text-sm text-[#0F172A]">
+                  <ul className="mt-2 flex-1 space-y-1 text-sm text-[#0F172A]">
                     {option.features.map((feature) => (
                       <li key={feature}>{feature}</li>
                     ))}
@@ -459,7 +459,7 @@ export default function BillingCheckoutModal(props: BillingCheckoutModalProps) {
                       void handleOpenCheckout(option.code);
                     }}
                     disabled={loading || option.code === currentPlanCode}
-                    className={`mt-4 rounded-xl border px-3 py-2 text-sm font-semibold ${
+                    className={`mt-3 rounded-xl border px-3 py-2 text-sm font-semibold ${
                       option.code === currentPlanCode
                         ? "cursor-not-allowed border-[#D1FAE5] bg-[#ECFDF3] text-[#047857]"
                         : option.code === "business"

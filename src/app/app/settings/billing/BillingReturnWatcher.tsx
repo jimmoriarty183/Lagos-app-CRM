@@ -64,7 +64,7 @@ export default function BillingReturnWatcher(props: BillingReturnWatcherProps) {
   if (!message) return null;
 
   return (
-    <div className="mt-5 rounded-2xl border border-[#BFDBFE] bg-[#EFF6FF] p-4 text-sm text-[#1E3A8A]">
+    <div className="mt-3 rounded-xl border border-[#BFDBFE] bg-[#EFF6FF] p-3 text-sm text-[#1E3A8A]">
       {message}
     </div>
   );

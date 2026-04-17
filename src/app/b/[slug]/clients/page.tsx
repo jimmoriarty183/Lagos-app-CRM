@@ -446,6 +446,7 @@ export default async function ClientsPage({
           "User"
         }
         currentUserAvatarUrl={context.profile?.avatar_url || undefined}
+        currentPlan={context.business.plan}
         businesses={businessOptions}
         businessId={context.business.id}
         businessHref={businessHref}
@@ -460,7 +461,7 @@ export default async function ClientsPage({
         }
       />
 
-      <main className="mx-auto max-w-[1220px] overflow-x-hidden px-4 pb-8 pt-20 sm:px-6">
+      <main className="mx-auto max-w-[1220px] overflow-x-hidden px-4 pb-8 pt-16 sm:px-6">
         <div className="hidden items-start gap-5 lg:grid lg:grid-cols-[auto_minmax(0,1fr)]">
           <div className="relative shrink-0">
             <DesktopLeftRail
@@ -482,6 +483,7 @@ export default async function ClientsPage({
               clearHref={clientsHref}
               businessHref={businessHref}
               clientsHref={clientsHref}
+              catalogHref={`/b/${slug}/catalog/products`}
               analyticsHref={`/b/${slug}/analytics`}
               todayHref={todayHref}
               supportHref={supportHref}
@@ -493,8 +495,8 @@ export default async function ClientsPage({
             />
           </div>
 
-          <section className="min-w-0 space-y-4">
-            <div className="rounded-[24px] border border-[#E5E7EB] bg-white p-5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+          <section className="min-w-0 space-y-3">
+            <div className="rounded-[16px] border border-[#E5E7EB] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <div className="product-page-kicker">CRM Clients</div>
@@ -508,7 +510,7 @@ export default async function ClientsPage({
                 </div>
               </div>
 
-              <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
                 <MetricCard label="Clients" value={String(totalClients)} />
                 <MetricCard
                   label="With orders"
@@ -527,7 +529,7 @@ export default async function ClientsPage({
 
               <form
                 action={clientsHref}
-                className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_220px_180px_auto]"
+                className="mt-3 grid gap-2 lg:grid-cols-[minmax(0,1fr)_220px_180px_auto]"
               >
                 {phoneRaw ? (
                   <input type="hidden" name="u" value={phoneRaw} />
@@ -590,8 +592,8 @@ export default async function ClientsPage({
           </section>
         </div>
 
-        <div className="space-y-4 lg:hidden">
-          <section className="rounded-[24px] border border-[#E5E7EB] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+        <div className="space-y-3 lg:hidden">
+          <section className="rounded-[16px] border border-[#E5E7EB] bg-white p-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
             <div className="product-page-kicker">CRM Clients</div>
             <h1 className="product-page-title mt-1.5">Client Directory</h1>
             <p className="product-page-subtitle mt-1.5">
@@ -619,9 +621,9 @@ export default async function ClientsPage({
 
 function MetricCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-[#E5E7EB] bg-[#F9FAFB] p-3">
+    <div className="rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] p-2.5">
       <div className="text-xs font-medium text-slate-500">{label}</div>
-      <div className="mt-1 text-lg font-semibold text-slate-900">{value}</div>
+      <div className="mt-0.5 text-base font-semibold text-slate-900">{value}</div>
     </div>
   );
 }

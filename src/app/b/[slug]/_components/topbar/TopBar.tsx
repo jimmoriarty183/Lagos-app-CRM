@@ -18,6 +18,7 @@ type Props = {
   role: "OWNER" | "MANAGER" | "GUEST";
   currentUserName?: string;
   currentUserAvatarUrl?: string;
+  currentPlan?: string | null;
   pill?: React.CSSProperties;
   businesses?: BusinessOption[];
   businessId?: string;
@@ -42,6 +43,7 @@ export default function TopBar({
   role,
   currentUserName,
   currentUserAvatarUrl,
+  currentPlan,
   businesses,
   businessId,
   businessHref,
@@ -110,17 +112,28 @@ export default function TopBar({
   const handleSelect = (slug: string) => {
     document.cookie = `active_business_slug=${encodeURIComponent(slug)}; path=/; max-age=${60 * 60 * 24 * 365}`;
 
+    const currentPath = window.location.pathname;
     const currentParams = new URLSearchParams(window.location.search);
     const qs = currentParams.toString();
-    router.push(qs ? `/app/crm?${qs}` : "/app/crm");
+
+    let nextPath = currentPath;
+    if (currentPath.startsWith("/b/")) {
+      const parts = currentPath.split("/");
+      if (parts.length > 2) {
+        parts[2] = slug;
+        nextPath = parts.join("/");
+      }
+    }
+
+    router.replace(qs ? `${nextPath}?${qs}` : nextPath);
     router.refresh();
   };
 
   return (
     <header className="fixed inset-x-0 top-0 z-50 border-b border-[var(--neutral-200)] bg-white">
       <div className="pt-[env(safe-area-inset-top)]">
-        <div className="mx-auto flex h-[64px] max-w-[1200px] items-center justify-between gap-4 px-6">
-          <div className="flex min-w-0 shrink-0 items-center gap-2.5">
+        <div className="mx-auto flex h-[48px] max-w-[1200px] items-center justify-between gap-3 px-4">
+          <div className="flex min-w-0 shrink-0 items-center gap-2">
             <MobileTopbarMenu
               businessId={businessId}
               businessSlug={businessSlug}
@@ -139,16 +152,16 @@ export default function TopBar({
             />
 
             <Link
-              href={dashboardHref}
+              href={businessHref ?? `/b/${businessSlug}`}
               aria-label="Go to dashboard"
               className="flex shrink-0 items-center justify-center sm:justify-start"
             >
               <span className="sm:hidden">
-                <BrandIcon size={38} />
+                <BrandIcon size={28} />
               </span>
               <BrandLockup
-                iconSize={34}
-                textClassName="text-[1.75rem]"
+                iconSize={26}
+                textClassName="text-[1.25rem]"
                 className="hidden sm:flex"
               />
             </Link>
@@ -206,13 +219,13 @@ export default function TopBar({
             )}
           </div>
 
-          <div className="hidden shrink-0 items-center gap-2.5 sm:flex">
+          <div className="hidden shrink-0 items-center gap-1.5 sm:flex">
             {todayHref ? (
               <Link
                 href={todayHref}
-                className="inline-flex h-8 items-center rounded-lg border border-[#C7D2FE] bg-[#EEF2FF] px-3 text-[12px] font-semibold text-[#3645A0] shadow-sm transition hover:border-[#A5B4FC] hover:bg-[#E0E7FF] hover:text-[#2F3EA8]"
+                className="inline-flex h-7 items-center rounded-md border border-[#C7D2FE] bg-[#EEF2FF] px-2.5 text-[11px] font-semibold text-[#3645A0] shadow-sm transition hover:border-[#A5B4FC] hover:bg-[#E0E7FF] hover:text-[#2F3EA8]"
               >
-                <CheckSquare className="h-4 w-4 text-[#3645A0]" />
+                <CheckSquare className="h-3.5 w-3.5 text-[#3645A0]" />
                 <span className="ml-2">To do</span>
                 {hasSplitTodoCounters ? (
                   <span className="ml-2 inline-flex items-center gap-1.5">
@@ -242,9 +255,9 @@ export default function TopBar({
             {calendarDayHref ? (
               <Link
                 href={calendarDayHref}
-                className="inline-flex h-8 items-center rounded-lg border border-[#D6DAE1] bg-white px-3 text-[12px] font-semibold text-[#475467] shadow-sm transition hover:border-[#C7D2FE] hover:bg-[#F8FAFF] hover:text-[#3645A0]"
+                className="inline-flex h-7 items-center rounded-md border border-[#D6DAE1] bg-white px-2.5 text-[11px] font-semibold text-[#475467] shadow-sm transition hover:border-[#C7D2FE] hover:bg-[#F8FAFF] hover:text-[#3645A0]"
               >
-                <CalendarDays className="h-4 w-4 text-[#667085]" />
+                <CalendarDays className="h-3.5 w-3.5 text-[#667085]" />
                 <span className="ml-2">Calendar</span>
               </Link>
             ) : null}
@@ -264,6 +277,8 @@ export default function TopBar({
               <UserMenu
                 userLabel={userLabel}
                 roleLabel={roleLabel}
+                currentPlan={currentPlan}
+                businessId={businessId}
                 profileHref={profileHref}
                 settingsHref={resolvedSettingsHref}
                 billingHref={resolvedBillingHref}
@@ -282,6 +297,8 @@ export default function TopBar({
               compact
               userLabel={userLabel}
               roleLabel={roleLabel}
+              currentPlan={currentPlan}
+              businessId={businessId}
               profileHref={profileHref}
               settingsHref={resolvedSettingsHref}
               billingHref={resolvedBillingHref}

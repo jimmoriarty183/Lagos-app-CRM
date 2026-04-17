@@ -1002,12 +1002,12 @@ export default async function OwnerAnalyticsPage({
           </div>
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className="grid gap-3 lg:grid-cols-2">
           <div className="rounded-xl border border-[#E5E7EB] bg-white p-4">
             <h3 className="text-sm font-semibold text-[#111827]">
               Client type distribution
             </h3>
-            <div className="mt-4 space-y-3 text-sm">
+            <div className="mt-3 space-y-2 text-sm">
               <div>
                 <div className="mb-1 flex items-center justify-between text-[#475467]">
                   <span>Individual</span>
@@ -1140,6 +1140,7 @@ export default async function OwnerAnalyticsPage({
         role={role}
         currentUserName={currentUserName}
         currentUserAvatarUrl={currentUserAvatarUrl || undefined}
+        currentPlan={currentBusiness.plan}
         businesses={businessOptions}
         businessId={String(currentBusiness.id)}
         businessHref={businessHref}
@@ -1153,8 +1154,8 @@ export default async function OwnerAnalyticsPage({
         todayCount={todayCount}
       />
 
-      <main className="mx-auto max-w-[1220px] overflow-x-hidden px-4 pb-8 pt-20 sm:px-6">
-        <div className="hidden items-start gap-5 lg:grid lg:grid-cols-[auto_minmax(0,1fr)]">
+      <main className="mx-auto max-w-[1220px] overflow-x-hidden px-4 pb-8 pt-16 sm:px-6">
+        <div className="hidden items-start gap-3 lg:grid lg:grid-cols-[auto_minmax(0,1fr)]">
           <div className="relative shrink-0">
             <DesktopLeftRail
               businessId={String(currentBusiness.id)}
@@ -1174,8 +1175,11 @@ export default async function OwnerAnalyticsPage({
               activeFiltersCount={0}
               clearHref={clearHref}
               businessHref={businessHref}
+              clientsHref={`/b/${slug}/clients`}
+              catalogHref={`/b/${slug}/catalog/products`}
               analyticsHref={analyticsHref}
               todayHref={todayHref}
+              supportHref={`/b/${slug}/support`}
               settingsHref={settingsHref}
               adminHref={adminHref}
               canSeeAnalytics

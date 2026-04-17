@@ -85,6 +85,7 @@ export default async function PlatformTasksPage() {
         role={role}
         currentUserName={currentUserName}
         currentUserAvatarUrl={currentUserAvatarUrl}
+        currentPlan={workspace.plan}
         businesses={businesses}
         businessHref={`/b/${workspace.slug}`}
         settingsHref="/app/settings"

@@ -170,7 +170,7 @@ export function EmptyState({
     <UiEmptyState
       title={title}
       description={description}
-      className="rounded-[16px] border-dashed border-slate-300 bg-slate-50 px-4 py-7"
+      className="rounded-xl border-dashed border-slate-300 bg-slate-50 px-3 py-5"
     />
   );
 }
@@ -183,7 +183,7 @@ export function AdminTable({
   children: React.ReactNode;
 }) {
   return (
-    <div className="overflow-x-auto rounded-[18px] border border-slate-200 bg-white shadow-sm">
+    <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
       <table className="min-w-[700px] w-full table-auto border-collapse md:table-fixed">
         <thead className="bg-slate-50/80">{head}</thead>
         <tbody>{children}</tbody>
@@ -273,7 +273,7 @@ export function PaginationBar({
   const pageItems = getPaginationItems(currentPage, totalPages);
 
   return (
-    <div className="mt-4 flex flex-wrap items-center justify-between gap-2.5">
+    <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
       <div className="text-sm text-slate-500">
         Страница {currentPage} из {totalPages}
       </div>
@@ -339,7 +339,7 @@ export function InlineKeyValue({
   value: React.ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+    <div className="rounded-xl border border-slate-200 bg-slate-50 p-2.5">
       <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">{label}</div>
       <div className="mt-1 text-sm text-slate-700">{value}</div>
     </div>
@@ -360,10 +360,10 @@ export function SectionList({
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {items.map((item, index) => {
         const body = (
-          <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 transition hover:border-slate-300">
+          <div className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 transition hover:border-slate-300">
             <div className="text-sm font-semibold text-slate-900">{item.title}</div>
             {item.meta ? <div className="mt-1 text-sm text-slate-500">{item.meta}</div> : null}
           </div>

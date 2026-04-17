@@ -263,7 +263,7 @@ export default function DesktopSidebarFilters({
       : "ALL";
 
   const inputCls =
-    "h-11 w-full rounded-lg border border-[#E5E7EB] bg-white px-4 text-sm font-medium text-[#374151] outline-none transition placeholder:text-[#9CA3AF] focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15";
+    "h-9 w-full rounded-lg border border-[#E5E7EB] bg-white px-3 text-sm font-medium text-[#374151] outline-none transition placeholder:text-[#9CA3AF] focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15";
 
   const toggleStatus = (status: SidebarStatus) => {
     if (!statusTouched) setStatusValues(baseStatusValues);
@@ -342,28 +342,23 @@ export default function DesktopSidebarFilters({
   }, [businessId]);
 
   return (
-    <section className="max-h-[calc(100vh-136px)] overflow-y-auto rounded-xl border border-[#E5E7EB] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)] overscroll-contain">
-      <div className="mb-4 flex items-start justify-between gap-3">
-        <div>
-          <div className="text-[12px] font-semibold uppercase tracking-[0.18em] text-[#9CA3AF]">
-            Filters
-          </div>
-          <div className="mt-1 text-sm text-[#6B7280]">
-            Clear filter state for the orders list
-          </div>
+    <section className="max-h-[calc(100vh-100px)] overflow-y-auto rounded-xl border border-[#E5E7EB] bg-white p-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)] overscroll-contain">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div className="text-[12px] font-semibold uppercase tracking-[0.18em] text-[#9CA3AF]">
+          Filters
         </div>
 
         {hasActiveFilters && clearHref ? (
           <a
             href={clearHref}
-            className="inline-flex h-9 items-center justify-center rounded-lg border border-[#E5E7EB] px-3 text-xs font-semibold text-[#6B7280] transition hover:border-[#C7D2FE] hover:text-[#1F2937]"
+            className="inline-flex h-7 items-center justify-center rounded-lg border border-[#E5E7EB] px-2.5 text-[11px] font-semibold text-[#6B7280] transition hover:border-[#C7D2FE] hover:text-[#1F2937]"
           >
             Reset
           </a>
         ) : null}
       </div>
 
-      <form ref={formRef} method="get" className="space-y-4 pb-2">
+      <form ref={formRef} method="get" className="space-y-3 pb-1">
         <input type="hidden" name="u" value={phoneRaw} />
         <input type="hidden" name="srange" value={summaryRange} />
         <input type="hidden" name="page" value="1" />
@@ -391,22 +386,22 @@ export default function DesktopSidebarFilters({
           ))}
 
         <label className="block">
-          <span className="mb-1.5 block text-xs font-medium text-[#6B7280]">
+          <span className="mb-1 block text-[11px] font-medium text-[#6B7280]">
             Search
           </span>
           <div className="flex items-center gap-2">
             <label className="relative block flex-1">
-              <Search className="icon-button pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#9CA3AF]" strokeWidth={2} />
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9CA3AF]" strokeWidth={2} />
               <input
                 name="q"
                 defaultValue={q}
                 placeholder="Name, phone, amount..."
-                className={`${inputCls} pl-11`}
+                className={`${inputCls} pl-9`}
               />
             </label>
             <button
               type="submit"
-              className="inline-flex h-11 shrink-0 items-center justify-center rounded-lg border border-[#E5E7EB] bg-white px-4 text-sm font-semibold text-[#374151] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937] disabled:cursor-not-allowed disabled:opacity-45"
+              className="inline-flex h-9 shrink-0 items-center justify-center rounded-lg border border-[#E5E7EB] bg-white px-3 text-sm font-semibold text-[#374151] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937] disabled:cursor-not-allowed disabled:opacity-45"
               disabled={!customRangeReady}
             >
               <span className="leading-none">Search</span>
@@ -415,7 +410,7 @@ export default function DesktopSidebarFilters({
         </label>
 
         <label className="block">
-          <span className="mb-1.5 block text-xs font-medium text-[#6B7280]">
+          <span className="mb-1 block text-[11px] font-medium text-[#6B7280]">
             Status
           </span>
           <DropdownMenu
@@ -426,7 +421,7 @@ export default function DesktopSidebarFilters({
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="inline-flex h-11 w-full items-center justify-between rounded-lg border border-[#E5E7EB] bg-white px-4 text-sm font-medium text-[#374151] outline-none transition hover:border-[var(--brand-200)] focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
+                className="inline-flex h-9 w-full items-center justify-between rounded-lg border border-[#E5E7EB] bg-white px-3 text-sm font-medium text-[#374151] outline-none transition hover:border-[var(--brand-200)] focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
               >
                 <span className="truncate">
                   {getStatusTriggerLabel(
@@ -563,14 +558,10 @@ export default function DesktopSidebarFilters({
               </DropdownMenuContent>
             </DropdownMenuPortal>
           </DropdownMenu>
-          <div className="mt-1.5 text-[11px] font-medium text-[#9CA3AF]">
-            Choose one or several statuses. If none selected, all statuses are
-            shown.
-          </div>
         </label>
 
         <label className="block">
-          <span className="mb-1.5 block text-xs font-medium text-[#6B7280]">
+          <span className="mb-1 block text-[11px] font-medium text-[#6B7280]">
             Period
           </span>
           <DropdownMenu
@@ -581,7 +572,7 @@ export default function DesktopSidebarFilters({
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="inline-flex h-11 w-full items-center justify-between rounded-xl border border-[#E5E7EB] bg-white px-4 text-sm font-medium text-[#374151] outline-none transition hover:border-[var(--brand-200)] focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
+                className="inline-flex h-9 w-full items-center justify-between rounded-lg border border-[#E5E7EB] bg-white px-3 text-sm font-medium text-[#374151] outline-none transition hover:border-[var(--brand-200)] focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
               >
                 <span className="truncate">
                   {DASHBOARD_RANGE_OPTIONS.find(
@@ -626,7 +617,7 @@ export default function DesktopSidebarFilters({
         {showCustomRange ? (
           <div className="grid grid-cols-2 gap-2">
             <label className="block">
-              <span className="mb-1.5 block text-xs font-medium text-[#6B7280]">
+              <span className="mb-1 block text-[11px] font-medium text-[#6B7280]">
                 Start date
               </span>
               <input
@@ -637,7 +628,7 @@ export default function DesktopSidebarFilters({
               />
             </label>
             <label className="block">
-              <span className="mb-1.5 block text-xs font-medium text-[#6B7280]">
+              <span className="mb-1 block text-[11px] font-medium text-[#6B7280]">
                 End date
               </span>
               <input
@@ -651,7 +642,7 @@ export default function DesktopSidebarFilters({
         ) : null}
 
         <label className="block">
-          <span className="mb-1.5 block text-xs font-medium text-[#6B7280]">
+          <span className="mb-1 block text-[11px] font-medium text-[#6B7280]">
             Team
           </span>
           <DropdownMenu
@@ -662,7 +653,7 @@ export default function DesktopSidebarFilters({
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="inline-flex h-11 w-full items-center justify-between rounded-xl border border-[#E5E7EB] bg-white px-4 text-sm font-medium text-[#374151] outline-none transition hover:border-[var(--brand-200)] focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
+                className="inline-flex h-9 w-full items-center justify-between rounded-lg border border-[#E5E7EB] bg-white px-3 text-sm font-medium text-[#374151] outline-none transition hover:border-[var(--brand-200)] focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
               >
                 <span className="truncate">
                   {getManagerTriggerLabel(normalizedActorValue, actorOptions)}
@@ -730,7 +721,7 @@ export default function DesktopSidebarFilters({
         </label>
 
         <label className="block">
-          <span className="mb-1.5 block text-xs font-medium text-[#6B7280]">
+          <span className="mb-1 block text-[11px] font-medium text-[#6B7280]">
             Sort
           </span>
           <DropdownMenu
@@ -741,7 +732,7 @@ export default function DesktopSidebarFilters({
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="inline-flex h-11 w-full items-center justify-between rounded-xl border border-[#E5E7EB] bg-white px-4 text-sm font-medium text-[#374151] outline-none transition hover:border-[var(--brand-200)] focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
+                className="inline-flex h-9 w-full items-center justify-between rounded-lg border border-[#E5E7EB] bg-white px-3 text-sm font-medium text-[#374151] outline-none transition hover:border-[var(--brand-200)] focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
               >
                 <span className="truncate">
                   {SORT_OPTIONS.find((option) => option.value === sortValue)
@@ -780,7 +771,7 @@ export default function DesktopSidebarFilters({
 
         <button
           type="submit"
-          className="inline-flex h-11 w-full items-center justify-center rounded-2xl border border-[#E5E7EB] bg-white px-4 text-sm font-semibold text-[#374151] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937] disabled:cursor-not-allowed disabled:opacity-45"
+          className="inline-flex h-9 w-full items-center justify-center rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm font-semibold text-[#374151] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937] disabled:cursor-not-allowed disabled:opacity-45"
           disabled={!customRangeReady}
         >
           <span className="leading-none">

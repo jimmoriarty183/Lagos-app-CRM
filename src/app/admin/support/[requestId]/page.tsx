@@ -66,28 +66,28 @@ export default async function AdminSupportRequestDetailsPage({
         </Link>
       }
     >
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
-        <div className="space-y-4">
+      <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="space-y-3">
           <SupportRequestDetailsCard request={request} showBusiness showSubmitter />
           {loadError ? (
-            <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+            <div className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2.5 text-sm text-rose-700">
               {loadError}
             </div>
           ) : null}
-          <div className="grid gap-4 xl:grid-cols-2">
+          <div className="grid gap-3 xl:grid-cols-2">
             <SupportTimeline items={history} />
             <SupportAttachmentsPanel
               items={attachments}
               downloadHrefBuilder={(attachmentId) => `/api/support/attachments/${attachmentId}?download=1`}
             />
           </div>
-          <div className="grid gap-4 xl:grid-cols-2">
+          <div className="grid gap-3 xl:grid-cols-2">
             <SupportNotesPanel items={notes} />
             <SupportAssignmentsPanel items={assignments} />
           </div>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-3">
           <SupportAdminActionsPanel
             requestId={request.id}
             initialStatus={request.status || ""}

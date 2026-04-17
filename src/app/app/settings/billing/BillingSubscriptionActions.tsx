@@ -26,9 +26,12 @@ export default function BillingSubscriptionActions(
   const normalizedStatus = String(props.subscriptionStatus ?? "").toLowerCase();
   const isTerminalStatus =
     normalizedStatus === "canceled" || normalizedStatus === "expired";
-  const canCancel =
-    !props.cancelAtPeriodEnd &&
-    !isTerminalStatus;
+
+  if (isTerminalStatus || props.cancelAtPeriodEnd) {
+    return null;
+  }
+
+  const canCancel = true;
 
   const handleCancel = async () => {
     if (!canCancel || loading) return;
@@ -80,13 +83,7 @@ export default function BillingSubscriptionActions(
         disabled={!canCancel || loading}
         className="inline-flex items-center justify-center rounded-full border border-[#B91C1C] bg-white px-4 py-2 text-sm font-semibold text-[#B91C1C] transition hover:bg-[#FEF2F2] disabled:cursor-not-allowed disabled:border-[#E5E7EB] disabled:text-[#9CA3AF]"
       >
-        {isTerminalStatus
-          ? "Already canceled"
-          : props.cancelAtPeriodEnd
-          ? "Canceled"
-          : loading
-            ? "Requesting..."
-            : "Cancel subscription"}
+        {loading ? "Requesting..." : "Cancel subscription"}
       </button>
       {message ? (
         <div className="rounded-xl border border-[#BFDBFE] bg-[#EFF6FF] px-3 py-2 text-xs text-[#1E3A8A]">

@@ -243,6 +243,7 @@ export default async function AdminDashboardPage({
   const now = period.referenceNowMs;
 
   const usersInPeriod = dataset.authUsers.filter((item) => inRange(item.createdAtMs, period));
+  const usersActiveInPeriod = dataset.authUsers.filter((item) => inRange(item.lastSeenAtMs, period));
   const businessesInPeriod = dataset.businesses.filter((item) => inRange(item.createdAtMs, period));
   const invitesInPeriod = dataset.invites.filter((item) => inRange(item.createdAtMs, period));
   const ordersInPeriod = dataset.orders.filter((item) => inRange(item.createdAtMs, period));
@@ -251,20 +252,22 @@ export default async function AdminDashboardPage({
   const registrationsTrend = buildSeries(dataset.authUsers, "registrations", period);
   const businessesTrend = buildSeries(dataset.businesses, "businesses", period);
 
-  const recentRegistrations = usersInPeriod.slice(0, 6);
+  const recentRegistrations = [...usersInPeriod]
+    .sort((a, b) => b.createdAtMs - a.createdAtMs)
+    .slice(0, 6);
   const recentBusinesses = [...businessesInPeriod]
     .sort((a, b) => b.createdAtMs - a.createdAtMs)
     .slice(0, 6);
   const recentActivity = activitiesInPeriod.slice(0, 8);
 
-  const totalUsers = usersInPeriod.length;
-  const registeredToday = usersInPeriod.filter((item) => now - item.createdAtMs <= DAY_MS).length;
-  const registeredLast7Days = usersInPeriod.filter((item) => now - item.createdAtMs <= DAY_MS * 7).length;
-  const confirmedEmail = usersInPeriod.filter((item) => Boolean(item.emailConfirmedAt)).length;
+  const totalUsers = dataset.authUsers.length;
+  const registeredToday = dataset.authUsers.filter((item) => now - item.createdAtMs <= DAY_MS).length;
+  const registeredLast7Days = dataset.authUsers.filter((item) => now - item.createdAtMs <= DAY_MS * 7).length;
+  const confirmedEmail = dataset.authUsers.filter((item) => Boolean(item.emailConfirmedAt)).length;
   const unconfirmedEmail = Math.max(0, totalUsers - confirmedEmail);
-  const usersWithSignIn = usersInPeriod.filter((item) => item.hasSignIn).length;
-  const usersNeverSignedIn = Math.max(0, totalUsers - usersWithSignIn);
-  const usersWithBusiness = usersInPeriod.filter((item) => item.hasBusiness).length;
+  const usersWithSignIn = usersActiveInPeriod.length;
+  const usersNeverSignedIn = Math.max(0, totalUsers - dataset.authUsers.filter((item) => item.hasSignIn).length);
+  const usersWithBusiness = dataset.authUsers.filter((item) => item.hasBusiness).length;
   const usersWithoutBusiness = Math.max(0, totalUsers - usersWithBusiness);
   const totalBusinesses = businessesInPeriod.length;
   const invitesPending = invitesInPeriod.filter((item) => item.status === "PENDING").length;
@@ -362,29 +365,29 @@ export default async function AdminDashboardPage({
         <div className="mt-2 text-xs text-slate-500">Текущий фильтр: {period.label}</div>
       </AdminSectionCard>
 
-      <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-8">
-        <AdminStatCard label="Всего пользователей" value={formatNumber(totalUsers)} hint="Пользователи, созданные в выбранный период" href="/admin/users" />
+      <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-8">
+        <AdminStatCard label="Всего пользователей" value={formatNumber(totalUsers)} hint="Все пользователи авторизации" href="/admin/users" />
         <AdminStatCard label="Регистрации сегодня" value={formatNumber(registeredToday)} hint="За последние 24 часа" href="/admin/users?window=24h" />
         <AdminStatCard label="Регистрации за 7 дней" value={formatNumber(registeredLast7Days)} hint="За последние 7 дней" href="/admin/users?window=7d" />
-        <AdminStatCard label="Подтвержденные email" value={formatNumber(confirmedEmail)} hint="Из пользователей периода" href="/admin/users?status=confirmed" />
-        <AdminStatCard label="Пользователи с входом" value={formatNumber(usersWithSignIn)} hint="Хотя бы один вход" href="/admin/users?signIn=has" />
-        <AdminStatCard label="Пользователи с бизнесом" value={formatNumber(usersWithBusiness)} hint="Есть рабочее пространство" href="/admin/users?business=has" />
+        <AdminStatCard label="Подтвержденные email" value={formatNumber(confirmedEmail)} hint="По всей базе пользователей" href="/admin/users?status=confirmed" />
+        <AdminStatCard label="Пользователи с входом" value={formatNumber(usersWithSignIn)} hint={`Активность в период: ${period.label}`} href="/admin/activity" />
+        <AdminStatCard label="Пользователи с бизнесом" value={formatNumber(usersWithBusiness)} hint="По всей базе пользователей" href="/admin/users?business=has" />
         <AdminStatCard label="Всего бизнесов" value={formatNumber(totalBusinesses)} hint="Созданы в выбранный период" href="/admin/businesses" />
         <AdminStatCard label="Всего заказов" value={formatNumber(totalOrders)} hint="Созданы в выбранный период" href="/admin/orders" />
       </div>
 
-      <div className="mt-6 grid gap-4 2xl:grid-cols-2">
+      <div className="mt-4 grid gap-3 2xl:grid-cols-2">
         <AdminTrendChart data={registrationsTrend} dataKey="registrations" title="Регистрации пользователей" subtitle={`Динамика: ${period.label}`} />
         <AdminTrendChart data={businessesTrend} dataKey="businesses" title="Созданные бизнесы" subtitle={`Динамика: ${period.label}`} />
       </div>
 
-      <div className="mt-6 grid gap-4 xl:grid-cols-3">
+      <div className="mt-4 grid gap-3 xl:grid-cols-3">
         <AdminPieChartBlock title="Подтверждение почты" data={emailStatusChart} subtitle={`Срез: ${period.label}`} />
         <AdminPieChartBlock title="Первый вход" data={signInStatusChart} subtitle={`Срез: ${period.label}`} />
         <AdminStatusBarChart title="Статусы приглашений" data={invitesStatusChart} subtitle={`Срез: ${period.label}`} />
       </div>
 
-      <div className="mt-6 grid gap-4 xl:grid-cols-2">
+      <div className="mt-4 grid gap-3 xl:grid-cols-2">
         <AdminSectionCard
           title="Последние регистрации"
           actions={
@@ -424,7 +427,7 @@ export default async function AdminDashboardPage({
         </AdminSectionCard>
       </div>
 
-      <div className="mt-6 grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
+      <div className="mt-4 grid gap-3 xl:grid-cols-[1.15fr_0.85fr]">
         <AdminSectionCard
           title="Последняя активность"
           actions={

@@ -43,8 +43,8 @@ export function AdminTrendChart({
   color?: string;
 }) {
   return (
-    <div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
-      <div className="mb-3">
+    <div className="rounded-[16px] border border-slate-200 bg-white p-3 shadow-sm">
+      <div className="mb-2">
         <div className="text-sm font-semibold text-slate-900">{title}</div>
         <div className="text-xs text-slate-500">{subtitle || "Динамика по выбранному периоду"}</div>
       </div>
@@ -86,8 +86,8 @@ export function AdminPieChartBlock({
   data: PiePoint[];
 }) {
   return (
-    <div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
-      <div className="mb-3">
+    <div className="rounded-[16px] border border-slate-200 bg-white p-3 shadow-sm">
+      <div className="mb-2">
         <div className="text-sm font-semibold text-slate-900">{title}</div>
         <div className="text-xs text-slate-500">{subtitle || "Распределение по текущему срезу данных"}</div>
       </div>
@@ -129,8 +129,8 @@ export function AdminStatusBarChart({
   color?: string;
 }) {
   return (
-    <div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
-      <div className="mb-3">
+    <div className="rounded-[16px] border border-slate-200 bg-white p-3 shadow-sm">
+      <div className="mb-2">
         <div className="text-sm font-semibold text-slate-900">{title}</div>
         <div className="text-xs text-slate-500">{subtitle || "Текущий срез по статусам"}</div>
       </div>
@@ -167,15 +167,15 @@ export function AdminFunnelChart({
   const maxValue = Math.max(...steps.map((step) => step.value), 1);
 
   return (
-    <div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
-      <div className="mb-4">
+    <div className="rounded-[16px] border border-slate-200 bg-white p-3 shadow-sm">
+      <div className="mb-3">
         <div className="text-sm font-semibold text-slate-900">{title}</div>
         <div className="text-xs text-slate-500">{subtitle || "Последовательность ключевых шагов"}</div>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-3">
         {steps.map((step, index) => (
-          <div key={step.key} className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+          <div key={step.key} className="rounded-xl border border-slate-200 bg-slate-50 p-2.5">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <div className="text-sm font-semibold text-slate-900">

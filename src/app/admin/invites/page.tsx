@@ -68,35 +68,35 @@ export default async function AdminInvitesPage({
       title="Приглашения"
       description="Приглашения в бизнесы с акцентом на статус, автора приглашения и зависшие pending-инвайты."
     >
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         <AdminStatCard label="Всего приглашений" value={formatNumber(dataset.invites.length)} hint="Все приглашения в системе" />
         <AdminStatCard label="Ожидают" value={formatNumber(dataset.invites.filter((item) => item.status === "PENDING").length)} hint="Еще не приняты" />
         <AdminStatCard label="Приняты" value={formatNumber(dataset.invites.filter((item) => item.status === "ACCEPTED").length)} hint="Уже использованы" />
         <AdminStatCard label="Отозваны" value={formatNumber(dataset.invites.filter((item) => item.status === "REVOKED").length)} hint="Отменены вручную" />
       </div>
 
-      <div className="mt-6">
+      <div className="mt-4">
         <AdminSectionCard title="Фильтры и поиск">
-          <form action="/admin/invites" className="grid gap-3 lg:grid-cols-[minmax(0,1.4fr)_180px_120px_120px]">
-            <input name="q" defaultValue={q} placeholder="Поиск по email, бизнесу или автору приглашения" className="h-11 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100" />
-            <select name="status" defaultValue={status} className="h-11 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
+          <form action="/admin/invites" className="grid gap-2.5 lg:grid-cols-[minmax(0,1.4fr)_180px_120px_120px]">
+            <input name="q" defaultValue={q} placeholder="Поиск по email, бизнесу или автору приглашения" className="h-10 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100" />
+            <select name="status" defaultValue={status} className="h-10 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
               <option value="all">Все статусы</option>
               <option value="pending">Ожидают</option>
               <option value="accepted">Приняты</option>
               <option value="revoked">Отозваны</option>
               <option value="expired">Истекли</option>
             </select>
-            <select name="perPage" defaultValue={String(perPage)} className="h-11 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
+            <select name="perPage" defaultValue={String(perPage)} className="h-10 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
               {PER_PAGE_OPTIONS.map((value) => <option key={value} value={value}>{value}</option>)}
             </select>
-            <Button type="submit" className="h-11 px-5 text-sm font-semibold">
+            <Button type="submit" className="h-10 px-5 text-sm font-semibold">
               Применить
             </Button>
           </form>
         </AdminSectionCard>
       </div>
 
-      <div className="mt-6">
+      <div className="mt-4">
         {rows.length ? (
           <AdminTable
             head={

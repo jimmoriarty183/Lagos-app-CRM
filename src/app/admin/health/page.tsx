@@ -27,7 +27,7 @@ export default async function AdminHealthPage() {
       title="Контроль"
       description="Проблемные зоны, которые требуют ручного внимания: проблемы onboarding, владение бизнесами, неактивные бизнесы и старые приглашения."
     >
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         <AdminStatCard label="Пользователи без бизнеса" value={formatNumber(usersWithoutBusiness.length)} hint="Нужно вернуть их в onboarding" href="/admin/users?business=none" />
         <AdminStatCard label="Без первого входа" value={formatNumber(usersNeverSignedIn.length)} hint="Регистрация без входа" href="/admin/users?signIn=never" />
         <AdminStatCard label="Неподтвержденная почта" value={formatNumber(usersUnconfirmed.length)} hint="Нужно проверить confirmation flow" href="/admin/users?status=unconfirmed" />
@@ -38,7 +38,7 @@ export default async function AdminHealthPage() {
         <AdminStatCard label="Старые ожидающие приглашения" value={formatNumber(pendingInvitesOlderThan7Days.length)} hint="Приглашение старше 7 дней" href="/admin/invites?status=pending" />
       </div>
 
-      <div className="mt-6 grid gap-4 xl:grid-cols-2">
+      <div className="mt-4 grid gap-3 xl:grid-cols-2">
         <AdminSectionCard title="Проблемы по пользователям">
           <SectionList
             items={[
@@ -78,9 +78,9 @@ export default async function AdminHealthPage() {
         </AdminSectionCard>
       </div>
 
-      <div className="mt-6">
+      <div className="mt-4">
         <AdminSectionCard title="Что считается приближенной оценкой">
-          <div className="space-y-3 text-sm text-slate-600">
+          <div className="space-y-2 text-sm text-slate-600">
             <p>Активные и неактивные бизнесы считаются по доступным activity timestamps, а не по отдельной аналитической витрине.</p>
             <p>Сигналы по пользователям уже достаточно точны для контроля продуктовой воронки.</p>
             <p>Если понадобятся более строгие health-метрики, следующим шагом нужен materialized metrics слой или полноценный event pipeline.</p>

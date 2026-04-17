@@ -56,6 +56,7 @@ export default async function BusinessSupportPage({
         businessSlug={slug}
         role={context.role}
         currentUserName={context.user.email || "User"}
+        currentPlan={context.business.plan}
         businesses={businessOptions}
         businessId={context.business.id}
         businessHref={businessHref}
@@ -67,8 +68,8 @@ export default async function BusinessSupportPage({
         supportHref={supportHref}
       />
 
-      <main className="mx-auto max-w-[1220px] overflow-x-hidden px-4 pb-8 pt-20 sm:px-6">
-        <div className="hidden items-start gap-5 lg:grid lg:grid-cols-[auto_minmax(0,1fr)]">
+      <main className="mx-auto max-w-[1220px] overflow-x-hidden px-4 pb-8 pt-16 sm:px-6">
+        <div className="hidden items-start gap-3 lg:grid lg:grid-cols-[auto_minmax(0,1fr)]">
           <div className="relative shrink-0">
             <DesktopLeftRail
               businessId={context.business.id}
@@ -89,6 +90,7 @@ export default async function BusinessSupportPage({
               clearHref={supportHref}
               businessHref={businessHref}
               clientsHref={`/b/${slug}/clients`}
+              catalogHref={`/b/${slug}/catalog/products`}
               analyticsHref={`/b/${slug}/analytics`}
               todayHref={todayHref}
               settingsHref={settingsHref}
@@ -100,12 +102,12 @@ export default async function BusinessSupportPage({
             />
           </div>
 
-          <section className="min-w-0 rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+          <section className="min-w-0 rounded-[16px] border border-slate-200 bg-white p-3 shadow-sm sm:p-4">
             <div className="flex flex-wrap items-end justify-between gap-3 border-b border-slate-200 pb-4">
               <div>
                 <div className="product-page-kicker">Support</div>
-                <h1 className="product-page-title mt-1.5">Support requests</h1>
-                <p className="product-page-subtitle mt-1.5">Requests for your current business workspace.</p>
+                <h1 className="product-page-title mt-1">Support requests</h1>
+                <p className="product-page-subtitle mt-1">Requests for your current business workspace.</p>
               </div>
               <Button asChild className="h-10 px-4 text-sm font-semibold">
                 <Link href={`/b/${slug}/support/new`}>New request</Link>
@@ -140,11 +142,11 @@ export default async function BusinessSupportPage({
         </div>
 
         <div className="space-y-4 lg:hidden">
-          <section className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
+          <section className="rounded-[16px] border border-slate-200 bg-white p-3 shadow-sm">
             <div className="flex flex-wrap items-end justify-between gap-3 border-b border-slate-200 pb-4">
               <div>
                 <div className="product-page-kicker">Support</div>
-                <h1 className="product-page-title mt-1.5">Support requests</h1>
+                <h1 className="product-page-title mt-1">Support requests</h1>
               </div>
               <Button asChild className="h-10 px-4 text-sm font-semibold">
                 <Link href={`/b/${slug}/support/new`}>New request</Link>

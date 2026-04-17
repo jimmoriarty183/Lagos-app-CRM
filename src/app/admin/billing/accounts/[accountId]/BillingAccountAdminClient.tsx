@@ -282,7 +282,7 @@ export default function BillingAccountAdminClient({
   }, [loadData]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
         Account: <span className="font-semibold">{accountName}</span>{" "}
         <span className="font-mono text-xs text-slate-500">({accountId})</span>
@@ -364,7 +364,7 @@ export default function BillingAccountAdminClient({
       </AdminSectionCard>
 
       <AdminSectionCard title="Overrides">
-        <form onSubmit={onCreateOverride} className="mb-4 grid gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 md:grid-cols-2 xl:grid-cols-3">
+        <form onSubmit={onCreateOverride} className="mb-3 grid gap-2.5 rounded-lg border border-slate-200 bg-slate-50 p-2.5 md:grid-cols-2 xl:grid-cols-3">
           <label className="flex flex-col gap-1 text-sm">
             <span className="text-slate-600">Feature</span>
             <select

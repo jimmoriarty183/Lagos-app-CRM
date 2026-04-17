@@ -255,7 +255,7 @@ export function TrackerModule({
               <div className="flex h-7 w-7 items-center justify-center rounded bg-[var(--brand-500)] text-xs font-bold text-white">
                 T
               </div>
-              <span className="text-[22px] font-semibold tracking-tight">
+              <span className="text-lg font-semibold tracking-tight">
                 TaskFlow
               </span>
             </div>
@@ -343,21 +343,21 @@ export function TrackerModule({
               />
             </div>
           </header>
-          <main className="flex-1 overflow-auto p-6">
+          <main className="flex-1 overflow-auto p-4">
             {!snapshot ? (
               <div className="text-sm text-[var(--neutral-600)]">
                 No tracker project found.
               </div>
             ) : null}
             {snapshot && page === "dashboard" ? (
-              <div className="space-y-6">
+              <div className="space-y-4">
                 <div>
-                  <h1 className="text-2xl font-semibold">Dashboard</h1>
+                  <h1 className="text-xl font-semibold">Dashboard</h1>
                   <p className="mt-1 text-sm text-[var(--neutral-600)]">
                     Welcome back, {name(profiles.get(currentUserId))}
                   </p>
                 </div>
-                <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
+                <div className="grid grid-cols-1 gap-3 lg:grid-cols-4">
                   <Metric
                     v={myOpen.length}
                     l="My Open Tasks"
@@ -386,9 +386,9 @@ export function TrackerModule({
               </div>
             ) : null}
             {snapshot && page === "projects" ? (
-              <div className="space-y-6">
-                <h1 className="text-2xl font-semibold">Projects</h1>
-                <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+              <div className="space-y-4">
+                <h1 className="text-xl font-semibold">Projects</h1>
+                <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
                   {projects.map((p) => {
                     const cur = p.id === snapshot.project.id;
                     const pi = cur ? items : [];
@@ -400,7 +400,7 @@ export function TrackerModule({
                       <button
                         key={p.id}
                         onClick={() => void reload(p.id)}
-                        className="h-full rounded-lg border border-[var(--neutral-200)] bg-white p-5 text-left transition hover:shadow-sm"
+                        className="h-full rounded-lg border border-[var(--neutral-200)] bg-white p-3 text-left transition hover:shadow-sm"
                       >
                         <div className="flex items-center gap-3">
                           <span className="rounded-lg bg-[var(--brand-50)] p-2 text-[var(--brand-500)]">
@@ -413,10 +413,10 @@ export function TrackerModule({
                             </p>
                           </div>
                         </div>
-                        <p className="mt-3 text-xs text-[var(--neutral-600)]">
+                        <p className="mt-2 text-xs text-[var(--neutral-600)]">
                           {p.description || "No description"}
                         </p>
-                        <div className="mt-4 space-y-1">
+                        <div className="mt-3 space-y-1">
                           <div className="flex items-center justify-between text-xs text-[var(--neutral-500)]">
                             <span>
                               {snapshot.epics.length} epics - {pi.length} items
@@ -430,7 +430,7 @@ export function TrackerModule({
                             />
                           </div>
                         </div>
-                        <div className="mt-4 inline-flex items-center gap-1.5">
+                        <div className="mt-3 inline-flex items-center gap-1.5">
                           <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#1DA1F2] text-[10px] font-semibold text-white">
                             {ini(name(profiles.get(p.owner_user_id)))}
                           </span>
@@ -445,8 +445,8 @@ export function TrackerModule({
               </div>
             ) : null}
             {snapshot && page === "my_work" ? (
-              <div className="space-y-6">
-                <h1 className="text-2xl font-semibold">My Work</h1>
+              <div className="space-y-4">
+                <h1 className="text-xl font-semibold">My Work</h1>
                 <div className="overflow-hidden rounded-lg border border-[var(--neutral-200)] bg-white">
                   <div className="divide-y divide-[var(--neutral-200)]">
                     {items
@@ -478,14 +478,14 @@ export function TrackerModule({
             {snapshot && page === "board" ? (
               <div className="space-y-4">
                 <div>
-                  <h1 className="text-xl font-semibold">
+                  <h1 className="text-lg font-semibold">
                     {snapshot.project.name} - Board
                   </h1>
                   <p className="text-sm text-[var(--neutral-600)]">
                     {snapshot.project.key}
                   </p>
                 </div>
-                <div className="flex gap-4 overflow-x-auto pb-4">
+                <div className="flex gap-3 overflow-x-auto pb-3">
                   {cols.map((c) => {
                     const ci = items.filter((i) => i.status === c.status);
                     return (
@@ -542,7 +542,7 @@ export function TrackerModule({
             ) : null}
             {snapshot && page === "list" ? (
               <div className="space-y-4">
-                <h1 className="text-xl font-semibold">
+                <h1 className="text-lg font-semibold">
                   {snapshot.project.name} - Issues
                 </h1>
                 <div className="overflow-hidden rounded-lg border border-[var(--neutral-200)] bg-white">
@@ -588,13 +588,13 @@ export function TrackerModule({
               </div>
             ) : null}
             {snapshot && page === "backlog" ? (
-              <div className="space-y-6">
-                <h1 className="text-xl font-semibold">
+              <div className="space-y-4">
+                <h1 className="text-lg font-semibold">
                   {snapshot.project.name} - Backlog
                 </h1>
                 {snapshot.sprints.map((s) => (
                   <Card key={s.id} className="gap-0 rounded-lg p-0">
-                    <CardHeader className="px-5 pt-5 pb-3">
+                    <CardHeader className="px-4 pt-4 pb-2">
                       <div className="flex items-center justify-between">
                         <CardTitle className="mb-0 text-sm font-medium">
                           {s.name}{" "}
@@ -638,11 +638,11 @@ export function TrackerModule({
               </div>
             ) : null}
             {snapshot && page === "epics" ? (
-              <div className="space-y-6">
-                <h1 className="text-xl font-semibold">
+              <div className="space-y-4">
+                <h1 className="text-lg font-semibold">
                   {snapshot.project.name} - Epics
                 </h1>
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {snapshot.epics.map((e) => {
                     const ei = items.filter((i) => i.epic_id === e.id);
                     const done = ei.filter((i) => i.status === "done").length;
@@ -650,11 +650,11 @@ export function TrackerModule({
                       ? Math.round((done / ei.length) * 100)
                       : 0;
                     return (
-                      <Card key={e.id} className="gap-0 rounded-lg p-5">
-                        <CardContent className="space-y-3 p-0">
+                      <Card key={e.id} className="gap-0 rounded-lg p-4">
+                        <CardContent className="space-y-2 p-0">
                           <div className="flex items-start justify-between">
                             <div>
-                              <h3 className="text-lg font-medium">{e.title}</h3>
+                              <h3 className="text-base font-medium">{e.title}</h3>
                               <p className="mt-1 text-xs text-[var(--neutral-600)]">
                                 {e.description || "No description"}
                               </p>
@@ -686,11 +686,11 @@ export function TrackerModule({
               </div>
             ) : null}
             {snapshot && page === "sprints" ? (
-              <div className="space-y-6">
-                <h1 className="text-xl font-semibold">
+              <div className="space-y-4">
+                <h1 className="text-lg font-semibold">
                   {snapshot.project.name} - Sprints
                 </h1>
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {snapshot.sprints.map((s) => {
                     const si = items.filter((i) => i.sprint_id === s.id);
                     const done = si.filter((i) => i.status === "done").length;
@@ -699,7 +699,7 @@ export function TrackerModule({
                       : 0;
                     return (
                       <Card key={s.id} className="gap-0 rounded-lg p-0">
-                        <CardHeader className="px-5 pt-5 pb-3">
+                        <CardHeader className="px-4 pt-4 pb-2">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                               <CardTitle className="mb-0 text-base">
@@ -717,7 +717,7 @@ export function TrackerModule({
                             </span>
                           </div>
                         </CardHeader>
-                        <CardContent className="space-y-3 px-5 pb-5">
+                        <CardContent className="space-y-2 px-4 pb-4">
                           <div className="flex items-center gap-3">
                             <div className="h-2 flex-1 overflow-hidden rounded-full bg-[var(--neutral-100)]">
                               <div
@@ -737,7 +737,7 @@ export function TrackerModule({
               </div>
             ) : null}
             {snapshot && page === "issue" && selected ? (
-              <div className="max-w-[1280px] space-y-6">
+              <div className="max-w-[1280px] space-y-4">
                 <div className="flex items-center gap-2 text-sm text-[var(--neutral-500)]">
                   <button
                     onClick={() => setPage("board")}
@@ -751,8 +751,8 @@ export function TrackerModule({
                     {selected.code}
                   </span>
                 </div>
-                <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-                  <div className="space-y-6 lg:col-span-2">
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+                  <div className="space-y-4 lg:col-span-2">
                     <div>
                       <div className="mb-2 flex items-center gap-2">
                         {ico(selected.type)}
@@ -760,7 +760,7 @@ export function TrackerModule({
                           {selected.code}
                         </span>
                       </div>
-                      <h1 className="text-xl font-semibold">
+                      <h1 className="text-lg font-semibold">
                         {selected.title}
                       </h1>
                       <p className="mt-2 text-sm leading-relaxed text-[var(--neutral-600)]">
@@ -769,7 +769,7 @@ export function TrackerModule({
                     </div>
                     {checklist(selected.checklist_json).length > 0 ? (
                       <Card className="gap-0 rounded-lg p-0">
-                        <CardHeader className="px-5 pt-5 pb-3">
+                        <CardHeader className="px-4 pt-4 pb-2">
                           <CardTitle className="mb-0 text-sm">
                             Checklist (
                             {
@@ -780,7 +780,7 @@ export function TrackerModule({
                             /{checklist(selected.checklist_json).length})
                           </CardTitle>
                         </CardHeader>
-                        <CardContent className="space-y-2 px-5 pb-5">
+                        <CardContent className="space-y-2 px-4 pb-4">
                           {checklist(selected.checklist_json).map((c) => (
                             <div key={c.id} className="flex items-center gap-2">
                               <input
@@ -800,13 +800,13 @@ export function TrackerModule({
                       </Card>
                     ) : null}
                     <Card className="gap-0 rounded-lg p-0">
-                      <CardHeader className="px-5 pt-5 pb-3">
+                      <CardHeader className="px-4 pt-4 pb-2">
                         <CardTitle className="mb-0 flex items-center gap-2 text-sm">
                           <Clock3 className="h-4 w-4" />
                           Comments ({comments.length})
                         </CardTitle>
                       </CardHeader>
-                      <CardContent className="space-y-4 px-5 pb-5">
+                      <CardContent className="space-y-4 px-4 pb-4">
                         {comments.length === 0 ? (
                           <p className="text-xs text-[var(--neutral-500)]">
                             No comments yet
@@ -824,7 +824,7 @@ export function TrackerModule({
                       </CardContent>
                     </Card>
                     <Card className="gap-0 rounded-lg p-0">
-                      <CardHeader className="px-5 pt-5 pb-3">
+                      <CardHeader className="px-4 pt-4 pb-2">
                         <CardTitle className="mb-0 text-sm">
                           Subtasks ({subtasks.length})
                         </CardTitle>
@@ -852,12 +852,12 @@ export function TrackerModule({
                     </Card>
                     {acts.length > 0 ? (
                       <Card className="gap-0 rounded-lg p-0">
-                        <CardHeader className="px-5 pt-5 pb-3">
+                        <CardHeader className="px-4 pt-4 pb-2">
                           <CardTitle className="mb-0 text-sm">
                             Activity
                           </CardTitle>
                         </CardHeader>
-                        <CardContent className="space-y-2 px-5 pb-5">
+                        <CardContent className="space-y-2 px-4 pb-4">
                           {acts.map((a) => (
                             <div
                               key={a.id}
@@ -947,7 +947,7 @@ function Metric({
       <CardContent className="flex items-center gap-3 p-0">
         <span className={`rounded-lg p-2 ${b}`}>{i}</span>
         <div>
-          <p className="text-2xl font-semibold leading-none">{v}</p>
+          <p className="text-xl font-semibold leading-none">{v}</p>
           <p className="mt-1 text-xs text-[var(--neutral-600)]">{l}</p>
         </div>
       </CardContent>

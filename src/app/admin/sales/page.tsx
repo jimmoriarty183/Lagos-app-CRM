@@ -94,51 +94,51 @@ export default async function AdminSalesRequestsPage() {
       title="Sales requests"
       description="Inbound enterprise/contact-sales form submissions from the pricing page."
     >
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-3 md:grid-cols-3">
         <AdminStatCard label="Total" value={total} hint="All captured sales requests" />
         <AdminStatCard label="New" value={open} hint="Needs first response" />
         <AdminStatCard label="Handled" value={handled} hint="Status moved from new" />
       </div>
 
-      <section className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white">
+      <section className="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-white">
         <div className="overflow-x-auto">
           <table className="min-w-[980px] w-full text-left text-sm">
             <thead className="bg-slate-50 text-slate-700">
               <tr>
-                <th className="px-4 py-3 font-semibold">Created</th>
-                <th className="px-4 py-3 font-semibold">Name</th>
-                <th className="px-4 py-3 font-semibold">Work email</th>
-                <th className="px-4 py-3 font-semibold">Company</th>
-                <th className="px-4 py-3 font-semibold">Team size</th>
-                <th className="px-4 py-3 font-semibold">Current tool</th>
-                <th className="px-4 py-3 font-semibold">Main goal</th>
-                <th className="px-4 py-3 font-semibold">Timeline</th>
-                <th className="px-4 py-3 font-semibold">Notes</th>
-                <th className="px-4 py-3 font-semibold">Status</th>
+                <th className="px-3 py-2.5 font-semibold">Created</th>
+                <th className="px-3 py-2.5 font-semibold">Name</th>
+                <th className="px-3 py-2.5 font-semibold">Work email</th>
+                <th className="px-3 py-2.5 font-semibold">Company</th>
+                <th className="px-3 py-2.5 font-semibold">Team size</th>
+                <th className="px-3 py-2.5 font-semibold">Current tool</th>
+                <th className="px-3 py-2.5 font-semibold">Main goal</th>
+                <th className="px-3 py-2.5 font-semibold">Timeline</th>
+                <th className="px-3 py-2.5 font-semibold">Notes</th>
+                <th className="px-3 py-2.5 font-semibold">Status</th>
               </tr>
             </thead>
             <tbody>
               {requests.length ? (
                 requests.map((item) => (
                   <tr key={item.id} className="border-t border-slate-100 align-top">
-                    <td className="px-4 py-3 text-slate-600">{formatDateTime(item.created_at)}</td>
-                    <td className="px-4 py-3 font-medium text-slate-900">{item.full_name || "-"}</td>
-                    <td className="px-4 py-3 text-slate-700">{item.work_email || "-"}</td>
-                    <td className="px-4 py-3 text-slate-700">
+                    <td className="px-3 py-2.5 text-slate-600">{formatDateTime(item.created_at)}</td>
+                    <td className="px-3 py-2.5 font-medium text-slate-900">{item.full_name || "-"}</td>
+                    <td className="px-3 py-2.5 text-slate-700">{item.work_email || "-"}</td>
+                    <td className="px-3 py-2.5 text-slate-700">
                       <ExpandableCell value={item.company_name} />
                     </td>
-                    <td className="px-4 py-3 text-slate-700">{item.team_size || "-"}</td>
-                    <td className="px-4 py-3 text-slate-700">
+                    <td className="px-3 py-2.5 text-slate-700">{item.team_size || "-"}</td>
+                    <td className="px-3 py-2.5 text-slate-700">
                       <ExpandableCell value={item.current_tool} />
                     </td>
-                    <td className="max-w-[320px] px-4 py-3 text-slate-700">
+                    <td className="max-w-[320px] px-3 py-2.5 text-slate-700">
                       <ExpandableCell value={item.main_goal} />
                     </td>
-                    <td className="px-4 py-3 text-slate-700">{item.timeline || "-"}</td>
-                    <td className="max-w-[320px] px-4 py-3 text-slate-700">
+                    <td className="px-3 py-2.5 text-slate-700">{item.timeline || "-"}</td>
+                    <td className="max-w-[320px] px-3 py-2.5 text-slate-700">
                       <ExpandableCell value={item.notes} />
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-3 py-2.5">
                       <span
                         className={[
                           "inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold",
@@ -154,7 +154,7 @@ export default async function AdminSalesRequestsPage() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={10} className="px-4 py-8 text-center text-sm text-slate-500">
+                  <td colSpan={10} className="px-3 py-6 text-center text-sm text-slate-500">
                     No sales requests yet.
                   </td>
                 </tr>

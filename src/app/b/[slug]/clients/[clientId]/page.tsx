@@ -620,6 +620,7 @@ export default async function ClientDetailPage({
           "User"
         }
         currentUserAvatarUrl={context.profile?.avatar_url || undefined}
+        currentPlan={context.business.plan}
         businesses={businessOptions}
         businessId={context.business.id}
         businessHref={businessHref}
@@ -631,7 +632,7 @@ export default async function ClientDetailPage({
         clearHref={clientsHref}
       />
 
-      <main className="mx-auto max-w-[1220px] overflow-x-hidden px-4 pb-8 pt-20 sm:px-6">
+      <main className="mx-auto max-w-[1220px] overflow-x-hidden px-4 pb-8 pt-16 sm:px-6">
         <div className="hidden items-start gap-5 lg:grid lg:grid-cols-[auto_minmax(0,1fr)]">
           <div className="relative shrink-0">
             <DesktopLeftRail
@@ -653,6 +654,7 @@ export default async function ClientDetailPage({
               clearHref={clientsHref}
               businessHref={businessHref}
               clientsHref={clientsHref}
+              catalogHref={`/b/${slug}/catalog/products`}
               analyticsHref={`/b/${slug}/analytics`}
               todayHref={todayHref}
               supportHref={supportHref}
@@ -667,7 +669,7 @@ export default async function ClientDetailPage({
           <section id="client-main-content" className="min-w-0 space-y-3">
             <div
               id="client-hero-card"
-              className="rounded-[24px] border border-[#E5E7EB] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]"
+              className="rounded-[16px] border border-[#E5E7EB] bg-white p-3.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]"
             >
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="min-w-0">
@@ -724,7 +726,7 @@ export default async function ClientDetailPage({
                 </div>
               </div>
 
-              <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-2 xl:grid-cols-4">
+              <dl className="mt-2.5 grid gap-2 text-sm sm:grid-cols-2 xl:grid-cols-4">
                 <InfoRow label="Postcode" value={resolvedPostcode} />
                 <InfoRow label="City" value={cleanText(client.city) || "—"} />
                 <InfoRow
@@ -753,7 +755,7 @@ export default async function ClientDetailPage({
 
             <div className="grid gap-3 xl:grid-cols-[minmax(0,1.85fr)_minmax(0,1fr)]">
               <div className="space-y-3">
-                <section className="rounded-[24px] border border-[var(--brand-200)] bg-[var(--brand-50)]/70 p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                <section className="rounded-[16px] border border-[var(--brand-200)] bg-[var(--brand-50)]/70 p-3.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
                   <h2 className="text-sm font-semibold text-slate-900">
                     Revenue
                   </h2>
@@ -776,7 +778,7 @@ export default async function ClientDetailPage({
 
                 <section
                   id="profile-data"
-                  className="rounded-[24px] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]"
+                  className="rounded-[16px] bg-white p-3.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]"
                 >
                   <h2 className="text-sm font-semibold text-slate-900">
                     Profile data
@@ -790,7 +792,7 @@ export default async function ClientDetailPage({
                       />
                     ))}
                   </dl>
-                  <details className="mt-3 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-3">
+                  <details className="mt-2.5 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-2.5">
                     <summary className="cursor-pointer list-none text-sm font-semibold text-slate-800">
                       Edit profile data
                     </summary>
@@ -1067,7 +1069,7 @@ export default async function ClientDetailPage({
                 ) : null}
 
                 {client.client_type === "company" ? (
-                  <section className="rounded-[24px] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                  <section className="rounded-[16px] bg-white p-3.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
                     <div className="flex items-center justify-between gap-3">
                       <h2 className="text-sm font-semibold text-slate-900">
                         Company contacts
@@ -1086,7 +1088,7 @@ export default async function ClientDetailPage({
                         {contacts.map((contact) => (
                           <div
                             key={contact.id}
-                            className="rounded-xl bg-slate-50 p-3"
+                            className="rounded-lg bg-slate-50 p-2.5"
                           >
                             <div className="flex flex-wrap items-center justify-between gap-2">
                               <div>
@@ -1140,7 +1142,7 @@ export default async function ClientDetailPage({
                       </div>
                     )}
 
-                    <details className="mt-3 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-3">
+                    <details className="mt-2.5 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-2.5">
                       <summary className="cursor-pointer list-none text-sm font-semibold text-slate-800">
                         + Add contact
                       </summary>
@@ -1238,7 +1240,7 @@ export default async function ClientDetailPage({
                   </section>
                 ) : null}
 
-                <section className="rounded-[24px] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                <section className="rounded-[16px] bg-white p-3.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
                   <h2 className="text-sm font-semibold text-slate-900">
                     Related orders
                   </h2>
@@ -1251,7 +1253,7 @@ export default async function ClientDetailPage({
               </div>
 
               <aside className="space-y-3 xl:sticky xl:top-[88px] xl:self-start">
-                <section className="rounded-[24px] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                <section className="rounded-[16px] bg-white p-3.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
                   <h2 className="text-sm font-semibold text-slate-900">
                     Manager
                   </h2>
@@ -1303,7 +1305,7 @@ export default async function ClientDetailPage({
                   </form>
                 </section>
 
-                <section className="rounded-[24px] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                <section className="rounded-[16px] bg-white p-3.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
                   <h2 className="text-sm font-semibold text-slate-900">
                     Assignment history
                   </h2>
@@ -1316,7 +1318,7 @@ export default async function ClientDetailPage({
                       {assignments.map((row) => (
                         <li
                           key={row.id}
-                          className="rounded-xl bg-slate-50 p-3 text-sm"
+                          className="rounded-lg bg-slate-50 p-2.5 text-sm"
                         >
                           <div className="font-semibold text-slate-900">
                             {cleanText(row.manager_id)
@@ -1351,7 +1353,7 @@ export default async function ClientDetailPage({
                 </section>
 
                 {visibleActivityEvents.length > 0 ? (
-                  <section className="rounded-[24px] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                  <section className="rounded-[16px] bg-white p-3.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
                     <h2 className="text-sm font-semibold text-slate-900">
                       Client activity
                     </h2>
@@ -1375,7 +1377,7 @@ export default async function ClientDetailPage({
                         return (
                           <li
                             key={event.id}
-                            className="rounded-xl bg-slate-50 p-3 text-sm"
+                            className="rounded-lg bg-slate-50 p-2.5 text-sm"
                           >
                             <div className="font-semibold text-slate-900">
                               {message}
@@ -1395,8 +1397,8 @@ export default async function ClientDetailPage({
           </section>
         </div>
 
-        <div className="space-y-4 lg:hidden">
-          <section className="rounded-[24px] border border-[#E5E7EB] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+        <div className="space-y-3 lg:hidden">
+          <section className="rounded-[16px] border border-[#E5E7EB] bg-white p-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
             <div className="text-sm font-semibold text-slate-900">
               {resolvedName}
             </div>
@@ -1419,7 +1421,7 @@ export default async function ClientDetailPage({
 
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+    <div className="rounded-lg border border-slate-200 bg-slate-50 p-2.5">
       <dt className="text-[11px] font-medium text-slate-500">{label}</dt>
       <dd className="mt-0.5 text-sm font-semibold text-slate-900">{value}</dd>
     </div>
@@ -1428,11 +1430,11 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 
 function MetricStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl bg-white/90 p-3">
+    <div className="rounded-lg bg-white/90 p-2.5">
       <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
         {label}
       </div>
-      <div className="mt-1 text-lg font-semibold tracking-tight text-slate-900">
+      <div className="mt-0.5 text-base font-semibold tracking-tight text-slate-900">
         {value}
       </div>
     </div>

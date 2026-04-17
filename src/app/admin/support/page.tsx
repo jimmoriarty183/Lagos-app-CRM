@@ -58,7 +58,7 @@ export default async function AdminSupportPage({
       title="Support"
       description="Support requests across businesses with admin-only actions and full timeline visibility."
     >
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
         <AdminStatCard label="Total" value={summary.total} hint="All support requests" />
         <AdminStatCard label="New" value={summary.new} hint="Awaiting first admin action" />
         <AdminStatCard label="In progress" value={summary.inProgress} hint="Active handling" />
@@ -66,11 +66,11 @@ export default async function AdminSupportPage({
         <AdminStatCard label="Resolved" value={summary.resolved} hint="Issue solved" />
       </div>
 
-      <div className="mt-6">
+      <div className="mt-4">
         <SupportAdminFilters pathname="/admin/support" value={filters} />
       </div>
 
-      <div className="mt-6">
+      <div className="mt-4">
         <SupportRequestsListView
           items={requests}
           hrefBuilder={(requestId) => `/admin/support/${requestId}`}

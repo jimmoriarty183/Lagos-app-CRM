@@ -45,13 +45,13 @@ function AnalyticsFunnelBlock({
 
   return (
     <AdminSectionCard title="Воронка">
-      <div className="mb-4 text-sm text-slate-500">
+      <div className="mb-3 text-sm text-slate-500">
         Зарегистрировались {"->"} вошли {"->"} создали бизнес {"->"} дошли до первого заказа
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-3">
         {steps.map((step, index) => (
-          <div key={step.key} className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+          <div key={step.key} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <div className="text-sm font-semibold text-slate-900">
@@ -134,8 +134,8 @@ export default async function AdminAnalyticsPage({
           </div>
         }
       >
-        <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+        <div className="grid gap-3 xl:grid-cols-[1.2fr_0.8fr]">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
             <div className="text-sm font-semibold text-slate-900">{analytics.rangeLabel}</div>
             <div className="mt-2 text-sm leading-6 text-slate-600">
               Текущий срез: {formatDateTime(new Date(analytics.rangeStartMs).toISOString())} -{" "}
@@ -153,7 +153,7 @@ export default async function AdminAnalyticsPage({
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
             <div className="text-sm font-semibold text-slate-900">Что можно считать уже сейчас</div>
             <div className="mt-2 text-sm leading-6 text-slate-600">
               Метрики опираются на реальные данные: регистрации пользователей, первый вход, привязку к бизнесам,
@@ -163,7 +163,7 @@ export default async function AdminAnalyticsPage({
         </div>
       </AdminSectionCard>
 
-      <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-8">
+      <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-8">
         <AdminStatCard
           label="Новые регистрации"
           value={formatNumber(analytics.kpis.registrationsCurrent)}
@@ -206,7 +206,7 @@ export default async function AdminAnalyticsPage({
         />
       </div>
 
-      <div className="mt-6 grid gap-4 2xl:grid-cols-2">
+      <div className="mt-4 grid gap-3 2xl:grid-cols-2">
         <AdminTrendChart
           data={analytics.trendSeries}
           dataKey="registrations"
@@ -223,12 +223,12 @@ export default async function AdminAnalyticsPage({
         />
       </div>
 
-      <div className="mt-6 grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
+      <div className="mt-4 grid gap-3 xl:grid-cols-[1.15fr_0.85fr]">
         <AdminSectionCard title="Активация">
-          <div className="grid gap-4 lg:grid-cols-3">
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          <div className="grid gap-3 lg:grid-cols-3">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
               <div className="text-sm font-semibold text-slate-900">Регистрация {"->"} первый вход</div>
-              <div className="product-stat-value mt-1.5">
+              <div className="product-stat-value mt-1">
                 {formatPercent(analytics.activation.signedInRate)}
               </div>
               <div className="mt-2 text-sm text-slate-600">
@@ -237,17 +237,17 @@ export default async function AdminAnalyticsPage({
               </div>
             </div>
 
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
               <div className="text-sm font-semibold text-slate-900">Регистрация {"->"} создание бизнеса</div>
-              <div className="product-stat-value mt-1.5">
+              <div className="product-stat-value mt-1">
                 {formatPercent(analytics.activation.usersWithBusinessRate)}
               </div>
               <div className="mt-2 text-sm text-slate-600">{analytics.activation.businessDefinition}</div>
             </div>
 
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
               <div className="text-sm font-semibold text-slate-900">Регистрация {"->"} первый заказ</div>
-              <div className="product-stat-value mt-1.5">
+              <div className="product-stat-value mt-1">
                 {formatPercent(analytics.activation.usersWithFirstOrderRate)}
               </div>
               <div className="mt-2 text-sm text-slate-600">{analytics.activation.orderDefinition}</div>
@@ -256,8 +256,8 @@ export default async function AdminAnalyticsPage({
         </AdminSectionCard>
 
         <AdminSectionCard title="Использование">
-          <div className="space-y-3">
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          <div className="space-y-2">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
               <div className="text-sm font-semibold text-slate-900">DAU / WAU / MAU</div>
               <div className="mt-2 grid gap-3 sm:grid-cols-3">
                 <div>
@@ -275,9 +275,9 @@ export default async function AdminAnalyticsPage({
               </div>
             </div>
 
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
               <div className="text-sm font-semibold text-slate-900">Возвращаемость</div>
-              <div className="product-stat-value mt-1.5">
+              <div className="product-stat-value mt-1">
                 {formatPercent(analytics.engagement.stickiness)}
               </div>
               <div className="mt-2 text-sm text-slate-600">
@@ -285,18 +285,18 @@ export default async function AdminAnalyticsPage({
               </div>
             </div>
 
-            <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-4 text-sm leading-6 text-slate-600">
+            <div className="rounded-xl border border-dashed border-slate-300 bg-white p-3 text-sm leading-6 text-slate-600">
               {analytics.engagement.methodology}
             </div>
           </div>
         </AdminSectionCard>
       </div>
 
-      <div className="mt-6 grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
+      <div className="mt-4 grid gap-3 xl:grid-cols-[1.15fr_0.85fr]">
         <AnalyticsFunnelBlock steps={analytics.funnel} />
 
         <AdminSectionCard title="Ограничения текущей аналитики">
-          <div className="space-y-3 text-sm leading-6 text-slate-600">
+          <div className="space-y-2 text-sm leading-6 text-slate-600">
             <p>
               Регистрации и первый вход считаются честно по `created_at` и `last_sign_in_at` пользователей авторизации.
             </p>

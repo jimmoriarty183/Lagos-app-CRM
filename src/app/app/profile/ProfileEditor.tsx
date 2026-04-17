@@ -36,7 +36,6 @@ export default function ProfileEditor({ initial, workspace, identities }: Props)
   const [displayName, setDisplayName] = useState(initial.displayName);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [message, setMessage] = useState<{ type: "ok" | "error"; text: string } | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
 
@@ -101,12 +100,10 @@ export default function ProfileEditor({ initial, workspace, identities }: Props)
     }
   }
 
-  const fallbackInitial = displayName?.trim()?.[0]?.toUpperCase() || "U";
-
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#F8FAFC_0%,#EEF2FF_100%)] text-[#111827]">
       <div className="mx-auto max-w-[980px] px-4 pb-10 pt-10 sm:px-6">
-        <div className="rounded-[28px] border border-[#E5E7EB] bg-white/92 p-6 shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur">
+        <div className="rounded-[20px] border border-[#E5E7EB] bg-white/92 p-4 shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur">
           <Link
             href="/app/settings"
             className="inline-flex items-center gap-2 rounded-full border border-[#E5E7EB] bg-white px-3 py-2 text-[12px] font-semibold text-[#374151] shadow-sm transition hover:border-[#D6DAE1] hover:bg-[#FCFCFD]"
@@ -115,47 +112,12 @@ export default function ProfileEditor({ initial, workspace, identities }: Props)
             Back to settings
           </Link>
 
-          <div className="mt-6 flex flex-wrap items-start gap-4">
-            <div className="relative">
-              {avatarUrl ? (
-                <button
-                  type="button"
-                  onClick={() => setIsPreviewOpen(true)}
-                  className="group relative block overflow-hidden rounded-2xl border border-[#E5E7EB] focus:outline-none focus:ring-2 focus:ring-[#A4BCFD]"
-                  title="View photo"
-                >
-                  <img
-                    src={avatarUrl}
-                    alt="Profile photo"
-                    className="h-16 w-16 object-cover transition group-hover:brightness-90"
-                  />
-                  <span className="absolute inset-0 flex items-center justify-center bg-black/0 transition group-hover:bg-black/20">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white opacity-0 drop-shadow transition group-hover:opacity-100" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-4.553M15 10H9m6 0V4M9 14l-4.553 4.553M9 14H3m6 0v6" /></svg>
-                  </span>
-                </button>
-              ) : (
-                <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-[#111827] text-lg font-semibold text-white">
-                  {fallbackInitial}
-                </div>
-              )}
-              <input
-                ref={fileRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(event) => {
-                  const file = event.currentTarget.files?.[0];
-                  if (file) void handleUpload(file);
-                  event.currentTarget.value = "";
-                }}
-              />
-            </div>
-
+          <div className="mt-4 flex flex-wrap items-center gap-3">
             <div className="min-w-0 flex-1">
               <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]">
                 Account profile
               </div>
-              <h1 className="mt-2 text-[30px] font-semibold tracking-[-0.03em] text-[#111827]">
+              <h1 className="mt-1 text-[22px] font-semibold tracking-[-0.03em] text-[#111827]">
                 {displayName}
               </h1>
               <p className="mt-2 text-sm leading-6 text-[#6B7280]">
@@ -169,56 +131,30 @@ export default function ProfileEditor({ initial, workspace, identities }: Props)
               >
                 {isUploading ? "Uploading..." : "Upload photo"}
               </button>
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(event) => {
+                  const file = event.currentTarget.files?.[0];
+                  if (file) void handleUpload(file);
+                  event.currentTarget.value = "";
+                }}
+              />
             </div>
 
             {/* Large avatar preview — top-right of header */}
             {avatarUrl && (
-              <button
-                type="button"
-                onClick={() => setIsPreviewOpen(true)}
-                className="group relative ml-auto hidden overflow-hidden rounded-3xl border border-[#E5E7EB] shadow-md focus:outline-none focus:ring-2 focus:ring-[#A4BCFD] sm:block"
-                title="View photo"
-              >
+              <div className="hidden self-center overflow-hidden rounded-3xl border border-[#E5E7EB] shadow-md sm:block">
                 <img
                   src={avatarUrl}
                   alt="Profile photo large"
-                  className="h-[110px] w-[110px] object-cover transition group-hover:brightness-90"
+                  className="h-[110px] w-[110px] object-cover"
                 />
-                <span className="absolute inset-0 flex items-center justify-center bg-black/0 transition group-hover:bg-black/25">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-white opacity-0 drop-shadow-lg transition group-hover:opacity-100" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><circle cx="11" cy="11" r="8"/><path strokeLinecap="round" d="M21 21l-4.35-4.35"/><path strokeLinecap="round" strokeLinejoin="round" d="M11 8v6M8 11h6"/></svg>
-                </span>
-              </button>
+              </div>
             )}
           </div>
-
-          {/* Lightbox */}
-          {isPreviewOpen && avatarUrl && (
-            <div
-              role="dialog"
-              aria-modal="true"
-              className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
-              onClick={() => setIsPreviewOpen(false)}
-            >
-              <div
-                className="relative max-h-[90vh] max-w-[90vw] overflow-hidden rounded-2xl shadow-2xl"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <img
-                  src={avatarUrl}
-                  alt="Profile photo preview"
-                  className="max-h-[80vh] max-w-[80vw] object-contain"
-                />
-                <button
-                  type="button"
-                  onClick={() => setIsPreviewOpen(false)}
-                  className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70"
-                  aria-label="Close preview"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
-              </div>
-            </div>
-          )}
 
           {message ? (
             <div
@@ -233,8 +169,8 @@ export default function ProfileEditor({ initial, workspace, identities }: Props)
             </div>
           ) : null}
 
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            <label className="rounded-[22px] border border-[#E5E7EB] bg-white p-5">
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <label className="rounded-[16px] border border-[#E5E7EB] bg-white p-3">
               <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]">
                 First name
               </div>
@@ -246,7 +182,7 @@ export default function ProfileEditor({ initial, workspace, identities }: Props)
               />
             </label>
 
-            <label className="rounded-[22px] border border-[#E5E7EB] bg-white p-5">
+            <label className="rounded-[16px] border border-[#E5E7EB] bg-white p-3">
               <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]">
                 Last name
               </div>
@@ -259,12 +195,12 @@ export default function ProfileEditor({ initial, workspace, identities }: Props)
             </label>
           </div>
 
-          <div className="mt-6 grid gap-4 sm:grid-cols-3">
-            <div className="rounded-[22px] border border-[#E5E7EB] bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
+          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+            <div className="rounded-[16px] border border-[#E5E7EB] bg-white p-3 shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
               <div className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-[#F3F4F6] text-[#4B5563]">
                 <Mail className="h-5 w-5" />
               </div>
-              <div className="mt-4 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]">
+              <div className="mt-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]">
                 Email
               </div>
               <div className="mt-2 text-sm font-semibold text-[#111827]">
@@ -272,11 +208,11 @@ export default function ProfileEditor({ initial, workspace, identities }: Props)
               </div>
             </div>
 
-            <label className="rounded-[22px] border border-[#E5E7EB] bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
+            <label className="rounded-[16px] border border-[#E5E7EB] bg-white p-3 shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
               <div className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-[#F3F4F6] text-[#4B5563]">
                 <Phone className="h-5 w-5" />
               </div>
-              <div className="mt-4 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]">
+              <div className="mt-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]">
                 Phone
               </div>
               <input
@@ -287,11 +223,11 @@ export default function ProfileEditor({ initial, workspace, identities }: Props)
               />
             </label>
 
-            <label className="rounded-[22px] border border-[#E5E7EB] bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
+            <label className="rounded-[16px] border border-[#E5E7EB] bg-white p-3 shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
               <div className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-[#F3F4F6] text-[#4B5563]">
                 <CalendarDays className="h-5 w-5" />
               </div>
-              <div className="mt-4 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]">
+              <div className="mt-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]">
                 Date of birth
               </div>
               <input
@@ -303,11 +239,11 @@ export default function ProfileEditor({ initial, workspace, identities }: Props)
             </label>
           </div>
 
-          <label className="mt-6 block rounded-[22px] border border-[#E5E7EB] bg-white p-5">
+          <label className="mt-4 block rounded-[16px] border border-[#E5E7EB] bg-white p-3">
             <div className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-[#F3F4F6] text-[#4B5563]">
               <UserCircle2 className="h-5 w-5" />
             </div>
-            <div className="mt-4 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]">
+            <div className="mt-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]">
               About
             </div>
             <textarea
@@ -319,7 +255,7 @@ export default function ProfileEditor({ initial, workspace, identities }: Props)
             />
           </label>
 
-          <div className="mt-6 flex items-center justify-between gap-3">
+          <div className="mt-4 flex items-center justify-between gap-3">
             <div className="text-xs text-[#6B7280]">
               Your profile is used in manager analytics, assignments, and owner dashboards.
             </div>
@@ -333,7 +269,7 @@ export default function ProfileEditor({ initial, workspace, identities }: Props)
             </button>
           </div>
 
-          <div className="mt-6 rounded-[22px] border border-[#E5E7EB] bg-[#F9FAFB] p-5">
+          <div className="mt-4 rounded-[16px] border border-[#E5E7EB] bg-[#F9FAFB] p-3">
             <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]">
               Current workspace
             </div>
@@ -345,13 +281,13 @@ export default function ProfileEditor({ initial, workspace, identities }: Props)
             </div>
             <Link
               href={`/b/${workspace.slug}/settings`}
-              className="mt-4 inline-flex items-center rounded-full border border-[#E5E7EB] bg-white px-3 py-2 text-[12px] font-semibold text-[#374151] shadow-sm transition hover:border-[#D6DAE1] hover:bg-[#FCFCFD]"
+              className="mt-3 inline-flex items-center rounded-full border border-[#E5E7EB] bg-white px-3 py-2 text-[12px] font-semibold text-[#374151] shadow-sm transition hover:border-[#D6DAE1] hover:bg-[#FCFCFD]"
             >
               Open workspace settings
             </Link>
           </div>
 
-          <div className="mt-4 rounded-[22px] border border-[#E5E7EB] bg-[#F9FAFB] p-5">
+          <div className="mt-3 rounded-[16px] border border-[#E5E7EB] bg-[#F9FAFB] p-3">
             <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]">
               Account identifiers
             </div>

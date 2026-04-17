@@ -36,7 +36,7 @@ export default async function AdminUserDetailPage({
         </Link>
       }
     >
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
         <AdminStatCard label="Бизнесы" value={formatNumber(user.businessesCount)} hint="Количество привязок к бизнесам" />
         <AdminStatCard label="Основная роль" value={translateLabel(user.primaryRole)} hint="Максимальная роль среди всех привязок" />
         <AdminStatCard label="Приглашения" value={formatNumber(userInvites.length)} hint="Найдено по email пользователя" />
@@ -44,7 +44,7 @@ export default async function AdminUserDetailPage({
         <AdminStatCard label="Статус" value={user.emailConfirmedAt ? "Подтвержден" : "Не подтвержден"} hint={user.hasSignIn ? "Вход уже был" : "Входа еще не было"} />
       </div>
 
-      <div className="mt-6 grid gap-4 xl:grid-cols-2">
+      <div className="mt-4 grid gap-3 xl:grid-cols-2">
         <AdminSectionCard title="Основная информация">
           <div className="grid gap-3 sm:grid-cols-2">
             <InlineKeyValue label="ID пользователя" value={<span className="font-mono text-xs">{user.id}</span>} />
@@ -53,13 +53,16 @@ export default async function AdminUserDetailPage({
             <InlineKeyValue label="Телефон" value={user.phone || "Нет"} />
             <InlineKeyValue label="Дата регистрации" value={formatDateTime(user.createdAt)} />
             <InlineKeyValue label="Подтверждение почты" value={formatDateTime(user.emailConfirmedAt)} />
-            <InlineKeyValue label="Последний вход" value={formatDateTime(user.lastSignInAt)} />
+            <InlineKeyValue label="Последний вход" value={formatDateTime(user.lastSeenAt)} />
             <InlineKeyValue label="Число входов" value="Нет в текущей модели данных" />
           </div>
-          <div className="mt-4 flex flex-wrap gap-2">
+          <div className="mt-3 flex flex-wrap gap-2">
             <AdminBadge label={user.emailConfirmedAt ? "CONFIRMED" : "UNCONFIRMED"} />
             <AdminBadge label={user.hasSignIn ? "HAS_SIGN_IN" : "NEVER_SIGNED_IN"} />
             <AdminBadge label={user.hasBusiness ? "HAS_BUSINESS" : "NO_BUSINESS"} />
+            {user.primaryRole === "OWNER"
+              ? user.ownerPlans.map((plan) => <AdminBadge key={`${user.id}-${plan}`} label={plan} tone="bg-slate-100 text-slate-700" />)
+              : null}
           </div>
         </AdminSectionCard>
 
@@ -76,7 +79,7 @@ export default async function AdminUserDetailPage({
         </AdminSectionCard>
       </div>
 
-      <div className="mt-6 grid gap-4 xl:grid-cols-3">
+      <div className="mt-4 grid gap-3 xl:grid-cols-3">
         <AdminSectionCard title="Приглашения">
           <SectionList
             items={userInvites.map((invite) => ({
@@ -101,7 +104,7 @@ export default async function AdminUserDetailPage({
         </AdminSectionCard>
 
         <AdminSectionCard title="Ограничения">
-          <div className="space-y-3 text-sm text-slate-600">
+          <div className="space-y-2 text-sm text-slate-600">
             <p>Детали собраны из пользователей авторизации, профиля, привязок к бизнесам, приглашений и заказов.</p>
             <p>Полного audit trail по IP, device и числу входов пока нет.</p>
             <p>Безопасные admin actions лучше добавлять позже через отдельный ACL и audit log.</p>

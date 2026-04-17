@@ -714,6 +714,7 @@ export default async function TodayFollowUpsPage({
         role={role}
         currentUserName={currentUserName}
         currentUserAvatarUrl={currentUserAvatarUrl || undefined}
+        currentPlan={currentBusiness.plan}
         businesses={businessOptions}
         businessId={currentBusiness.id}
         businessHref={businessHref}
@@ -728,8 +729,8 @@ export default async function TodayFollowUpsPage({
         todayCount={todayOnlyCount}
       />
 
-      <main className="mx-auto max-w-[1440px] overflow-x-hidden px-4 pb-8 pt-20 sm:px-6">
-        <div className="hidden items-start gap-5 lg:grid lg:grid-cols-[auto_minmax(0,1fr)]">
+      <main className="mx-auto max-w-[1440px] overflow-x-hidden px-4 pb-8 pt-16 sm:px-6">
+        <div className="hidden items-start gap-3 lg:grid lg:grid-cols-[auto_minmax(0,1fr)]">
           <div className="relative shrink-0">
             <DesktopLeftRail
               businessId={currentBusiness.id}
@@ -750,6 +751,7 @@ export default async function TodayFollowUpsPage({
               clearHref={todayHref}
               businessHref={businessHref}
               clientsHref={`/b/${slug}/clients`}
+              catalogHref={`/b/${slug}/catalog/products`}
               analyticsHref={analyticsHref}
               todayHref={todayHref}
               supportHref={supportHref}

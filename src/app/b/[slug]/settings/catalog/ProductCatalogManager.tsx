@@ -179,8 +179,8 @@ export default function ProductCatalogManager({
     : taxRateMode;
 
   return (
-    <div className="space-y-5">
-      <section className="rounded-[20px] border border-[#E5E7EB] bg-[#FCFCFD] p-4 sm:p-5">
+    <div className="space-y-4">
+      <section className="rounded-[16px] border border-[#E5E7EB] bg-[#FCFCFD] p-3 sm:p-4">
         {schemaWarning ? (
           <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
             {schemaWarning}
@@ -188,8 +188,8 @@ export default function ProductCatalogManager({
         ) : null}
         <div className="mb-4">
           <div className="product-section-label text-[#6B7280]">Catalog</div>
-          <h2 className="product-section-title mt-1.5">Create product</h2>
-          <p className="product-page-subtitle mt-1.5">
+          <h2 className="product-section-title mt-1">Create product</h2>
+          <p className="product-page-subtitle mt-1">
             Visible catalog entry for goods you want to use in orders later.
           </p>
         </div>
@@ -456,11 +456,11 @@ export default function ProductCatalogManager({
         ) : null}
       </section>
 
-      <section className="rounded-[20px] border border-[#E5E7EB] bg-white p-4 sm:p-5">
-        <div className="mb-4 flex items-center justify-between gap-3">
+      <section className="rounded-[16px] border border-[#E5E7EB] bg-white p-3 sm:p-4">
+        <div className="mb-3 flex items-center justify-between gap-3">
           <div>
             <div className="product-section-label text-[#6B7280]">Catalog</div>
-            <h2 className="product-section-title mt-1.5">Products</h2>
+            <h2 className="product-section-title mt-1">Products</h2>
           </div>
           <div className="text-sm text-[#667085]">
             {search.trim()
@@ -485,7 +485,7 @@ export default function ProductCatalogManager({
               setSortDir(dir);
               setPage(0);
             }}
-            className="h-9 rounded-lg border border-[#E5E7EB] bg-white px-2.5 text-xs text-[#344054] focus:border-[var(--brand-600)] focus:outline-none"
+            className="h-9 shrink-0 rounded-lg border border-[#E5E7EB] bg-white px-2.5 text-xs text-[#344054] focus:border-[var(--brand-600)] focus:outline-none"
           >
             <option value="updated:desc">Newest first</option>
             <option value="updated:asc">Oldest first</option>

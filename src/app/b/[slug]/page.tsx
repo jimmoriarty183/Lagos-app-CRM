@@ -38,6 +38,8 @@ import { normalizeOrderClient } from "@/lib/order-client";
 import { getAdminUsersPath, isAdminEmail } from "@/lib/admin-access";
 import { ensureWorkspaceForBusiness } from "@/lib/workspaces";
 import { getTodayDateOnly } from "@/lib/follow-ups";
+import { resolveOwnerAccountId } from "@/lib/businesses/business-limits-service";
+import { getSubscriptionSnapshot } from "@/lib/billing/subscriptions";
 
 function isSameStatusFilterSet(
   actual: readonly StatusFilterValue[],
@@ -527,6 +529,33 @@ export default async function Page({ params, searchParams }: PageProps) {
             : "Guest");
       currentUserAvatarUrl = "";
     }
+  }
+
+  let currentPlanCode = cleanText(currentBusiness.plan) || null;
+  try {
+    const billingReader = supabaseAdmin();
+    const ownerMembership = await billingReader
+      .from("memberships")
+      .select("user_id")
+      .eq("business_id", String(currentBusiness.id))
+      .eq("role", "owner")
+      .order("created_at", { ascending: true })
+      .limit(1);
+
+    const ownerUserId = cleanText(
+      (ownerMembership.data?.[0] as { user_id?: string } | undefined)?.user_id,
+    );
+
+    if (ownerUserId) {
+      const accountId = await resolveOwnerAccountId(billingReader, ownerUserId);
+      if (accountId) {
+        const subscription = await getSubscriptionSnapshot(billingReader, accountId);
+        const snapshotPlanCode = cleanText(subscription?.plan?.code);
+        if (snapshotPlanCode) currentPlanCode = snapshotPlanCode;
+      }
+    }
+  } catch {
+    // Keep dashboard resilient: fallback to workspace plan when billing lookup fails.
   }
 
   const phoneRaw = String(sp.u ?? "");
@@ -1355,6 +1384,7 @@ export default async function Page({ params, searchParams }: PageProps) {
         role={userRole}
         currentUserName={currentUserName}
         currentUserAvatarUrl={currentUserAvatarUrl || undefined}
+        currentPlan={currentPlanCode}
         businesses={businessOptions}
         businessId={String(currentBusiness.id)}
         businessHref={businessHref}
@@ -1373,7 +1403,7 @@ export default async function Page({ params, searchParams }: PageProps) {
 
       <main
         className={[
-          "overflow-x-hidden px-4 pt-20 sm:px-6",
+          "overflow-x-hidden px-4 pt-16 sm:px-6",
           viewMode === "kanban"
             ? "mx-0 max-w-none overflow-hidden pb-4"
             : "mx-auto max-w-[1220px] pb-8",
@@ -1382,8 +1412,8 @@ export default async function Page({ params, searchParams }: PageProps) {
         <div
           className={`hidden items-start lg:grid lg:grid-cols-[auto_minmax(0,1fr)] ${
             viewMode === "kanban"
-              ? "lg:h-[calc(100vh-100px)] lg:gap-3"
-              : "lg:gap-5"
+              ? "lg:h-[calc(100vh-84px)] lg:gap-3"
+              : "lg:gap-3"
           }`}
         >
           <div className="relative shrink-0">

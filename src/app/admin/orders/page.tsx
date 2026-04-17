@@ -26,7 +26,7 @@ export default async function AdminOrdersPage() {
       title="Заказы"
       description="Агрегированный обзор заказов по продукту. Это не CRM, а панель понимания реального использования."
     >
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
         <AdminStatCard label="Всего заказов" value={formatNumber(dataset.orders.length)} hint="Все доступные заказы" />
         <AdminStatCard label="Создано сегодня" value={formatNumber(ordersToday)} hint="Новые заказы за 24 часа" />
         <AdminStatCard label="Создано за 7 дней" value={formatNumber(orders7d)} hint="Новые заказы за неделю" />
@@ -34,7 +34,7 @@ export default async function AdminOrdersPage() {
         <AdminStatCard label="Бизнесов с заказами" value={formatNumber(businessesWithOrders)} hint="Уже дошли до основного сценария" />
       </div>
 
-      <div className="mt-6 grid gap-4 xl:grid-cols-2">
+      <div className="mt-4 grid gap-3 xl:grid-cols-2">
         <AdminSectionCard title="Лидеры по числу заказов">
           <SectionList
             items={topBusinesses.map((business) => ({
@@ -59,23 +59,23 @@ export default async function AdminOrdersPage() {
         </AdminSectionCard>
       </div>
 
-      <div className="mt-6">
+      <div className="mt-4">
         <AdminSectionCard title="Продуктовые сигналы">
           <div className="grid gap-3 md:grid-cols-3">
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
               <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Бизнесы без заказов</div>
               <div className="mt-2 text-2xl font-semibold text-slate-900">{formatNumber(businessesZeroOrders)}</div>
               <Link href="/admin/businesses?orders=zero_orders" className="mt-2 inline-block text-sm text-slate-600 hover:text-slate-900">
                 Открыть список
               </Link>
             </div>
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
               <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Текущее покрытие раздела</div>
               <div className="mt-2 text-sm text-slate-600">
                 Раздел работает от реальных orders в базе и уже показывает общую картину adoption без лишней CRM-сложности.
               </div>
             </div>
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
               <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Ограничение</div>
               <div className="mt-2 text-sm text-slate-600">
                 Для revenue-аналитики и более сложной воронки позже понадобится отдельный metrics слой.

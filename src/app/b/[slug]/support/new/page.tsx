@@ -39,6 +39,7 @@ export default async function NewBusinessSupportRequestPage({
         businessSlug={slug}
         role={context.role}
         currentUserName={context.user.email || "User"}
+        currentPlan={context.business.plan}
         businesses={businessOptions}
         businessId={context.business.id}
         businessHref={businessHref}
@@ -50,8 +51,8 @@ export default async function NewBusinessSupportRequestPage({
         supportHref={supportHref}
       />
 
-      <main className="mx-auto max-w-[1220px] overflow-x-hidden px-4 pb-8 pt-20 sm:px-6">
-        <div className="hidden items-start gap-5 lg:grid lg:grid-cols-[auto_minmax(0,1fr)]">
+      <main className="mx-auto max-w-[1220px] overflow-x-hidden px-4 pb-8 pt-16 sm:px-6">
+        <div className="hidden items-start gap-3 lg:grid lg:grid-cols-[auto_minmax(0,1fr)]">
           <div className="relative shrink-0">
             <DesktopLeftRail
               businessId={context.business.id}
@@ -72,6 +73,7 @@ export default async function NewBusinessSupportRequestPage({
               clearHref={supportHref}
               businessHref={businessHref}
               clientsHref={`/b/${slug}/clients`}
+              catalogHref={`/b/${slug}/catalog/products`}
               analyticsHref={`/b/${slug}/analytics`}
               todayHref={todayHref}
               settingsHref={settingsHref}

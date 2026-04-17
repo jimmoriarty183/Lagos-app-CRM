@@ -67,8 +67,8 @@ export default async function AdminCampaignEditPage({
       }
     >
       {showPreview && preview ? (
-        <div className="mb-4 rounded-xl border border-slate-200 bg-white p-4">
-          <div className="grid gap-2 text-sm text-slate-700 md:grid-cols-2">
+        <div className="mb-3 rounded-lg border border-slate-200 bg-white p-3">
+          <div className="grid gap-1.5 text-sm text-slate-700 md:grid-cols-2">
             <div className="flex items-center gap-2"><span className="font-semibold text-slate-900">Status:</span> <CampaignStatusBadge status={preview.status} /></div>
             <div className="flex items-center gap-2"><span className="font-semibold text-slate-900">Type:</span> <CampaignTypeBadge type={preview.campaign.type} /></div>
             <div><span className="font-semibold text-slate-900">Sent by:</span> {preview.sentByLabel ?? "-"}</div>

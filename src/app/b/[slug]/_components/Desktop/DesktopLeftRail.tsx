@@ -132,13 +132,13 @@ function RailLink({
   const cls = [
     "group relative flex border shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition-all duration-150",
     expanded
-      ? "min-h-14 w-full items-start justify-start gap-3 rounded-2xl px-4 py-3"
-      : "h-12 w-full items-center justify-center rounded-2xl",
+      ? "min-h-10 w-full items-start justify-start gap-2 rounded-xl px-3 py-2"
+      : "h-10 w-full items-center justify-center rounded-xl",
     active
       ? "border-[#D7DEFA] bg-[#F5F7FF] text-[#334155] shadow-[0_4px_12px_rgba(99,102,241,0.08)]"
       : disabled
         ? "cursor-not-allowed border-[#E5E7EB] bg-[#F9FAFB] text-[#9CA3AF] opacity-90"
-        : "cursor-pointer border-[#E5E7EB] bg-white text-[#6B7280] hover:-translate-y-[1px] hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937] hover:shadow-[0_10px_24px_rgba(15,23,42,0.08)]",
+        : "cursor-pointer border-[#E5E7EB] bg-white text-[#6B7280] hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937] hover:shadow-[0_10px_24px_rgba(15,23,42,0.08)]",
     className ?? "",
   ].join(" ");
 
@@ -146,12 +146,12 @@ function RailLink({
     <>
       <span
         className={[
-          "relative shrink-0 rounded-xl transition-colors duration-150",
+          "relative shrink-0 rounded-lg transition-colors duration-150",
           active
-            ? "bg-[var(--brand-600)] p-2 text-white shadow-[0_8px_18px_rgba(91,91,179,0.26)]"
+            ? "bg-[var(--brand-600)] p-1.5 text-white shadow-[0_4px_12px_rgba(91,91,179,0.22)]"
             : disabled
-              ? "bg-white/70 p-2 text-[#9CA3AF]"
-              : "bg-[var(--brand-50)] p-2 text-[var(--brand-600)] group-hover:bg-[var(--brand-100)] group-hover:text-[var(--brand-700)]",
+              ? "bg-white/70 p-1.5 text-[#9CA3AF]"
+              : "bg-[var(--brand-50)] p-1.5 text-[var(--brand-600)] group-hover:bg-[var(--brand-100)] group-hover:text-[var(--brand-700)]",
         ].join(" ")}
       >
         {icon}
@@ -167,11 +167,11 @@ function RailLink({
         ) : null}
       </span>
       {expanded ? (
-        <span className="min-w-0 flex-1 pt-0.5 text-left">
-          <span className="flex items-center gap-2">
+        <span className="min-w-0 flex-1 text-left">
+          <span className="flex items-center gap-1.5">
             <span
               className={[
-                "block text-sm font-semibold leading-5 transition-colors",
+                "block text-xs font-semibold leading-4 transition-colors",
                 active
                   ? "text-[#334155]"
                   : disabled
@@ -200,7 +200,7 @@ function RailLink({
           {description ? (
             <span
               className={[
-                "mt-0.5 block text-xs font-medium leading-4",
+                "mt-0 block text-[10px] font-medium leading-3.5",
                 active
                   ? "text-[#4B5563]"
                   : disabled
@@ -301,21 +301,12 @@ export default function DesktopLeftRail({
     isKanban && !effectiveKanbanPeekOpen && !expanded && !filtersOpen
       ? "w-0"
       : isKanban
-        ? "w-[96px]"
-        : "w-[104px]";
-  const expandedRailWidth = isKanban ? "w-[208px]" : "w-[232px]";
-  const collapsedPanelWidth = isKanban ? "w-[88px]" : "w-[96px]";
-  const expandedPanelWidth = isKanban ? "w-[192px]" : "w-[216px]";
-  const topOffset =
-    layoutMode === "kanban"
-      ? "calc(env(safe-area-inset-top) + 112px)"
-      : "calc(env(safe-area-inset-top) + 112px)";
-  const leftOffset =
-    layoutMode === "list"
-      ? activeSection === "today"
-        ? "max(1.5rem, calc((100vw - 1440px) / 2 + 1.5rem))"
-        : "max(1.5rem, calc((100vw - 1220px) / 2 + 1.5rem))"
-      : undefined;
+        ? "w-[80px]"
+        : "w-[88px]";
+  const expandedRailWidth = isKanban ? "w-[192px]" : "w-[208px]";
+  const collapsedPanelWidth = isKanban ? "w-[72px]" : "w-[80px]";
+  const expandedPanelWidth = isKanban ? "w-[176px]" : "w-[192px]";
+  const topOffset = "calc(env(safe-area-inset-top) + 80px)";
 
   const openCollapsedRail = () => {
     if (isKanban && !expanded) {
@@ -380,8 +371,8 @@ export default function DesktopLeftRail({
     (item) => item.key === "settings",
   );
   const navIconByKey = {
-    academy: <GraduationCap className="h-5 w-5" />,
-    settings: <Settings className="h-5 w-5" />,
+    academy: <GraduationCap className="h-4 w-4" />,
+    settings: <Settings className="h-4 w-4" />,
   } as const;
   const analyticsTarget =
     analyticsHref ??
@@ -413,14 +404,8 @@ export default function DesktopLeftRail({
     adminHref ? "admin" : null,
   ].filter((value): value is string => Boolean(value));
   const tooltipSideByKey = new Map([
-    ...topSectionOrder.map((key, index) => [
-      key,
-      expanded ? ("right" as const) : index % 2 === 0 ? ("left" as const) : ("right" as const),
-    ]),
-    ...middleSectionOrder.map((key, index) => [
-      key,
-      expanded ? ("right" as const) : index % 2 === 0 ? ("left" as const) : ("right" as const),
-    ]),
+    ...topSectionOrder.map((key) => [key, "right" as const]),
+    ...middleSectionOrder.map((key) => [key, "right" as const]),
   ]);
 
   return (
@@ -432,11 +417,8 @@ export default function DesktopLeftRail({
       ].join(" ")}
     >
       <div
-        className={layoutMode === "list" ? "fixed" : "sticky"}
-        style={{
-          top: topOffset,
-          ...(layoutMode === "list" ? { left: leftOffset } : {}),
-        }}
+        className="sticky"
+        style={{ top: topOffset }}
       >
         <div className="relative">
           {isKanban && !expanded && !effectiveKanbanPeekOpen && !filtersOpen ? (
@@ -458,7 +440,7 @@ export default function DesktopLeftRail({
           ) : (
             <div
               className={[
-                "max-h-[calc(100vh-136px)] rounded-[26px] border border-[#E5E7EB] bg-[#F9FAFB]/96 p-1.5 shadow-[0_10px_34px_rgba(15,23,42,0.06)] backdrop-blur transition-all",
+                "max-h-[calc(100vh-100px)] rounded-[18px] border border-[#E5E7EB] bg-[#F9FAFB]/96 p-1 shadow-[0_10px_34px_rgba(15,23,42,0.06)] backdrop-blur transition-all",
                 expanded
                   ? "overflow-x-hidden overflow-y-auto overscroll-contain"
                   : "overflow-visible",
@@ -471,11 +453,11 @@ export default function DesktopLeftRail({
                   <button
                     type="button"
                     onClick={closeCollapsedRail}
-                    className="col-span-2 inline-flex h-12 w-full items-center justify-center rounded-2xl border border-[#E5E7EB] bg-white text-[#6B7280] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]"
+                    className="col-span-2 inline-flex h-9 w-full items-center justify-center rounded-xl border border-[#E5E7EB] bg-white text-[#6B7280] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]"
                     aria-label="Hide rail menu"
                     title="Hide menu"
                   >
-                    <ChevronsLeft className="h-5 w-5" />
+                    <ChevronsLeft className="h-4 w-4" />
                   </button>
                 ) : null}
 
@@ -483,11 +465,11 @@ export default function DesktopLeftRail({
                   <button
                     type="button"
                     onClick={toggleExpanded}
-                    className="col-span-2 inline-flex h-12 w-full items-center justify-center rounded-2xl border border-[#E5E7EB] bg-white text-[#6B7280] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]"
+                    className="col-span-2 inline-flex h-9 w-full items-center justify-center rounded-xl border border-[#E5E7EB] bg-white text-[#6B7280] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]"
                     aria-label="Open full menu"
                     title="Open full menu"
                   >
-                    <ChevronsRight className="h-5 w-5" />
+                    <ChevronsRight className="h-4 w-4" />
                   </button>
                 ) : null}
 
@@ -495,9 +477,9 @@ export default function DesktopLeftRail({
                   <RailLink
                     icon={
                       expanded ? (
-                        <ChevronsLeft className="h-5 w-5" />
+                        <ChevronsLeft className="h-4 w-4" />
                       ) : (
-                        <ChevronsRight className="h-5 w-5" />
+                        <ChevronsRight className="h-4 w-4" />
                       )
                     }
                     label={expanded ? "Collapse menu" : "Expand menu"}
@@ -509,7 +491,7 @@ export default function DesktopLeftRail({
 
                 {showFilters ? (
                   <RailLink
-                    icon={<SlidersHorizontal className="h-5 w-5" />}
+                    icon={<SlidersHorizontal className="h-4 w-4" />}
                     label="Filters"
                     description="Search and narrow orders"
                     expanded={expanded}
@@ -522,7 +504,7 @@ export default function DesktopLeftRail({
 
                 {canSeeAnalytics ? (
                   <RailLink
-                    icon={<BarChart3 className="h-5 w-5" />}
+                    icon={<BarChart3 className="h-4 w-4" />}
                     label="Analytics"
                     description="Owner workload and deadline control"
                     expanded={expanded}
@@ -534,7 +516,7 @@ export default function DesktopLeftRail({
 
                 {todayHref ? (
                   <RailLink
-                    icon={<CalendarDays className="h-5 w-5" />}
+                    icon={<CalendarDays className="h-4 w-4" />}
                     label="Today"
                     description="Overdue and due-today follow-ups"
                     expanded={expanded}
@@ -567,7 +549,7 @@ export default function DesktopLeftRail({
                 })}
                 {inferredClientsHref ? (
                   <RailLink
-                    icon={<Users className="h-5 w-5" />}
+                    icon={<Users className="h-4 w-4" />}
                     label="Clients"
                     description="Client directory and ownership"
                     expanded={expanded}
@@ -578,7 +560,7 @@ export default function DesktopLeftRail({
                 ) : null}
                 {inferredCatalogHref ? (
                   <RailLink
-                    icon={<Boxes className="h-5 w-5" />}
+                    icon={<Boxes className="h-4 w-4" />}
                     label="Catalog"
                     description="Products and services"
                     expanded={expanded}
@@ -589,7 +571,7 @@ export default function DesktopLeftRail({
                 ) : null}
                 {supportHref ? (
                   <RailLink
-                    icon={<LifeBuoy className="h-5 w-5" />}
+                    icon={<LifeBuoy className="h-4 w-4" />}
                     label="Support"
                     description="Requests and ticket history"
                     expanded={expanded}
@@ -600,7 +582,7 @@ export default function DesktopLeftRail({
                 ) : null}
                 {adminHref ? (
                   <RailLink
-                    icon={<Shield className="h-5 w-5" />}
+                    icon={<Shield className="h-4 w-4" />}
                     label="Admin"
                     description="Registered users and access"
                     expanded={expanded}
@@ -634,16 +616,16 @@ export default function DesktopLeftRail({
           {showFilters && filtersOpen ? (
             <div
               className={[
-                "absolute z-40 w-[312px]",
+                "absolute z-40 w-[340px]",
                 expanded
                   ? isKanban
-                    ? "left-[204px]"
-                    : "left-[228px]"
+                    ? "left-[180px]"
+                    : "left-[196px]"
                   : isKanban
-                    ? "left-[72px]"
-                    : "left-[84px]",
+                    ? "left-[60px]"
+                    : "left-[72px]",
               ].join(" ")}
-              style={{ top: 0, maxHeight: "calc(100vh - 136px)" }}
+              style={{ top: 0, maxHeight: "calc(100vh - 100px)" }}
             >
               <DesktopSidebarFilters
                 businessId={businessId}

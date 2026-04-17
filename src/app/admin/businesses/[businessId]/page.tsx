@@ -34,7 +34,7 @@ export default async function AdminBusinessDetailPage({
         </Link>
       }
     >
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
         <AdminStatCard label="Участники" value={formatNumber(business.membersCount)} hint="Все участники бизнеса" />
         <AdminStatCard label="Менеджеры" value={formatNumber(business.managersCount)} hint="Роль менеджера" />
         <AdminStatCard label="Заказы" value={formatNumber(businessOrders.length)} hint="Все заказы бизнеса" />
@@ -42,7 +42,7 @@ export default async function AdminBusinessDetailPage({
         <AdminStatCard label="Подписка" value={business.subscriptionStatus ? translateLabel(business.subscriptionStatus.toUpperCase()) : (business.active ? "Активен" : "Неактивен")} hint={business.billingPlanCode ? `План: ${translateLabel(business.billingPlanCode.toUpperCase())}` : business.plan ? `План: ${translateLabel(business.plan.toUpperCase())}` : "План не указан"} />
       </div>
 
-      <div className="mt-6 grid gap-4 xl:grid-cols-2">
+      <div className="mt-4 grid gap-3 xl:grid-cols-2">
         <AdminSectionCard title="Основная информация">
           <div className="grid gap-3 sm:grid-cols-2">
             <InlineKeyValue label="ID бизнеса" value={<span className="font-mono text-xs">{business.id}</span>} />
@@ -70,7 +70,7 @@ export default async function AdminBusinessDetailPage({
         </AdminSectionCard>
       </div>
 
-      <div className="mt-6 grid gap-4 xl:grid-cols-3">
+      <div className="mt-4 grid gap-3 xl:grid-cols-3">
         <AdminSectionCard title="Приглашения">
           <SectionList
             items={businessInvites.map((invite) => ({

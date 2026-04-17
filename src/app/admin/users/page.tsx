@@ -67,7 +67,7 @@ export default async function AdminUsersPage({
       return true;
     })
     .sort((a, b) => {
-      if (sort === "last_sign_in_desc") return b.lastSignInAtMs - a.lastSignInAtMs;
+      if (sort === "last_sign_in_desc") return b.lastSeenAtMs - a.lastSeenAtMs;
       if (sort === "email_asc") return String(a.email ?? "").localeCompare(String(b.email ?? ""));
       return b.createdAtMs - a.createdAtMs;
     });
@@ -107,7 +107,7 @@ export default async function AdminUsersPage({
         </div>
       }
     >
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
         <AdminStatCard label="Всего" value={formatNumber(cards.total)} hint="Все пользователи авторизации" />
         <AdminStatCard label="Подтверждены" value={formatNumber(cards.confirmed)} hint="Почта подтверждена" />
         <AdminStatCard label="Ожидают подтверждения" value={formatNumber(cards.pending)} hint="Почта не подтверждена" />
@@ -116,51 +116,51 @@ export default async function AdminUsersPage({
         <AdminStatCard label="Без входа" value={formatNumber(cards.neverSignedIn)} hint="Еще не заходили в продукт" />
       </div>
 
-      <div className="mt-6 grid gap-4">
+      <div className="mt-4 grid gap-3">
         <AdminSectionCard title="Фильтры и поиск">
-          <form action="/admin/users" className="grid gap-3 xl:grid-cols-[minmax(0,1.4fr)_150px_150px_150px_140px_170px_minmax(260px,1fr)]">
+          <form action="/admin/users" className="grid gap-2.5 xl:grid-cols-[minmax(0,1.4fr)_150px_150px_150px_140px_170px_minmax(260px,1fr)]">
             <input
               type="text"
               name="q"
               defaultValue={q}
               placeholder="Поиск по имени, email, ID, телефону или бизнесу"
-              className="h-11 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
+              className="h-10 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
             />
-            <select name="status" defaultValue={status} className="h-11 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
+            <select name="status" defaultValue={status} className="h-10 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
               <option value="all">Любая почта</option>
               <option value="confirmed">Подтверждена</option>
               <option value="unconfirmed">Не подтверждена</option>
             </select>
-            <select name="signIn" defaultValue={signIn} className="h-11 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
+            <select name="signIn" defaultValue={signIn} className="h-10 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
               <option value="all">Любой вход</option>
               <option value="has">Был вход</option>
               <option value="never">Без входа</option>
             </select>
-            <select name="business" defaultValue={business} className="h-11 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
+            <select name="business" defaultValue={business} className="h-10 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
               <option value="all">Любой бизнес</option>
               <option value="has">Есть бизнес</option>
               <option value="none">Нет бизнеса</option>
             </select>
-            <select name="window" defaultValue={window} className="h-11 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
+            <select name="window" defaultValue={window} className="h-10 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
               <option value="all">Весь период</option>
               <option value="24h">24 часа</option>
               <option value="7d">7 дней</option>
               <option value="30d">30 дней</option>
             </select>
-            <select name="sort" defaultValue={sort} className="h-11 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
+            <select name="sort" defaultValue={sort} className="h-10 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
               <option value="created_desc">Сначала новые</option>
               <option value="last_sign_in_desc">Последний вход</option>
               <option value="email_asc">Email А-Я</option>
             </select>
             <div className="flex gap-3">
-              <select name="perPage" defaultValue={String(perPage)} className="h-11 min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
+              <select name="perPage" defaultValue={String(perPage)} className="h-10 min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
                 {PER_PAGE_OPTIONS.map((value) => (
                   <option key={value} value={value}>
                     {value}
                   </option>
                 ))}
               </select>
-              <Button type="submit" className="h-11 min-w-[128px] shrink-0 whitespace-nowrap px-5 text-sm font-semibold !text-white">
+              <Button type="submit" className="h-10 min-w-[128px] shrink-0 whitespace-nowrap px-5 text-sm font-semibold !text-white">
                 Применить
               </Button>
             </div>
@@ -217,8 +217,19 @@ export default async function AdminUsersPage({
                   </div>
                 </AdminCell>
                 <AdminCell>{formatDateTime(item.createdAt)}</AdminCell>
-                <AdminCell>{formatDateTime(item.lastSignInAt)}</AdminCell>
-                <AdminCell>{translateLabel(item.primaryRole)}</AdminCell>
+                <AdminCell>{formatDateTime(item.lastSeenAt)}</AdminCell>
+                <AdminCell>
+                  <div className="flex flex-col gap-1.5">
+                    <span>{translateLabel(item.primaryRole)}</span>
+                    {item.primaryRole === "OWNER" && item.ownerPlans.length > 0 ? (
+                      <div className="flex flex-wrap gap-1.5">
+                        {item.ownerPlans.map((plan) => (
+                          <AdminBadge key={`${item.id}-${plan}`} label={plan} tone="bg-slate-100 text-slate-700" />
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                </AdminCell>
               </AdminTableRow>
             ))}
           </AdminTable>
