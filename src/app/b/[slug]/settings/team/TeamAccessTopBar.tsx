@@ -48,7 +48,6 @@ export default function TeamAccessTopBar({
 
       let nextPath: string;
       if (currentPath.startsWith("/b/")) {
-        // Replace slug segment: /b/old-slug/... → /b/new-slug/...
         const parts = currentPath.split("/");
         if (parts.length > 2) {
           parts[2] = slug;
@@ -56,8 +55,9 @@ export default function TeamAccessTopBar({
         } else {
           nextPath = `/b/${slug}`;
         }
+      } else if (currentPath.startsWith("/app/settings")) {
+        nextPath = `/b/${slug}/settings`;
       } else {
-        // /app/settings/billing → /b/{slug} (main CRM page)
         nextPath = `/b/${slug}`;
       }
 

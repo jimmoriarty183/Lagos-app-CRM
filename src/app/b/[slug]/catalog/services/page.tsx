@@ -164,16 +164,34 @@ export default async function CatalogServicesPage({
     .map(asServiceRow)
     .filter((row) => row.id);
 
+  // Load businesses for switcher
+  const { data: userMemberships } = await admin
+    .from("memberships")
+    .select("business_id, role")
+    .eq("user_id", user.id);
+  const bizIds = (userMemberships ?? []).map((m: any) => m.business_id);
+  const { data: allBusinesses } = bizIds.length > 0
+    ? await admin.from("businesses").select("id, slug, name").in("id", bizIds)
+    : { data: [] };
+  const businessOptions = (allBusinesses ?? []).map((b: any) => ({
+    id: String(b.id),
+    slug: String(b.slug),
+    name: String(b.name ?? b.slug),
+    role: ((userMemberships ?? []).find((m: any) => m.business_id === b.id)?.role ?? "GUEST").toUpperCase(),
+  }));
+
   return (
     <div className="min-h-[100svh] overflow-x-clip bg-transparent text-[#1F2937]">
       <TeamAccessTopBar
-        ordersHref="/app/crm"
+        ordersHref={`/b/${slug}`}
         userLabel={currentUserName}
         currentPlan={business.plan}
         businessId={String(business.id)}
         roleLabel={role.toLowerCase()}
         adminHref={adminHref}
         userAvatarUrl={currentUserAvatarUrl}
+        businesses={businessOptions}
+        currentBusinessSlug={slug}
         profileHref={
           user.phone
             ? `/m/${encodeURIComponent(user.phone)}`
