@@ -113,19 +113,21 @@ export default function TopBar({
     document.cookie = `active_business_slug=${encodeURIComponent(slug)}; path=/; max-age=${60 * 60 * 24 * 365}`;
 
     const currentPath = window.location.pathname;
-    const currentParams = new URLSearchParams(window.location.search);
-    const qs = currentParams.toString();
 
-    let nextPath = currentPath;
+    let nextPath: string;
     if (currentPath.startsWith("/b/")) {
       const parts = currentPath.split("/");
       if (parts.length > 2) {
         parts[2] = slug;
         nextPath = parts.join("/");
+      } else {
+        nextPath = `/b/${slug}`;
       }
+    } else {
+      nextPath = `/b/${slug}`;
     }
 
-    router.replace(qs ? `${nextPath}?${qs}` : nextPath);
+    router.replace(nextPath);
     router.refresh();
   };
 

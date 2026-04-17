@@ -45,19 +45,23 @@ export default function TeamAccessTopBar({
     (slug: string) => {
       document.cookie = `active_business_slug=${encodeURIComponent(slug)}; path=/; max-age=${60 * 60 * 24 * 365}`;
       const currentPath = window.location.pathname;
-      const currentParams = new URLSearchParams(window.location.search);
-      const qs = currentParams.toString();
 
-      let nextPath = currentPath;
+      let nextPath: string;
       if (currentPath.startsWith("/b/")) {
+        // Replace slug segment: /b/old-slug/... → /b/new-slug/...
         const parts = currentPath.split("/");
         if (parts.length > 2) {
           parts[2] = slug;
           nextPath = parts.join("/");
+        } else {
+          nextPath = `/b/${slug}`;
         }
+      } else {
+        // /app/settings/billing → /b/{slug} (main CRM page)
+        nextPath = `/b/${slug}`;
       }
 
-      router.replace(qs ? `${nextPath}?${qs}` : nextPath);
+      router.replace(nextPath);
       router.refresh();
     },
     [router],
