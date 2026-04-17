@@ -155,6 +155,7 @@ export default function ServiceCatalogManager({
     return list;
   }, [rows, search, sortBy, sortDir]);
 
+  const [showCreateForm, setShowCreateForm] = useState(false);
   const [taxRateMode, setTaxRateMode] = useState<
     "" | "0" | "7" | "20" | "custom"
   >("");
@@ -263,14 +264,24 @@ export default function ServiceCatalogManager({
             {schemaWarning}
           </div>
         ) : null}
-        <div className="mb-4">
-          <div className="product-section-label text-[#6B7280]">Catalog</div>
-          <h2 className="product-section-title mt-1">Create service</h2>
-          <p className="product-page-subtitle mt-1">
-            Visible catalog entry for services you want to use in requests and
-            orders later.
-          </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="product-section-label text-[#6B7280]">Catalog</div>
+            <h2 className="product-section-title mt-1">Create service</h2>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowCreateForm((v) => !v)}
+            className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[#D0D5DD] bg-white px-3.5 text-sm font-medium text-[#344054] transition hover:bg-[#F9FAFB]"
+          >
+            {showCreateForm ? "Hide form" : "+ New service"}
+          </button>
         </div>
+        {showCreateForm ? (
+        <>
+        <p className="product-page-subtitle mt-2">
+          Visible catalog entry for services you want to use in requests and orders later.
+        </p>
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <div className="space-y-1.5">
@@ -590,6 +601,8 @@ export default function ServiceCatalogManager({
           <div className="mt-3 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
             {errorText}
           </div>
+        ) : null}
+        </>
         ) : null}
       </section>
 
