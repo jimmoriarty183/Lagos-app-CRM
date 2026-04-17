@@ -24,6 +24,13 @@ const LABELS: Record<string, string> = {
   PRO: "Платный",
   BETA: "Бета",
   UNKNOWN: "Неизвестно",
+  SOLO: "Solo",
+  STARTER: "Starter",
+  BUSINESS: "Business",
+  TRIALING: "Триал",
+  CANCELED: "Отменён",
+  PAST_DUE: "Просрочен",
+  PAUSED: "Приостановлен",
 };
 
 export function getSingleParam(value: string | string[] | undefined) {

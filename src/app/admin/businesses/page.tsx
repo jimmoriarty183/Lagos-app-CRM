@@ -180,8 +180,16 @@ export default async function AdminBusinessesPage({
                 <AdminCell>{formatDateTime(item.lastActivityAt)}</AdminCell>
                 <AdminCell>
                   <div className="flex flex-wrap gap-2">
-                    <AdminBadge label={item.active ? "ACTIVE" : "INACTIVE"} />
-                    {item.plan ? <AdminBadge label={translateLabel(item.plan.toUpperCase())} tone="bg-slate-100 text-slate-700" /> : null}
+                    {item.subscriptionStatus ? (
+                      <AdminBadge label={translateLabel(item.subscriptionStatus.toUpperCase())} tone={item.subscriptionStatus === "active" ? undefined : item.subscriptionStatus === "trialing" ? "bg-blue-50 text-blue-700" : "bg-amber-50 text-amber-700"} />
+                    ) : (
+                      <AdminBadge label={item.active ? "ACTIVE" : "INACTIVE"} />
+                    )}
+                    {item.billingPlanCode ? (
+                      <AdminBadge label={translateLabel(item.billingPlanCode.toUpperCase())} tone="bg-slate-100 text-slate-700" />
+                    ) : item.plan ? (
+                      <AdminBadge label={translateLabel(item.plan.toUpperCase())} tone="bg-slate-100 text-slate-700" />
+                    ) : null}
                   </div>
                 </AdminCell>
               </AdminTableRow>

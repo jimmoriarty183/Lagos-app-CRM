@@ -39,7 +39,7 @@ export default async function AdminBusinessDetailPage({
         <AdminStatCard label="Менеджеры" value={formatNumber(business.managersCount)} hint="Роль менеджера" />
         <AdminStatCard label="Заказы" value={formatNumber(businessOrders.length)} hint="Все заказы бизнеса" />
         <AdminStatCard label="Приглашения" value={formatNumber(businessInvites.length)} hint="Инвайты бизнеса" />
-        <AdminStatCard label="Статус" value={business.active ? "Активен" : "Неактивен"} hint={business.plan ? `План: ${translateLabel(business.plan.toUpperCase())}` : "План не указан"} />
+        <AdminStatCard label="Подписка" value={business.subscriptionStatus ? translateLabel(business.subscriptionStatus.toUpperCase()) : (business.active ? "Активен" : "Неактивен")} hint={business.billingPlanCode ? `План: ${translateLabel(business.billingPlanCode.toUpperCase())}` : business.plan ? `План: ${translateLabel(business.plan.toUpperCase())}` : "План не указан"} />
       </div>
 
       <div className="mt-6 grid gap-4 xl:grid-cols-2">
@@ -52,7 +52,8 @@ export default async function AdminBusinessDetailPage({
             <InlineKeyValue label="Дата создания" value={formatDateTime(business.createdAt)} />
             <InlineKeyValue label="Обновлен" value={formatDateTime(business.updatedAt)} />
             <InlineKeyValue label="Последняя активность" value={formatDateTime(business.lastActivityAt)} />
-            <InlineKeyValue label="План" value={business.plan ? translateLabel(business.plan.toUpperCase()) : "Нет"} />
+            <InlineKeyValue label="План (биллинг)" value={business.billingPlanCode ? translateLabel(business.billingPlanCode.toUpperCase()) : "Нет подписки"} />
+            <InlineKeyValue label="Статус подписки" value={business.subscriptionStatus ? translateLabel(business.subscriptionStatus.toUpperCase()) : "Нет"} />
           </div>
         </AdminSectionCard>
 

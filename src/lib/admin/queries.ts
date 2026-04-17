@@ -1,4 +1,3 @@
-import { cache } from "react";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { buildSafeUserFallback, resolveUserDisplay } from "@/lib/user-display";
 
@@ -10,6 +9,8 @@ export type AdminAuthUser = {
   emailConfirmedAt: string | null;
   lastSignInAt: string | null;
   lastSignInAtMs: number;
+  lastSeenAt: string | null;
+  lastSeenAtMs: number;
   fullName: string | null;
   phone: string | null;
   memberships: {
@@ -21,8 +22,10 @@ export type AdminAuthUser = {
     id: string;
     slug: string | null;
     name: string | null;
+    plan: string | null;
     role: string;
   }[];
+  ownerPlans: string[];
   businessesCount: number;
   primaryRole: string;
   hasBusiness: boolean;
@@ -35,6 +38,8 @@ export type AdminBusiness = {
   slug: string | null;
   name: string | null;
   plan: string | null;
+  billingPlanCode: string | null;
+  subscriptionStatus: string | null;
   createdAt: string | null;
   createdAtMs: number;
   updatedAt: string | null;
@@ -182,6 +187,42 @@ type RawActivityEvent = {
   payload: Record<string, unknown> | null;
 };
 
+type RawAuthUser = {
+  id: string;
+  email: string | null;
+  created_at: string | null;
+  email_confirmed_at: string | null;
+  last_sign_in_at: string | null;
+};
+
+type RawAccountUser = {
+  account_id: string | null;
+  user_id: string | null;
+};
+
+type RawSubscription = {
+  account_id: string | null;
+  plan_price_id: string | null;
+  status: string | null;
+  updated_at: string | null;
+  created_at: string | null;
+};
+
+type RawPlanPrice = {
+  id: string;
+  plan_id: string | null;
+};
+
+type RawPlan = {
+  id: string;
+  code: string | null;
+};
+
+type QueryErrorLike = {
+  code?: string | null;
+  message?: string | null;
+};
+
 function asTimeMs(value: string | null | undefined) {
   if (!value) return 0;
   const parsed = new Date(value).getTime();
@@ -220,19 +261,43 @@ function getActivityTitle(kind: string | null | undefined) {
   return titles[normalized] ?? (kind ? String(kind) : "Системное событие");
 }
 
+function subscriptionStatusPriority(status: string | null | undefined) {
+  const normalized = String(status ?? "").trim().toLowerCase();
+  if (normalized === "active") return 0;
+  if (normalized === "trialing") return 1;
+  if (normalized === "past_due") return 2;
+  if (normalized === "paused") return 3;
+  if (normalized === "canceled" || normalized === "cancelled") return 4;
+  if (normalized === "expired") return 5;
+  return 6;
+}
+
+function isIgnorableOptionalAdminQueryError(error: QueryErrorLike | null | undefined) {
+  if (!error) return false;
+  const code = String(error.code ?? "").trim();
+  const message = String(error.message ?? "").toLowerCase();
+  if (code === "42P01" || code === "42703" || code === "42501") return true;
+  return (
+    message.includes("does not exist")
+    || message.includes("permission denied")
+    || message.includes("could not find the table")
+    || message.includes("schema cache")
+  );
+}
+
 // TECH DEBT: this reads auth users page-by-page through Admin API. Good enough for MVP,
 // but once auth user volume grows, move these metrics into a dedicated analytics table/view.
 async function loadAllAuthUsers() {
   const admin = supabaseAdmin();
   const perPage = 200;
   const maxPages = 10;
-  const users: any[] = [];
+  const users: RawAuthUser[] = [];
 
   for (let page = 1; page <= maxPages; page += 1) {
     const { data, error } = await admin.auth.admin.listUsers({ page, perPage });
     if (error) throw new Error(error.message);
 
-    const batch = data?.users ?? [];
+    const batch = (data?.users ?? []) as RawAuthUser[];
     users.push(...batch);
     if (batch.length < perPage) break;
   }
@@ -240,7 +305,7 @@ async function loadAllAuthUsers() {
   return users;
 }
 
-export const loadAdminDataset = cache(async () => {
+export async function loadAdminDataset() {
   const admin = supabaseAdmin();
 
   const [authUsersRaw, profilesRes, membershipsRes, businessesRes, invitesRes, ordersRes, activityRes] =
@@ -267,6 +332,68 @@ export const loadAdminDataset = cache(async () => {
   const invites = (invitesRes.data ?? []) as RawInvite[];
   const orders = (ordersRes.data ?? []) as RawOrder[];
   const activityEvents = (activityRes.data ?? []) as RawActivityEvent[];
+  let accountUsers: RawAccountUser[] = [];
+  let subscriptions: RawSubscription[] = [];
+  let planPrices: RawPlanPrice[] = [];
+  let plans: RawPlan[] = [];
+
+  try {
+    const accountUsersRes = await admin.from("account_users").select("account_id,user_id");
+    if (accountUsersRes.error) {
+      if (!isIgnorableOptionalAdminQueryError(accountUsersRes.error)) {
+        throw new Error(accountUsersRes.error.message);
+      }
+    } else {
+      accountUsers = (accountUsersRes.data ?? []) as RawAccountUser[];
+    }
+  } catch (error: unknown) {
+    const queryError = error as QueryErrorLike;
+    if (!isIgnorableOptionalAdminQueryError(queryError)) throw error;
+  }
+
+  try {
+    const subscriptionsRes = await admin
+      .from("subscriptions")
+      .select("account_id,plan_price_id,status,updated_at,created_at");
+    if (subscriptionsRes.error) {
+      if (!isIgnorableOptionalAdminQueryError(subscriptionsRes.error)) {
+        throw new Error(subscriptionsRes.error.message);
+      }
+    } else {
+      subscriptions = (subscriptionsRes.data ?? []) as RawSubscription[];
+    }
+  } catch (error: unknown) {
+    const queryError = error as QueryErrorLike;
+    if (!isIgnorableOptionalAdminQueryError(queryError)) throw error;
+  }
+
+  try {
+    const planPricesRes = await admin.from("plan_prices").select("id,plan_id");
+    if (planPricesRes.error) {
+      if (!isIgnorableOptionalAdminQueryError(planPricesRes.error)) {
+        throw new Error(planPricesRes.error.message);
+      }
+    } else {
+      planPrices = (planPricesRes.data ?? []) as RawPlanPrice[];
+    }
+  } catch (error: unknown) {
+    const queryError = error as QueryErrorLike;
+    if (!isIgnorableOptionalAdminQueryError(queryError)) throw error;
+  }
+
+  try {
+    const plansRes = await admin.from("plans").select("id,code");
+    if (plansRes.error) {
+      if (!isIgnorableOptionalAdminQueryError(plansRes.error)) {
+        throw new Error(plansRes.error.message);
+      }
+    } else {
+      plans = (plansRes.data ?? []) as RawPlan[];
+    }
+  } catch (error: unknown) {
+    const queryError = error as QueryErrorLike;
+    if (!isIgnorableOptionalAdminQueryError(queryError)) throw error;
+  }
 
   const profilesById = new Map(profiles.map((profile) => [String(profile.id), profile]));
   const businessesById = new Map(businesses.map((business) => [String(business.id), business]));
@@ -275,6 +402,17 @@ export const loadAdminDataset = cache(async () => {
   const ordersByBusinessId = new Map<string, RawOrder[]>();
   const invitesByBusinessId = new Map<string, RawInvite[]>();
   const activityByBusinessId = new Map<string, RawActivityEvent[]>();
+  const userActivityMsById = new Map<string, number>();
+  const accountIdsByUserId = new Map<string, Set<string>>();
+
+  const markUserActivity = (userId: string | null | undefined, timestamp: string | null | undefined) => {
+    const normalizedUserId = String(userId ?? "").trim();
+    if (!normalizedUserId) return;
+    const ts = asTimeMs(timestamp);
+    if (!ts) return;
+    const previous = userActivityMsById.get(normalizedUserId) ?? 0;
+    if (ts > previous) userActivityMsById.set(normalizedUserId, ts);
+  };
 
   for (const membership of memberships) {
     const userId = String(membership.user_id ?? "").trim();
@@ -283,6 +421,7 @@ export const loadAdminDataset = cache(async () => {
       const list = membershipsByUserId.get(userId) ?? [];
       list.push(membership);
       membershipsByUserId.set(userId, list);
+      markUserActivity(userId, membership.created_at);
     }
     if (businessId) {
       const list = membershipsByBusinessId.get(businessId) ?? [];
@@ -297,6 +436,7 @@ export const loadAdminDataset = cache(async () => {
     const list = ordersByBusinessId.get(businessId) ?? [];
     list.push(order);
     ordersByBusinessId.set(businessId, list);
+    markUserActivity(order.manager_id, order.updated_at ?? order.created_at);
   }
 
   for (const invite of invites) {
@@ -305,6 +445,9 @@ export const loadAdminDataset = cache(async () => {
     const list = invitesByBusinessId.get(businessId) ?? [];
     list.push(invite);
     invitesByBusinessId.set(businessId, list);
+    markUserActivity(invite.invited_by, invite.created_at);
+    markUserActivity(invite.accepted_by, invite.accepted_at);
+    markUserActivity(invite.revoked_by, invite.revoked_at);
   }
 
   for (const event of activityEvents) {
@@ -313,6 +456,49 @@ export const loadAdminDataset = cache(async () => {
     const list = activityByBusinessId.get(businessId) ?? [];
     list.push(event);
     activityByBusinessId.set(businessId, list);
+    markUserActivity(event.actor_id, event.created_at);
+  }
+
+  for (const business of businesses) {
+    markUserActivity(business.created_by, business.created_at);
+  }
+
+  for (const accountUser of accountUsers) {
+    const userId = String(accountUser.user_id ?? "").trim();
+    const accountId = String(accountUser.account_id ?? "").trim();
+    if (!userId || !accountId) continue;
+    const set = accountIdsByUserId.get(userId) ?? new Set<string>();
+    set.add(accountId);
+    accountIdsByUserId.set(userId, set);
+  }
+
+  const planIdByPriceId = new Map(planPrices.map((item) => [String(item.id), String(item.plan_id ?? "").trim()]));
+  const planCodeByPlanId = new Map(plans.map((item) => [String(item.id), String(item.code ?? "").trim().toUpperCase()]));
+  const subscriptionsByAccountId = new Map<string, RawSubscription[]>();
+
+  for (const subscription of subscriptions) {
+    const accountId = String(subscription.account_id ?? "").trim();
+    if (!accountId) continue;
+    const list = subscriptionsByAccountId.get(accountId) ?? [];
+    list.push(subscription);
+    subscriptionsByAccountId.set(accountId, list);
+  }
+
+  const planCodesByAccountId = new Map<string, string>();
+  for (const [accountId, rows] of subscriptionsByAccountId.entries()) {
+    const sorted = [...rows].sort((left, right) => {
+      const statusDelta = subscriptionStatusPriority(left.status) - subscriptionStatusPriority(right.status);
+      if (statusDelta !== 0) return statusDelta;
+      const leftTs = asTimeMs(left.updated_at) || asTimeMs(left.created_at);
+      const rightTs = asTimeMs(right.updated_at) || asTimeMs(right.created_at);
+      return rightTs - leftTs;
+    });
+    const selected = sorted[0];
+    if (!selected) continue;
+    const planPriceId = String(selected.plan_price_id ?? "").trim();
+    const planId = planIdByPriceId.get(planPriceId) ?? "";
+    const planCode = planCodeByPlanId.get(planId) ?? "";
+    if (planCode) planCodesByAccountId.set(accountId, planCode);
   }
 
   const authUsers: AdminAuthUser[] = authUsersRaw.map((user) => {
@@ -341,9 +527,26 @@ export const loadAdminDataset = cache(async () => {
         id: membership.businessId,
         slug: business?.slug ?? null,
         name: business?.name ?? null,
+        plan: business?.plan ?? null,
         role: membership.role,
       };
     });
+
+    const ownerPlansFromBusinesses = Array.from(
+      new Set(
+        userBusinesses
+          .filter((business) => business.role === "OWNER")
+          .map((business) => String(business.plan ?? "").trim().toUpperCase())
+          .filter(Boolean),
+      ),
+    );
+    const ownerPlansFromBilling = Array.from(accountIdsByUserId.get(id) ?? [])
+      .map((accountId) => planCodesByAccountId.get(accountId) ?? "")
+      .filter(Boolean);
+    const ownerPlans = Array.from(new Set([...ownerPlansFromBusinesses, ...ownerPlansFromBilling]));
+    const authLastSignInAtMs = asTimeMs(user.last_sign_in_at ?? null);
+    const derivedLastSeenAtMs = userActivityMsById.get(id) ?? 0;
+    const lastSeenAtMs = Math.max(authLastSignInAtMs, derivedLastSeenAtMs);
 
     return {
       id,
@@ -352,15 +555,18 @@ export const loadAdminDataset = cache(async () => {
       createdAtMs: asTimeMs(user.created_at ?? null),
       emailConfirmedAt: user.email_confirmed_at ?? null,
       lastSignInAt: user.last_sign_in_at ?? null,
-      lastSignInAtMs: asTimeMs(user.last_sign_in_at ?? null),
+      lastSignInAtMs: authLastSignInAtMs,
+      lastSeenAt: lastSeenAtMs ? new Date(lastSeenAtMs).toISOString() : null,
+      lastSeenAtMs,
       fullName: display.fullName || display.fromParts || display.email || buildSafeUserFallback(id),
       phone: display.phone || null,
       memberships: userMemberships,
       businesses: userBusinesses,
+      ownerPlans,
       businessesCount: userBusinesses.length,
       primaryRole: getPrimaryRole(userMemberships.map((membership) => membership.role)),
       hasBusiness: userBusinesses.length > 0,
-      hasSignIn: Boolean(user.last_sign_in_at),
+      hasSignIn: lastSeenAtMs > 0,
       searchBlob: [
         id,
         user.email ?? "",
@@ -416,11 +622,43 @@ export const loadAdminDataset = cache(async () => {
     );
     const owner = businessMemberships.find((membership) => membership.role === "OWNER") ?? null;
 
+    // Resolve billing plan & subscription status via owner → account → subscription
+    const ownerId = business.owner_id ?? owner?.userId ?? null;
+    let billingPlanCode: string | null = null;
+    let subscriptionStatus: string | null = null;
+
+    if (ownerId) {
+      const ownerAccountIds = accountIdsByUserId.get(ownerId);
+      if (ownerAccountIds) {
+        for (const accountId of ownerAccountIds) {
+          const accountSubs = subscriptionsByAccountId.get(accountId);
+          if (!accountSubs?.length) continue;
+          const sorted = [...accountSubs].sort((left, right) => {
+            const statusDelta = subscriptionStatusPriority(left.status) - subscriptionStatusPriority(right.status);
+            if (statusDelta !== 0) return statusDelta;
+            const leftTs = asTimeMs(left.updated_at) || asTimeMs(left.created_at);
+            const rightTs = asTimeMs(right.updated_at) || asTimeMs(right.created_at);
+            return rightTs - leftTs;
+          });
+          const best = sorted[0];
+          if (best) {
+            subscriptionStatus = best.status ?? null;
+            const priceId = String(best.plan_price_id ?? "").trim();
+            const planId = planIdByPriceId.get(priceId) ?? "";
+            billingPlanCode = planCodeByPlanId.get(planId) ?? null;
+            break;
+          }
+        }
+      }
+    }
+
     return {
       id: businessId,
       slug: business.slug ?? null,
       name: business.name ?? null,
       plan: business.plan ?? null,
+      billingPlanCode,
+      subscriptionStatus,
       createdAt: business.created_at ?? null,
       createdAtMs: asTimeMs(business.created_at),
       updatedAt: business.updated_at ?? null,
@@ -520,13 +758,13 @@ export const loadAdminDataset = cache(async () => {
       });
     }
 
-    if (user.lastSignInAt) {
+    if (user.lastSeenAt) {
       syntheticActivity.push({
         id: `user-signin-${user.id}`,
         kind: "user.signed_in",
         title: "Вход в продукт",
-        createdAt: user.lastSignInAt,
-        createdAtMs: user.lastSignInAtMs,
+        createdAt: user.lastSeenAt,
+        createdAtMs: user.lastSeenAtMs,
         userId: user.id,
         userLabel: user.fullName || user.email,
         businessId: user.businesses[0]?.id ?? null,
@@ -635,9 +873,9 @@ export const loadAdminDataset = cache(async () => {
     orders: adminOrders,
     activities,
   };
-});
+}
 
-export const loadAdminSummary = cache(async () => {
+export async function loadAdminSummary() {
   const dataset = await loadAdminDataset();
   const now = Date.now();
   const dayMs = 1000 * 60 * 60 * 24;
@@ -682,4 +920,4 @@ export const loadAdminSummary = cache(async () => {
     invitesRevoked,
     totalOrders,
   };
-});
+}
