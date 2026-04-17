@@ -968,9 +968,10 @@ export default function DesktopOrdersTable({
     if (typeof window === "undefined") return;
 
     const url = new URL(window.location.href);
-    if (!url.searchParams.has("focusOrder")) return;
+    if (!url.searchParams.has("focusOrder") && !url.searchParams.has("focusTab")) return;
 
     url.searchParams.delete("focusOrder");
+    url.searchParams.delete("focusTab");
     const nextSearch = url.searchParams.toString();
     const nextHref = `${url.pathname}${nextSearch ? `?${nextSearch}` : ""}`;
     router.replace(nextHref, { scroll: false });
@@ -986,6 +987,22 @@ export default function DesktopOrdersTable({
     router.replace(nextHref, { scroll: false });
   }, [router]);
 
+  const syncFocusOrderParam = React.useCallback(
+    (nextId: string | null) => {
+      if (typeof window === "undefined") return;
+      const url = new URL(window.location.href);
+      if (nextId) {
+        url.searchParams.set("focusOrder", nextId);
+      } else {
+        url.searchParams.delete("focusOrder");
+      }
+      const nextSearch = url.searchParams.toString();
+      const nextHref = `${url.pathname}${nextSearch ? `?${nextSearch}` : ""}`;
+      router.replace(nextHref, { scroll: false });
+    },
+    [router],
+  );
+
   React.useEffect(() => {
     if (!initialOpenOrderId) return;
     if (typeof window !== "undefined") {
@@ -994,15 +1011,15 @@ export default function DesktopOrdersTable({
     }
     if (!boardRows.some((order) => order.id === initialOpenOrderId)) return;
     setOpenId(initialOpenOrderId);
-    clearFocusOrderParam();
-  }, [boardRows, clearFocusOrderParam, initialOpenOrderId]);
+  }, [boardRows, initialOpenOrderId]);
 
   React.useEffect(() => {
     if (!initialCreateOrderOpen) return;
     setOpenId(null);
+    syncFocusOrderParam(null);
     setCreatePreviewOpen(true);
     clearCreateOrderParam();
-  }, [clearCreateOrderParam, initialCreateOrderOpen]);
+  }, [clearCreateOrderParam, initialCreateOrderOpen, syncFocusOrderParam]);
   const statusOptions = useMemo(
     () => [
       ...statuses.map((status) => ({
@@ -1118,7 +1135,9 @@ export default function DesktopOrdersTable({
 
   const toggleOrderPreview = (orderId: string) => {
     if (shouldIgnoreOverlayCloseClick()) return;
-    setOpenId((current) => (current === orderId ? null : orderId));
+    const next = openId === orderId ? null : orderId;
+    setOpenId(next);
+    syncFocusOrderParam(next);
   };
 
   const navigateWithFallback = (href: string) => {
@@ -1499,6 +1518,7 @@ export default function DesktopOrdersTable({
 
     if (openId === orderId) {
       setOpenId(null);
+      syncFocusOrderParam(null);
     }
     router.refresh();
   };
@@ -1523,6 +1543,7 @@ export default function DesktopOrdersTable({
     setConfirmDeleteId(null);
     if (openId === orderId) {
       setOpenId(null);
+      syncFocusOrderParam(null);
     }
     router.refresh();
   };
@@ -1738,6 +1759,7 @@ export default function DesktopOrdersTable({
                 type="button"
                 onClick={() => {
                   setOpenId(null);
+                  syncFocusOrderParam(null);
                   setCreatePreviewOpen(true);
                 }}
                 className="inline-flex h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-lg border border-[var(--brand-600)] bg-[var(--brand-600)] px-4 text-[15px] font-medium text-white transition hover:bg-[var(--brand-700)] hover:border-[var(--brand-700)]"
@@ -2325,6 +2347,7 @@ export default function DesktopOrdersTable({
                               onSelect={(event) => {
                                 event.preventDefault();
                                 setOpenId(order.id);
+                                syncFocusOrderParam(order.id);
                               }}
                             >
                               <Eye className="h-4 w-4" />
@@ -2798,6 +2821,7 @@ export default function DesktopOrdersTable({
                                               onSelect={(event) => {
                                                 event.preventDefault();
                                                 setOpenId(order.id);
+                                                syncFocusOrderParam(order.id);
                                               }}
                                             >
                                               <Eye className="h-4 w-4" />

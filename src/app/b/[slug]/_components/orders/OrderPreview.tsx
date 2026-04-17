@@ -15,6 +15,7 @@ import {
   Plus,
   Paperclip,
   Tag,
+  Trash2,
   X,
 } from "lucide-react";
 
@@ -38,6 +39,7 @@ import { CANCELED_REASONS } from "@/app/b/[slug]/order-status-reasons";
 import {
   appendLocalActivityEvent,
   makeLocalActivityEventId,
+  ORDER_ACTIVITY_REFRESH_EVENT,
   type LocalActivityEvent,
 } from "@/app/b/[slug]/_components/orders/order-activity";
 import { normalizeOrderClient } from "@/lib/order-client";
@@ -80,6 +82,7 @@ type TeamActor = {
   id: string;
   label: string;
   kind: "OWNER" | "MANAGER";
+  avatar_url?: string | null;
 };
 
 type OrderRow = {
@@ -135,6 +138,7 @@ type OverviewAttachmentRow = {
   mime_type: string | null;
   file_size: number | null;
   created_at: string | null;
+  uploaded_by: string | null;
 };
 
 function normalizeActors(input: TeamActor[]): TeamActor[] {
@@ -254,7 +258,17 @@ function formatFileSize(value: number | null) {
   return `${(size / (1024 * 1024 * 1024)).toFixed(1)} GB`;
 }
 
-function ActorAvatar({ label }: { label: string }) {
+function ActorAvatar({ label, avatarUrl }: { label: string; avatarUrl?: string | null }) {
+  const src = String(avatarUrl ?? "").trim();
+  if (src) {
+    return (
+      <img
+        src={src}
+        alt={label || "Avatar"}
+        className="h-6 w-6 shrink-0 rounded-full border border-[#E5E7EB] object-cover"
+      />
+    );
+  }
   const initials =
     label
       .split(/\s+/)
@@ -734,6 +748,8 @@ function FilesSection({
   canUpload,
   successMessage,
   onAddFiles,
+  onDeleteFile,
+  currentUserId,
 }: {
   files: OverviewAttachmentRow[];
   loading: boolean;
@@ -741,7 +757,10 @@ function FilesSection({
   canUpload: boolean;
   successMessage: string | null;
   onAddFiles: () => void;
+  onDeleteFile?: (id: string) => void;
+  currentUserId?: string | null;
 }) {
+  const [deletingId, setDeletingId] = React.useState<string | null>(null);
   return (
     <div className="rounded-[20px] border border-[#F3F4F6] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -780,14 +799,16 @@ function FilesSection({
           </div>
         ) : files.length > 0 ? (
           files.map((file) => (
-            <a
+            <div
               key={file.id}
-              href={`/api/activity-attachments/${file.id}`}
-              target="_blank"
-              rel="noreferrer"
               className="flex items-center justify-between gap-3 rounded-[18px] border border-[#F3F4F6] bg-[#F9FAFB] px-3.5 py-3 transition hover:border-[#C7D2FE] hover:bg-white"
             >
-              <div className="min-w-0 flex-1">
+              <a
+                href={`/api/activity-attachments/${file.id}`}
+                target="_blank"
+                rel="noreferrer"
+                className="min-w-0 flex-1"
+              >
                 <div className="flex items-center gap-2 text-sm font-semibold text-[#1F2937]">
                   <FileText className="h-4 w-4 shrink-0 text-[#9CA3AF]" />
                   <span className="truncate">{file.file_name}</span>
@@ -800,11 +821,32 @@ function FilesSection({
                     .filter(Boolean)
                     .join(" • ")}
                 </div>
+              </a>
+              <div className="flex shrink-0 items-center gap-1.5">
+                <a
+                  href={`/api/activity-attachments/${file.id}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#E5E7EB] bg-white text-[#374151] transition hover:bg-[#F3F4F6]"
+                >
+                  <Download className="h-4 w-4" />
+                </a>
+                {onDeleteFile && (!currentUserId || file.uploaded_by === currentUserId) ? (
+                  <button
+                    type="button"
+                    disabled={deletingId === file.id}
+                    onClick={() => {
+                      if (!confirm("Удалить этот файл?")) return;
+                      setDeletingId(file.id);
+                      onDeleteFile(file.id);
+                    }}
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#E5E7EB] bg-white text-[#9CA3AF] transition hover:border-[#FCA5A5] hover:bg-[#FEF2F2] hover:text-[#EF4444] disabled:opacity-50"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                ) : null}
               </div>
-              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[#E5E7EB] bg-white text-[#374151]">
-                <Download className="h-4 w-4" />
-              </span>
-            </a>
+            </div>
           ))
         ) : (
           <div className="rounded-[18px] border border-dashed border-[#E5E7EB] bg-[#F9FAFB] px-4 py-5 text-sm text-[#6B7280]">
@@ -904,13 +946,13 @@ function LabelsSection({
   };
 
   return (
-    <div className="rounded-[20px] border border-[#F3F4F6] bg-white p-3.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
-      <div className="flex items-center gap-2 text-sm font-semibold text-[#1F2937]">
-        <Tag className="h-4 w-4 text-[#9CA3AF]" />
+    <div className="rounded-[16px] border border-[#F3F4F6] bg-white p-2.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+      <div className="flex items-center gap-1.5 text-[13px] font-semibold text-[#1F2937]">
+        <Tag className="h-3.5 w-3.5 text-[#9CA3AF]" />
         Labels
       </div>
 
-      <div className="mt-2.5 flex flex-wrap gap-1.5">
+      <div className="mt-2 flex flex-wrap gap-1">
         {value.length > 0 ? (
           value.map((label) => (
             <button
@@ -927,7 +969,7 @@ function LabelsSection({
         )}
       </div>
 
-      <div className="mt-3 flex flex-wrap gap-1.5">
+      <div className="mt-2 flex flex-wrap gap-1">
         {suggestedLabels
           .filter(
             (label) =>
@@ -945,7 +987,7 @@ function LabelsSection({
           ))}
       </div>
 
-      <div className="mt-3 flex gap-2">
+      <div className="mt-2 flex gap-1.5">
         <input
           value={draft}
           onChange={(event) => setDraft(event.currentTarget.value)}
@@ -956,19 +998,19 @@ function LabelsSection({
             }
           }}
           placeholder="Add label"
-          className="h-10 flex-1 rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:bg-white focus:ring-2 focus:ring-[var(--brand-600)]/15"
+          className="h-8 flex-1 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] px-2.5 text-[13px] outline-none transition focus:border-[var(--brand-600)] focus:bg-white focus:ring-2 focus:ring-[var(--brand-600)]/15"
         />
         <button
           type="button"
           onClick={() => addLabel(draft)}
           disabled={!draft.trim()}
-          className="rounded-xl border border-[#E5E7EB] bg-white px-4 text-sm font-semibold text-[#374151] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
+          className="rounded-lg border border-[#E5E7EB] bg-white px-3 text-[13px] font-semibold text-[#374151] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
         >
           {draft.trim() ? `Add "${draft.trim()}"` : "+ Add label"}
         </button>
       </div>
 
-      <p className="mt-2.5 text-xs leading-5 text-[#9CA3AF]">
+      <p className="mt-2 text-[11px] leading-4 text-[#9CA3AF]">
         Labels are currently session-only UI until backend storage is connected.
       </p>
     </div>
@@ -992,7 +1034,26 @@ export function OrderPreview({
 }: Props) {
   const router = useRouter();
   const isCreateMode = mode === "create";
-  const [activeTab, setActiveTab] = React.useState("overview");
+  const [activeTab, setActiveTabRaw] = React.useState(() => {
+    if (typeof window === "undefined") return "overview";
+    const params = new URLSearchParams(window.location.search);
+    return params.get("focusTab") || "overview";
+  });
+  const setActiveTab = React.useCallback(
+    (tab: string) => {
+      setActiveTabRaw(tab);
+      if (typeof window === "undefined") return;
+      const url = new URL(window.location.href);
+      if (tab && tab !== "overview") {
+        url.searchParams.set("focusTab", tab);
+      } else {
+        url.searchParams.delete("focusTab");
+      }
+      const next = `${url.pathname}${url.search}`;
+      router.replace(next, { scroll: false });
+    },
+    [router],
+  );
   const [labels, setLabels] = React.useState<string[]>([]);
   const [layoutMode, setLayoutMode] = React.useState<"default" | "wide">(
     "default",
@@ -1057,7 +1118,11 @@ export function OrderPreview({
 
   React.useEffect(() => {
     if (open) {
-      setActiveTab("overview");
+      const urlTab =
+        typeof window !== "undefined"
+          ? new URLSearchParams(window.location.search).get("focusTab")
+          : null;
+      setActiveTabRaw(urlTab || "overview");
       setIsEditingOverview(isCreateMode);
     }
   }, [isCreateMode, open, order?.id]);
@@ -1142,6 +1207,10 @@ export function OrderPreview({
     });
   }, [client.firstName, client.lastName, open, previewOrder]);
   const currentOrder = previewOrder;
+  const managerAvatarUrl = React.useMemo(() => {
+    if (!currentOrder?.manager_id) return null;
+    return managerOptions.find((a) => a.id === currentOrder.manager_id)?.avatar_url ?? null;
+  }, [currentOrder?.manager_id, managerOptions]);
   const dueISO = currentOrder?.due_date
     ? String(currentOrder.due_date).slice(0, 10)
     : null;
@@ -1165,7 +1234,7 @@ export function OrderPreview({
       setIsLoadingOverviewFiles(true);
       const { data, error } = await supabase
         .from("activity_attachments")
-        .select("id, file_name, storage_path, mime_type, file_size, created_at")
+        .select("id, file_name, storage_path, mime_type, file_size, created_at, uploaded_by")
         .eq("business_id", businessId)
         .eq("order_id", orderId)
         .order("created_at", { ascending: false })
@@ -1341,6 +1410,55 @@ export function OrderPreview({
       supabase,
       userRole,
     ],
+  );
+
+  const handleDeleteFile = React.useCallback(
+    async (attachmentId: string) => {
+      if (!currentOrder) return;
+      const file = overviewFiles.find((f) => f.id === attachmentId);
+      try {
+        const response = await fetch(
+          `/api/activity-attachments/${attachmentId}`,
+          { method: "DELETE" },
+        );
+        const payload = (await response.json().catch(() => ({}))) as {
+          ok?: boolean;
+          error?: string;
+        };
+        if (!response.ok || !payload.ok) {
+          throw new Error(payload.error || "Failed to delete file.");
+        }
+        if (file) {
+          appendLocalActivityEvent(businessId, currentOrder.id, {
+            id: makeLocalActivityEventId("file-deleted"),
+            type: "file_deleted",
+            actorName: currentUserName || "Manager",
+            actorRole: userRole,
+            description: `deleted file ${file.file_name}`,
+            ts: new Date().toISOString(),
+            payload: {
+              attachmentId: file.id,
+              attachment_id: file.id,
+              fileName: file.file_name,
+              fileType: file.mime_type,
+              fileSize: file.file_size,
+            },
+          });
+          window.dispatchEvent(
+            new CustomEvent(ORDER_ACTIVITY_REFRESH_EVENT, {
+              detail: { orderId: currentOrder.id },
+            }),
+          );
+        }
+        await loadOverviewFiles(currentOrder.id);
+      } catch (error) {
+        console.error("delete file error:", error);
+        window.alert(
+          error instanceof Error ? error.message : "Failed to delete file.",
+        );
+      }
+    },
+    [businessId, currentOrder, currentUserName, loadOverviewFiles, overviewFiles, userRole],
   );
 
   function buildOrderNoteId() {
@@ -1669,6 +1787,7 @@ export function OrderPreview({
                             label={
                               currentOrder.manager_name?.trim() || "Unassigned"
                             }
+                            avatarUrl={managerAvatarUrl}
                           />
                           Manager:{" "}
                           {currentOrder.manager_name?.trim() || "Unassigned"}
@@ -1792,7 +1911,7 @@ export function OrderPreview({
                   isUltraCompactTop ? "pt-0.5" : "pt-1",
                 ].join(" ")}
               >
-                <div className="grid gap-3 lg:grid-cols-[minmax(0,4fr)_minmax(220px,1fr)]">
+                <div className="grid gap-3 lg:grid-cols-[minmax(0,4fr)_minmax(180px,1fr)]">
                   <div className="min-w-0 space-y-3">
                     <TabsContent value="overview" className="mt-0">
                       <div className="space-y-3">
@@ -2308,6 +2427,7 @@ export function OrderPreview({
                                       currentOrder.manager_name?.trim() ||
                                       "Unassigned"
                                     }
+                                    avatarUrl={managerAvatarUrl}
                                   />
                                   <span>
                                     {currentOrder.manager_name?.trim() ||
@@ -2792,15 +2912,17 @@ export function OrderPreview({
                         canUpload={canUploadFiles}
                         successMessage={overviewUploadSuccess}
                         onAddFiles={openOverviewFilePicker}
+                        onDeleteFile={canUploadFiles ? handleDeleteFile : undefined}
+                        currentUserId={currentUserId}
                       />
                     </TabsContent>
                   </div>
-                  <aside className="space-y-3">
-                    <div className="rounded-[20px] border border-[#F3F4F6] bg-white p-3.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
-                      <div className="text-xs font-semibold uppercase tracking-[0.04em] text-[#6B7280]">
+                  <aside className="space-y-2">
+                    <div className="rounded-[16px] border border-[#F3F4F6] bg-white p-2.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                      <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[#6B7280]">
                         Status
                       </div>
-                      <div className="mt-2">
+                      <div className="mt-1.5">
                         <DrawerStatusSelect
                           orderId={currentOrder.id}
                           businessSlug={businessSlug}
@@ -2834,11 +2956,11 @@ export function OrderPreview({
                       ) : null}
                     </div>
 
-                    <div className="rounded-[20px] border border-[#F3F4F6] bg-white p-3.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
-                      <div className="text-xs font-semibold uppercase tracking-[0.04em] text-[#6B7280]">
+                    <div className="rounded-[16px] border border-[#F3F4F6] bg-white p-2.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                      <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[#6B7280]">
                         Client
                       </div>
-                      <div className="mt-2 space-y-1.5 text-sm text-[#374151]">
+                      <div className="mt-1.5 space-y-1 text-sm text-[#374151]">
                         <div className="font-medium text-[#1F2937]">
                           {displayName || "Unknown client"}
                         </div>
@@ -2851,6 +2973,7 @@ export function OrderPreview({
                             label={
                               currentOrder.manager_name?.trim() || "Unassigned"
                             }
+                            avatarUrl={managerAvatarUrl}
                           />
                           {currentOrder.manager_name?.trim() || "Unassigned"}
                         </div>
@@ -2867,16 +2990,16 @@ export function OrderPreview({
                     />
 
                     {canUploadFiles && activeTab === "overview" ? (
-                      <div className="rounded-[20px] border border-[#F3F4F6] bg-white p-3.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
-                        <div className="text-xs font-semibold uppercase tracking-[0.04em] text-[#6B7280]">
+                      <div className="rounded-[16px] border border-[#F3F4F6] bg-white p-2.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[#6B7280]">
                           Quick Actions
                         </div>
-                        <div className="mt-2.5 space-y-2">
+                        <div className="mt-2 space-y-1.5">
                           {canUploadFiles ? (
                             <Button
                               type="button"
                               variant="outline"
-                              className="h-10 w-full rounded-xl border-[#E5E7EB] bg-white px-3 text-sm font-semibold text-[#374151] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
+                              className="h-8 w-full rounded-lg border-[#E5E7EB] bg-white px-2.5 text-[13px] font-semibold text-[#374151] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
                               onClick={openOverviewFilePicker}
                               disabled={isUploadingOverviewFiles}
                             >

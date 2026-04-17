@@ -16,12 +16,14 @@ import {
   Paperclip,
   Pencil,
   Send,
+  Smile,
   Tag,
+  ThumbsUp,
   Trash2,
   UserRound,
 } from "lucide-react";
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { OrderAttachmentLightbox } from "@/app/b/[slug]/_components/orders/OrderAttachmentLightbox";
 import { cn } from "@/components/ui/utils";
 import { formatFollowUpDate } from "@/lib/follow-ups";
@@ -35,7 +37,7 @@ import {
   type LocalActivityEventPayload,
 } from "@/app/b/[slug]/_components/orders/order-activity";
 
-type TeamActor = { id: string; label: string; kind: "OWNER" | "MANAGER" };
+type TeamActor = { id: string; label: string; kind: "OWNER" | "MANAGER"; avatar_url?: string | null };
 type ReplySnapshot = {
   id?: string;
   kind?: "comment" | "file";
@@ -58,8 +60,10 @@ type OrderRow = {
 type CommentRow = {
   id: string;
   body: string;
+  author_name: string | null;
   author_phone: string | null;
   author_role: string | null;
+  author_user_id: string | null;
   created_at: string;
   reply_to_comment_id?: string | null;
   reply_snapshot?: ReplySnapshot | null;
@@ -107,6 +111,13 @@ type ActivityAttachmentRow = {
   extra?: Record<string, unknown> | null;
   created_at: string;
 };
+type ReactionRow = {
+  id: string;
+  comment_id: string;
+  user_id: string;
+  user_name: string;
+  emoji: string;
+};
 type Props = {
   order: OrderRow;
   businessId: string;
@@ -136,6 +147,7 @@ type TimelineComment = {
   createdAt: string;
   actorName: string;
   actorRole?: string | null;
+  actorAvatarUrl?: string | null;
   body: string;
   isOwnComment: boolean;
   edited?: boolean;
@@ -307,16 +319,28 @@ function replaceMentionToken(
   selectionStart: number,
   label: string,
 ) {
+  const token = `@[${label}]`;
   const before = text.slice(0, selectionStart);
   const after = text.slice(selectionStart);
   const match = before.match(/(^|\s)@([^\s@]*)$/);
   if (!match) {
-    const inserted = `${text}@[${label}] `;
+    const inserted = `${text}${token} `;
     return { value: inserted, caret: inserted.length };
   }
   const tokenStart = before.length - match[0].length + match[1].length;
-  const value = `${text.slice(0, tokenStart)}@[${label}] ${after}`;
-  return { value, caret: tokenStart + label.length + 4 };
+  const value = `${text.slice(0, tokenStart)}${token} ${after}`;
+  return { value, caret: tokenStart + token.length + 1 };
+}
+
+/** Replace display names with UUIDs before saving to DB */
+function serializeMentions(
+  text: string,
+  mentionMap: Map<string, string>,
+) {
+  return text.replace(/@\[([^\]]+)\]/g, (_match, name: string) => {
+    const id = mentionMap.get(name);
+    return id ? `@[${id}]` : `@[${name}]`;
+  });
 }
 
 function getMentionQuery(text: string, selectionStart: number) {
@@ -325,24 +349,48 @@ function getMentionQuery(text: string, selectionStart: number) {
   return match ? match[2] : null;
 }
 
-function renderRichText(text: string) {
+function renderRichText(
+  text: string,
+  actorNames?: Map<string, string>,
+) {
   return text.split(/(@\[[^\]]+\])/g).map((part, index) => {
     const match = part.match(/^@\[(.+)\]$/);
     if (!match)
       return <React.Fragment key={`${part}-${index}`}>{part}</React.Fragment>;
+    const raw = match[1];
+    // Resolve UUID to name, fall back to raw value (supports legacy @[Name] format)
+    const isUuid = /^[a-f0-9-]{36}$/.test(raw);
+    const displayName = isUuid ? (actorNames?.get(raw) ?? raw) : raw;
     return (
       <span
         key={`${part}-${index}`}
         className="inline-flex rounded-md bg-[var(--brand-50)] px-1.5 py-0.5 text-[0.95em] font-medium text-[var(--brand-600)]"
       >
-        @{match[1]}
+        @{displayName}
       </span>
     );
   });
 }
 
-function getCompactPreview(text: string) {
-  const compact = text.replace(/\s+/g, " ").trim();
+function resolveMentionsPlain(
+  text: string,
+  actorNames?: Map<string, string>,
+) {
+  return text.replace(/@\[([^\]]+)\]/g, (_m, raw: string) => {
+    if (/^[a-f0-9-]{36}$/.test(raw)) {
+      const name = actorNames?.get(raw);
+      return name ? `@${name}` : "@mention";
+    }
+    return `@${raw}`;
+  });
+}
+
+function getCompactPreview(
+  text: string,
+  actorNames?: Map<string, string>,
+) {
+  const resolved = resolveMentionsPlain(text, actorNames);
+  const compact = resolved.replace(/\s+/g, " ").trim();
   if (compact.length <= 120) return compact;
   return `${compact.slice(0, 117).trimEnd()}...`;
 }
@@ -916,7 +964,7 @@ function ActivityHeader({
     <div
       className={cn(
         "border border-[#E5E7EB] bg-[linear-gradient(180deg,#ffffff_0%,#F9FAFB_100%)] shadow-[0_8px_20px_rgba(15,23,42,0.05)]",
-        compact ? "rounded-[18px] px-3 py-2" : "rounded-[20px] px-3 py-2.5",
+        compact ? "rounded-[14px] px-2.5 py-1.5" : "rounded-[20px] px-3 py-2.5",
       )}
     >
       <div
@@ -991,12 +1039,72 @@ function ActivityHeader({
   );
 }
 
+const EMOJI_LIST = [
+  "😀","😂","🥹","😍","🤔","👍","👎","🙏","🔥","❤️",
+  "✅","❌","⭐","🎉","💯","👀","🚀","💪","😎","🤝",
+  "📎","📌","⚡","💡","🏷️","📝","🗓️","📦","🛠️","✨",
+];
+
+function EmojiPicker({
+  onSelect,
+  compact = false,
+}: {
+  onSelect: (emoji: string) => void;
+  compact?: boolean;
+}) {
+  const [open, setOpen] = React.useState(false);
+  const ref = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (!open) return;
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className={cn(
+          "flex shrink-0 items-center justify-center rounded-lg text-[#6B7280] transition hover:bg-[#F3F4F6] hover:text-[#1F2937]",
+          compact ? "h-6 w-6" : "h-8 w-8",
+        )}
+        aria-label="Emoji"
+      >
+        <Smile className={compact ? "h-3.5 w-3.5" : "h-4 w-4"} />
+      </button>
+      {open ? (
+        <div className="absolute bottom-full right-0 z-20 mb-1 grid w-[220px] grid-cols-10 gap-0.5 rounded-xl border border-[#E5E7EB] bg-white p-1.5 shadow-[0_-8px_24px_rgba(15,23,42,0.12)]">
+          {EMOJI_LIST.map((emoji) => (
+            <button
+              key={emoji}
+              type="button"
+              onClick={() => {
+                onSelect(emoji);
+                setOpen(false);
+              }}
+              className="flex h-[26px] w-[20px] items-center justify-center rounded text-sm transition hover:bg-[#F3F4F6]"
+            >
+              {emoji}
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function CommentComposer({
   value,
   onChange,
   onSubmit,
   isSubmitting,
   currentUserName,
+  currentUserAvatarUrl,
   canWrite,
   attachments,
   onAttachFiles,
@@ -1005,12 +1113,14 @@ function CommentComposer({
   replyTarget,
   onClearReply,
   compact = false,
+  mentionMapRef,
 }: {
   value: string;
   onChange: (value: string) => void;
   onSubmit: () => void;
   isSubmitting: boolean;
   currentUserName: string;
+  currentUserAvatarUrl?: string | null;
   canWrite: boolean;
   attachments: ComposerAttachment[];
   onAttachFiles: (files: FileList | null) => void;
@@ -1019,6 +1129,7 @@ function CommentComposer({
   replyTarget: ReplyTarget | null;
   onClearReply: () => void;
   compact?: boolean;
+  mentionMapRef?: React.MutableRefObject<Map<string, string>>;
 }) {
   const textareaRef = React.useRef<HTMLTextAreaElement | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
@@ -1051,13 +1162,14 @@ function CommentComposer({
     onAttachFiles(files);
   }
 
-  function applyMention(label: string) {
+  function applyMention(actorId: string, actorLabel: string) {
+    if (mentionMapRef) mentionMapRef.current.set(actorLabel, actorId);
     const textarea = textareaRef.current;
     if (!textarea) return;
     const next = replaceMentionToken(
       value,
       textarea.selectionStart ?? value.length,
-      label,
+      actorLabel,
     );
     onChange(next.value);
     setMentionQuery(null);
@@ -1070,223 +1182,262 @@ function CommentComposer({
   return (
     <div
       className={cn(
-        "rounded-[22px] border border-[#e6ebf2] bg-white/96 shadow-[0_10px_24px_rgba(15,23,42,0.08)] backdrop-blur",
-        compact ? "p-2" : "p-2.5",
+        "border border-[#e6ebf2] bg-white/96 shadow-[0_10px_24px_rgba(15,23,42,0.08)] backdrop-blur",
+        compact ? "rounded-xl p-1.5" : "rounded-[22px] p-2.5",
       )}
     >
-      <div className={cn("flex", compact ? "gap-2" : "gap-2.5")}>
-        <Avatar className={cn("rounded-2xl", compact ? "h-8 w-8" : "h-9 w-9")}>
-          <AvatarFallback className="rounded-2xl bg-[#111827] text-xs font-semibold text-white">
-            {getInitials(currentUserName)}
-          </AvatarFallback>
-        </Avatar>
-        <div className="min-w-0 flex-1">
-          {replyTarget ? (
-            <div className="mb-2 rounded-[18px] border border-[#E5E7EB] bg-[#F9FAFB] px-3.5 py-3">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="product-section-label flex items-center gap-2 text-[#9CA3AF]">
-                    <CornerUpLeft className="h-3.5 w-3.5" />
-                    Replying to {replyTarget.kind}
-                  </div>
-                  <div className="mt-1 text-sm font-semibold text-[#1F2937]">
-                    {replyTarget.label}
-                  </div>
-                  <div className="mt-1 text-xs leading-5 text-[#6B7280]">
-                    {replyTarget.preview}
-                  </div>
+      {compact && replyTarget ? (
+        <div className="mb-1.5 flex items-center justify-between rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] px-2 py-1 text-[11px]">
+          <span className="flex items-center gap-1 text-[#9CA3AF]">
+            <CornerUpLeft className="h-3 w-3" />
+            <span className="font-medium text-[#667085]">{replyTarget.label}</span>
+            <span className="max-w-[200px] truncate text-[#9CA3AF]">{replyTarget.preview}</span>
+          </span>
+          <button type="button" onClick={onClearReply} className="ml-2 font-semibold text-[#6B7280] hover:text-[#1F2937]">
+            &times;
+          </button>
+        </div>
+      ) : null}
+      {compact ? (
+        <>
+          <div className="flex items-center gap-1.5">
+            <Avatar className="h-6 w-6 rounded-lg">
+              {currentUserAvatarUrl ? (
+                <AvatarImage src={currentUserAvatarUrl} alt={currentUserName} className="rounded-lg object-cover" />
+              ) : null}
+              <AvatarFallback className="rounded-lg bg-[#111827] text-[9px] font-semibold text-white">
+                {getInitials(currentUserName)}
+              </AvatarFallback>
+            </Avatar>
+            <div className="relative min-w-0 flex-1">
+              <textarea
+                ref={textareaRef}
+                value={value}
+                onFocus={() => setExpanded(true)}
+                onChange={(event) => {
+                  onChange(event.target.value);
+                  setMentionQuery(
+                    getMentionQuery(
+                      event.target.value,
+                      event.target.selectionStart ?? event.target.value.length,
+                    ),
+                  );
+                  const el = event.target;
+                  el.style.height = "auto";
+                  el.style.height = `${el.scrollHeight}px`;
+                }}
+                disabled={!canWrite}
+                rows={1}
+                placeholder={canWrite ? "Write a comment..." : "Only Owner / Manager can add comments."}
+                className="w-full resize-none bg-transparent text-[13px] leading-5 text-[#1F2937] outline-none placeholder:text-[#9CA3AF]"
+                style={{ minHeight: "20px" }}
+                onKeyDown={(event) => {
+                  if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+                    event.preventDefault();
+                    if (!submitDisabled) onSubmit();
+                  }
+                }}
+              />
+              {filteredMentions.length > 0 ? (
+                <div className="absolute bottom-full left-0 right-0 z-10 mb-1 rounded-xl border border-[#E5E7EB] bg-white p-1.5 shadow-[0_-10px_30px_rgba(15,23,42,0.12)]">
+                  {filteredMentions.map((actor) => (
+                    <button key={actor.id} type="button" onClick={() => applyMention(actor.id, actor.label)} className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left transition hover:bg-[#F9FAFB]">
+                      {String(actor.avatar_url ?? "").trim() ? (
+                        <img src={actor.avatar_url!} alt={actor.label} className="h-6 w-6 rounded-lg border border-[#E5E7EB] object-cover" />
+                      ) : (
+                        <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-[#F3F4F6] text-[10px] font-semibold text-[#4B5563]">{getInitials(actor.label)}</span>
+                      )}
+                      <span className="truncate text-[13px] font-medium text-[#1F2937]">{actor.label}</span>
+                    </button>
+                  ))}
                 </div>
-                <button
-                  type="button"
-                  onClick={onClearReply}
-                  className="text-xs font-semibold text-[#6B7280] transition hover:text-[#1F2937]"
-                >
-                  Clear
-                </button>
-              </div>
+              ) : null}
             </div>
-          ) : null}
-          <div
-            className={cn(
-              "relative rounded-[18px] border border-[#E5E7EB] bg-[linear-gradient(180deg,#FFFFFF_0%,#F9FAFB_100%)] transition focus-within:border-[var(--brand-600)] focus-within:bg-white",
-              compact ? "px-3 py-2" : "px-3.5 py-2.5",
-            )}
-          >
-            <textarea
-              ref={textareaRef}
-              value={value}
-              onFocus={() => setExpanded(true)}
-              onChange={(event) => {
-                onChange(event.target.value);
-                setMentionQuery(
-                  getMentionQuery(
-                    event.target.value,
-                    event.target.selectionStart ?? event.target.value.length,
-                  ),
-                );
-              }}
-              disabled={!canWrite}
-              rows={expanded ? 3 : 1}
-              placeholder={
-                canWrite
-                  ? "Write a comment..."
-                  : "Only Owner / Manager can add comments."
-              }
-              className={cn(
-                "w-full resize-none bg-transparent text-sm text-[#1F2937] outline-none placeholder:text-[#9CA3AF]",
-                compact ? "leading-5" : "leading-5",
-                expanded
-                  ? compact
-                    ? "min-h-[64px]"
-                    : "min-h-[78px]"
-                  : compact
-                    ? "min-h-[20px] overflow-hidden"
-                    : "min-h-[24px] overflow-hidden",
-              )}
-              onKeyDown={(event) => {
-                if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
-                  event.preventDefault();
-                  if (!submitDisabled) onSubmit();
-                }
+            <EmojiPicker
+              compact
+              onSelect={(emoji) => {
+                const ta = textareaRef.current;
+                const pos = ta?.selectionStart ?? value.length;
+                const next = value.slice(0, pos) + emoji + value.slice(pos);
+                onChange(next);
+                requestAnimationFrame(() => {
+                  if (ta) {
+                    ta.focus();
+                    const newPos = pos + emoji.length;
+                    ta.setSelectionRange(newPos, newPos);
+                  }
+                });
               }}
             />
-            {filteredMentions.length > 0 ? (
-              <div className="absolute left-4 right-4 top-full z-10 mt-2 rounded-2xl border border-[#E5E7EB] bg-white p-2 shadow-[0_20px_40px_rgba(15,23,42,0.12)]">
-                {filteredMentions.map((actor) => (
-                  <button
-                    key={actor.id}
-                    type="button"
-                    onClick={() => applyMention(actor.label)}
-                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-[#F9FAFB]"
-                  >
-                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-[#F3F4F6] text-[11px] font-semibold text-[#4B5563]">
-                      {getInitials(actor.label)}
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-semibold text-[#1F2937]">
-                        {actor.label}
-                      </span>
-                      <span className="block text-xs text-[#6B7280]">
-                        {actor.kind}
-                      </span>
-                    </span>
-                    <AtSign className="h-4 w-4 text-[#9CA3AF]" />
-                  </button>
-                ))}
-              </div>
-            ) : null}
+            <button type="button" onClick={openFilePicker} disabled={!canWrite} className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-[#6B7280] transition hover:bg-[#F3F4F6] hover:text-[#1F2937] disabled:opacity-40" aria-label="Attach file">
+              <Paperclip className="h-3.5 w-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={onSubmit}
+              disabled={submitDisabled}
+              className={cn(
+                "flex h-6 w-6 shrink-0 items-center justify-center rounded-lg transition",
+                submitDisabled ? "text-[#D1D5DB]" : "text-[#1F2937] hover:bg-[#F3F4F6]",
+              )}
+              aria-label="Comment"
+            >
+              <Send className="h-3.5 w-3.5" />
+            </button>
           </div>
           {attachments.length > 0 ? (
-            <div className="mt-2 flex flex-wrap gap-2">
+            <div className="mt-1 flex flex-wrap gap-1 pl-7">
               {attachments.map((attachment) => (
-                <span
-                  key={attachment.id}
-                  className="inline-flex items-center gap-2 rounded-full border border-[#E5E7EB] bg-[#F9FAFB] px-3 py-1.5 text-xs font-medium text-[#4B5563]"
-                >
-                  <Paperclip className="h-3.5 w-3.5 text-[#6B7280]" />
-                  <span className="max-w-[180px] truncate">
-                    {attachment.file.name}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => onRemoveAttachment(attachment.id)}
-                    className="rounded-full p-0.5 text-[#9CA3AF] transition hover:bg-white hover:text-[#374151]"
-                    aria-label={`Remove ${attachment.file.name}`}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
+                <span key={attachment.id} className="inline-flex items-center gap-1 rounded-full border border-[#E5E7EB] bg-[#F9FAFB] px-2 py-0.5 text-[11px] font-medium text-[#4B5563]">
+                  <Paperclip className="h-3 w-3 text-[#6B7280]" />
+                  <span className="max-w-[120px] truncate">{attachment.file.name}</span>
+                  <button type="button" onClick={() => onRemoveAttachment(attachment.id)} className="rounded-full p-px text-[#9CA3AF] hover:text-[#374151]" aria-label={`Remove ${attachment.file.name}`}>
+                    <Trash2 className="h-3 w-3" />
                   </button>
                 </span>
               ))}
             </div>
           ) : null}
-          <div
-            className={cn(
-              "mt-2 flex flex-col sm:flex-row sm:items-center sm:justify-between",
-              compact ? "gap-1.5" : "gap-2",
-              expanded &&
-                (compact
-                  ? "border-t border-[#EEF2FF] pt-2"
-                  : "border-t border-[#EEF2FF] pt-2.5"),
-            )}
-          >
-            <div className="flex flex-wrap items-center gap-2 text-xs text-[#6B7280]">
-              <button
-                type="button"
-                onClick={openFilePicker}
+          <div className="mt-1 pl-7 text-[10px] text-[#9CA3AF]">
+            @ to mention &middot; Ctrl+Enter sends
+          </div>
+        </>
+      ) : (
+        <div className="flex gap-2.5">
+          <Avatar className="h-9 w-9 rounded-2xl">
+            {currentUserAvatarUrl ? (
+              <AvatarImage src={currentUserAvatarUrl} alt={currentUserName} className="rounded-2xl object-cover" />
+            ) : null}
+            <AvatarFallback className="rounded-2xl bg-[#111827] text-xs font-semibold text-white">
+              {getInitials(currentUserName)}
+            </AvatarFallback>
+          </Avatar>
+          <div className="min-w-0 flex-1">
+            {replyTarget ? (
+              <div className="mb-2 rounded-[18px] border border-[#E5E7EB] bg-[#F9FAFB] px-3.5 py-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="product-section-label flex items-center gap-2 text-[#9CA3AF]">
+                      <CornerUpLeft className="h-3.5 w-3.5" />
+                      Replying to {replyTarget.kind}
+                    </div>
+                    <div className="mt-1 text-sm font-semibold text-[#1F2937]">{replyTarget.label}</div>
+                    <div className="mt-1 text-xs leading-5 text-[#6B7280]">{replyTarget.preview}</div>
+                  </div>
+                  <button type="button" onClick={onClearReply} className="text-xs font-semibold text-[#6B7280] transition hover:text-[#1F2937]">Clear</button>
+                </div>
+              </div>
+            ) : null}
+            <div className="relative rounded-[18px] border border-[#E5E7EB] bg-[linear-gradient(180deg,#FFFFFF_0%,#F9FAFB_100%)] px-3.5 py-2.5 transition focus-within:border-[var(--brand-600)] focus-within:bg-white">
+              <textarea
+                ref={textareaRef}
+                value={value}
+                onFocus={() => setExpanded(true)}
+                onChange={(event) => {
+                  onChange(event.target.value);
+                  setMentionQuery(
+                    getMentionQuery(event.target.value, event.target.selectionStart ?? event.target.value.length),
+                  );
+                  const el = event.target;
+                  el.style.height = "auto";
+                  el.style.height = `${el.scrollHeight}px`;
+                }}
                 disabled={!canWrite}
-                className={cn(
-                  "inline-flex items-center gap-2 border border-[#E5E7EB] bg-white font-semibold text-[#4B5563] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937] disabled:cursor-not-allowed disabled:opacity-50",
-                  compact
-                    ? "h-8 rounded-[14px] px-3 text-[13px]"
-                    : "h-10 rounded-[16px] px-3.5 text-sm",
-                )}
-              >
-                <Paperclip className="h-3.5 w-3.5" />
-                Attach file
-              </button>
-              {expanded ? (
-                <span>
-                  Type `@` to mention a teammate. Ctrl/Cmd + Enter sends.
-                </span>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setExpanded(true);
-                    textareaRef.current?.focus();
-                  }}
-                  className="font-medium text-[#6B7280] transition hover:text-[#1F2937]"
-                >
-                  Expand composer
-                </button>
-              )}
+                rows={1}
+                placeholder={canWrite ? "Write a comment..." : "Only Owner / Manager can add comments."}
+                className="min-h-[24px] w-full resize-none bg-transparent text-sm leading-5 text-[#1F2937] outline-none placeholder:text-[#9CA3AF]"
+                onKeyDown={(event) => {
+                  if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+                    event.preventDefault();
+                    if (!submitDisabled) onSubmit();
+                  }
+                }}
+              />
+              {filteredMentions.length > 0 ? (
+                <div className="absolute left-4 right-4 top-full z-10 mt-2 rounded-2xl border border-[#E5E7EB] bg-white p-2 shadow-[0_20px_40px_rgba(15,23,42,0.12)]">
+                  {filteredMentions.map((actor) => (
+                    <button key={actor.id} type="button" onClick={() => applyMention(actor.id, actor.label)} className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-[#F9FAFB]">
+                      {String(actor.avatar_url ?? "").trim() ? (
+                        <img src={actor.avatar_url!} alt={actor.label} className="h-8 w-8 rounded-xl border border-[#E5E7EB] object-cover" />
+                      ) : (
+                        <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-[#F3F4F6] text-[11px] font-semibold text-[#4B5563]">{getInitials(actor.label)}</span>
+                      )}
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-semibold text-[#1F2937]">{actor.label}</span>
+                        <span className="block text-xs text-[#6B7280]">{actor.kind}</span>
+                      </span>
+                      <AtSign className="h-4 w-4 text-[#9CA3AF]" />
+                    </button>
+                  ))}
+                </div>
+              ) : null}
             </div>
-            <div className="flex items-center justify-end gap-2">
-              {expanded && !value.trim() && attachments.length === 0 ? (
+            {attachments.length > 0 ? (
+              <div className="mt-2 flex flex-wrap gap-2">
+                {attachments.map((attachment) => (
+                  <span key={attachment.id} className="inline-flex items-center gap-2 rounded-full border border-[#E5E7EB] bg-[#F9FAFB] px-3 py-1.5 text-xs font-medium text-[#4B5563]">
+                    <Paperclip className="h-3.5 w-3.5 text-[#6B7280]" />
+                    <span className="max-w-[180px] truncate">{attachment.file.name}</span>
+                    <button type="button" onClick={() => onRemoveAttachment(attachment.id)} className="rounded-full p-0.5 text-[#9CA3AF] transition hover:bg-white hover:text-[#374151]" aria-label={`Remove ${attachment.file.name}`}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            ) : null}
+            <div className="mt-2 flex flex-col gap-2 border-t border-[#EEF2FF] pt-2.5 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-wrap items-center gap-2 text-xs text-[#6B7280]">
+                <EmojiPicker
+                  onSelect={(emoji) => {
+                    const ta = textareaRef.current;
+                    const pos = ta?.selectionStart ?? value.length;
+                    const next = value.slice(0, pos) + emoji + value.slice(pos);
+                    onChange(next);
+                    requestAnimationFrame(() => {
+                      if (ta) {
+                        ta.focus();
+                        const newPos = pos + emoji.length;
+                        ta.setSelectionRange(newPos, newPos);
+                      }
+                    });
+                  }}
+                />
+                <button type="button" onClick={openFilePicker} disabled={!canWrite} className="inline-flex h-10 items-center gap-2 rounded-[16px] border border-[#E5E7EB] bg-white px-3.5 text-sm font-semibold text-[#4B5563] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937] disabled:cursor-not-allowed disabled:opacity-50">
+                  <Paperclip className="h-3.5 w-3.5" />
+                  Attach file
+                </button>
+                <span>Type `@` to mention a teammate. Ctrl/Cmd + Enter sends.</span>
+              </div>
+              <div className="flex items-center justify-end gap-2">
                 <button
                   type="button"
-                  onClick={() => setExpanded(false)}
+                  onClick={onSubmit}
+                  disabled={submitDisabled}
                   className={cn(
-                    "inline-flex items-center justify-center border border-[#E5E7EB] bg-white font-semibold text-[#4B5563] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]",
-                    compact
-                      ? "h-8 rounded-[14px] px-3 text-[13px]"
-                      : "h-10 rounded-[16px] px-3.5 text-sm",
+                    "inline-flex h-10 items-center justify-center gap-2 rounded-[16px] border px-4 text-sm font-semibold transition",
+                    submitDisabled
+                      ? "cursor-not-allowed border-[#E5E7EB] bg-[#F3F4F6] text-[#9CA3AF]"
+                      : "border-[#E5E7EB] bg-white text-[#1F2937] shadow-[0_1px_2px_rgba(16,24,40,0.04)] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]",
                   )}
                 >
-                  Collapse
+                  <Send className="h-4 w-4" />
+                  {isSubmitting ? "Posting..." : "Comment"}
                 </button>
-              ) : null}
-              <button
-                type="button"
-                onClick={onSubmit}
-                disabled={submitDisabled}
-                className={cn(
-                  "inline-flex items-center justify-center gap-2 border font-semibold transition",
-                  compact
-                    ? "h-8 rounded-[14px] px-3.5 text-[13px]"
-                    : "h-10 rounded-[16px] px-4 text-sm",
-                  submitDisabled
-                    ? "cursor-not-allowed border-[#E5E7EB] bg-[#F3F4F6] text-[#9CA3AF]"
-                    : "border-[#E5E7EB] bg-white text-[#1F2937] shadow-[0_1px_2px_rgba(16,24,40,0.04)] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]",
-                )}
-              >
-                <Send className="h-4 w-4" />
-                {isSubmitting ? "Posting..." : "Comment"}
-              </button>
+              </div>
             </div>
           </div>
-          <input
-            ref={fileInputRef}
-            type="file"
-            multiple
-            className="hidden"
-            onChange={(event) => {
-              handleAttachFiles(event.target.files);
-              event.currentTarget.value = "";
-            }}
-          />
         </div>
-      </div>
+      )}
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        className="hidden"
+        onChange={(event) => {
+          handleAttachFiles(event.target.files);
+          event.currentTarget.value = "";
+        }}
+      />
     </div>
   );
 }
@@ -1331,7 +1482,7 @@ function AuditValue({
     <div
       className={cn(
         compact
-          ? "rounded-[14px] border px-2.5 py-2"
+          ? "rounded-[12px] border px-2 py-1.5"
           : "rounded-2xl border px-3 py-2.5",
         tone === "old" && "border-[#FECACA] bg-[#FFF1F2]",
         tone === "new" && "border-[#A7F3D0] bg-[#ECFDF3]",
@@ -1372,7 +1523,7 @@ function EventDelta({
       <div
         className={cn(
           "flex flex-wrap",
-          compact ? "mt-2 gap-1.5" : "mt-3 gap-2",
+          compact ? "mt-1 gap-1" : "mt-3 gap-2",
         )}
       >
         {(payload.removed ?? []).map((value) => (
@@ -1380,7 +1531,7 @@ function EventDelta({
             key={`removed-${value}`}
             className={cn(
               "inline-flex rounded-full border border-[#f0d5dd] bg-[#fff1f3] font-semibold text-[#b42318]",
-              compact ? "px-2.5 py-0.5 text-[11px]" : "px-3 py-1 text-xs",
+              compact ? "px-1.5 py-px text-[10px]" : "px-3 py-1 text-xs",
             )}
           >
             {value} removed
@@ -1391,7 +1542,7 @@ function EventDelta({
             key={`added-${value}`}
             className={cn(
               "inline-flex rounded-full border border-[#d1fadf] bg-[#f0fdf4] font-semibold text-[#067647]",
-              compact ? "px-2.5 py-0.5 text-[11px]" : "px-3 py-1 text-xs",
+              compact ? "px-1.5 py-px text-[10px]" : "px-3 py-1 text-xs",
             )}
           >
             {value} added
@@ -1407,13 +1558,31 @@ function EventDelta({
     payload.fromLabel ||
     payload.toLabel
   ) {
+    if (compact) {
+      const fromVal = formatAuditValue(
+        payload.from,
+        payload.fromLabel,
+        payload.field,
+      );
+      const toVal = formatAuditValue(
+        payload.to,
+        payload.toLabel,
+        payload.field,
+      );
+      return (
+        <div className="mt-0.5 flex flex-wrap items-center gap-1 text-[11px]">
+          <span className="rounded border border-[#FECACA] bg-[#FFF1F2] px-1.5 py-px font-medium text-[#991b1b]">
+            {fromVal}
+          </span>
+          <span className="text-[#9CA3AF]">&rarr;</span>
+          <span className="rounded border border-[#A7F3D0] bg-[#ECFDF3] px-1.5 py-px font-medium text-[#065f46]">
+            {toVal}
+          </span>
+        </div>
+      );
+    }
     return (
-      <div
-        className={cn(
-          "grid sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-center",
-          compact ? "mt-2 gap-1.5" : "mt-3 gap-2",
-        )}
-      >
+      <div className="mt-3 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-center">
         <AuditValue
           label="Before"
           value={formatAuditValue(
@@ -1422,30 +1591,31 @@ function EventDelta({
             payload.field,
           )}
           tone="old"
-          compact={compact}
         />
-        <div
-          className={cn(
-            "hidden text-center font-semibold text-[#9CA3AF] sm:block",
-            compact ? "text-xs" : "text-sm",
-          )}
-        >
+        <div className="hidden text-center text-sm font-semibold text-[#9CA3AF] sm:block">
           -&gt;
         </div>
         <AuditValue
           label="After"
           value={formatAuditValue(payload.to, payload.toLabel, payload.field)}
           tone="new"
-          compact={compact}
         />
       </div>
     );
   }
 
   if (payload.fileName) {
+    if (compact) {
+      return (
+        <div className="mt-0.5 text-[11px] text-[#667085]">
+          <Paperclip className="mr-0.5 inline h-3 w-3" />
+          {payload.fileName}
+        </div>
+      );
+    }
     return (
-      <div className={compact ? "mt-2" : "mt-3"}>
-        <AuditValue label="File" value={payload.fileName} compact={compact} />
+      <div className="mt-3">
+        <AuditValue label="File" value={payload.fileName} />
       </div>
     );
   }
@@ -1464,7 +1634,7 @@ function EventGlyph({
 }) {
   const classes = cn(
     compact
-      ? "flex h-8 w-8 items-center justify-center rounded-[14px] border"
+      ? "flex h-5 w-5 shrink-0 items-center justify-center rounded-md border"
       : "flex h-9 w-9 items-center justify-center rounded-2xl border",
     tone === "success" && "border-[#A7F3D0] bg-[#ECFDF3] text-[#059669]",
     tone === "warning" && "border-[#FDE68A] bg-[#FFFBEB] text-[#D97706]",
@@ -1472,22 +1642,23 @@ function EventGlyph({
     tone === "default" &&
       "border-[var(--brand-200)] bg-[var(--brand-50)] text-[var(--brand-600)]",
   );
+  const iconCn = compact ? "h-3 w-3" : "h-4 w-4";
   if (eventType === "status_changed")
     return (
       <span className={classes}>
-        <CalendarClock className="h-4 w-4" />
+        <CalendarClock className={iconCn} />
       </span>
     );
   if (eventType === "manager_changed" || eventType === "manager_assigned")
     return (
       <span className={classes}>
-        <UserRound className="h-4 w-4" />
+        <UserRound className={iconCn} />
       </span>
     );
   if (eventType === "label_added" || eventType === "label_removed")
     return (
       <span className={classes}>
-        <Tag className="h-4 w-4" />
+        <Tag className={iconCn} />
       </span>
     );
   if (
@@ -1501,19 +1672,19 @@ function EventGlyph({
   )
     return (
       <span className={classes}>
-        <CalendarClock className="h-4 w-4" />
+        <CalendarClock className={iconCn} />
       </span>
     );
   if (eventType === "file_uploaded" || eventType === "file_deleted")
     return (
       <span className={classes}>
-        <Paperclip className="h-4 w-4" />
+        <Paperclip className={iconCn} />
       </span>
     );
   if (eventType === "comment_edited" || eventType === "comment_deleted")
     return (
       <span className={classes}>
-        <MessageSquareText className="h-4 w-4" />
+        <MessageSquareText className={iconCn} />
       </span>
     );
   if (
@@ -1524,18 +1695,18 @@ function EventGlyph({
   )
     return (
       <span className={classes}>
-        <CheckCircle2 className="h-4 w-4" />
+        <CheckCircle2 className={iconCn} />
       </span>
     );
   if (eventType === "order_created")
     return (
       <span className={classes}>
-        <FileText className="h-4 w-4" />
+        <FileText className={iconCn} />
       </span>
     );
   return (
     <span className={classes}>
-      <Clock3 className="h-4 w-4" />
+      <Clock3 className={iconCn} />
     </span>
   );
 }
@@ -1568,31 +1739,31 @@ function AttachmentCard({
   return (
     <div
       className={cn(
-        "rounded-[18px] border border-[#E5E7EB] bg-[#F9FAFB]",
-        compact ? "mt-2 p-2.5" : "mt-3 p-3.5",
+        "border border-[#E5E7EB] bg-[#F9FAFB]",
+        compact ? "mt-1 rounded-lg px-2 py-1.5" : "mt-3 rounded-[18px] p-3.5",
       )}
     >
-      <div className="flex items-start justify-between gap-3">
+      <div className={cn("flex items-start justify-between", compact ? "gap-2" : "gap-3")}>
         <div className="min-w-0">
           <div
             className={cn(
-              "flex items-center gap-2 font-semibold text-[#101828]",
-              compact ? "text-[13px]" : "text-sm",
+              "flex items-center font-semibold text-[#101828]",
+              compact ? "gap-1.5 text-[12px]" : "gap-2 text-sm",
             )}
           >
-            <Paperclip className="h-4 w-4 text-[#667085]" />
+            <Paperclip className={cn("text-[#667085]", compact ? "h-3 w-3" : "h-4 w-4")} />
             <span className="truncate">{payload.fileName}</span>
           </div>
           <div
             className={cn(
-              "mt-1 text-[#667085]",
-              compact ? "text-[11px]" : "text-xs",
+              "text-[#667085]",
+              compact ? "mt-0.5 text-[10px]" : "mt-1 text-xs",
             )}
           >
             {fileMeta || "Attachment"}
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className={cn("flex items-center", compact ? "gap-1" : "gap-2")}>
           {isImage && previewUrl ? (
             <OrderAttachmentLightbox
               fileName={payload.fileName}
@@ -1604,11 +1775,11 @@ function AttachmentCard({
               target="_blank"
               rel="noreferrer"
               className={cn(
-                "inline-flex items-center gap-2 rounded-[16px] border border-[#E5E7EB] bg-white font-semibold text-[#4B5563] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]",
-                compact ? "h-8 px-3 text-[13px]" : "h-10 px-4 text-sm",
+                "inline-flex items-center gap-1.5 rounded-lg border border-[#E5E7EB] bg-white font-semibold text-[#4B5563] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]",
+                compact ? "h-6 px-2 text-[11px]" : "h-10 px-4 text-sm",
               )}
             >
-              <Eye className="h-4 w-4" />
+              <Eye className={compact ? "h-3 w-3" : "h-4 w-4"} />
               Open
             </a>
           ) : null}
@@ -1617,11 +1788,11 @@ function AttachmentCard({
               href={downloadUrl}
               download={payload.fileName}
               className={cn(
-                "inline-flex items-center gap-2 rounded-[16px] border border-[#E5E7EB] bg-white font-semibold text-[#4B5563] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]",
-                compact ? "h-8 px-3 text-[13px]" : "h-10 px-4 text-sm",
+                "inline-flex items-center gap-1.5 rounded-lg border border-[#E5E7EB] bg-white font-semibold text-[#4B5563] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]",
+                compact ? "h-6 px-2 text-[11px]" : "h-10 px-4 text-sm",
               )}
             >
-              <Download className="h-4 w-4" />
+              <Download className={compact ? "h-3 w-3" : "h-4 w-4"} />
               Download
             </a>
           ) : null}
@@ -1643,68 +1814,102 @@ function SystemEventItem({
   const badge = getRoleBadge(normalizeRole(item.actorRole));
   const canReplyToFile =
     item.eventType === "file_uploaded" && !!item.payload?.fileName;
+
+  if (compact) {
+    return (
+      <div className="flex items-start gap-1.5 rounded-xl border border-[#EEF2FF] bg-[#FAFBFF] px-2 py-1.5 text-[12px] leading-[18px] text-[#475467]">
+        <EventGlyph eventType={item.eventType} tone={item.tone} compact />
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
+            <span className="font-medium text-[#101828]">{item.title}</span>
+            {item.payload?.field ? (
+              <span className="text-[11px] text-[#98a2b3]">
+                {formatFieldLabel(item.payload.field)}
+              </span>
+            ) : null}
+            {item.detail ? (
+              <span className="line-clamp-1 text-[#667085]">
+                — {item.detail}
+              </span>
+            ) : null}
+          </div>
+          {item.eventType === "file_uploaded" ||
+          item.eventType === "file_deleted" ? (
+            <AttachmentCard payload={item.payload} compact />
+          ) : (
+            <EventDelta payload={item.payload} compact />
+          )}
+          <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-[11px] text-[#98a2b3]">
+            <span className="font-medium text-[#667085]">
+              {item.actorName}
+            </span>
+            <span
+              className={cn(
+                "inline-flex rounded-full border px-1.5 py-px text-[9px] font-semibold uppercase tracking-[0.08em]",
+                badge.className,
+              )}
+            >
+              {badge.label}
+            </span>
+            <span>{formatDateTime(item.createdAt)}</span>
+            {canReplyToFile ? (
+              <button
+                type="button"
+                onClick={() =>
+                  onReply({
+                    id: item.id,
+                    kind: "file",
+                    label: item.payload?.fileName || "Attachment",
+                    preview:
+                      item.payload?.fileName || item.detail || "Attachment",
+                  })
+                }
+                className="inline-flex items-center gap-0.5 font-semibold text-[#667085] transition hover:text-[#101828]"
+              >
+                <CornerUpLeft className="h-3 w-3" />
+                Reply
+              </button>
+            ) : null}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
-      className={cn(
-        "flex rounded-[20px] border border-[#E5E7EB] bg-[linear-gradient(180deg,#FFFFFF_0%,#F9FAFB_100%)] transition hover:border-[#C7D2FE] hover:shadow-[0_10px_24px_rgba(15,23,42,0.05)]",
-        compact ? "gap-2.5 px-3 py-2.5" : "gap-3 px-4 py-3",
-      )}
+      className="flex gap-3 rounded-[20px] border border-[#E5E7EB] bg-[linear-gradient(180deg,#FFFFFF_0%,#F9FAFB_100%)] px-4 py-3 transition hover:border-[#C7D2FE] hover:shadow-[0_10px_24px_rgba(15,23,42,0.05)]"
     >
-      <div
-        className={cn("flex flex-col items-center", compact ? "w-8" : "w-12")}
-      >
+      <div className="flex w-12 flex-col items-center">
         <EventGlyph
           eventType={item.eventType}
           tone={item.tone}
-          compact={compact}
         />
-        <div
-          className={cn("h-full w-px bg-[#edf1f5]", compact ? "mt-1" : "mt-2")}
-        />
+        <div className="mt-2 h-full w-px bg-[#edf1f5]" />
       </div>
-      <div className={cn("min-w-0 flex-1", compact ? "pb-1" : "pb-2")}>
+      <div className="min-w-0 flex-1 pb-2">
         <div className="flex flex-wrap items-center gap-2">
-          <span
-            className={cn(
-              "text-[#101828]",
-              compact ? "text-sm font-medium" : "text-sm font-semibold",
-            )}
-          >
+          <span className="text-sm font-semibold text-[#101828]">
             {item.title}
           </span>
           {item.payload?.field ? (
-            <span
-              className={cn(
-                "font-medium text-[#98a2b3]",
-                compact ? "text-[11px]" : "text-xs",
-              )}
-            >
+            <span className="text-xs font-medium text-[#98a2b3]">
               {formatFieldLabel(item.payload.field)}
             </span>
           ) : null}
         </div>
         {item.detail ? (
-          <div
-            className={cn(
-              "text-sm text-[#475467]",
-              compact ? "mt-0.5 line-clamp-2 leading-5" : "mt-1 leading-6",
-            )}
-          >
+          <div className="mt-1 text-sm leading-6 text-[#475467]">
             {item.detail}
           </div>
         ) : null}
         {item.eventType === "file_uploaded" ||
         item.eventType === "file_deleted" ? (
-          <AttachmentCard payload={item.payload} compact={compact} />
+          <AttachmentCard payload={item.payload} />
         ) : (
-          <EventDelta payload={item.payload} compact={compact} />
+          <EventDelta payload={item.payload} />
         )}
-        <div
-          className={cn(
-            "flex flex-wrap items-center gap-y-1 text-[#98a2b3]",
-            compact ? "mt-1.5 gap-x-2 text-[11px]" : "mt-3 gap-x-3 text-xs",
-          )}
-        >
+        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#98a2b3]">
           <span className="font-medium text-[#667085]">{item.actorName}</span>
           <span
             className={cn(
@@ -1739,18 +1944,24 @@ function SystemEventItem({
   );
 }
 
-function ReplyPreview({ snapshot }: { snapshot?: ReplySnapshot | null }) {
+function ReplyPreview({
+  snapshot,
+  actorNames,
+}: {
+  snapshot?: ReplySnapshot | null;
+  actorNames?: Map<string, string>;
+}) {
   const reply = getReplyPreviewContent(snapshot);
   if (!reply) return null;
 
   return (
-    <div className="mb-3 rounded-[18px] border border-[#e5edf8] bg-[#f8fbff] px-3 py-2.5">
-      <div className="product-section-label flex items-center gap-2 text-[#7c8aa5]">
-        <CornerUpLeft className="h-3.5 w-3.5" />
+    <div className="mb-2 rounded-[12px] border border-[#e5edf8] bg-[#f8fbff] px-2.5 py-2">
+      <div className="product-section-label flex items-center gap-1.5 text-[#7c8aa5]">
+        <CornerUpLeft className="h-3 w-3" />
         <span>{reply.label}</span>
       </div>
-      <div className="mt-1 line-clamp-2 text-sm leading-5 text-[#52607a]">
-        {reply.preview}
+      <div className="mt-0.5 line-clamp-2 text-[13px] leading-5 text-[#52607a]">
+        {resolveMentionsPlain(reply.preview, actorNames)}
       </div>
     </div>
   );
@@ -1770,6 +1981,10 @@ function CommentItem({
   toggleExpanded,
   onReply,
   compact = false,
+  actorNames,
+  reactions = [],
+  onToggleReaction,
+  currentUserId,
 }: {
   item: TimelineComment;
   canWrite: boolean;
@@ -1784,6 +1999,10 @@ function CommentItem({
   toggleExpanded: (id: string) => void;
   onReply: (target: ReplyTarget) => void;
   compact?: boolean;
+  actorNames?: Map<string, string>;
+  reactions?: ReactionRow[];
+  onToggleReaction?: () => void;
+  currentUserId?: string | null;
 }) {
   const badge = getRoleBadge(normalizeRole(item.actorRole));
   const isEditing = editingId === item.id;
@@ -1802,13 +2021,16 @@ function CommentItem({
   return (
     <div
       className={cn(
-        "group flex rounded-[20px] border border-[#E5E7EB] bg-white shadow-[0_8px_20px_rgba(15,23,42,0.04)] transition hover:border-[#C7D2FE] hover:shadow-[0_12px_24px_rgba(15,23,42,0.06)]",
-        compact ? "gap-2.5 px-3 py-2.5" : "gap-3 px-4 py-3",
+        "group flex border border-[#E5E7EB] bg-white shadow-[0_8px_20px_rgba(15,23,42,0.04)] transition hover:border-[#C7D2FE] hover:shadow-[0_12px_24px_rgba(15,23,42,0.06)]",
+        compact ? "gap-2 rounded-[14px] px-2.5 py-2" : "gap-3 rounded-[20px] px-4 py-3",
         item.replyToCommentId && "ml-4 border-[#e5edf8] bg-[#fcfdff]",
       )}
     >
-      <Avatar className={cn("rounded-2xl", compact ? "h-8 w-8" : "h-10 w-10")}>
-        <AvatarFallback className="rounded-2xl bg-[#111827] text-xs font-semibold text-white">
+      <Avatar className={cn(compact ? "h-7 w-7 rounded-xl" : "h-10 w-10 rounded-2xl")}>
+        {item.actorAvatarUrl ? (
+          <AvatarImage src={item.actorAvatarUrl} alt={item.actorName} className={cn("object-cover", compact ? "rounded-xl" : "rounded-2xl")} />
+        ) : null}
+        <AvatarFallback className={cn("bg-[#111827] font-semibold text-white", compact ? "rounded-xl text-[10px]" : "rounded-2xl text-xs")}>
           {getInitials(item.actorName)}
         </AvatarFallback>
       </Avatar>
@@ -1862,7 +2084,7 @@ function CommentItem({
                       id: item.id,
                       kind: "comment",
                       label: item.actorName,
-                      preview: getCompactPreview(item.body),
+                      preview: getCompactPreview(item.body, actorNames),
                     })
                   }
                   className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-transparent bg-[#F9FAFB] text-[#6B7280] transition hover:border-[#E5E7EB] hover:bg-white hover:text-[#1F2937]"
@@ -1927,7 +2149,7 @@ function CommentItem({
           </div>
         ) : (
           <div className={cn(compact ? "mt-2" : "mt-2.5")}>
-            <ReplyPreview snapshot={item.replySnapshot} />
+            <ReplyPreview snapshot={item.replySnapshot} actorNames={actorNames} />
             <div
               className={cn(
                 "whitespace-pre-wrap text-sm text-[#1F2937]",
@@ -1937,7 +2159,7 @@ function CommentItem({
                   (compact ? "line-clamp-3" : "line-clamp-5"),
               )}
             >
-              {renderRichText(item.body)}
+              {renderRichText(item.body, actorNames)}
             </div>
             {shouldCollapse ? (
               <button
@@ -1969,9 +2191,30 @@ function CommentItem({
                     )}
                   />
                 </button>
-                {showChanges ? <EventDelta payload={item.editPayload} /> : null}
+                {showChanges ? <EventDelta payload={item.editPayload} compact={compact} /> : null}
               </div>
             ) : null}
+            {/* Reactions */}
+            <div className="mt-1 flex items-center gap-1">
+              <button
+                type="button"
+                onClick={onToggleReaction}
+                className={cn(
+                  "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium transition",
+                  reactions.some((r) => r.user_id === currentUserId)
+                    ? "border-[var(--brand-200)] bg-[var(--brand-50)] text-[var(--brand-600)]"
+                    : "border-[#E5E7EB] bg-white text-[#6B7280] hover:border-[var(--brand-200)] hover:bg-[var(--brand-50)]",
+                )}
+              >
+                <ThumbsUp className="h-3 w-3" />
+                {reactions.length > 0 ? reactions.length : null}
+              </button>
+              {reactions.length > 0 ? (
+                <span className="text-[10px] text-[#9CA3AF]">
+                  {reactions.map((r) => r.user_name).join(", ")}
+                </span>
+              ) : null}
+            </div>
           </div>
         )}
       </div>
@@ -1995,6 +2238,10 @@ function ActivityTimeline({
   toggleExpanded,
   onReply,
   compact = false,
+  actorNames,
+  reactionsByComment,
+  onToggleReaction,
+  currentUserId,
 }: {
   items: TimelineItem[];
   hiddenCount: number;
@@ -2011,12 +2258,119 @@ function ActivityTimeline({
   toggleExpanded: (id: string) => void;
   onReply: (target: ReplyTarget) => void;
   compact?: boolean;
+  actorNames?: Map<string, string>;
+  reactionsByComment?: Map<string, ReactionRow[]>;
+  onToggleReaction?: (commentId: string) => void;
+  currentUserId?: string | null;
 }) {
+  // Build thread chains: for any comment that is part of a reply chain,
+  // collect the full chain (walk up to root, then collect all descendants)
+  const commentById = React.useMemo(() => {
+    const map = new Map<string, TimelineComment>();
+    for (const item of items) {
+      if (item.kind === "comment") map.set(item.id, item);
+    }
+    return map;
+  }, [items]);
+
+  const getThreadChain = React.useCallback(
+    (commentId: string): TimelineComment[] => {
+      // Walk up to find root
+      let rootId = commentId;
+      const visited = new Set<string>();
+      while (true) {
+        visited.add(rootId);
+        const item = commentById.get(rootId);
+        const parentId = item?.replyToCommentId
+          ? `comment-${item.replyToCommentId}`
+          : null;
+        if (!parentId || !commentById.has(parentId) || visited.has(parentId)) break;
+        rootId = parentId;
+      }
+      // Collect chain from root downward (BFS)
+      const chain: TimelineComment[] = [];
+      const queue = [rootId];
+      const seen = new Set<string>();
+      while (queue.length > 0) {
+        const id = queue.shift()!;
+        if (seen.has(id)) continue;
+        seen.add(id);
+        const item = commentById.get(id);
+        if (item) chain.push(item);
+        // Find children
+        for (const c of commentById.values()) {
+          if (c.replyToCommentId && `comment-${c.replyToCommentId}` === id) {
+            queue.push(c.id);
+          }
+        }
+      }
+      return chain.sort(
+        (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+      );
+    },
+    [commentById],
+  );
+
+  // Check if a comment is part of a thread (has replies or is a reply)
+  const hasThread = React.useCallback(
+    (item: TimelineComment) => {
+      if (item.replyToCommentId) return true;
+      for (const c of commentById.values()) {
+        if (c.replyToCommentId && `comment-${c.replyToCommentId}` === item.id) return true;
+      }
+      return false;
+    },
+    [commentById],
+  );
+
+  const [threadViewId, setThreadViewId] = React.useState<string | null>(null);
+  const threadChain = React.useMemo(
+    () => (threadViewId ? getThreadChain(threadViewId) : []),
+    [getThreadChain, threadViewId],
+  );
+
+  const renderComment = (item: TimelineComment, showThreadBtn = false) => (
+    <div key={item.id}>
+      <CommentItem
+        item={item}
+        canWrite={canWrite}
+        editingId={editingId}
+        editingValue={editingValue}
+        setEditingValue={setEditingValue}
+        onStartEdit={onStartEdit}
+        onCancelEdit={onCancelEdit}
+        onSaveEdit={onSaveEdit}
+        onDelete={onDelete}
+        expandedComments={expandedComments}
+        toggleExpanded={toggleExpanded}
+        onReply={onReply}
+        compact={compact}
+        actorNames={actorNames}
+        reactions={reactionsByComment?.get(item.id.replace(/^comment-/, "")) ?? []}
+        onToggleReaction={onToggleReaction ? () => onToggleReaction(item.id.replace(/^comment-/, "")) : undefined}
+        currentUserId={currentUserId}
+      />
+      {showThreadBtn && hasThread(item) ? (
+        <button
+          type="button"
+          onClick={() => setThreadViewId(item.id)}
+          className={cn(
+            "mt-0.5 inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[12px] font-semibold text-[var(--brand-600)] transition hover:bg-[var(--brand-50)]",
+            compact && "ml-2",
+          )}
+        >
+          <MessageSquareText className="h-3 w-3" />
+          View thread
+        </button>
+      ) : null}
+    </div>
+  );
+
   return (
     <div
       className={cn(
-        "rounded-[22px] border border-[#E5E7EB] bg-[linear-gradient(180deg,#FFFFFF_0%,#F9FAFB_100%)] shadow-[0_10px_24px_rgba(15,23,42,0.05)]",
-        compact ? "p-2.5" : "p-3",
+        "border border-[#E5E7EB] bg-[linear-gradient(180deg,#FFFFFF_0%,#F9FAFB_100%)] shadow-[0_10px_24px_rgba(15,23,42,0.05)]",
+        compact ? "rounded-[16px] p-1.5" : "rounded-[22px] p-3",
       )}
     >
       {items.length === 0 ? (
@@ -2033,7 +2387,7 @@ function ActivityTimeline({
           </p>
         </div>
       ) : (
-        <div className={compact ? "space-y-1.5" : "space-y-2.5"}>
+        <div className={compact ? "space-y-1" : "space-y-2.5"}>
           {items.map((item, index) => {
             const previous = index > 0 ? items[index - 1] : null;
             const showSeparator =
@@ -2048,21 +2402,7 @@ function ActivityTimeline({
                   />
                 ) : null}
                 {item.kind === "comment" ? (
-                  <CommentItem
-                    item={item}
-                    canWrite={canWrite}
-                    editingId={editingId}
-                    editingValue={editingValue}
-                    setEditingValue={setEditingValue}
-                    onStartEdit={onStartEdit}
-                    onCancelEdit={onCancelEdit}
-                    onSaveEdit={onSaveEdit}
-                    onDelete={onDelete}
-                    expandedComments={expandedComments}
-                    toggleExpanded={toggleExpanded}
-                    onReply={onReply}
-                    compact={compact}
-                  />
+                  renderComment(item, true)
                 ) : (
                   <SystemEventItem
                     item={item}
@@ -2086,6 +2426,34 @@ function ActivityTimeline({
           </button>
         </div>
       ) : null}
+      {/* Thread view overlay */}
+      {threadViewId && threadChain.length > 0 ? (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/30 backdrop-blur-sm" onClick={() => setThreadViewId(null)}>
+          <div
+            className="mx-4 flex max-h-[80vh] w-full max-w-lg flex-col rounded-2xl border border-[#E5E7EB] bg-white shadow-[0_25px_50px_rgba(15,23,42,0.15)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-[#EEF2FF] px-4 py-3">
+              <div className="flex items-center gap-2 text-sm font-semibold text-[#1F2937]">
+                <MessageSquareText className="h-4 w-4 text-[var(--brand-600)]" />
+                Thread ({threadChain.length} messages)
+              </div>
+              <button
+                type="button"
+                onClick={() => setThreadViewId(null)}
+                className="flex h-7 w-7 items-center justify-center rounded-lg text-[#6B7280] transition hover:bg-[#F3F4F6] hover:text-[#1F2937]"
+              >
+                &times;
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-3">
+              <div className="space-y-2">
+                {threadChain.map((comment) => renderComment(comment, false))}
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -2095,6 +2463,7 @@ export function OrderActivitySection({
   businessId,
   supabase,
   phoneRaw,
+  currentUserId,
   currentUserName,
   userRole,
   actors,
@@ -2113,8 +2482,61 @@ export function OrderActivitySection({
   );
   const [editingId, setEditingId] = React.useState<string | null>(null);
   const [editingValue, setEditingValue] = React.useState("");
+  const mentionMapRef = React.useRef<Map<string, string>>(new Map());
   const [loading, setLoading] = React.useState(true);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [reactions, setReactions] = React.useState<ReactionRow[]>([]);
+
+  const loadReactions = React.useCallback(async () => {
+    const { data } = await supabase
+      .from("comment_reactions")
+      .select("id, comment_id, user_id, user_name, emoji")
+      .in(
+        "comment_id",
+        comments.map((c) => c.id),
+      );
+    if (data) setReactions(data as ReactionRow[]);
+  }, [comments, supabase]);
+
+  React.useEffect(() => {
+    if (comments.length > 0) void loadReactions();
+  }, [comments, loadReactions]);
+
+  const toggleReaction = React.useCallback(
+    async (commentId: string) => {
+      if (!currentUserId) return;
+      const existing = reactions.find(
+        (r) => r.comment_id === commentId && r.user_id === currentUserId && r.emoji === "👍",
+      );
+      if (existing) {
+        await supabase.from("comment_reactions").delete().eq("id", existing.id);
+        setReactions((prev) => prev.filter((r) => r.id !== existing.id));
+      } else {
+        const { data } = await supabase
+          .from("comment_reactions")
+          .insert({
+            comment_id: commentId,
+            user_id: currentUserId,
+            user_name: currentUserName || "User",
+            emoji: "👍",
+          })
+          .select("id, comment_id, user_id, user_name, emoji")
+          .single();
+        if (data) setReactions((prev) => [...prev, data as ReactionRow]);
+      }
+    },
+    [currentUserId, currentUserName, reactions, supabase],
+  );
+
+  const reactionsByComment = React.useMemo(() => {
+    const map = new Map<string, ReactionRow[]>();
+    for (const r of reactions) {
+      const list = map.get(r.comment_id) ?? [];
+      list.push(r);
+      map.set(r.comment_id, list);
+    }
+    return map;
+  }, [reactions]);
   const [filter, setFilter] = React.useState<FilterValue>("all");
   const [sort, setSort] = React.useState<SortValue>("newest");
   const [visibleCount, setVisibleCount] = React.useState(18);
@@ -2123,6 +2545,22 @@ export function OrderActivitySection({
   );
   const actorById = React.useMemo(
     () => new Map(actors.map((actor) => [actor.id, actor])),
+    [actors],
+  );
+  const currentUserAvatarUrl = React.useMemo(() => {
+    if (!currentUserId) return null;
+    return actorById.get(currentUserId)?.avatar_url ?? null;
+  }, [actorById, currentUserId]);
+  const actorAvatarByName = React.useMemo(() => {
+    const m = new Map<string, string>();
+    for (const actor of actors) {
+      const url = String(actor.avatar_url ?? "").trim();
+      if (url) m.set(actor.label.toLowerCase(), url);
+    }
+    return m;
+  }, [actors]);
+  const actorNameById = React.useMemo(
+    () => new Map(actors.map((a) => [a.id, a.label])),
     [actors],
   );
   const canWrite = userRole === "OWNER" || userRole === "MANAGER";
@@ -2204,7 +2642,7 @@ export function OrderActivitySection({
         nextItems.push(
           createEvent(
             `due-date-${order.id}`,
-            order.due_date,
+            order.created_at,
             "System",
             null,
             "due_date_set",
@@ -2226,27 +2664,36 @@ export function OrderActivitySection({
             },
           ),
         );
-      for (const comment of nextComments)
+      for (const comment of nextComments) {
+        const isOwn = currentUserId
+          ? comment.author_user_id === currentUserId
+          : (comment.author_phone?.trim() ?? "") === phoneRaw.trim();
+        const storedName = comment.author_name?.trim();
+        const hasRealName = storedName && storedName !== "Manager";
+        const resolvedName = hasRealName
+          ? storedName
+          : comment.author_user_id
+            ? (actorById.get(comment.author_user_id)?.label ?? storedName ?? "Manager")
+            : resolveAuthorName(comment, phoneRaw, currentUserName, ownerName, managerName);
         nextItems.push({
           id: `comment-${comment.id}`,
           kind: "comment",
           createdAt: comment.created_at,
-          actorName: resolveAuthorName(
-            comment,
-            phoneRaw,
-            currentUserName,
-            ownerName,
-            managerName,
-          ),
+          actorName: resolvedName,
           actorRole: comment.author_role,
+          actorAvatarUrl: isOwn
+            ? currentUserAvatarUrl
+            : (comment.author_user_id
+                ? actorById.get(comment.author_user_id)?.avatar_url
+                : actorAvatarByName.get(resolvedName.toLowerCase())) ?? null,
           body: comment.body,
-          isOwnComment:
-            (comment.author_phone?.trim() ?? "") === phoneRaw.trim(),
+          isOwnComment: isOwn,
           edited: editedCommentIds.has(comment.id),
           editPayload: editPayloadByCommentId.get(comment.id),
           replyToCommentId: comment.reply_to_comment_id || null,
           replySnapshot: comment.reply_snapshot || null,
         });
+      }
       for (const event of auditEvents) {
         const payload = (event.payload ?? {}) as LocalActivityEventPayload;
         const itemId =
@@ -2454,7 +2901,7 @@ export function OrderActivitySection({
           supabase
             .from("order_comments")
             .select(
-              "id, body, author_phone, author_role, created_at, reply_to_comment_id, reply_snapshot",
+              "id, body, author_name, author_phone, author_role, author_user_id, created_at, reply_to_comment_id, reply_snapshot",
             )
             .eq("order_id", order.id)
             .order("created_at", { ascending: true }),
@@ -2604,12 +3051,18 @@ export function OrderActivitySection({
     setIsSubmitting(true);
     let nextComments = comments;
     if (composerValue.trim()) {
+      const serializedBody = serializeMentions(
+        composerValue.trim(),
+        mentionMapRef.current,
+      );
       const insertPayload = {
         order_id: order.id,
         business_id: businessId,
-        body: composerValue.trim(),
+        body: serializedBody,
+        author_name: currentUserName || "Manager",
         author_phone: phoneRaw || null,
         author_role: userRole,
+        author_user_id: currentUserId || null,
         reply_to_comment_id:
           replyTarget?.kind === "comment"
             ? replyTarget.id.replace(/^comment-/, "")
@@ -2620,10 +3073,15 @@ export function OrderActivitySection({
         .from("order_comments")
         .insert(insertPayload)
         .select(
-          "id, body, author_phone, author_role, created_at, reply_to_comment_id, reply_snapshot",
+          "id, body, author_name, author_phone, author_role, author_user_id, created_at, reply_to_comment_id, reply_snapshot",
         )
         .single();
-      if (!error && data) nextComments = [...comments, data as CommentRow];
+      if (error) {
+        console.error("insert comment error:", error);
+        setIsSubmitting(false);
+        return;
+      }
+      if (data) nextComments = [...comments, data as CommentRow];
     }
     if (attachments.length > 0) {
       for (const attachment of attachments) {
@@ -2667,6 +3125,7 @@ export function OrderActivitySection({
     }
     await refreshWith(nextComments);
     setComposerValue("");
+    mentionMapRef.current.clear();
     setAttachments([]);
     setReplyTarget(null);
     setIsSubmitting(false);
@@ -2774,6 +3233,10 @@ export function OrderActivitySection({
           }
           onReply={setReplyTarget}
           compact={compact}
+          actorNames={actorNameById}
+          reactionsByComment={reactionsByComment}
+          onToggleReaction={toggleReaction}
+          currentUserId={currentUserId}
         />
       )}
       <div
@@ -2788,6 +3251,7 @@ export function OrderActivitySection({
           onSubmit={submitComment}
           isSubmitting={isSubmitting}
           currentUserName={currentUserName}
+          currentUserAvatarUrl={currentUserAvatarUrl}
           canWrite={canWrite}
           attachments={attachments}
           onAttachFiles={(files) => {
@@ -2807,6 +3271,7 @@ export function OrderActivitySection({
           replyTarget={replyTarget}
           onClearReply={() => setReplyTarget(null)}
           compact={compact}
+          mentionMapRef={mentionMapRef}
         />
       </div>
     </div>
