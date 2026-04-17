@@ -12,7 +12,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { createCatalogProduct, setCatalogProductStatus } from "./actions";
+import { createClient as createBrowserClient } from "@/lib/supabase/client";
+import { createCatalogProduct, setCatalogProductStatus, updateCatalogProduct } from "./actions";
 
 type ProductRow = {
   id: string;
@@ -34,7 +35,7 @@ function fmtNumber(value: number | string) {
 }
 
 const UOM_OPTIONS = ["EA", "PCS", "KG", "G", "L", "ML", "PACK", "BOX"];
-const CURRENCY_OPTIONS = ["GBP", "USD", "EUR"];
+const CURRENCY_OPTIONS = ["GBP", "USD", "EUR", "GBR"];
 const TAX_RATE_OPTIONS = [
   { value: "0", label: "0%" },
   { value: "7", label: "7%" },
@@ -86,6 +87,78 @@ export default function ProductCatalogManager({
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<"name" | "price" | "updated">("updated");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const [editingProduct, setEditingProduct] = useState<ProductRow | null>(null);
+  const [editForm, setEditForm] = useState({ sku: "", name: "", description: "", uomCode: "EA", isStockManaged: true, defaultUnitPrice: "", defaultTaxRate: "", currencyCode: "USD", stockQty: "" });
+  const [editError, setEditError] = useState<string | null>(null);
+
+  function openEdit(row: ProductRow) {
+    setEditingProduct(row);
+    setEditForm({
+      sku: row.sku,
+      name: row.name,
+      description: row.description || "",
+      uomCode: row.uom_code,
+      isStockManaged: row.is_stock_managed,
+      defaultUnitPrice: fmtNumber(row.default_unit_price),
+      defaultTaxRate: decimalToPercentString(String(row.default_tax_rate)),
+      currencyCode: row.currency_code.trim(),
+      stockQty: "",
+    });
+    setEditError(null);
+    // Load stock quantity
+    if (row.is_stock_managed) {
+      const supabase = createBrowserClient();
+      supabase
+        .from("inventory_balances")
+        .select("on_hand_qty")
+        .eq("product_id", row.id)
+        .limit(1)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (data?.on_hand_qty != null) {
+            setEditForm((f) => ({ ...f, stockQty: String(Number(data.on_hand_qty)) }));
+          }
+        });
+    }
+  }
+
+  function saveEdit() {
+    if (!editingProduct) return;
+    setEditError(null);
+    startTransition(async () => {
+      const result = await updateCatalogProduct({
+        businessSlug,
+        productId: editingProduct.id,
+        sku: editForm.sku,
+        name: editForm.name,
+        description: editForm.description || null,
+        defaultUnitPrice: editForm.defaultUnitPrice,
+        defaultTaxRate: percentToDecimalString(editForm.defaultTaxRate),
+        currencyCode: editForm.currencyCode,
+        uomCode: editForm.uomCode,
+        isStockManaged: editForm.isStockManaged,
+      });
+      if (!result.ok) {
+        setEditError(result.error);
+        return;
+      }
+      // Update stock if changed
+      if (editForm.isStockManaged && editForm.stockQty.trim()) {
+        const supabase = createBrowserClient();
+        const qty = Number(editForm.stockQty);
+        if (Number.isFinite(qty)) {
+          await supabase
+            .from("inventory_balances")
+            .upsert(
+              { product_id: editingProduct.id, on_hand_qty: qty, available_qty: qty },
+              { onConflict: "product_id" },
+            );
+        }
+      }
+      setEditingProduct(null);
+      router.refresh();
+    });
+  }
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -513,7 +586,8 @@ export default function ProductCatalogManager({
                   pageRows.map((row, i) => (
                     <article
                       key={row.id}
-                      className="flex items-center gap-3 rounded-xl border border-[#E5E7EB] bg-[#FCFCFD] px-3.5 py-2.5"
+                      onClick={() => openEdit(row)}
+                      className="flex cursor-pointer items-center gap-3 rounded-xl border border-[#E5E7EB] bg-[#FCFCFD] px-3.5 py-2.5 transition hover:border-[#C7D2FE] hover:bg-white"
                     >
                       <span className="w-6 shrink-0 text-xs font-medium text-[#9CA3AF] text-right">
                         {start + i + 1}
@@ -581,6 +655,82 @@ export default function ProductCatalogManager({
           );
         })()}
       </section>
+      {/* Edit Modal */}
+      {editingProduct ? (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/30 backdrop-blur-sm" onClick={() => setEditingProduct(null)}>
+          <div className="mx-4 w-full max-w-lg rounded-2xl border border-[#E5E7EB] bg-white p-6 shadow-[0_25px_50px_rgba(15,23,42,0.15)]" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-[#101828]">Edit Product</h3>
+              <button type="button" onClick={() => setEditingProduct(null)} className="flex h-8 w-8 items-center justify-center rounded-lg text-[#6B7280] hover:bg-[#F3F4F6]">&times;</button>
+            </div>
+            {editError ? <div className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{editError}</div> : null}
+            <div className="mt-4 space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs text-[#667085]">SKU</Label>
+                  <Input value={editForm.sku} onChange={(e) => setEditForm((f) => ({ ...f, sku: e.target.value }))} className="mt-1" />
+                </div>
+                <div>
+                  <Label className="text-xs text-[#667085]">Name</Label>
+                  <Input value={editForm.name} onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))} className="mt-1" />
+                </div>
+              </div>
+              <div>
+                <Label className="text-xs text-[#667085]">Description</Label>
+                <Textarea value={editForm.description} onChange={(e) => setEditForm((f) => ({ ...f, description: e.target.value }))} rows={2} className="mt-1" />
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <Label className="text-xs text-[#667085]">Unit Price</Label>
+                  <Input type="number" step="0.01" value={editForm.defaultUnitPrice} onChange={(e) => setEditForm((f) => ({ ...f, defaultUnitPrice: e.target.value }))} className="mt-1" />
+                </div>
+                <div>
+                  <Label className="text-xs text-[#667085]">Tax Rate (%)</Label>
+                  <Input type="number" step="0.01" value={editForm.defaultTaxRate} onChange={(e) => setEditForm((f) => ({ ...f, defaultTaxRate: e.target.value }))} className="mt-1" />
+                </div>
+                <div>
+                  <Label className="text-xs text-[#667085]">Currency</Label>
+                  <Select value={editForm.currencyCode} onValueChange={(v) => setEditForm((f) => ({ ...f, currencyCode: v }))}>
+                    <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                    <SelectContent position="popper" side="top" className="z-[300]">
+                      {[...new Set([...CURRENCY_OPTIONS, editForm.currencyCode].filter(Boolean))].map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs text-[#667085]">UOM</Label>
+                  <Select value={editForm.uomCode} onValueChange={(v) => setEditForm((f) => ({ ...f, uomCode: v }))}>
+                    <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                    <SelectContent position="popper" side="top" className="z-[300]">
+                      {[...new Set([...UOM_OPTIONS, editForm.uomCode].filter(Boolean))].map((u) => <SelectItem key={u} value={u}>{u}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-end pb-1">
+                  <label className="flex items-center gap-2 text-sm">
+                    <input type="checkbox" checked={editForm.isStockManaged} onChange={(e) => setEditForm((f) => ({ ...f, isStockManaged: e.target.checked }))} className="rounded" />
+                    Stock managed
+                  </label>
+                </div>
+              </div>
+              {editForm.isStockManaged ? (
+                <div>
+                  <Label className="text-xs text-[#667085]">Quantity in stock</Label>
+                  <Input type="number" step="1" min="0" value={editForm.stockQty} onChange={(e) => setEditForm((f) => ({ ...f, stockQty: e.target.value }))} className="mt-1 w-40" placeholder="0" />
+                </div>
+              ) : null}
+            </div>
+            <div className="mt-5 flex justify-end gap-2">
+              <button type="button" onClick={() => setEditingProduct(null)} className="h-9 rounded-lg border border-[#D0D5DD] bg-white px-4 text-sm font-medium text-[#344054] hover:bg-[#F9FAFB]">Cancel</button>
+              <button type="button" onClick={saveEdit} disabled={isPending} className="h-9 rounded-lg bg-[var(--brand-600)] px-4 text-sm font-medium text-white hover:bg-[var(--brand-700)] disabled:opacity-60">
+                {isPending ? "Saving..." : "Save changes"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -12,9 +12,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { createCatalogService, setCatalogServiceStatus } from "./actions";
+import { createCatalogService, setCatalogServiceStatus, updateCatalogService } from "./actions";
 
-const CURRENCY_OPTIONS = ["GBP", "USD", "EUR"];
+const CURRENCY_OPTIONS = ["GBP", "USD", "EUR", "GBR"];
 const TAX_RATE_OPTIONS = [
   { value: "0", label: "0%" },
   { value: "7", label: "7%" },
@@ -87,6 +87,51 @@ export default function ServiceCatalogManager({
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<"name" | "price" | "updated">("updated");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const [editingService, setEditingService] = useState<ServiceRow | null>(null);
+  const [editForm, setEditForm] = useState({ serviceCode: "", name: "", description: "", defaultUnitPrice: "", defaultTaxRate: "", currencyCode: "GBP", defaultSlaMinutes: "", defaultDurationMinutes: "", requiresAssignee: true });
+  const [editError, setEditError] = useState<string | null>(null);
+
+  function openEdit(row: ServiceRow) {
+    setEditingService(row);
+    setEditForm({
+      serviceCode: row.service_code,
+      name: row.name,
+      description: row.description || "",
+      defaultUnitPrice: fmtNumber(row.default_unit_price),
+      defaultTaxRate: decimalToPercentString(String(row.default_tax_rate)),
+      currencyCode: row.currency_code.trim(),
+      defaultSlaMinutes: row.default_sla_minutes != null ? String(row.default_sla_minutes) : "",
+      defaultDurationMinutes: row.default_duration_minutes != null ? String(row.default_duration_minutes) : "",
+      requiresAssignee: row.requires_assignee,
+    });
+    setEditError(null);
+  }
+
+  function saveEdit() {
+    if (!editingService) return;
+    setEditError(null);
+    startTransition(async () => {
+      const result = await updateCatalogService({
+        businessSlug,
+        serviceId: editingService.id,
+        serviceCode: editForm.serviceCode,
+        name: editForm.name,
+        description: editForm.description || null,
+        defaultUnitPrice: editForm.defaultUnitPrice,
+        defaultTaxRate: percentToDecimalString(editForm.defaultTaxRate),
+        currencyCode: editForm.currencyCode,
+        defaultSlaMinutes: editForm.defaultSlaMinutes ? Number(editForm.defaultSlaMinutes) : null,
+        defaultDurationMinutes: editForm.defaultDurationMinutes ? Number(editForm.defaultDurationMinutes) : null,
+        requiresAssignee: editForm.requiresAssignee,
+      });
+      if (!result.ok) {
+        setEditError(result.error);
+        return;
+      }
+      setEditingService(null);
+      router.refresh();
+    });
+  }
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -605,7 +650,8 @@ export default function ServiceCatalogManager({
                   pageRows.map((row, i) => (
                     <article
                       key={row.id}
-                      className="flex items-center gap-3 rounded-xl border border-[#E5E7EB] bg-[#FCFCFD] px-3.5 py-2.5"
+                      onClick={() => openEdit(row)}
+                      className="flex cursor-pointer items-center gap-3 rounded-xl border border-[#E5E7EB] bg-[#FCFCFD] px-3.5 py-2.5 transition hover:border-[#C7D2FE] hover:bg-white"
                     >
                       <span className="w-6 shrink-0 text-xs font-medium text-[#9CA3AF] text-right">
                         {start + i + 1}
@@ -673,6 +719,71 @@ export default function ServiceCatalogManager({
           );
         })()}
       </section>
+      {/* Edit Modal */}
+      {editingService ? (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/30 backdrop-blur-sm" onClick={() => setEditingService(null)}>
+          <div className="mx-4 w-full max-w-lg rounded-2xl border border-[#E5E7EB] bg-white p-6 shadow-[0_25px_50px_rgba(15,23,42,0.15)]" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-[#101828]">Edit Service</h3>
+              <button type="button" onClick={() => setEditingService(null)} className="flex h-8 w-8 items-center justify-center rounded-lg text-[#6B7280] hover:bg-[#F3F4F6]">&times;</button>
+            </div>
+            {editError ? <div className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{editError}</div> : null}
+            <div className="mt-4 space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs text-[#667085]">Service Code</Label>
+                  <Input value={editForm.serviceCode} onChange={(e) => setEditForm((f) => ({ ...f, serviceCode: e.target.value }))} className="mt-1" />
+                </div>
+                <div>
+                  <Label className="text-xs text-[#667085]">Name</Label>
+                  <Input value={editForm.name} onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))} className="mt-1" />
+                </div>
+              </div>
+              <div>
+                <Label className="text-xs text-[#667085]">Description</Label>
+                <Textarea value={editForm.description} onChange={(e) => setEditForm((f) => ({ ...f, description: e.target.value }))} rows={2} className="mt-1" />
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <Label className="text-xs text-[#667085]">Unit Price</Label>
+                  <Input type="number" step="0.01" value={editForm.defaultUnitPrice} onChange={(e) => setEditForm((f) => ({ ...f, defaultUnitPrice: e.target.value }))} className="mt-1" />
+                </div>
+                <div>
+                  <Label className="text-xs text-[#667085]">Tax Rate (%)</Label>
+                  <Input type="number" step="0.01" value={editForm.defaultTaxRate} onChange={(e) => setEditForm((f) => ({ ...f, defaultTaxRate: e.target.value }))} className="mt-1" />
+                </div>
+                <div>
+                  <Label className="text-xs text-[#667085]">Currency</Label>
+                  <Select value={editForm.currencyCode} onValueChange={(v) => setEditForm((f) => ({ ...f, currencyCode: v }))}>
+                    <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                    <SelectContent>{[...new Set([...CURRENCY_OPTIONS, editForm.currencyCode].filter(Boolean))].map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs text-[#667085]">SLA (minutes)</Label>
+                  <Input type="number" value={editForm.defaultSlaMinutes} onChange={(e) => setEditForm((f) => ({ ...f, defaultSlaMinutes: e.target.value }))} className="mt-1" placeholder="Optional" />
+                </div>
+                <div>
+                  <Label className="text-xs text-[#667085]">Duration (minutes)</Label>
+                  <Input type="number" value={editForm.defaultDurationMinutes} onChange={(e) => setEditForm((f) => ({ ...f, defaultDurationMinutes: e.target.value }))} className="mt-1" placeholder="Optional" />
+                </div>
+              </div>
+              <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" checked={editForm.requiresAssignee} onChange={(e) => setEditForm((f) => ({ ...f, requiresAssignee: e.target.checked }))} className="rounded" />
+                Requires assignee
+              </label>
+            </div>
+            <div className="mt-5 flex justify-end gap-2">
+              <button type="button" onClick={() => setEditingService(null)} className="h-9 rounded-lg border border-[#D0D5DD] bg-white px-4 text-sm font-medium text-[#344054] hover:bg-[#F9FAFB]">Cancel</button>
+              <button type="button" onClick={saveEdit} disabled={isPending} className="h-9 rounded-lg bg-[var(--brand-600)] px-4 text-sm font-medium text-white hover:bg-[var(--brand-700)] disabled:opacity-60">
+                {isPending ? "Saving..." : "Save changes"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -334,6 +334,108 @@ export async function createCatalogService(input: {
   }
 }
 
+export async function updateCatalogProduct(input: {
+  businessSlug: string;
+  productId: string;
+  sku: string;
+  name: string;
+  description?: string | null;
+  defaultUnitPrice: number | string;
+  defaultTaxRate: number | string;
+  currencyCode: string;
+  uomCode: string;
+  isStockManaged: boolean;
+}) {
+  try {
+    const { admin, userId, businessId } = await requireCatalogManagerAccess(input.businessSlug);
+    const defaultUnitPrice = parseRequiredNumber(input.defaultUnitPrice);
+    const defaultTaxRate = parseRequiredNumber(input.defaultTaxRate);
+    if (!cleanText(input.sku) || !cleanText(input.name) || !cleanText(input.currencyCode)) {
+      throw new Error("SKU, name and currency are required");
+    }
+    if (defaultUnitPrice === null || defaultTaxRate === null) {
+      throw new Error("Unit price and tax rate are required");
+    }
+    const payload = {
+      sku: cleanText(input.sku),
+      name: cleanText(input.name),
+      description: cleanText(input.description) || null,
+      default_unit_price: defaultUnitPrice,
+      default_tax_rate: defaultTaxRate,
+      currency_code: cleanText(input.currencyCode).toUpperCase(),
+      uom_code: cleanText(input.uomCode).toUpperCase() || "EA",
+      is_stock_managed: Boolean(input.isStockManaged),
+      updated_by: userId,
+    };
+    let updateResult = await admin
+      .from("catalog_products")
+      .update(payload)
+      .eq("id", input.productId)
+      .eq("business_id", businessId);
+    if (updateResult.error && isMissingBusinessIdColumnError(updateResult.error.message, "catalog_products")) {
+      updateResult = await admin.from("catalog_products").update(payload).eq("id", input.productId).eq("created_by", userId);
+    }
+    if (updateResult.error) throw new Error(updateResult.error.message);
+    revalidatePath(`/b/${input.businessSlug}/catalog/products`);
+    revalidatePath(`/b/${input.businessSlug}/settings/catalog/products`);
+    return { ok: true as const };
+  } catch (error) {
+    return { ok: false as const, error: normalizeCatalogError(error) };
+  }
+}
+
+export async function updateCatalogService(input: {
+  businessSlug: string;
+  serviceId: string;
+  serviceCode: string;
+  name: string;
+  description?: string | null;
+  defaultUnitPrice: number | string;
+  defaultTaxRate: number | string;
+  currencyCode: string;
+  defaultSlaMinutes?: number | null;
+  defaultDurationMinutes?: number | null;
+  requiresAssignee: boolean;
+}) {
+  try {
+    const { admin, userId, businessId } = await requireCatalogManagerAccess(input.businessSlug);
+    const defaultUnitPrice = parseRequiredNumber(input.defaultUnitPrice);
+    const defaultTaxRate = parseRequiredNumber(input.defaultTaxRate);
+    if (!cleanText(input.serviceCode) || !cleanText(input.name) || !cleanText(input.currencyCode)) {
+      throw new Error("Service code, name and currency are required");
+    }
+    if (defaultUnitPrice === null || defaultTaxRate === null) {
+      throw new Error("Unit price and tax rate are required");
+    }
+    const payload = {
+      service_code: cleanText(input.serviceCode),
+      name: cleanText(input.name),
+      description: cleanText(input.description) || null,
+      default_unit_price: defaultUnitPrice,
+      default_tax_rate: defaultTaxRate,
+      currency_code: cleanText(input.currencyCode).toUpperCase(),
+      default_sla_minutes: input.defaultSlaMinutes == null || Number.isNaN(Number(input.defaultSlaMinutes)) ? null : Number(input.defaultSlaMinutes),
+      default_duration_minutes: input.defaultDurationMinutes == null || Number.isNaN(Number(input.defaultDurationMinutes)) ? null : Number(input.defaultDurationMinutes),
+      requires_assignee: Boolean(input.requiresAssignee),
+      updated_by: userId,
+    };
+    let updateResult = await admin
+      .from("catalog_services")
+      .update(payload)
+      .eq("id", input.serviceId)
+      .eq("business_id", businessId);
+    if (updateResult.error && isMissingBusinessIdColumnError(updateResult.error.message, "catalog_services")) {
+      updateResult = await admin.from("catalog_services").update(payload).eq("id", input.serviceId).eq("created_by", userId);
+    }
+    if (updateResult.error) throw new Error(updateResult.error.message);
+    revalidatePath(`/b/${input.businessSlug}/catalog/services`);
+    revalidatePath(`/b/${input.businessSlug}/settings/catalog/services`);
+    return { ok: true as const };
+  } catch (error) {
+    return { ok: false as const, error: normalizeCatalogError(error) };
+  }
+}
+
 export async function setCatalogServiceStatus(input: {
   businessSlug: string;
   serviceId: string;
