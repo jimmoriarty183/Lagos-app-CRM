@@ -14,6 +14,43 @@ function isMissingColumnError(message: string) {
   return lowered.includes("column") && (lowered.includes("does not exist") || lowered.includes("schema cache"));
 }
 
+function upperRole(value: unknown): "OWNER" | "MANAGER" | "GUEST" {
+  const role = String(value ?? "").trim().toUpperCase();
+  if (role === "OWNER") return "OWNER";
+  if (role === "MANAGER") return "MANAGER";
+  return "GUEST";
+}
+
+async function getMembershipRole(
+  admin: ReturnType<typeof supabaseAdmin>,
+  businessId: string,
+  userId: string,
+) {
+  const { data: primary, error: primaryErr } = await admin
+    .from("memberships")
+    .select("role")
+    .eq("business_id", businessId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (!primaryErr && primary?.role) return upperRole(primary.role);
+
+  const { data: fallback, error: fallbackErr } = await admin
+    .from("business_memberships")
+    .select("role")
+    .eq("business_id", businessId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (!fallbackErr && fallback?.role) return upperRole(fallback.role);
+
+  if (primaryErr && fallbackErr) {
+    throw new Error(primaryErr.message || fallbackErr.message || "Failed to resolve membership role");
+  }
+
+  return "GUEST";
+}
+
 export async function PATCH(req: Request) {
   try {
     const supabase = await supabaseServer();
@@ -34,18 +71,7 @@ export async function PATCH(req: Request) {
       return NextResponse.json({ ok: false, error: "businessId is required" }, { status: 400 });
     }
 
-    const { data: membership, error: membershipErr } = await admin
-      .from("memberships")
-      .select("role")
-      .eq("business_id", businessId)
-      .eq("user_id", user.id)
-      .maybeSingle();
-
-    if (membershipErr) {
-      return NextResponse.json({ ok: false, error: membershipErr.message }, { status: 500 });
-    }
-
-    const role = String(membership?.role || "").toUpperCase();
+    const role = await getMembershipRole(admin, businessId, user.id);
     if (role !== "OWNER" && role !== "MANAGER") {
       return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
     }

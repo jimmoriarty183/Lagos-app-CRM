@@ -988,6 +988,10 @@ export default function DesktopOrdersTable({
 
   React.useEffect(() => {
     if (!initialOpenOrderId) return;
+    if (typeof window !== "undefined") {
+      const isDesktopViewport = window.matchMedia("(min-width: 1024px)").matches;
+      if (!isDesktopViewport) return;
+    }
     if (!boardRows.some((order) => order.id === initialOpenOrderId)) return;
     setOpenId(initialOpenOrderId);
     clearFocusOrderParam();

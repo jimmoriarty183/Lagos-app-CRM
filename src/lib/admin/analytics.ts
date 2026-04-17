@@ -1,15 +1,8 @@
-import { cache } from "react";
 import { loadAdminDataset } from "@/lib/admin/queries";
 
 export const ANALYTICS_PERIODS = ["7d", "30d", "90d", "all"] as const;
 
 export type AnalyticsPeriod = (typeof ANALYTICS_PERIODS)[number];
-
-type TrendPoint = {
-  label: string;
-  registrations: number;
-  businesses: number;
-};
 
 type FunnelStep = {
   key: string;
@@ -192,7 +185,7 @@ function buildFunnel(
   return steps;
 }
 
-export const loadAdminAnalytics = cache(async (period: AnalyticsPeriod) => {
+export async function loadAdminAnalytics(period: AnalyticsPeriod) {
   const dataset = await loadAdminDataset();
   const now = Date.now();
   const dayMs = 1000 * 60 * 60 * 24;
@@ -321,4 +314,4 @@ export const loadAdminAnalytics = cache(async (period: AnalyticsPeriod) => {
     funnel: buildFunnel(currentUsers, usersWhoCreatedBusiness, usersWithOwnedBusinessOrders),
     trendSeries: buildTrendSeries(dataset, rangeStartMs, rangeEndMs, period),
   };
-});
+}

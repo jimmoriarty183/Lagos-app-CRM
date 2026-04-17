@@ -29,7 +29,8 @@ async function updateNotificationsForUser(
   notificationId?: string,
 ) {
   const readAt = new Date().toISOString();
-  const tables = ["notifications_compat", "notifications"];
+  // Write only to base tables. `notifications_compat` is a read-model view.
+  const tables = ["notifications"];
   const payloads = [
     { is_read: true, read: true, read_at: readAt },
     { is_read: true, read_at: readAt },
@@ -48,9 +49,17 @@ async function updateNotificationsForUser(
         if (notificationId) {
           query = query.eq("id", notificationId);
         }
-        const result = await query.eq(recipientColumn, userId);
+        const result = await query
+          .eq(recipientColumn, userId)
+          .select("id")
+          .limit(1);
 
-        if (!result.error) return null;
+        if (!result.error) {
+          if (Array.isArray(result.data) && result.data.length > 0) {
+            return null;
+          }
+          continue;
+        }
         if (isMissingRelationError(result.error, table)) {
           continue;
         }
@@ -76,9 +85,16 @@ async function updateNotificationsForUser(
       const fallback = await admin
         .from(table)
         .update(payload)
-        .eq("id", notificationId);
+        .eq("id", notificationId)
+        .select("id")
+        .limit(1);
 
-      if (!fallback.error) return null;
+      if (!fallback.error) {
+        if (Array.isArray(fallback.data) && fallback.data.length > 0) {
+          return null;
+        }
+        continue;
+      }
       if (isMissingRelationError(fallback.error, table)) {
         continue;
       }

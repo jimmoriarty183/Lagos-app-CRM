@@ -24,6 +24,8 @@ import {
 export function UserMenu({
   userLabel,
   roleLabel,
+  currentPlan,
+  businessId,
   profileHref,
   settingsHref,
   billingHref,
@@ -33,6 +35,8 @@ export function UserMenu({
 }: {
   userLabel: string;
   roleLabel: string;
+  currentPlan?: string | null;
+  businessId?: string;
   profileHref: string;
   settingsHref: string;
   billingHref?: string;
@@ -43,10 +47,61 @@ export function UserMenu({
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = React.useState(false);
   const [isHydrated, setIsHydrated] = React.useState(false);
+  const [resolvedPlan, setResolvedPlan] = React.useState<string | null>(
+    currentPlan ?? null,
+  );
 
   React.useEffect(() => {
     setIsHydrated(true);
   }, []);
+
+  React.useEffect(() => {
+    setResolvedPlan(currentPlan ?? null);
+  }, [currentPlan]);
+
+  React.useEffect(() => {
+    const id = String(businessId ?? "").trim();
+    if (!id) return;
+
+    const controller = new AbortController();
+    void (async () => {
+      try {
+        const response = await fetch(
+          `/api/billing/current-plan?business_id=${encodeURIComponent(id)}`,
+          {
+            method: "GET",
+            cache: "no-store",
+            signal: controller.signal,
+          },
+        );
+        if (!response.ok) return;
+        const payload = (await response.json()) as { plan_code?: string | null };
+        const nextPlan = String(payload.plan_code ?? "").trim();
+        if (nextPlan) {
+          setResolvedPlan(nextPlan);
+          return;
+        }
+        setResolvedPlan(null);
+      } catch {
+        // Silent fallback: keep menu usable even if billing endpoint is unavailable.
+      }
+    })();
+
+    return () => controller.abort();
+  }, [businessId]);
+
+  const planMeta = React.useMemo(() => {
+    const raw = String(resolvedPlan ?? "").trim().toLowerCase();
+    const knownPlans: Record<string, string> = {
+      solo: "Solo",
+      starter: "Starter",
+      business: "Business",
+      pro: "Pro",
+    };
+    const label = knownPlans[raw] ?? "No active plan";
+    const isFallback = !(raw in knownPlans);
+    return { label, isFallback };
+  }, [resolvedPlan]);
 
   async function handleLogout() {
     setIsLoggingOut(true);
@@ -127,6 +182,15 @@ export function UserMenu({
           </div>
           <div className="pt-0.5 text-[11px] font-medium capitalize text-[#9CA3AF]">
             {roleLabel}
+          </div>
+          <div
+            className={`mt-2 inline-flex max-w-full items-center rounded-md px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.04em] ${
+              planMeta.isFallback
+                ? "border border-[#E5E7EB] bg-[#F9FAFB] text-[#667085]"
+                : "border border-[#C7D2FE] bg-[#EEF2FF] text-[#3645A0]"
+            }`}
+          >
+            <span className="truncate">Current plan: {planMeta.label}</span>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />

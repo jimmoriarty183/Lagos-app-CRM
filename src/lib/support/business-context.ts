@@ -13,6 +13,7 @@ type BusinessRow = {
   id: string;
   slug: string;
   name: string | null;
+  plan: string | null;
 };
 
 export type BusinessSupportContext = {
@@ -55,7 +56,7 @@ export async function getBusinessSupportContext(slug: string): Promise<BusinessS
   const businessIds = membershipRows.map((entry) => entry.business_id);
   const { data: businesses, error: businessesError } = await supabase
     .from("businesses")
-    .select("id, slug, name")
+    .select("id, slug, name, plan")
     .in("id", businessIds);
   if (businessesError) {
     throw new Error(businessesError.message);
@@ -74,4 +75,3 @@ export async function getBusinessSupportContext(slug: string): Promise<BusinessS
 
   return { user, role, business, businesses: businessRows };
 }
-

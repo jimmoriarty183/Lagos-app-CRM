@@ -8,7 +8,7 @@ import React, {
   useState,
   useTransition,
 } from "react";
-import { Bell, BellRing, Check, FileText, Loader2 } from "lucide-react";
+import { Bell, BellRing, Check, FileText, Loader2, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -27,6 +27,8 @@ type Props = {
   businessId?: string;
   currentBusinessSlug: string;
 };
+
+const READ_INVITES_STORAGE_KEY = "topbar_read_invites_v1";
 
 function isCampaignNotification(notification: InboxNotification) {
   return (
@@ -127,6 +129,8 @@ export default function InviteInbox({
   const [items, setItems] = useState<InboxNotification[]>([]);
   const [error, setError] = useState("");
   const [activeId, setActiveId] = useState("");
+  const [inviteActionId, setInviteActionId] = useState("");
+  const [readInviteIds, setReadInviteIds] = useState<Set<string>>(new Set());
   const [filter, setFilter] = useState<"all" | "survey" | "notification">(
     "all",
   );
@@ -165,6 +169,35 @@ export default function InviteInbox({
   const visibleItemsCount =
     newNotifications.length + earlierNotifications.length;
 
+  const markInviteReadLocal = useCallback((notification: InboxNotification) => {
+    const inviteId = String(
+      notification.metadata?.invite_id ?? notification.entity_id ?? "",
+    ).trim();
+
+    setItems((current) =>
+      current.map((item) =>
+        item.id === notification.id ? { ...item, is_read: true } : item,
+      ),
+    );
+
+    if (!inviteId) return;
+
+    setReadInviteIds((current) => {
+      if (current.has(inviteId)) return current;
+      const next = new Set(current);
+      next.add(inviteId);
+      try {
+        window.localStorage.setItem(
+          READ_INVITES_STORAGE_KEY,
+          JSON.stringify(Array.from(next)),
+        );
+      } catch {
+        // ignore storage write errors
+      }
+      return next;
+    });
+  }, []);
+
   const load = useCallback(async () => {
     setLoading(true);
     setError("");
@@ -182,14 +215,41 @@ export default function InviteInbox({
         throw new Error(json?.error || "Failed to load inbox");
       }
 
-      setItems(Array.isArray(json.notifications) ? json.notifications : []);
+      const notifications = Array.isArray(json.notifications)
+        ? (json.notifications as InboxNotification[])
+        : [];
+      setItems(
+        notifications.map((item) => {
+          if (item.type !== "invitation_received") return item;
+          const inviteId = String(
+            item.metadata?.invite_id ?? item.entity_id ?? "",
+          ).trim();
+          if (!inviteId || !readInviteIds.has(inviteId)) return item;
+          return { ...item, is_read: true };
+        }),
+      );
     } catch (error: unknown) {
       setItems([]);
       setError(error instanceof Error ? error.message : "Failed to load inbox");
     } finally {
       setLoading(false);
     }
-  }, [businessId]);
+  }, [businessId, readInviteIds]);
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(READ_INVITES_STORAGE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return;
+      const ids = parsed
+        .map((value) => String(value ?? "").trim())
+        .filter(Boolean);
+      setReadInviteIds(new Set(ids));
+    } catch {
+      // ignore malformed storage
+    }
+  }, []);
 
   useEffect(() => {
     if (!businessId) {
@@ -295,7 +355,9 @@ export default function InviteInbox({
       }
 
       setItems((current) =>
-        current.map((item) => ({ ...item, is_read: true })),
+        current.map((item) =>
+          item.type === "invitation_received" ? item : { ...item, is_read: true },
+        ),
       );
       window.dispatchEvent(
         new CustomEvent("campaign:state-changed", {
@@ -340,15 +402,20 @@ export default function InviteInbox({
   }, [items, open]);
 
   const handleNotificationClick = useCallback(
-    (notification: InboxNotification) => {
+    async (notification: InboxNotification) => {
       const isCampaignItem = isCampaignNotification(notification);
       const campaignId = isCampaignItem ? getCampaignId(notification) : "";
+      const isInvite = notification.type === "invitation_received";
 
       if (
         !notification.is_read &&
         notification.type !== "invitation_received"
       ) {
-        void markAsRead(notification);
+        await markAsRead(notification);
+      }
+      if (!notification.is_read && isInvite) {
+        markInviteReadLocal(notification);
+        return;
       }
 
       startTransition(() => {
@@ -390,12 +457,61 @@ export default function InviteInbox({
               notification.order_id,
             )}`,
           );
-        } else if (notification.type === "invitation_received") {
-          router.refresh();
         }
       });
     },
-    [currentBusinessSlug, markAsRead, router],
+    [currentBusinessSlug, markAsRead, markInviteReadLocal, router],
+  );
+
+  const runInviteAction = useCallback(
+    async (notification: InboxNotification, url: string) => {
+      const inviteId = String(
+        notification.metadata?.invite_id ?? notification.entity_id ?? "",
+      ).trim();
+      if (!inviteId) return;
+
+      setInviteActionId(notification.id);
+      setError("");
+
+      try {
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ inviteId }),
+        });
+        const json = await res.json().catch(() => ({}));
+
+        if (!res.ok || !json?.ok) {
+          throw new Error(json?.error || "Invite action failed");
+        }
+
+        setItems((current) => current.filter((item) => item.id !== notification.id));
+        markInviteReadLocal(notification);
+
+        if (url.endsWith("/accept")) {
+          const businessSlug = String(
+            json?.businessSlug ??
+              notification.metadata?.business_slug ??
+              "",
+          ).trim();
+          if (businessSlug) {
+            startTransition(() => {
+              if (businessSlug === currentBusinessSlug) {
+                router.refresh();
+                return;
+              }
+              router.push(`/b/${encodeURIComponent(businessSlug)}`);
+              router.refresh();
+            });
+          }
+        }
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Invite action failed");
+      } finally {
+        setInviteActionId("");
+      }
+    },
+    [currentBusinessSlug, markInviteReadLocal, router, startTransition],
   );
 
   const title = useMemo(() => {
@@ -549,7 +665,14 @@ export default function InviteInbox({
                             key={`${notification.id || "notification"}-${index}`}
                             notification={notification}
                             activeId={activeId}
+                            inviteActionId={inviteActionId}
                             onClick={handleNotificationClick}
+                            onAcceptInvite={(item) =>
+                              void runInviteAction(item, "/api/invite/accept")
+                            }
+                            onDeclineInvite={(item) =>
+                              void runInviteAction(item, "/api/invite/decline")
+                            }
                           />
                         ))}
                       </div>
@@ -567,7 +690,14 @@ export default function InviteInbox({
                             key={`${notification.id || "notification"}-${index}`}
                             notification={notification}
                             activeId={activeId}
+                            inviteActionId={inviteActionId}
                             onClick={handleNotificationClick}
+                            onAcceptInvite={(item) =>
+                              void runInviteAction(item, "/api/invite/accept")
+                            }
+                            onDeclineInvite={(item) =>
+                              void runInviteAction(item, "/api/invite/decline")
+                            }
                           />
                         ))}
                       </div>
@@ -586,30 +716,47 @@ export default function InviteInbox({
 type NotificationItemProps = {
   notification: InboxNotification;
   activeId: string;
+  inviteActionId: string;
   onClick: (notification: InboxNotification) => void;
+  onAcceptInvite: (notification: InboxNotification) => void;
+  onDeclineInvite: (notification: InboxNotification) => void;
 };
 
 function NotificationItem({
   notification,
   activeId,
+  inviteActionId,
   onClick,
+  onAcceptInvite,
+  onDeclineInvite,
 }: NotificationItemProps) {
-  const isBusy = activeId === notification.id;
+  const isBusy = activeId === notification.id || inviteActionId === notification.id;
+  const isInviteActionBusy = inviteActionId === notification.id;
   const displayState = getInboxNotificationDisplayState(notification);
   const typeDisplay = getInboxNotificationTypeDisplay(notification);
   const exactTime = formatNotificationExactTime(notification.created_at);
   const isSurvey = typeDisplay.kind === "survey";
+  const isInvite = notification.type === "invitation_received";
 
   return (
-    <button
-      type="button"
-      onClick={() => onClick(notification)}
-      disabled={isBusy}
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={() => {
+        onClick(notification);
+      }}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onClick(notification);
+        }
+      }}
       title={exactTime}
       className={cn(
         "group flex w-full items-start gap-3 rounded-2xl border px-4 py-3 text-left shadow-sm transition duration-150 ease-out",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/70 focus-visible:ring-inset focus-visible:ring-offset-0",
-        "disabled:cursor-not-allowed disabled:opacity-70",
+        isBusy && "cursor-not-allowed opacity-70",
+        !isInvite && "cursor-pointer",
         displayState.emphasized
           ? isSurvey
             ? "border-violet-100 bg-violet-50/75 hover:bg-violet-50 active:bg-violet-100/80"
@@ -665,8 +812,40 @@ function NotificationItem({
           </span>
           <span className="text-slate-500">{exactTime}</span>
         </div>
+        {isInvite ? (
+          <div className="mt-2 flex items-center gap-2">
+            <button
+              type="button"
+              disabled={isInviteActionBusy}
+              onClick={(event) => {
+                event.stopPropagation();
+                onAcceptInvite(notification);
+              }}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--brand-600)] px-2.5 py-1.5 text-[11px] font-semibold text-white hover:bg-[var(--brand-700)] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isInviteActionBusy ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Check className="h-3.5 w-3.5" />
+              )}
+              Accept
+            </button>
+            <button
+              type="button"
+              disabled={isInviteActionBusy}
+              onClick={(event) => {
+                event.stopPropagation();
+                onDeclineInvite(notification);
+              }}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-slate-600 hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <X className="h-3.5 w-3.5" />
+              Decline
+            </button>
+          </div>
+        ) : null}
       </div>
-    </button>
+    </div>
   );
 }
 

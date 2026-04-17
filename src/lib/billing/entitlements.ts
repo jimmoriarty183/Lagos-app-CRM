@@ -9,6 +9,7 @@ import {
 import type {
   EffectiveEntitlement,
   FeatureRow,
+  FeatureRowRaw,
   ManualEntitlementOverrideRow,
   PlanFeatureRow,
   PlanPriceRow,
@@ -16,6 +17,11 @@ import type {
 } from "@/lib/billing/types";
 
 const ENTITLED_STATUSES = new Set(["trialing", "active", "past_due", "paused"]);
+
+/** Production uses `key`, local seed uses `code`. Normalise to `code`. */
+function normalizeFeature(raw: FeatureRowRaw): FeatureRow {
+  return { ...raw, code: raw.code ?? raw.key ?? "" } as FeatureRow;
+}
 
 function nowIso() {
   return new Date().toISOString();
@@ -60,7 +66,7 @@ async function loadPlanEntitlements(
     .select("*")
     .in("id", featureIds);
   if (featuresError) throw featuresError;
-  const features = (featuresData ?? []) as FeatureRow[];
+  const features = ((featuresData ?? []) as FeatureRowRaw[]).map(normalizeFeature);
   const featureById = new Map(features.map((feature) => [feature.id, feature]));
 
   return planFeatures
@@ -71,9 +77,9 @@ async function loadPlanEntitlements(
         featureId: feature.id,
         featureCode: feature.code,
         valueType: feature.value_type,
-        valueBool: row.value_bool,
-        valueInt: row.value_int,
-        valueText: row.value_text,
+        valueBool: row.bool_value,
+        valueInt: row.int_value,
+        valueText: row.text_value,
       } satisfies PlanEntitlementInput;
     })
     .filter((row): row is PlanEntitlementInput => Boolean(row));
@@ -88,7 +94,7 @@ async function loadActiveOverrides(
     .from("manual_entitlement_overrides")
     .select("*")
     .eq("account_id", accountId)
-    .eq("is_active", true)
+    .is("revoked_at", null)
     .order("created_at", { ascending: true });
   if (overrideError) throw overrideError;
 
@@ -101,7 +107,7 @@ async function loadActiveOverrides(
     .select("*")
     .in("id", featureIds);
   if (featuresError) throw featuresError;
-  const features = (featuresData ?? []) as FeatureRow[];
+  const features = ((featuresData ?? []) as FeatureRowRaw[]).map(normalizeFeature);
   const featureById = new Map(features.map((feature) => [feature.id, feature]));
 
   return overrides
@@ -114,9 +120,9 @@ async function loadActiveOverrides(
         featureCode: feature.code,
         valueType: feature.value_type,
         overrideType: row.override_type,
-        valueBool: row.value_bool,
-        valueInt: row.value_int,
-        valueText: row.value_text,
+        valueBool: row.bool_value,
+        valueInt: row.int_value,
+        valueText: row.text_value,
       } satisfies OverrideEntitlementInput;
     })
     .filter((row): row is OverrideEntitlementInput => Boolean(row));

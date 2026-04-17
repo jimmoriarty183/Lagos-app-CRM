@@ -226,7 +226,7 @@ export async function resolveMaxBusinessesUpgradeRecommendation(
   const featureResult = await admin
     .from("features")
     .select("id")
-    .eq("code", MAX_BUSINESSES_FEATURE_CODE)
+    .eq("key", MAX_BUSINESSES_FEATURE_CODE)
     .maybeSingle();
   if (featureResult.error) throw featureResult.error;
 
@@ -235,12 +235,12 @@ export async function resolveMaxBusinessesUpgradeRecommendation(
 
   const planFeaturesResult = await admin
     .from("plan_features")
-    .select("value_int, plans:plans(code, is_active)")
+    .select("int_value, plans:plans(code, is_active)")
     .eq("feature_id", featureId);
   if (planFeaturesResult.error) throw planFeaturesResult.error;
 
   const rows = ((planFeaturesResult.data ?? []) as Array<{
-    value_int: number | null;
+    int_value: number | null;
     plans?: { code?: string; is_active?: boolean } | null;
   }>)
     .map((row) => {
@@ -250,9 +250,9 @@ export async function resolveMaxBusinessesUpgradeRecommendation(
       return {
         plan_code: planCode,
         limit_value:
-          row.value_int === null || row.value_int === undefined
+          row.int_value === null || row.int_value === undefined
             ? null
-            : Number(row.value_int),
+            : Number(row.int_value),
       } satisfies PlanLimitRow;
     })
     .filter((row): row is PlanLimitRow => Boolean(row));

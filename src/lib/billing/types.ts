@@ -46,6 +46,18 @@ export type PlanPriceRow = {
   updated_at: string;
 };
 
+/** Raw row from the `features` table. Production uses `key`; local seed uses `code`. */
+export type FeatureRowRaw = {
+  id: string;
+  key?: string;
+  code?: string;
+  name: string;
+  description: string | null;
+  value_type: FeatureValueType;
+  created_at: string;
+  updated_at: string;
+};
+
 export type FeatureRow = {
   id: string;
   code: string;
@@ -60,9 +72,10 @@ export type PlanFeatureRow = {
   id: string;
   plan_id: string;
   feature_id: string;
-  value_bool: boolean | null;
-  value_int: number | null;
-  value_text: string | null;
+  value_type: FeatureValueType;
+  bool_value: boolean | null;
+  int_value: number | null;
+  text_value: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -89,16 +102,17 @@ export type ManualEntitlementOverrideRow = {
   account_id: string;
   feature_id: string;
   override_type: OverrideType;
-  value_bool: boolean | null;
-  value_int: number | null;
-  value_text: string | null;
-  is_active: boolean;
+  value_type: FeatureValueType;
+  bool_value: boolean | null;
+  int_value: number | null;
+  text_value: string | null;
   reason: string | null;
-  created_by: string | null;
+  actor_id: string | null;
+  actor_email: string | null;
   expires_at: string | null;
-  metadata: Record<string, unknown> | null;
+  revoked_at: string | null;
+  revoked_by: string | null;
   created_at: string;
-  updated_at: string;
 };
 
 export type PaddleCustomerRow = {

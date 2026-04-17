@@ -12,6 +12,7 @@ type BusinessRow = {
   id: string;
   slug: string | null;
   name: string | null;
+  plan: string | null;
 };
 
 export type CurrentWorkspace = {
@@ -19,6 +20,7 @@ export type CurrentWorkspace = {
   slug: string;
   name: string | null;
   role: string | null;
+  plan: string | null;
 };
 
 export const resolveCurrentWorkspace = cache(async () => {
@@ -28,7 +30,11 @@ export const resolveCurrentWorkspace = cache(async () => {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return { user: null, workspace: null as CurrentWorkspace | null };
+    return {
+      user: null,
+      workspace: null as CurrentWorkspace | null,
+      workspaces: [] as CurrentWorkspace[],
+    };
   }
 
   const { data: membershipRows, error: membershipError } = await supabase
@@ -41,13 +47,17 @@ export const resolveCurrentWorkspace = cache(async () => {
 
   const memberships = (membershipRows ?? []) as MembershipRow[];
   if (memberships.length === 0) {
-    return { user, workspace: null as CurrentWorkspace | null };
+    return {
+      user,
+      workspace: null as CurrentWorkspace | null,
+      workspaces: [] as CurrentWorkspace[],
+    };
   }
 
   const businessIds = memberships.map((membership) => membership.business_id);
   const { data: businessRows, error: businessError } = await supabase
     .from("businesses")
-    .select("id, slug, name")
+    .select("id, slug, name, plan")
     .in("id", businessIds);
 
   if (businessError) throw businessError;
@@ -72,8 +82,26 @@ export const resolveCurrentWorkspace = cache(async () => {
 
   const selectedBusiness = businessById.get(selectedMembership.business_id);
   if (!selectedBusiness?.slug) {
-    return { user, workspace: null as CurrentWorkspace | null };
+    return {
+      user,
+      workspace: null as CurrentWorkspace | null,
+      workspaces: [] as CurrentWorkspace[],
+    };
   }
+
+  const workspaces = memberships
+    .map((membership) => {
+      const business = businessById.get(membership.business_id);
+      if (!business?.slug) return null;
+      return {
+        id: business.id,
+        slug: business.slug,
+        name: business.name,
+        role: membership.role,
+        plan: business.plan,
+      } satisfies CurrentWorkspace;
+    })
+    .filter((workspace): workspace is CurrentWorkspace => Boolean(workspace));
 
   return {
     user,
@@ -82,6 +110,8 @@ export const resolveCurrentWorkspace = cache(async () => {
       slug: selectedBusiness.slug,
       name: selectedBusiness.name,
       role: selectedMembership.role,
+      plan: selectedBusiness.plan,
     } satisfies CurrentWorkspace,
+    workspaces,
   };
 });

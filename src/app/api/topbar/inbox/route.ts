@@ -137,10 +137,6 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const businessId = String(searchParams.get("businessId") ?? "").trim();
 
-    if (!businessId) {
-      return NextResponse.json({ ok: false, error: "businessId required" }, { status: 400 });
-    }
-
     const supabase = await supabaseServer();
     const admin = supabaseAdmin();
 
@@ -201,7 +197,6 @@ export async function GET(request: Request) {
       .select("id, business_id, role, created_at, invited_by")
       .eq("email", user.email)
       .eq("status", "PENDING")
-      .eq("business_id", businessId)
       .order("created_at", { ascending: false })
       .limit(20);
 
@@ -270,6 +265,36 @@ export async function GET(request: Request) {
             String(order.id),
             String(order.business_id ?? ""),
           ]),
+        );
+      }
+    }
+
+    const inviteBusinessIds = Array.from(
+      new Set(
+        ((invites ?? []) as Array<{ business_id?: string | null }>)
+          .map((invite) => String(invite.business_id ?? "").trim())
+          .filter(Boolean),
+      ),
+    );
+    let businessesById = new Map<string, { id: string; slug: string; name: string | null }>();
+    if (inviteBusinessIds.length > 0) {
+      const { data: businesses } = await admin
+        .from("businesses")
+        .select("id,slug,name")
+        .in("id", inviteBusinessIds);
+
+      if (businesses) {
+        businessesById = new Map(
+          businesses
+            .filter((business) => business?.id && business?.slug)
+            .map((business) => [
+              String(business.id),
+              {
+                id: String(business.id),
+                slug: String(business.slug),
+                name: business.name ? String(business.name) : null,
+              },
+            ]),
         );
       }
     }
@@ -369,25 +394,34 @@ export async function GET(request: Request) {
       role: string | null;
       created_at: string | null;
       invited_by: string | null;
-    }>).map((invite) => ({
-      id: `invite:${String(invite.id)}`,
-      type: "invitation_received",
-      entity_type: "invitation",
-      entity_id: String(invite.id),
-      order_id: null,
-      order_number: null,
-      title: "You were invited to a workspace",
-      preview: String(invite.role ?? "MANAGER"),
-      actor_label: actorLabelsById.get(String(invite.invited_by ?? "")) ?? null,
-      is_read: true,
-      created_at: String(invite.created_at ?? new Date().toISOString()),
-      metadata: {
-        invite_id: invite.id,
-        business_id: invite.business_id,
-        role: invite.role,
-        invited_by: invite.invited_by,
-      },
-    }));
+    }>).map((invite) => {
+      const business = businessesById.get(String(invite.business_id ?? "").trim()) ?? null;
+      return {
+        id: `invite:${String(invite.id)}`,
+        type: "invitation_received",
+        entity_type: "invitation",
+        entity_id: String(invite.id),
+        order_id: null,
+        order_number: null,
+        title: business?.name
+          ? `Invite to ${business.name}`
+          : business?.slug
+            ? `Invite to /${business.slug}`
+            : "You were invited to a workspace",
+        preview: String(invite.role ?? "MANAGER"),
+        actor_label: actorLabelsById.get(String(invite.invited_by ?? "")) ?? null,
+        is_read: false,
+        created_at: String(invite.created_at ?? new Date().toISOString()),
+        metadata: {
+          invite_id: invite.id,
+          business_id: invite.business_id,
+          business_slug: business?.slug ?? null,
+          business_name: business?.name ?? null,
+          role: invite.role,
+          invited_by: invite.invited_by,
+        },
+      };
+    });
 
     const mergedNotifications = [...inboxNotifications, ...inviteNotifications].sort(
       (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),

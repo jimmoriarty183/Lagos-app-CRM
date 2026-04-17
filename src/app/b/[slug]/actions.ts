@@ -1931,22 +1931,125 @@ export async function setOrderManager(input: {
   managerId: string | null;
 }) {
   const { admin, userId } = await requireOrderManagerAccess(input.orderId);
+  const supabase = await supabaseServer();
+  const nextManagerId = cleanText(input.managerId) || null;
 
-  const { error: managerError } = await admin
+  const { data: orderBefore, error: orderBeforeError } = await admin
     .from("orders")
-    .update({ manager_id: input.managerId })
-    .eq("id", input.orderId);
+    .select("business_id, client_id")
+    .eq("id", input.orderId)
+    .maybeSingle();
+
+  if (orderBeforeError) throw new Error(orderBeforeError.message);
+  if (!orderBefore?.business_id) throw new Error("Order not found");
+
+  if (nextManagerId) {
+    const [primaryMembershipRes, fallbackMembershipRes] = await Promise.all([
+      admin
+        .from("memberships")
+        .select("user_id")
+        .eq("business_id", orderBefore.business_id)
+        .eq("user_id", nextManagerId)
+        .or("role.eq.OWNER,role.eq.owner,role.eq.MANAGER,role.eq.manager")
+        .maybeSingle(),
+      admin
+        .from("business_memberships")
+        .select("user_id")
+        .eq("business_id", orderBefore.business_id)
+        .eq("user_id", nextManagerId)
+        .or("role.eq.OWNER,role.eq.owner,role.eq.MANAGER,role.eq.manager")
+        .maybeSingle(),
+    ]);
+
+    if (primaryMembershipRes.error && fallbackMembershipRes.error) {
+      throw new Error(primaryMembershipRes.error.message);
+    }
+
+    const hasAccess = Boolean(
+      primaryMembershipRes.data?.user_id || fallbackMembershipRes.data?.user_id,
+    );
+
+    if (!hasAccess) {
+      throw new Error("Selected manager does not have access to this business.");
+    }
+
+    const { data: profileRow, error: profileLookupError } = await admin
+      .from("profiles")
+      .select("id")
+      .eq("id", nextManagerId)
+      .maybeSingle();
+
+    if (profileLookupError) throw new Error(profileLookupError.message);
+
+    if (!profileRow?.id) {
+      let email: string | null = null;
+      let fullName: string | null = null;
+      let firstName: string | null = null;
+      let lastName: string | null = null;
+
+      try {
+        const { data: authLookup, error: authLookupError } =
+          await admin.auth.admin.getUserById(nextManagerId);
+        if (authLookupError) throw authLookupError;
+
+        const authUser = authLookup?.user;
+        const meta = (authUser?.user_metadata ?? {}) as Record<string, unknown>;
+        email = cleanText(authUser?.email) || null;
+        firstName = cleanText(meta.first_name) || null;
+        lastName = cleanText(meta.last_name) || null;
+        fullName =
+          cleanText(meta.full_name) ||
+          [firstName, lastName].filter(Boolean).join(" ").trim() ||
+          email;
+      } catch {
+        fullName = null;
+      }
+
+      const { error: profileCreateError } = await admin.from("profiles").upsert(
+        {
+          id: nextManagerId,
+          email,
+          full_name: fullName,
+          first_name: firstName,
+          last_name: lastName,
+        },
+        { onConflict: "id" },
+      );
+
+      if (profileCreateError) throw new Error(profileCreateError.message);
+    }
+  }
+
+  const updateOrderManager = async (payload: { manager_id?: string | null; created_by?: string | null }) => {
+    const { error } = await admin
+      .from("orders")
+      .update(payload)
+      .eq("id", input.orderId);
+
+    if (!error) return null;
+
+    const message = String(error.message ?? "").toLowerCase();
+    const isActorIdNotificationError =
+      message.includes("null value in column \"actor_id\"") &&
+      message.includes("relation \"notifications\"");
+
+    if (!isActorIdNotificationError) return error;
+
+    const { error: sessionError } = await supabase
+      .from("orders")
+      .update(payload)
+      .eq("id", input.orderId);
+
+    return sessionError ?? null;
+  };
+
+  const managerError = await updateOrderManager({ manager_id: nextManagerId });
 
   if (!managerError) {
-    const { data: orderAfter } = await admin
-      .from("orders")
-      .select("client_id")
-      .eq("id", input.orderId)
-      .maybeSingle();
     await ensureClientCurrentManager({
       admin,
-      clientId: orderAfter?.client_id ? String(orderAfter.client_id) : null,
-      managerId: input.managerId,
+      clientId: orderBefore.client_id ? String(orderBefore.client_id) : null,
+      managerId: nextManagerId,
       actorUserId: userId,
     });
     revalidatePath(`/b/${input.businessSlug}`);
@@ -1955,10 +2058,7 @@ export async function setOrderManager(input: {
 
   if (isMissingColumnError(managerError, "manager_id")) {
     {
-      const { error: fallbackError } = await admin
-        .from("orders")
-        .update({ created_by: input.managerId })
-        .eq("id", input.orderId);
+      const fallbackError = await updateOrderManager({ created_by: nextManagerId });
 
       if (!fallbackError) {
         revalidatePath(`/b/${input.businessSlug}`);

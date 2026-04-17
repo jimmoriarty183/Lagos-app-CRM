@@ -410,6 +410,10 @@ export default function MobileOrdersList({
   }, [router]);
   useEffect(() => {
     if (!initialOpenOrderId) return;
+    if (typeof window !== "undefined") {
+      const isMobileViewport = window.matchMedia("(max-width: 1023px)").matches;
+      if (!isMobileViewport) return;
+    }
     if (!rows.some((order) => order.id === initialOpenOrderId)) return;
     setOpenId(initialOpenOrderId);
     clearFocusOrderParam();
