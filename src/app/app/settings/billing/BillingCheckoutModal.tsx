@@ -295,182 +295,160 @@ export default function BillingCheckoutModal(props: BillingCheckoutModalProps) {
 
       {open ? (
         <div
-          className="fixed inset-0 z-[80] flex items-center justify-center bg-black/45 p-3 sm:p-4"
+          className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 p-3 sm:p-4"
           onClick={() => setOpen(false)}
         >
           <div
-            className="max-h-[92vh] w-full max-w-[1120px] overflow-y-auto rounded-2xl border border-[#D6E0EC] bg-[#F7FAFF] p-3 shadow-2xl sm:p-4"
+            className="relative mx-auto flex max-h-[calc(100vh-2rem)] w-full max-w-[1200px] flex-col overflow-hidden rounded-2xl border border-[#D6E0EC] bg-[#F7FAFF] shadow-2xl sm:max-h-[calc(100vh-3rem)]"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <div className="inline-flex items-center rounded-full border border-[#C7D2FE] bg-[#EEF2FF] px-3 py-1 text-[11px] font-semibold text-[#4F46E5]">
-                  UK launch pricing
+            {/* Header */}
+            <div className="flex flex-none items-center justify-between gap-3 border-b border-[#E2E8F0] px-4 py-2.5">
+              <div className="flex items-center gap-3">
+                <div>
+                  <div className="flex items-center gap-2.5">
+                    <span className="rounded-full border border-[#C7D2FE] bg-[#EEF2FF] px-2.5 py-0.5 text-[10px] font-semibold text-[#4F46E5]">
+                      UK launch pricing
+                    </span>
+                    <h3 className="text-base font-semibold tracking-[-0.02em] text-[#0F172A] sm:text-lg">
+                      Control execution. Not just tasks.
+                    </h3>
+                  </div>
+                  <p className="mt-0.5 text-[12px] text-[#475569]">
+                    A CRM built for real operations — track orders, manage follow-ups, and keep your team accountable.
+                  </p>
                 </div>
-                <h3 className="mt-2 text-xl font-semibold tracking-[-0.02em] text-[#0F172A] sm:text-[26px]">
-                  Control execution. Not just tasks.
-                </h3>
-                <p className="mt-1.5 max-w-[640px] text-sm text-[#475569]">
-                  A CRM built for real operations — track orders, manage follow-ups, and keep
-                  your team accountable with full visibility and control.
-                </p>
               </div>
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                className="flex-none inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[#E5E7EB] text-[#6B7280] hover:bg-[#F9FAFB]"
-                aria-label="Close"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
 
-            <div className="mt-3 flex flex-wrap items-center gap-3">
-              <div className="inline-flex flex-wrap items-center gap-1 rounded-xl border border-[#D6E0EC] bg-[#F8FAFC] p-1">
+              <div className="flex flex-none items-center gap-2.5">
+                <div className="inline-flex items-center gap-0.5 rounded-lg border border-[#D6E0EC] bg-[#F8FAFC] p-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setInterval("monthly")}
+                    className={`rounded-md px-2.5 py-1 text-[12px] font-semibold ${
+                      interval === "monthly"
+                        ? "bg-white text-[#111827] shadow-[0_1px_2px_rgba(15,23,42,0.08)]"
+                        : "text-[#64748B]"
+                    }`}
+                  >
+                    Monthly
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setInterval("yearly")}
+                    className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[12px] font-semibold ${
+                      interval === "yearly"
+                        ? "bg-white text-[#111827] shadow-[0_1px_2px_rgba(15,23,42,0.08)]"
+                        : "text-[#64748B]"
+                    }`}
+                  >
+                    Yearly
+                    <span className="rounded-full bg-[#EEF2FF] px-1.5 py-px text-[9px] font-bold text-[#4F46E5]">
+                      -2mo
+                    </span>
+                  </button>
+                </div>
+
                 <button
                   type="button"
-                  onClick={() => setInterval("monthly")}
-                  className={`rounded-lg px-3 py-1.5 text-sm font-semibold ${
-                    interval === "monthly"
-                      ? "bg-white text-[#111827] shadow-[0_1px_2px_rgba(15,23,42,0.08)]"
-                      : "text-[#64748B]"
-                  }`}
+                  onClick={() => setOpen(false)}
+                  className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-[#E5E7EB] text-[#6B7280] hover:bg-[#F9FAFB]"
+                  aria-label="Close"
                 >
-                  Monthly
+                  <X className="h-3.5 w-3.5" />
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setInterval("yearly")}
-                  className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold ${
-                    interval === "yearly"
-                      ? "bg-white text-[#111827] shadow-[0_1px_2px_rgba(15,23,42,0.08)]"
-                      : "text-[#64748B]"
-                  }`}
-                >
-                  Yearly
-                  <span className="rounded-full border border-[#C7D2FE] bg-[#EEF2FF] px-2 py-0.5 text-[10px] font-semibold text-[#4F46E5]">
-                    2 months free
-                  </span>
-                </button>
-              </div>
-              <p className="text-sm font-semibold text-[#4F46E5]">
-                Founding launch pricing available for a limited period.
-              </p>
-            </div>
-
-            <div className="mt-2 flex flex-wrap items-center gap-3">
-              <button
-                type="button"
-                onClick={() => handleOpenCheckout(plan)}
-                disabled={loading}
-                className="rounded-xl border border-[#4F46E5] bg-[#4F46E5] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
-              >
-                {loading ? "Opening..." : "Get started"}
-              </button>
-              <a
-                href="/pricing"
-                className="rounded-xl border border-[#CBD5E1] bg-white px-4 py-2 text-sm font-semibold text-[#0F172A]"
-              >
-                Compare plans
-              </a>
-              <div className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2 text-xs text-[#475569]">
-                Checkout email:{" "}
-                <span className="font-semibold text-[#0F172A]">
-                  {props.customerEmail || "will be requested in checkout"}
-                </span>
               </div>
             </div>
 
-            <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
-              {PLAN_OPTIONS.map((option) => (
-                <article
-                  key={option.code}
-                  onClick={() => setPlan(option.code)}
-                  className={`relative flex cursor-pointer flex-col rounded-2xl border bg-white p-4 transition ${
-                    plan === option.code
-                      ? "border-[#818CF8] ring-1 ring-[#818CF8] shadow-[0_6px_20px_rgba(79,70,229,0.10)]"
-                      : "border-[#E2E8F0] hover:border-[#C7D2FE]"
-                  }`}
-                >
-                  {currentPlanCode && option.code === currentPlanCode ? (
-                    <span className="absolute right-3 top-3 rounded-full border border-[#34D399] bg-[#ECFDF3] px-2.5 py-0.5 text-[10px] font-semibold text-[#047857]">
-                      Current plan
-                    </span>
-                  ) : null}
-                  {!currentPlanCode && option.code === "business" ? (
-                    <span className="absolute right-3 top-3 rounded-full border border-[#C7D2FE] bg-[#EEF2FF] px-2.5 py-0.5 text-[10px] font-semibold text-[#4F46E5]">
-                      Most popular
-                    </span>
-                  ) : null}
-
-                  <h4 className="text-lg font-semibold tracking-[-0.02em] text-[#0F172A]">
-                    {option.label}
-                  </h4>
-                  <p className="mt-1 text-[13px] leading-[1.4] text-[#475569]">{option.description}</p>
-
-                  <div className="mt-3 border-t border-[#F1F5F9] pt-3">
-                    <div className="flex items-center gap-2">
-                      <span className="rounded-full border border-[#C7D2FE] bg-[#EEF2FF] px-2 py-0.5 text-[10px] font-semibold text-[#4F46E5]">
-                        Launch price
+            {/* Plan cards */}
+            <div className="px-4 py-2.5">
+              <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-4">
+                {PLAN_OPTIONS.map((option) => (
+                  <article
+                    key={option.code}
+                    onClick={() => setPlan(option.code)}
+                    className={`relative flex cursor-pointer flex-col rounded-xl border bg-white px-3 py-2.5 transition ${
+                      plan === option.code
+                        ? "border-[#818CF8] ring-1 ring-[#818CF8] shadow-[0_4px_16px_rgba(79,70,229,0.10)]"
+                        : "border-[#E2E8F0] hover:border-[#C7D2FE]"
+                    }`}
+                  >
+                    {currentPlanCode && option.code === currentPlanCode ? (
+                      <span className="absolute right-2 top-2 rounded-full border border-[#34D399] bg-[#ECFDF3] px-1.5 py-px text-[9px] font-semibold text-[#047857]">
+                        Current
                       </span>
-                      <span className="text-[12px] font-medium text-[#94A3B8] line-through">
+                    ) : null}
+                    {!currentPlanCode && option.code === "business" ? (
+                      <span className="absolute right-2 top-2 rounded-full border border-[#C7D2FE] bg-[#EEF2FF] px-1.5 py-px text-[9px] font-semibold text-[#4F46E5]">
+                        Popular
+                      </span>
+                    ) : null}
+
+                    <h4 className="text-[14px] font-semibold text-[#0F172A]">{option.label}</h4>
+                    <p className="text-[10px] leading-[1.3] text-[#64748B]">{option.description}</p>
+
+                    <div className="mt-1.5 flex items-baseline gap-0.5 text-[#0F172A]">
+                      <span className="text-base font-bold leading-none">£</span>
+                      <span className="text-[28px] font-bold leading-none tracking-[-0.03em]">
+                        {interval === "monthly" ? option.launchAmount : `${option.launchAmount}0`}
+                      </span>
+                      <span className="ml-0.5 text-[11px] font-semibold text-[#64748B]">
+                        /{interval === "monthly" ? "mo" : "yr"}
+                      </span>
+                      <span className="ml-1 text-[10px] font-medium text-[#94A3B8] line-through">
                         £{interval === "monthly" ? option.regularAmount : `${option.regularAmount}0`}
                       </span>
                     </div>
-                    <div className="mt-1.5 flex items-baseline gap-0.5 text-[#0F172A]">
-                      <span className="text-2xl font-bold leading-none">£</span>
-                      <span className="text-[40px] font-bold leading-none tracking-[-0.03em]">
-                        {interval === "monthly" ? option.launchAmount : `${option.launchAmount}0`}
-                      </span>
-                      <span className="ml-0.5 text-base font-semibold text-[#64748B]">
-                        / {interval === "monthly" ? "month" : "year"}
-                      </span>
-                    </div>
-                  </div>
 
-                  {interval === "yearly" ? (
-                    <p className="mt-1 text-xs font-semibold text-[#4F46E5]">
-                      £{option.monthlyLaunchAmount}/mo billed annually
+                    <p className="text-[10px] font-medium text-[#64748B]">
+                      {interval === "yearly"
+                        ? `£${option.monthlyLaunchAmount}/mo billed annually`
+                        : option.note[interval]}
                     </p>
-                  ) : null}
 
-                  <p className="mt-1 text-[13px] font-medium text-[#475569]">{option.note[interval]}</p>
+                    <ul className="mt-1.5 flex-1 space-y-px border-t border-[#F1F5F9] pt-1.5 text-[10px] leading-[1.5] text-[#334155]">
+                      {option.features.map((feature) => (
+                        <li key={feature} className="flex items-center gap-1">
+                          <svg className="h-2.5 w-2.5 flex-none text-[#4F46E5]" viewBox="0 0 16 16" fill="none">
+                            <path d="M13.5 4.5L6.5 11.5L2.5 7.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
 
-                  <ul className="mt-3 flex-1 space-y-1.5 border-t border-[#F1F5F9] pt-3 text-[13px] text-[#334155]">
-                    {option.features.map((feature) => (
-                      <li key={feature} className="flex items-start gap-2">
-                        <svg className="mt-0.5 h-3.5 w-3.5 flex-none text-[#4F46E5]" viewBox="0 0 16 16" fill="none">
-                          <path d="M13.5 4.5L6.5 11.5L2.5 7.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                        {feature}
-                      </li>
-                    ))}
-                  </ul>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setPlan(option.code);
+                        void handleOpenCheckout(option.code);
+                      }}
+                      disabled={loading || option.code === currentPlanCode}
+                      className={`mt-1.5 w-full rounded-lg border px-2 py-1 text-[11px] font-semibold transition ${
+                        option.code === currentPlanCode
+                          ? "cursor-not-allowed border-[#D1FAE5] bg-[#ECFDF3] text-[#047857]"
+                          : option.code === "business"
+                            ? "border-[#4F46E5] bg-[#4F46E5] text-white hover:bg-[#4338CA]"
+                            : "border-[#CBD5E1] bg-white text-[#0F172A] hover:border-[#A5B4FC] hover:bg-[#F5F3FF]"
+                      } disabled:opacity-60`}
+                    >
+                      {option.code === currentPlanCode ? "Current plan" : option.cta}
+                    </button>
+                  </article>
+                ))}
+              </div>
+            </div>
 
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setPlan(option.code);
-                      void handleOpenCheckout(option.code);
-                    }}
-                    disabled={loading || option.code === currentPlanCode}
-                    className={`mt-3 w-full rounded-xl border px-3 py-2.5 text-sm font-semibold transition ${
-                      option.code === currentPlanCode
-                        ? "cursor-not-allowed border-[#D1FAE5] bg-[#ECFDF3] text-[#047857]"
-                        : option.code === "business"
-                          ? "border-[#4F46E5] bg-[#4F46E5] text-white hover:bg-[#4338CA]"
-                          : "border-[#CBD5E1] bg-white text-[#0F172A] hover:border-[#A5B4FC] hover:bg-[#F5F3FF]"
-                    } disabled:opacity-60`}
-                  >
-                    {option.code === currentPlanCode ? "Current plan" : option.cta}
-                  </button>
-                </article>
-              ))}
+            {/* Footer */}
+            <div className="flex flex-none items-center gap-2 border-t border-[#E2E8F0] px-4 py-1.5 text-[10px] text-[#64748B]">
+              <span className="font-semibold text-[#4F46E5]">Launch pricing</span>
+              <span>·</span>
+              <span>{props.customerEmail || "Email will be requested at checkout"}</span>
             </div>
 
             {error ? (
-              <div className="mt-3 rounded-xl border border-[#FECACA] bg-[#FEF2F2] p-3 text-sm text-[#991B1B]">
+              <div className="border-t border-[#FECACA] bg-[#FEF2F2] px-5 py-2 text-[12px] text-[#991B1B]">
                 {error}
               </div>
             ) : null}
