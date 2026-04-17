@@ -107,7 +107,7 @@ export default async function SelectBusinessPage() {
             {options.map((option) => (
               <Link
                 key={option.id}
-                href={`/b/${option.slug}`}
+                href={`/api/workspace/select?slug=${encodeURIComponent(option.slug)}`}
                 className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 transition hover:border-slate-300 hover:bg-white"
               >
                 <div className="min-w-0">
@@ -118,7 +118,7 @@ export default async function SelectBusinessPage() {
                     /b/{option.slug}
                   </div>
                 </div>
-                <span className="shrink-0 rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-900">
+                <span className="shrink-0 rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white">
                   {option.roleLabel}
                 </span>
               </Link>
