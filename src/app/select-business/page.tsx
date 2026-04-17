@@ -1,5 +1,4 @@
 ﻿import type { Metadata } from "next";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { BrandIcon, BrandWordmark } from "@/components/Brand";
 import { supabaseServerReadOnly } from "@/lib/supabase/server";
@@ -32,6 +31,13 @@ function normalizeRole(role: string | null) {
   if (value === "OWNER") return "Owner";
   if (value === "MANAGER") return "Manager";
   return "Member";
+}
+
+function roleBadgeClass(role: string) {
+  const value = role.toUpperCase();
+  if (value === "OWNER") return "border-[#C7D2FE] bg-[#EEF2FF] text-[#3645A0]";
+  if (value === "MANAGER") return "border-[#E5E7EB] bg-[#F9FAFB] text-[#475467]";
+  return "border-[#E5E7EB] bg-white text-[#98A2B3]";
 }
 
 export default async function SelectBusinessPage() {
@@ -105,7 +111,7 @@ export default async function SelectBusinessPage() {
 
           <div className="space-y-3 px-6 py-6 sm:px-8 sm:py-8">
             {options.map((option) => (
-              <Link
+              <a
                 key={option.id}
                 href={`/api/workspace/select?slug=${encodeURIComponent(option.slug)}`}
                 className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 transition hover:border-slate-300 hover:bg-white"
@@ -114,14 +120,11 @@ export default async function SelectBusinessPage() {
                   <div className="truncate text-base font-semibold text-slate-900">
                     {option.name}
                   </div>
-                  <div className="mt-1 text-sm text-slate-500">
-                    /b/{option.slug}
-                  </div>
                 </div>
-                <span className="shrink-0 rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white">
+                <span className={`shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-semibold ${roleBadgeClass(option.roleLabel)}`}>
                   {option.roleLabel}
                 </span>
-              </Link>
+              </a>
             ))}
           </div>
         </div>
