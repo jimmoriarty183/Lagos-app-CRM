@@ -8,9 +8,9 @@ type PageProps = {
   params: Promise<{ accountId: string }>;
 };
 
-type FeatureOption = {
+type FeatureOptionRaw = {
   id: string;
-  code: string;
+  key: string;
   name: string;
   value_type: "boolean" | "integer" | "text";
 };
@@ -29,18 +29,18 @@ export default async function AdminBillingAccountPage({ params }: PageProps) {
         .maybeSingle(),
       admin
         .from("features")
-        .select("id, code, name, value_type")
-        .order("code", { ascending: true }),
+        .select("id, key, name, value_type")
+        .order("key", { ascending: true }),
     ]);
 
   if (accountError) throw accountError;
   if (!accountData) notFound();
   if (featuresError) throw featuresError;
 
-  const features = ((featuresData ?? []) as FeatureOption[]).map((feature) => ({
+  const features = ((featuresData ?? []) as FeatureOptionRaw[]).map((feature) => ({
     id: feature.id,
-    code: feature.code,
-    name: feature.name || feature.code,
+    code: feature.key,
+    name: feature.name || feature.key,
     value_type: feature.value_type,
   }));
 
