@@ -564,7 +564,7 @@ export default async function TodayFollowUpsPage({
   ];
 
   const businessHref = buildScopedHref("/app/crm", phoneRaw);
-  const settingsHref = buildScopedHref("/app/settings", phoneRaw);
+  const settingsHref = buildScopedHref(`/b/${slug}/settings`, phoneRaw);
   const todayHref = buildScopedHref(`/b/${slug}/today`, phoneRaw);
   const supportHref = buildScopedHref(`/b/${slug}/support`, phoneRaw);
   const analyticsHref = buildScopedHref(`/b/${slug}/analytics`, phoneRaw);

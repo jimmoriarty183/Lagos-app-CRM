@@ -72,7 +72,7 @@ export default function TopBar({
   const userLabel = currentUserName?.trim() || "User";
   const roleLabel =
     role === "OWNER" ? "owner" : role === "MANAGER" ? "manager" : "guest";
-  const resolvedSettingsHref = settingsHref ?? "/app/settings";
+  const resolvedSettingsHref = settingsHref ?? `/b/${businessSlug}/settings`;
   const profileHref = "/app/profile";
   const resolvedBillingHref = billingHref ?? "/app/settings/billing";
   const canManage = role === "OWNER" || role === "MANAGER";

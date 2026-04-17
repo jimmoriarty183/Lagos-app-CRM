@@ -111,7 +111,7 @@ export default async function SettingsPage({
             analyticsHref={`/b/${business.slug}/analytics`}
             todayHref={`/b/${business.slug}/today`}
             supportHref={`/b/${business.slug}/support`}
-            settingsHref={`/app/settings`}
+            settingsHref={`/b/${business.slug}/settings`}
             adminHref={adminHref}
             canSeeAnalytics={role === "OWNER"}
             showFilters={false}

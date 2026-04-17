@@ -357,8 +357,8 @@ export default async function OwnerAnalyticsPage({
       : "/app/crm";
   const settingsHref =
     phoneRaw && phoneRaw.length > 0
-      ? `/app/settings?u=${encodeURIComponent(phoneRaw)}`
-      : "/app/settings";
+      ? `/b/${slug}/settings?u=${encodeURIComponent(phoneRaw)}`
+      : `/b/${slug}/settings`;
   const todayHref =
     phoneRaw && phoneRaw.length > 0
       ? `/b/${slug}/today?u=${encodeURIComponent(phoneRaw)}`

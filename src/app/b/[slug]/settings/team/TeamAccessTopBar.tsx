@@ -119,7 +119,7 @@ export default function TeamAccessTopBar({
               currentPlan={currentPlan}
               businessId={businessId}
               profileHref={profileHref}
-              settingsHref="/app/settings"
+              settingsHref={currentBusinessSlug ? `/b/${currentBusinessSlug}/settings` : "/app/settings"}
               billingHref={billingHref ?? "/app/settings/billing"}
               adminHref={adminHref}
               userAvatarUrl={userAvatarUrl}
