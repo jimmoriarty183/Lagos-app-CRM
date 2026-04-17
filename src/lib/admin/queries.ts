@@ -195,6 +195,11 @@ type RawAuthUser = {
   last_sign_in_at: string | null;
 };
 
+type RawAccount = {
+  id: string;
+  slug: string | null;
+};
+
 type RawAccountUser = {
   account_id: string | null;
   user_id: string | null;
@@ -332,10 +337,25 @@ export async function loadAdminDataset() {
   const invites = (invitesRes.data ?? []) as RawInvite[];
   const orders = (ordersRes.data ?? []) as RawOrder[];
   const activityEvents = (activityRes.data ?? []) as RawActivityEvent[];
+  let accounts: RawAccount[] = [];
   let accountUsers: RawAccountUser[] = [];
   let subscriptions: RawSubscription[] = [];
   let planPrices: RawPlanPrice[] = [];
   let plans: RawPlan[] = [];
+
+  try {
+    const accountsRes = await admin.from("accounts").select("id,slug");
+    if (accountsRes.error) {
+      if (!isIgnorableOptionalAdminQueryError(accountsRes.error)) {
+        throw new Error(accountsRes.error.message);
+      }
+    } else {
+      accounts = (accountsRes.data ?? []) as RawAccount[];
+    }
+  } catch (error: unknown) {
+    const queryError = error as QueryErrorLike;
+    if (!isIgnorableOptionalAdminQueryError(queryError)) throw error;
+  }
 
   try {
     const accountUsersRes = await admin.from("account_users").select("account_id,user_id");
@@ -471,6 +491,12 @@ export async function loadAdminDataset() {
     set.add(accountId);
     accountIdsByUserId.set(userId, set);
   }
+
+  const accountIdBySlug = new Map(
+    accounts
+      .filter((a) => a.slug)
+      .map((a) => [String(a.slug).trim(), String(a.id)]),
+  );
 
   const planIdByPriceId = new Map(planPrices.map((item) => [String(item.id), String(item.plan_id ?? "").trim()]));
   const planCodeByPlanId = new Map(plans.map((item) => [String(item.id), String(item.code ?? "").trim().toUpperCase()]));
@@ -622,32 +648,29 @@ export async function loadAdminDataset() {
     );
     const owner = businessMemberships.find((membership) => membership.role === "OWNER") ?? null;
 
-    // Resolve billing plan & subscription status via owner → account → subscription
-    const ownerId = business.owner_id ?? owner?.userId ?? null;
+    // Resolve billing plan & subscription status via business slug → account → subscription
     let billingPlanCode: string | null = null;
     let subscriptionStatus: string | null = null;
 
-    if (ownerId) {
-      const ownerAccountIds = accountIdsByUserId.get(ownerId);
-      if (ownerAccountIds) {
-        for (const accountId of ownerAccountIds) {
-          const accountSubs = subscriptionsByAccountId.get(accountId);
-          if (!accountSubs?.length) continue;
-          const sorted = [...accountSubs].sort((left, right) => {
-            const statusDelta = subscriptionStatusPriority(left.status) - subscriptionStatusPriority(right.status);
-            if (statusDelta !== 0) return statusDelta;
-            const leftTs = asTimeMs(left.updated_at) || asTimeMs(left.created_at);
-            const rightTs = asTimeMs(right.updated_at) || asTimeMs(right.created_at);
-            return rightTs - leftTs;
-          });
-          const best = sorted[0];
-          if (best) {
-            subscriptionStatus = best.status ?? null;
-            const priceId = String(best.plan_price_id ?? "").trim();
-            const planId = planIdByPriceId.get(priceId) ?? "";
-            billingPlanCode = planCodeByPlanId.get(planId) ?? null;
-            break;
-          }
+    const businessSlug = String(business.slug ?? "").trim();
+    const matchedAccountId = businessSlug ? accountIdBySlug.get(businessSlug) : null;
+
+    if (matchedAccountId) {
+      const accountSubs = subscriptionsByAccountId.get(matchedAccountId);
+      if (accountSubs?.length) {
+        const sorted = [...accountSubs].sort((left, right) => {
+          const statusDelta = subscriptionStatusPriority(left.status) - subscriptionStatusPriority(right.status);
+          if (statusDelta !== 0) return statusDelta;
+          const leftTs = asTimeMs(left.updated_at) || asTimeMs(left.created_at);
+          const rightTs = asTimeMs(right.updated_at) || asTimeMs(right.created_at);
+          return rightTs - leftTs;
+        });
+        const best = sorted[0];
+        if (best) {
+          subscriptionStatus = best.status ?? null;
+          const priceId = String(best.plan_price_id ?? "").trim();
+          const planId = planIdByPriceId.get(priceId) ?? "";
+          billingPlanCode = planCodeByPlanId.get(planId) ?? null;
         }
       }
     }
