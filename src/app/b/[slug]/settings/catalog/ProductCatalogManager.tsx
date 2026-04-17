@@ -12,8 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { createClient as createBrowserClient } from "@/lib/supabase/client";
-import { createCatalogProduct, setCatalogProductStatus, updateCatalogProduct } from "./actions";
+import { createCatalogProduct, setCatalogProductStatus, updateCatalogProduct, getProductStock, updateProductStock } from "./actions";
 
 type ProductRow = {
   id: string;
@@ -27,6 +26,7 @@ type ProductRow = {
   currency_code: string;
   status: "ACTIVE" | "INACTIVE";
   updated_at: string;
+  stock_qty?: number | null;
 };
 
 function fmtNumber(value: number | string) {
@@ -105,20 +105,10 @@ export default function ProductCatalogManager({
       stockQty: "",
     });
     setEditError(null);
-    // Load stock quantity
     if (row.is_stock_managed) {
-      const supabase = createBrowserClient();
-      supabase
-        .from("inventory_balances")
-        .select("on_hand_qty")
-        .eq("product_id", row.id)
-        .limit(1)
-        .maybeSingle()
-        .then(({ data }) => {
-          if (data?.on_hand_qty != null) {
-            setEditForm((f) => ({ ...f, stockQty: String(Number(data.on_hand_qty)) }));
-          }
-        });
+      getProductStock({ businessSlug, productId: row.id }).then((res) => {
+        if (res.ok) setEditForm((f) => ({ ...f, stockQty: String(res.qty) }));
+      });
     }
   }
 
@@ -142,17 +132,10 @@ export default function ProductCatalogManager({
         setEditError(result.error);
         return;
       }
-      // Update stock if changed
       if (editForm.isStockManaged && editForm.stockQty.trim()) {
-        const supabase = createBrowserClient();
         const qty = Number(editForm.stockQty);
         if (Number.isFinite(qty)) {
-          await supabase
-            .from("inventory_balances")
-            .upsert(
-              { product_id: editingProduct.id, on_hand_qty: qty, available_qty: qty },
-              { onConflict: "product_id" },
-            );
+          await updateProductStock({ businessSlug, productId: editingProduct.id, qty });
         }
       }
       setEditingProduct(null);
@@ -615,8 +598,13 @@ export default function ProductCatalogManager({
                             {row.sku}
                           </span>
                         </div>
-                        <div className="mt-0.5 text-xs text-[#667085]">
-                          {fmtNumber(row.default_unit_price)} {row.currency_code}
+                        <div className="mt-0.5 flex items-center gap-2 text-xs text-[#667085]">
+                          <span>{fmtNumber(row.default_unit_price)} {row.currency_code}</span>
+                          {row.is_stock_managed && row.stock_qty != null ? (
+                            <span className="rounded border border-[#E5E7EB] bg-[#F9FAFB] px-1.5 py-px text-[10px] font-medium">
+                              qty: {row.stock_qty}
+                            </span>
+                          ) : null}
                         </div>
                       </div>
                       <span

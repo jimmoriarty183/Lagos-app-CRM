@@ -151,9 +151,28 @@ export default async function CatalogProductsPage({
   }).primary;
   const currentUserAvatarUrl =
     String(profile?.avatar_url ?? user.user_metadata?.avatar_url ?? "").trim() || undefined;
-  const rows = ((productsData ?? []) as Record<string, unknown>[])
+  const rawRows = ((productsData ?? []) as Record<string, unknown>[])
     .map(asProductRow)
     .filter((row) => row.id);
+
+  // Load stock quantities
+  const stockProductIds = rawRows.filter((r) => r.is_stock_managed).map((r) => r.id);
+  let stockMap = new Map<string, number>();
+  if (stockProductIds.length > 0) {
+    const { data: balances } = await admin
+      .from("inventory_balances")
+      .select("product_id, on_hand_qty")
+      .in("product_id", stockProductIds);
+    if (balances) {
+      for (const b of balances as { product_id: string; on_hand_qty: number }[]) {
+        stockMap.set(b.product_id, Number(b.on_hand_qty ?? 0));
+      }
+    }
+  }
+  const rows = rawRows.map((r) => ({
+    ...r,
+    stock_qty: r.is_stock_managed ? (stockMap.get(r.id) ?? 0) : null,
+  }));
 
   return (
     <div className="min-h-[100svh] overflow-x-clip bg-transparent text-[#1F2937]">

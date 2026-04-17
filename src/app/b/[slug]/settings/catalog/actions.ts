@@ -246,6 +246,99 @@ export async function createCatalogProduct(input: {
   }
 }
 
+export async function getProductStock(input: {
+  businessSlug: string;
+  productId: string;
+}) {
+  try {
+    const { admin, businessId } = await requireCatalogManagerAccess(input.businessSlug);
+    const warehouseCode = buildWarehouseCodeForBusiness(businessId);
+    const { data: warehouse } = await admin
+      .from("warehouses")
+      .select("id")
+      .eq("warehouse_code", warehouseCode)
+      .eq("is_deleted", false)
+      .maybeSingle();
+    if (!warehouse?.id) return { ok: true as const, qty: 0 };
+    const { data: balance } = await admin
+      .from("inventory_balances")
+      .select("on_hand_qty")
+      .eq("warehouse_id", warehouse.id)
+      .eq("product_id", input.productId)
+      .maybeSingle();
+    return { ok: true as const, qty: Number(balance?.on_hand_qty ?? 0) };
+  } catch (error) {
+    return { ok: false as const, qty: 0, error: normalizeCatalogError(error) };
+  }
+}
+
+export async function updateProductStock(input: {
+  businessSlug: string;
+  productId: string;
+  qty: number;
+}) {
+  try {
+    const { admin, userId, businessId } = await requireCatalogManagerAccess(input.businessSlug);
+    const qty = Math.max(0, input.qty);
+    const warehouseCode = buildWarehouseCodeForBusiness(businessId);
+
+    // Find or create warehouse
+    let { data: warehouse } = await admin
+      .from("warehouses")
+      .select("id")
+      .eq("warehouse_code", warehouseCode)
+      .eq("is_deleted", false)
+      .maybeSingle();
+
+    if (!warehouse?.id) {
+      const { data: created, error: createErr } = await admin
+        .from("warehouses")
+        .insert({ warehouse_code: warehouseCode, name: "Main Warehouse", status: "ACTIVE", created_by: userId, updated_by: userId })
+        .select("id")
+        .single();
+      if (createErr) {
+        const { data: existing } = await admin.from("warehouses").select("id").eq("warehouse_code", warehouseCode).eq("is_deleted", false).maybeSingle();
+        warehouse = existing;
+      } else {
+        warehouse = created;
+      }
+    }
+    if (!warehouse?.id) throw new Error("Could not resolve warehouse");
+
+    // Check existing balance
+    const { data: existing } = await admin
+      .from("inventory_balances")
+      .select("id, reserved_qty")
+      .eq("warehouse_id", warehouse.id)
+      .eq("product_id", input.productId)
+      .maybeSingle();
+
+    const reserved = Number(existing?.reserved_qty ?? 0);
+    const available = Math.max(0, qty - reserved);
+
+    if (existing?.id) {
+      const { error } = await admin
+        .from("inventory_balances")
+        .update({ on_hand_qty: qty, available_qty: available, updated_by: userId })
+        .eq("id", existing.id);
+      if (error) throw new Error(error.message);
+    } else {
+      const { error } = await admin
+        .from("inventory_balances")
+        .insert({ warehouse_id: warehouse.id, product_id: input.productId, on_hand_qty: qty, reserved_qty: 0, available_qty: qty, created_by: userId, updated_by: userId });
+      if (error) {
+        const msg = String(error.message ?? "");
+        if (!msg.toLowerCase().includes("permission denied for schema app")) throw new Error(msg);
+      }
+    }
+
+    revalidatePath(`/b/${input.businessSlug}/catalog/products`);
+    return { ok: true as const };
+  } catch (error) {
+    return { ok: false as const, error: normalizeCatalogError(error) };
+  }
+}
+
 export async function setCatalogProductStatus(input: {
   businessSlug: string;
   productId: string;
