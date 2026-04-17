@@ -74,7 +74,7 @@ export default async function StatusesPage({
   return (
     <div className="min-h-[100svh] overflow-x-clip bg-transparent text-[#1F2937]">
       <TeamAccessTopBar
-        ordersHref="/app/crm"
+        ordersHref={`/b/${business.slug}`}
         userLabel={currentUserName}
         currentPlan={business.plan}
         businessId={String(business.id)}

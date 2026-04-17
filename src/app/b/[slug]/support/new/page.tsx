@@ -27,7 +27,7 @@ export default async function NewBusinessSupportRequestPage({
       isAdmin: isAdminEmail(context.user.email),
     }));
 
-  const businessHref = "/app/crm";
+  const businessHref = `/b/${slug}`;
   const todayHref = `/b/${slug}/today`;
   const settingsHref = `/b/${slug}/settings`;
   const supportHref = `/b/${slug}/support`;

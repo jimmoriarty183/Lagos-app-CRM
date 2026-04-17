@@ -17,17 +17,29 @@ function upperRole(value: string | null | undefined): "OWNER" | "MANAGER" | "GUE
   return "GUEST";
 }
 
-export default async function PlatformSettingsPage() {
-  const { user, workspace, workspaces } = await resolveCurrentWorkspace();
+export default async function PlatformSettingsPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ b?: string }>;
+}) {
+  const { user, workspace: cookieWorkspace, workspaces } = await resolveCurrentWorkspace();
 
   if (!user) {
     redirect("/login?next=%2Fapp%2Fsettings");
   }
 
-  if (!workspace) {
+  if (!cookieWorkspace) {
     redirect("/select-business");
   }
 
+  const sp = await (searchParams ?? Promise.resolve({}));
+  const requestedSlug = String(sp?.b ?? "").trim();
+  const workspace =
+    (requestedSlug
+      ? workspaces.find((w) => w.slug === requestedSlug)
+      : undefined) ?? cookieWorkspace;
+
+  const billingHref = `/app/settings/billing?b=${encodeURIComponent(workspace.slug)}`;
   const adminHref = isAdminEmail(user.email) ? getAdminUsersPath() : undefined;
   const accountLabel = user.email || user.phone || "User";
   let currentUserName = accountLabel;
@@ -60,7 +72,7 @@ export default async function PlatformSettingsPage() {
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#F8FAFC_0%,#EEF2FF_100%)] text-[#111827]">
       <TeamAccessTopBar
-        ordersHref="/app/crm"
+        ordersHref={`/b/${workspace.slug}`}
         userLabel={currentUserName}
         profileHref="/app/profile"
         currentPlan={workspace.plan}
@@ -172,7 +184,7 @@ export default async function PlatformSettingsPage() {
                 </Link>
 
                 <Link
-                  href="/app/settings/billing"
+                  href={billingHref}
                   className="group rounded-xl border border-[#E5E7EB] bg-white p-3 shadow-[0_10px_30px_rgba(15,23,42,0.04)] transition hover:border-[#D6DAE1] hover:bg-[#FCFCFD]"
                 >
                   <div className="flex items-center justify-between gap-3">

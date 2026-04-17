@@ -71,15 +71,37 @@ export default async function SettingsPage({
   const currentUserAvatarUrl =
     String(profile?.avatar_url ?? user.user_metadata?.avatar_url ?? "").trim() || undefined;
 
+  const { data: userMemberships } = await supabase
+    .from("memberships")
+    .select("business_id, role")
+    .eq("user_id", user.id);
+  const bizIds = (userMemberships ?? []).map((m: { business_id: string }) => m.business_id);
+  const { data: allBusinesses } = bizIds.length > 0
+    ? await supabase.from("businesses").select("id, slug, name").in("id", bizIds)
+    : { data: [] as { id: string; slug: string; name: string | null }[] };
+  const businessOptions = (allBusinesses ?? []).map((b) => ({
+    id: String(b.id),
+    slug: String(b.slug),
+    name: String(b.name ?? b.slug),
+    role: (
+      (userMemberships ?? []).find(
+        (m: { business_id: string; role: string | null }) => m.business_id === b.id,
+      )?.role ?? "GUEST"
+    ).toString().toUpperCase() as "OWNER" | "MANAGER" | "GUEST",
+    isAdmin: Boolean(adminHref),
+  }));
+
   return (
     <div className="min-h-[100svh] overflow-x-clip bg-transparent text-[#1F2937]">
       <TeamAccessTopBar
-        ordersHref="/app/crm"
+        ordersHref={`/b/${slug}`}
         userLabel={currentUserName}
         currentPlan={business.plan}
         businessId={String(business.id)}
         adminHref={adminHref}
         userAvatarUrl={currentUserAvatarUrl}
+        businesses={businessOptions}
+        currentBusinessSlug={slug}
         profileHref={
           user.phone
             ? `/m/${encodeURIComponent(user.phone)}`
@@ -104,8 +126,8 @@ export default async function SettingsPage({
             currentUserId={user.id}
             hasActiveFilters={false}
             activeFiltersCount={0}
-            clearHref={`/app/crm`}
-            businessHref={`/app/crm`}
+            clearHref={`/b/${business.slug}`}
+            businessHref={`/b/${business.slug}`}
             clientsHref={`/b/${business.slug}/clients`}
             catalogHref={`/b/${business.slug}/catalog/products`}
             analyticsHref={`/b/${business.slug}/analytics`}

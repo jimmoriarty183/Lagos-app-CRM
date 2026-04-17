@@ -65,14 +65,17 @@ export default function TopBar({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const dashboardQuery = searchParams.toString();
+  const dashboardBase = businessSlug ? `/b/${businessSlug}` : "/app/crm";
   const dashboardHref = dashboardQuery
-    ? `/app/crm?${dashboardQuery}`
-    : "/app/crm";
+    ? `${dashboardBase}?${dashboardQuery}`
+    : dashboardBase;
   const showSwitcher = !!businesses && businesses.length >= 1;
   const userLabel = currentUserName?.trim() || "User";
   const roleLabel =
     role === "OWNER" ? "owner" : role === "MANAGER" ? "manager" : "guest";
-  const resolvedSettingsHref = settingsHref ?? `/b/${businessSlug}/settings`;
+  const resolvedSettingsHref = businessSlug
+    ? `/app/settings?b=${encodeURIComponent(businessSlug)}`
+    : "/app/settings";
   const profileHref = "/app/profile";
   const resolvedBillingHref = billingHref ?? "/app/settings/billing";
   const canManage = role === "OWNER" || role === "MANAGER";
@@ -141,12 +144,12 @@ export default function TopBar({
               businessSlug={businessSlug}
               canManage={canManage}
               analyticsHref={analyticsHref ?? `/b/${businessSlug}/analytics`}
-              businessHref={businessHref ?? dashboardHref}
+              businessHref={businessHref ?? `/b/${businessSlug}`}
               clientsHref={clientsHref ?? `/b/${businessSlug}/clients`}
               catalogHref={catalogHref ?? `/b/${businessSlug}/catalog/products`}
-              todayHref={todayHref ?? businessHref ?? dashboardHref}
+              todayHref={todayHref ?? businessHref ?? `/b/${businessSlug}`}
               supportHref={supportHref ?? `/b/${businessSlug}/support`}
-              clearHref={clearHref ?? dashboardHref}
+              clearHref={clearHref ?? `/b/${businessSlug}`}
               hasActiveFilters={hasActiveFilters}
               canSeeAnalytics={role === "OWNER"}
               userLabel={userLabel}

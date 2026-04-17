@@ -635,8 +635,8 @@ export default async function Page({ params, searchParams }: PageProps) {
   })();
   const businessHref =
     phoneRaw && phoneRaw.length > 0
-      ? `/app/crm?u=${encodeURIComponent(phoneRaw)}`
-      : "/app/crm";
+      ? `/b/${slug}?u=${encodeURIComponent(phoneRaw)}`
+      : `/b/${slug}`;
   const settingsHref =
     phoneRaw && phoneRaw.length > 0
       ? `/b/${slug}/settings?u=${encodeURIComponent(phoneRaw)}`

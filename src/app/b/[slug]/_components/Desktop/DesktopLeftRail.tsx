@@ -387,6 +387,13 @@ export default function DesktopLeftRail({
     (settingsHref.startsWith("/b/") && settingsHref.includes("/settings")
       ? settingsHref.replace(/\/settings(?:\/.*)?$/, "/catalog/products")
       : undefined);
+  const accountSettingsHref = (() => {
+    const slugMatch = settingsHref.match(/^\/b\/([^/]+)/);
+    if (slugMatch) {
+      return `/app/settings?b=${encodeURIComponent(slugMatch[1])}`;
+    }
+    return "/app/settings";
+  })();
   const railItemsClass = expanded
     ? "flex flex-col items-stretch gap-1.5"
     : "grid grid-cols-2 items-stretch gap-1.5";
@@ -603,7 +610,7 @@ export default function DesktopLeftRail({
                       label={settingsModule.label}
                       description={settingsModule.description}
                       expanded={expanded}
-                      href={settingsHref}
+                      href={accountSettingsHref}
                       active={activeSection === "settings"}
                       className={collapsedFullRowClass}
                     />

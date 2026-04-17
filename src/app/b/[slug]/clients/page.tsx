@@ -161,7 +161,7 @@ export default async function ClientsPage({
       isAdmin: isAdminEmail(context.user.email),
     }));
 
-  const businessHref = "/app/crm";
+  const businessHref = `/b/${slug}`;
   const clientsHref = `/b/${slug}/clients`;
   const todayHref = `/b/${slug}/today`;
   const settingsHref = `/b/${slug}/settings`;

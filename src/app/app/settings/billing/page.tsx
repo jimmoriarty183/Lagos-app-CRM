@@ -82,7 +82,7 @@ export default async function BillingSettingsPage({
     const query = params.toString();
     return query ? `/app/settings/billing?${query}` : "/app/settings/billing";
   })();
-  const [{ user, workspace, workspaces }, supabase] = await Promise.all([
+  const [{ user, workspace: cookieWorkspace, workspaces }, supabase] = await Promise.all([
     resolveCurrentWorkspace(),
     supabaseServerReadOnly(),
   ]);
@@ -91,9 +91,15 @@ export default async function BillingSettingsPage({
     redirect(`/login?next=${encodeURIComponent(nextPath)}`);
   }
 
-  if (!workspace) {
+  if (!cookieWorkspace) {
     redirect("/select-business");
   }
+
+  const requestedSlug = String(resolvedSearchParams.b ?? "").trim();
+  const workspace =
+    (requestedSlug
+      ? workspaces.find((w) => w.slug === requestedSlug)
+      : undefined) ?? cookieWorkspace;
 
   const role = upperRole(workspace.role);
   const accountLabel = user.email || user.phone || "User";
@@ -354,7 +360,7 @@ export default async function BillingSettingsPage({
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#F8FAFC_0%,#EEF2FF_100%)] text-[#111827]">
       <TeamAccessTopBar
-        ordersHref="/app/crm"
+        ordersHref={`/b/${workspace.slug}`}
         userLabel={currentUserName}
         profileHref="/app/profile"
         currentPlan={subscription?.plan?.code ?? null}

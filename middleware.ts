@@ -22,7 +22,19 @@ export async function middleware(req: NextRequest) {
   // 🚫 MVP bypass — если есть ?u=, не трогаем auth
   const u = searchParams.get("u");
   if (u && pathname.startsWith("/b/")) {
-    return NextResponse.next();
+    const bypassRes = NextResponse.next();
+    const slugMatch = pathname.match(/^\/b\/([^/]+)/);
+    if (slugMatch) {
+      const slug = decodeURIComponent(slugMatch[1]);
+      if (slug && req.cookies.get("active_business_slug")?.value !== slug) {
+        bypassRes.cookies.set("active_business_slug", slug, {
+          path: "/",
+          maxAge: 60 * 60 * 24 * 365,
+          sameSite: "lax",
+        });
+      }
+    }
+    return bypassRes;
   }
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -34,6 +46,18 @@ export async function middleware(req: NextRequest) {
   }
 
   const res = NextResponse.next();
+
+  const businessSlugMatch = pathname.match(/^\/b\/([^/]+)/);
+  if (businessSlugMatch) {
+    const slug = decodeURIComponent(businessSlugMatch[1]);
+    if (slug && req.cookies.get("active_business_slug")?.value !== slug) {
+      res.cookies.set("active_business_slug", slug, {
+        path: "/",
+        maxAge: 60 * 60 * 24 * 365,
+        sameSite: "lax",
+      });
+    }
+  }
 
   const supabase = createServerClient(supabaseUrl, supabaseAnon, {
       cookies: {
