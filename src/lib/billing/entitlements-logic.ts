@@ -56,15 +56,30 @@ export function applyOverride(
     valueText: override.valueText,
   });
 
-  if (override.overrideType === "set_limit") {
+  // `set_value` (DB enum) is the canonical "set to this exact value" override.
+  // `set_limit` is kept as a backwards-compatible alias used in legacy seed.
+  if (override.overrideType === "set_value" || override.overrideType === "set_limit") {
     return overrideValue;
   }
 
+  // `grant` flips a boolean feature on, or for typed features adds the
+  // override value on top of the current. For booleans the override row's
+  // bool_value is allowed to be NULL per the DB check constraint, so we
+  // hard-code `true` rather than reading `overrideValue`.
   if (override.overrideType === "grant") {
     if (valueType === "boolean") return true;
     return overrideValue;
   }
 
+  // `increment` adds the override delta to the current numeric value.
+  if (override.overrideType === "increment" && valueType === "integer") {
+    const base = typeof currentValue === "number" ? currentValue : 0;
+    const delta = override.valueInt ?? 0;
+    return base + delta;
+  }
+
+  // `revoke` (or any unknown future enum value) — explicitly turn the
+  // feature off. Booleans go to false, numerics to 0, text to empty.
   if (valueType === "boolean") return false;
   if (valueType === "integer") return 0;
   return "";

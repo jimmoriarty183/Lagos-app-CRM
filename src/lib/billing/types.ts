@@ -10,7 +10,9 @@ export type BillingInterval = "month" | "year";
 
 export type FeatureValueType = "boolean" | "integer" | "text";
 
-export type OverrideType = "grant" | "revoke" | "set_limit";
+// Mirrors public.override_type_enum in PROD. `set_limit` is a legacy alias
+// of `set_value` kept for backwards compatibility with older seed.
+export type OverrideType = "grant" | "revoke" | "set_value" | "increment" | "set_limit";
 
 export type FeatureValue = boolean | number | string | null;
 
