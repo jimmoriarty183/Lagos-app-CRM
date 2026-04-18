@@ -72,6 +72,14 @@ export default async function TeamPage({
   if (role === "GUEST") {
     redirect(`/login?next=${encodeURIComponent(nextPath)}`);
   }
+
+  // Team management is account-level now (checkboxes per business, shared
+  // seat pool, one invite per email). Owner is always redirected to the
+  // unified team screen. Managers stay on this page — they don't have
+  // account-level permissions unless explicitly delegated.
+  if (role === "OWNER") {
+    redirect(`/app/settings/team?from=${encodeURIComponent(slug)}`);
+  }
   const adminHref = isAdminEmail(user.email) ? getAdminUsersPath() : undefined;
   const profile = await loadUserProfileSafe(supabase, user.id);
   const currentUserName = resolveUserDisplay({
@@ -83,6 +91,27 @@ export default async function TeamPage({
   }).primary;
   const currentUserAvatarUrl =
     String(profile?.avatar_url ?? user.user_metadata?.avatar_url ?? "").trim() || undefined;
+
+  // Resolve businesses list so the topbar switcher is always available.
+  const { data: userMemberships } = await supabase
+    .from("memberships")
+    .select("business_id, role")
+    .eq("user_id", user.id);
+  const bizIds = (userMemberships ?? []).map((m: { business_id: string }) => m.business_id);
+  const { data: allBusinesses } = bizIds.length > 0
+    ? await supabase.from("businesses").select("id, slug, name").in("id", bizIds)
+    : { data: [] as { id: string; slug: string; name: string | null }[] };
+  const businessOptions = (allBusinesses ?? []).map((b) => ({
+    id: String(b.id),
+    slug: String(b.slug),
+    name: String(b.name ?? b.slug),
+    role: (
+      (userMemberships ?? []).find(
+        (m: { business_id: string; role: string | null }) => m.business_id === b.id,
+      )?.role ?? "GUEST"
+    ).toString().toUpperCase() as "OWNER" | "MANAGER" | "GUEST",
+    isAdmin: Boolean(adminHref),
+  }));
 
   const { data: ownerManagerMems } = await supabase
     .from("memberships")
@@ -117,6 +146,8 @@ export default async function TeamPage({
         businessId={String(business.id)}
         adminHref={adminHref}
         userAvatarUrl={currentUserAvatarUrl}
+        businesses={businessOptions}
+        currentBusinessSlug={business.slug}
         profileHref={
           user.phone
             ? `/m/${encodeURIComponent(user.phone)}`
@@ -150,7 +181,7 @@ export default async function TeamPage({
             supportHref={`/b/${business.slug}/support`}
             settingsHref={`/b/${business.slug}/settings/team`}
             adminHref={adminHref}
-            canSeeAnalytics={role === "OWNER"}
+            canSeeAnalytics={false}
             showFilters={false}
             activeSection="settings"
           />
@@ -169,7 +200,7 @@ export default async function TeamPage({
               tabs={[
                 {
                   href: `/b/${business.slug}/settings`,
-                  label: "Business",
+                  label: "General",
                   active: false,
                 },
                 {
@@ -179,7 +210,7 @@ export default async function TeamPage({
                 },
                 {
                   href: `/b/${business.slug}/settings/invites`,
-                  label: "Invites",
+                  label: "Business invitations",
                   active: false,
                 },
                 {
@@ -219,7 +250,7 @@ export default async function TeamPage({
               tabs={[
                 {
                   href: `/b/${business.slug}/settings`,
-                  label: "Business",
+                  label: "General",
                   active: false,
                 },
                 {
@@ -229,7 +260,7 @@ export default async function TeamPage({
                 },
                 {
                   href: `/b/${business.slug}/settings/invites`,
-                  label: "Invites",
+                  label: "Business invitations",
                   active: false,
                 },
                 {

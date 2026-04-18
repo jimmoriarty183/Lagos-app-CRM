@@ -92,11 +92,13 @@ export function UserMenu({
 
   const planMeta = React.useMemo(() => {
     const raw = String(resolvedPlan ?? "").trim().toLowerCase();
+    // Display names were swapped in Phase 5: code='business' is middle-high
+    // tier shown as "Pro", code='pro' is top tier shown as "Business".
     const knownPlans: Record<string, string> = {
       solo: "Solo",
       starter: "Starter",
-      business: "Business",
-      pro: "Pro",
+      business: "Pro",
+      pro: "Business",
     };
     const label = knownPlans[raw] ?? "No active plan";
     const isFallback = !(raw in knownPlans);

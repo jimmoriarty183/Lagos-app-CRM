@@ -143,7 +143,7 @@ export default async function SettingsPage({
           <section className="w-full min-w-0 max-w-full rounded-[16px] border border-[#E5E7EB] bg-white p-3 pb-4 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:rounded-[18px] sm:p-4">
             <div className="mb-3">
               <div className="product-page-kicker">Settings</div>
-              <h1 className="product-page-title mt-1">Business</h1>
+              <h1 className="product-page-title mt-1">General</h1>
               <p className="product-page-subtitle mt-1">
                 Core workspace context for{" "}
                 <span className="font-semibold">{business.slug}</span>
@@ -154,7 +154,7 @@ export default async function SettingsPage({
               tabs={[
                 {
                   href: `/b/${business.slug}/settings`,
-                  label: "Business",
+                  label: "General",
                   active: true,
                 },
                 {
@@ -164,7 +164,7 @@ export default async function SettingsPage({
                 },
                 {
                   href: `/b/${business.slug}/settings/invites`,
-                  label: "Invites",
+                  label: "Business invitations",
                   active: false,
                 },
                 {
@@ -192,7 +192,7 @@ export default async function SettingsPage({
           <section className="w-full min-w-0 max-w-full rounded-[16px] border border-[#E5E7EB] bg-white p-3 pb-4 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:rounded-[18px] sm:p-4">
             <div className="mb-3">
               <div className="product-page-kicker">Settings</div>
-              <h1 className="product-page-title mt-1">Business</h1>
+              <h1 className="product-page-title mt-1">General</h1>
               <p className="product-page-subtitle mt-1">
                 Core workspace context for{" "}
                 <span className="font-semibold">{business.slug}</span>
@@ -203,7 +203,7 @@ export default async function SettingsPage({
               tabs={[
                 {
                   href: `/b/${business.slug}/settings`,
-                  label: "Business",
+                  label: "General",
                   active: true,
                 },
                 {
@@ -213,7 +213,7 @@ export default async function SettingsPage({
                 },
                 {
                   href: `/b/${business.slug}/settings/invites`,
-                  label: "Invites",
+                  label: "Business invitations",
                   active: false,
                 },
                 {

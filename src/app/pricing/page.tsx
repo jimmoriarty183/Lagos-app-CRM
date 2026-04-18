@@ -11,6 +11,10 @@ type BillingCycle = "monthly" | "yearly";
 
 type Plan = {
   name: string;
+  // Internal plan code (stable, matches plans.code in DB and Paddle mapping).
+  // Middle-high tier is displayed as "Pro" but code='business';
+  // top tier is displayed as "Business" but code='pro'.
+  code: string;
   launchAmount: string;
   regularAmount: string;
   monthlyLaunchAmount: string;
@@ -26,7 +30,23 @@ type Plan = {
   priceIdYearly: string;
 };
 
+// Column keys use the INTERNAL plan code (`business`=middle-high/Pro, `pro`=top/Business).
+// Display order in the table is: Solo | Starter | Pro (business) | Business (pro).
 const comparisonRows = [
+  {
+    feature: "Businesses",
+    solo: "1",
+    starter: "2",
+    business: "5",
+    pro: "10",
+  },
+  {
+    feature: "Team members",
+    solo: "1",
+    starter: "5",
+    business: "10",
+    pro: "20",
+  },
   {
     feature: "CRM (orders + kanban)",
     solo: "Yes",
@@ -64,7 +84,7 @@ const comparisonRows = [
   },
   {
     feature: "Team management",
-    solo: "Limited",
+    solo: "—",
     starter: "Yes",
     business: "Yes",
     pro: "Yes",
@@ -92,7 +112,28 @@ const comparisonRows = [
   },
   { feature: "Alerts", solo: "No", starter: "No", business: "Yes", pro: "Yes" },
   {
+    feature: "Export clients & products",
+    solo: "No",
+    starter: "No",
+    business: "Yes",
+    pro: "Yes",
+  },
+  {
+    feature: "Import from CSV",
+    solo: "No",
+    starter: "No",
+    business: "No",
+    pro: "Yes",
+  },
+  {
     feature: "Risk score",
+    solo: "No",
+    starter: "No",
+    business: "No",
+    pro: "Yes",
+  },
+  {
+    feature: "Audit log",
     solo: "No",
     starter: "No",
     business: "No",
@@ -121,22 +162,34 @@ const whoIsThisFor = [
   },
   {
     name: "Starter",
-    text: "For small teams that need shared visibility and basic coordination.",
-  },
-  {
-    name: "Business",
-    text: "For growing teams that need control, performance tracking, and execution discipline.",
+    text: "For small teams running up to 2 businesses with shared visibility and basic coordination.",
   },
   {
     name: "Pro",
-    text: "For teams that operate at scale and need full visibility, alerts, and risk control.",
+    text: "For growing teams that need manager dashboards, KPI tracking, and performance analytics across up to 5 businesses.",
+  },
+  {
+    name: "Business",
+    text: "For multi-location operations and agencies managing up to 10 businesses with full support workflow, audit log, and priority support.",
   },
 ];
 
 const faqs = [
   {
-    q: "How many users are included?",
-    a: "Solo is for one user. Starter includes up to 5 users, Business up to 10 users, and Pro up to 20 users.",
+    q: "How many users and businesses are included?",
+    a: "Solo: 1 user, 1 business. Starter: up to 5 users, 2 businesses. Pro: up to 10 users, 5 businesses. Business: up to 20 users, 10 businesses.",
+  },
+  {
+    q: "How are users counted across businesses?",
+    a: "Users are counted per unique email across all your businesses. If the same person works in two of your businesses, they count as one seat.",
+  },
+  {
+    q: "What does the free trial include?",
+    a: "14-day free trial. Cancel anytime before day 15 and you won't be charged. Card details are required at checkout (this is how Paddle works).",
+  },
+  {
+    q: "Are prices shown with VAT?",
+    a: "Prices on this page are shown excluding VAT. UK VAT at 20% is added at checkout where applicable.",
   },
   {
     q: "Can I upgrade later?",
@@ -144,7 +197,7 @@ const faqs = [
   },
   {
     q: "Is this launch pricing?",
-    a: "Yes. Current prices are part of the launch offer for a limited period.",
+    a: "Yes. Current prices are part of the founding launch offer for a limited period.",
   },
 ];
 
@@ -275,12 +328,13 @@ export default function PricingPage() {
   const plans: Plan[] = [
     {
       name: "Solo",
+      code: "solo",
       launchAmount: billingCycle === "monthly" ? "8" : "80",
       regularAmount: billingCycle === "monthly" ? "12" : "120",
       monthlyLaunchAmount: "8",
       priceNote: {
-        monthly: "1 user included",
-        yearly: "1 user included",
+        monthly: "1 user • 1 business",
+        yearly: "1 user • 1 business",
       },
       description:
         "For individuals who need structure and follow-up discipline",
@@ -290,7 +344,6 @@ export default function PricingPage() {
         "Custom statuses",
         "Basic inbox",
         "Today & follow-ups",
-        "Limited team management",
       ],
       cta: "Start with Solo",
       priceIdMonthly: "pri_01kmncmgt9csnfq6hwvz6eg5m3",
@@ -298,20 +351,18 @@ export default function PricingPage() {
     },
     {
       name: "Starter",
+      code: "starter",
       launchAmount: billingCycle === "monthly" ? "39" : "390",
       regularAmount: billingCycle === "monthly" ? "49" : "490",
       monthlyLaunchAmount: "39",
       priceNote: {
-        monthly: "Includes up to 5 users",
-        yearly: "Includes up to 5 users",
+        monthly: "Up to 5 users • 2 businesses",
+        yearly: "Up to 5 users • 2 businesses",
       },
       description: "For small teams getting control over daily operations",
       features: [
-        "CRM (orders + kanban)",
-        "Filters & search",
-        "Custom statuses",
+        "Everything in Solo",
         "Full inbox",
-        "Today & follow-ups",
         "Team management",
         "Basic support workflow",
       ],
@@ -320,61 +371,53 @@ export default function PricingPage() {
       priceIdYearly: "pri_01kn1zrysbhmecpa8dmn3mjkwv",
     },
     {
-      name: "Business",
+      // Middle-high tier — displayed as "Pro" (code='business' in DB / Paddle).
+      name: "Pro",
+      code: "business",
       launchAmount: billingCycle === "monthly" ? "79" : "790",
       regularAmount: billingCycle === "monthly" ? "99" : "990",
       monthlyLaunchAmount: "79",
       priceNote: {
-        monthly: "Includes up to 10 users",
-        yearly: "Includes up to 10 users",
+        monthly: "Up to 10 users • 5 businesses",
+        yearly: "Up to 10 users • 5 businesses",
       },
       description:
-        "For growing teams that need execution visibility and control",
+        "For growing teams that need manager dashboards and KPI visibility",
       features: [
-        "CRM (orders + kanban)",
-        "Filters & search",
-        "Custom statuses",
-        "Full inbox",
-        "Today & follow-ups",
-        "Team management",
+        "Everything in Starter",
         "Manager dashboards",
         "KPI tracking",
         "Productivity analytics",
         "Alerts",
-        "Basic support workflow",
+        "Export clients & products",
       ],
-      cta: "Upgrade to Business",
+      cta: "Start with Pro",
       highlight: true,
       priceIdMonthly: "pri_01kmncrvjyqb3y1rwf6w2zcpbq",
       priceIdYearly: "pri_01kn1zq31rkhqbgxys3f1fgqgj",
     },
     {
-      name: "Pro",
+      // Top tier — displayed as "Business" (code='pro' in DB / Paddle).
+      name: "Business",
+      code: "pro",
       launchAmount: billingCycle === "monthly" ? "149" : "1490",
       regularAmount: billingCycle === "monthly" ? "179" : "1790",
       monthlyLaunchAmount: "149",
       priceNote: {
-        monthly: "Includes up to 20 users",
-        yearly: "Includes up to 20 users",
+        monthly: "Up to 20 users • 10 businesses",
+        yearly: "Up to 20 users • 10 businesses",
       },
       description:
-        "For teams that need full operational control and risk visibility",
+        "For multi-location teams and agencies that need full operational control",
       features: [
-        "CRM (orders + kanban)",
-        "Filters & search",
-        "Custom statuses",
-        "Full inbox",
-        "Today & follow-ups",
-        "Team management",
-        "Manager dashboards",
-        "KPI tracking",
-        "Productivity analytics",
-        "Alerts",
+        "Everything in Pro",
         "Risk score",
         "Full support workflow",
         "Priority support",
+        "Import from CSV",
+        "Audit log",
       ],
-      cta: "Go Pro",
+      cta: "Start with Business",
       priceIdMonthly: "pri_01kmncvk1ytkmj0tar1wxb8cw4",
       priceIdYearly: "pri_01kn1zmv87cs2he9v7xy01xpns",
     },
@@ -505,6 +548,8 @@ export default function PricingPage() {
                   </div>
                 </div>
 
+                <p className="vatNote">+ VAT</p>
+
                 {billingCycle === "yearly" ? (
                   <p className="yearlySavings">
                     Equivalent to £{plan.monthlyLaunchAmount}/month, billed
@@ -513,6 +558,9 @@ export default function PricingPage() {
                 ) : null}
 
                 <p className="priceNote">{plan.priceNote[billingCycle]}</p>
+                <p className="trialNote">
+                  14-day free trial · Cancel anytime before day 15
+                </p>
 
                 <ul>
                   {plan.features.map((item) => (
@@ -525,7 +573,7 @@ export default function PricingPage() {
                     label={plan.cta}
                     className={plan.highlight ? "primary" : "secondary"}
                     redirectTo={`/app/settings/billing?plan=${encodeURIComponent(
-                      plan.name.toLowerCase(),
+                      plan.code,
                     )}&interval=${encodeURIComponent(
                       billingCycle === "monthly" ? "monthly" : "yearly",
                     )}`}
@@ -797,8 +845,8 @@ export default function PricingPage() {
                     <th>Feature</th>
                     <th>Solo</th>
                     <th>Starter</th>
-                    <th>Business</th>
                     <th>Pro</th>
+                    <th>Business</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -807,7 +855,9 @@ export default function PricingPage() {
                       <td>{row.feature}</td>
                       <td>{row.solo}</td>
                       <td>{row.starter}</td>
+                      {/* Pro column shows the middle-high tier (row.business). */}
                       <td>{row.business}</td>
+                      {/* Business column shows the top tier (row.pro). */}
                       <td>{row.pro}</td>
                     </tr>
                   ))}
@@ -1112,6 +1162,13 @@ export default function PricingPage() {
             font-weight: 600;
             letter-spacing: -0.01em;
           }
+          .vatNote {
+            margin: 4px 0 0;
+            color: #64748b;
+            font-weight: 600;
+            font-size: 12px;
+            letter-spacing: 0.02em;
+          }
           .yearlySavings {
             margin: 8px 0 0;
             color: #4f46e5;
@@ -1125,6 +1182,12 @@ export default function PricingPage() {
             font-weight: 600;
             font-size: 14px;
             min-height: 22px;
+          }
+          .trialNote {
+            margin: 4px 0 0;
+            color: #475569;
+            font-size: 12px;
+            font-weight: 500;
           }
           .plan ul {
             margin: 14px 0 0;

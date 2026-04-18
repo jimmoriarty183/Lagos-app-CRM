@@ -71,7 +71,7 @@ export default function BusinessSwitcher({
   businesses,
   currentSlug,
   onSelect,
-  disabledAdd = true,
+  disabledAdd = false,
   widthClassName = "w-[220px] sm:w-[248px]",
   variant = "toolbar",
   hintText = "Switch workspace",
@@ -211,14 +211,23 @@ export default function BusinessSwitcher({
           </div>
 
           <div className="border-t border-gray-100 p-2">
-            <button
-              type="button"
-              disabled={disabledAdd}
-              className={`w-full rounded-xl px-3 py-2 text-left text-sm font-semibold transition ${disabledAdd ? "cursor-not-allowed text-gray-400" : "text-[#1F2937] hover:bg-[#F9FAFB]"}`}
-            >
-              + Create workspace{" "}
-              <span className="ml-2 text-[11px]">(soon)</span>
-            </button>
+            {disabledAdd ? (
+              <button
+                type="button"
+                disabled
+                className="w-full cursor-not-allowed rounded-xl px-3 py-2 text-left text-sm font-semibold text-gray-400"
+              >
+                + Create business
+              </button>
+            ) : (
+              <a
+                href="/onboarding/business?new=1"
+                className="block w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-[#1F2937] transition hover:bg-[#F9FAFB]"
+                onClick={() => setOpen(false)}
+              >
+                + Create business
+              </a>
+            )}
           </div>
         </div>
       ) : null}

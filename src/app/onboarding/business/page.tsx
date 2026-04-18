@@ -14,14 +14,27 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function OnboardingBusinessPage() {
+export default async function OnboardingBusinessPage({
+  searchParams,
+}: {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const resolved = (await searchParams) ?? {};
+  const isAdditional = String(resolved.new ?? "").trim() === "1";
+
   const { user, workspace } = await resolveCurrentWorkspace();
 
   if (!user) {
-    redirect("/login?next=%2Fonboarding%2Fbusiness");
+    const nextPath = isAdditional
+      ? "/onboarding/business?new=1"
+      : "/onboarding/business";
+    redirect(`/login?next=${encodeURIComponent(nextPath)}`);
   }
 
-  if (workspace) {
+  // First-time onboarding: user landed here right after signup without any
+  // workspace. If they already have one, send them to the CRM — unless they
+  // explicitly requested to create an additional business via `?new=1`.
+  if (workspace && !isAdditional) {
     redirect("/app/crm");
   }
 

@@ -59,6 +59,10 @@ export default async function InvitesPage({
   if (role === "GUEST") {
     redirect(`/login?next=${encodeURIComponent(nextPath)}`);
   }
+
+  // Sending invites happens at account level (/app/settings/team). This page
+  // now only shows the INCOMING invites list (where someone invited you to
+  // another business) so you can accept or decline them.
   const adminHref = isAdminEmail(user.email) ? getAdminUsersPath() : undefined;
   const profile = await loadUserProfileSafe(supabase, user.id);
   const currentUserName = resolveUserDisplay({
@@ -71,12 +75,33 @@ export default async function InvitesPage({
   const currentUserAvatarUrl =
     String(profile?.avatar_url ?? user.user_metadata?.avatar_url ?? "").trim() || undefined;
 
+  // Resolve businesses list so the topbar switcher is always available.
+  const { data: userMemberships } = await supabase
+    .from("memberships")
+    .select("business_id, role")
+    .eq("user_id", user.id);
+  const bizIds = (userMemberships ?? []).map((m: { business_id: string }) => m.business_id);
+  const { data: allBusinesses } = bizIds.length > 0
+    ? await supabase.from("businesses").select("id, slug, name").in("id", bizIds)
+    : { data: [] as { id: string; slug: string; name: string | null }[] };
+  const businessOptions = (allBusinesses ?? []).map((b) => ({
+    id: String(b.id),
+    slug: String(b.slug),
+    name: String(b.name ?? b.slug),
+    role: (
+      (userMemberships ?? []).find(
+        (m: { business_id: string; role: string | null }) => m.business_id === b.id,
+      )?.role ?? "GUEST"
+    ).toString().toUpperCase() as "OWNER" | "MANAGER" | "GUEST",
+    isAdmin: Boolean(adminHref),
+  }));
+
   const tabs = [
-    { href: `/b/${business.slug}/settings`, label: "Business", active: false },
+    { href: `/b/${business.slug}/settings`, label: "General", active: false },
     { href: `/b/${business.slug}/settings/team`, label: "Team", active: false },
     {
       href: `/b/${business.slug}/settings/invites`,
-      label: "Invites",
+      label: "Business invitations",
       active: true,
     },
     {
@@ -95,6 +120,8 @@ export default async function InvitesPage({
         businessId={String(business.id)}
         adminHref={adminHref}
         userAvatarUrl={currentUserAvatarUrl}
+        businesses={businessOptions}
+        currentBusinessSlug={business.slug}
         profileHref={
           user.phone
             ? `/m/${encodeURIComponent(user.phone)}`
@@ -136,10 +163,10 @@ export default async function InvitesPage({
           <section className="w-full min-w-0 max-w-full rounded-[16px] border border-[#E5E7EB] bg-white p-3 pb-4 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:rounded-[18px] sm:p-4">
             <div className="mb-3">
               <div className="product-page-kicker">Settings</div>
-              <h1 className="product-page-title mt-1">Invites</h1>
+              <h1 className="product-page-title mt-1">Business invitations</h1>
               <p className="product-page-subtitle mt-1">
-                Manage sent invites and incoming access requests for{" "}
-                <span className="font-semibold">{business.slug}</span>
+                Accept or decline invitations you&apos;ve received to join other businesses. To send invites for{" "}
+                <span className="font-semibold">{business.slug}</span>, use Team &amp; Invites on the account level.
               </p>
             </div>
 
@@ -156,10 +183,10 @@ export default async function InvitesPage({
           <section className="w-full min-w-0 max-w-full rounded-[16px] border border-[#E5E7EB] bg-white p-3 pb-4 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:rounded-[18px] sm:p-4">
             <div className="mb-3">
               <div className="product-page-kicker">Settings</div>
-              <h1 className="product-page-title mt-1">Invites</h1>
+              <h1 className="product-page-title mt-1">Business invitations</h1>
               <p className="product-page-subtitle mt-1">
-                Manage sent invites and incoming access requests for{" "}
-                <span className="font-semibold">{business.slug}</span>
+                Accept or decline invitations you&apos;ve received to join other businesses. To send invites for{" "}
+                <span className="font-semibold">{business.slug}</span>, use Team &amp; Invites on the account level.
               </p>
             </div>
 

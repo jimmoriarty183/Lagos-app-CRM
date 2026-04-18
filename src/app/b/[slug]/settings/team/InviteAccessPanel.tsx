@@ -1,13 +1,11 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { Send } from "lucide-react";
-import InviteManager from "@/app/b/[slug]/_components/InviteManager";
-import PendingInvites, { type PendingInvitesHandle } from "@/app/b/[slug]/_components/PendingInvites";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import IncomingInvitesPanel from "./IncomingInvitesPanel";
 
 export default function InviteAccessPanel({
-  businessId,
+  businessId: _businessId,
   businessSlug,
   canManage,
 }: {
@@ -15,39 +13,27 @@ export default function InviteAccessPanel({
   businessSlug: string;
   canManage: boolean;
 }) {
-  const pendingInvitesRef = useRef<PendingInvitesHandle | null>(null);
-  const [refreshKey, setRefreshKey] = useState(0);
-
   return (
-    <div className="grid gap-4 xl:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
-      <div className="space-y-4">
-        {canManage ? (
-          <section className="rounded-[18px] border border-[#E5E7EB] bg-white p-4 shadow-[0_4px_14px_rgba(15,23,42,0.04)]">
-            <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#6B7280]">
-              <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] text-[#6B7280]">
-                <Send className="h-4 w-4" />
-              </span>
-              Invite manager
-            </div>
-
-            <div className="mt-3">
-              <InviteManager
-                businessId={businessId}
-                onInvited={async () => {
-                  setRefreshKey((current) => current + 1);
-                  await pendingInvitesRef.current?.reload();
-                }}
-              />
-            </div>
-          </section>
-        ) : null}
-
-        <PendingInvites
-          ref={pendingInvitesRef}
-          businessId={businessId}
-          refreshKey={refreshKey}
-        />
-      </div>
+    <div className="space-y-4">
+      {canManage ? (
+        <Link
+          href="/app/settings/team"
+          className="flex items-center justify-between gap-3 rounded-[18px] border border-[#C7D2FE] bg-[#EEF2FF] px-4 py-3 text-sm text-[#312E81] transition hover:border-[#A5B4FC] hover:bg-[#E0E7FF]"
+        >
+          <span className="min-w-0">
+            <span className="block font-semibold text-[#3730A3]">
+              Inviting people happens on the account level now
+            </span>
+            <span className="mt-0.5 block text-[13px] leading-5 text-[#4338CA]">
+              One invite, multiple businesses. Shared seat limit across all your businesses.
+            </span>
+          </span>
+          <span className="flex-none inline-flex items-center gap-1.5 rounded-full bg-[#4F46E5] px-3 py-1.5 text-xs font-semibold text-white">
+            Manage team
+            <ArrowRight className="h-3.5 w-3.5" />
+          </span>
+        </Link>
+      ) : null}
 
       <IncomingInvitesPanel currentBusinessSlug={businessSlug} />
     </div>

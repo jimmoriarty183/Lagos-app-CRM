@@ -66,8 +66,20 @@ export async function GET(request: Request) {
         const accountId = await resolveOwnerAccountId(admin, ownerUserId);
         if (accountId) {
           const subscription = await getSubscriptionSnapshot(admin, accountId);
+          const status = String(subscription?.status ?? "").trim().toLowerCase();
+          // Only surface plan code for genuinely entitled statuses. Canceled
+          // or expired subscriptions should NOT keep showing the old plan
+          // badge in the UI — that confuses users into thinking they still
+          // have access.
+          const isEntitled =
+            status === "active" ||
+            status === "trialing" ||
+            status === "past_due" ||
+            status === "paused";
           const planCode = cleanText(subscription?.plan?.code);
-          if (planCode) subscriptionPlanCode = planCode;
+          if (isEntitled && planCode) {
+            subscriptionPlanCode = planCode;
+          }
         }
       } catch {
         // Keep endpoint resilient: fallback to workspace plan if billing snapshot is unavailable.

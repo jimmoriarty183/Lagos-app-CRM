@@ -34,7 +34,12 @@ function Spinner() {
 export default function InviteClient() {
   const router = useRouter();
   const sp = useSearchParams();
-  const inviteId = sp.get("invite_id") || "";
+  const inviteIdParam = sp.get("invite_id") || "";
+  const tokenParam = sp.get("token") || "";
+  // `token` is the new account-invite flow (Phase 4), `invite_id` is the
+  // legacy per-business flow. We support both in the same landing page.
+  const isAccountInvite = Boolean(tokenParam);
+  const inviteId = inviteIdParam;
 
   const supabase = useMemo(() => createClient(), []);
 
@@ -83,10 +88,10 @@ export default function InviteClient() {
     setLoading(true);
     setError("");
 
-    if (!inviteId) {
+    if (!inviteId && !tokenParam) {
       setLoading(false);
       setError(
-        "Invite link is missing invite_id. Please open the email again.",
+        "Invite link is missing a token. Please open the email again.",
       );
       return;
     }
@@ -110,10 +115,10 @@ export default function InviteClient() {
 
       setEmail(session.user.email ?? "");
 
-      const r = await fetch(
-        `/api/invite/pending?invite_id=${encodeURIComponent(inviteId)}`,
-        { cache: "no-store" },
-      );
+      const endpoint = isAccountInvite
+        ? `/api/account-invite/pending?token=${encodeURIComponent(tokenParam)}`
+        : `/api/invite/pending?invite_id=${encodeURIComponent(inviteId)}`;
+      const r = await fetch(endpoint, { cache: "no-store" });
       const j = await r.json().catch(() => ({}));
 
       if (!r.ok) {
@@ -144,7 +149,7 @@ export default function InviteClient() {
       sub.subscription.unsubscribe();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [supabase, inviteId]);
+  }, [supabase, inviteId, tokenParam]);
 
   const canSubmitSetup =
     firstName.trim().length >= 2 &&
@@ -158,10 +163,19 @@ export default function InviteClient() {
   const canAcceptExisting = !loading && !submitting;
 
   const finishAccept = async (payload: Record<string, unknown>) => {
-    const r = await fetch("/api/invite/accept", {
+    // Account invites use a different accept endpoint and identify themselves
+    // by token rather than invite_id.
+    const endpoint = isAccountInvite
+      ? "/api/account-invite/accept"
+      : "/api/invite/accept";
+    const body = isAccountInvite
+      ? { ...payload, token: tokenParam }
+      : payload;
+
+    const r = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(body),
     });
 
     const j = await r.json().catch(() => ({}));

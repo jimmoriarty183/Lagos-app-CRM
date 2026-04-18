@@ -177,7 +177,6 @@ export default function TopBar({
                   businesses={businesses!}
                   currentSlug={businessSlug}
                   onSelect={handleSelect}
-                  disabledAdd
                   widthClassName="w-[176px] lg:w-[208px]"
                   variant="toolbar-compact"
                 />
@@ -211,7 +210,6 @@ export default function TopBar({
                 businesses={businesses!}
                 currentSlug={businessSlug}
                 onSelect={handleSelect}
-                disabledAdd
                 widthClassName="w-full"
                 variant="toolbar"
               />

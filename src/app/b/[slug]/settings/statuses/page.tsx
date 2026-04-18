@@ -71,6 +71,28 @@ export default async function StatusesPage({
   const currentUserAvatarUrl =
     String(profile?.avatar_url ?? user.user_metadata?.avatar_url ?? "").trim() || undefined;
 
+  // Resolve businesses list so the topbar switcher is always available on
+  // every settings tab.
+  const { data: userMemberships } = await supabase
+    .from("memberships")
+    .select("business_id, role")
+    .eq("user_id", user.id);
+  const bizIds = (userMemberships ?? []).map((m: { business_id: string }) => m.business_id);
+  const { data: allBusinesses } = bizIds.length > 0
+    ? await supabase.from("businesses").select("id, slug, name").in("id", bizIds)
+    : { data: [] as { id: string; slug: string; name: string | null }[] };
+  const businessOptions = (allBusinesses ?? []).map((b) => ({
+    id: String(b.id),
+    slug: String(b.slug),
+    name: String(b.name ?? b.slug),
+    role: (
+      (userMemberships ?? []).find(
+        (m: { business_id: string; role: string | null }) => m.business_id === b.id,
+      )?.role ?? "GUEST"
+    ).toString().toUpperCase() as "OWNER" | "MANAGER" | "GUEST",
+    isAdmin: Boolean(adminHref),
+  }));
+
   return (
     <div className="min-h-[100svh] overflow-x-clip bg-transparent text-[#1F2937]">
       <TeamAccessTopBar
@@ -80,6 +102,8 @@ export default async function StatusesPage({
         businessId={String(business.id)}
         adminHref={adminHref}
         userAvatarUrl={currentUserAvatarUrl}
+        businesses={businessOptions}
+        currentBusinessSlug={business.slug}
         profileHref={
           user.phone
             ? `/m/${encodeURIComponent(user.phone)}`
@@ -132,7 +156,7 @@ export default async function StatusesPage({
               tabs={[
                 {
                   href: `/b/${business.slug}/settings`,
-                  label: "Business",
+                  label: "General",
                   active: false,
                 },
                 {
@@ -142,7 +166,7 @@ export default async function StatusesPage({
                 },
                 {
                   href: `/b/${business.slug}/settings/invites`,
-                  label: "Invites",
+                  label: "Business invitations",
                   active: false,
                 },
                 {
@@ -175,7 +199,7 @@ export default async function StatusesPage({
               tabs={[
                 {
                   href: `/b/${business.slug}/settings`,
-                  label: "Business",
+                  label: "General",
                   active: false,
                 },
                 {
@@ -185,7 +209,7 @@ export default async function StatusesPage({
                 },
                 {
                   href: `/b/${business.slug}/settings/invites`,
-                  label: "Invites",
+                  label: "Business invitations",
                   active: false,
                 },
                 {

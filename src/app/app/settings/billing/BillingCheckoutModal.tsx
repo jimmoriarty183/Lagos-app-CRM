@@ -35,6 +35,10 @@ type PlanOption = {
   };
 };
 
+// NOTE on labels vs codes: the middle-high tier is displayed as "Pro" but its
+// code is `business` (stable Paddle mapping). The top tier is displayed as
+// "Business" but its code is `pro`. This follows the Phase 5 UI swap where DB
+// codes stay untouched for billing history stability.
 const PLAN_OPTIONS: PlanOption[] = [
   {
     code: "solo",
@@ -49,12 +53,11 @@ const PLAN_OPTIONS: PlanOption[] = [
       "Custom statuses",
       "Basic inbox",
       "Today & follow-ups",
-      "Limited team management",
     ],
     cta: "Start with Solo",
     note: {
-      monthly: "1 user included",
-      yearly: "1 user included",
+      monthly: "1 user • 1 business",
+      yearly: "1 user • 1 business",
     },
   },
   {
@@ -65,72 +68,57 @@ const PLAN_OPTIONS: PlanOption[] = [
     launchAmount: "39",
     monthlyLaunchAmount: "39",
     features: [
-      "CRM (orders + kanban)",
-      "Filters & search",
-      "Custom statuses",
+      "Everything in Solo",
       "Full inbox",
-      "Today & follow-ups",
       "Team management",
       "Basic support workflow",
     ],
     cta: "Start with Starter",
     note: {
-      monthly: "Includes up to 5 users",
-      yearly: "Includes up to 5 users",
+      monthly: "Up to 5 users • 2 businesses",
+      yearly: "Up to 5 users • 2 businesses",
     },
   },
   {
     code: "business",
-    label: "Business",
-    description: "For growing teams that need execution visibility and control",
+    label: "Pro",
+    description: "For growing teams that need manager dashboards and KPI visibility",
     regularAmount: "99",
     launchAmount: "79",
     monthlyLaunchAmount: "79",
     features: [
-      "CRM (orders + kanban)",
-      "Filters & search",
-      "Custom statuses",
-      "Full inbox",
-      "Today & follow-ups",
-      "Team management",
+      "Everything in Starter",
       "Manager dashboards",
       "KPI tracking",
       "Productivity analytics",
       "Alerts",
-      "Basic support workflow",
+      "Export clients & products",
     ],
-    cta: "Upgrade to Business",
+    cta: "Upgrade to Pro",
     note: {
-      monthly: "Includes up to 10 users",
-      yearly: "Includes up to 10 users",
+      monthly: "Up to 10 users • 5 businesses",
+      yearly: "Up to 10 users • 5 businesses",
     },
   },
   {
     code: "pro",
-    label: "Pro",
-    description: "For teams that need full operational control and risk visibility",
+    label: "Business",
+    description: "For multi-location teams and agencies that need full operational control",
     regularAmount: "179",
     launchAmount: "149",
     monthlyLaunchAmount: "149",
     features: [
-      "CRM (orders + kanban)",
-      "Filters & search",
-      "Custom statuses",
-      "Full inbox",
-      "Today & follow-ups",
-      "Team management",
-      "Manager dashboards",
-      "KPI tracking",
-      "Productivity analytics",
-      "Alerts",
+      "Everything in Pro",
       "Risk score",
       "Full support workflow",
       "Priority support",
+      "Import from CSV",
+      "Audit log",
     ],
-    cta: "Go Pro",
+    cta: "Upgrade to Business",
     note: {
-      monthly: "Includes up to 20 users",
-      yearly: "Includes up to 20 users",
+      monthly: "Up to 20 users • 10 businesses",
+      yearly: "Up to 20 users • 10 businesses",
     },
   },
 ];

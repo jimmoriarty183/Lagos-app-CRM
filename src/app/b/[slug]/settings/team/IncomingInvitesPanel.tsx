@@ -4,15 +4,21 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import { Check, Loader2, Mail, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 
+type BusinessRef = {
+  id: string;
+  slug: string;
+  name: string | null;
+};
+
 type PendingInvite = {
   id: string;
   business_id: string;
   created_at: string | null;
-  business: {
-    id: string;
-    slug: string;
-    name: string | null;
-  };
+  business: BusinessRef;
+  // Multi-business access (set only when source === "account").
+  businesses?: BusinessRef[];
+  // "account" = new unified flow, "legacy" = old per-business flow.
+  source?: "account" | "legacy";
 };
 
 function formatDateTime(value?: string | null) {
@@ -98,21 +104,28 @@ export default function IncomingInvitesPanel({
     }
   };
 
+  const urlFor = (invite: PendingInvite | undefined, action: "accept" | "decline") => {
+    const base = invite?.source === "account" ? "/api/account-invite" : "/api/invite";
+    return `${base}/${action}`;
+  };
+
   const acceptInvite = async (inviteId: string) => {
-    await runAction(inviteId, "/api/invite/accept", (invite) => {
+    const invite = items.find((item) => item.id === inviteId);
+    await runAction(inviteId, urlFor(invite, "accept"), (completed) => {
       startTransition(() => {
-        if (invite.business.slug === currentBusinessSlug) {
+        if (completed.business.slug === currentBusinessSlug) {
           router.refresh();
           return;
         }
-        router.push(`/b/${invite.business.slug}`);
+        router.push(`/b/${completed.business.slug}`);
         router.refresh();
       });
     });
   };
 
   const declineInvite = async (inviteId: string) => {
-    await runAction(inviteId, "/api/invite/decline");
+    const invite = items.find((item) => item.id === inviteId);
+    await runAction(inviteId, urlFor(invite, "decline"));
   };
 
   return (
@@ -154,11 +167,26 @@ export default function IncomingInvitesPanel({
                 className="rounded-2xl border border-[#E5E7EB] bg-white px-3 py-3"
               >
                 <div className="text-sm font-semibold text-[#1F2937]">
-                  {invite.business.name || invite.business.slug}
+                  {invite.source === "account" && (invite.businesses?.length ?? 0) > 1
+                    ? `Access to ${invite.businesses!.length} businesses`
+                    : (invite.business.name || invite.business.slug)}
                 </div>
-                <div className="mt-1 text-xs text-[#6B7280]">
-                  /{invite.business.slug}
-                </div>
+                {invite.source === "account" && invite.businesses ? (
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    {invite.businesses.map((b) => (
+                      <span
+                        key={b.id}
+                        className="inline-flex items-center rounded-full bg-[#F9FAFB] px-2 py-0.5 text-[11px] font-semibold text-[#4B5563] ring-1 ring-inset ring-[#E5E7EB]"
+                      >
+                        {b.name || b.slug}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="mt-1 text-xs text-[#6B7280]">
+                    /{invite.business.slug}
+                  </div>
+                )}
                 <div className="mt-2 text-xs text-[#9CA3AF]">
                   Invited: {formatDateTime(invite.created_at)}
                 </div>

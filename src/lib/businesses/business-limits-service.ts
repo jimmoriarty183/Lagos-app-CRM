@@ -50,7 +50,12 @@ export async function resolveOwnerAccountId(
   admin: SupabaseClient,
   ownerUserId: string,
 ): Promise<string | null> {
-  const ownerColumns = ["owner_user_id", "owner_id", "created_by"] as const;
+  const ownerColumns = [
+    "primary_owner_user_id",
+    "owner_user_id",
+    "owner_id",
+    "created_by",
+  ] as const;
 
   for (const ownerColumn of ownerColumns) {
     const { data, error } = await admin

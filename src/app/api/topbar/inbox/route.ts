@@ -204,6 +204,35 @@ export async function GET(request: Request) {
       return NextResponse.json({ ok: false, error: invitesError.message }, { status: 500 });
     }
 
+    // Account-level invites (Phase 4). Match by email (case-insensitive).
+    const { data: accountInvites, error: accountInvitesError } = await admin
+      .from("account_invites")
+      .select("id, account_id, email, can_manage_team, created_at, invited_by, expires_at")
+      .ilike("email", String(user.email ?? "").trim())
+      .eq("status", "pending")
+      .order("created_at", { ascending: false })
+      .limit(20);
+
+    if (accountInvitesError && !isMissingRelationError(accountInvitesError, "account_invites")) {
+      return NextResponse.json({ ok: false, error: accountInvitesError.message }, { status: 500 });
+    }
+
+    let accountInviteAccess = new Map<string, string[]>();
+    if ((accountInvites ?? []).length > 0) {
+      const accessRes = await admin
+        .from("account_invite_business_access")
+        .select("invite_id, business_id")
+        .in("invite_id", (accountInvites ?? []).map((i: { id: string }) => i.id));
+      if (accessRes.error && !isMissingRelationError(accessRes.error, "account_invite_business_access")) {
+        return NextResponse.json({ ok: false, error: accessRes.error.message }, { status: 500 });
+      }
+      for (const row of (accessRes.data ?? []) as Array<{ invite_id: string; business_id: string }>) {
+        const arr = accountInviteAccess.get(row.invite_id) ?? [];
+        arr.push(String(row.business_id));
+        accountInviteAccess.set(row.invite_id, arr);
+      }
+    }
+
     // Build actor labels map
     const actorIds = Array.from(
       new Set(
@@ -211,6 +240,9 @@ export async function GET(request: Request) {
           ...notifications.map((n) => String(n.actor_user_id ?? "")),
           ...((invites ?? []) as Array<{ invited_by?: string | null }>).map((invite) =>
             String(invite.invited_by ?? ""),
+          ),
+          ...((accountInvites ?? []) as Array<{ invited_by?: string | null }>).map(
+            (invite) => String(invite.invited_by ?? ""),
           ),
         ]
           .filter(Boolean),
@@ -271,9 +303,12 @@ export async function GET(request: Request) {
 
     const inviteBusinessIds = Array.from(
       new Set(
-        ((invites ?? []) as Array<{ business_id?: string | null }>)
-          .map((invite) => String(invite.business_id ?? "").trim())
-          .filter(Boolean),
+        [
+          ...((invites ?? []) as Array<{ business_id?: string | null }>)
+            .map((invite) => String(invite.business_id ?? "").trim())
+            .filter(Boolean),
+          ...Array.from(accountInviteAccess.values()).flat().map((id) => String(id ?? "").trim()).filter(Boolean),
+        ],
       ),
     );
     let businessesById = new Map<string, { id: string; slug: string; name: string | null }>();
@@ -423,7 +458,65 @@ export async function GET(request: Request) {
       };
     });
 
-    const mergedNotifications = [...inboxNotifications, ...inviteNotifications].sort(
+    const accountInviteNotifications: InboxNotification[] = (
+      (accountInvites ?? []) as Array<{
+        id: string;
+        account_id: string | null;
+        email: string;
+        can_manage_team: boolean;
+        created_at: string | null;
+        invited_by: string | null;
+        expires_at: string | null;
+      }>
+    ).map((invite) => {
+      const businessIds = accountInviteAccess.get(invite.id) ?? [];
+      const businesses = businessIds
+        .map((id) => businessesById.get(id))
+        .filter((b): b is NonNullable<typeof b> => Boolean(b));
+      const firstBiz = businesses[0] ?? null;
+      const title =
+        businesses.length > 1
+          ? `Invite to ${businesses.length} businesses`
+          : firstBiz?.name
+            ? `Invite to ${firstBiz.name}`
+            : firstBiz?.slug
+              ? `Invite to /${firstBiz.slug}`
+              : "You were invited to join a workspace";
+      const preview = invite.can_manage_team
+        ? "MANAGER · can manage team"
+        : "MANAGER";
+      return {
+        id: `account-invite:${String(invite.id)}`,
+        type: "invitation_received",
+        entity_type: "invitation",
+        entity_id: String(invite.id),
+        order_id: null,
+        order_number: null,
+        title,
+        preview,
+        actor_label: actorLabelsById.get(String(invite.invited_by ?? "")) ?? null,
+        is_read: false,
+        created_at: String(invite.created_at ?? new Date().toISOString()),
+        metadata: {
+          invite_id: invite.id,
+          invite_source: "account",
+          account_id: invite.account_id,
+          business_ids: businessIds,
+          business_slugs: businesses.map((b) => b.slug),
+          business_names: businesses.map((b) => b.name).filter(Boolean),
+          role: "MANAGER",
+          can_manage_team: invite.can_manage_team,
+          invited_by: invite.invited_by,
+          expires_at: invite.expires_at,
+        },
+      };
+    });
+
+    const mergedNotifications = [
+      ...inboxNotifications,
+      ...inviteNotifications,
+      ...accountInviteNotifications,
+    ].sort(
       (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
     );
 

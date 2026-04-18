@@ -93,7 +93,6 @@ export default function TeamAccessTopBar({
                   businesses={businesses!}
                   currentSlug={currentBusinessSlug!}
                   onSelect={handleSelectBusiness}
-                  disabledAdd
                   widthClassName="w-[176px] lg:w-[208px]"
                   variant="toolbar-compact"
                 />
