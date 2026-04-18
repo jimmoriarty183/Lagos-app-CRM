@@ -106,7 +106,7 @@ export default function DataMenu({
                 <FileDown className="h-3.5 w-3.5 text-[#4F46E5]" />
                 Excel (.xlsx)
               </span>
-              {!canExport ? <span className="text-[10px] uppercase tracking-wide text-[#9CA3AF]">Pro+</span> : null}
+              {!canExport ? <span className="text-[10px] uppercase tracking-wide text-[#9CA3AF]">Pro</span> : null}
             </button>
             <button
               type="button"
@@ -117,7 +117,7 @@ export default function DataMenu({
                 <FileDown className="h-3.5 w-3.5 text-[#4F46E5]" />
                 CSV (.csv)
               </span>
-              {!canExport ? <span className="text-[10px] uppercase tracking-wide text-[#9CA3AF]">Pro+</span> : null}
+              {!canExport ? <span className="text-[10px] uppercase tracking-wide text-[#9CA3AF]">Pro</span> : null}
             </button>
 
             <div className="border-t border-[#F3F4F6] px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]">
