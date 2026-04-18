@@ -30,10 +30,6 @@ export default function DataMenu({
   const [showPaywall, setShowPaywall] = useState<null | "export" | "import">(null);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
 
-  // Export and import are owner-only operations. Hide the menu entirely for
-  // managers — keeps the surface clean and matches the API-side restriction.
-  if (!isOwner) return null;
-
   useEffect(() => {
     if (!open) return;
     const onClick = (event: MouseEvent) => {
@@ -42,6 +38,11 @@ export default function DataMenu({
     document.addEventListener("mousedown", onClick);
     return () => document.removeEventListener("mousedown", onClick);
   }, [open]);
+
+  // Export and import are owner-only operations. Hide the menu entirely for
+  // managers — keeps the surface clean and matches the API-side restriction.
+  // Conditional return MUST come after all hooks to satisfy Rules of Hooks.
+  if (!isOwner) return null;
 
   function downloadUrl(extra: Record<string, string>) {
     const url = new URL(`/api/b/${encodeURIComponent(businessSlug)}/export`, window.location.origin);
@@ -85,11 +86,11 @@ export default function DataMenu({
         <button
           type="button"
           onClick={() => setOpen((prev) => !prev)}
-          className="inline-flex items-center gap-1.5 rounded-full border border-[#E5E7EB] bg-white px-3 py-1.5 text-xs font-semibold text-[#374151] transition hover:border-[#D6DAE1] hover:bg-[#FCFCFD]"
+          className="inline-flex h-10 items-center gap-2 rounded-xl border border-[var(--brand-200)] bg-white px-4 text-sm font-medium text-[var(--brand-700)] transition hover:border-[#A5B4FC] hover:bg-[var(--brand-50)]"
         >
-          <Download className="h-3.5 w-3.5" />
+          <Download className="h-4 w-4" />
           Data
-          <ChevronDown className="h-3 w-3 text-[#9CA3AF]" />
+          <ChevronDown className="h-4 w-4 text-[var(--brand-600)]" />
         </button>
 
         {open ? (
