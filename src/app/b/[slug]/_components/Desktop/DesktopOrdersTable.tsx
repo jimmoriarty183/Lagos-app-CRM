@@ -164,6 +164,7 @@ type Props = {
   currentUserName: string;
   initialOpenOrderId?: string | null;
   initialCreateOrderOpen?: boolean;
+  dataMenuSlot?: React.ReactNode;
 };
 
 function fmtAmount(n: number) {
@@ -832,6 +833,7 @@ export default function DesktopOrdersTable({
   currentUserName,
   initialOpenOrderId = null,
   initialCreateOrderOpen = false,
+  dataMenuSlot,
 }: Props) {
   const router = useRouter();
   const { customStatuses, statuses } = useBusinessStatuses(businessId);
@@ -1791,6 +1793,8 @@ export default function DesktopOrdersTable({
                 Reset
               </a>
             ) : null}
+
+            {dataMenuSlot && viewMode === "list" ? dataMenuSlot : null}
 
             <div className="inline-flex items-center rounded-xl border border-[var(--brand-200)] bg-[var(--brand-50)] p-1">
               <button

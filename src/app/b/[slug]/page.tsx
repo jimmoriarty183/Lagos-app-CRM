@@ -1462,17 +1462,6 @@ export default async function Page({ params, searchParams }: PageProps) {
             }`}
           >
             {viewMode === "list" ? (
-              <div className="flex items-center justify-end">
-                <DataMenu
-                  businessSlug={slug}
-                  type="orders"
-                  canExport={dataEntitlements.canExport}
-                  canImport={dataEntitlements.canImport}
-                  isOwner={userRole === "OWNER"}
-                />
-              </div>
-            ) : null}
-            {viewMode === "list" ? (
               <DesktopAnalyticsCard
                 cards={summaryCards}
                 periodLabel={summaryPeriod.current.label}
@@ -1535,6 +1524,15 @@ export default async function Page({ params, searchParams }: PageProps) {
               currentUserName={currentUserName}
               initialOpenOrderId={initialOpenOrderId || null}
               initialCreateOrderOpen={initialCreateOrderOpen}
+              dataMenuSlot={
+                <DataMenu
+                  businessSlug={slug}
+                  type="orders"
+                  canExport={dataEntitlements.canExport}
+                  canImport={dataEntitlements.canImport}
+                  isOwner={userRole === "OWNER"}
+                />
+              }
             />
           </div>
         </div>

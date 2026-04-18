@@ -404,23 +404,23 @@ export function ClientDirectoryList({
                       <Cell>{formatMoney(row.turnover_total)}</Cell>
                       <Cell>{formatDate(row.last_order_at)}</Cell>
                       <Cell>{formatDateTime(row.updated_at)}</Cell>
-                      <Cell>
-                        <div className="flex items-center gap-2">
+                      <td className="whitespace-nowrap py-3 pl-2 pr-4 text-right">
+                        <div className="inline-flex items-center gap-1.5">
                           <button
                             type="button"
                             onClick={() => setOpenClientId(String(row.id))}
-                            className="inline-flex h-8 items-center rounded-lg border border-[var(--brand-200)] bg-[var(--brand-50)] px-3 text-xs font-semibold text-[var(--brand-700)] transition hover:border-[var(--brand-300)]"
+                            className="inline-flex h-8 items-center rounded-lg border border-[var(--brand-200)] bg-[var(--brand-50)] px-2.5 text-xs font-semibold text-[var(--brand-700)] transition hover:border-[var(--brand-300)]"
                           >
                             Preview
                           </button>
                           <Link
                             href={`/b/${slug}/clients/${String(row.id)}`}
-                            className="inline-flex h-8 items-center rounded-lg border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
+                            className="inline-flex h-8 items-center rounded-lg border border-slate-300 bg-white px-2.5 text-xs font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
                           >
                             Open
                           </Link>
                         </div>
-                      </Cell>
+                      </td>
                     </tr>
                   ))
                 )}
