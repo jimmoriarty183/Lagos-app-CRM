@@ -40,6 +40,8 @@ import { ensureWorkspaceForBusiness } from "@/lib/workspaces";
 import { getTodayDateOnly } from "@/lib/follow-ups";
 import { resolveOwnerAccountId } from "@/lib/businesses/business-limits-service";
 import { getSubscriptionSnapshot } from "@/lib/billing/subscriptions";
+import { resolveBusinessDataEntitlements } from "@/lib/billing/business-entitlements";
+import DataMenu from "@/components/data/DataMenu";
 
 function isSameStatusFilterSet(
   actual: readonly StatusFilterValue[],
@@ -1377,6 +1379,11 @@ export default async function Page({ params, searchParams }: PageProps) {
     trendTone: comparison.tone,
   }));
 
+  const dataEntitlements = await resolveBusinessDataEntitlements(supabaseAdmin(), {
+    businessId: String(currentBusiness.id),
+    ownerUserId: currentUserId,
+  });
+
   return (
     <div className="min-h-screen overflow-x-hidden bg-transparent text-slate-900">
       <TopBar
@@ -1454,6 +1461,17 @@ export default async function Page({ params, searchParams }: PageProps) {
               viewMode === "kanban" ? "h-full pl-0.5" : "pl-2"
             }`}
           >
+            {viewMode === "list" ? (
+              <div className="flex items-center justify-end">
+                <DataMenu
+                  businessSlug={slug}
+                  type="orders"
+                  canExport={dataEntitlements.canExport}
+                  canImport={dataEntitlements.canImport}
+                  isOwner={userRole === "OWNER"}
+                />
+              </div>
+            ) : null}
             {viewMode === "list" ? (
               <DesktopAnalyticsCard
                 cards={summaryCards}

@@ -18,16 +18,17 @@ const SETTINGS_ITEM: PlatformNavItem = {
   href: "/app/settings",
 };
 
-export function getPlatformSidebarNavigation(): PlatformNavItem[] {
-  return [
-    ...getVisiblePlatformModules().map((module) => ({
-      key: module.key,
-      label: module.name,
-      description: module.description,
-      href: module.href,
-    })),
-    SETTINGS_ITEM,
-  ];
+export type PlatformSidebarNavItem = Omit<PlatformNavItem, "key"> & {
+  key: PlatformModuleKey;
+};
+
+export function getPlatformSidebarNavigation(): PlatformSidebarNavItem[] {
+  return getVisiblePlatformModules().map((module) => ({
+    key: module.key,
+    label: module.name,
+    description: module.description,
+    href: module.href,
+  }));
 }
 
 export function getPlatformNavItem(key: PlatformModuleKey | "settings") {

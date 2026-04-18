@@ -74,7 +74,7 @@ export default function TopBar({
   const roleLabel =
     role === "OWNER" ? "owner" : role === "MANAGER" ? "manager" : "guest";
   const resolvedSettingsHref = businessSlug
-    ? `/app/settings?b=${encodeURIComponent(businessSlug)}`
+    ? `/b/${businessSlug}/settings`
     : "/app/settings";
   const profileHref = "/app/profile";
   const resolvedBillingHref = billingHref ?? "/app/settings/billing";

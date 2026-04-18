@@ -120,7 +120,7 @@ export default function TeamAccessTopBar({
               profileHref={profileHref}
               settingsHref={
                 currentBusinessSlug
-                  ? `/app/settings?b=${encodeURIComponent(currentBusinessSlug)}`
+                  ? `/b/${currentBusinessSlug}/settings`
                   : "/app/settings"
               }
               billingHref={billingHref ?? "/app/settings/billing"}

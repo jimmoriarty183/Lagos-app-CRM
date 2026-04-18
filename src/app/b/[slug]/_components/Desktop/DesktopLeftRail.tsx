@@ -11,7 +11,6 @@ import {
   ChevronsRight,
   GraduationCap,
   LifeBuoy,
-  Settings,
   SlidersHorizontal,
   Users,
 } from "lucide-react";
@@ -132,8 +131,8 @@ function RailLink({
   const cls = [
     "group relative flex border shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition-all duration-150",
     expanded
-      ? "min-h-10 w-full items-start justify-start gap-2 rounded-xl px-3 py-2"
-      : "h-10 w-full items-center justify-center rounded-xl",
+      ? "min-h-12 w-full items-start justify-start gap-2.5 rounded-xl px-3 py-2.5"
+      : "h-12 w-full items-center justify-center rounded-xl",
     active
       ? "border-[#D7DEFA] bg-[#F5F7FF] text-[#334155] shadow-[0_4px_12px_rgba(99,102,241,0.08)]"
       : disabled
@@ -148,10 +147,10 @@ function RailLink({
         className={[
           "relative shrink-0 rounded-lg transition-colors duration-150",
           active
-            ? "bg-[var(--brand-600)] p-1.5 text-white shadow-[0_4px_12px_rgba(91,91,179,0.22)]"
+            ? "bg-[var(--brand-600)] p-2 text-white shadow-[0_4px_12px_rgba(91,91,179,0.22)]"
             : disabled
-              ? "bg-white/70 p-1.5 text-[#9CA3AF]"
-              : "bg-[var(--brand-50)] p-1.5 text-[var(--brand-600)] group-hover:bg-[var(--brand-100)] group-hover:text-[var(--brand-700)]",
+              ? "bg-white/70 p-2 text-[#9CA3AF]"
+              : "bg-[var(--brand-50)] p-2 text-[var(--brand-600)] group-hover:bg-[var(--brand-100)] group-hover:text-[var(--brand-700)]",
         ].join(" ")}
       >
         {icon}
@@ -171,7 +170,7 @@ function RailLink({
           <span className="flex items-center gap-1.5">
             <span
               className={[
-                "block text-xs font-semibold leading-4 transition-colors",
+                "block text-[13px] font-semibold leading-5 transition-colors",
                 active
                   ? "text-[#334155]"
                   : disabled
@@ -200,7 +199,7 @@ function RailLink({
           {description ? (
             <span
               className={[
-                "mt-0 block text-[10px] font-medium leading-3.5",
+                "mt-0.5 block text-[11px] font-medium leading-4",
                 active
                   ? "text-[#4B5563]"
                   : disabled
@@ -301,11 +300,11 @@ export default function DesktopLeftRail({
     isKanban && !effectiveKanbanPeekOpen && !expanded && !filtersOpen
       ? "w-0"
       : isKanban
-        ? "w-[80px]"
-        : "w-[88px]";
-  const expandedRailWidth = isKanban ? "w-[192px]" : "w-[208px]";
-  const collapsedPanelWidth = isKanban ? "w-[72px]" : "w-[80px]";
-  const expandedPanelWidth = isKanban ? "w-[176px]" : "w-[192px]";
+        ? "w-[92px]"
+        : "w-[100px]";
+  const expandedRailWidth = isKanban ? "w-[216px]" : "w-[232px]";
+  const collapsedPanelWidth = isKanban ? "w-[84px]" : "w-[92px]";
+  const expandedPanelWidth = isKanban ? "w-[200px]" : "w-[216px]";
   const topOffset = "calc(env(safe-area-inset-top) + 80px)";
 
   const openCollapsedRail = () => {
@@ -365,14 +364,10 @@ export default function DesktopLeftRail({
 
   const platformNavigation = getPlatformSidebarNavigation();
   const secondaryModules = platformNavigation.filter(
-    (item) => item.key !== "crm" && item.key !== "tasks" && item.key !== "settings",
-  );
-  const settingsModule = platformNavigation.find(
-    (item) => item.key === "settings",
+    (item) => item.key !== "crm" && item.key !== "tasks",
   );
   const navIconByKey = {
-    academy: <GraduationCap className="h-4 w-4" />,
-    settings: <Settings className="h-4 w-4" />,
+    academy: <GraduationCap className="h-5 w-5" />,
   } as const;
   const analyticsTarget =
     analyticsHref ??
@@ -387,13 +382,6 @@ export default function DesktopLeftRail({
     (settingsHref.startsWith("/b/") && settingsHref.includes("/settings")
       ? settingsHref.replace(/\/settings(?:\/.*)?$/, "/catalog/products")
       : undefined);
-  const accountSettingsHref = (() => {
-    const slugMatch = settingsHref.match(/^\/b\/([^/]+)/);
-    if (slugMatch) {
-      return `/app/settings?b=${encodeURIComponent(slugMatch[1])}`;
-    }
-    return "/app/settings";
-  })();
   const railItemsClass = expanded
     ? "flex flex-col items-stretch gap-1.5"
     : "grid grid-cols-2 items-stretch gap-1.5";
@@ -464,7 +452,7 @@ export default function DesktopLeftRail({
                     aria-label="Hide rail menu"
                     title="Hide menu"
                   >
-                    <ChevronsLeft className="h-4 w-4" />
+                    <ChevronsLeft className="h-5 w-5" />
                   </button>
                 ) : null}
 
@@ -476,7 +464,7 @@ export default function DesktopLeftRail({
                     aria-label="Open full menu"
                     title="Open full menu"
                   >
-                    <ChevronsRight className="h-4 w-4" />
+                    <ChevronsRight className="h-5 w-5" />
                   </button>
                 ) : null}
 
@@ -484,9 +472,9 @@ export default function DesktopLeftRail({
                   <RailLink
                     icon={
                       expanded ? (
-                        <ChevronsLeft className="h-4 w-4" />
+                        <ChevronsLeft className="h-5 w-5" />
                       ) : (
-                        <ChevronsRight className="h-4 w-4" />
+                        <ChevronsRight className="h-5 w-5" />
                       )
                     }
                     label={expanded ? "Collapse menu" : "Expand menu"}
@@ -498,7 +486,7 @@ export default function DesktopLeftRail({
 
                 {showFilters ? (
                   <RailLink
-                    icon={<SlidersHorizontal className="h-4 w-4" />}
+                    icon={<SlidersHorizontal className="h-5 w-5" />}
                     label="Filters"
                     description="Search and narrow orders"
                     expanded={expanded}
@@ -511,7 +499,7 @@ export default function DesktopLeftRail({
 
                 {canSeeAnalytics ? (
                   <RailLink
-                    icon={<BarChart3 className="h-4 w-4" />}
+                    icon={<BarChart3 className="h-5 w-5" />}
                     label="Analytics"
                     description="Owner workload and deadline control"
                     expanded={expanded}
@@ -523,7 +511,7 @@ export default function DesktopLeftRail({
 
                 {todayHref ? (
                   <RailLink
-                    icon={<CalendarDays className="h-4 w-4" />}
+                    icon={<CalendarDays className="h-5 w-5" />}
                     label="Today"
                     description="Overdue and due-today follow-ups"
                     expanded={expanded}
@@ -556,7 +544,7 @@ export default function DesktopLeftRail({
                 })}
                 {inferredClientsHref ? (
                   <RailLink
-                    icon={<Users className="h-4 w-4" />}
+                    icon={<Users className="h-5 w-5" />}
                     label="Clients"
                     description="Client directory and ownership"
                     expanded={expanded}
@@ -567,7 +555,7 @@ export default function DesktopLeftRail({
                 ) : null}
                 {inferredCatalogHref ? (
                   <RailLink
-                    icon={<Boxes className="h-4 w-4" />}
+                    icon={<Boxes className="h-5 w-5" />}
                     label="Catalog"
                     description="Products and services"
                     expanded={expanded}
@@ -578,7 +566,7 @@ export default function DesktopLeftRail({
                 ) : null}
                 {supportHref ? (
                   <RailLink
-                    icon={<LifeBuoy className="h-4 w-4" />}
+                    icon={<LifeBuoy className="h-5 w-5" />}
                     label="Support"
                     description="Requests and ticket history"
                     expanded={expanded}
@@ -589,7 +577,7 @@ export default function DesktopLeftRail({
                 ) : null}
                 {adminHref ? (
                   <RailLink
-                    icon={<Shield className="h-4 w-4" />}
+                    icon={<Shield className="h-5 w-5" />}
                     label="Admin"
                     description="Registered users and access"
                     expanded={expanded}
@@ -597,24 +585,6 @@ export default function DesktopLeftRail({
                     active={activeSection === "admin"}
                     tooltipSide={tooltipSideByKey.get("admin") ?? "right"}
                   />
-                ) : null}
-                {settingsModule ? (
-                  <>
-                    {expanded ? (
-                      <div className="mt-1 h-px bg-[#E5E7EB]" />
-                    ) : (
-                      <div className="col-span-2 mt-0.5 h-px bg-[#E5E7EB]" />
-                    )}
-                    <RailLink
-                      icon={navIconByKey.settings}
-                      label={settingsModule.label}
-                      description={settingsModule.description}
-                      expanded={expanded}
-                      href={accountSettingsHref}
-                      active={activeSection === "settings"}
-                      className={collapsedFullRowClass}
-                    />
-                  </>
                 ) : null}
               </div>
             </div>
@@ -626,11 +596,11 @@ export default function DesktopLeftRail({
                 "absolute z-40 w-[340px]",
                 expanded
                   ? isKanban
-                    ? "left-[180px]"
-                    : "left-[196px]"
+                    ? "left-[204px]"
+                    : "left-[220px]"
                   : isKanban
-                    ? "left-[60px]"
-                    : "left-[72px]",
+                    ? "left-[72px]"
+                    : "left-[84px]",
               ].join(" ")}
               style={{ top: 0, maxHeight: "calc(100vh - 100px)" }}
             >

@@ -8,6 +8,8 @@ import DesktopLeftRail from "@/app/b/[slug]/_components/Desktop/DesktopLeftRail"
 import ProductCatalogManager from "../../settings/catalog/ProductCatalogManager";
 import { loadUserProfileSafe } from "@/lib/profile";
 import { resolveUserDisplay } from "@/lib/user-display";
+import { resolveBusinessDataEntitlements } from "@/lib/billing/business-entitlements";
+import DataMenu from "@/components/data/DataMenu";
 
 type Role = "OWNER" | "MANAGER" | "GUEST";
 
@@ -190,6 +192,11 @@ export default async function CatalogProductsPage({
     role: ((userMemberships ?? []).find((m: any) => m.business_id === b.id)?.role ?? "GUEST").toUpperCase(),
   }));
 
+  const dataEntitlements = await resolveBusinessDataEntitlements(admin, {
+    businessId: String(business.id),
+    ownerUserId: user.id,
+  });
+
   return (
     <div className="min-h-[100svh] overflow-x-clip bg-transparent text-[#1F2937]">
       <TeamAccessTopBar
@@ -240,12 +247,21 @@ export default async function CatalogProductsPage({
           />
 
           <section className="w-full min-w-0 max-w-full rounded-[14px] border border-[#E5E7EB] bg-white p-3 pb-5 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:rounded-[18px] sm:p-4">
-            <div className="mb-3">
-              <div className="product-page-kicker">Catalog</div>
-              <h1 className="product-page-title mt-1.5">Products</h1>
-              <p className="product-page-subtitle mt-1.5">
-                Create and manage product catalog entries from a separate sidebar section.
-              </p>
+            <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <div className="product-page-kicker">Catalog</div>
+                <h1 className="product-page-title mt-1.5">Products</h1>
+                <p className="product-page-subtitle mt-1.5">
+                  Create and manage product catalog entries from a separate sidebar section.
+                </p>
+              </div>
+              <DataMenu
+                businessSlug={business.slug}
+                type="products"
+                canExport={dataEntitlements.canExport}
+                canImport={dataEntitlements.canImport}
+                isOwner={role === "OWNER"}
+              />
             </div>
 
             <CatalogTabs slug={business.slug} active="products" />
@@ -259,12 +275,21 @@ export default async function CatalogProductsPage({
 
         <div className="mx-auto w-full max-w-[920px] min-w-0 lg:hidden">
           <section className="w-full min-w-0 max-w-full rounded-[14px] border border-[#E5E7EB] bg-white p-3 pb-5 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:rounded-[18px] sm:p-4">
-            <div className="mb-3">
-              <div className="product-page-kicker">Catalog</div>
-              <h1 className="product-page-title mt-1.5">Products</h1>
-              <p className="product-page-subtitle mt-1.5">
-                Create and manage product catalog entries from a separate sidebar section.
-              </p>
+            <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <div className="product-page-kicker">Catalog</div>
+                <h1 className="product-page-title mt-1.5">Products</h1>
+                <p className="product-page-subtitle mt-1.5">
+                  Create and manage product catalog entries from a separate sidebar section.
+                </p>
+              </div>
+              <DataMenu
+                businessSlug={business.slug}
+                type="products"
+                canExport={dataEntitlements.canExport}
+                canImport={dataEntitlements.canImport}
+                isOwner={role === "OWNER"}
+              />
             </div>
 
             <CatalogTabs slug={business.slug} active="products" />

@@ -207,16 +207,6 @@ export function UserMenu({
           </Link>
         </DropdownMenuItem>
 
-        <DropdownMenuItem
-          asChild
-          className="rounded-xl px-3 py-2 text-sm font-medium text-[#374151]"
-        >
-          <Link href={settingsHref}>
-            <Settings className="h-4 w-4" />
-            Settings
-          </Link>
-        </DropdownMenuItem>
-
         {billingHref ? (
           <DropdownMenuItem
             asChild
@@ -240,6 +230,16 @@ export function UserMenu({
             </Link>
           </DropdownMenuItem>
         ) : null}
+
+        <DropdownMenuItem
+          asChild
+          className="rounded-xl px-3 py-2 text-sm font-medium text-[#374151]"
+        >
+          <Link href={settingsHref}>
+            <Settings className="h-4 w-4" />
+            Settings
+          </Link>
+        </DropdownMenuItem>
 
         <DropdownMenuSeparator />
 

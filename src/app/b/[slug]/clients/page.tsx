@@ -7,6 +7,9 @@ import { getAdminUsersPath, isAdminEmail } from "@/lib/admin-access";
 import { getBusinessClientsContext } from "@/lib/clients/context";
 import { isTurnoverEligibleStatus } from "@/lib/orders/display";
 import { supabaseServerReadOnly } from "@/lib/supabase/server";
+import { supabaseAdmin } from "@/lib/supabase/admin";
+import { resolveBusinessDataEntitlements } from "@/lib/billing/business-entitlements";
+import DataMenu from "@/components/data/DataMenu";
 
 type ClientsPageSearchParams = {
   q?: string;
@@ -434,6 +437,11 @@ export default async function ClientsPage({
       ? managerOptions.filter((entry) => entry.id === context.user.id)
       : managerOptions;
 
+  const dataEntitlements = await resolveBusinessDataEntitlements(supabaseAdmin(), {
+    businessId: context.business.id,
+    ownerUserId: context.user.id,
+  });
+
   return (
     <div className="min-h-screen overflow-x-hidden bg-transparent text-slate-900">
       <TopBar
@@ -508,6 +516,13 @@ export default async function ClientsPage({
                     visibility.
                   </p>
                 </div>
+                <DataMenu
+                  businessSlug={slug}
+                  type="clients"
+                  canExport={dataEntitlements.canExport}
+                  canImport={dataEntitlements.canImport}
+                  isOwner={context.role === "OWNER"}
+                />
               </div>
 
               <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
