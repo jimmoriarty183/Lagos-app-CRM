@@ -20,6 +20,7 @@ import {
   Zap,
 } from "lucide-react";
 import { BrandLockup } from "./Brand";
+import BuyCtaButton from "./BuyCtaButton";
 import { PublicFooter } from "./PublicFooter";
 
 const heroFadeUp: Variants = {
@@ -52,11 +53,31 @@ type DemoView = "kanban" | "crm" | "analytics";
 // NOTE: display names are swapped vs internal plan code (single source of truth: /pricing).
 // "Pro" (displayed) = code 'business' (highlighted middle-high tier);
 // "Business" (displayed) = code 'pro' (top tier).
-const plans = [
+type PlanCode = "solo" | "starter" | "business" | "pro";
+
+type Plan = {
+  name: string;
+  code: PlanCode;
+  launch: { monthly: number; yearly: number };
+  regular: { monthly: number; yearly: number };
+  priceIds: { monthly: string; yearly: string };
+  note: string;
+  description: string;
+  cta: string;
+  highlight?: boolean;
+  features: string[];
+};
+
+const plans: Plan[] = [
   {
     name: "Solo",
+    code: "solo",
     launch: { monthly: 8, yearly: 80 },
     regular: { monthly: 12, yearly: 120 },
+    priceIds: {
+      monthly: "pri_01kmncmgt9csnfq6hwvz6eg5m3",
+      yearly: "pri_01kn1ztvh3d8mf3c7msstc4yj4",
+    },
     note: "1 user · 1 business",
     description: "For individuals who need structure and follow-up discipline",
     cta: "Start with Solo",
@@ -70,8 +91,13 @@ const plans = [
   },
   {
     name: "Starter",
+    code: "starter",
     launch: { monthly: 39, yearly: 390 },
     regular: { monthly: 49, yearly: 490 },
+    priceIds: {
+      monthly: "pri_01kmncq914c512x590mj142cm9",
+      yearly: "pri_01kn1zrysbhmecpa8dmn3mjkwv",
+    },
     note: "Up to 5 users · 2 businesses",
     description: "For small teams getting control over daily operations",
     cta: "Start with Starter",
@@ -84,8 +110,13 @@ const plans = [
   },
   {
     name: "Pro",
+    code: "business",
     launch: { monthly: 79, yearly: 790 },
     regular: { monthly: 99, yearly: 990 },
+    priceIds: {
+      monthly: "pri_01kmncrvjyqb3y1rwf6w2zcpbq",
+      yearly: "pri_01kn1zq31rkhqbgxys3f1fgqgj",
+    },
     note: "Up to 10 users · 5 businesses",
     description:
       "For growing teams that need manager dashboards and KPI visibility",
@@ -102,8 +133,13 @@ const plans = [
   },
   {
     name: "Business",
+    code: "pro",
     launch: { monthly: 149, yearly: 1490 },
     regular: { monthly: 179, yearly: 1790 },
+    priceIds: {
+      monthly: "pri_01kmncvk1ytkmj0tar1wxb8cw4",
+      yearly: "pri_01kn1zmv87cs2he9v7xy01xpns",
+    },
     note: "Up to 20 users · 10 businesses",
     description:
       "For multi-location teams and agencies that need full operational control",
@@ -664,16 +700,17 @@ export function MarketingLandingPage() {
                     ))}
                   </ul>
                   <div className="mt-auto flex flex-col gap-2">
-                    <Link
-                      href="/pricing"
-                      className={`inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
+                    <BuyCtaButton
+                      planCode={plan.code}
+                      interval={billingCycle}
+                      priceId={plan.priceIds[billingCycle]}
+                      label={plan.cta}
+                      className={`inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-sm font-semibold transition disabled:cursor-wait disabled:opacity-70 ${
                         plan.highlight
                           ? "brand-primary-btn shadow-[0_10px_24px_-12px_rgba(91,91,179,0.6)]"
                           : "border border-slate-200 bg-white text-slate-900 hover:border-[var(--brand-300)] hover:bg-[var(--brand-50)] hover:text-[var(--brand-700)]"
                       }`}
-                    >
-                      {plan.cta}
-                    </Link>
+                    />
                   </div>
                 </motion.article>
               );

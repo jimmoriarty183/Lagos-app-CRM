@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BrandLockup } from "@/components/Brand";
 
-import BuyButton from "@/components/BuyButton";
+import BuyCtaButton from "@/components/BuyCtaButton";
 import { PublicFooter } from "@/components/PublicFooter";
 
 type BillingCycle = "monthly" | "yearly";
@@ -14,7 +14,7 @@ type Plan = {
   // Internal plan code (stable, matches plans.code in DB and Paddle mapping).
   // Middle-high tier is displayed as "Pro" but code='business';
   // top tier is displayed as "Business" but code='pro'.
-  code: string;
+  code: "solo" | "starter" | "business" | "pro";
   launchAmount: string;
   regularAmount: string;
   monthlyLaunchAmount: string;
@@ -568,15 +568,12 @@ export default function PricingPage() {
                   ))}
                 </ul>
                 <div className="planCta">
-                  <BuyButton
+                  <BuyCtaButton
+                    planCode={plan.code}
+                    interval={billingCycle === "monthly" ? "monthly" : "yearly"}
                     priceId={billingCycle === "monthly" ? plan.priceIdMonthly : plan.priceIdYearly}
                     label={plan.cta}
                     className={plan.highlight ? "primary" : "secondary"}
-                    redirectTo={`/app/settings/billing?plan=${encodeURIComponent(
-                      plan.code,
-                    )}&interval=${encodeURIComponent(
-                      billingCycle === "monthly" ? "monthly" : "yearly",
-                    )}`}
                   />
                 </div>
               </article>

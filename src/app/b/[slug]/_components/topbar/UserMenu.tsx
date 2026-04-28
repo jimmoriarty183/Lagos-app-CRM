@@ -110,12 +110,48 @@ export function UserMenu({
 
     try {
       document.cookie = "u=; path=/; max-age=0";
-      await fetch("/api/auth/logout", { method: "POST" });
-    } finally {
-      setIsLoggingOut(false);
-      router.push("/login");
-      router.refresh();
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        cache: "no-store",
+        credentials: "include",
+      });
+    } catch {
+      // Ignore network errors — we still proceed to wipe client state below.
     }
+
+    // Defensive client-side wipe: remove any Supabase tokens that the browser
+    // client may have cached in storage so a stale session cannot resurrect.
+    try {
+      if (typeof window !== "undefined") {
+        const wipeStorage = (storage: Storage) => {
+          const removable: string[] = [];
+          for (let i = 0; i < storage.length; i += 1) {
+            const key = storage.key(i);
+            if (!key) continue;
+            if (key.startsWith("sb-") || key.startsWith("supabase.")) {
+              removable.push(key);
+            }
+          }
+          removable.forEach((key) => storage.removeItem(key));
+        };
+        wipeStorage(window.localStorage);
+        wipeStorage(window.sessionStorage);
+      }
+    } catch {
+      // localStorage may be unavailable (private mode); fall through.
+    }
+
+    setIsLoggingOut(false);
+
+    // Hard redirect drops in-memory React/router state and forces middleware
+    // to re-evaluate auth from the now-cleared cookies. router.push would keep
+    // the cached client state and could flash an authed UI.
+    if (typeof window !== "undefined") {
+      window.location.replace("/login");
+      return;
+    }
+    router.push("/login");
+    router.refresh();
   }
 
   if (!isHydrated) {

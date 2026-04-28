@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { DEMO_BLOCKED_ERROR, isDemoAccount, isDemoEmail } from "@/lib/billing/demo";
 import { requestPlanChange } from "@/lib/billing/paddle-service";
 import {
   resolveBusinessLimitStatus,
@@ -20,6 +21,13 @@ export async function POST() {
       return NextResponse.json(
         { ok: false, code: "UNAUTHORIZED", message: "Not authenticated" },
         { status: 401 },
+      );
+    }
+
+    if (isDemoEmail(user.email)) {
+      return NextResponse.json(
+        { ok: false, code: DEMO_BLOCKED_ERROR.code, message: DEMO_BLOCKED_ERROR.message },
+        { status: 403 },
       );
     }
 

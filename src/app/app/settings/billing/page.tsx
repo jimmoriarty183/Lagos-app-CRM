@@ -5,6 +5,7 @@ import { ArrowLeft, Sparkles } from "lucide-react";
 import TeamAccessTopBar from "@/app/b/[slug]/settings/team/TeamAccessTopBar";
 import DesktopLeftRail from "@/app/b/[slug]/_components/Desktop/DesktopLeftRail";
 import { getAdminUsersPath, isAdminEmail } from "@/lib/admin-access";
+import { isDemoEmail } from "@/lib/billing/demo";
 import { listEntitlements } from "@/lib/billing/entitlements";
 import { getSubscriptionSnapshot } from "@/lib/billing/subscriptions";
 import type { SubscriptionSnapshot } from "@/lib/billing/types";
@@ -75,10 +76,12 @@ export default async function BillingSettingsPage({
   const requestedPlan = String(resolvedSearchParams.plan ?? "").trim();
   const requestedInterval = String(resolvedSearchParams.interval ?? "").trim();
   const checkoutState = String(resolvedSearchParams.checkout ?? "").trim().toLowerCase();
+  const autoCheckoutFlag = String(resolvedSearchParams.autocheckout ?? "").trim() === "1";
   const nextPath = (() => {
     const params = new URLSearchParams();
     if (requestedPlan) params.set("plan", requestedPlan);
     if (requestedInterval) params.set("interval", requestedInterval);
+    if (autoCheckoutFlag) params.set("autocheckout", "1");
     const query = params.toString();
     return query ? `/app/settings/billing?${query}` : "/app/settings/billing";
   })();
@@ -327,6 +330,7 @@ export default async function BillingSettingsPage({
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <BillingCheckoutModal
               isOwner={role === "OWNER"}
+              isDemo={isDemoEmail(user.email)}
               customerEmail={String(user.email ?? "").trim()}
               accountId={accountId}
               ownerUserId={ownerUserId}
@@ -336,6 +340,7 @@ export default async function BillingSettingsPage({
               initialInterval={requestedInterval}
               currentPlan={subscription?.plan?.code ?? null}
               currentInterval={subscription?.billingInterval ?? null}
+              autoCheckout={autoCheckoutFlag}
             />
             <BillingSubscriptionActions
               isOwner={role === "OWNER"}

@@ -6,6 +6,7 @@ import { openCheckout } from "@/components/BuyButton";
 
 type BillingCheckoutModalProps = {
   isOwner: boolean;
+  isDemo?: boolean;
   customerEmail: string;
   accountId: string | null;
   ownerUserId: string | null;
@@ -15,6 +16,10 @@ type BillingCheckoutModalProps = {
   initialInterval?: string;
   currentPlan?: string | null;
   currentInterval?: string | null;
+  /** When true, open Paddle checkout automatically once on mount.
+   *  Set by the homepage Buy → login → checkout flow via ?autocheckout=1.
+   */
+  autoCheckout?: boolean;
 };
 
 type PlanCode = "solo" | "starter" | "business" | "pro";
@@ -193,6 +198,7 @@ export default function BillingCheckoutModal(props: BillingCheckoutModalProps) {
   const [interval, setInterval] = useState<BillingInterval>(
     normalizeInterval(preferredInitialInterval),
   );
+  const [autoCheckoutFired, setAutoCheckoutFired] = useState(false);
 
   useEffect(() => {
     if (!open || !props.accountId) return;
@@ -236,6 +242,12 @@ export default function BillingCheckoutModal(props: BillingCheckoutModalProps) {
 
   const handleOpenCheckout = async (selectedPlan: PlanCode = plan) => {
     if (!props.isOwner || loading) return;
+    if (props.isDemo) {
+      setError(
+        "Billing actions are disabled for the demo account. Sign in with a real account to upgrade.",
+      );
+      return;
+    }
     const priceId = PRICE_IDS[selectedPlan][interval];
     setLoading(true);
     setError("");
@@ -263,10 +275,37 @@ export default function BillingCheckoutModal(props: BillingCheckoutModalProps) {
     }
   };
 
+  // Auto-resume checkout for the homepage Buy → login → checkout flow.
+  // The query string carries autocheckout=1 and the chosen plan/interval.
+  // Fires once per mount; gated on owner + non-demo so we don't surprise
+  // members or demo accounts who hit the same URL.
+  useEffect(() => {
+    if (!props.autoCheckout) return;
+    if (autoCheckoutFired) return;
+    if (!props.isOwner || props.isDemo) return;
+
+    setAutoCheckoutFired(true);
+    void handleOpenCheckout(normalizePlan(props.initialPlan));
+    // handleOpenCheckout intentionally excluded — it closes over `loading` /
+    // `interval` and we only want a single fire keyed by the autoCheckout flag.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props.autoCheckout, props.isOwner, props.isDemo, autoCheckoutFired]);
+
   if (!props.isOwner) {
     return (
       <span className="inline-flex cursor-not-allowed items-center gap-2 rounded-full border border-[#E5E7EB] bg-[#F9FAFB] px-4 py-2 text-sm font-semibold text-[#9CA3AF]">
         Upgrade plan (owner only)
+      </span>
+    );
+  }
+
+  if (props.isDemo) {
+    return (
+      <span
+        className="inline-flex cursor-not-allowed items-center gap-2 rounded-full border border-[#E5E7EB] bg-[#F9FAFB] px-4 py-2 text-sm font-semibold text-[#9CA3AF]"
+        title="Billing is disabled for the demo account."
+      >
+        Upgrade plan (demo)
       </span>
     );
   }
