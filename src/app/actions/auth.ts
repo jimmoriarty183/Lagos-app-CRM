@@ -100,7 +100,22 @@ export async function loginAction(
     if (memErr) return { ok: false, error: memErr.message, next: "" };
 
     if (!mems || mems.length === 0) {
-      return { ok: true, error: "", next: "/onboarding/business" };
+      // No business yet. If the user also has no billing account, they
+      // never finished subscribing — route them through /pricing first so
+      // the Paddle webhook can provision the account+subscription before
+      // /onboarding/business runs its entitlement-dependent flow.
+      const { data: accountRow } = await supabase
+        .from("accounts")
+        .select("id")
+        .eq("primary_owner_user_id", user.id)
+        .limit(1)
+        .maybeSingle();
+      const hasAccount = Boolean(accountRow?.id);
+      return {
+        ok: true,
+        error: "",
+        next: hasAccount ? "/onboarding/business" : "/pricing",
+      };
     }
 
     if (mems.length > 1) {
@@ -208,10 +223,14 @@ export async function registerOwnerAction(
 
     const { data: signedInData } = await supabase.auth.getUser();
     if (signedInData.user) {
+      // Fresh signups go to /pricing first to subscribe (Paddle webhook
+      // creates the account + trial subscription). Once the trial is live,
+      // they can create their business — otherwise /onboarding/business
+      // would fail with "Billing account not found".
       return {
         ok: true,
         error: "",
-        next: safeNext || "/onboarding/business",
+        next: safeNext || "/pricing",
       };
     }
 

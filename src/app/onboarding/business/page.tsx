@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { resolveCurrentWorkspace } from "@/lib/platform/workspace";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { OnboardingBusinessForm } from "./ui";
 
 export const dynamic = "force-dynamic";
@@ -36,6 +37,23 @@ export default async function OnboardingBusinessPage({
   // explicitly requested to create an additional business via `?new=1`.
   if (workspace && !isAdditional) {
     redirect("/app/crm");
+  }
+
+  // Without a billing account the create-business flow throws
+  // "Billing account not found for owner user" before the form ever submits.
+  // Send the user to /pricing to subscribe first (Paddle webhook then
+  // provisions the account+trial subscription via owner_user_id).
+  if (!workspace) {
+    const admin = supabaseAdmin();
+    const { data: accountRow } = await admin
+      .from("accounts")
+      .select("id")
+      .eq("primary_owner_user_id", user.id)
+      .limit(1)
+      .maybeSingle();
+    if (!accountRow?.id) {
+      redirect("/pricing");
+    }
   }
 
   return (

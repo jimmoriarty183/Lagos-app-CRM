@@ -29,7 +29,12 @@ function buildBillingPath(
   return `/app/settings/billing?${params.toString()}`;
 }
 
-type AuthState = { authenticated: boolean; isDemo: boolean };
+type AuthState = {
+  authenticated: boolean;
+  isDemo: boolean;
+  userId: string | null;
+  hasBusiness: boolean;
+};
 
 async function fetchAuthState(): Promise<AuthState> {
   try {
@@ -38,17 +43,23 @@ async function fetchAuthState(): Promise<AuthState> {
       cache: "no-store",
       credentials: "include",
     });
-    if (!response.ok) return { authenticated: false, isDemo: false };
+    if (!response.ok) {
+      return { authenticated: false, isDemo: false, userId: null, hasBusiness: false };
+    }
     const payload = (await response.json()) as {
       authenticated?: boolean;
       isDemo?: boolean;
+      userId?: string | null;
+      hasBusiness?: boolean;
     };
     return {
       authenticated: Boolean(payload.authenticated),
       isDemo: Boolean(payload.isDemo),
+      userId: payload.userId ? String(payload.userId) : null,
+      hasBusiness: Boolean(payload.hasBusiness),
     };
   } catch {
-    return { authenticated: false, isDemo: false };
+    return { authenticated: false, isDemo: false, userId: null, hasBusiness: false };
   }
 }
 
@@ -88,15 +99,24 @@ export default function BuyCtaButton({
         return;
       }
 
-      // Authenticated, non-demo: open Paddle directly. successUrl returns the
-      // user to settings/billing where webhooks have updated the snapshot.
+      // Authenticated, non-demo: open Paddle directly. For first-time users
+      // (no business yet) we land them on onboarding so they can finish setup
+      // right after the trial subscription is created by the webhook.
+      const successPath = auth.hasBusiness
+        ? "/app/settings/billing?checkout=success&source=homepage"
+        : "/onboarding/business?checkout=success";
+      // owner_user_id lets the billing webhook resolve (or create) an
+      // accounts row for brand-new signups that don't have one yet —
+      // see resolveOwnerAccountId / ensureAccountForOwner in webhooks.ts.
+      const customData: Record<string, string> = {
+        plan_code: planCode,
+        billing_interval: interval,
+        source: CHECKOUT_SOURCE,
+      };
+      if (auth.userId) customData.owner_user_id = auth.userId;
       const opened = await openCheckout(priceId, {
-        customData: {
-          plan_code: planCode,
-          billing_interval: interval,
-          source: CHECKOUT_SOURCE,
-        },
-        successUrl: `${window.location.origin}/app/settings/billing?checkout=success&source=homepage`,
+        customData,
+        successUrl: `${window.location.origin}${successPath}`,
       });
 
       if (!opened) {
