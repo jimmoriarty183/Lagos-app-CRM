@@ -99,7 +99,7 @@ export function SupportAdminActionsPanel({
           <select
             value={status}
             onChange={(event) => setStatus(event.target.value)}
-            className="h-10 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm text-slate-900 dark:text-white outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
+            className="h-10 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm text-slate-900 dark:text-white outline-none transition hover:border-slate-300 dark:hover:border-white/20 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
           >
             {STATUS_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
@@ -122,7 +122,7 @@ export function SupportAdminActionsPanel({
             value={customerReply}
             onChange={(event) => setCustomerReply(event.target.value)}
             placeholder="Type reply that requester should see..."
-            className="min-h-[84px] w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-2 text-sm outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
+            className="min-h-[84px] w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-2 text-sm outline-none transition hover:border-slate-300 dark:hover:border-white/20 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
           />
         </label>
 
@@ -144,14 +144,14 @@ export function SupportAdminActionsPanel({
           <textarea
             value={note}
             onChange={(event) => setNote(event.target.value)}
-            className="min-h-[100px] w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-2 text-sm outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
+            className="min-h-[100px] w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-2 text-sm outline-none transition hover:border-slate-300 dark:hover:border-white/20 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
           />
         </label>
         <button
           type="button"
           onClick={addInternalNote}
           disabled={isAddingNote || !note.trim()}
-          className="mt-3 inline-flex h-10 items-center rounded-xl border border-slate-300 dark:border-white/15 bg-white dark:bg-white/[0.03] px-4 text-sm font-semibold text-slate-700 dark:text-white/80 transition hover:border-slate-400 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
+          className="mt-3 inline-flex h-10 items-center rounded-xl border border-slate-300 dark:border-white/15 bg-white dark:bg-white/[0.03] px-4 text-sm font-semibold text-slate-700 dark:text-white/80 transition hover:border-slate-400 hover:text-slate-900 dark:hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isAddingNote ? "Adding..." : "Add note"}
         </button>

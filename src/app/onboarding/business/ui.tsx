@@ -341,7 +341,7 @@ export function OnboardingBusinessForm({
             value={businessName}
             onChange={(e) => setBusinessName(e.target.value)}
             placeholder="Acme Operations"
-            className="h-11 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3.5 text-sm text-slate-900 dark:text-white outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-[var(--brand-600)] focus:ring-4 focus:ring-[rgba(91,91,179,0.14)]"
+            className="h-11 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3.5 text-sm text-slate-900 dark:text-white outline-none transition placeholder:text-slate-400 hover:border-slate-300 dark:hover:border-white/20 focus:border-[var(--brand-600)] focus:ring-4 focus:ring-[rgba(91,91,179,0.14)]"
           />
         </label>
 

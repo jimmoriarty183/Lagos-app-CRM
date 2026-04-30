@@ -100,7 +100,16 @@ export default async function SelectBusinessPage() {
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400 dark:text-white/45">
                   Ordo access
                 </p>
-                <BrandWordmark variant="gradient" height={22} className="mt-1 h-[22px] w-auto" />
+                <BrandWordmark
+                  variant="gradient"
+                  height={22}
+                  className="mt-1 h-[22px] w-auto dark:hidden"
+                />
+                <BrandWordmark
+                  variant="light"
+                  height={22}
+                  className="mt-1 hidden h-[22px] w-auto dark:inline-block"
+                />
                 <h1 className="mt-1 text-[1.85rem] font-semibold tracking-tight text-slate-900 dark:text-white sm:text-[2rem]">
                   Select a workspace
                 </h1>
@@ -116,7 +125,7 @@ export default async function SelectBusinessPage() {
               <a
                 key={option.id}
                 href={`/api/workspace/select?slug=${encodeURIComponent(option.slug)}`}
-                className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] px-4 py-4 transition hover:border-slate-300 hover:bg-white"
+                className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] px-4 py-4 transition hover:border-slate-300 dark:hover:border-white/20 hover:bg-white dark:hover:bg-white/[0.07]"
               >
                 <div className="min-w-0">
                   <div className="truncate text-base font-semibold text-slate-900 dark:text-white">

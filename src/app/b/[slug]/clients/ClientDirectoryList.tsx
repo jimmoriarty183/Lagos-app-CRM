@@ -415,7 +415,7 @@ export function ClientDirectoryList({
                           </button>
                           <Link
                             href={`/b/${slug}/clients/${String(row.id)}`}
-                            className="inline-flex h-8 items-center rounded-lg border border-slate-300 dark:border-white/15 bg-white dark:bg-white/[0.03] px-2.5 text-xs font-semibold text-slate-700 dark:text-white/80 transition hover:border-slate-400 hover:text-slate-900"
+                            className="inline-flex h-8 items-center rounded-lg border border-slate-300 dark:border-white/15 bg-white dark:bg-white/[0.03] px-2.5 text-xs font-semibold text-slate-700 dark:text-white/80 transition hover:border-slate-400 hover:text-slate-900 dark:hover:text-white"
                           >
                             Open
                           </Link>
@@ -667,7 +667,7 @@ export function ClientDirectoryList({
                       key={order.id}
                       type="button"
                       onClick={() => setOpenOrderId(String(order.id))}
-                      className="flex w-full items-center justify-between gap-3 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] px-3 py-2 text-left transition hover:border-[#C7D2FE]"
+                      className="flex w-full items-center justify-between gap-3 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] px-3 py-2 text-left transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40"
                     >
                       <span className="min-w-0">
                         <span className="block text-sm font-semibold text-[#111827]">
@@ -699,7 +699,7 @@ export function ClientDirectoryList({
                 <button
                   type="button"
                   onClick={() => setClientReloadToken((v) => v + 1)}
-                  className="inline-flex h-8 items-center rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-xs font-semibold text-[#374151] hover:border-[#C7D2FE]"
+                  className="inline-flex h-8 items-center rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-xs font-semibold text-[#374151] hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40"
                 >
                   Retry
                 </button>
@@ -773,7 +773,7 @@ export function ClientDirectoryList({
                 <button
                   type="button"
                   onClick={() => setOrderReloadToken((v) => v + 1)}
-                  className="inline-flex h-8 items-center rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-xs font-semibold text-[#374151] hover:border-[#C7D2FE]"
+                  className="inline-flex h-8 items-center rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-xs font-semibold text-[#374151] hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40"
                 >
                   Retry
                 </button>

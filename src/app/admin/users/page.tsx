@@ -124,36 +124,36 @@ export default async function AdminUsersPage({
               name="q"
               defaultValue={q}
               placeholder="Поиск по имени, email, ID, телефону или бизнесу"
-              className="h-10 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3.5 text-sm text-slate-900 dark:text-white outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
+              className="h-10 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3.5 text-sm text-slate-900 dark:text-white outline-none transition placeholder:text-slate-400 hover:border-slate-300 dark:hover:border-white/20 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
             />
-            <select name="status" defaultValue={status} className="h-10 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3.5 text-sm text-slate-900 dark:text-white outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
+            <select name="status" defaultValue={status} className="h-10 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3.5 text-sm text-slate-900 dark:text-white outline-none transition hover:border-slate-300 dark:hover:border-white/20 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
               <option value="all">Любая почта</option>
               <option value="confirmed">Подтверждена</option>
               <option value="unconfirmed">Не подтверждена</option>
             </select>
-            <select name="signIn" defaultValue={signIn} className="h-10 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3.5 text-sm text-slate-900 dark:text-white outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
+            <select name="signIn" defaultValue={signIn} className="h-10 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3.5 text-sm text-slate-900 dark:text-white outline-none transition hover:border-slate-300 dark:hover:border-white/20 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
               <option value="all">Любой вход</option>
               <option value="has">Был вход</option>
               <option value="never">Без входа</option>
             </select>
-            <select name="business" defaultValue={business} className="h-10 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3.5 text-sm text-slate-900 dark:text-white outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
+            <select name="business" defaultValue={business} className="h-10 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3.5 text-sm text-slate-900 dark:text-white outline-none transition hover:border-slate-300 dark:hover:border-white/20 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
               <option value="all">Любой бизнес</option>
               <option value="has">Есть бизнес</option>
               <option value="none">Нет бизнеса</option>
             </select>
-            <select name="window" defaultValue={window} className="h-10 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3.5 text-sm text-slate-900 dark:text-white outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
+            <select name="window" defaultValue={window} className="h-10 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3.5 text-sm text-slate-900 dark:text-white outline-none transition hover:border-slate-300 dark:hover:border-white/20 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
               <option value="all">Весь период</option>
               <option value="24h">24 часа</option>
               <option value="7d">7 дней</option>
               <option value="30d">30 дней</option>
             </select>
-            <select name="sort" defaultValue={sort} className="h-10 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3.5 text-sm text-slate-900 dark:text-white outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
+            <select name="sort" defaultValue={sort} className="h-10 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3.5 text-sm text-slate-900 dark:text-white outline-none transition hover:border-slate-300 dark:hover:border-white/20 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
               <option value="created_desc">Сначала новые</option>
               <option value="last_sign_in_desc">Последний вход</option>
               <option value="email_asc">Email А-Я</option>
             </select>
             <div className="flex gap-3">
-              <select name="perPage" defaultValue={String(perPage)} className="h-10 min-w-0 flex-1 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3.5 text-sm text-slate-900 dark:text-white outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
+              <select name="perPage" defaultValue={String(perPage)} className="h-10 min-w-0 flex-1 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3.5 text-sm text-slate-900 dark:text-white outline-none transition hover:border-slate-300 dark:hover:border-white/20 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
                 {PER_PAGE_OPTIONS.map((value) => (
                   <option key={value} value={value}>
                     {value}

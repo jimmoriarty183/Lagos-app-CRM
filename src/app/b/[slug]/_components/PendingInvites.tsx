@@ -201,7 +201,7 @@ const PendingInvites = forwardRef<
                   <button
                     type="button"
                     onClick={() => revoke(inv.id)}
-                    className="inline-flex items-center gap-2 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-2 text-sm font-semibold text-gray-700 dark:text-white/80 hover:bg-gray-50"
+                    className="inline-flex items-center gap-2 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-2 text-sm font-semibold text-gray-700 dark:text-white/80 hover:bg-gray-50 dark:hover:bg-white/[0.06]"
                     title="Revoke invite"
                   >
                     <X className="h-4 w-4" />

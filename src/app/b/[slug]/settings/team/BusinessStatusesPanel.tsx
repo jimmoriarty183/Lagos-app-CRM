@@ -57,7 +57,7 @@ function colorButtonClass(selected: boolean) {
     "inline-flex h-11 items-center gap-2 rounded-xl border px-3 text-sm font-medium transition",
     selected
       ? "border-slate-900 bg-slate-50 dark:bg-white/[0.04] text-slate-900 dark:text-white shadow-[0_0_0_2px_rgba(15,23,42,0.08)]"
-      : "border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#4B5563] dark:text-white/70 hover:border-[#C7D2FE] hover:bg-[#F9FAFB]",
+      : "border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#4B5563] dark:text-white/70 hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]",
   ].join(" ");
 }
 
@@ -679,7 +679,7 @@ export default function BusinessStatusesPanel({
             type="button"
             onClick={handleReset}
             disabled={isSaving || !isDirty}
-            className="inline-flex h-10 items-center rounded-full border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 text-sm font-semibold text-[#4B5563] dark:text-white/70 transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937] disabled:cursor-not-allowed disabled:opacity-45"
+            className="inline-flex h-10 items-center rounded-full border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 text-sm font-semibold text-[#4B5563] dark:text-white/70 transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06] hover:text-[#1F2937] dark:hover:text-white disabled:cursor-not-allowed disabled:opacity-45"
           >
             Reset
           </button>
@@ -806,7 +806,7 @@ export default function BusinessStatusesPanel({
               <button
                 type="button"
                 onClick={resetEditor}
-                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 text-sm font-semibold text-[#4B5563] dark:text-white/70 transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 text-sm font-semibold text-[#4B5563] dark:text-white/70 transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]"
               >
                 <X className="h-4 w-4" />
                 Cancel
@@ -826,7 +826,7 @@ export default function BusinessStatusesPanel({
               type="button"
               onClick={() => moveWorkflowStatus(-1)}
               disabled={selectedWorkflowIndex <= 0}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#6B7280] dark:text-white/55 transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] disabled:cursor-not-allowed disabled:opacity-35"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#6B7280] dark:text-white/55 transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06] disabled:cursor-not-allowed disabled:opacity-35"
               aria-label="Move selected status left"
             >
               <ArrowLeft className="h-4 w-4" />
@@ -838,7 +838,7 @@ export default function BusinessStatusesPanel({
                 selectedWorkflowIndex < 0 ||
                 selectedWorkflowIndex >= workflowStatuses.length - 1
               }
-              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#6B7280] dark:text-white/55 transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] disabled:cursor-not-allowed disabled:opacity-35"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#6B7280] dark:text-white/55 transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06] disabled:cursor-not-allowed disabled:opacity-35"
               aria-label="Move selected status right"
             >
               <ArrowRight className="h-4 w-4" />
@@ -1051,7 +1051,7 @@ export default function BusinessStatusesPanel({
                           "inline-flex h-9 items-center gap-2 rounded-xl border px-3 text-xs font-semibold transition",
                           editing
                             ? "border-slate-900 bg-slate-50 dark:bg-white/[0.04] text-slate-900 dark:text-white"
-                            : "border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#4B5563] dark:text-white/70 hover:border-[#C7D2FE] hover:bg-[#F9FAFB]",
+                            : "border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#4B5563] dark:text-white/70 hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]",
                         ].join(" ")}
                       >
                         <PencilLine className="h-3.5 w-3.5" />
@@ -1067,7 +1067,7 @@ export default function BusinessStatusesPanel({
                           "inline-flex h-9 items-center gap-2 rounded-xl px-3 text-xs font-semibold transition",
                           inWorkflow
                             ? "border border-[#f3d5d8] bg-[#fff5f5] text-red-600 hover:border-[#efb8bf] hover:bg-[#ffe8e8]"
-                            : "border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#4B5563] dark:text-white/70 hover:border-[#C7D2FE] hover:bg-[#F9FAFB]",
+                            : "border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#4B5563] dark:text-white/70 hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]",
                         ].join(" ")}
                       >
                         {inWorkflow

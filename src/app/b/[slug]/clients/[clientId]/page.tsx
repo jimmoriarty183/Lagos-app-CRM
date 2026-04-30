@@ -1422,7 +1422,7 @@ export default async function ClientDetailPage({
                     <select
                       name="manager_id"
                       defaultValue={cleanText(currentAssignment?.manager_id)}
-                      className="h-10 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
+                      className="h-10 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none transition hover:border-slate-300 dark:hover:border-white/20 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
                     >
                       {!cleanText(currentAssignment?.manager_id) ? (
                         <option value="" disabled>
@@ -1438,7 +1438,7 @@ export default async function ClientDetailPage({
                     <input
                       name="note"
                       placeholder="Optional note"
-                      className="h-10 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
+                      className="h-10 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none transition hover:border-slate-300 dark:hover:border-white/20 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
                     />
                     <Button
                       type="submit"

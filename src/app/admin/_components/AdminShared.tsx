@@ -286,7 +286,7 @@ export function PaginationBar({
             "inline-flex h-8 items-center rounded-lg border px-2.5 text-sm font-medium",
             currentPage === 1
               ? "pointer-events-none border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/[0.06] text-slate-400 dark:text-white/45"
-              : "border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] text-slate-700 dark:text-white/80 hover:border-slate-300 hover:text-slate-900",
+              : "border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] text-slate-700 dark:text-white/80 hover:border-slate-300 dark:hover:border-white/20 hover:text-slate-900 dark:hover:text-white",
           ].join(" ")}
         >
           Назад
@@ -305,7 +305,7 @@ export function PaginationBar({
                   "inline-flex h-8 min-w-8 items-center justify-center rounded-lg border px-2.5 text-sm font-medium",
                   page === currentPage
                     ? "border-[#bfd0ea] dark:border-white/15 bg-[#eef5ff] dark:bg-[var(--brand-600)]/15 text-slate-900 dark:text-white"
-                    : "border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] text-slate-700 dark:text-white/80 hover:border-slate-300 hover:text-slate-900",
+                    : "border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] text-slate-700 dark:text-white/80 hover:border-slate-300 dark:hover:border-white/20 hover:text-slate-900 dark:hover:text-white",
                 ].join(" ")}
               >
                 {page}
@@ -321,7 +321,7 @@ export function PaginationBar({
             "inline-flex h-8 items-center rounded-lg border px-2.5 text-sm font-medium",
             currentPage === totalPages
               ? "pointer-events-none border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/[0.06] text-slate-400 dark:text-white/45"
-              : "border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] text-slate-700 dark:text-white/80 hover:border-slate-300 hover:text-slate-900",
+              : "border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] text-slate-700 dark:text-white/80 hover:border-slate-300 dark:hover:border-white/20 hover:text-slate-900 dark:hover:text-white",
           ].join(" ")}
         >
           Вперед
@@ -363,7 +363,7 @@ export function SectionList({
     <div className="space-y-2">
       {items.map((item, index) => {
         const body = (
-          <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-2.5 transition hover:border-slate-300">
+          <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-2.5 transition hover:border-slate-300 dark:hover:border-white/20">
             <div className="text-sm font-semibold text-slate-900 dark:text-white">{item.title}</div>
             {item.meta ? <div className="mt-1 text-sm text-slate-500 dark:text-white/55">{item.meta}</div> : null}
           </div>

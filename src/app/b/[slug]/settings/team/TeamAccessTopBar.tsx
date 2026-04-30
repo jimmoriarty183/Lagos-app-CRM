@@ -84,7 +84,7 @@ export default function TeamAccessTopBar({
 
             <Link
               href={ordersHref}
-              className="inline-flex h-9 w-10 items-center justify-center rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[13px] font-semibold text-[#4B5563] dark:text-white/70 shadow-sm transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937] sm:hidden"
+              className="inline-flex h-9 w-10 items-center justify-center rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[13px] font-semibold text-[#4B5563] dark:text-white/70 shadow-sm transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06] hover:text-[#1F2937] dark:hover:text-white sm:hidden"
             >
               <BrandIcon size={18} />
             </Link>

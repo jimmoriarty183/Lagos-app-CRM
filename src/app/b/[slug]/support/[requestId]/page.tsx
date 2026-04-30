@@ -114,7 +114,7 @@ export default async function BusinessSupportRequestDetailsPage({
           </div>
           <div className="min-w-0 space-y-4">
             <div className="flex justify-end">
-              <Link href={supportHref} className="inline-flex h-9 items-center rounded-xl border border-slate-300 dark:border-white/15 bg-white dark:bg-white/[0.03] px-3 text-sm font-semibold text-slate-700 dark:text-white/80 transition hover:border-slate-400 hover:text-slate-900">
+              <Link href={supportHref} className="inline-flex h-9 items-center rounded-xl border border-slate-300 dark:border-white/15 bg-white dark:bg-white/[0.03] px-3 text-sm font-semibold text-slate-700 dark:text-white/80 transition hover:border-slate-400 hover:text-slate-900 dark:hover:text-white">
                 Back to list
               </Link>
             </div>
@@ -136,7 +136,7 @@ export default async function BusinessSupportRequestDetailsPage({
 
         <div className="space-y-4 lg:hidden">
           <div className="flex justify-end">
-            <Link href={supportHref} className="inline-flex h-9 items-center rounded-xl border border-slate-300 dark:border-white/15 bg-white dark:bg-white/[0.03] px-3 text-sm font-semibold text-slate-700 dark:text-white/80 transition hover:border-slate-400 hover:text-slate-900">
+            <Link href={supportHref} className="inline-flex h-9 items-center rounded-xl border border-slate-300 dark:border-white/15 bg-white dark:bg-white/[0.03] px-3 text-sm font-semibold text-slate-700 dark:text-white/80 transition hover:border-slate-400 hover:text-slate-900 dark:hover:text-white">
               Back to list
             </Link>
           </div>

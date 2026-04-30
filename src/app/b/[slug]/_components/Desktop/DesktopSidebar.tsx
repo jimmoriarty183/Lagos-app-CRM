@@ -11,7 +11,7 @@ export default function DesktopSidebar({
 }: Props) {
   const itemBase =
     "flex w-full items-start justify-between gap-3 rounded-lg px-3 py-3 text-sm transition-colors";
-  const itemIdle = "text-gray-700 dark:text-white/80 hover:bg-gray-50";
+  const itemIdle = "text-gray-700 dark:text-white/80 hover:bg-gray-50 dark:hover:bg-white/[0.06]";
   const metaIdle = "text-xs text-gray-500 dark:text-white/55 tabular-nums";
 
   return (

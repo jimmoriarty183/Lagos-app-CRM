@@ -104,35 +104,35 @@ export default async function AdminBusinessesPage({
       <div className="mt-4">
         <AdminSectionCard title="Фильтры и поиск">
           <form action="/admin/businesses" className="grid gap-2.5 lg:grid-cols-[minmax(0,1.4fr)_130px_140px_130px_130px_180px_120px]">
-            <input name="q" defaultValue={q} placeholder="Поиск по названию, slug, ID или владельцу" className="h-10 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3.5 text-sm text-slate-900 dark:text-white outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100" />
-            <select name="window" defaultValue={window} className="h-10 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3.5 text-sm text-slate-900 dark:text-white outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
+            <input name="q" defaultValue={q} placeholder="Поиск по названию, slug, ID или владельцу" className="h-10 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3.5 text-sm text-slate-900 dark:text-white outline-none transition placeholder:text-slate-400 hover:border-slate-300 dark:hover:border-white/20 focus:border-blue-600 focus:ring-4 focus:ring-blue-100" />
+            <select name="window" defaultValue={window} className="h-10 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3.5 text-sm text-slate-900 dark:text-white outline-none transition hover:border-slate-300 dark:hover:border-white/20 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
               <option value="all">Весь период</option>
               <option value="24h">24 часа</option>
               <option value="7d">7 дней</option>
               <option value="30d">30 дней</option>
             </select>
-            <select name="orders" defaultValue={orders} className="h-10 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3.5 text-sm text-slate-900 dark:text-white outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
+            <select name="orders" defaultValue={orders} className="h-10 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3.5 text-sm text-slate-900 dark:text-white outline-none transition hover:border-slate-300 dark:hover:border-white/20 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
               <option value="all">Любые заказы</option>
               <option value="with_orders">Есть заказы</option>
               <option value="zero_orders">Без заказов</option>
             </select>
-            <select name="activity" defaultValue={activity} className="h-10 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3.5 text-sm text-slate-900 dark:text-white outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
+            <select name="activity" defaultValue={activity} className="h-10 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3.5 text-sm text-slate-900 dark:text-white outline-none transition hover:border-slate-300 dark:hover:border-white/20 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
               <option value="all">Любая активность</option>
               <option value="active">Активные</option>
               <option value="inactive">Неактивные</option>
             </select>
-            <select name="owner" defaultValue={owner} className="h-10 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3.5 text-sm text-slate-900 dark:text-white outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
+            <select name="owner" defaultValue={owner} className="h-10 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3.5 text-sm text-slate-900 dark:text-white outline-none transition hover:border-slate-300 dark:hover:border-white/20 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
               <option value="all">Любой владелец</option>
               <option value="assigned">Владелец назначен</option>
               <option value="missing">Без владельца</option>
             </select>
-            <select name="sort" defaultValue={sort} className="h-10 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3.5 text-sm text-slate-900 dark:text-white outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
+            <select name="sort" defaultValue={sort} className="h-10 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3.5 text-sm text-slate-900 dark:text-white outline-none transition hover:border-slate-300 dark:hover:border-white/20 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
               <option value="created_desc">Сначала новые</option>
               <option value="orders_desc">По числу заказов</option>
               <option value="last_activity_desc">По последней активности</option>
             </select>
             <div className="flex gap-3">
-              <select name="perPage" defaultValue={String(perPage)} className="h-10 min-w-0 flex-1 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3.5 text-sm text-slate-900 dark:text-white outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
+              <select name="perPage" defaultValue={String(perPage)} className="h-10 min-w-0 flex-1 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3.5 text-sm text-slate-900 dark:text-white outline-none transition hover:border-slate-300 dark:hover:border-white/20 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
                 {PER_PAGE_OPTIONS.map((value) => <option key={value} value={value}>{value}</option>)}
               </select>
               <Button type="submit" className="h-10 px-5 text-sm font-semibold">

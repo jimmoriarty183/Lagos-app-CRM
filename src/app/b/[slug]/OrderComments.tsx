@@ -230,7 +230,7 @@ export function OrderComments({ order, supabase, author, ownerName, managerName 
                 <button
                   type="button"
                   onClick={() => setReplyTo(null)}
-                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#667085] transition hover:bg-white hover:text-[#111827]"
+                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#667085] transition hover:bg-white dark:hover:bg-white/[0.07] hover:text-[#111827]"
                   aria-label="Cancel reply"
                 >
                   <X className="h-4 w-4" />
@@ -401,7 +401,7 @@ export function OrderComments({ order, supabase, author, ownerName, managerName 
                         <button
                           type="button"
                           onClick={() => setReplyTo(c)}
-                          className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-transparent bg-[#f8fafc] dark:bg-white/[0.04] text-[#667085] transition hover:border-[#dbe3ef] hover:bg-white hover:text-[#111827]"
+                          className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-transparent bg-[#f8fafc] dark:bg-white/[0.04] text-[#667085] transition hover:border-[#dbe3ef] hover:bg-white dark:hover:bg-white/[0.07] hover:text-[#111827]"
                           aria-label={`Reply to ${authorName}`}
                           title="Reply"
                         >

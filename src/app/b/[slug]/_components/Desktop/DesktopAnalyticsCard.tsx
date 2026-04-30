@@ -243,7 +243,7 @@ export default function DesktopAnalyticsCard({
             <button
               type="button"
               onClick={() => setHidden(!hidden)}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#6B7280] dark:text-white/55 transition hover:border-[#C7D2FE] hover:text-[#1F2937]"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#6B7280] dark:text-white/55 transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:text-[#1F2937] dark:hover:text-white"
               aria-label={hidden ? "Show summary" : "Hide summary"}
               title={hidden ? "Show summary" : "Hide summary"}
             >
@@ -265,7 +265,7 @@ export default function DesktopAnalyticsCard({
                     "rounded-md px-3 py-1.5 text-[11px] font-semibold transition",
                     option.active
                       ? "bg-[var(--brand-600)] text-white"
-                      : "text-[#6B7280] dark:text-white/55 hover:bg-[#F9FAFB] hover:text-[#1F2937]",
+                      : "text-[#6B7280] dark:text-white/55 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06] hover:text-[#1F2937] dark:hover:text-white",
                   ].join(" ")}
                 >
                   {option.shortLabel}
@@ -287,7 +287,7 @@ export default function DesktopAnalyticsCard({
                         "block rounded-xl px-3 py-2 text-[12px] font-medium transition",
                         option.active
                           ? "bg-[var(--brand-600)] text-white"
-                          : "text-[#374151] hover:bg-[#F9FAFB]",
+                          : "text-[#374151] hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]",
                       ].join(" ")}
                     >
                       {option.label}
@@ -304,7 +304,7 @@ export default function DesktopAnalyticsCard({
             <button
               type="button"
               onClick={() => setHidden(!hidden)}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#6B7280] dark:text-white/55 transition hover:border-[#C7D2FE] hover:text-[#1F2937]"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#6B7280] dark:text-white/55 transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:text-[#1F2937] dark:hover:text-white"
               aria-label={hidden ? "Show summary" : "Hide summary"}
               title={hidden ? "Show summary" : "Hide summary"}
             >
@@ -399,7 +399,7 @@ export default function DesktopAnalyticsCard({
                 </label>
                 <a
                   href={customRange.resetHref}
-                  className="inline-flex h-11 min-w-[112px] shrink-0 items-center justify-center rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 text-sm font-semibold text-[#374151] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
+                  className="inline-flex h-11 min-w-[112px] shrink-0 items-center justify-center rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 text-sm font-semibold text-[#374151] transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]"
                 >
                   Reset
                 </a>

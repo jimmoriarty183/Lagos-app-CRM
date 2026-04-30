@@ -249,7 +249,7 @@ export function RightCampaignPopup() {
             onClick={dismiss}
             disabled={dismissBusy}
             aria-label="Close popup"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] text-slate-500 dark:text-white/55 transition hover:border-slate-300 hover:text-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] text-slate-500 dark:text-white/55 transition hover:border-slate-300 dark:hover:border-white/20 hover:text-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
           >
             <X className="h-4 w-4" />
           </button>
@@ -300,7 +300,7 @@ export function RightCampaignPopup() {
                 size="sm"
                 onClick={dismiss}
                 disabled={dismissBusy}
-                className="h-9 border-slate-300 dark:border-white/15 bg-white dark:bg-white/[0.03] px-3.5 text-slate-700 dark:text-white/80 hover:border-slate-400 hover:text-slate-900 disabled:opacity-60"
+                className="h-9 border-slate-300 dark:border-white/15 bg-white dark:bg-white/[0.03] px-3.5 text-slate-700 dark:text-white/80 hover:border-slate-400 hover:text-slate-900 dark:hover:text-white disabled:opacity-60"
               >
                 Close for now
               </Button>

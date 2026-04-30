@@ -124,7 +124,7 @@ export default async function AdminAnalyticsPage({
                     "inline-flex h-10 items-center rounded-xl border px-4 text-sm font-medium transition",
                     active
                       ? "border-[#bfd0ea] dark:border-white/15 bg-[#eef5ff] dark:bg-[var(--brand-600)]/15 text-slate-900 dark:text-white"
-                      : "border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] text-slate-700 dark:text-white/80 hover:border-slate-300 hover:text-slate-900",
+                      : "border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] text-slate-700 dark:text-white/80 hover:border-slate-300 dark:hover:border-white/20 hover:text-slate-900 dark:hover:text-white",
                   ].join(" ")}
                 >
                   {option.label}

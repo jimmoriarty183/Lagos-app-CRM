@@ -65,7 +65,7 @@ export default async function AdminOrdersPage() {
             <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] p-3">
               <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-white/55">Бизнесы без заказов</div>
               <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">{formatNumber(businessesZeroOrders)}</div>
-              <Link href="/admin/businesses?orders=zero_orders" className="mt-2 inline-block text-sm text-slate-600 dark:text-white/70 hover:text-slate-900">
+              <Link href="/admin/businesses?orders=zero_orders" className="mt-2 inline-block text-sm text-slate-600 dark:text-white/70 hover:text-slate-900 dark:hover:text-white">
                 Открыть список
               </Link>
             </div>

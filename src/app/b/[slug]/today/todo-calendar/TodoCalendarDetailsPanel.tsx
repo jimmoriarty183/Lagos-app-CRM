@@ -124,7 +124,7 @@ export function TodoCalendarDetailsPanel({
               {selectedItem.orderHref ? (
                 <Link
                   href={selectedItem.orderHref}
-                  className="inline-flex h-10 items-center gap-2 rounded-[14px] border border-[#D0D5DD] bg-white dark:bg-white/[0.03] px-3.5 text-[13px] font-semibold text-[#344054] transition hover:border-[#C7D2FE] hover:text-[#3645A0]"
+                  className="inline-flex h-10 items-center gap-2 rounded-[14px] border border-[#D0D5DD] bg-white dark:bg-white/[0.03] px-3.5 text-[13px] font-semibold text-[#344054] transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:text-[#3645A0]"
                 >
                   Open full order
                   <ChevronRight className="h-4 w-4" />

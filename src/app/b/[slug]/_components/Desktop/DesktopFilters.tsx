@@ -61,7 +61,7 @@ export default function DesktopFilters({
         {hasActiveFilters ? (
           <a
             href={clearHref}
-            className="rounded-full border border-gray-200 dark:border-white/10 px-2.5 py-1 text-xs font-medium text-gray-600 dark:text-white/70 transition hover:border-gray-300 hover:text-gray-900"
+            className="rounded-full border border-gray-200 dark:border-white/10 px-2.5 py-1 text-xs font-medium text-gray-600 dark:text-white/70 transition hover:border-gray-300 dark:hover:border-white/20 hover:text-gray-900 dark:hover:text-white"
           >
             Reset
           </a>

@@ -51,7 +51,7 @@ export function NotificationBellDropdown({ items, loading, error, onItemClick }:
                 onClick={() => onItemClick(item)}
                 className={[
                   "w-full px-4 py-3 text-left transition",
-                  item.isRead ? "bg-white dark:bg-white/[0.03] hover:bg-slate-50" : "bg-blue-50/40 hover:bg-blue-50/70",
+                  item.isRead ? "bg-white dark:bg-white/[0.03] hover:bg-slate-50 dark:hover:bg-white/[0.06]" : "bg-blue-50/40 hover:bg-blue-50/70",
                 ].join(" ")}
               >
                 <div className="flex items-center justify-between gap-3">

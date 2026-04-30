@@ -546,7 +546,7 @@ export default function InviteInbox({
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-2",
           open
             ? "border-blue-300 bg-blue-50/80"
-            : "border-slate-200 dark:border-white/10 text-slate-700 dark:text-white/80 hover:border-slate-300 hover:bg-[#FCFCFD]",
+            : "border-slate-200 dark:border-white/10 text-slate-700 dark:text-white/80 hover:border-slate-300 dark:hover:border-white/20 hover:bg-[#FCFCFD]",
         )}
       >
         {open || unreadCount > 0 ? (
@@ -588,7 +588,7 @@ export default function InviteInbox({
                     type="button"
                     onClick={markAllAsRead}
                     disabled={isPending || unreadCount === 0}
-                    className="inline-flex h-8 shrink-0 items-center rounded-lg px-2.5 text-[12px] font-medium text-slate-500 dark:text-white/55 transition hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex h-8 shrink-0 items-center rounded-lg px-2.5 text-[12px] font-medium text-slate-500 dark:text-white/55 transition hover:bg-slate-100 dark:hover:bg-white/[0.08] hover:text-slate-900 dark:hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     Mark all as read
                   </button>
@@ -837,7 +837,7 @@ function NotificationItem({
                 event.stopPropagation();
                 onDeclineInvite(notification);
               }}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-2.5 py-1.5 text-[11px] font-semibold text-slate-600 dark:text-white/70 hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-2.5 py-1.5 text-[11px] font-semibold text-slate-600 dark:text-white/70 hover:border-slate-300 dark:hover:border-white/20 hover:bg-slate-50 dark:hover:bg-white/[0.06] disabled:cursor-not-allowed disabled:opacity-60"
             >
               <X className="h-3.5 w-3.5" />
               Decline
@@ -874,7 +874,7 @@ function InboxFilterChip({
             : tone === "notification"
               ? "border-sky-200 bg-sky-50 text-sky-700"
               : "border-[var(--brand-200)] bg-[var(--brand-50)] text-[var(--brand-700)]"
-          : "border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] text-slate-500 dark:text-white/55 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-600",
+          : "border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] text-slate-500 dark:text-white/55 hover:border-slate-300 dark:hover:border-white/20 hover:bg-slate-50 dark:hover:bg-white/[0.06] hover:text-slate-600",
       )}
     >
       {label}

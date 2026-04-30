@@ -541,7 +541,7 @@ export function OrderChecklist({
               "inline-flex h-11 w-full min-w-0 shrink-0 items-center justify-center gap-2 rounded-[18px] border px-4 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-600)]/15 sm:w-auto sm:min-w-[132px]",
               !title.trim() || loading
                 ? "cursor-not-allowed border-[#E5E7EB] dark:border-white/10 bg-[#F3F4F6] text-[#9CA3AF] dark:text-white/40"
-                : "border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#1F2937] dark:text-white/90 shadow-[0_1px_2px_rgba(16,24,40,0.04)] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]",
+                : "border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#1F2937] dark:text-white/90 shadow-[0_1px_2px_rgba(16,24,40,0.04)] hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]",
             ].join(" ")}
           >
             <CirclePlus className="h-4 w-4" />

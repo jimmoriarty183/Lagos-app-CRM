@@ -781,7 +781,7 @@ export default function MobileOrdersList({
                   "inline-flex h-9 flex-1 items-center justify-center gap-2 rounded-lg text-sm font-medium transition",
                   viewMode === "list"
                     ? "border border-[var(--brand-200)] bg-white dark:bg-white/[0.03] text-[#1F2937] dark:text-white/90 shadow-[0_8px_18px_rgba(91,91,179,0.12)]"
-                    : "border border-transparent text-[#6B7280] dark:text-white/55 hover:text-[#1F2937]",
+                    : "border border-transparent text-[#6B7280] dark:text-white/55 hover:text-[#1F2937] dark:hover:text-white",
                 ].join(" ")}
               >
                 <List className="h-4 w-4" />
@@ -796,7 +796,7 @@ export default function MobileOrdersList({
                   "inline-flex h-9 flex-1 items-center justify-center gap-2 rounded-lg text-sm font-medium transition",
                   viewMode === "kanban"
                     ? "border border-[var(--brand-200)] bg-white dark:bg-white/[0.03] text-[#1F2937] dark:text-white/90 shadow-[0_8px_18px_rgba(91,91,179,0.12)]"
-                    : "border border-transparent text-[#6B7280] dark:text-white/55 hover:text-[#1F2937]",
+                    : "border border-transparent text-[#6B7280] dark:text-white/55 hover:text-[#1F2937] dark:hover:text-white",
                 ].join(" ")}
               >
                 <Columns3 className="h-4 w-4" />
@@ -913,7 +913,7 @@ export default function MobileOrdersList({
                 if (shouldIgnoreOverlayCloseClick()) return;
                 setOpenId(order.id);
               }}
-              className="cursor-pointer rounded-[20px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
+              className="cursor-pointer rounded-[20px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]"
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0 flex-1">
@@ -949,7 +949,7 @@ export default function MobileOrdersList({
                     <DropdownMenuTrigger asChild>
                       <button
                         type="button"
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#6B7280] dark:text-white/55 transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#6B7280] dark:text-white/55 transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06] hover:text-[#1F2937] dark:hover:text-white"
                         aria-label="Open order actions"
                       >
                         <Ellipsis className="h-4 w-4" />
@@ -1214,7 +1214,7 @@ export default function MobileOrdersList({
                                 <DropdownMenuTrigger asChild>
                                   <button
                                     type="button"
-                                    className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#6B7280] dark:text-white/55 transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]"
+                                    className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#6B7280] dark:text-white/55 transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06] hover:text-[#1F2937] dark:hover:text-white"
                                     aria-label="Open order actions"
                                   >
                                     <Ellipsis className="h-4 w-4" />
@@ -1424,7 +1424,7 @@ export default function MobileOrdersList({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel
-              className="rounded-xl border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] text-slate-700 dark:text-white/80 hover:bg-slate-50"
+              className="rounded-xl border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] text-slate-700 dark:text-white/80 hover:bg-slate-50 dark:hover:bg-white/[0.06]"
               disabled={Boolean(deletingId)}
             >
               Keep order

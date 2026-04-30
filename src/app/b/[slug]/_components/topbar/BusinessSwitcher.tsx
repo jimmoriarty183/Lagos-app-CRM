@@ -116,10 +116,10 @@ export default function BusinessSwitcher({
 
   const triggerClass =
     variant === "toolbar-compact"
-      ? "inline-flex h-8 w-full items-center justify-between gap-2 rounded-lg border border-transparent bg-transparent px-2.5 transition hover:border-[#E5E7EB] hover:bg-[#F8FAFC]"
+      ? "inline-flex h-8 w-full items-center justify-between gap-2 rounded-lg border border-transparent bg-transparent px-2.5 transition hover:border-[#E5E7EB] dark:hover:border-white/15 hover:bg-[#F8FAFC]"
       : variant === "toolbar"
-        ? "inline-flex h-10 w-full items-center justify-between gap-2 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#D1D5DB] hover:bg-[#F9FAFB]"
-        : "inline-flex h-11 w-full items-center justify-between gap-3 rounded-2xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:bg-[#F9FAFB]";
+        ? "inline-flex h-10 w-full items-center justify-between gap-2 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#D1D5DB] dark:hover:border-white/20 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]"
+        : "inline-flex h-11 w-full items-center justify-between gap-3 rounded-2xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]";
 
   return (
     <div className={`relative z-50 ${widthClassName}`} ref={ref}>
@@ -185,7 +185,7 @@ export default function BusinessSwitcher({
                     setOpen(false);
                     onSelect(business.slug);
                   }}
-                  className={`w-full rounded-xl px-3 py-2 text-left transition hover:bg-[#F9FAFB] ${isCurrent ? "bg-[#EEF2FF] dark:bg-[var(--brand-600)]/15" : ""}`}
+                  className={`w-full rounded-xl px-3 py-2 text-left transition hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06] ${isCurrent ? "bg-[#EEF2FF] dark:bg-[var(--brand-600)]/15" : ""}`}
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
@@ -222,7 +222,7 @@ export default function BusinessSwitcher({
             ) : (
               <a
                 href="/onboarding/business?new=1"
-                className="block w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-[#1F2937] dark:text-white/90 transition hover:bg-[#F9FAFB]"
+                className="block w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-[#1F2937] dark:text-white/90 transition hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]"
                 onClick={() => setOpen(false)}
               >
                 + Create business

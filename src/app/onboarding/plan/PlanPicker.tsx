@@ -216,7 +216,7 @@ export function OnboardingPlanPicker({
           <form action="/api/auth/logout" method="post">
             <button
               type="submit"
-              className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-1.5 font-medium text-slate-600 dark:text-white/70 transition hover:border-slate-300 hover:bg-slate-50"
+              className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-1.5 font-medium text-slate-600 dark:text-white/70 transition hover:border-slate-300 dark:hover:border-white/20 hover:bg-slate-50 dark:hover:bg-white/[0.06]"
             >
               <LogOut className="h-3.5 w-3.5" />
               Sign out
@@ -247,7 +247,7 @@ export function OnboardingPlanPicker({
               className={`rounded-lg px-3 py-1.5 text-sm font-semibold transition ${
                 interval === "monthly"
                   ? "bg-white dark:bg-white/[0.03] text-slate-900 dark:text-white shadow-[0_1px_2px_rgba(15,23,42,0.08)]"
-                  : "text-slate-500 dark:text-white/55 hover:text-slate-900"
+                  : "text-slate-500 dark:text-white/55 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
               Monthly
@@ -258,7 +258,7 @@ export function OnboardingPlanPicker({
               className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold transition ${
                 interval === "yearly"
                   ? "bg-white dark:bg-white/[0.03] text-slate-900 dark:text-white shadow-[0_1px_2px_rgba(15,23,42,0.08)]"
-                  : "text-slate-500 dark:text-white/55 hover:text-slate-900"
+                  : "text-slate-500 dark:text-white/55 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
               Yearly

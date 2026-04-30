@@ -98,7 +98,7 @@ export function AdminCampaignList({ initialItems }: Props) {
               {items.map((item, index) => (
                 <tr
                   key={item.id || `campaign-row-${index}`}
-                  className="border-b border-slate-100 dark:border-white/[0.06] hover:bg-slate-50"
+                  className="border-b border-slate-100 dark:border-white/[0.06] hover:bg-slate-50 dark:hover:bg-white/[0.06]"
                 >
                   <td className="px-4 py-3 text-sm text-slate-700 dark:text-white/80">
                     {item.id ? (

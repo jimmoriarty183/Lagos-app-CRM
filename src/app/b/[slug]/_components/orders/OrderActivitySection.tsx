@@ -990,7 +990,7 @@ function ActivityHeader({
             setSort(sort === "conversation" ? "newest" : "conversation")
           }
           className={cn(
-            "inline-flex items-center gap-1.5 self-start rounded-full border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] font-semibold text-[#374151] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB]",
+            "inline-flex items-center gap-1.5 self-start rounded-full border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] font-semibold text-[#374151] transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]",
             compact ? "px-2.5 py-1 text-[11px]" : "px-3 py-1 text-xs",
           )}
         >
@@ -1016,7 +1016,7 @@ function ActivityHeader({
                 : "gap-1.5 px-2.5 py-1 text-[11px]",
               filter === item.value
                 ? "border-[var(--brand-200)] bg-[var(--brand-50)] text-[var(--brand-600)]"
-                : "border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#6B7280] dark:text-white/55 hover:border-[#C7D2FE] hover:text-[#374151]",
+                : "border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#6B7280] dark:text-white/55 hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:text-[#374151]",
             )}
           >
             <span>{item.label}</span>
@@ -1070,7 +1070,7 @@ function EmojiPicker({
         type="button"
         onClick={() => setOpen((v) => !v)}
         className={cn(
-          "flex shrink-0 items-center justify-center rounded-lg text-[#6B7280] dark:text-white/55 transition hover:bg-[#F3F4F6] hover:text-[#1F2937]",
+          "flex shrink-0 items-center justify-center rounded-lg text-[#6B7280] dark:text-white/55 transition hover:bg-[#F3F4F6] hover:text-[#1F2937] dark:hover:text-white",
           compact ? "h-6 w-6" : "h-8 w-8",
         )}
         aria-label="Emoji"
@@ -1193,7 +1193,7 @@ function CommentComposer({
             <span className="font-medium text-[#667085]">{replyTarget.label}</span>
             <span className="max-w-[200px] truncate text-[#9CA3AF] dark:text-white/40">{replyTarget.preview}</span>
           </span>
-          <button type="button" onClick={onClearReply} className="ml-2 font-semibold text-[#6B7280] dark:text-white/55 hover:text-[#1F2937]">
+          <button type="button" onClick={onClearReply} className="ml-2 font-semibold text-[#6B7280] dark:text-white/55 hover:text-[#1F2937] dark:hover:text-white">
             &times;
           </button>
         </div>
@@ -1241,7 +1241,7 @@ function CommentComposer({
               {filteredMentions.length > 0 ? (
                 <div className="absolute bottom-full left-0 right-0 z-10 mb-1 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-1.5 shadow-[0_-10px_30px_rgba(15,23,42,0.12)]">
                   {filteredMentions.map((actor) => (
-                    <button key={actor.id} type="button" onClick={() => applyMention(actor.id, actor.label)} className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left transition hover:bg-[#F9FAFB]">
+                    <button key={actor.id} type="button" onClick={() => applyMention(actor.id, actor.label)} className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left transition hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]">
                       {String(actor.avatar_url ?? "").trim() ? (
                         <img src={actor.avatar_url!} alt={actor.label} className="h-6 w-6 rounded-lg border border-[#E5E7EB] dark:border-white/10 object-cover" />
                       ) : (
@@ -1269,7 +1269,7 @@ function CommentComposer({
                 });
               }}
             />
-            <button type="button" onClick={openFilePicker} disabled={!canWrite} className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-[#6B7280] dark:text-white/55 transition hover:bg-[#F3F4F6] hover:text-[#1F2937] disabled:opacity-40" aria-label="Attach file">
+            <button type="button" onClick={openFilePicker} disabled={!canWrite} className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-[#6B7280] dark:text-white/55 transition hover:bg-[#F3F4F6] hover:text-[#1F2937] dark:hover:text-white disabled:opacity-40" aria-label="Attach file">
               <Paperclip className="h-3.5 w-3.5" />
             </button>
             <button
@@ -1324,7 +1324,7 @@ function CommentComposer({
                     <div className="mt-1 text-sm font-semibold text-[#1F2937] dark:text-white/90">{replyTarget.label}</div>
                     <div className="mt-1 text-xs leading-5 text-[#6B7280] dark:text-white/55">{replyTarget.preview}</div>
                   </div>
-                  <button type="button" onClick={onClearReply} className="text-xs font-semibold text-[#6B7280] dark:text-white/55 transition hover:text-[#1F2937]">Clear</button>
+                  <button type="button" onClick={onClearReply} className="text-xs font-semibold text-[#6B7280] dark:text-white/55 transition hover:text-[#1F2937] dark:hover:text-white">Clear</button>
                 </div>
               </div>
             ) : null}
@@ -1356,7 +1356,7 @@ function CommentComposer({
               {filteredMentions.length > 0 ? (
                 <div className="absolute left-4 right-4 top-full z-10 mt-2 rounded-2xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-2 shadow-[0_20px_40px_rgba(15,23,42,0.12)]">
                   {filteredMentions.map((actor) => (
-                    <button key={actor.id} type="button" onClick={() => applyMention(actor.id, actor.label)} className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-[#F9FAFB]">
+                    <button key={actor.id} type="button" onClick={() => applyMention(actor.id, actor.label)} className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]">
                       {String(actor.avatar_url ?? "").trim() ? (
                         <img src={actor.avatar_url!} alt={actor.label} className="h-8 w-8 rounded-xl border border-[#E5E7EB] dark:border-white/10 object-cover" />
                       ) : (
@@ -1378,7 +1378,7 @@ function CommentComposer({
                   <span key={attachment.id} className="inline-flex items-center gap-2 rounded-full border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] px-3 py-1.5 text-xs font-medium text-[#4B5563] dark:text-white/70">
                     <Paperclip className="h-3.5 w-3.5 text-[#6B7280] dark:text-white/55" />
                     <span className="max-w-[180px] truncate">{attachment.file.name}</span>
-                    <button type="button" onClick={() => onRemoveAttachment(attachment.id)} className="rounded-full p-0.5 text-[#9CA3AF] dark:text-white/40 transition hover:bg-white hover:text-[#374151]" aria-label={`Remove ${attachment.file.name}`}>
+                    <button type="button" onClick={() => onRemoveAttachment(attachment.id)} className="rounded-full p-0.5 text-[#9CA3AF] dark:text-white/40 transition hover:bg-white dark:hover:bg-white/[0.07] hover:text-[#374151]" aria-label={`Remove ${attachment.file.name}`}>
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
                   </span>
@@ -1402,7 +1402,7 @@ function CommentComposer({
                     });
                   }}
                 />
-                <button type="button" onClick={openFilePicker} disabled={!canWrite} className="inline-flex h-10 items-center gap-2 rounded-[16px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3.5 text-sm font-semibold text-[#4B5563] dark:text-white/70 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937] disabled:cursor-not-allowed disabled:opacity-50">
+                <button type="button" onClick={openFilePicker} disabled={!canWrite} className="inline-flex h-10 items-center gap-2 rounded-[16px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3.5 text-sm font-semibold text-[#4B5563] dark:text-white/70 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06] hover:text-[#1F2937] dark:hover:text-white disabled:cursor-not-allowed disabled:opacity-50">
                   <Paperclip className="h-3.5 w-3.5" />
                   Attach file
                 </button>
@@ -1417,7 +1417,7 @@ function CommentComposer({
                     "inline-flex h-10 items-center justify-center gap-2 rounded-[16px] border px-4 text-sm font-semibold transition",
                     submitDisabled
                       ? "cursor-not-allowed border-[#E5E7EB] dark:border-white/10 bg-[#F3F4F6] text-[#9CA3AF] dark:text-white/40"
-                      : "border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#1F2937] dark:text-white/90 shadow-[0_1px_2px_rgba(16,24,40,0.04)] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]",
+                      : "border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#1F2937] dark:text-white/90 shadow-[0_1px_2px_rgba(16,24,40,0.04)] hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]",
                   )}
                 >
                   <Send className="h-4 w-4" />
@@ -1775,7 +1775,7 @@ function AttachmentCard({
               target="_blank"
               rel="noreferrer"
               className={cn(
-                "inline-flex items-center gap-1.5 rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] font-semibold text-[#4B5563] dark:text-white/70 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]",
+                "inline-flex items-center gap-1.5 rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] font-semibold text-[#4B5563] dark:text-white/70 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06] hover:text-[#1F2937] dark:hover:text-white",
                 compact ? "h-6 px-2 text-[11px]" : "h-10 px-4 text-sm",
               )}
             >
@@ -1788,7 +1788,7 @@ function AttachmentCard({
               href={downloadUrl}
               download={payload.fileName}
               className={cn(
-                "inline-flex items-center gap-1.5 rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] font-semibold text-[#4B5563] dark:text-white/70 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]",
+                "inline-flex items-center gap-1.5 rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] font-semibold text-[#4B5563] dark:text-white/70 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06] hover:text-[#1F2937] dark:hover:text-white",
                 compact ? "h-6 px-2 text-[11px]" : "h-10 px-4 text-sm",
               )}
             >
@@ -1878,7 +1878,7 @@ function SystemEventItem({
 
   return (
     <div
-      className="flex gap-3 rounded-[20px] border border-[#E5E7EB] dark:border-white/10 bg-[linear-gradient(180deg,#FFFFFF_0%,#F9FAFB_100%)] px-4 py-3 transition hover:border-[#C7D2FE] hover:shadow-[0_10px_24px_rgba(15,23,42,0.05)]"
+      className="flex gap-3 rounded-[20px] border border-[#E5E7EB] dark:border-white/10 bg-[linear-gradient(180deg,#FFFFFF_0%,#F9FAFB_100%)] px-4 py-3 transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:shadow-[0_10px_24px_rgba(15,23,42,0.05)]"
     >
       <div className="flex w-12 flex-col items-center">
         <EventGlyph
@@ -2021,7 +2021,7 @@ function CommentItem({
   return (
     <div
       className={cn(
-        "group flex border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] shadow-[0_8px_20px_rgba(15,23,42,0.04)] transition hover:border-[#C7D2FE] hover:shadow-[0_12px_24px_rgba(15,23,42,0.06)]",
+        "group flex border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] shadow-[0_8px_20px_rgba(15,23,42,0.04)] transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:shadow-[0_12px_24px_rgba(15,23,42,0.06)]",
         compact ? "gap-2 rounded-[14px] px-2.5 py-2" : "gap-3 rounded-[20px] px-4 py-3",
         item.replyToCommentId && "ml-4 border-[#e5edf8] bg-[#fcfdff]",
       )}
@@ -2087,7 +2087,7 @@ function CommentItem({
                       preview: getCompactPreview(item.body, actorNames),
                     })
                   }
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-transparent bg-[#F9FAFB] dark:bg-white/[0.04] text-[#6B7280] dark:text-white/55 transition hover:border-[#E5E7EB] hover:bg-white hover:text-[#1F2937]"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-transparent bg-[#F9FAFB] dark:bg-white/[0.04] text-[#6B7280] dark:text-white/55 transition hover:border-[#E5E7EB] dark:hover:border-white/15 hover:bg-white dark:hover:bg-white/[0.07] hover:text-[#1F2937] dark:hover:text-white"
                   aria-label="Reply to comment"
                 >
                   <CornerUpLeft className="h-4 w-4" />
@@ -2097,7 +2097,7 @@ function CommentItem({
                 <button
                   type="button"
                   onClick={() => onStartEdit(item)}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-transparent bg-[#F9FAFB] dark:bg-white/[0.04] text-[#6B7280] dark:text-white/55 transition hover:border-[#E5E7EB] hover:bg-white hover:text-[#1F2937]"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-transparent bg-[#F9FAFB] dark:bg-white/[0.04] text-[#6B7280] dark:text-white/55 transition hover:border-[#E5E7EB] dark:hover:border-white/15 hover:bg-white dark:hover:bg-white/[0.07] hover:text-[#1F2937] dark:hover:text-white"
                   aria-label="Edit comment"
                 >
                   <Pencil className="h-4 w-4" />
@@ -2107,7 +2107,7 @@ function CommentItem({
                 <button
                   type="button"
                   onClick={() => onDelete(item)}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-transparent bg-[#fef3f2] text-[#b42318] transition hover:border-[#fecdca] hover:bg-white"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-transparent bg-[#fef3f2] text-[#b42318] transition hover:border-[#fecdca] hover:bg-white dark:hover:bg-white/[0.07]"
                   aria-label="Delete comment"
                 >
                   <Trash2 className="h-4 w-4" />
@@ -2133,7 +2133,7 @@ function CommentItem({
               <button
                 type="button"
                 onClick={onCancelEdit}
-                className="inline-flex h-10 items-center justify-center rounded-2xl border border-[#E5E7EB] dark:border-white/10 px-4 text-sm font-semibold text-[#4B5563] dark:text-white/70 transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
+                className="inline-flex h-10 items-center justify-center rounded-2xl border border-[#E5E7EB] dark:border-white/10 px-4 text-sm font-semibold text-[#4B5563] dark:text-white/70 transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]"
               >
                 Cancel
               </button>
@@ -2165,7 +2165,7 @@ function CommentItem({
               <button
                 type="button"
                 onClick={() => toggleExpanded(item.id)}
-                className="mt-1.5 inline-flex items-center gap-1 text-xs font-semibold text-[#6B7280] dark:text-white/55 transition hover:text-[#1F2937]"
+                className="mt-1.5 inline-flex items-center gap-1 text-xs font-semibold text-[#6B7280] dark:text-white/55 transition hover:text-[#1F2937] dark:hover:text-white"
               >
                 {isExpanded ? "Show less" : "Show more"}
                 <ChevronDown
@@ -2181,7 +2181,7 @@ function CommentItem({
                 <button
                   type="button"
                   onClick={() => setShowChanges((prev) => !prev)}
-                  className="inline-flex items-center gap-1 text-xs font-semibold text-[#6B7280] dark:text-white/55 transition hover:text-[#1F2937]"
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-[#6B7280] dark:text-white/55 transition hover:text-[#1F2937] dark:hover:text-white"
                 >
                   {showChanges ? "Hide changes" : "Show changes"}
                   <ChevronDown
@@ -2420,7 +2420,7 @@ function ActivityTimeline({
           <button
             type="button"
             onClick={onLoadMore}
-            className="inline-flex items-center gap-2 rounded-full border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 py-2 text-sm font-semibold text-[#374151] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
+            className="inline-flex items-center gap-2 rounded-full border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 py-2 text-sm font-semibold text-[#374151] transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]"
           >
             Load {Math.min(20, hiddenCount)} older activities
           </button>
@@ -2441,7 +2441,7 @@ function ActivityTimeline({
               <button
                 type="button"
                 onClick={() => setThreadViewId(null)}
-                className="flex h-7 w-7 items-center justify-center rounded-lg text-[#6B7280] dark:text-white/55 transition hover:bg-[#F3F4F6] hover:text-[#1F2937]"
+                className="flex h-7 w-7 items-center justify-center rounded-lg text-[#6B7280] dark:text-white/55 transition hover:bg-[#F3F4F6] hover:text-[#1F2937] dark:hover:text-white"
               >
                 &times;
               </button>

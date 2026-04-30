@@ -293,7 +293,7 @@ export default function BillingAccountAdminClient({
           type="button"
           onClick={loadData}
           disabled={loading}
-          className="rounded-lg border border-slate-300 dark:border-white/15 bg-white dark:bg-white/[0.03] px-3 py-2 text-sm font-medium text-slate-700 dark:text-white/80 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+          className="rounded-lg border border-slate-300 dark:border-white/15 bg-white dark:bg-white/[0.03] px-3 py-2 text-sm font-medium text-slate-700 dark:text-white/80 hover:bg-slate-50 dark:hover:bg-white/[0.06] disabled:cursor-not-allowed disabled:opacity-60"
         >
           {loading ? "Loading..." : "Refresh"}
         </button>
@@ -457,7 +457,7 @@ export default function BillingAccountAdminClient({
             <button
               type="submit"
               disabled={loading || !selectedFeature}
-              className="w-full rounded-md border border-slate-300 dark:border-white/15 bg-white dark:bg-white/[0.03] px-3 py-2 text-sm font-medium text-slate-700 dark:text-white/80 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+              className="w-full rounded-md border border-slate-300 dark:border-white/15 bg-white dark:bg-white/[0.03] px-3 py-2 text-sm font-medium text-slate-700 dark:text-white/80 hover:bg-slate-100 dark:hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-60"
             >
               Create Override
             </button>
@@ -493,7 +493,7 @@ export default function BillingAccountAdminClient({
                       type="button"
                       onClick={() => onDeactivateOverride(row.id)}
                       disabled={loading}
-                      className="rounded-md border border-slate-300 dark:border-white/15 bg-white dark:bg-white/[0.03] px-2 py-1 text-xs font-medium text-slate-700 dark:text-white/80 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="rounded-md border border-slate-300 dark:border-white/15 bg-white dark:bg-white/[0.03] px-2 py-1 text-xs font-medium text-slate-700 dark:text-white/80 hover:bg-slate-100 dark:hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       Deactivate
                     </button>

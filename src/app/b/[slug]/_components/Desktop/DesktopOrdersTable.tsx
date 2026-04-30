@@ -648,7 +648,7 @@ function ManagerAssignmentCell({
         canManage ? "cursor-pointer" : "cursor-default",
         isUnassigned
           ? "border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] text-[#6B7280] dark:text-white/55"
-          : "border-transparent bg-transparent px-0 text-[#374151] hover:text-[#1F2937]",
+          : "border-transparent bg-transparent px-0 text-[#374151] hover:text-[#1F2937] dark:hover:text-white",
       ].join(" ")}
     >
       {isUnassigned ? (
@@ -688,7 +688,7 @@ function ManagerAssignmentCell({
               "flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm transition",
               !localManagerId
                 ? "bg-[var(--brand-50)] text-[var(--brand-600)]"
-                : "text-[#4B5563] dark:text-white/70 hover:bg-[#F9FAFB]",
+                : "text-[#4B5563] dark:text-white/70 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]",
             ].join(" ")}
             onClick={() => {
               const prevId = localManagerId;
@@ -731,7 +731,7 @@ function ManagerAssignmentCell({
                 "flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm transition",
                 localManagerId === actor.id
                   ? "bg-[var(--brand-50)] text-[var(--brand-600)]"
-                  : "text-[#374151] hover:bg-[#F9FAFB]",
+                  : "text-[#374151] hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]",
               ].join(" ")}
               onClick={() => {
                 if (localManagerId === actor.id) return;
@@ -1788,7 +1788,7 @@ export default function DesktopOrdersTable({
             {hasActiveFilters ? (
               <a
                 href={clearHref}
-                className="inline-flex h-10 items-center justify-center rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 text-[14px] font-medium text-[#4B5563] dark:text-white/70 transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]"
+                className="inline-flex h-10 items-center justify-center rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 text-[14px] font-medium text-[#4B5563] dark:text-white/70 transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06] hover:text-[#1F2937] dark:hover:text-white"
               >
                 Reset
               </a>
@@ -1808,7 +1808,7 @@ export default function DesktopOrdersTable({
                   "inline-flex h-9 items-center gap-2 rounded-lg px-3.5 text-[15px] font-medium transition",
                   viewMode === "list"
                     ? "border border-[var(--brand-200)] bg-white dark:bg-white/[0.03] text-[#1F2937] dark:text-white/90 shadow-[0_8px_18px_rgba(91,91,179,0.12)]"
-                    : "border border-transparent text-[#6B7280] dark:text-white/55 hover:text-[#1F2937]",
+                    : "border border-transparent text-[#6B7280] dark:text-white/55 hover:text-[#1F2937] dark:hover:text-white",
                 ].join(" ")}
               >
                 <List className="h-[15px] w-[15px]" />
@@ -1823,7 +1823,7 @@ export default function DesktopOrdersTable({
                   "inline-flex h-9 items-center gap-2 rounded-lg px-3.5 text-[15px] font-medium transition",
                   viewMode === "kanban"
                     ? "border border-[var(--brand-200)] bg-white dark:bg-white/[0.03] text-[#1F2937] dark:text-white/90 shadow-[0_8px_18px_rgba(91,91,179,0.12)]"
-                    : "border border-transparent text-[#6B7280] dark:text-white/55 hover:text-[#1F2937]",
+                    : "border border-transparent text-[#6B7280] dark:text-white/55 hover:text-[#1F2937] dark:hover:text-white",
                 ].join(" ")}
               >
                 <Columns3 className="h-[15px] w-[15px]" />
@@ -1946,14 +1946,14 @@ export default function DesktopOrdersTable({
                   <button
                     type="button"
                     onClick={selectAllStatuses}
-                    className="text-[11px] font-semibold text-[#374151] transition hover:text-[#1F2937]"
+                    className="text-[11px] font-semibold text-[#374151] transition hover:text-[#1F2937] dark:hover:text-white"
                   >
                     Select all
                   </button>
                   <button
                     type="button"
                     onClick={clearAllStatuses}
-                    className="text-[11px] font-semibold text-[#6B7280] dark:text-white/55 transition hover:text-[#1F2937]"
+                    className="text-[11px] font-semibold text-[#6B7280] dark:text-white/55 transition hover:text-[#1F2937] dark:hover:text-white"
                   >
                     Clear all
                   </button>
@@ -2061,7 +2061,7 @@ export default function DesktopOrdersTable({
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
-                  className="inline-flex h-11 min-w-[170px] flex-1 items-center justify-between rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 text-sm font-medium text-[#374151] outline-none transition hover:border-[#C7D2FE] focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15"
+                  className="inline-flex h-11 min-w-[170px] flex-1 items-center justify-between rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 text-sm font-medium text-[#374151] outline-none transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/15"
                 >
                   <span className="truncate">
                     {getManagerTriggerLabel(
@@ -2171,7 +2171,7 @@ export default function DesktopOrdersTable({
               tabIndex={hasActiveFilters ? 0 : -1}
               className={`inline-flex h-11 min-w-[84px] shrink-0 items-center justify-center whitespace-nowrap rounded-2xl border px-3 text-sm font-semibold transition ${
                 hasActiveFilters
-                  ? "border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#374151] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
+                  ? "border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#374151] hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]"
                   : "pointer-events-none border-transparent bg-transparent text-transparent"
               }`}
             >
@@ -2257,7 +2257,7 @@ export default function DesktopOrdersTable({
                 return (
                   <React.Fragment key={order.id}>
                     <tr
-                      className="cursor-pointer border-b border-[#F3F4F6] transition-colors hover:bg-[#F9FAFB]"
+                      className="cursor-pointer border-b border-[#F3F4F6] transition-colors hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]"
                       onClick={() => toggleOrderPreview(order.id)}
                     >
                       <td className="px-5 py-3 align-middle">
@@ -2336,7 +2336,7 @@ export default function DesktopOrdersTable({
                           <DropdownMenuTrigger asChild>
                             <button
                               type="button"
-                              className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#6B7280] dark:text-white/55 transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]"
+                              className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#6B7280] dark:text-white/55 transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06] hover:text-[#1F2937] dark:hover:text-white"
                               aria-label="Open order actions"
                             >
                               <Ellipsis className="h-4 w-4" />
@@ -2425,7 +2425,7 @@ export default function DesktopOrdersTable({
                   type="button"
                   onClick={() => scrollKanban("left")}
                   aria-label="Scroll kanban left"
-                  className="absolute top-1/2 left-2 z-10 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-[#E5E7EB] dark:border-white/10 bg-white/96 text-[#374151] shadow-[0_12px_28px_rgba(15,23,42,0.14)] backdrop-blur transition hover:border-[#C7D2FE] hover:bg-white hover:text-[#1F2937]"
+                  className="absolute top-1/2 left-2 z-10 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-[#E5E7EB] dark:border-white/10 bg-white/96 text-[#374151] shadow-[0_12px_28px_rgba(15,23,42,0.14)] backdrop-blur transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-white dark:hover:bg-white/[0.07] hover:text-[#1F2937] dark:hover:text-white"
                 >
                   <ChevronLeft className="h-5 w-5" />
                 </button>
@@ -2436,7 +2436,7 @@ export default function DesktopOrdersTable({
                   type="button"
                   onClick={() => scrollKanban("right")}
                   aria-label="Scroll kanban right"
-                  className="absolute top-1/2 right-2 z-10 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-[#E5E7EB] dark:border-white/10 bg-white/96 text-[#374151] shadow-[0_12px_28px_rgba(15,23,42,0.14)] backdrop-blur transition hover:border-[#C7D2FE] hover:bg-white hover:text-[#1F2937]"
+                  className="absolute top-1/2 right-2 z-10 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-[#E5E7EB] dark:border-white/10 bg-white/96 text-[#374151] shadow-[0_12px_28px_rgba(15,23,42,0.14)] backdrop-blur transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-white dark:hover:bg-white/[0.07] hover:text-[#1F2937] dark:hover:text-white"
                 >
                   <ChevronRight className="h-5 w-5" />
                 </button>
@@ -2649,8 +2649,8 @@ export default function DesktopOrdersTable({
                                       ? "h-6 min-w-[42px] px-1.5 text-[10px] font-semibold"
                                       : "h-7 min-w-[48px] px-2 text-[11px] font-semibold"
                                     : isCollapsedColumn
-                                      ? "h-6 min-w-[42px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-1.5 text-[10px] font-semibold text-[#6B7280] dark:text-white/55 hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]"
-                                      : "h-7 min-w-[48px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-2 text-[11px] font-semibold text-[#6B7280] dark:text-white/55 hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]",
+                                      ? "h-6 min-w-[42px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-1.5 text-[10px] font-semibold text-[#6B7280] dark:text-white/55 hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06] hover:text-[#1F2937] dark:hover:text-white"
+                                      : "h-7 min-w-[48px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-2 text-[11px] font-semibold text-[#6B7280] dark:text-white/55 hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06] hover:text-[#1F2937] dark:hover:text-white",
                                 ].join(" ")}
                                 style={
                                   hiddenByFilter || hiddenByPreference
@@ -2752,7 +2752,7 @@ export default function DesktopOrdersTable({
                                       "group rounded-[16px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-2.5 py-2 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition",
                                       isDragging
                                         ? "scale-[0.99] border-[#C7D2FE] dark:border-[var(--brand-500)]/40 bg-[#F9FAFB] dark:bg-white/[0.04] opacity-90 shadow-[0_18px_36px_rgba(15,23,42,0.14)]"
-                                        : "hover:-translate-y-0.5 hover:border-[#C7D2FE] hover:shadow-[0_16px_32px_rgba(15,23,42,0.08)]",
+                                        : "hover:-translate-y-0.5 hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:shadow-[0_16px_32px_rgba(15,23,42,0.08)]",
                                       canManage && !isSavingCard
                                         ? "cursor-grab active:cursor-grabbing"
                                         : "",
@@ -2802,7 +2802,7 @@ export default function DesktopOrdersTable({
                                           <DropdownMenuTrigger asChild>
                                             <button
                                               type="button"
-                                              className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#6B7280] dark:text-white/55 transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]"
+                                              className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#6B7280] dark:text-white/55 transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06] hover:text-[#1F2937] dark:hover:text-white"
                                               aria-label="Open order actions"
                                               style={{
                                                 cursor:
@@ -3236,7 +3236,7 @@ export default function DesktopOrdersTable({
                 key={reason}
                 type="button"
                 onClick={() => closeCanceledReasonDialog(reason)}
-                className="w-full rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-2.5 text-left text-sm font-medium text-[#1F2937] dark:text-white/90 transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
+                className="w-full rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-2.5 text-left text-sm font-medium text-[#1F2937] dark:text-white/90 transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]"
               >
                 {reason}
               </button>
@@ -3259,7 +3259,7 @@ export default function DesktopOrdersTable({
 
           <AlertDialogFooter>
             <AlertDialogCancel
-              className="rounded-xl border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] text-slate-700 dark:text-white/80 hover:bg-slate-50"
+              className="rounded-xl border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] text-slate-700 dark:text-white/80 hover:bg-slate-50 dark:hover:bg-white/[0.06]"
               onClick={(event) => {
                 event.preventDefault();
                 closeCanceledReasonDialog(null);
@@ -3301,7 +3301,7 @@ export default function DesktopOrdersTable({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel
-              className="rounded-xl border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] text-slate-700 dark:text-white/80 hover:bg-slate-50"
+              className="rounded-xl border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] text-slate-700 dark:text-white/80 hover:bg-slate-50 dark:hover:bg-white/[0.06]"
               disabled={Boolean(deletingId)}
             >
               Keep order

@@ -94,7 +94,7 @@ export function BellNotifications() {
             void load();
           }
         }}
-        className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 dark:border-white/10 bg-white/90 dark:bg-white/[0.05] text-slate-700 dark:text-white/80 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
+        className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 dark:border-white/10 bg-white/90 dark:bg-white/[0.05] text-slate-700 dark:text-white/80 shadow-sm transition hover:border-slate-300 dark:hover:border-white/20 hover:bg-slate-50 dark:hover:bg-white/[0.06]"
       >
         <Bell className="h-4 w-4" />
         {unreadCount > 0 ? (

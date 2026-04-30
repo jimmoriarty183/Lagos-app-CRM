@@ -79,7 +79,7 @@ export function StartDayNudge({
               <button
                 type="button"
                 onClick={handleDismiss}
-                className="inline-flex items-center justify-center rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-2 py-1.5 text-slate-500 dark:text-white/55 transition hover:bg-slate-50"
+                className="inline-flex items-center justify-center rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-2 py-1.5 text-slate-500 dark:text-white/55 transition hover:bg-slate-50 dark:hover:bg-white/[0.06]"
                 aria-label="Dismiss"
               >
                 <X className="h-4 w-4" />

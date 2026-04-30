@@ -618,7 +618,7 @@ export function ClientOrderForm({
               "inline-flex h-10 items-center justify-center gap-2 rounded-xl border text-sm font-semibold transition",
               clientType === "individual"
                 ? "border-[var(--brand-600)] bg-[var(--brand-50)] text-[var(--brand-700)]"
-                : "border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#475467] dark:text-white/70 hover:border-[#C7D2FE]",
+                : "border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#475467] dark:text-white/70 hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40",
             ].join(" ")}
           >
             <UserRound className="h-4 w-4" />
@@ -631,7 +631,7 @@ export function ClientOrderForm({
               "inline-flex h-10 items-center justify-center gap-2 rounded-xl border text-sm font-semibold transition",
               clientType === "company"
                 ? "border-[var(--brand-600)] bg-[var(--brand-50)] text-[var(--brand-700)]"
-                : "border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#475467] dark:text-white/70 hover:border-[#C7D2FE]",
+                : "border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#475467] dark:text-white/70 hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40",
             ].join(" ")}
           >
             <Building2 className="h-4 w-4" />

@@ -333,7 +333,7 @@ export default async function AdminDashboardPage({
           <select
             name="period"
             defaultValue={period.preset}
-            className="h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm text-slate-900 dark:text-white outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
+            className="h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm text-slate-900 dark:text-white outline-none transition hover:border-slate-300 dark:hover:border-white/20 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
           >
             <option value="today">Сегодня</option>
             <option value="yesterday">Вчера</option>
@@ -347,13 +347,13 @@ export default async function AdminDashboardPage({
             type="date"
             name="from"
             defaultValue={period.fromInput}
-            className="h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm text-slate-900 dark:text-white outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
+            className="h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm text-slate-900 dark:text-white outline-none transition hover:border-slate-300 dark:hover:border-white/20 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
           />
           <input
             type="date"
             name="to"
             defaultValue={period.toInput}
-            className="h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm text-slate-900 dark:text-white outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
+            className="h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm text-slate-900 dark:text-white outline-none transition hover:border-slate-300 dark:hover:border-white/20 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
           />
           <Button
             type="submit"
@@ -391,7 +391,7 @@ export default async function AdminDashboardPage({
         <AdminSectionCard
           title="Последние регистрации"
           actions={
-            <Link href="/admin/users" className="text-sm font-medium text-slate-600 dark:text-white/70 hover:text-slate-900">
+            <Link href="/admin/users" className="text-sm font-medium text-slate-600 dark:text-white/70 hover:text-slate-900 dark:hover:text-white">
               Открыть список
             </Link>
           }
@@ -410,7 +410,7 @@ export default async function AdminDashboardPage({
         <AdminSectionCard
           title="Последние бизнесы"
           actions={
-            <Link href="/admin/businesses" className="text-sm font-medium text-slate-600 dark:text-white/70 hover:text-slate-900">
+            <Link href="/admin/businesses" className="text-sm font-medium text-slate-600 dark:text-white/70 hover:text-slate-900 dark:hover:text-white">
               Открыть список
             </Link>
           }
@@ -431,7 +431,7 @@ export default async function AdminDashboardPage({
         <AdminSectionCard
           title="Последняя активность"
           actions={
-            <Link href="/admin/activity" className="text-sm font-medium text-slate-600 dark:text-white/70 hover:text-slate-900">
+            <Link href="/admin/activity" className="text-sm font-medium text-slate-600 dark:text-white/70 hover:text-slate-900 dark:hover:text-white">
               Открыть ленту
             </Link>
           }
@@ -449,7 +449,7 @@ export default async function AdminDashboardPage({
         <AdminSectionCard
           title="Требует внимания"
           actions={
-            <Link href="/admin/health" className="text-sm font-medium text-slate-600 dark:text-white/70 hover:text-slate-900">
+            <Link href="/admin/health" className="text-sm font-medium text-slate-600 dark:text-white/70 hover:text-slate-900 dark:hover:text-white">
               Открыть контроль
             </Link>
           }

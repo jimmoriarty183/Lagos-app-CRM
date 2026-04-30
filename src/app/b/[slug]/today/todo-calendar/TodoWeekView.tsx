@@ -68,7 +68,7 @@ export function TodoWeekView({
               type="button"
               onClick={() => onSelectDate(day)}
               className={cn(
-                "border-r border-[#F2F4F7] px-3 py-3 text-left transition hover:bg-[#F9FAFB]",
+                "border-r border-[#F2F4F7] px-3 py-3 text-left transition hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]",
                 selected && "bg-[#F9FAFF]",
               )}
             >

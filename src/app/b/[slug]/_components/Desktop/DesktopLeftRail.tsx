@@ -137,7 +137,7 @@ function RailLink({
       ? "border-[#D7DEFA] bg-[#F5F7FF] text-[#334155] dark:text-white/80 shadow-[0_4px_12px_rgba(99,102,241,0.08)]"
       : disabled
         ? "cursor-not-allowed border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] text-[#9CA3AF] dark:text-white/40 opacity-90"
-        : "cursor-pointer border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#6B7280] dark:text-white/55 hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937] hover:shadow-[0_10px_24px_rgba(15,23,42,0.08)]",
+        : "cursor-pointer border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#6B7280] dark:text-white/55 hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06] hover:text-[#1F2937] dark:hover:text-white hover:shadow-[0_10px_24px_rgba(15,23,42,0.08)]",
     className ?? "",
   ].join(" ");
 
@@ -421,7 +421,7 @@ export default function DesktopLeftRail({
               type="button"
               onClick={openCollapsedRail}
               aria-label="Open rail menu"
-              className="fixed left-0 z-50 inline-flex h-[84px] w-7 flex-col items-center justify-center gap-1 rounded-r-xl border border-[#E5E7EB] dark:border-white/10 border-l-0 bg-white/96 text-[#374151] shadow-[0_10px_28px_rgba(15,23,42,0.10)] backdrop-blur transition hover:bg-white hover:text-[#1F2937]"
+              className="fixed left-0 z-50 inline-flex h-[84px] w-7 flex-col items-center justify-center gap-1 rounded-r-xl border border-[#E5E7EB] dark:border-white/10 border-l-0 bg-white/96 text-[#374151] shadow-[0_10px_28px_rgba(15,23,42,0.10)] backdrop-blur transition hover:bg-white dark:hover:bg-white/[0.07] hover:text-[#1F2937] dark:hover:text-white"
               style={{ top: topOffset }}
             >
               <ChevronsRight className="h-3.5 w-3.5 shrink-0" />
@@ -448,7 +448,7 @@ export default function DesktopLeftRail({
                   <button
                     type="button"
                     onClick={closeCollapsedRail}
-                    className="col-span-2 inline-flex h-9 w-full items-center justify-center rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#6B7280] dark:text-white/55 transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]"
+                    className="col-span-2 inline-flex h-9 w-full items-center justify-center rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#6B7280] dark:text-white/55 transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06] hover:text-[#1F2937] dark:hover:text-white"
                     aria-label="Hide rail menu"
                     title="Hide menu"
                   >
@@ -460,7 +460,7 @@ export default function DesktopLeftRail({
                   <button
                     type="button"
                     onClick={toggleExpanded}
-                    className="col-span-2 inline-flex h-9 w-full items-center justify-center rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#6B7280] dark:text-white/55 transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]"
+                    className="col-span-2 inline-flex h-9 w-full items-center justify-center rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#6B7280] dark:text-white/55 transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06] hover:text-[#1F2937] dark:hover:text-white"
                     aria-label="Open full menu"
                     title="Open full menu"
                   >

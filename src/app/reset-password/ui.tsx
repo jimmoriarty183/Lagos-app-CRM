@@ -56,7 +56,7 @@ function PasswordInput({
         <button
           type="button"
           onClick={() => setShow((s) => !s)}
-          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg px-2 py-1 text-[11px] font-semibold text-gray-600 dark:text-white/70 hover:bg-gray-100 hover:text-gray-900"
+          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg px-2 py-1 text-[11px] font-semibold text-gray-600 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-white/[0.08] hover:text-gray-900 dark:hover:text-white"
         >
           {show ? "Hide" : "Show"}
         </button>

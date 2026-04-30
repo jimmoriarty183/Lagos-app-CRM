@@ -2043,7 +2043,7 @@ export default async function OwnerAnalyticsPage({
                     "rounded-md px-3 py-1.5 text-[12px] font-semibold transition",
                     analyticsView === tab.key
                       ? "bg-[var(--brand-600)] text-white"
-                      : "text-[#6B7280] dark:text-white/55 hover:bg-[#F9FAFB] hover:text-[#1F2937]",
+                      : "text-[#6B7280] dark:text-white/55 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06] hover:text-[#1F2937] dark:hover:text-white",
                   ].join(" ")}
                 >
                   {tab.label}
@@ -2132,7 +2132,7 @@ export default async function OwnerAnalyticsPage({
                     "shrink-0 whitespace-nowrap rounded-md px-3 py-1.5 text-[12px] font-semibold transition",
                     analyticsView === tab.key
                       ? "bg-[var(--brand-600)] text-white"
-                      : "text-[#6B7280] dark:text-white/55 hover:bg-[#F9FAFB] hover:text-[#1F2937]",
+                      : "text-[#6B7280] dark:text-white/55 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06] hover:text-[#1F2937] dark:hover:text-white",
                   ].join(" ")}
                 >
                   {tab.label}

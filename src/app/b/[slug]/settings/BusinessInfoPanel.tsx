@@ -124,7 +124,7 @@ function EditableCard({
             "inline-flex h-9 w-9 items-center justify-center rounded-xl border transition",
             editing
               ? "border-[var(--brand-600)] bg-[var(--brand-50)] text-[var(--brand-600)] shadow-[0_0_0_3px_rgba(91,91,179,0.12)]"
-              : "border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#4B5563] dark:text-white/70 hover:border-[#C7D2FE] hover:bg-[#F9FAFB]",
+              : "border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#4B5563] dark:text-white/70 hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]",
           ].join(" ")}
           aria-label={editing ? `Close ${label} editing` : `Edit ${label}`}
         >
@@ -349,7 +349,7 @@ export default function BusinessInfoPanel({
               type="button"
               onClick={discardChanges}
               disabled={status === "saving"}
-              className="inline-flex h-11 items-center rounded-full border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-5 text-sm font-semibold text-[#4B5563] dark:text-white/70 transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex h-11 items-center rounded-full border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-5 text-sm font-semibold text-[#4B5563] dark:text-white/70 transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06] disabled:cursor-not-allowed disabled:opacity-60"
             >
               Discard changes
             </button>

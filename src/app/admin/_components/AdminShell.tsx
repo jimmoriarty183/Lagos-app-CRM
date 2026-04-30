@@ -147,7 +147,7 @@ export function AdminShell({
                   onClick={handleToggleNav}
                   aria-label={navCollapsed ? "Expand menu" : "Collapse menu"}
                   title={navCollapsed ? "Expand menu" : "Collapse menu"}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] text-slate-600 dark:text-white/70 transition hover:border-slate-300 hover:text-slate-900"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] text-slate-600 dark:text-white/70 transition hover:border-slate-300 dark:hover:border-white/20 hover:text-slate-900 dark:hover:text-white"
                 >
                   {navCollapsed ? (
                     <ChevronRight className="h-4 w-4" />
@@ -159,7 +159,7 @@ export function AdminShell({
               <Link
                 href={workspaceHref}
                 className={[
-                  "flex items-center gap-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-2.5 py-2.5 shadow-sm transition hover:border-slate-300",
+                  "flex items-center gap-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-2.5 py-2.5 shadow-sm transition hover:border-slate-300 dark:hover:border-white/20",
                   navCollapsed ? "xl:justify-center xl:px-2" : "xl:px-2.5",
                 ].join(" ")}
                 title="Ordo Admin"
@@ -191,7 +191,7 @@ export function AdminShell({
                           : "xl:px-2.5",
                         active
                           ? "border-[#bfd0ea] dark:border-white/15 bg-[#eef5ff] dark:bg-[var(--brand-600)]/15 shadow-sm"
-                          : "border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] hover:border-slate-300 hover:bg-slate-50",
+                          : "border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] hover:border-slate-300 dark:hover:border-white/20 hover:bg-slate-50 dark:hover:bg-white/[0.06]",
                       ].join(" ")}
                     >
                       <span
@@ -223,7 +223,7 @@ export function AdminShell({
                 <Link
                   href={workspaceHref}
                   className={[
-                    "flex items-center gap-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-2.5 py-2.5 transition hover:border-slate-300 hover:bg-slate-50",
+                    "flex items-center gap-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-2.5 py-2.5 transition hover:border-slate-300 dark:hover:border-white/20 hover:bg-slate-50 dark:hover:bg-white/[0.06]",
                     navCollapsed ? "xl:justify-center xl:px-2" : "xl:px-2.5",
                   ].join(" ")}
                   title="Назад в приложение"

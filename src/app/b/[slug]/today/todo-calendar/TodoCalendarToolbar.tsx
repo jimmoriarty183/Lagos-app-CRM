@@ -48,7 +48,7 @@ export function TodoCalendarToolbar({
         <button
           type="button"
           onClick={onToday}
-          className="inline-flex h-10 items-center rounded-[14px] border border-[#CBD5E1] bg-white dark:bg-white/[0.03] px-3.5 text-[13px] font-semibold text-[#1E293B] dark:text-white/90 shadow-[0_3px_12px_rgba(15,23,42,0.06)] transition hover:border-[#C7D2FE] hover:text-[#3645A0]"
+          className="inline-flex h-10 items-center rounded-[14px] border border-[#CBD5E1] bg-white dark:bg-white/[0.03] px-3.5 text-[13px] font-semibold text-[#1E293B] dark:text-white/90 shadow-[0_3px_12px_rgba(15,23,42,0.06)] transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:text-[#3645A0]"
         >
           Today
         </button>

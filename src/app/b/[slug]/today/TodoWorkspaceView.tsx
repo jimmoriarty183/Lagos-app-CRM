@@ -341,7 +341,7 @@ export function TodoWorkspaceView({
                   <Button
                     type="button"
                     variant="outline"
-                    className="h-10 rounded-[14px] border-[#CBD5E1] bg-white dark:bg-white/[0.03] px-3.5 text-[13px] font-semibold text-[#1E293B] dark:text-white/90 shadow-[0_3px_12px_rgba(15,23,42,0.06)] hover:border-[#C7D2FE] hover:text-[#3645A0]"
+                    className="h-10 rounded-[14px] border-[#CBD5E1] bg-white dark:bg-white/[0.03] px-3.5 text-[13px] font-semibold text-[#1E293B] dark:text-white/90 shadow-[0_3px_12px_rgba(15,23,42,0.06)] hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:text-[#3645A0]"
                     onClick={openCreateFollowUp}
                   >
                     <CalendarPlus className="mr-1.5 h-4 w-4" />

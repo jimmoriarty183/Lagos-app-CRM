@@ -509,7 +509,7 @@ function DrawerStatusSelect({
                       setReasonTarget(null);
                       setCustomReason("");
                     }}
-                    className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-[#6B7280] dark:text-white/55 transition hover:bg-[#F9FAFB] hover:text-[#1F2937]"
+                    className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-[#6B7280] dark:text-white/55 transition hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06] hover:text-[#1F2937] dark:hover:text-white"
                   >
                     <ChevronLeft className="h-3.5 w-3.5" />
                     Back
@@ -523,7 +523,7 @@ function DrawerStatusSelect({
                       type="button"
                       disabled={isPending}
                       onClick={() => applyStatusSelection("CANCELED", reason)}
-                      className="w-full rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-2 text-left text-sm font-medium text-[#1F2937] dark:text-white/90 transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] disabled:cursor-default disabled:opacity-60"
+                      className="w-full rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-2 text-left text-sm font-medium text-[#1F2937] dark:text-white/90 transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06] disabled:cursor-default disabled:opacity-60"
                     >
                       {reason}
                     </button>
@@ -609,7 +609,7 @@ function DrawerStatusSelect({
               onClick={() => {
                 router.push(`/b/${businessSlug}/settings/statuses`);
               }}
-              className="inline-flex h-7 items-center rounded-full border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-2.5 text-[12px] font-semibold text-[#374151] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
+              className="inline-flex h-7 items-center rounded-full border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-2.5 text-[12px] font-semibold text-[#374151] transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]"
             >
               Status settings
             </button>
@@ -650,7 +650,7 @@ function DrawerStatusSelect({
                     "inline-flex h-9 items-center gap-2 rounded-xl border px-3 text-xs font-semibold transition",
                     draftStatusColor === option.value
                       ? "border-[var(--brand-600)] bg-[var(--brand-600)] !text-white"
-                      : "border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#374151] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]",
+                      : "border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#374151] hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]",
                   ].join(" ")}
                 >
                   <span
@@ -668,7 +668,7 @@ function DrawerStatusSelect({
                   "inline-flex h-9 items-center gap-2 rounded-xl border px-3 text-xs font-semibold transition",
                   draftStatusColor === "custom"
                     ? "border-[var(--brand-600)] bg-[var(--brand-600)] !text-white"
-                    : "border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#374151] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]",
+                    : "border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#374151] hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]",
                 ].join(" ")}
               >
                 <span
@@ -778,7 +778,7 @@ function FilesSection({
             type="button"
             onClick={onAddFiles}
             disabled={uploading}
-            className="inline-flex h-10 items-center gap-2 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 text-sm font-semibold text-[#374151] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex h-10 items-center gap-2 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 text-sm font-semibold text-[#374151] transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06] disabled:cursor-not-allowed disabled:opacity-60"
           >
             <Plus className="h-4 w-4" />
             {uploading ? "Uploading..." : "Add file"}
@@ -801,7 +801,7 @@ function FilesSection({
           files.map((file) => (
             <div
               key={file.id}
-              className="flex items-center justify-between gap-3 rounded-[18px] border border-[#F3F4F6] bg-[#F9FAFB] dark:bg-white/[0.04] px-3.5 py-3 transition hover:border-[#C7D2FE] hover:bg-white"
+              className="flex items-center justify-between gap-3 rounded-[18px] border border-[#F3F4F6] bg-[#F9FAFB] dark:bg-white/[0.04] px-3.5 py-3 transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-white dark:hover:bg-white/[0.07]"
             >
               <a
                 href={`/api/activity-attachments/${file.id}`}
@@ -959,7 +959,7 @@ function LabelsSection({
               key={label}
               type="button"
               onClick={() => removeLabel(label)}
-              className="inline-flex items-center rounded-full border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] px-2.5 py-1 text-[11px] font-semibold text-[#6B7280] dark:text-white/55 transition hover:border-[#C7D2FE] hover:bg-white"
+              className="inline-flex items-center rounded-full border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] px-2.5 py-1 text-[11px] font-semibold text-[#6B7280] dark:text-white/55 transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-white dark:hover:bg-white/[0.07]"
             >
               {label}
             </button>
@@ -980,7 +980,7 @@ function LabelsSection({
               key={label}
               type="button"
               onClick={() => addLabel(label)}
-              className="inline-flex items-center rounded-full border border-dashed border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-2.5 py-1 text-[11px] font-semibold text-[#6B7280] dark:text-white/55 transition hover:border-[#C7D2FE] hover:text-[#1F2937]"
+              className="inline-flex items-center rounded-full border border-dashed border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-2.5 py-1 text-[11px] font-semibold text-[#6B7280] dark:text-white/55 transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:text-[#1F2937] dark:hover:text-white"
             >
               + {label}
             </button>
@@ -1004,7 +1004,7 @@ function LabelsSection({
           type="button"
           onClick={() => addLabel(draft)}
           disabled={!draft.trim()}
-          className="rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-[13px] font-semibold text-[#374151] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
+          className="rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-[13px] font-semibold text-[#374151] transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]"
         >
           {draft.trim() ? `Add "${draft.trim()}"` : "+ Add label"}
         </button>
@@ -1607,7 +1607,7 @@ export function OrderPreview({
                         current === "wide" ? "default" : "wide",
                       )
                     }
-                    className="inline-flex h-10 items-center gap-1.5 rounded-[18px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 text-sm font-semibold text-[#1F2937] dark:text-white/90 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
+                    className="inline-flex h-10 items-center gap-1.5 rounded-[18px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 text-sm font-semibold text-[#1F2937] dark:text-white/90 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]"
                     aria-label={
                       isWideLayout
                         ? "Use default order preview width"
@@ -1624,7 +1624,7 @@ export function OrderPreview({
                   <button
                     type="button"
                     onClick={onClose}
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-[18px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#374151] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]"
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-[18px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#374151] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06] hover:text-[#1F2937] dark:hover:text-white"
                     aria-label="Close order preview"
                   >
                     <X className="h-4 w-4" />
@@ -1818,7 +1818,7 @@ export function OrderPreview({
                         )
                       }
                       className={[
-                        "hidden items-center gap-1.5 rounded-[16px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] font-semibold text-[#1F2937] dark:text-white/90 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] sm:inline-flex",
+                        "hidden items-center gap-1.5 rounded-[16px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] font-semibold text-[#1F2937] dark:text-white/90 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06] sm:inline-flex",
                         isUltraCompactTop
                           ? "h-8 px-3 text-[13px]"
                           : "h-11 px-5",
@@ -1840,7 +1840,7 @@ export function OrderPreview({
                       type="button"
                       onClick={onClose}
                       className={[
-                        "inline-flex items-center justify-center rounded-[16px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#6B7280] dark:text-white/55 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]",
+                        "inline-flex items-center justify-center rounded-[16px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#6B7280] dark:text-white/55 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06] hover:text-[#1F2937] dark:hover:text-white",
                         isUltraCompactTop ? "h-8 w-8" : "h-11 w-11",
                       ].join(" ")}
                       aria-label="Close order preview"
@@ -1946,7 +1946,7 @@ export function OrderPreview({
                                   <Button
                                     type="button"
                                     variant="outline"
-                                    className="h-10 min-w-24 rounded-xl border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-5 text-sm font-semibold text-[#374151] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
+                                    className="h-10 min-w-24 rounded-xl border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-5 text-sm font-semibold text-[#374151] hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]"
                                     onClick={() => {
                                       setIsEditingOverview(false);
                                       setDraft({
@@ -2275,7 +2275,7 @@ export function OrderPreview({
                                   <DropdownMenuTrigger asChild>
                                     <button
                                       type="button"
-                                      className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#6B7280] dark:text-white/55 transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]"
+                                      className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#6B7280] dark:text-white/55 transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06] hover:text-[#1F2937] dark:hover:text-white"
                                       aria-label="Overview actions"
                                     >
                                       <MoreHorizontal className="h-4 w-4" />
@@ -2524,7 +2524,7 @@ export function OrderPreview({
                                 <Button
                                   type="button"
                                   variant="outline"
-                                  className="h-9 rounded-xl border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm font-semibold text-[#374151] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
+                                  className="h-9 rounded-xl border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm font-semibold text-[#374151] hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]"
                                   onClick={() => {
                                     setShowAddLineCard(true);
                                     setLineActionError(null);
@@ -2718,7 +2718,7 @@ export function OrderPreview({
                                   <Button
                                     type="button"
                                     variant="outline"
-                                    className="h-9 rounded-xl border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm font-semibold text-[#374151] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
+                                    className="h-9 rounded-xl border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm font-semibold text-[#374151] hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]"
                                     onClick={() => {
                                       setShowAddLineCard(false);
                                       resetAddLineDraft();
@@ -2999,7 +2999,7 @@ export function OrderPreview({
                             <Button
                               type="button"
                               variant="outline"
-                              className="h-8 w-full rounded-lg border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-2.5 text-[13px] font-semibold text-[#374151] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
+                              className="h-8 w-full rounded-lg border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-2.5 text-[13px] font-semibold text-[#374151] hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]"
                               onClick={openOverviewFilePicker}
                               disabled={isUploadingOverviewFiles}
                             >

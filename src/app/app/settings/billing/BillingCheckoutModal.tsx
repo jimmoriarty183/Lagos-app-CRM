@@ -379,7 +379,7 @@ export default function BillingCheckoutModal(props: BillingCheckoutModalProps) {
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
-                  className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-[#E5E7EB] dark:border-white/10 text-[#6B7280] dark:text-white/55 hover:bg-[#F9FAFB]"
+                  className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-[#E5E7EB] dark:border-white/10 text-[#6B7280] dark:text-white/55 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]"
                   aria-label="Close"
                 >
                   <X className="h-3.5 w-3.5" />
@@ -397,7 +397,7 @@ export default function BillingCheckoutModal(props: BillingCheckoutModalProps) {
                     className={`relative flex cursor-pointer flex-col rounded-xl border bg-white dark:bg-white/[0.03] px-3 py-2.5 transition ${
                       plan === option.code
                         ? "border-[#818CF8] ring-1 ring-[#818CF8] shadow-[0_4px_16px_rgba(79,70,229,0.10)]"
-                        : "border-[#E2E8F0] dark:border-white/10 hover:border-[#C7D2FE]"
+                        : "border-[#E2E8F0] dark:border-white/10 hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40"
                     }`}
                   >
                     {currentPlanCode && option.code === currentPlanCode ? (

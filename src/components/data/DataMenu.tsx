@@ -101,7 +101,7 @@ export default function DataMenu({
             <button
               type="button"
               onClick={() => onExport("xlsx")}
-              className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm font-semibold text-[#1F2937] dark:text-white/90 hover:bg-[#F9FAFB]"
+              className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm font-semibold text-[#1F2937] dark:text-white/90 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]"
             >
               <span className="inline-flex items-center gap-2">
                 <FileDown className="h-3.5 w-3.5 text-[#4F46E5]" />
@@ -112,7 +112,7 @@ export default function DataMenu({
             <button
               type="button"
               onClick={() => onExport("csv")}
-              className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm font-semibold text-[#1F2937] dark:text-white/90 hover:bg-[#F9FAFB]"
+              className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm font-semibold text-[#1F2937] dark:text-white/90 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]"
             >
               <span className="inline-flex items-center gap-2">
                 <FileDown className="h-3.5 w-3.5 text-[#4F46E5]" />
@@ -127,7 +127,7 @@ export default function DataMenu({
             <button
               type="button"
               onClick={() => onTemplate("xlsx")}
-              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-semibold text-[#1F2937] dark:text-white/90 hover:bg-[#F9FAFB]"
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-semibold text-[#1F2937] dark:text-white/90 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]"
             >
               <FileDown className="h-3.5 w-3.5 text-[#9CA3AF] dark:text-white/40" />
               Download Excel template
@@ -135,7 +135,7 @@ export default function DataMenu({
             <button
               type="button"
               onClick={() => onTemplate("csv")}
-              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-semibold text-[#1F2937] dark:text-white/90 hover:bg-[#F9FAFB]"
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-semibold text-[#1F2937] dark:text-white/90 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]"
             >
               <FileDown className="h-3.5 w-3.5 text-[#9CA3AF] dark:text-white/40" />
               Download CSV template
@@ -149,7 +149,7 @@ export default function DataMenu({
                 <button
                   type="button"
                   onClick={onImport}
-                  className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm font-semibold text-[#1F2937] dark:text-white/90 hover:bg-[#F9FAFB]"
+                  className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm font-semibold text-[#1F2937] dark:text-white/90 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]"
                 >
                   <span className="inline-flex items-center gap-2">
                     <FileUp className="h-3.5 w-3.5 text-[#10B981]" />

@@ -119,7 +119,7 @@ export function OrderNoteComposer({
               "inline-flex h-9 items-center gap-2 rounded-full border px-3 text-xs font-semibold transition",
               isPinned
                 ? "border-[#d5ddf6] bg-[#eef2ff] dark:bg-[var(--brand-600)]/15 text-[#3645a0] dark:text-[var(--brand-300)]"
-                : "border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] text-[#6B7280] dark:text-white/55 hover:border-[#C7D2FE] hover:bg-white hover:text-[#374151]",
+                : "border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] text-[#6B7280] dark:text-white/55 hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-white dark:hover:bg-white/[0.07] hover:text-[#374151]",
             )}
             aria-pressed={isPinned}
           >
@@ -141,7 +141,7 @@ export function OrderNoteComposer({
           <button
             type="button"
             onClick={onCancel}
-            className="inline-flex h-11 items-center justify-center rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-5 text-base font-semibold text-[#374151] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
+            className="inline-flex h-11 items-center justify-center rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-5 text-base font-semibold text-[#374151] transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]"
           >
             Cancel
           </button>
@@ -201,7 +201,7 @@ export function OrderNoteItem({
         "rounded-[24px] border bg-white/95 p-4 transition",
         note.isPinned
           ? "border-[#d7dff2] bg-[linear-gradient(180deg,#ffffff_0%,#f8faff_100%)]"
-          : "border-[#e6ebf2] hover:border-[#d9e2ec] hover:bg-white",
+          : "border-[#e6ebf2] hover:border-[#d9e2ec] hover:bg-white dark:hover:bg-white/[0.07]",
       )}
     >
       <div className="flex items-start gap-3">
@@ -238,7 +238,7 @@ export function OrderNoteItem({
                 <DropdownMenuTrigger asChild>
                   <button
                     type="button"
-                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-transparent bg-[#F9FAFB] dark:bg-white/[0.04] text-[#6B7280] dark:text-white/55 transition hover:border-[#E5E7EB] hover:bg-white hover:text-[#1F2937]"
+                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-transparent bg-[#F9FAFB] dark:bg-white/[0.04] text-[#6B7280] dark:text-white/55 transition hover:border-[#E5E7EB] dark:hover:border-white/15 hover:bg-white dark:hover:bg-white/[0.07] hover:text-[#1F2937] dark:hover:text-white"
                     aria-label={`Manage note from ${note.authorName}`}
                   >
                     <Ellipsis className="h-4 w-4" />
@@ -407,7 +407,7 @@ export function OrderNotesPanel({
             <button
               type="button"
               onClick={openCreateComposer}
-              className="inline-flex h-11 items-center justify-center rounded-[18px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-5 text-base font-semibold text-[#374151] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
+              className="inline-flex h-11 items-center justify-center rounded-[18px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-5 text-base font-semibold text-[#374151] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]"
             >
               Add note
             </button>

@@ -31,7 +31,7 @@ export default async function AdminUserDetailPage({
       title={user.fullName || user.email || user.id}
       description="Детальный профиль пользователя: основная информация, привязки к бизнесам, приглашения и последняя активность."
       actions={
-        <Link href="/admin/users" className="rounded-xl border border-slate-300 dark:border-white/15 bg-white dark:bg-white/[0.03] px-3 py-2 text-sm font-medium text-slate-700 dark:text-white/80 transition hover:border-slate-400 hover:text-slate-900">
+        <Link href="/admin/users" className="rounded-xl border border-slate-300 dark:border-white/15 bg-white dark:bg-white/[0.03] px-3 py-2 text-sm font-medium text-slate-700 dark:text-white/80 transition hover:border-slate-400 hover:text-slate-900 dark:hover:text-white">
           Назад к списку
         </Link>
       }

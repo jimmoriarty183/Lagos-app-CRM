@@ -197,7 +197,7 @@ export default function TopBar({
                     "inline-flex h-7 items-center rounded-md px-3 text-[12px] font-semibold transition",
                     tab.active
                       ? "bg-white dark:bg-white/[0.03] text-[#3645A0] dark:text-[var(--brand-300)] shadow-[0_1px_2px_rgba(16,24,40,0.08)]"
-                      : "text-[#6B7280] dark:text-white/55 hover:bg-white hover:text-[#1F2937]",
+                      : "text-[#6B7280] dark:text-white/55 hover:bg-white dark:hover:bg-white/[0.07] hover:text-[#1F2937] dark:hover:text-white",
                   ].join(" ")}
                 >
                   {tab.label}
@@ -260,7 +260,7 @@ export default function TopBar({
             {calendarDayHref ? (
               <Link
                 href={calendarDayHref}
-                className="inline-flex h-7 items-center rounded-md border border-[#D6DAE1] bg-white dark:bg-white/[0.03] px-2.5 text-[11px] font-semibold text-[#475467] dark:text-white/70 shadow-sm transition hover:border-[#C7D2FE] hover:bg-[#F8FAFF] hover:text-[#3645A0]"
+                className="inline-flex h-7 items-center rounded-md border border-[#D6DAE1] bg-white dark:bg-white/[0.03] px-2.5 text-[11px] font-semibold text-[#475467] dark:text-white/70 shadow-sm transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F8FAFF] hover:text-[#3645A0]"
               >
                 <CalendarDays className="h-3.5 w-3.5 text-[#667085]" />
                 <span className="ml-2">Calendar</span>

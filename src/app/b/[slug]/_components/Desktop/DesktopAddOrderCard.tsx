@@ -37,7 +37,7 @@ export default function DesktopAddOrderCard({ businessId, businessSlug }: Props)
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
-          className="h-9 px-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-white/[0.03] text-sm font-semibold text-gray-900 dark:text-white hover:bg-gray-50 transition-colors"
+          className="h-9 px-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-white/[0.03] text-sm font-semibold text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-white/[0.06] transition-colors"
         >
           {open ? "Hide" : "Open"}
         </button>

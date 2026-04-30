@@ -345,7 +345,7 @@ export function RelatedOrdersPreview({
                   <button
                     type="button"
                     onClick={() => loadOrderPreview(openOrderId)}
-                    className="inline-flex h-8 items-center rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-xs font-semibold text-[#374151] hover:border-[#C7D2FE]"
+                    className="inline-flex h-8 items-center rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-xs font-semibold text-[#374151] hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40"
                   >
                     Retry
                   </button>
@@ -365,7 +365,7 @@ export function RelatedOrdersPreview({
                 <button
                   type="button"
                   onClick={() => loadOrderPreview(openOrderId)}
-                  className="inline-flex h-8 items-center rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-xs font-semibold text-[#374151] hover:border-[#C7D2FE]"
+                  className="inline-flex h-8 items-center rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-xs font-semibold text-[#374151] hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40"
                 >
                   Retry
                 </button>

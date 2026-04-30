@@ -160,7 +160,7 @@ function RescheduleMenu({
               onReschedule(item, getTodayDateOnly());
               setCalendarOpen(false);
             }}
-            className="flex h-8.5 w-full items-center justify-between rounded-[12px] px-3 text-[13px] font-medium text-[#374151] transition hover:bg-[#F9FAFB]"
+            className="flex h-8.5 w-full items-center justify-between rounded-[12px] px-3 text-[13px] font-medium text-[#374151] transition hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]"
           >
             <span>Today</span>
             {item.due_date === getTodayDateOnly() ? (
@@ -173,7 +173,7 @@ function RescheduleMenu({
               onReschedule(item, getTomorrowDateOnly());
               setCalendarOpen(false);
             }}
-            className="flex h-8.5 w-full items-center justify-between rounded-[12px] px-3 text-[13px] font-medium text-[#374151] transition hover:bg-[#F9FAFB]"
+            className="flex h-8.5 w-full items-center justify-between rounded-[12px] px-3 text-[13px] font-medium text-[#374151] transition hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]"
           >
             <span>Tomorrow</span>
             {item.due_date === getTomorrowDateOnly() ? (
@@ -228,7 +228,7 @@ function FollowUpTodayRow({
           <button
             type="button"
             onClick={() => onDone(item)}
-            className="mt-0.5 inline-flex h-7.5 w-7.5 shrink-0 items-center justify-center rounded-full border border-[#D9E2EC] bg-[#F9FAFB] dark:bg-white/[0.04] text-[#9CA3AF] dark:text-white/40 transition hover:border-[#C7D2FE] hover:text-[#5558E3]"
+            className="mt-0.5 inline-flex h-7.5 w-7.5 shrink-0 items-center justify-center rounded-full border border-[#D9E2EC] bg-[#F9FAFB] dark:bg-white/[0.04] text-[#9CA3AF] dark:text-white/40 transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:text-[#5558E3]"
             aria-label={`Mark ${item.title} as done`}
           >
             <Check className="h-3.5 w-3.5" />

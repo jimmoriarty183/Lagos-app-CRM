@@ -202,7 +202,7 @@ export function SupportRequestForm({ businessSlug }: { businessSlug: string }) {
           <button
             type="button"
             onClick={() => router.push(`/b/${businessSlug}/support`)}
-            className="inline-flex h-10 items-center rounded-xl border border-slate-300 dark:border-white/15 bg-white dark:bg-white/[0.03] px-4 text-sm font-semibold text-slate-700 dark:text-white/80 transition hover:border-slate-400 hover:text-slate-900"
+            className="inline-flex h-10 items-center rounded-xl border border-slate-300 dark:border-white/15 bg-white dark:bg-white/[0.03] px-4 text-sm font-semibold text-slate-700 dark:text-white/80 transition hover:border-slate-400 hover:text-slate-900 dark:hover:text-white"
           >
             Back
           </button>

@@ -127,7 +127,7 @@ export default function ProfileEditor({ initial, workspace, identities }: Props)
                 type="button"
                 onClick={() => fileRef.current?.click()}
                 disabled={isUploading}
-                className="mt-3 inline-flex items-center rounded-full border border-[#D0D5DD] bg-white dark:bg-white/[0.03] px-3 py-1.5 text-[12px] font-semibold text-[#344054] transition hover:border-[#98A2B3] hover:bg-[#F9FAFB] disabled:opacity-60"
+                className="mt-3 inline-flex items-center rounded-full border border-[#D0D5DD] bg-white dark:bg-white/[0.03] px-3 py-1.5 text-[12px] font-semibold text-[#344054] transition hover:border-[#98A2B3] hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06] disabled:opacity-60"
               >
                 {isUploading ? "Uploading..." : "Upload photo"}
               </button>

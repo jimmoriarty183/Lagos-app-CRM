@@ -446,7 +446,7 @@ export default function BusinessPeoplePanel({
           />
           <Link
             href={href}
-            className="block rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 py-3 text-sm font-semibold text-slate-900 dark:text-white hover:bg-slate-50"
+            className="block rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 py-3 text-sm font-semibold text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-white/[0.06]"
           >
             Manage access →
           </Link>
@@ -470,7 +470,7 @@ export default function BusinessPeoplePanel({
         />
         <Link
           href={href}
-          className="block rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 py-3 text-sm font-semibold text-slate-900 dark:text-white hover:bg-slate-50"
+          className="block rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 py-3 text-sm font-semibold text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-white/[0.06]"
         >
           Manage access →
         </Link>
@@ -570,7 +570,7 @@ export default function BusinessPeoplePanel({
                       <button
                         type="button"
                         onClick={() => setManagerToRemove(manager)}
-                        className="inline-flex h-9 min-w-[104px] items-center justify-center rounded-xl border border-slate-200 dark:border-white/10 px-4 text-sm font-semibold text-slate-700 dark:text-white/80 transition hover:bg-slate-50 hover:text-slate-900 sm:h-8 sm:min-w-0 sm:rounded-lg sm:px-3 sm:text-xs sm:text-slate-600"
+                        className="inline-flex h-9 min-w-[104px] items-center justify-center rounded-xl border border-slate-200 dark:border-white/10 px-4 text-sm font-semibold text-slate-700 dark:text-white/80 transition hover:bg-slate-50 dark:hover:bg-white/[0.06] hover:text-slate-900 dark:hover:text-white sm:h-8 sm:min-w-0 sm:rounded-lg sm:px-3 sm:text-xs sm:text-slate-600"
                       >
                         Remove
                       </button>
@@ -585,7 +585,7 @@ export default function BusinessPeoplePanel({
             <button
               type="button"
               onClick={() => setShowAllManagers((prev) => !prev)}
-              className="inline-flex w-full items-center justify-center rounded-xl border border-slate-200 dark:border-white/10 px-4 py-3 text-sm font-semibold text-slate-700 dark:text-white/80 transition hover:bg-slate-50 hover:text-slate-900 sm:w-auto sm:justify-start sm:border-0 sm:px-0 sm:py-0"
+              className="inline-flex w-full items-center justify-center rounded-xl border border-slate-200 dark:border-white/10 px-4 py-3 text-sm font-semibold text-slate-700 dark:text-white/80 transition hover:bg-slate-50 dark:hover:bg-white/[0.06] hover:text-slate-900 dark:hover:text-white sm:w-auto sm:justify-start sm:border-0 sm:px-0 sm:py-0"
             >
               {showAllManagers ? "Show fewer managers" : "Show all managers"}
             </button>
@@ -627,7 +627,7 @@ export default function BusinessPeoplePanel({
                         <button
                           type="button"
                           onClick={() => setInviteToRevoke(invite)}
-                          className="inline-flex h-9 min-w-[104px] items-center justify-center rounded-xl border border-slate-200 dark:border-white/10 px-4 text-sm font-semibold text-slate-700 dark:text-white/80 transition hover:bg-slate-50 hover:text-slate-900 sm:h-8 sm:min-w-0 sm:rounded-lg sm:px-3 sm:text-xs sm:text-slate-600"
+                          className="inline-flex h-9 min-w-[104px] items-center justify-center rounded-xl border border-slate-200 dark:border-white/10 px-4 text-sm font-semibold text-slate-700 dark:text-white/80 transition hover:bg-slate-50 dark:hover:bg-white/[0.06] hover:text-slate-900 dark:hover:text-white sm:h-8 sm:min-w-0 sm:rounded-lg sm:px-3 sm:text-xs sm:text-slate-600"
                         >
                           Revoke
                         </button>

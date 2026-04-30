@@ -119,12 +119,12 @@ export default async function BusinessSupportPage({
                 name="q"
                 defaultValue={query}
                 placeholder="Search subject or message"
-                className="h-10 min-w-0 flex-1 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
+                className="h-10 min-w-0 flex-1 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none transition hover:border-slate-300 dark:hover:border-white/20 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
               />
               <Button
                 type="submit"
                 variant="outline"
-                className="h-10 px-4 text-sm font-semibold text-slate-700 dark:text-white/80 hover:border-slate-400 hover:text-slate-900"
+                className="h-10 px-4 text-sm font-semibold text-slate-700 dark:text-white/80 hover:border-slate-400 hover:text-slate-900 dark:hover:text-white"
               >
                 Search
               </Button>
@@ -157,12 +157,12 @@ export default async function BusinessSupportPage({
                 name="q"
                 defaultValue={query}
                 placeholder="Search subject or message"
-                className="h-10 min-w-0 flex-1 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
+                className="h-10 min-w-0 flex-1 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none transition hover:border-slate-300 dark:hover:border-white/20 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
               />
               <Button
                 type="submit"
                 variant="outline"
-                className="h-10 px-4 text-sm font-semibold text-slate-700 dark:text-white/80 hover:border-slate-400 hover:text-slate-900"
+                className="h-10 px-4 text-sm font-semibold text-slate-700 dark:text-white/80 hover:border-slate-400 hover:text-slate-900 dark:hover:text-white"
               >
                 Search
               </Button>

@@ -268,8 +268,8 @@ export function EndOfDayDialog({
             className={
               triggerClassName ??
               (compact
-                ? "flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-semibold text-gray-800 dark:text-white/90 transition-colors hover:bg-gray-50"
-                : "inline-flex h-10 items-center rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-[12px] font-semibold text-[#374151] shadow-sm transition hover:border-[#C7D2FE] hover:text-[#1F2937]")
+                ? "flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-semibold text-gray-800 dark:text-white/90 transition-colors hover:bg-gray-50 dark:hover:bg-white/[0.06]"
+                : "inline-flex h-10 items-center rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-[12px] font-semibold text-[#374151] shadow-sm transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:text-[#1F2937] dark:hover:text-white")
             }
           >
             <MoonStar
@@ -363,7 +363,7 @@ export function EndOfDayDialog({
                         type="button"
                         variant="outline"
                         size="sm"
-                        className="h-9 rounded-[14px] border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-xs text-[#374151] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
+                        className="h-9 rounded-[14px] border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-xs text-[#374151] hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]"
                         onClick={() =>
                           setTomorrowItems((current) => [
                             ...current,
@@ -454,7 +454,7 @@ export function EndOfDayDialog({
             <Button
               type="button"
               variant="outline"
-              className="rounded-[16px] border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#374151] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
+              className="rounded-[16px] border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#374151] hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]"
               onClick={() => {
                 armOverlayCloseGuard();
                 setOpen(false);

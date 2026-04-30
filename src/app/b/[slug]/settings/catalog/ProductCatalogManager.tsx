@@ -251,7 +251,7 @@ export default function ProductCatalogManager({
           <button
             type="button"
             onClick={() => setShowCreateForm((v) => !v)}
-            className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[#D0D5DD] bg-white dark:bg-white/[0.03] px-3.5 text-sm font-medium text-[#344054] transition hover:bg-[#F9FAFB]"
+            className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[#D0D5DD] bg-white dark:bg-white/[0.03] px-3.5 text-sm font-medium text-[#344054] transition hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]"
           >
             {showCreateForm ? "Hide form" : "+ New product"}
           </button>
@@ -584,7 +584,7 @@ export default function ProductCatalogManager({
                     <article
                       key={row.id}
                       onClick={() => openEdit(row)}
-                      className="flex cursor-pointer items-center gap-3 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-[#FCFCFD] px-3.5 py-2.5 transition hover:border-[#C7D2FE] hover:bg-white"
+                      className="flex cursor-pointer items-center gap-3 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-[#FCFCFD] px-3.5 py-2.5 transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-white dark:hover:bg-white/[0.07]"
                     >
                       <span className="w-6 shrink-0 text-xs font-medium text-[#9CA3AF] dark:text-white/40 text-right">
                         {start + i + 1}
@@ -725,7 +725,7 @@ export default function ProductCatalogManager({
               ) : null}
             </div>
             <div className="mt-5 flex justify-end gap-2">
-              <button type="button" onClick={() => setEditingProduct(null)} className="h-9 rounded-lg border border-[#D0D5DD] bg-white dark:bg-white/[0.03] px-4 text-sm font-medium text-[#344054] hover:bg-[#F9FAFB]">Cancel</button>
+              <button type="button" onClick={() => setEditingProduct(null)} className="h-9 rounded-lg border border-[#D0D5DD] bg-white dark:bg-white/[0.03] px-4 text-sm font-medium text-[#344054] hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]">Cancel</button>
               <button type="button" onClick={saveEdit} disabled={isPending} className="h-9 rounded-lg bg-[var(--brand-600)] px-4 text-sm font-medium text-white hover:bg-[var(--brand-700)] disabled:opacity-60">
                 {isPending ? "Saving..." : "Save changes"}
               </button>

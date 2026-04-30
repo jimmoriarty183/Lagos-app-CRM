@@ -605,7 +605,7 @@ export function AdminCampaignForm({
           </button>
           <Link
             href="/admin/campaigns"
-            className="text-sm font-medium text-slate-500 dark:text-white/55 hover:text-slate-700"
+            className="text-sm font-medium text-slate-500 dark:text-white/55 hover:text-slate-700 dark:hover:text-white/85"
           >
             К списку кампаний
           </Link>

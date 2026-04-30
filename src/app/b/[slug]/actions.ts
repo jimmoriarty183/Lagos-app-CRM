@@ -128,7 +128,10 @@ function upperRole(value: unknown) {
   return cleanText(value).toUpperCase();
 }
 
-type OrdersPayload = Record<string, string | number | boolean | null>;
+type OrdersPayload = Record<
+  string,
+  string | number | boolean | null | Record<string, unknown>
+>;
 
 function omitKeys<T extends OrdersPayload>(payload: T, keys: readonly string[]) {
   const next = { ...payload };
@@ -157,6 +160,7 @@ async function runOrdersMutation<T>(
       "client_id",
       "contact_id",
       "due_at",
+      "metadata",
     ]
       .find((column) => !stripped.has(column) && isMissingColumnError(result.error, column));
 
@@ -395,6 +399,40 @@ function normalizeNameForMatch(value: string | null | undefined) {
   return String(value ?? "").trim().replace(/\s+/g, " ").toLowerCase();
 }
 
+export const CLEANING_RECURRENCE_LABELS = [
+  "one-off",
+  "weekly",
+  "fortnightly",
+  "monthly",
+] as const;
+export type CleaningRecurrenceLabel = (typeof CLEANING_RECURRENCE_LABELS)[number];
+
+export const CLEANING_PROPERTY_TYPES = [
+  "residential",
+  "office",
+  "commercial",
+  "specialist",
+] as const;
+export type CleaningPropertyType = (typeof CLEANING_PROPERTY_TYPES)[number];
+
+export function isCleaningRecurrenceLabel(
+  value: unknown,
+): value is CleaningRecurrenceLabel {
+  return (
+    typeof value === "string" &&
+    (CLEANING_RECURRENCE_LABELS as readonly string[]).includes(value)
+  );
+}
+
+export function isCleaningPropertyType(
+  value: unknown,
+): value is CleaningPropertyType {
+  return (
+    typeof value === "string" &&
+    (CLEANING_PROPERTY_TYPES as readonly string[]).includes(value)
+  );
+}
+
 export type CreateOrderClientPayloadInput = {
   businessId: string;
   businessSlug: string;
@@ -406,6 +444,8 @@ export type CreateOrderClientPayloadInput = {
   description?: string | null;
   existingClientId?: string | null;
   existingContactId?: string | null;
+  recurrenceLabel?: CleaningRecurrenceLabel | null;
+  propertyType?: CleaningPropertyType | null;
   individual?: {
     firstName?: string | null;
     lastName?: string | null;
@@ -826,6 +866,19 @@ export async function createOrderFromClientPayload(
   const description = cleanText(input.description) || null;
   const existingClientId = cleanText(input.existingClientId) || null;
   const existingContactId = cleanText(input.existingContactId) || null;
+  const recurrenceLabel = isCleaningRecurrenceLabel(input.recurrenceLabel)
+    ? input.recurrenceLabel
+    : null;
+  const propertyType = isCleaningPropertyType(input.propertyType)
+    ? input.propertyType
+    : null;
+  const cleaningMetadata: Record<string, string> = {};
+  if (recurrenceLabel) cleaningMetadata.recurrence_label = recurrenceLabel;
+  if (propertyType) cleaningMetadata.property_type = propertyType;
+  const orderMetadata =
+    Object.keys(cleaningMetadata).length > 0
+      ? { cleaning: cleaningMetadata }
+      : null;
 
   if (input.clientType !== "individual" && input.clientType !== "company") {
     throw new Error("Client type is required");
@@ -966,6 +1019,7 @@ export async function createOrderFromClientPayload(
       manager_id: managerId,
       client_id: clientId,
       contact_id: contactId,
+      ...(orderMetadata ? { metadata: orderMetadata } : {}),
     },
     (nextPayload) => admin.from("orders").insert(nextPayload).select("id").single(),
   );

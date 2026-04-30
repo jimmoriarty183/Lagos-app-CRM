@@ -41,7 +41,7 @@ export default function MobileAccordion({
         onClick={() => setOpen((value) => !value)}
         className={[
           "flex w-full items-center justify-between gap-3 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 py-3 shadow-sm",
-          "transition-colors hover:bg-gray-50",
+          "transition-colors hover:bg-gray-50 dark:hover:bg-white/[0.06]",
         ].join(" ")}
       >
         <div className="min-w-0 flex items-center gap-2">

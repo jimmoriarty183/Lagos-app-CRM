@@ -351,7 +351,7 @@ export default function DesktopSidebarFilters({
         {hasActiveFilters && clearHref ? (
           <a
             href={clearHref}
-            className="inline-flex h-7 items-center justify-center rounded-lg border border-[#E5E7EB] dark:border-white/10 px-2.5 text-[11px] font-semibold text-[#6B7280] dark:text-white/55 transition hover:border-[#C7D2FE] hover:text-[#1F2937]"
+            className="inline-flex h-7 items-center justify-center rounded-lg border border-[#E5E7EB] dark:border-white/10 px-2.5 text-[11px] font-semibold text-[#6B7280] dark:text-white/55 transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:text-[#1F2937] dark:hover:text-white"
           >
             Reset
           </a>
@@ -401,7 +401,7 @@ export default function DesktopSidebarFilters({
             </label>
             <button
               type="submit"
-              className="inline-flex h-9 shrink-0 items-center justify-center rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm font-semibold text-[#374151] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937] disabled:cursor-not-allowed disabled:opacity-45"
+              className="inline-flex h-9 shrink-0 items-center justify-center rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm font-semibold text-[#374151] transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06] hover:text-[#1F2937] dark:hover:text-white disabled:cursor-not-allowed disabled:opacity-45"
               disabled={!customRangeReady}
             >
               <span className="leading-none">Search</span>
@@ -450,7 +450,7 @@ export default function DesktopSidebarFilters({
                         statusOptions.map((option) => option.value),
                       );
                     }}
-                    className="text-[11px] font-semibold text-[#374151] transition hover:text-[#1F2937]"
+                    className="text-[11px] font-semibold text-[#374151] transition hover:text-[#1F2937] dark:hover:text-white"
                   >
                     Select all
                   </button>
@@ -460,7 +460,7 @@ export default function DesktopSidebarFilters({
                       setStatusTouched(true);
                       setStatusValues([]);
                     }}
-                    className="text-[11px] font-semibold text-[#6B7280] dark:text-white/55 transition hover:text-[#1F2937]"
+                    className="text-[11px] font-semibold text-[#6B7280] dark:text-white/55 transition hover:text-[#1F2937] dark:hover:text-white"
                   >
                     Clear all
                   </button>
@@ -771,7 +771,7 @@ export default function DesktopSidebarFilters({
 
         <button
           type="submit"
-          className="inline-flex h-9 w-full items-center justify-center rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm font-semibold text-[#374151] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937] disabled:cursor-not-allowed disabled:opacity-45"
+          className="inline-flex h-9 w-full items-center justify-center rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm font-semibold text-[#374151] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06] hover:text-[#1F2937] dark:hover:text-white disabled:cursor-not-allowed disabled:opacity-45"
           disabled={!customRangeReady}
         >
           <span className="leading-none">

@@ -187,8 +187,8 @@ export function UserMenu({
           aria-label="Open user menu"
           className={
             compact
-              ? "inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#4B5563] dark:text-white/70 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#D1D5DB] hover:bg-[#F9FAFB]"
-              : "inline-flex h-9 items-center gap-2 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] pl-1.5 pr-2.5 text-[#4B5563] dark:text-white/70 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#D1D5DB] hover:bg-[#F9FAFB]"
+              ? "inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#4B5563] dark:text-white/70 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#D1D5DB] dark:hover:border-white/20 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]"
+              : "inline-flex h-9 items-center gap-2 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] pl-1.5 pr-2.5 text-[#4B5563] dark:text-white/70 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#D1D5DB] dark:hover:border-white/20 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]"
           }
         >
           {userAvatarUrl ? (

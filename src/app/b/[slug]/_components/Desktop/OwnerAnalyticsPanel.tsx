@@ -1267,7 +1267,7 @@ export default function OwnerAnalyticsPanel({
                 className={[
                   "inline-flex h-10 items-center justify-center rounded-lg border px-3 text-[13px] font-semibold transition",
                   hasSalesFilter
-                    ? "border-[#D0D5DD] text-[#374151] hover:bg-[#F9FAFB]"
+                    ? "border-[#D0D5DD] text-[#374151] hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]"
                     : "pointer-events-none border-[#EAECF0] text-[#98A2B3] dark:text-white/45",
                 ].join(" ")}
                 aria-disabled={!hasSalesFilter}
@@ -1546,7 +1546,7 @@ export default function OwnerAnalyticsPanel({
                       "rounded-md px-3 py-1.5 text-[12px] font-semibold transition",
                       data.productivity.period === period.key
                         ? "bg-[var(--brand-600)] text-white"
-                        : "text-[#6B7280] dark:text-white/55 hover:bg-[#F9FAFB] hover:text-[#1F2937]",
+                        : "text-[#6B7280] dark:text-white/55 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06] hover:text-[#1F2937] dark:hover:text-white",
                     ].join(" ")}
                   >
                     {period.label}

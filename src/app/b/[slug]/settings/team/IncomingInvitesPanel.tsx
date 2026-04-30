@@ -210,7 +210,7 @@ export default function IncomingInvitesPanel({
                     type="button"
                     disabled={busy}
                     onClick={() => void declineInvite(invite.id)}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-2 text-sm font-semibold text-[#4B5563] dark:text-white/70 hover:border-[#C7D2FE] hover:bg-[#F9FAFB] disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-2 text-sm font-semibold text-[#4B5563] dark:text-white/70 hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06] disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <X className="h-4 w-4" />
                     Decline

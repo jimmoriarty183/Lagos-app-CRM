@@ -251,7 +251,7 @@ export function SurveyForm({
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex h-9 items-center rounded-lg border border-slate-300 dark:border-white/15 bg-white dark:bg-white/[0.03] px-3.5 text-sm font-semibold text-slate-700 dark:text-white/80 transition hover:border-slate-400 hover:bg-slate-50"
+            className="inline-flex h-9 items-center rounded-lg border border-slate-300 dark:border-white/15 bg-white dark:bg-white/[0.03] px-3.5 text-sm font-semibold text-slate-700 dark:text-white/80 transition hover:border-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.06]"
           >
             Close for now
           </button>

@@ -46,7 +46,7 @@ export default async function AdminCampaignEditPage({
           {campaign.type === "survey" ? (
             <Link
               href={`/admin/campaigns/${campaign.id}/stats`}
-              className="inline-flex h-10 items-center rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 text-sm font-semibold text-slate-700 dark:text-white/80 transition hover:border-slate-300"
+              className="inline-flex h-10 items-center rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 text-sm font-semibold text-slate-700 dark:text-white/80 transition hover:border-slate-300 dark:hover:border-white/20"
             >
               Survey stats
             </Link>
@@ -59,7 +59,7 @@ export default async function AdminCampaignEditPage({
           </Link>
           <Link
             href={`/admin/campaigns/${campaign.id}?view=details`}
-            className="inline-flex h-10 items-center rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 text-sm font-semibold text-slate-700 dark:text-white/80 transition hover:border-slate-300"
+            className="inline-flex h-10 items-center rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 text-sm font-semibold text-slate-700 dark:text-white/80 transition hover:border-slate-300 dark:hover:border-white/20"
           >
             View / Preview
           </Link>
