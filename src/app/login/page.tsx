@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { BrandLockup } from "@/components/Brand";
 import LoginUI from "./ui";
 import { Spinner } from "@/components/ui/spinner";
@@ -14,8 +15,17 @@ const benefits = [
 ];
 
 export default function Page() {
+  return (
+    <React.Suspense fallback={null}>
+      <LoginPageContent />
+    </React.Suspense>
+  );
+}
+
+function LoginPageContent() {
+  const searchParams = useSearchParams();
   const [mode, setMode] = React.useState<"login" | "register" | "reset">(
-    "login",
+    searchParams.get("mode") === "register" ? "register" : "login",
   );
   const showPromo = mode !== "register";
 
