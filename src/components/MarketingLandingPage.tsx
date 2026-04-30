@@ -736,7 +736,9 @@ export function MarketingLandingPage() {
                       }`}
                     />
                     <p className="mt-2 text-center text-[11px] text-slate-500 dark:text-white/55 dark:text-white/45">
-                      14-day free trial · cancel before day 15
+                      {billingCycle === "monthly"
+                        ? "30-day free trial · cancel before day 31"
+                        : "14-day free trial · cancel before day 15"}
                     </p>
                   </div>
                 </motion.article>
@@ -845,7 +847,7 @@ export function MarketingLandingPage() {
                   </Link>
                 </div>
                 <p className="mt-5 text-xs text-slate-400 dark:text-white/45">
-                  No credit card required · 14-day free trial · Cancel anytime
+                  No credit card required · 30-day trial on monthly · 14-day on yearly
                 </p>
               </div>
             </div>

@@ -186,7 +186,7 @@ const faqs = [
   },
   {
     q: "What does the free trial include?",
-    a: "14-day free trial. Cancel anytime before day 15 and you won't be charged. Card details are required at checkout (this is how Paddle works).",
+    a: "Free trial: 30 days on monthly billing or 14 days on yearly. Cancel before the trial ends and you won't be charged. Card details are required at checkout (this is how Paddle works).",
   },
   {
     q: "Are prices shown with VAT?",
@@ -563,7 +563,9 @@ export default function PricingPage() {
 
                 <p className="priceNote">{plan.priceNote[billingCycle]}</p>
                 <p className="trialNote">
-                  14-day free trial · Cancel anytime before day 15
+                  {billingCycle === "monthly"
+                    ? "30-day free trial · Cancel anytime before day 31"
+                    : "14-day free trial · Cancel anytime before day 15"}
                 </p>
 
                 <ul>

@@ -235,8 +235,9 @@ export function OnboardingPlanPicker({
               Pick a plan to activate your workspace
             </h1>
             <p className="mt-2 max-w-xl text-sm leading-relaxed text-slate-600 dark:text-white/70">
-              All plans start with a 14-day free trial. After checkout we&apos;ll
-              ask you to name your business and you&apos;ll be inside the CRM.
+              {interval === "monthly"
+                ? "All plans start with a 30-day free trial on monthly billing. After checkout you'll be back inside the CRM."
+                : "Yearly plans include a 14-day free trial. After checkout you'll be back inside the CRM."}
             </p>
           </div>
 
@@ -323,7 +324,9 @@ export function OnboardingPlanPicker({
                   {option.note}
                 </p>
                 <p className="mt-1 text-[11px] text-slate-500 dark:text-white/55">
-                  14-day free trial · Cancel anytime before day 15
+                  {interval === "monthly"
+                    ? "30-day free trial · Cancel before day 31"
+                    : "14-day free trial · Cancel before day 15"}
                 </p>
 
                 <ul className="my-3 flex-1 space-y-1.5 border-t border-slate-100 dark:border-white/[0.06] pt-3 text-xs text-slate-700 dark:text-white/80">
@@ -383,7 +386,8 @@ export function OnboardingPlanPicker({
 
         <p className="mt-5 text-[11px] leading-snug text-slate-500 dark:text-white/55">
           Payments are processed by Paddle. We&apos;ll request your card at
-          checkout — you can cancel anytime in the first 14 days without being
+          checkout — you can cancel anytime in the first{" "}
+          {interval === "monthly" ? "30 days" : "14 days"} without being
           charged.
         </p>
       </section>

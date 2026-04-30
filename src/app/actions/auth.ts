@@ -179,7 +179,15 @@ export async function registerOwnerAction(
     const emailRedirectTo = (() => {
       if (!redirectBase) return undefined;
       try {
-        return new URL("/auth/callback", redirectBase).toString();
+        // Encode where /auth/callback should land after exchanging the code.
+        // Without this, /auth/callback defaults to /app/crm which then
+        // re-redirects to /onboarding/business (no workspace) — a needless
+        // double-hop that flashes the CRM shell. Sending them directly to
+        // /onboarding/business or to the saved Buy intent feels instant.
+        const callback = new URL("/auth/callback", redirectBase);
+        const desiredNext = safeNext || "/onboarding/business";
+        callback.searchParams.set("next", desiredNext);
+        return callback.toString();
       } catch {
         return undefined;
       }
