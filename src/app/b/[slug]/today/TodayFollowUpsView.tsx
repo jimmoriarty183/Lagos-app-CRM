@@ -110,8 +110,8 @@ function DueBadge({ dueDate }: { dueDate: string }) {
       className={cn(
         "inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold",
         isOverdue
-          ? "border-[#FECACA] bg-[#FEF2F2] text-[#B42318]"
-          : "border-[#C7D2FE] bg-[#EEF2FF] text-[#3645A0]",
+          ? "border-[#FECACA] bg-[#FEF2F2] dark:bg-rose-500/10 text-[#B42318]"
+          : "border-[#C7D2FE] dark:border-[var(--brand-500)]/40 bg-[#EEF2FF] dark:bg-[var(--brand-600)]/15 text-[#3645A0] dark:text-[var(--brand-300)]",
       )}
       title={isOverdue ? `Due ${dueDateLabel}. Overdue by ${daysOverdue} days.` : dueDateLabel}
     >
@@ -143,7 +143,7 @@ function RescheduleMenu({
           aria-label={`Reschedule ${item.title}`}
         >
           <DueBadge dueDate={item.due_date} />
-          <span className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-[#E5E7EB] bg-white text-[#9CA3AF]">
+          <span className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#9CA3AF] dark:text-white/40">
             <ChevronDown className="h-3 w-3" />
           </span>
         </button>
@@ -151,7 +151,7 @@ function RescheduleMenu({
       <PopoverContent
         align="end"
         sideOffset={8}
-        className="z-[140] w-[min(280px,calc(100vw-1.5rem))] rounded-[18px] border-[#E5E7EB] bg-white p-2 shadow-[0_16px_40px_rgba(15,23,42,0.18)] max-h-[min(360px,var(--radix-popover-content-available-height))] overflow-y-auto overscroll-contain"
+        className="z-[140] w-[min(280px,calc(100vw-1.5rem))] rounded-[18px] border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-2 shadow-[0_16px_40px_rgba(15,23,42,0.18)] max-h-[min(360px,var(--radix-popover-content-available-height))] overflow-y-auto overscroll-contain"
       >
         <div className="space-y-1.5">
           <button
@@ -181,7 +181,7 @@ function RescheduleMenu({
             ) : null}
           </button>
           <div className="rounded-[14px] border border-[#F3F4F6] bg-[#FBFCFE] p-3">
-            <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.06em] text-[#9CA3AF]">
+            <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.06em] text-[#9CA3AF] dark:text-white/40">
               <CalendarDays className="h-3.5 w-3.5" />
               Pick date
             </div>
@@ -189,7 +189,7 @@ function RescheduleMenu({
               type="date"
               defaultValue={item.due_date}
               min={minDate}
-              className="h-10 w-full rounded-[12px] border border-[#E5E7EB] bg-white px-3 text-[13px] font-medium text-[#1F2937] outline-none transition focus:border-[#C7D2FE] focus:ring-4 focus:ring-[#E0E7FF]"
+              className="h-10 w-full rounded-[12px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-[13px] font-medium text-[#1F2937] dark:text-white/90 outline-none transition focus:border-[#C7D2FE] focus:ring-4 focus:ring-[#E0E7FF]"
               onChange={(event) => {
                 const nextDate = event.currentTarget.value;
                 if (!nextDate) return;
@@ -197,7 +197,7 @@ function RescheduleMenu({
                 setCalendarOpen(false);
               }}
             />
-            <p className="mt-2 text-[11px] leading-4 text-[#9CA3AF]">
+            <p className="mt-2 text-[11px] leading-4 text-[#9CA3AF] dark:text-white/40">
               Choosing a future date removes the item from Today.
             </p>
           </div>
@@ -222,20 +222,20 @@ function FollowUpTodayRow({
   const timeLabel = item.due_at ? formatFollowUpDateTime(item.due_at) : null;
 
   return (
-    <article className="rounded-[16px] border border-[#E8ECF3] bg-white px-3 py-2 transition-colors hover:bg-[#FBFCFE]">
+    <article className="rounded-[16px] border border-[#E8ECF3] bg-white dark:bg-white/[0.03] px-3 py-2 transition-colors hover:bg-[#FBFCFE]">
       <div className="flex items-start gap-2">
         {canManage ? (
           <button
             type="button"
             onClick={() => onDone(item)}
-            className="mt-0.5 inline-flex h-7.5 w-7.5 shrink-0 items-center justify-center rounded-full border border-[#D9E2EC] bg-[#F9FAFB] text-[#9CA3AF] transition hover:border-[#C7D2FE] hover:text-[#5558E3]"
+            className="mt-0.5 inline-flex h-7.5 w-7.5 shrink-0 items-center justify-center rounded-full border border-[#D9E2EC] bg-[#F9FAFB] dark:bg-white/[0.04] text-[#9CA3AF] dark:text-white/40 transition hover:border-[#C7D2FE] hover:text-[#5558E3]"
             aria-label={`Mark ${item.title} as done`}
           >
             <Check className="h-3.5 w-3.5" />
           </button>
         ) : (
           <span
-            className="mt-0.5 inline-flex h-7.5 w-7.5 shrink-0 rounded-full border border-[#E5E7EB] bg-[#F9FAFB]"
+            className="mt-0.5 inline-flex h-7.5 w-7.5 shrink-0 rounded-full border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04]"
             aria-hidden="true"
           />
         )}
@@ -244,7 +244,7 @@ function FollowUpTodayRow({
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 flex-1 pt-0.5 pr-2">
               <div className="flex items-center gap-2">
-                <div className="truncate text-[13px] font-medium leading-5 text-[#1F2937]">
+                <div className="truncate text-[13px] font-medium leading-5 text-[#1F2937] dark:text-white/90">
                   {item.title}
                 </div>
                 {timeLabel ? (
@@ -254,7 +254,7 @@ function FollowUpTodayRow({
               {hasOrderLink ? (
                 <Link
                   href={item.orderHref!}
-                  className="mt-0.5 inline-flex max-w-full items-center gap-1 truncate text-[12px] leading-5 text-[#6B7280] transition hover:text-[#5558E3]"
+                  className="mt-0.5 inline-flex max-w-full items-center gap-1 truncate text-[12px] leading-5 text-[#6B7280] dark:text-white/55 transition hover:text-[#5558E3]"
                 >
                   <span className="truncate">{item.orderLabel}</span>
                   <ExternalLink className="h-3 w-3 shrink-0" />
@@ -414,38 +414,38 @@ export function TodayFollowUpsView({
 
   return (
     <div className="space-y-3.5">
-      <div className="rounded-[22px] border border-[#E5E7EB] bg-[linear-gradient(180deg,#ffffff_0%,#F9FAFB_100%)] px-4 py-3 shadow-[0_10px_30px_rgba(15,23,42,0.05)]">
+      <div className="rounded-[22px] border border-[#E5E7EB] dark:border-white/10 bg-[linear-gradient(180deg,#ffffff_0%,#F9FAFB_100%)] px-4 py-3 shadow-[0_10px_30px_rgba(15,23,42,0.05)]">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="product-page-title text-[#111827]">Today</div>
-            <p className="mt-0.5 product-body-sm text-[#6B7280]">
+            <p className="mt-0.5 product-body-sm text-[#6B7280] dark:text-white/55">
               Overdue and due-today actions in one compact execution view.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {headerAction}
-            <span className="inline-flex items-center rounded-full border border-[#FECACA] bg-[#FEF2F2] px-2.5 py-1 text-[11px] font-semibold text-[#B42318]">
+            <span className="inline-flex items-center rounded-full border border-[#FECACA] bg-[#FEF2F2] dark:bg-rose-500/10 px-2.5 py-1 text-[11px] font-semibold text-[#B42318]">
               Overdue {overdue.length}
             </span>
-            <span className="inline-flex items-center rounded-full border border-[#C7D2FE] bg-[#EEF2FF] px-2.5 py-1 text-[11px] font-semibold text-[#3645A0]">
+            <span className="inline-flex items-center rounded-full border border-[#C7D2FE] dark:border-[var(--brand-500)]/40 bg-[#EEF2FF] dark:bg-[var(--brand-600)]/15 px-2.5 py-1 text-[11px] font-semibold text-[#3645A0] dark:text-[var(--brand-300)]">
               Today {today.length}
             </span>
-            <span className="inline-flex items-center rounded-full border border-[#E5E7EB] bg-white px-2.5 py-1 text-[11px] font-semibold text-[#475467]">
+            <span className="inline-flex items-center rounded-full border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-2.5 py-1 text-[11px] font-semibold text-[#475467] dark:text-white/70">
               Tomorrow {tomorrow.length}
             </span>
           </div>
         </div>
         {managerPlanProgress ? (
-          <div className="mt-3 rounded-[14px] border border-[#E5E7EB] bg-white px-3 py-2.5">
+          <div className="mt-3 rounded-[14px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-2.5">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="text-[12px] font-semibold text-[#111827]">
                 Monthly plan • {managerPlanProgress.monthStart} to {managerPlanProgress.monthEnd}
               </div>
-              <div className="text-[11px] font-semibold text-[#475467]">
+              <div className="text-[11px] font-semibold text-[#475467] dark:text-white/70">
                 Day {managerPlanProgress.daysElapsed}/{managerPlanProgress.daysTotal}
               </div>
             </div>
-            <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-[#EEF2FF]">
+            <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-[#EEF2FF] dark:bg-[var(--brand-600)]/15">
               <div
                 className="h-full rounded-full bg-[var(--brand-600)] transition-all"
                 style={{
@@ -453,7 +453,7 @@ export function TodayFollowUpsView({
                 }}
               />
             </div>
-            <div className="mt-2 grid grid-cols-1 gap-2 text-[11px] text-[#475467] sm:grid-cols-3">
+            <div className="mt-2 grid grid-cols-1 gap-2 text-[11px] text-[#475467] dark:text-white/70 sm:grid-cols-3">
               <div>
                 Amount: {formatCurrency(managerPlanProgress.planAmount)} / {formatCurrency(managerPlanProgress.actualAmount)} / {formatCurrency(managerPlanProgress.forecastAmount)}
               </div>
@@ -467,14 +467,14 @@ export function TodayFollowUpsView({
           </div>
         ) : null}
         {errorMessage ? (
-          <div className="mt-3 rounded-[14px] border border-[#FECACA] bg-[#FEF2F2] px-3 py-2.5 text-sm font-medium text-[#B42318]">
+          <div className="mt-3 rounded-[14px] border border-[#FECACA] bg-[#FEF2F2] dark:bg-rose-500/10 px-3 py-2.5 text-sm font-medium text-[#B42318]">
             {errorMessage}
           </div>
         ) : null}
       </div>
 
       {savingId ? (
-        <div className="flex items-center gap-2 text-sm font-medium text-[#6B7280]">
+        <div className="flex items-center gap-2 text-sm font-medium text-[#6B7280] dark:text-white/55">
           <Loader2 className="h-4 w-4 animate-spin" />
           Updating follow-up...
         </div>
@@ -489,7 +489,7 @@ export function TodayFollowUpsView({
         persistenceKey={`${businessSlug}:today:list:overdue`}
       >
         {overdue.length === 0 ? (
-          <div className="rounded-[16px] border border-dashed border-[#E5E7EB] bg-white/70 px-4 py-5 text-sm text-[#6B7280]">
+          <div className="rounded-[16px] border border-dashed border-[#E5E7EB] dark:border-white/10 bg-white/70 dark:bg-white/[0.05] px-4 py-5 text-sm text-[#6B7280] dark:text-white/55">
             No overdue follow-ups right now.
           </div>
         ) : (
@@ -518,7 +518,7 @@ export function TodayFollowUpsView({
         persistenceKey={`${businessSlug}:today:list:today`}
       >
         {today.length === 0 ? (
-          <div className="rounded-[16px] border border-dashed border-[#E5E7EB] bg-white/70 px-4 py-5 text-sm text-[#6B7280]">
+          <div className="rounded-[16px] border border-dashed border-[#E5E7EB] dark:border-white/10 bg-white/70 dark:bg-white/[0.05] px-4 py-5 text-sm text-[#6B7280] dark:text-white/55">
             No follow-ups scheduled for today.
           </div>
         ) : (
@@ -547,7 +547,7 @@ export function TodayFollowUpsView({
         persistenceKey={`${businessSlug}:today:list:tomorrow`}
       >
         {tomorrow.length === 0 ? (
-          <div className="rounded-[16px] border border-dashed border-[#E5E7EB] bg-white/70 px-4 py-5 text-sm text-[#6B7280]">
+          <div className="rounded-[16px] border border-dashed border-[#E5E7EB] dark:border-white/10 bg-white/70 dark:bg-white/[0.05] px-4 py-5 text-sm text-[#6B7280] dark:text-white/55">
             No follow-ups scheduled for tomorrow.
           </div>
         ) : (

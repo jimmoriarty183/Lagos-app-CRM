@@ -45,33 +45,33 @@ function AnalyticsFunnelBlock({
 
   return (
     <AdminSectionCard title="Воронка">
-      <div className="mb-3 text-sm text-slate-500">
+      <div className="mb-3 text-sm text-slate-500 dark:text-white/55">
         Зарегистрировались {"->"} вошли {"->"} создали бизнес {"->"} дошли до первого заказа
       </div>
 
       <div className="space-y-3">
         {steps.map((step, index) => (
-          <div key={step.key} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+          <div key={step.key} className="rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] p-3">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <div className="text-sm font-semibold text-slate-900">
+                <div className="text-sm font-semibold text-slate-900 dark:text-white">
                   {index + 1}. {step.label}
                 </div>
-                <div className="mt-1 text-xs text-slate-500">
+                <div className="mt-1 text-xs text-slate-500 dark:text-white/55">
                   {step.rateFromPrevious === null
                     ? "Для первого шага конверсия не считается"
                     : `Конверсия с предыдущего шага: ${step.rateFromPrevious.toFixed(1)}%`}
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-lg font-semibold text-slate-900">{formatNumber(step.value)}</div>
-                <div className="text-xs text-slate-500">
+                <div className="text-lg font-semibold text-slate-900 dark:text-white">{formatNumber(step.value)}</div>
+                <div className="text-xs text-slate-500 dark:text-white/55">
                   {step.rateFromStart === null ? "Нет базы" : `${step.rateFromStart.toFixed(1)}% от всех`}
                 </div>
               </div>
             </div>
 
-            <div className="mt-3 h-3 overflow-hidden rounded-full bg-slate-200">
+            <div className="mt-3 h-3 overflow-hidden rounded-full bg-slate-200 dark:bg-white/[0.08]">
               <div
                 className="h-full rounded-full bg-gradient-to-r from-[#1d4ed8] to-[#0f766e]"
                 style={{ width: `${Math.max(8, (step.value / maxValue) * 100)}%` }}
@@ -105,8 +105,8 @@ export default async function AdminAnalyticsPage({
       title="Аналитика"
       description="Панель product и marketing metrics для владельца продукта: рост, активация, использование и потери в воронке."
       actions={
-        <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600">
-          Вход как <span className="font-semibold text-slate-900">{user.email}</span>
+        <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-2 text-sm text-slate-600 dark:text-white/70">
+          Вход как <span className="font-semibold text-slate-900 dark:text-white">{user.email}</span>
         </div>
       }
     >
@@ -123,8 +123,8 @@ export default async function AdminAnalyticsPage({
                   className={[
                     "inline-flex h-10 items-center rounded-xl border px-4 text-sm font-medium transition",
                     active
-                      ? "border-[#bfd0ea] bg-[#eef5ff] text-slate-900"
-                      : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:text-slate-900",
+                      ? "border-[#bfd0ea] dark:border-white/15 bg-[#eef5ff] dark:bg-[var(--brand-600)]/15 text-slate-900 dark:text-white"
+                      : "border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] text-slate-700 dark:text-white/80 hover:border-slate-300 hover:text-slate-900",
                   ].join(" ")}
                 >
                   {option.label}
@@ -135,9 +135,9 @@ export default async function AdminAnalyticsPage({
         }
       >
         <div className="grid gap-3 xl:grid-cols-[1.2fr_0.8fr]">
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-            <div className="text-sm font-semibold text-slate-900">{analytics.rangeLabel}</div>
-            <div className="mt-2 text-sm leading-6 text-slate-600">
+          <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] p-3">
+            <div className="text-sm font-semibold text-slate-900 dark:text-white">{analytics.rangeLabel}</div>
+            <div className="mt-2 text-sm leading-6 text-slate-600 dark:text-white/70">
               Текущий срез: {formatDateTime(new Date(analytics.rangeStartMs).toISOString())} -{" "}
               {formatDateTime(new Date(analytics.rangeEndMs).toISOString())}.
               {analytics.previousRangeStartMs !== null && analytics.previousRangeEndMs !== null ? (
@@ -153,9 +153,9 @@ export default async function AdminAnalyticsPage({
             </div>
           </div>
 
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-            <div className="text-sm font-semibold text-slate-900">Что можно считать уже сейчас</div>
-            <div className="mt-2 text-sm leading-6 text-slate-600">
+          <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] p-3">
+            <div className="text-sm font-semibold text-slate-900 dark:text-white">Что можно считать уже сейчас</div>
+            <div className="mt-2 text-sm leading-6 text-slate-600 dark:text-white/70">
               Метрики опираются на реальные данные: регистрации пользователей, первый вход, привязку к бизнесам,
               создание и владение бизнесом, заказы и доступные события активности.
             </div>
@@ -226,66 +226,66 @@ export default async function AdminAnalyticsPage({
       <div className="mt-4 grid gap-3 xl:grid-cols-[1.15fr_0.85fr]">
         <AdminSectionCard title="Активация">
           <div className="grid gap-3 lg:grid-cols-3">
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-              <div className="text-sm font-semibold text-slate-900">Регистрация {"->"} первый вход</div>
+            <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] p-3">
+              <div className="text-sm font-semibold text-slate-900 dark:text-white">Регистрация {"->"} первый вход</div>
               <div className="product-stat-value mt-1">
                 {formatPercent(analytics.activation.signedInRate)}
               </div>
-              <div className="mt-2 text-sm text-slate-600">
+              <div className="mt-2 text-sm text-slate-600 dark:text-white/70">
                 {formatNumber(analytics.activation.signedInUsers)} пользователей сделали хотя бы один вход после
                 регистрации в выбранном периоде.
               </div>
             </div>
 
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-              <div className="text-sm font-semibold text-slate-900">Регистрация {"->"} создание бизнеса</div>
+            <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] p-3">
+              <div className="text-sm font-semibold text-slate-900 dark:text-white">Регистрация {"->"} создание бизнеса</div>
               <div className="product-stat-value mt-1">
                 {formatPercent(analytics.activation.usersWithBusinessRate)}
               </div>
-              <div className="mt-2 text-sm text-slate-600">{analytics.activation.businessDefinition}</div>
+              <div className="mt-2 text-sm text-slate-600 dark:text-white/70">{analytics.activation.businessDefinition}</div>
             </div>
 
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-              <div className="text-sm font-semibold text-slate-900">Регистрация {"->"} первый заказ</div>
+            <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] p-3">
+              <div className="text-sm font-semibold text-slate-900 dark:text-white">Регистрация {"->"} первый заказ</div>
               <div className="product-stat-value mt-1">
                 {formatPercent(analytics.activation.usersWithFirstOrderRate)}
               </div>
-              <div className="mt-2 text-sm text-slate-600">{analytics.activation.orderDefinition}</div>
+              <div className="mt-2 text-sm text-slate-600 dark:text-white/70">{analytics.activation.orderDefinition}</div>
             </div>
           </div>
         </AdminSectionCard>
 
         <AdminSectionCard title="Использование">
           <div className="space-y-2">
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-              <div className="text-sm font-semibold text-slate-900">DAU / WAU / MAU</div>
+            <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] p-3">
+              <div className="text-sm font-semibold text-slate-900 dark:text-white">DAU / WAU / MAU</div>
               <div className="mt-2 grid gap-3 sm:grid-cols-3">
                 <div>
-                  <div className="text-xl font-semibold text-slate-900">{formatNumber(analytics.engagement.dau)}</div>
-                  <div className="text-sm text-slate-500">За 1 день</div>
+                  <div className="text-xl font-semibold text-slate-900 dark:text-white">{formatNumber(analytics.engagement.dau)}</div>
+                  <div className="text-sm text-slate-500 dark:text-white/55">За 1 день</div>
                 </div>
                 <div>
-                  <div className="text-xl font-semibold text-slate-900">{formatNumber(analytics.engagement.wau)}</div>
-                  <div className="text-sm text-slate-500">За 7 дней</div>
+                  <div className="text-xl font-semibold text-slate-900 dark:text-white">{formatNumber(analytics.engagement.wau)}</div>
+                  <div className="text-sm text-slate-500 dark:text-white/55">За 7 дней</div>
                 </div>
                 <div>
-                  <div className="text-xl font-semibold text-slate-900">{formatNumber(analytics.engagement.mau)}</div>
-                  <div className="text-sm text-slate-500">За 30 дней</div>
+                  <div className="text-xl font-semibold text-slate-900 dark:text-white">{formatNumber(analytics.engagement.mau)}</div>
+                  <div className="text-sm text-slate-500 dark:text-white/55">За 30 дней</div>
                 </div>
               </div>
             </div>
 
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-              <div className="text-sm font-semibold text-slate-900">Возвращаемость</div>
+            <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] p-3">
+              <div className="text-sm font-semibold text-slate-900 dark:text-white">Возвращаемость</div>
               <div className="product-stat-value mt-1">
                 {formatPercent(analytics.engagement.stickiness)}
               </div>
-              <div className="mt-2 text-sm text-slate-600">
+              <div className="mt-2 text-sm text-slate-600 dark:text-white/70">
                 Stickiness показывает, какая доля месячной аудитории была активна за последние сутки.
               </div>
             </div>
 
-            <div className="rounded-xl border border-dashed border-slate-300 bg-white p-3 text-sm leading-6 text-slate-600">
+            <div className="rounded-xl border border-dashed border-slate-300 dark:border-white/15 bg-white dark:bg-white/[0.03] p-3 text-sm leading-6 text-slate-600 dark:text-white/70">
               {analytics.engagement.methodology}
             </div>
           </div>
@@ -296,7 +296,7 @@ export default async function AdminAnalyticsPage({
         <AnalyticsFunnelBlock steps={analytics.funnel} />
 
         <AdminSectionCard title="Ограничения текущей аналитики">
-          <div className="space-y-2 text-sm leading-6 text-slate-600">
+          <div className="space-y-2 text-sm leading-6 text-slate-600 dark:text-white/70">
             <p>
               Регистрации и первый вход считаются честно по `created_at` и `last_sign_in_at` пользователей авторизации.
             </p>

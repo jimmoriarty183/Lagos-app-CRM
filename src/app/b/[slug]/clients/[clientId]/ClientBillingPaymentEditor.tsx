@@ -145,33 +145,33 @@ export function ClientBillingPaymentEditor({
   }
 
   return (
-    <section className="rounded-[24px] border border-[#E5E7EB] bg-white p-5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+    <section className="rounded-[24px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-sm font-semibold text-slate-900">
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
             Billing &amp; Payment details
           </h2>
-          <p className="mt-1 text-xs text-slate-500">
+          <p className="mt-1 text-xs text-slate-500 dark:text-white/55">
             Legal entity data, payment setup, and dedicated communication
             emails.
           </p>
         </div>
-        <label className="inline-flex items-center gap-2 text-xs font-medium text-slate-700">
+        <label className="inline-flex items-center gap-2 text-xs font-medium text-slate-700 dark:text-white/80">
           <input
             type="checkbox"
             checked={sameAsCompanyProfile}
             onChange={(event) =>
               setSameAsCompanyProfile(event.currentTarget.checked)
             }
-            className="h-4 w-4 rounded border-slate-300"
+            className="h-4 w-4 rounded border-slate-300 dark:border-white/15"
           />
           Same as company profile
         </label>
       </div>
 
       <form onSubmit={submit} className="mt-4 space-y-4">
-        <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-          <h3 className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600">
+        <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] p-3">
+          <h3 className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-white/70">
             Billing (legal) information
           </h3>
           <div className="mt-3 grid gap-2 md:grid-cols-2">
@@ -181,7 +181,7 @@ export function ClientBillingPaymentEditor({
                 setLegalEntityName(event.currentTarget.value)
               }
               placeholder="Legal entity name"
-              className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none"
+              className="h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none"
             />
             <input
               value={registrationNumber}
@@ -189,37 +189,37 @@ export function ClientBillingPaymentEditor({
                 setRegistrationNumber(event.currentTarget.value)
               }
               placeholder="Registration number"
-              className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none"
+              className="h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none"
             />
             <input
               value={vatNumber}
               onChange={(event) => setVatNumber(event.currentTarget.value)}
               placeholder="VAT number"
-              className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none"
+              className="h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none"
             />
             <input
               value={taxId}
               onChange={(event) => setTaxId(event.currentTarget.value)}
               placeholder="Tax ID"
-              className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none"
+              className="h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none"
             />
             <input
               value={legalAddress}
               onChange={(event) => setLegalAddress(event.currentTarget.value)}
               placeholder="Legal address"
-              className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none md:col-span-2"
+              className="h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none md:col-span-2"
             />
             <input
               value={postcode}
               onChange={(event) => setPostcode(event.currentTarget.value)}
               placeholder="Postcode"
-              className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none"
+              className="h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none"
             />
           </div>
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-          <h3 className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600">
+        <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] p-3">
+          <h3 className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-white/70">
             Payment details
           </h3>
           <div className="mt-3 grid gap-2 md:grid-cols-2">
@@ -227,19 +227,19 @@ export function ClientBillingPaymentEditor({
               value={bankName}
               onChange={(event) => setBankName(event.currentTarget.value)}
               placeholder="Bank name"
-              className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none"
+              className="h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none"
             />
             <input
               value={accountNumber}
               onChange={(event) => setAccountNumber(event.currentTarget.value)}
               placeholder="IBAN / Account number"
-              className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none"
+              className="h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none"
             />
             <input
               value={swiftBic}
               onChange={(event) => setSwiftBic(event.currentTarget.value)}
               placeholder="SWIFT / BIC"
-              className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none"
+              className="h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none"
             />
             <select
               value={currencyCode}
@@ -248,7 +248,7 @@ export function ClientBillingPaymentEditor({
                   event.currentTarget.value as "GBP" | "UAH" | "EUR" | "USD",
                 )
               }
-              className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none"
+              className="h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none"
             >
               <option value="GBP">GBP</option>
               <option value="UAH">UAH</option>
@@ -265,7 +265,7 @@ export function ClientBillingPaymentEditor({
                     | "card",
                 )
               }
-              className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none"
+              className="h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none"
             >
               <option value="bank_transfer">Bank transfer</option>
               <option value="cash">Cash</option>
@@ -283,7 +283,7 @@ export function ClientBillingPaymentEditor({
                     | "custom",
                 )
               }
-              className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none"
+              className="h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none"
             >
               <option value="prepaid">Prepaid</option>
               <option value="net_7">Net 7</option>
@@ -298,20 +298,20 @@ export function ClientBillingPaymentEditor({
                   setPaymentTermsCustom(event.currentTarget.value)
                 }
                 placeholder="Custom payment terms"
-                className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none md:col-span-2"
+                className="h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none md:col-span-2"
               />
             ) : null}
           </div>
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-          <h3 className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600">
+        <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] p-3">
+          <h3 className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-white/70">
             Communication emails
           </h3>
 
           <div className="mt-3 grid gap-2 md:grid-cols-2">
             <label className="grid gap-1.5">
-              <span className="text-xs font-medium text-slate-600">
+              <span className="text-xs font-medium text-slate-600 dark:text-white/70">
                 Primary email source
               </span>
               <select
@@ -321,14 +321,14 @@ export function ClientBillingPaymentEditor({
                     event.currentTarget.value as "primary_contact" | "custom",
                   )
                 }
-                className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none"
+                className="h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none"
               >
                 <option value="primary_contact">From primary contact</option>
                 <option value="custom">Custom email</option>
               </select>
             </label>
             <label className="grid gap-1.5">
-              <span className="text-xs font-medium text-slate-600">
+              <span className="text-xs font-medium text-slate-600 dark:text-white/70">
                 Primary email
               </span>
               <input
@@ -340,12 +340,12 @@ export function ClientBillingPaymentEditor({
                 onChange={(event) => setPrimaryEmail(event.currentTarget.value)}
                 disabled={primaryEmailSource === "primary_contact"}
                 placeholder="Primary communication email"
-                className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none disabled:bg-slate-100"
+                className="h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none disabled:bg-slate-100"
               />
             </label>
 
             <label className="grid gap-1.5">
-              <span className="text-xs font-medium text-slate-600">
+              <span className="text-xs font-medium text-slate-600 dark:text-white/70">
                 Invoice email source
               </span>
               <select
@@ -355,14 +355,14 @@ export function ClientBillingPaymentEditor({
                     event.currentTarget.value as "primary_contact" | "custom",
                   )
                 }
-                className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none"
+                className="h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none"
               >
                 <option value="primary_contact">From primary contact</option>
                 <option value="custom">Custom email</option>
               </select>
             </label>
             <label className="grid gap-1.5">
-              <span className="text-xs font-medium text-slate-600">
+              <span className="text-xs font-medium text-slate-600 dark:text-white/70">
                 Invoice email
               </span>
               <input
@@ -374,12 +374,12 @@ export function ClientBillingPaymentEditor({
                 onChange={(event) => setInvoiceEmail(event.currentTarget.value)}
                 disabled={invoiceEmailSource === "primary_contact"}
                 placeholder="Invoices and billing email"
-                className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none disabled:bg-slate-100"
+                className="h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none disabled:bg-slate-100"
               />
             </label>
           </div>
 
-          <p className="mt-2 text-xs text-slate-500">
+          <p className="mt-2 text-xs text-slate-500 dark:text-white/55">
             Primary contact email: {primaryContactEmail || "not available"}
           </p>
         </div>

@@ -265,7 +265,7 @@ function ActorAvatar({ label, avatarUrl }: { label: string; avatarUrl?: string |
       <img
         src={src}
         alt={label || "Avatar"}
-        className="h-6 w-6 shrink-0 rounded-full border border-[#E5E7EB] object-cover"
+        className="h-6 w-6 shrink-0 rounded-full border border-[#E5E7EB] dark:border-white/10 object-cover"
       />
     );
   }
@@ -489,17 +489,17 @@ function DrawerStatusSelect({
           <DropdownMenuContent
             align="start"
             sideOffset={8}
-            className="z-[120] w-72 rounded-xl border-[#E5E7EB] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
+            className="z-[120] w-72 rounded-xl border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
             onCloseAutoFocus={(event) => event.preventDefault()}
           >
             {reasonTarget === "CANCELED" ? (
               <div className="p-1">
                 <div className="mb-2 flex items-start justify-between gap-3 px-2 py-1">
                   <div>
-                    <div className="text-sm font-semibold text-[#1F2937]">
+                    <div className="text-sm font-semibold text-[#1F2937] dark:text-white/90">
                       Why is this order canceled?
                     </div>
-                    <div className="mt-1 text-xs text-[#6B7280]">
+                    <div className="mt-1 text-xs text-[#6B7280] dark:text-white/55">
                       Pick a quick reason or write your own.
                     </div>
                   </div>
@@ -509,7 +509,7 @@ function DrawerStatusSelect({
                       setReasonTarget(null);
                       setCustomReason("");
                     }}
-                    className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-[#6B7280] transition hover:bg-[#F9FAFB] hover:text-[#1F2937]"
+                    className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-[#6B7280] dark:text-white/55 transition hover:bg-[#F9FAFB] hover:text-[#1F2937]"
                   >
                     <ChevronLeft className="h-3.5 w-3.5" />
                     Back
@@ -523,7 +523,7 @@ function DrawerStatusSelect({
                       type="button"
                       disabled={isPending}
                       onClick={() => applyStatusSelection("CANCELED", reason)}
-                      className="w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-left text-sm font-medium text-[#1F2937] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] disabled:cursor-default disabled:opacity-60"
+                      className="w-full rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-2 text-left text-sm font-medium text-[#1F2937] dark:text-white/90 transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] disabled:cursor-default disabled:opacity-60"
                     >
                       {reason}
                     </button>
@@ -538,7 +538,7 @@ function DrawerStatusSelect({
                     }
                     placeholder="Other reason..."
                     rows={3}
-                    className="w-full resize-none rounded-xl border border-[#E5E7EB] px-3 py-2 text-sm outline-none transition placeholder:text-[#9CA3AF] focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
+                    className="w-full resize-none rounded-xl border border-[#E5E7EB] dark:border-white/10 px-3 py-2 text-sm outline-none transition placeholder:text-[#9CA3AF] focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
                   />
                   <button
                     type="button"
@@ -560,7 +560,7 @@ function DrawerStatusSelect({
                 return (
                   <DropdownMenuItem
                     key={option.value}
-                    className="rounded-lg px-3 py-2 text-sm font-medium text-[#1F2937] focus:bg-[#F9FAFB] focus:text-[#1F2937]"
+                    className="rounded-lg px-3 py-2 text-sm font-medium text-[#1F2937] dark:text-white/90 focus:bg-[#F9FAFB] focus:text-[#1F2937]"
                     onSelect={(event) => {
                       event.preventDefault();
                       if (option.value === localStatus) {
@@ -592,7 +592,7 @@ function DrawerStatusSelect({
                         <span>{option.label}</span>
                       </span>
                       {selected ? (
-                        <Check className="h-4 w-4 shrink-0 text-[#6B7280]" />
+                        <Check className="h-4 w-4 shrink-0 text-[#6B7280] dark:text-white/55" />
                       ) : null}
                     </div>
                   </DropdownMenuItem>
@@ -609,7 +609,7 @@ function DrawerStatusSelect({
               onClick={() => {
                 router.push(`/b/${businessSlug}/settings/statuses`);
               }}
-              className="inline-flex h-7 items-center rounded-full border border-[#E5E7EB] bg-white px-2.5 text-[12px] font-semibold text-[#374151] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
+              className="inline-flex h-7 items-center rounded-full border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-2.5 text-[12px] font-semibold text-[#374151] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
             >
               Status settings
             </button>
@@ -619,7 +619,7 @@ function DrawerStatusSelect({
                 setIsCreateOpen((prev) => !prev);
                 setCreateError(null);
               }}
-              className="inline-flex h-7 items-center gap-1 rounded-full border border-[#E5E7EB] bg-[var(--brand-50)] px-2.5 text-[12px] font-semibold text-[var(--brand-600)] transition hover:border-[var(--brand-200)] hover:bg-[var(--brand-50)]"
+              className="inline-flex h-7 items-center gap-1 rounded-full border border-[#E5E7EB] dark:border-white/10 bg-[var(--brand-50)] px-2.5 text-[12px] font-semibold text-[var(--brand-600)] transition hover:border-[var(--brand-200)] hover:bg-[var(--brand-50)]"
             >
               <Plus className="h-3.5 w-3.5" />
               Add status
@@ -629,7 +629,7 @@ function DrawerStatusSelect({
       </div>
 
       {isCreateOpen ? (
-        <div className="rounded-2xl border border-[#E5E7EB] bg-[#F9FAFB] p-3">
+        <div className="rounded-2xl border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] p-3">
           <div className="product-section-label">New status</div>
           <div className="mt-2 grid gap-2">
             <input
@@ -638,7 +638,7 @@ function DrawerStatusSelect({
                 setDraftStatusLabel(event.currentTarget.value)
               }
               placeholder="Ready for pickup"
-              className="h-10 rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
+              className="h-10 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
             />
             <div className="flex flex-wrap gap-2">
               {STATUS_COLOR_OPTIONS.map((option) => (
@@ -650,7 +650,7 @@ function DrawerStatusSelect({
                     "inline-flex h-9 items-center gap-2 rounded-xl border px-3 text-xs font-semibold transition",
                     draftStatusColor === option.value
                       ? "border-[var(--brand-600)] bg-[var(--brand-600)] !text-white"
-                      : "border-[#E5E7EB] bg-white text-[#374151] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]",
+                      : "border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#374151] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]",
                   ].join(" ")}
                 >
                   <span
@@ -668,7 +668,7 @@ function DrawerStatusSelect({
                   "inline-flex h-9 items-center gap-2 rounded-xl border px-3 text-xs font-semibold transition",
                   draftStatusColor === "custom"
                     ? "border-[var(--brand-600)] bg-[var(--brand-600)] !text-white"
-                    : "border-[#E5E7EB] bg-white text-[#374151] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]",
+                    : "border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#374151] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]",
                 ].join(" ")}
               >
                 <span
@@ -680,7 +680,7 @@ function DrawerStatusSelect({
               </button>
             </div>
             {draftStatusColor === "custom" ? (
-              <label className="flex items-center gap-3 rounded-xl border border-[#E5E7EB] bg-white px-3 py-2">
+              <label className="flex items-center gap-3 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-2">
                 <input
                   type="color"
                   value={customStatusColor}
@@ -689,9 +689,9 @@ function DrawerStatusSelect({
                       event.currentTarget.value.toUpperCase(),
                     )
                   }
-                  className="h-8 w-10 cursor-pointer rounded-md border border-[#E5E7EB] bg-white"
+                  className="h-8 w-10 cursor-pointer rounded-md border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03]"
                 />
-                <span className="text-xs font-medium text-[#6B7280]">
+                <span className="text-xs font-medium text-[#6B7280] dark:text-white/55">
                   {customStatusColor.toUpperCase()} keeps the chosen client
                   color with softer badge tones
                 </span>
@@ -732,9 +732,9 @@ function DrawerStatusSelect({
 
 function MetaItem({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="rounded-[18px] border border-[#F3F4F6] bg-[#F9FAFB] px-3.5 py-2.5">
+    <div className="rounded-[18px] border border-[#F3F4F6] bg-[#F9FAFB] dark:bg-white/[0.04] px-3.5 py-2.5">
       <div className="product-section-label">{label}</div>
-      <div className="mt-1 text-sm font-medium leading-5 text-[#1F2937]">
+      <div className="mt-1 text-sm font-medium leading-5 text-[#1F2937] dark:text-white/90">
         {value}
       </div>
     </div>
@@ -762,14 +762,14 @@ function FilesSection({
 }) {
   const [deletingId, setDeletingId] = React.useState<string | null>(null);
   return (
-    <div className="rounded-[20px] border border-[#F3F4F6] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+    <div className="rounded-[20px] border border-[#F3F4F6] bg-white dark:bg-white/[0.03] p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <div className="flex items-center gap-2 text-sm font-semibold text-[#1F2937]">
-            <Paperclip className="h-4 w-4 text-[#9CA3AF]" />
+          <div className="flex items-center gap-2 text-sm font-semibold text-[#1F2937] dark:text-white/90">
+            <Paperclip className="h-4 w-4 text-[#9CA3AF] dark:text-white/40" />
             Files
           </div>
-          <p className="mt-1 text-xs text-[#6B7280]">
+          <p className="mt-1 text-xs text-[#6B7280] dark:text-white/55">
             Contracts, photos, invoices, and any order-related documents.
           </p>
         </div>
@@ -778,7 +778,7 @@ function FilesSection({
             type="button"
             onClick={onAddFiles}
             disabled={uploading}
-            className="inline-flex h-10 items-center gap-2 rounded-xl border border-[#E5E7EB] bg-white px-4 text-sm font-semibold text-[#374151] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex h-10 items-center gap-2 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 text-sm font-semibold text-[#374151] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] disabled:cursor-not-allowed disabled:opacity-60"
           >
             <Plus className="h-4 w-4" />
             {uploading ? "Uploading..." : "Add file"}
@@ -794,14 +794,14 @@ function FilesSection({
 
       <div className="mt-3 space-y-2">
         {loading ? (
-          <div className="rounded-[18px] border border-dashed border-[#E5E7EB] bg-[#F9FAFB] px-4 py-5 text-sm text-[#6B7280]">
+          <div className="rounded-[18px] border border-dashed border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] px-4 py-5 text-sm text-[#6B7280] dark:text-white/55">
             Loading files...
           </div>
         ) : files.length > 0 ? (
           files.map((file) => (
             <div
               key={file.id}
-              className="flex items-center justify-between gap-3 rounded-[18px] border border-[#F3F4F6] bg-[#F9FAFB] px-3.5 py-3 transition hover:border-[#C7D2FE] hover:bg-white"
+              className="flex items-center justify-between gap-3 rounded-[18px] border border-[#F3F4F6] bg-[#F9FAFB] dark:bg-white/[0.04] px-3.5 py-3 transition hover:border-[#C7D2FE] hover:bg-white"
             >
               <a
                 href={`/api/activity-attachments/${file.id}`}
@@ -809,11 +809,11 @@ function FilesSection({
                 rel="noreferrer"
                 className="min-w-0 flex-1"
               >
-                <div className="flex items-center gap-2 text-sm font-semibold text-[#1F2937]">
-                  <FileText className="h-4 w-4 shrink-0 text-[#9CA3AF]" />
+                <div className="flex items-center gap-2 text-sm font-semibold text-[#1F2937] dark:text-white/90">
+                  <FileText className="h-4 w-4 shrink-0 text-[#9CA3AF] dark:text-white/40" />
                   <span className="truncate">{file.file_name}</span>
                 </div>
-                <div className="mt-1 text-xs text-[#6B7280]">
+                <div className="mt-1 text-xs text-[#6B7280] dark:text-white/55">
                   {[
                     formatFileSize(file.file_size),
                     file.created_at ? formatDateTime(file.created_at) : null,
@@ -827,7 +827,7 @@ function FilesSection({
                   href={`/api/activity-attachments/${file.id}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#E5E7EB] bg-white text-[#374151] transition hover:bg-[#F3F4F6]"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#374151] transition hover:bg-[#F3F4F6]"
                 >
                   <Download className="h-4 w-4" />
                 </a>
@@ -840,7 +840,7 @@ function FilesSection({
                       setDeletingId(file.id);
                       onDeleteFile(file.id);
                     }}
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#E5E7EB] bg-white text-[#9CA3AF] transition hover:border-[#FCA5A5] hover:bg-[#FEF2F2] hover:text-[#EF4444] disabled:opacity-50"
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#9CA3AF] dark:text-white/40 transition hover:border-[#FCA5A5] hover:bg-[#FEF2F2] hover:text-[#EF4444] disabled:opacity-50"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
@@ -849,7 +849,7 @@ function FilesSection({
             </div>
           ))
         ) : (
-          <div className="rounded-[18px] border border-dashed border-[#E5E7EB] bg-[#F9FAFB] px-4 py-5 text-sm text-[#6B7280]">
+          <div className="rounded-[18px] border border-dashed border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] px-4 py-5 text-sm text-[#6B7280] dark:text-white/55">
             No files attached yet.
           </div>
         )}
@@ -946,9 +946,9 @@ function LabelsSection({
   };
 
   return (
-    <div className="rounded-[16px] border border-[#F3F4F6] bg-white p-2.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
-      <div className="flex items-center gap-1.5 text-[13px] font-semibold text-[#1F2937]">
-        <Tag className="h-3.5 w-3.5 text-[#9CA3AF]" />
+    <div className="rounded-[16px] border border-[#F3F4F6] bg-white dark:bg-white/[0.03] p-2.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+      <div className="flex items-center gap-1.5 text-[13px] font-semibold text-[#1F2937] dark:text-white/90">
+        <Tag className="h-3.5 w-3.5 text-[#9CA3AF] dark:text-white/40" />
         Labels
       </div>
 
@@ -959,13 +959,13 @@ function LabelsSection({
               key={label}
               type="button"
               onClick={() => removeLabel(label)}
-              className="inline-flex items-center rounded-full border border-[#E5E7EB] bg-[#F9FAFB] px-2.5 py-1 text-[11px] font-semibold text-[#6B7280] transition hover:border-[#C7D2FE] hover:bg-white"
+              className="inline-flex items-center rounded-full border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] px-2.5 py-1 text-[11px] font-semibold text-[#6B7280] dark:text-white/55 transition hover:border-[#C7D2FE] hover:bg-white"
             >
               {label}
             </button>
           ))
         ) : (
-          <span className="text-xs text-[#9CA3AF]">No labels yet.</span>
+          <span className="text-xs text-[#9CA3AF] dark:text-white/40">No labels yet.</span>
         )}
       </div>
 
@@ -980,7 +980,7 @@ function LabelsSection({
               key={label}
               type="button"
               onClick={() => addLabel(label)}
-              className="inline-flex items-center rounded-full border border-dashed border-[#E5E7EB] bg-white px-2.5 py-1 text-[11px] font-semibold text-[#6B7280] transition hover:border-[#C7D2FE] hover:text-[#1F2937]"
+              className="inline-flex items-center rounded-full border border-dashed border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-2.5 py-1 text-[11px] font-semibold text-[#6B7280] dark:text-white/55 transition hover:border-[#C7D2FE] hover:text-[#1F2937]"
             >
               + {label}
             </button>
@@ -998,19 +998,19 @@ function LabelsSection({
             }
           }}
           placeholder="Add label"
-          className="h-8 flex-1 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] px-2.5 text-[13px] outline-none transition focus:border-[var(--brand-600)] focus:bg-white focus:ring-2 focus:ring-[var(--brand-600)]/15"
+          className="h-8 flex-1 rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] px-2.5 text-[13px] outline-none transition focus:border-[var(--brand-600)] focus:bg-white focus:ring-2 focus:ring-[var(--brand-600)]/15"
         />
         <button
           type="button"
           onClick={() => addLabel(draft)}
           disabled={!draft.trim()}
-          className="rounded-lg border border-[#E5E7EB] bg-white px-3 text-[13px] font-semibold text-[#374151] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
+          className="rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-[13px] font-semibold text-[#374151] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
         >
           {draft.trim() ? `Add "${draft.trim()}"` : "+ Add label"}
         </button>
       </div>
 
-      <p className="mt-2 text-[11px] leading-4 text-[#9CA3AF]">
+      <p className="mt-2 text-[11px] leading-4 text-[#9CA3AF] dark:text-white/40">
         Labels are currently session-only UI until backend storage is connected.
       </p>
     </div>
@@ -1564,7 +1564,7 @@ export function OrderPreview({
         side="right"
         showClose={false}
         className={[
-          "h-auto w-[calc(100vw-24px)] overflow-hidden border border-[#E5E7EB] bg-white p-0 transition-[max-width] duration-200",
+          "h-auto w-[calc(100vw-24px)] overflow-hidden border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-0 transition-[max-width] duration-200",
           // Normal mode: stick to right
           !isWideLayout && "top-3 right-3 bottom-3 sm:max-w-[700px]",
           // Wide mode: center on screen
@@ -1589,13 +1589,13 @@ export function OrderPreview({
 
         {isCreateMode ? (
           <div className="flex h-full min-h-0 flex-col">
-            <div className="sticky top-0 z-20 border-b border-[#E5E7EB] bg-white/95 backdrop-blur">
+            <div className="sticky top-0 z-20 border-b border-[#E5E7EB] dark:border-white/10 bg-white/95 backdrop-blur">
               <div className="flex items-start justify-between gap-4 px-5 py-4 sm:px-6">
                 <div>
-                  <div className="text-lg font-semibold text-[#1F2937]">
+                  <div className="text-lg font-semibold text-[#1F2937] dark:text-white/90">
                     Create order
                   </div>
-                  <div className="mt-1 text-sm text-[#6B7280]">
+                  <div className="mt-1 text-sm text-[#6B7280] dark:text-white/55">
                     Type-driven creation with live duplicate checking
                   </div>
                 </div>
@@ -1607,7 +1607,7 @@ export function OrderPreview({
                         current === "wide" ? "default" : "wide",
                       )
                     }
-                    className="inline-flex h-10 items-center gap-1.5 rounded-[18px] border border-[#E5E7EB] bg-white px-4 text-sm font-semibold text-[#1F2937] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
+                    className="inline-flex h-10 items-center gap-1.5 rounded-[18px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 text-sm font-semibold text-[#1F2937] dark:text-white/90 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
                     aria-label={
                       isWideLayout
                         ? "Use default order preview width"
@@ -1624,7 +1624,7 @@ export function OrderPreview({
                   <button
                     type="button"
                     onClick={onClose}
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-[18px] border border-[#E5E7EB] bg-white text-[#374151] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]"
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-[18px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#374151] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]"
                     aria-label="Close order preview"
                   >
                     <X className="h-4 w-4" />
@@ -1647,7 +1647,7 @@ export function OrderPreview({
                         </div>
                       ) : null}
                       {error?.stack ? (
-                        <pre className="max-h-28 overflow-auto rounded-lg border border-rose-200 bg-white/70 p-2 text-[11px] text-rose-900">
+                        <pre className="max-h-28 overflow-auto rounded-lg border border-rose-200 bg-white/70 dark:bg-white/[0.05] p-2 text-[11px] text-rose-900">
                           {error.stack}
                         </pre>
                       ) : null}
@@ -1655,7 +1655,7 @@ export function OrderPreview({
                         <button
                           type="button"
                           onClick={reset}
-                          className="inline-flex h-9 items-center justify-center rounded-lg border border-rose-300 bg-white px-3 text-xs font-semibold text-rose-700 hover:bg-rose-100"
+                          className="inline-flex h-9 items-center justify-center rounded-lg border border-rose-300 bg-white dark:bg-white/[0.03] px-3 text-xs font-semibold text-rose-700 hover:bg-rose-100"
                         >
                           Try again
                         </button>
@@ -1665,7 +1665,7 @@ export function OrderPreview({
                             reset();
                             router.refresh();
                           }}
-                          className="inline-flex h-9 items-center justify-center rounded-lg border border-rose-300 bg-white px-3 text-xs font-semibold text-rose-700 hover:bg-rose-100"
+                          className="inline-flex h-9 items-center justify-center rounded-lg border border-rose-300 bg-white dark:bg-white/[0.03] px-3 text-xs font-semibold text-rose-700 hover:bg-rose-100"
                         >
                           Refresh data
                         </button>
@@ -1693,7 +1693,7 @@ export function OrderPreview({
             onValueChange={setActiveTab}
             className="flex h-full min-h-0 flex-col"
           >
-            <div className="border-b border-[#E5E7EB] bg-white">
+            <div className="border-b border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03]">
               <div
                 className={[
                   "px-4 sm:px-5 transition-all",
@@ -1705,7 +1705,7 @@ export function OrderPreview({
                     <div className="flex flex-wrap items-center gap-2">
                       <div
                         className={[
-                          "font-semibold text-[#1F2937] transition-all",
+                          "font-semibold text-[#1F2937] dark:text-white/90 transition-all",
                           isUltraCompactTop
                             ? "text-xs sm:text-[13px]"
                             : isCompactTop
@@ -1723,7 +1723,7 @@ export function OrderPreview({
 
                     <div
                       className={[
-                        "font-semibold leading-none text-[#1F2937] transition-all",
+                        "font-semibold leading-none text-[#1F2937] dark:text-white/90 transition-all",
                         isUltraCompactTop
                           ? "mt-0.5 text-lg"
                           : isCompactTop
@@ -1734,20 +1734,20 @@ export function OrderPreview({
                       {displayName}
                     </div>
                     <div className="mt-2 flex flex-wrap gap-1.5">
-                      <span className="inline-flex max-w-full items-center rounded-full border border-[#C7D2FE] bg-[#EEF2FF] px-2.5 py-1 text-[11px] font-semibold text-[#3730A3]">
+                      <span className="inline-flex max-w-full items-center rounded-full border border-[#C7D2FE] dark:border-[var(--brand-500)]/40 bg-[#EEF2FF] dark:bg-[var(--brand-600)]/15 px-2.5 py-1 text-[11px] font-semibold text-[#3730A3]">
                         Client: {displayName || "Unknown client"}
                       </span>
                       {labels.length > 0 ? (
                         labels.map((label) => (
                           <span
                             key={label}
-                            className="inline-flex items-center rounded-full border border-[#E5E7EB] bg-[#F9FAFB] px-2.5 py-1 text-[11px] font-semibold text-[#6B7280]"
+                            className="inline-flex items-center rounded-full border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] px-2.5 py-1 text-[11px] font-semibold text-[#6B7280] dark:text-white/55"
                           >
                             {label}
                           </span>
                         ))
                       ) : (
-                        <span className="text-xs text-[#9CA3AF]">
+                        <span className="text-xs text-[#9CA3AF] dark:text-white/40">
                           No labels yet
                         </span>
                       )}
@@ -1755,7 +1755,7 @@ export function OrderPreview({
                     {!isUltraCompactTop ? (
                       <div
                         className={[
-                          "text-sm text-[#6B7280] transition-all",
+                          "text-sm text-[#6B7280] dark:text-white/55 transition-all",
                           isCompactTop ? "mt-0.5" : "mt-1",
                         ].join(" ")}
                       >
@@ -1765,7 +1765,7 @@ export function OrderPreview({
 
                     <div
                       className={[
-                        "flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-[#4B5563] transition-all",
+                        "flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-[#4B5563] dark:text-white/70 transition-all",
                         isUltraCompactTop
                           ? "mt-1 text-xs"
                           : isCompactTop
@@ -1818,7 +1818,7 @@ export function OrderPreview({
                         )
                       }
                       className={[
-                        "hidden items-center gap-1.5 rounded-[16px] border border-[#E5E7EB] bg-white font-semibold text-[#1F2937] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] sm:inline-flex",
+                        "hidden items-center gap-1.5 rounded-[16px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] font-semibold text-[#1F2937] dark:text-white/90 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] sm:inline-flex",
                         isUltraCompactTop
                           ? "h-8 px-3 text-[13px]"
                           : "h-11 px-5",
@@ -1840,7 +1840,7 @@ export function OrderPreview({
                       type="button"
                       onClick={onClose}
                       className={[
-                        "inline-flex items-center justify-center rounded-[16px] border border-[#E5E7EB] bg-white text-[#6B7280] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]",
+                        "inline-flex items-center justify-center rounded-[16px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#6B7280] dark:text-white/55 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]",
                         isUltraCompactTop ? "h-8 w-8" : "h-11 w-11",
                       ].join(" ")}
                       aria-label="Close order preview"
@@ -1852,7 +1852,7 @@ export function OrderPreview({
               </div>
             </div>
 
-            <div className="sticky top-0 z-30 bg-white shadow-[0_8px_18px_rgba(15,23,42,0.06)]">
+            <div className="sticky top-0 z-30 bg-white dark:bg-white/[0.03] shadow-[0_8px_18px_rgba(15,23,42,0.06)]">
               <div
                 className={[
                   "px-4 sm:px-5 transition-all",
@@ -1865,7 +1865,7 @@ export function OrderPreview({
               >
                 <TabsList
                   className={[
-                    "grid h-auto w-full grid-cols-6 border border-[#E5E7EB] bg-[linear-gradient(180deg,#F9FAFB_0%,#EEF2FF_100%)] shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)]",
+                    "grid h-auto w-full grid-cols-6 border border-[#E5E7EB] dark:border-white/10 bg-[linear-gradient(180deg,#F9FAFB_0%,#EEF2FF_100%)] shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)]",
                     isUltraCompactTop
                       ? "gap-0.5 rounded-[16px] p-0.5"
                       : "gap-1 rounded-[26px] p-1.5",
@@ -1883,7 +1883,7 @@ export function OrderPreview({
                       key={value}
                       value={value}
                       className={[
-                        "min-w-0 border border-transparent font-semibold text-[#6B7280] shadow-none transition data-[state=active]:border-[#C7D2FE] data-[state=active]:bg-white data-[state=active]:text-[#1F2937] data-[state=active]:shadow-[0_6px_16px_rgba(15,23,42,0.08)]",
+                        "min-w-0 border border-transparent font-semibold text-[#6B7280] dark:text-white/55 shadow-none transition data-[state=active]:border-[#C7D2FE] data-[state=active]:bg-white data-[state=active]:text-[#1F2937] data-[state=active]:shadow-[0_6px_16px_rgba(15,23,42,0.08)]",
                         isUltraCompactTop
                           ? "rounded-[12px] px-2 py-1 text-xs"
                           : "rounded-[20px] px-3 py-3 text-base",
@@ -1898,8 +1898,8 @@ export function OrderPreview({
               <div
                 className={
                   isUltraCompactTop
-                    ? "h-1 border-t border-[#F3F4F6] bg-white"
-                    : "h-2 border-t border-[#F3F4F6] bg-white"
+                    ? "h-1 border-t border-[#F3F4F6] bg-white dark:bg-white/[0.03]"
+                    : "h-2 border-t border-[#F3F4F6] bg-white dark:bg-white/[0.03]"
                 }
               />
             </div>
@@ -1916,10 +1916,10 @@ export function OrderPreview({
                     <TabsContent value="overview" className="mt-0">
                       <div className="space-y-3">
                         {canManage ? (
-                          <div className="flex flex-wrap items-center justify-between gap-3 rounded-[20px] border border-[#F3F4F6] bg-white px-4 py-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                          <div className="flex flex-wrap items-center justify-between gap-3 rounded-[20px] border border-[#F3F4F6] bg-white dark:bg-white/[0.03] px-4 py-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
                             <div>
                               <div className="flex flex-wrap items-center gap-2">
-                                <div className="text-sm font-semibold text-[#1F2937]">
+                                <div className="text-sm font-semibold text-[#1F2937] dark:text-white/90">
                                   Overview
                                 </div>
                                 <span
@@ -1928,7 +1928,7 @@ export function OrderPreview({
                                   {clientTypeLabel}
                                 </span>
                               </div>
-                              <p className="text-xs text-[#6B7280]">
+                              <p className="text-xs text-[#6B7280] dark:text-white/55">
                                 {isEditingOverview
                                   ? "Editing order details."
                                   : "Customer, manager, amount, due date, and description."}
@@ -1946,7 +1946,7 @@ export function OrderPreview({
                                   <Button
                                     type="button"
                                     variant="outline"
-                                    className="h-10 min-w-24 rounded-xl border-[#E5E7EB] bg-white px-5 text-sm font-semibold text-[#374151] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
+                                    className="h-10 min-w-24 rounded-xl border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-5 text-sm font-semibold text-[#374151] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
                                     onClick={() => {
                                       setIsEditingOverview(false);
                                       setDraft({
@@ -2275,7 +2275,7 @@ export function OrderPreview({
                                   <DropdownMenuTrigger asChild>
                                     <button
                                       type="button"
-                                      className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#E5E7EB] bg-white text-[#6B7280] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]"
+                                      className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#6B7280] dark:text-white/55 transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]"
                                       aria-label="Overview actions"
                                     >
                                       <MoreHorizontal className="h-4 w-4" />
@@ -2283,10 +2283,10 @@ export function OrderPreview({
                                   </DropdownMenuTrigger>
                                   <DropdownMenuContent
                                     align="end"
-                                    className="z-[120] w-44 rounded-xl border-[#E5E7EB] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
+                                    className="z-[120] w-44 rounded-xl border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
                                   >
                                     <DropdownMenuItem
-                                      className="rounded-lg px-3 py-2 text-sm font-medium text-[#1F2937] focus:bg-[#F9FAFB] focus:text-[#1F2937]"
+                                      className="rounded-lg px-3 py-2 text-sm font-medium text-[#1F2937] dark:text-white/90 focus:bg-[#F9FAFB] focus:text-[#1F2937]"
                                       onSelect={(event) => {
                                         event.preventDefault();
                                         setIsEditingOverview(true);
@@ -2295,7 +2295,7 @@ export function OrderPreview({
                                       Edit overview
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
-                                      className="rounded-lg px-3 py-2 text-sm font-medium text-[#1F2937] focus:bg-[#F9FAFB] focus:text-[#1F2937]"
+                                      className="rounded-lg px-3 py-2 text-sm font-medium text-[#1F2937] dark:text-white/90 focus:bg-[#F9FAFB] focus:text-[#1F2937]"
                                       onSelect={(event) => {
                                         event.preventDefault();
                                         setShowAddLineCard(true);
@@ -2307,7 +2307,7 @@ export function OrderPreview({
                                     </DropdownMenuItem>
                                     {canUploadFiles ? (
                                       <DropdownMenuItem
-                                        className="rounded-lg px-3 py-2 text-sm font-medium text-[#1F2937] focus:bg-[#F9FAFB] focus:text-[#1F2937]"
+                                        className="rounded-lg px-3 py-2 text-sm font-medium text-[#1F2937] dark:text-white/90 focus:bg-[#F9FAFB] focus:text-[#1F2937]"
                                         onSelect={(event) => {
                                           event.preventDefault();
                                           openOverviewFilePicker();
@@ -2337,7 +2337,7 @@ export function OrderPreview({
                                       firstName: nextValue,
                                     }));
                                   }}
-                                  className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
+                                  className="h-10 w-full rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
                                 />
                               ) : (
                                 currentOrder.client_first_name?.trim() ||
@@ -2359,7 +2359,7 @@ export function OrderPreview({
                                       lastName: nextValue,
                                     }));
                                   }}
-                                  className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
+                                  className="h-10 w-full rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
                                 />
                               ) : (
                                 currentOrder.client_last_name?.trim() ||
@@ -2381,7 +2381,7 @@ export function OrderPreview({
                                       phone: nextValue,
                                     }));
                                   }}
-                                  className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
+                                  className="h-10 w-full rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
                                 />
                               ) : (
                                 currentOrder.client_phone?.trim() ||
@@ -2403,10 +2403,10 @@ export function OrderPreview({
                                     }))
                                   }
                                 >
-                                  <SelectTrigger className="h-10 w-full rounded-xl border-[#E5E7EB] bg-white text-sm shadow-none focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15">
+                                  <SelectTrigger className="h-10 w-full rounded-xl border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-sm shadow-none focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15">
                                     <SelectValue />
                                   </SelectTrigger>
-                                  <SelectContent className="z-[120] rounded-2xl border-[#E5E7EB] bg-white shadow-[0_16px_40px_rgba(15,23,42,0.18)]">
+                                  <SelectContent className="z-[120] rounded-2xl border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] shadow-[0_16px_40px_rgba(15,23,42,0.18)]">
                                     <SelectItem value="__unassigned__">
                                       Unassigned
                                     </SelectItem>
@@ -2455,7 +2455,7 @@ export function OrderPreview({
                                       dueDate: nextValue,
                                     }));
                                   }}
-                                  className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
+                                  className="h-10 w-full rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
                                 />
                               ) : (
                                 formatDate(currentOrder.due_date)
@@ -2476,7 +2476,7 @@ export function OrderPreview({
                                       amount: nextValue,
                                     }));
                                   }}
-                                  className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
+                                  className="h-10 w-full rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
                                 />
                               ) : (
                                 `$${fmtAmount(currentOrder.amount)}`
@@ -2485,8 +2485,8 @@ export function OrderPreview({
                           />
                         </div>
 
-                        <div className="rounded-[20px] border border-[#F3F4F6] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
-                          <div className="text-sm font-semibold text-[#1F2937]">
+                        <div className="rounded-[20px] border border-[#F3F4F6] bg-white dark:bg-white/[0.03] p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                          <div className="text-sm font-semibold text-[#1F2937] dark:text-white/90">
                             Description
                           </div>
                           {isEditingOverview ? (
@@ -2499,10 +2499,10 @@ export function OrderPreview({
                                   description: nextValue,
                                 }));
                               }}
-                              className="mt-2 min-h-24 w-full rounded-[18px] border border-[#E5E7EB] bg-white px-4 py-3 text-sm leading-6 text-[#1F2937] outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
+                              className="mt-2 min-h-24 w-full rounded-[18px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 py-3 text-sm leading-6 text-[#1F2937] dark:text-white/90 outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
                             />
                           ) : (
-                            <p className="mt-2 whitespace-pre-wrap text-sm leading-5 text-[#4B5563]">
+                            <p className="mt-2 whitespace-pre-wrap text-sm leading-5 text-[#4B5563] dark:text-white/70">
                               {currentOrder.description?.trim() ||
                                 "No description provided yet."}
                             </p>
@@ -2510,13 +2510,13 @@ export function OrderPreview({
                         </div>
 
                         {canManage ? (
-                          <div className="rounded-[20px] border border-[#F3F4F6] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                          <div className="rounded-[20px] border border-[#F3F4F6] bg-white dark:bg-white/[0.03] p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
                             <div className="flex flex-wrap items-center justify-between gap-2">
                               <div>
-                                <div className="text-sm font-semibold text-[#1F2937]">
+                                <div className="text-sm font-semibold text-[#1F2937] dark:text-white/90">
                                   Products and services
                                 </div>
-                                <p className="text-xs text-[#6B7280]">
+                                <p className="text-xs text-[#6B7280] dark:text-white/55">
                                   Add a line item to this existing order.
                                 </p>
                               </div>
@@ -2524,7 +2524,7 @@ export function OrderPreview({
                                 <Button
                                   type="button"
                                   variant="outline"
-                                  className="h-9 rounded-xl border-[#E5E7EB] bg-white px-3 text-sm font-semibold text-[#374151] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
+                                  className="h-9 rounded-xl border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm font-semibold text-[#374151] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
                                   onClick={() => {
                                     setShowAddLineCard(true);
                                     setLineActionError(null);
@@ -2544,10 +2544,10 @@ export function OrderPreview({
                             ) : null}
 
                             {showAddLineCard ? (
-                              <div className="mt-3 space-y-3 rounded-2xl border border-[#E5E7EB] bg-[#F9FAFB] p-3">
+                              <div className="mt-3 space-y-3 rounded-2xl border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] p-3">
                                 <div className="grid gap-2 sm:grid-cols-2">
                                   <label className="space-y-1">
-                                    <span className="text-xs font-semibold uppercase tracking-[0.04em] text-[#6B7280]">
+                                    <span className="text-xs font-semibold uppercase tracking-[0.04em] text-[#6B7280] dark:text-white/55">
                                       Type
                                     </span>
                                     <select
@@ -2560,7 +2560,7 @@ export function OrderPreview({
                                             : "PRODUCT";
                                         resetAddLineDraft(nextType);
                                       }}
-                                      className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
+                                      className="h-10 w-full rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
                                     >
                                       <option value="PRODUCT">Product</option>
                                       <option value="SERVICE">Service</option>
@@ -2568,7 +2568,7 @@ export function OrderPreview({
                                   </label>
 
                                   <label className="space-y-1">
-                                    <span className="text-xs font-semibold uppercase tracking-[0.04em] text-[#6B7280]">
+                                    <span className="text-xs font-semibold uppercase tracking-[0.04em] text-[#6B7280] dark:text-white/55">
                                       Item
                                     </span>
                                     <select
@@ -2599,7 +2599,7 @@ export function OrderPreview({
                                         isLoadingCatalogOptions ||
                                         activeLineOptions.length === 0
                                       }
-                                      className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15 disabled:bg-[#F3F4F6]"
+                                      className="h-10 w-full rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15 disabled:bg-[#F3F4F6]"
                                     >
                                       <option value="">
                                         {isLoadingCatalogOptions
@@ -2628,7 +2628,7 @@ export function OrderPreview({
                                 lineItemIdDraft === "__new_product__" ? (
                                   <div className="grid gap-2 sm:grid-cols-2">
                                     <label className="space-y-1">
-                                      <span className="text-xs font-semibold uppercase tracking-[0.04em] text-[#6B7280]">
+                                      <span className="text-xs font-semibold uppercase tracking-[0.04em] text-[#6B7280] dark:text-white/55">
                                         New product code
                                       </span>
                                       <input
@@ -2640,11 +2640,11 @@ export function OrderPreview({
                                           setLineActionError(null);
                                         }}
                                         placeholder="e.g. SKU-100"
-                                        className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
+                                        className="h-10 w-full rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
                                       />
                                     </label>
                                     <label className="space-y-1">
-                                      <span className="text-xs font-semibold uppercase tracking-[0.04em] text-[#6B7280]">
+                                      <span className="text-xs font-semibold uppercase tracking-[0.04em] text-[#6B7280] dark:text-white/55">
                                         New product name
                                       </span>
                                       <input
@@ -2656,7 +2656,7 @@ export function OrderPreview({
                                           setLineActionError(null);
                                         }}
                                         placeholder="e.g. Installation kit"
-                                        className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
+                                        className="h-10 w-full rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
                                       />
                                     </label>
                                   </div>
@@ -2664,7 +2664,7 @@ export function OrderPreview({
 
                                 <div className="grid gap-2 sm:grid-cols-2">
                                   <label className="space-y-1">
-                                    <span className="text-xs font-semibold uppercase tracking-[0.04em] text-[#6B7280]">
+                                    <span className="text-xs font-semibold uppercase tracking-[0.04em] text-[#6B7280] dark:text-white/55">
                                       Qty
                                     </span>
                                     <input
@@ -2676,12 +2676,12 @@ export function OrderPreview({
                                         );
                                         setLineActionError(null);
                                       }}
-                                      className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
+                                      className="h-10 w-full rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
                                     />
                                   </label>
 
                                   <label className="space-y-1">
-                                    <span className="text-xs font-semibold uppercase tracking-[0.04em] text-[#6B7280]">
+                                    <span className="text-xs font-semibold uppercase tracking-[0.04em] text-[#6B7280] dark:text-white/55">
                                       Unit price
                                     </span>
                                     <input
@@ -2693,13 +2693,13 @@ export function OrderPreview({
                                         );
                                         setLineActionError(null);
                                       }}
-                                      className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
+                                      className="h-10 w-full rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
                                     />
                                   </label>
                                 </div>
 
                                 {selectedLineOption ? (
-                                  <div className="rounded-xl border border-[#E5E7EB] bg-white px-3 py-2 text-xs text-[#6B7280]">
+                                  <div className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-2 text-xs text-[#6B7280] dark:text-white/55">
                                     Default price: $
                                     {fmtAmount(selectedLineOption.unitPrice)}
                                     {selectedLineOption.currencyCode
@@ -2709,7 +2709,7 @@ export function OrderPreview({
                                 ) : null}
 
                                 {lineActionError ? (
-                                  <div className="rounded-xl border border-[#fecaca] bg-[#fef2f2] px-3 py-2 text-xs text-[#b42318]">
+                                  <div className="rounded-xl border border-[#fecaca] bg-[#fef2f2] dark:bg-rose-500/10 px-3 py-2 text-xs text-[#b42318]">
                                     {lineActionError}
                                   </div>
                                 ) : null}
@@ -2718,7 +2718,7 @@ export function OrderPreview({
                                   <Button
                                     type="button"
                                     variant="outline"
-                                    className="h-9 rounded-xl border-[#E5E7EB] bg-white px-3 text-sm font-semibold text-[#374151] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
+                                    className="h-9 rounded-xl border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm font-semibold text-[#374151] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
                                     onClick={() => {
                                       setShowAddLineCard(false);
                                       resetAddLineDraft();
@@ -2918,8 +2918,8 @@ export function OrderPreview({
                     </TabsContent>
                   </div>
                   <aside className="space-y-2">
-                    <div className="rounded-[16px] border border-[#F3F4F6] bg-white p-2.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
-                      <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[#6B7280]">
+                    <div className="rounded-[16px] border border-[#F3F4F6] bg-white dark:bg-white/[0.03] p-2.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                      <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[#6B7280] dark:text-white/55">
                         Status
                       </div>
                       <div className="mt-1.5">
@@ -2956,19 +2956,19 @@ export function OrderPreview({
                       ) : null}
                     </div>
 
-                    <div className="rounded-[16px] border border-[#F3F4F6] bg-white p-2.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
-                      <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[#6B7280]">
+                    <div className="rounded-[16px] border border-[#F3F4F6] bg-white dark:bg-white/[0.03] p-2.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                      <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[#6B7280] dark:text-white/55">
                         Client
                       </div>
                       <div className="mt-1.5 space-y-1 text-sm text-[#374151]">
-                        <div className="font-medium text-[#1F2937]">
+                        <div className="font-medium text-[#1F2937] dark:text-white/90">
                           {displayName || "Unknown client"}
                         </div>
-                        <div className="text-[#6B7280]">
+                        <div className="text-[#6B7280] dark:text-white/55">
                           {currentOrder.client_phone?.trim() ||
                             "No phone number"}
                         </div>
-                        <div className="inline-flex items-center gap-1.5 text-xs text-[#6B7280]">
+                        <div className="inline-flex items-center gap-1.5 text-xs text-[#6B7280] dark:text-white/55">
                           <ActorAvatar
                             label={
                               currentOrder.manager_name?.trim() || "Unassigned"
@@ -2990,8 +2990,8 @@ export function OrderPreview({
                     />
 
                     {canUploadFiles && activeTab === "overview" ? (
-                      <div className="rounded-[16px] border border-[#F3F4F6] bg-white p-2.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
-                        <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[#6B7280]">
+                      <div className="rounded-[16px] border border-[#F3F4F6] bg-white dark:bg-white/[0.03] p-2.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[#6B7280] dark:text-white/55">
                           Quick Actions
                         </div>
                         <div className="mt-2 space-y-1.5">
@@ -2999,7 +2999,7 @@ export function OrderPreview({
                             <Button
                               type="button"
                               variant="outline"
-                              className="h-8 w-full rounded-lg border-[#E5E7EB] bg-white px-2.5 text-[13px] font-semibold text-[#374151] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
+                              className="h-8 w-full rounded-lg border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-2.5 text-[13px] font-semibold text-[#374151] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
                               onClick={openOverviewFilePicker}
                               disabled={isUploadingOverviewFiles}
                             >

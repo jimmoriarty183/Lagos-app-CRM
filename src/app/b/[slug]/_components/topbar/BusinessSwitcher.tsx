@@ -30,9 +30,9 @@ function roleLabel(role: Role) {
 }
 
 function roleBadgeClass(role: Role) {
-  if (role === "OWNER") return "border-[#C7D2FE] bg-[#EEF2FF] text-[#3645A0]";
-  if (role === "MANAGER") return "border-[#E5E7EB] bg-[#F9FAFB] text-[#475467]";
-  return "border-[#E5E7EB] bg-white text-[#98A2B3]";
+  if (role === "OWNER") return "border-[#C7D2FE] dark:border-[var(--brand-500)]/40 bg-[#EEF2FF] dark:bg-[var(--brand-600)]/15 text-[#3645A0] dark:text-[var(--brand-300)]";
+  if (role === "MANAGER") return "border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] text-[#475467] dark:text-white/70";
+  return "border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#98A2B3] dark:text-white/45";
 }
 
 function RoleBadge({
@@ -58,7 +58,7 @@ function AdminBadge({ compact = false }: { compact?: boolean }) {
     <span
       title="Admin"
       aria-label="Admin"
-      className={`inline-flex items-center justify-center rounded-full border border-[var(--brand-200)] bg-white text-[var(--brand-600)] shadow-sm ${
+      className={`inline-flex items-center justify-center rounded-full border border-[var(--brand-200)] bg-white dark:bg-white/[0.03] text-[var(--brand-600)] shadow-sm ${
         compact ? "h-5 w-5" : "h-7 w-7"
       }`}
     >
@@ -118,8 +118,8 @@ export default function BusinessSwitcher({
     variant === "toolbar-compact"
       ? "inline-flex h-8 w-full items-center justify-between gap-2 rounded-lg border border-transparent bg-transparent px-2.5 transition hover:border-[#E5E7EB] hover:bg-[#F8FAFC]"
       : variant === "toolbar"
-        ? "inline-flex h-10 w-full items-center justify-between gap-2 rounded-xl border border-[#E5E7EB] bg-white px-3.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#D1D5DB] hover:bg-[#F9FAFB]"
-        : "inline-flex h-11 w-full items-center justify-between gap-3 rounded-2xl border border-[#E5E7EB] bg-white px-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:bg-[#F9FAFB]";
+        ? "inline-flex h-10 w-full items-center justify-between gap-2 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#D1D5DB] hover:bg-[#F9FAFB]"
+        : "inline-flex h-11 w-full items-center justify-between gap-3 rounded-2xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:bg-[#F9FAFB]";
 
   return (
     <div className={`relative z-50 ${widthClassName}`} ref={ref}>
@@ -134,7 +134,7 @@ export default function BusinessSwitcher({
           <div className="min-w-0 flex-1 text-left leading-tight">
             <div className="flex min-w-0 items-center gap-2">
               <div
-                className={`truncate font-semibold text-slate-900 ${compact ? "text-[12px]" : "text-sm"}`}
+                className={`truncate font-semibold text-slate-900 dark:text-white ${compact ? "text-[12px]" : "text-sm"}`}
               >
                 {current.name}
               </div>
@@ -144,7 +144,7 @@ export default function BusinessSwitcher({
               </div>
             </div>
             {!compact ? (
-              <p className="truncate pt-0.5 text-[11px] text-slate-500">
+              <p className="truncate pt-0.5 text-[11px] text-slate-500 dark:text-white/55">
                 {hintText}
               </p>
             ) : null}
@@ -152,7 +152,7 @@ export default function BusinessSwitcher({
         </div>
 
         <ChevronDown
-          className={`h-4 w-4 shrink-0 text-slate-500 transition ${open ? "rotate-180" : ""}`}
+          className={`h-4 w-4 shrink-0 text-slate-500 dark:text-white/55 transition ${open ? "rotate-180" : ""}`}
           aria-hidden="true"
         />
       </button>
@@ -160,15 +160,15 @@ export default function BusinessSwitcher({
       {open ? (
         <div
           role="menu"
-          className="absolute right-0 z-50 mt-2 w-[280px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_12px_28px_rgba(16,24,40,0.12)]"
+          className="absolute right-0 z-50 mt-2 w-[280px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] shadow-[0_12px_28px_rgba(16,24,40,0.12)]"
         >
           {!compact ? (
-            <div className="border-b border-gray-100 p-3">
+            <div className="border-b border-gray-100 dark:border-white/[0.06] p-3">
               <input
                 value={q}
                 onChange={(event) => setQ(event.target.value)}
                 placeholder="Search workspace..."
-                className="h-10 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm text-[#1F2937] outline-none transition focus:border-[#C7D2FE] focus:ring-4 focus:ring-[rgba(99,102,241,0.12)]"
+                className="h-10 w-full rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm text-[#1F2937] dark:text-white/90 outline-none transition focus:border-[#C7D2FE] focus:ring-4 focus:ring-[rgba(99,102,241,0.12)]"
               />
             </div>
           ) : null}
@@ -185,14 +185,14 @@ export default function BusinessSwitcher({
                     setOpen(false);
                     onSelect(business.slug);
                   }}
-                  className={`w-full rounded-xl px-3 py-2 text-left transition hover:bg-[#F9FAFB] ${isCurrent ? "bg-[#EEF2FF]" : ""}`}
+                  className={`w-full rounded-xl px-3 py-2 text-left transition hover:bg-[#F9FAFB] ${isCurrent ? "bg-[#EEF2FF] dark:bg-[var(--brand-600)]/15" : ""}`}
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
-                      <div className="truncate text-sm font-semibold text-gray-900">
+                      <div className="truncate text-sm font-semibold text-gray-900 dark:text-white">
                         {business.name}
                       </div>
-                      <div className="truncate pt-0.5 text-[11px] text-gray-500">
+                      <div className="truncate pt-0.5 text-[11px] text-gray-500 dark:text-white/55">
                         {business.slug}
                       </div>
                     </div>
@@ -210,19 +210,19 @@ export default function BusinessSwitcher({
             })}
           </div>
 
-          <div className="border-t border-gray-100 p-2">
+          <div className="border-t border-gray-100 dark:border-white/[0.06] p-2">
             {disabledAdd ? (
               <button
                 type="button"
                 disabled
-                className="w-full cursor-not-allowed rounded-xl px-3 py-2 text-left text-sm font-semibold text-gray-400"
+                className="w-full cursor-not-allowed rounded-xl px-3 py-2 text-left text-sm font-semibold text-gray-400 dark:text-white/45"
               >
                 + Create business
               </button>
             ) : (
               <a
                 href="/onboarding/business?new=1"
-                className="block w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-[#1F2937] transition hover:bg-[#F9FAFB]"
+                className="block w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-[#1F2937] dark:text-white/90 transition hover:bg-[#F9FAFB]"
                 onClick={() => setOpen(false)}
               >
                 + Create business

@@ -112,7 +112,7 @@ export default async function InvitesPage({
   ];
 
   return (
-    <div className="min-h-[100svh] overflow-x-clip bg-transparent text-[#1F2937]">
+    <div className="min-h-[100svh] overflow-x-clip bg-transparent text-[#1F2937] dark:text-white/90">
       <TeamAccessTopBar
         ordersHref={`/b/${business.slug}`}
         userLabel={currentUserName}
@@ -160,7 +160,7 @@ export default async function InvitesPage({
             activeSection="settings"
           />
 
-          <section className="w-full min-w-0 max-w-full rounded-[16px] border border-[#E5E7EB] bg-white p-3 pb-4 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:rounded-[18px] sm:p-4">
+          <section className="w-full min-w-0 max-w-full rounded-[16px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3 pb-4 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:rounded-[18px] sm:p-4">
             <div className="mb-3">
               <div className="product-page-kicker">Settings</div>
               <h1 className="product-page-title mt-1">Business invitations</h1>
@@ -180,7 +180,7 @@ export default async function InvitesPage({
         </div>
 
         <div className="mx-auto w-full max-w-[920px] min-w-0 lg:hidden">
-          <section className="w-full min-w-0 max-w-full rounded-[16px] border border-[#E5E7EB] bg-white p-3 pb-4 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:rounded-[18px] sm:p-4">
+          <section className="w-full min-w-0 max-w-full rounded-[16px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3 pb-4 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:rounded-[18px] sm:p-4">
             <div className="mb-3">
               <div className="product-page-kicker">Settings</div>
               <h1 className="product-page-title mt-1">Business invitations</h1>

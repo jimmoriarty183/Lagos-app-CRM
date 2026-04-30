@@ -36,7 +36,7 @@ function StatusPill({ status }: { status: string }) {
       : s === "ACCEPTED"
         ? "bg-emerald-50 text-emerald-700 border-emerald-100"
         : s === "REVOKED" || s === "EXPIRED"
-          ? "bg-gray-100 text-gray-700 border-gray-200"
+          ? "bg-gray-100 dark:bg-white/[0.06] text-gray-700 dark:text-white/80 border-gray-200 dark:border-white/10"
           : "bg-blue-50 text-blue-700 border-blue-100";
 
   return (
@@ -144,10 +144,10 @@ const PendingInvites = forwardRef<
   const count = viewInvites.length;
 
   return (
-    <div className="mt-4 rounded-2xl border border-gray-100 bg-white px-4 py-4 shadow-sm">
+    <div className="mt-4 rounded-2xl border border-gray-100 dark:border-white/[0.06] bg-white dark:bg-white/[0.03] px-4 py-4 shadow-sm">
       <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-sm font-semibold text-gray-900">
-          <Clock className="h-4 w-4 text-gray-500" />
+        <div className="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-white">
+          <Clock className="h-4 w-4 text-gray-500 dark:text-white/55" />
           {loading ? "Pending invites…" : `Pending invites (${count})`}
         </div>
       </div>
@@ -160,30 +160,30 @@ const PendingInvites = forwardRef<
 
       <div className="mt-3 space-y-2">
         {count === 0 ? (
-          <div className="rounded-2xl border border-dashed border-gray-200 bg-white px-4 py-4 text-sm text-gray-500">
+          <div className="rounded-2xl border border-dashed border-gray-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 py-4 text-sm text-gray-500 dark:text-white/55">
             No pending invites.
           </div>
         ) : (
           viewInvites.map((inv) => (
             <div
               key={inv.id}
-              className="flex items-center justify-between gap-3 rounded-2xl border border-gray-100 bg-white px-4 py-3"
+              className="flex items-center justify-between gap-3 rounded-2xl border border-gray-100 dark:border-white/[0.06] bg-white dark:bg-white/[0.03] px-4 py-3"
             >
               <div className="flex min-w-0 items-center gap-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gray-50 text-gray-600">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gray-50 dark:bg-white/[0.04] text-gray-600 dark:text-white/70">
                   <Mail className="h-5 w-5" />
                 </div>
 
                 <div className="min-w-0">
-                  <div className="truncate text-sm font-semibold text-gray-900">
+                  <div className="truncate text-sm font-semibold text-gray-900 dark:text-white">
                     {inv.email}
                     {inv.id === "__optimistic__" ? (
-                      <span className="ml-2 text-xs font-semibold text-gray-400">
+                      <span className="ml-2 text-xs font-semibold text-gray-400 dark:text-white/45">
                         (syncing…)
                       </span>
                     ) : null}
                   </div>
-                  <div className="truncate text-xs text-gray-500">
+                  <div className="truncate text-xs text-gray-500 dark:text-white/55">
                     {inv.created_at
                       ? `Sent: ${formatDateTime(inv.created_at)}`
                       : ""}
@@ -201,7 +201,7 @@ const PendingInvites = forwardRef<
                   <button
                     type="button"
                     onClick={() => revoke(inv.id)}
-                    className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                    className="inline-flex items-center gap-2 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-2 text-sm font-semibold text-gray-700 dark:text-white/80 hover:bg-gray-50"
                     title="Revoke invite"
                   >
                     <X className="h-4 w-4" />

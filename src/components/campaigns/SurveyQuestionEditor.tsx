@@ -202,9 +202,9 @@ export function SurveyQuestionEditor({ campaignId, initialQuestions }: Props) {
   };
 
   return (
-    <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-4">
+    <div className="space-y-4 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] p-4">
       <div className="flex items-center gap-2">
-        <div className="text-sm font-semibold text-slate-900">
+        <div className="text-sm font-semibold text-slate-900 dark:text-white">
           Вопросы опроса
         </div>
         <button
@@ -212,13 +212,13 @@ export function SurveyQuestionEditor({ campaignId, initialQuestions }: Props) {
           onClick={() => setShowTypeHelp((current) => !current)}
           aria-expanded={showTypeHelp}
           aria-label="Показать подсказку по типам вопросов"
-          className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-slate-300 bg-white text-xs font-bold text-slate-700"
+          className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-slate-300 dark:border-white/15 bg-white dark:bg-white/[0.03] text-xs font-bold text-slate-700 dark:text-white/80"
         >
           ?
         </button>
       </div>
       {showTypeHelp ? (
-        <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+        <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] px-3 py-2 text-xs text-slate-700 dark:text-white/80">
           <div>
             <b>Один вариант</b>: пользователь выбирает только один ответ.
           </div>
@@ -239,14 +239,14 @@ export function SurveyQuestionEditor({ campaignId, initialQuestions }: Props) {
           value={title}
           onChange={(event) => setTitle(event.target.value)}
           placeholder="Текст вопроса"
-          className="h-10 rounded-lg border border-slate-200 px-3 text-sm"
+          className="h-10 rounded-lg border border-slate-200 dark:border-white/10 px-3 text-sm"
         />
         <select
           value={questionType}
           onChange={(event) =>
             setQuestionType(event.target.value as SurveyQuestionType)
           }
-          className="h-10 rounded-lg border border-slate-200 px-3 text-sm"
+          className="h-10 rounded-lg border border-slate-200 dark:border-white/10 px-3 text-sm"
         >
           {QUESTION_TYPES.map((value) => (
             <option key={value} value={value}>
@@ -267,7 +267,7 @@ export function SurveyQuestionEditor({ campaignId, initialQuestions }: Props) {
       {error ? <div className="text-sm text-rose-600">{error}</div> : null}
 
       {questions.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 px-3 py-6 text-center text-sm text-slate-500">
+        <div className="rounded-lg border border-dashed border-slate-300 dark:border-white/15 bg-slate-50 dark:bg-white/[0.04] px-3 py-6 text-center text-sm text-slate-500 dark:text-white/55">
           Вопросов пока нет
         </div>
       ) : (
@@ -275,12 +275,12 @@ export function SurveyQuestionEditor({ campaignId, initialQuestions }: Props) {
           {questions.map((question) => (
             <div
               key={question.id}
-              className="rounded-lg border border-slate-200 bg-slate-50 p-3"
+              className="rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] p-3"
             >
-              <div className="text-sm font-semibold text-slate-900">
+              <div className="text-sm font-semibold text-slate-900 dark:text-white">
                 {question.questionOrder}. {question.title}
               </div>
-              <div className="mt-1 text-xs uppercase tracking-[0.08em] text-slate-500">
+              <div className="mt-1 text-xs uppercase tracking-[0.08em] text-slate-500 dark:text-white/55">
                 {questionTypeLabel[question.questionType]}
               </div>
               <div className="mt-2 flex items-center gap-3">
@@ -302,14 +302,14 @@ export function SurveyQuestionEditor({ campaignId, initialQuestions }: Props) {
                 </button>
               </div>
               {editingQuestionId === question.id ? (
-                <div className="mt-2 space-y-2 rounded-md border border-slate-200 bg-white p-2">
+                <div className="mt-2 space-y-2 rounded-md border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] p-2">
                   <div className="grid gap-2 md:grid-cols-[1fr_180px_auto]">
                     <input
                       value={editQuestionTitle}
                       onChange={(event) =>
                         setEditQuestionTitle(event.target.value)
                       }
-                      className="h-9 rounded-md border border-slate-200 px-2 text-xs"
+                      className="h-9 rounded-md border border-slate-200 dark:border-white/10 px-2 text-xs"
                     />
                     <select
                       value={editQuestionType}
@@ -318,7 +318,7 @@ export function SurveyQuestionEditor({ campaignId, initialQuestions }: Props) {
                           event.target.value as SurveyQuestionType,
                         )
                       }
-                      className="h-9 rounded-md border border-slate-200 px-2 text-xs"
+                      className="h-9 rounded-md border border-slate-200 dark:border-white/10 px-2 text-xs"
                     >
                       {QUESTION_TYPES.map((value) => (
                         <option key={value} value={value}>

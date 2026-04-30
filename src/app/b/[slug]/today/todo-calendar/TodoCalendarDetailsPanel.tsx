@@ -37,7 +37,7 @@ export function TodoCalendarDetailsPanel({
         <button
           type="button"
           onClick={onToggleCollapsed}
-          className="sticky top-20 inline-flex h-12 items-center gap-2 rounded-[16px] border border-[#E5E7EB] bg-white px-3 text-[12px] font-semibold text-[#475467] shadow-[0_10px_24px_rgba(15,23,42,0.06)] transition hover:text-[#111827]"
+          className="sticky top-20 inline-flex h-12 items-center gap-2 rounded-[16px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-[12px] font-semibold text-[#475467] dark:text-white/70 shadow-[0_10px_24px_rgba(15,23,42,0.06)] transition hover:text-[#111827]"
         >
           <PanelRightOpen className="h-4 w-4" />
           Details
@@ -61,7 +61,7 @@ export function TodoCalendarDetailsPanel({
         <button
           type="button"
           onClick={onToggleCollapsed}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-[12px] border border-[#D8DFEA] bg-white text-[#667085] transition hover:bg-[#EEF2FF] hover:text-[#3645A0]"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-[12px] border border-[#D8DFEA] bg-white dark:bg-white/[0.03] text-[#667085] transition hover:bg-[#EEF2FF] hover:text-[#3645A0]"
           aria-label="Collapse details panel"
         >
           <PanelRightClose className="h-4 w-4" />
@@ -71,7 +71,7 @@ export function TodoCalendarDetailsPanel({
       <div className="space-y-4 px-4 py-4">
         <div className="space-y-2">
           {dayItems.length === 0 ? (
-            <div className="rounded-[16px] border border-dashed border-[#E5E7EB] bg-[#FCFCFD] px-4 py-5 text-sm text-[#667085]">
+            <div className="rounded-[16px] border border-dashed border-[#E5E7EB] dark:border-white/10 bg-[#FCFCFD] px-4 py-5 text-sm text-[#667085]">
               Nothing is scheduled for this day.
             </div>
           ) : (
@@ -86,13 +86,13 @@ export function TodoCalendarDetailsPanel({
           )}
         </div>
 
-        <div className="rounded-[18px] border border-[#E8EDF4] bg-white p-4 shadow-[0_8px_20px_rgba(15,23,42,0.04)]">
+        <div className="rounded-[18px] border border-[#E8EDF4] bg-white dark:bg-white/[0.03] p-4 shadow-[0_8px_20px_rgba(15,23,42,0.04)]">
           {selectedItem ? (
             <div className="space-y-3">
               <div className="flex items-center gap-2">
                 <span className={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold ${tone?.tint}`}>{getItemTypeLabel(selectedItem.type)}</span>
                 {selectedItem.status === "overdue" ? (
-                  <span className="inline-flex rounded-full border border-[#FECACA] bg-[#FEF2F2] px-2.5 py-1 text-[11px] font-semibold text-[#B42318]">
+                  <span className="inline-flex rounded-full border border-[#FECACA] bg-[#FEF2F2] dark:bg-rose-500/10 px-2.5 py-1 text-[11px] font-semibold text-[#B42318]">
                     Overdue
                   </span>
                 ) : null}
@@ -124,7 +124,7 @@ export function TodoCalendarDetailsPanel({
               {selectedItem.orderHref ? (
                 <Link
                   href={selectedItem.orderHref}
-                  className="inline-flex h-10 items-center gap-2 rounded-[14px] border border-[#D0D5DD] bg-white px-3.5 text-[13px] font-semibold text-[#344054] transition hover:border-[#C7D2FE] hover:text-[#3645A0]"
+                  className="inline-flex h-10 items-center gap-2 rounded-[14px] border border-[#D0D5DD] bg-white dark:bg-white/[0.03] px-3.5 text-[13px] font-semibold text-[#344054] transition hover:border-[#C7D2FE] hover:text-[#3645A0]"
                 >
                   Open full order
                   <ChevronRight className="h-4 w-4" />

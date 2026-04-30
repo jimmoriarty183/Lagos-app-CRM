@@ -183,7 +183,7 @@ function getReportTimeFlag(input: {
   if (tracked <= 0.01) {
     return {
       label: "Zero tracked with in-work time",
-      toneClass: "border-[#FECACA] bg-[#FEF2F2] text-[#B42318]",
+      toneClass: "border-[#FECACA] bg-[#FEF2F2] dark:bg-rose-500/10 text-[#B42318]",
     };
   }
   if (pauseRatio >= 0.8) {
@@ -358,11 +358,11 @@ export default function OwnerAnalyticsPanel({
   return (
     <section
       id="owner-analytics"
-      className="space-y-4 rounded-2xl border border-[#E5E7EB] bg-[linear-gradient(180deg,#FFFFFF_0%,#FBFCFF_100%)] p-4 shadow-[0_14px_34px_rgba(15,23,42,0.08)]"
+      className="space-y-4 rounded-2xl border border-[#E5E7EB] dark:border-white/10 bg-[linear-gradient(180deg,#FFFFFF_0%,#FBFCFF_100%)] p-4 shadow-[0_14px_34px_rgba(15,23,42,0.08)]"
     >
-      <div className="flex items-center justify-between rounded-xl border border-[#E5E7EB] bg-white/90 px-3 py-2.5">
+      <div className="flex items-center justify-between rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white/90 dark:bg-white/[0.05] px-3 py-2.5">
         <div>
-          <div className="text-xs text-[#6B7280]">
+          <div className="text-xs text-[#6B7280] dark:text-white/55">
             Owner Analytics / {currentViewMeta.label}
           </div>
           <div className="mt-1 flex items-center gap-2">
@@ -374,13 +374,13 @@ export default function OwnerAnalyticsPanel({
             </h2>
             <details className="relative">
               <summary
-                className="inline-flex h-5 w-5 cursor-pointer list-none items-center justify-center rounded-full border border-[#D0D5DD] bg-white text-[11px] font-semibold text-[#475467] transition hover:border-[#98A2B3] hover:text-[#111827]"
+                className="inline-flex h-5 w-5 cursor-pointer list-none items-center justify-center rounded-full border border-[#D0D5DD] bg-white dark:bg-white/[0.03] text-[11px] font-semibold text-[#475467] dark:text-white/70 transition hover:border-[#98A2B3] hover:text-[#111827]"
                 aria-label={`${currentViewMeta.label} help`}
                 title={`${currentViewMeta.label} help`}
               >
                 ?
               </summary>
-              <div className="absolute left-0 top-7 z-20 w-[340px] rounded-xl border border-[#E5E7EB] bg-white p-3 text-xs text-[#344054] shadow-[0_12px_24px_rgba(16,24,40,0.12)]">
+              <div className="absolute left-0 top-7 z-20 w-[340px] rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3 text-xs text-[#344054] shadow-[0_12px_24px_rgba(16,24,40,0.12)]">
                 <div className="text-sm font-semibold text-[#111827]">
                   {currentViewMeta.helpTitle}
                 </div>
@@ -395,16 +395,16 @@ export default function OwnerAnalyticsPanel({
             </details>
           </div>
         </div>
-        <span className="text-xs text-[#6B7280]">
+        <span className="text-xs text-[#6B7280] dark:text-white/55">
           Updated: {new Date(data.summary.generated_at).toLocaleString("en-US")}
         </span>
       </div>
 
       {showOverview ? (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          <article className="rounded-xl border border-[#E5E7EB] bg-white p-3 shadow-[0_8px_18px_rgba(15,23,42,0.05)]">
+          <article className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3 shadow-[0_8px_18px_rgba(15,23,42,0.05)]">
             <div className="flex items-center justify-between">
-              <div className="text-xs font-medium text-[#6B7280]">
+              <div className="text-xs font-medium text-[#6B7280] dark:text-white/55">
                 Active Tasks
               </div>
               <Activity className="icon-button text-[var(--brand-600)]" strokeWidth={2} />
@@ -426,9 +426,9 @@ export default function OwnerAnalyticsPanel({
               {data.summary.overdue_tasks}
             </div>
           </article>
-          <article className="rounded-xl border border-[#E5E7EB] bg-white p-3 shadow-[0_8px_18px_rgba(15,23,42,0.05)]">
+          <article className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3 shadow-[0_8px_18px_rgba(15,23,42,0.05)]">
             <div className="flex items-center justify-between">
-              <div className="text-xs font-medium text-[#6B7280]">
+              <div className="text-xs font-medium text-[#6B7280] dark:text-white/55">
                 Due in 7 Days
               </div>
               <CalendarClock className="icon-button text-[var(--brand-600)]" strokeWidth={2} />
@@ -437,9 +437,9 @@ export default function OwnerAnalyticsPanel({
               {data.summary.due_7d}
             </div>
           </article>
-          <article className="rounded-xl border border-[#E5E7EB] bg-white p-3 shadow-[0_8px_18px_rgba(15,23,42,0.05)]">
+          <article className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3 shadow-[0_8px_18px_rgba(15,23,42,0.05)]">
             <div className="flex items-center justify-between">
-              <div className="text-xs font-medium text-[#6B7280]">
+              <div className="text-xs font-medium text-[#6B7280] dark:text-white/55">
                 On-Time Completion
               </div>
               <TrendingUp className="icon-button text-[#067647]" strokeWidth={2} />
@@ -448,9 +448,9 @@ export default function OwnerAnalyticsPanel({
               {formatPercent(data.summary.on_time_completion_pct)}
             </div>
           </article>
-          <article className="rounded-xl border border-[#E5E7EB] bg-white p-3 shadow-[0_8px_18px_rgba(15,23,42,0.05)]">
+          <article className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3 shadow-[0_8px_18px_rgba(15,23,42,0.05)]">
             <div className="flex items-center justify-between">
-              <div className="text-xs font-medium text-[#6B7280]">
+              <div className="text-xs font-medium text-[#6B7280] dark:text-white/55">
                 Team Workload
               </div>
               <Gauge className="icon-button text-[var(--brand-600)]" strokeWidth={2} />
@@ -461,9 +461,9 @@ export default function OwnerAnalyticsPanel({
               {formatPercent(data.summary.team_workload_pct)}
             </div>
           </article>
-          <article className="rounded-xl border border-[#E5E7EB] bg-white p-3 shadow-[0_8px_18px_rgba(15,23,42,0.05)]">
+          <article className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3 shadow-[0_8px_18px_rgba(15,23,42,0.05)]">
             <div className="flex items-center justify-between">
-              <div className="text-xs font-medium text-[#6B7280]">
+              <div className="text-xs font-medium text-[#6B7280] dark:text-white/55">
                 Managers At Risk
               </div>
               <ShieldAlert className="icon-button text-[#B54708]" strokeWidth={2} />
@@ -478,7 +478,7 @@ export default function OwnerAnalyticsPanel({
       ) : null}
 
       {showOverview ? (
-        <article className="rounded-xl border border-[#E5E7EB] p-3">
+        <article className="rounded-xl border border-[#E5E7EB] dark:border-white/10 p-3">
           <div className="mb-2 text-sm font-semibold text-[#111827]">
             Deadline Control (7 days)
           </div>
@@ -498,7 +498,7 @@ export default function OwnerAnalyticsPanel({
               />
             </div>
           </div>
-          <div className="mt-2 flex flex-wrap gap-4 text-xs text-[#4B5563]">
+          <div className="mt-2 flex flex-wrap gap-4 text-xs text-[#4B5563] dark:text-white/70">
             <span>On Track: {data.deadline_control.traffic_bar.on_track}</span>
             <span>At Risk: {data.deadline_control.traffic_bar.at_risk}</span>
             <span>Overdue: {data.deadline_control.traffic_bar.overdue}</span>
@@ -511,14 +511,14 @@ export default function OwnerAnalyticsPanel({
 
       {showOverview ? (
         <div className="grid grid-cols-1 gap-3 xl:grid-cols-3">
-          <article className="rounded-xl border border-[#E5E7EB] bg-white p-3 xl:col-span-2">
+          <article className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3 xl:col-span-2">
             <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-[#111827]">
               <LineChart className="icon-button text-[var(--brand-600)]" strokeWidth={2} />
               Execution Health
             </div>
             <div className="space-y-3">
               <div>
-                <div className="mb-1 flex items-center justify-between text-xs text-[#475467]">
+                <div className="mb-1 flex items-center justify-between text-xs text-[#475467] dark:text-white/70">
                   <span>Overdue Rate</span>
                   <span className="font-semibold text-[#B42318]">
                     {overdueRate.toFixed(1)}%
@@ -532,7 +532,7 @@ export default function OwnerAnalyticsPanel({
                 </div>
               </div>
               <div>
-                <div className="mb-1 flex items-center justify-between text-xs text-[#475467]">
+                <div className="mb-1 flex items-center justify-between text-xs text-[#475467] dark:text-white/70">
                   <span>7-Day Deadline Pressure</span>
                   <span className="font-semibold text-[#B54708]">
                     {duePressureRate.toFixed(1)}%
@@ -546,7 +546,7 @@ export default function OwnerAnalyticsPanel({
                 </div>
               </div>
               <div>
-                <div className="mb-1 flex items-center justify-between text-xs text-[#475467]">
+                <div className="mb-1 flex items-center justify-between text-xs text-[#475467] dark:text-white/70">
                   <span>On-Time Completion</span>
                   <span className="font-semibold text-[#067647]">
                     {formatPercent(data.summary.on_time_completion_pct)}
@@ -564,13 +564,13 @@ export default function OwnerAnalyticsPanel({
             </div>
           </article>
 
-          <article className="rounded-xl border border-[#E5E7EB] bg-white p-3">
+          <article className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3">
             <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-[#111827]">
               <Users className="icon-button text-[var(--brand-600)]" strokeWidth={2} />
               Risk Distribution
             </div>
             <div className="space-y-2 text-xs">
-              <div className="flex items-center justify-between rounded-lg border border-[#FECACA] bg-[#FEF2F2] px-2.5 py-2">
+              <div className="flex items-center justify-between rounded-lg border border-[#FECACA] bg-[#FEF2F2] dark:bg-rose-500/10 px-2.5 py-2">
                 <span className="font-medium text-[#B42318]">High Risk</span>
                 <span className="text-sm font-semibold text-[#B42318]">
                   {riskDistribution.high}
@@ -595,26 +595,26 @@ export default function OwnerAnalyticsPanel({
 
       {showOverview ? (
         <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
-          <article className="rounded-xl border border-[#E5E7EB] bg-white p-3">
+          <article className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3">
             <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-[#111827]">
               <ListChecks className="icon-button text-[var(--brand-600)]" strokeWidth={2} />
               Top Productive Managers
             </div>
             <ul className="space-y-2 text-xs">
               {topProductiveManagers.length === 0 ? (
-                <li className="rounded-lg border border-dashed border-[#D0D5DD] p-2 text-[#6B7280]">
+                <li className="rounded-lg border border-dashed border-[#D0D5DD] p-2 text-[#6B7280] dark:text-white/55">
                   No productivity data yet.
                 </li>
               ) : (
                 topProductiveManagers.map((manager, idx) => (
                   <li
                     key={`prod-${manager.manager_id}`}
-                    className="flex items-center justify-between rounded-lg border border-[#E5E7EB] px-2.5 py-2"
+                    className="flex items-center justify-between rounded-lg border border-[#E5E7EB] dark:border-white/10 px-2.5 py-2"
                   >
                     <span className="text-[#111827]">
                       {idx + 1}. {managerLabel(manager.manager_name)}
                     </span>
-                    <span className="font-semibold text-[#3645A0]">
+                    <span className="font-semibold text-[#3645A0] dark:text-[var(--brand-300)]">
                       {manager.total_closed}
                     </span>
                   </li>
@@ -637,7 +637,7 @@ export default function OwnerAnalyticsPanel({
                 highRiskManagers.map((manager) => (
                   <li
                     key={`risk-${manager.manager_id}`}
-                    className="flex items-center justify-between rounded-lg border border-[#FECACA] bg-[#FEF2F2] px-2.5 py-2"
+                    className="flex items-center justify-between rounded-lg border border-[#FECACA] bg-[#FEF2F2] dark:bg-rose-500/10 px-2.5 py-2"
                   >
                     <span className="text-[#111827]">
                       {managerLabel(manager.manager_name)}
@@ -654,22 +654,22 @@ export default function OwnerAnalyticsPanel({
       ) : null}
 
       {showManagers ? (
-        <article className="rounded-xl border border-[#E5E7EB] p-3">
+        <article className="rounded-xl border border-[#E5E7EB] dark:border-white/10 p-3">
           <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-[#111827]">
             <Users className="icon-button text-[var(--brand-600)]" strokeWidth={2} />
             Manager Table
           </div>
-          <p className="mb-2 text-xs text-[#6B7280]">
+          <p className="mb-2 text-xs text-[#6B7280] dark:text-white/55">
             `Risk` shows the total score (0–100). Open `details` to see the
             exact drivers: overdue tasks, tasks due in 7 days, workload, overdue
             follow-ups, on-time performance, and tasks without deadlines.
           </p>
-          <p className="mb-2 text-xs text-[#6B7280]">
+          <p className="mb-2 text-xs text-[#6B7280] dark:text-white/55">
             Managers shown: {tableManagers.length}
           </p>
           <div className="overflow-x-auto">
             <table className="min-w-full text-left text-xs">
-              <thead className="bg-[#F9FAFB] text-[#4B5563]">
+              <thead className="bg-[#F9FAFB] dark:bg-white/[0.04] text-[#4B5563] dark:text-white/70">
                 <tr>
                   <th className="px-2 py-2">Manager</th>
                   <th className="px-2 py-2">Active</th>
@@ -686,7 +686,7 @@ export default function OwnerAnalyticsPanel({
                   <tr
                     id={`manager-${manager.manager_id}`}
                     key={manager.manager_id}
-                    className="border-t border-[#E5E7EB]"
+                    className="border-t border-[#E5E7EB] dark:border-white/10"
                   >
                     <td className="px-2 py-2 font-medium text-[#111827]">
                       {managerLabel(manager.manager_name)}
@@ -711,7 +711,7 @@ export default function OwnerAnalyticsPanel({
                           <summary className="cursor-pointer text-[var(--brand-600)]">
                             details
                           </summary>
-                          <div className="mt-2 w-[320px] rounded-lg bg-[#F9FAFB] p-2 text-[11px] text-[#374151]">
+                          <div className="mt-2 w-[320px] rounded-lg bg-[#F9FAFB] dark:bg-white/[0.04] p-2 text-[11px] text-[#374151]">
                             <div className="font-semibold text-[#111827]">
                               Score breakdown
                             </div>
@@ -806,7 +806,7 @@ export default function OwnerAnalyticsPanel({
 
       {showOverview ? (
         <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
-          <article className="rounded-xl border border-[#E5E7EB] p-3">
+          <article className="rounded-xl border border-[#E5E7EB] dark:border-white/10 p-3">
             <div className="mb-2 text-sm font-semibold text-[#111827]">
               Top Overdue Tasks
             </div>
@@ -816,7 +816,7 @@ export default function OwnerAnalyticsPanel({
                 .map((task) => (
                   <li
                     key={task.task_id}
-                    className="rounded-lg border border-[#E5E7EB] p-2"
+                    className="rounded-lg border border-[#E5E7EB] dark:border-white/10 p-2"
                   >
                     <div className="font-medium text-[#111827]">
                       {buildOrderHref(task.task_id, businessSlug, phoneRaw) ? (
@@ -836,7 +836,7 @@ export default function OwnerAnalyticsPanel({
                         task.task_title
                       )}
                     </div>
-                    <div className="mt-1 text-[#6B7280]">
+                    <div className="mt-1 text-[#6B7280] dark:text-white/55">
                       Manager:{" "}
                       {buildManagerHref(task.manager_id ?? "") &&
                       task.manager_id ? (
@@ -862,7 +862,7 @@ export default function OwnerAnalyticsPanel({
       ) : null}
 
       {showAlerts ? (
-        <article className="rounded-xl border border-[#E5E7EB] p-3">
+        <article className="rounded-xl border border-[#E5E7EB] dark:border-white/10 p-3">
           <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-[#111827]">
             <BellRing className="icon-button text-[#B54708]" strokeWidth={2} />
             Alerts / Action Queue
@@ -873,12 +873,12 @@ export default function OwnerAnalyticsPanel({
               return (
                 <li
                   key={alert.alert_id}
-                  className="rounded-lg border border-[#E5E7EB] p-2"
+                  className="rounded-lg border border-[#E5E7EB] dark:border-white/10 p-2"
                 >
                   <div className="font-medium text-[#111827]">
                     {alert.problem}
                   </div>
-                  <div className="mt-1 text-[#6B7280]">{alert.reason}</div>
+                  <div className="mt-1 text-[#6B7280] dark:text-white/55">{alert.reason}</div>
                   <div className="mt-1 text-[#374151]">{action.note}</div>
                   {action.href ? (
                     <a
@@ -896,23 +896,23 @@ export default function OwnerAnalyticsPanel({
       ) : null}
 
       {showReports ? (
-        <article className="rounded-xl border border-[#E5E7EB] p-3">
+        <article className="rounded-xl border border-[#E5E7EB] dark:border-white/10 p-3">
           <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-[#111827]">
             <Timer className="icon-button text-[var(--brand-600)]" strokeWidth={2} />
             Manager Daily Reports
           </div>
-          <p className="mb-2 text-xs text-[#6B7280]">
+          <p className="mb-2 text-xs text-[#6B7280] dark:text-white/55">
             End-of-day reports submitted when managers close their work day.
           </p>
           <form
             method="get"
-            className="mb-3 grid grid-cols-1 gap-2 rounded-lg border border-[#E5E7EB] p-2 sm:grid-cols-5"
+            className="mb-3 grid grid-cols-1 gap-2 rounded-lg border border-[#E5E7EB] dark:border-white/10 p-2 sm:grid-cols-5"
           >
             <input type="hidden" name="tab" value="reports" />
             {phoneRaw ? (
               <input type="hidden" name="u" value={phoneRaw} />
             ) : null}
-            <label className="flex flex-col gap-1 text-[11px] text-[#4B5563]">
+            <label className="flex flex-col gap-1 text-[11px] text-[#4B5563] dark:text-white/70">
               <span>From</span>
               <input
                 type="date"
@@ -921,7 +921,7 @@ export default function OwnerAnalyticsPanel({
                 className="h-10 rounded-md border border-[#D0D5DD] px-3 text-[14px] leading-5 text-[#111827]"
               />
             </label>
-            <label className="flex flex-col gap-1 text-[11px] text-[#4B5563]">
+            <label className="flex flex-col gap-1 text-[11px] text-[#4B5563] dark:text-white/70">
               <span>To</span>
               <input
                 type="date"
@@ -930,12 +930,12 @@ export default function OwnerAnalyticsPanel({
                 className="h-10 rounded-md border border-[#D0D5DD] px-3 text-[14px] leading-5 text-[#111827]"
               />
             </label>
-            <label className="flex flex-col gap-1 text-[11px] text-[#4B5563] sm:col-span-2">
+            <label className="flex flex-col gap-1 text-[11px] text-[#4B5563] dark:text-white/70 sm:col-span-2">
               <span>Manager</span>
               <select
                 name="rmanager"
                 defaultValue={String(reportFilter?.managerId ?? "")}
-                className="h-10 rounded-md border border-[#D0D5DD] bg-white px-3 text-[14px] leading-5 text-[#111827]"
+                className="h-10 rounded-md border border-[#D0D5DD] bg-white dark:bg-white/[0.03] px-3 text-[14px] leading-5 text-[#111827]"
               >
                 <option value="">All managers</option>
                 {reportManagerOptions.map((item) => (
@@ -963,13 +963,13 @@ export default function OwnerAnalyticsPanel({
             </div>
           </form>
           {data.reports.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-[#D0D5DD] p-3 text-xs text-[#6B7280]">
+            <div className="rounded-lg border border-dashed border-[#D0D5DD] p-3 text-xs text-[#6B7280] dark:text-white/55">
               No daily reports yet.
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="min-w-full text-left text-xs">
-                <thead className="bg-[#F9FAFB] text-[#4B5563]">
+                <thead className="bg-[#F9FAFB] dark:bg-white/[0.04] text-[#4B5563] dark:text-white/70">
                   <tr>
                     <th className="px-2 py-2">Date</th>
                     <th className="px-2 py-2">Manager</th>
@@ -996,7 +996,7 @@ export default function OwnerAnalyticsPanel({
                     return (
                       <tr
                         key={report.report_id}
-                        className="border-t border-[#E5E7EB]"
+                        className="border-t border-[#E5E7EB] dark:border-white/10"
                       >
                         <td className="px-2 py-2 text-[#111827]">
                           {report.work_date}
@@ -1036,7 +1036,7 @@ export default function OwnerAnalyticsPanel({
                             <summary className="cursor-pointer text-[var(--brand-600)]">
                               {report.completed_today_count}
                             </summary>
-                            <ul className="mt-1 max-w-[260px] space-y-1 rounded bg-[#F9FAFB] p-2 text-[11px] text-[#374151]">
+                            <ul className="mt-1 max-w-[260px] space-y-1 rounded bg-[#F9FAFB] dark:bg-white/[0.04] p-2 text-[11px] text-[#374151]">
                               {report.completed_today_items.length === 0 ? (
                                 <li>No completed tasks</li>
                               ) : (
@@ -1071,7 +1071,7 @@ export default function OwnerAnalyticsPanel({
                             <summary className="cursor-pointer text-[var(--brand-600)]">
                               {report.tomorrow_plan_count}
                             </summary>
-                            <ul className="mt-1 max-w-[260px] space-y-1 rounded bg-[#F9FAFB] p-2 text-[11px] text-[#374151]">
+                            <ul className="mt-1 max-w-[260px] space-y-1 rounded bg-[#F9FAFB] dark:bg-white/[0.04] p-2 text-[11px] text-[#374151]">
                               {report.tomorrow_plan_items.length === 0 ? (
                                 <li>No planned items</li>
                               ) : (
@@ -1116,14 +1116,14 @@ export default function OwnerAnalyticsPanel({
       ) : null}
 
       {showSales ? (
-        <article className="space-y-3 rounded-xl border border-[#E5E7EB] p-3">
+        <article className="space-y-3 rounded-xl border border-[#E5E7EB] dark:border-white/10 p-3">
           {salesPlanEditor ? (
-            <div className="space-y-2 rounded-xl border border-[#E5E7EB] bg-[#FFFFFF] p-3">
+            <div className="space-y-2 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-[#FFFFFF] dark:bg-white/[0.04] p-3">
               <div className="flex items-center justify-between">
                 <div className="text-sm font-semibold text-[#111827]">
                   Monthly Plan Setup
                 </div>
-                <div className="text-xs text-[#6B7280]">
+                <div className="text-xs text-[#6B7280] dark:text-white/55">
                   Checked = included in plan, unchecked + Save row = excluded.
                 </div>
               </div>
@@ -1142,22 +1142,22 @@ export default function OwnerAnalyticsPanel({
                   return (
                     <details
                       key={`plan-section-${section.key}`}
-                      className="rounded-lg border border-[#E5E7EB] bg-[#FCFCFD]"
+                      className="rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-[#FCFCFD]"
                     >
                       <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-3 py-2 text-[13px] font-semibold text-[#111827]">
                         <span>
                           {section.label} ({section.monthStart})
                         </span>
-                        <span className="text-[11px] font-medium text-[#6B7280]">
+                        <span className="text-[11px] font-medium text-[#6B7280] dark:text-white/55">
                           Included {includedCount}/{section.participants.length}
                         </span>
                       </summary>
-                      <div className="space-y-2 border-t border-[#E5E7EB] p-2.5">
+                      <div className="space-y-2 border-t border-[#E5E7EB] dark:border-white/10 p-2.5">
                         {section.participants.map((participant) => (
                           <form
                             key={`sales-plan-row-${section.key}-${participant.id}`}
                             action={saveSalesPlanRowAction}
-                            className="grid grid-cols-1 gap-2 rounded-lg border border-[#E5E7EB] bg-white p-2.5 sm:grid-cols-[minmax(0,1fr)_130px_130px_110px]"
+                            className="grid grid-cols-1 gap-2 rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-2.5 sm:grid-cols-[minmax(0,1fr)_130px_130px_110px]"
                           >
                             <input type="hidden" name="businessId" value={salesPlanEditor.businessId} />
                             <input type="hidden" name="businessSlug" value={businessSlug ?? ""} />
@@ -1176,13 +1176,13 @@ export default function OwnerAnalyticsPanel({
                               <span>
                                 {managerLabel(participant.name)}
                                 {participant.isCurrentUser ? " (You)" : ""}
-                                <span className="ml-2 text-[11px] font-semibold text-[#6B7280]">
+                                <span className="ml-2 text-[11px] font-semibold text-[#6B7280] dark:text-white/55">
                                   {participant.role}
                                 </span>
                               </span>
                             </label>
 
-                            <label className="flex flex-col gap-1 text-[11px] font-medium text-[#6B7280]">
+                            <label className="flex flex-col gap-1 text-[11px] font-medium text-[#6B7280] dark:text-white/55">
                               Plan amount
                               <input
                                 type="number"
@@ -1190,11 +1190,11 @@ export default function OwnerAnalyticsPanel({
                                 min="0"
                                 name="planAmount"
                                 defaultValue={participant.planAmount}
-                                className="h-9 rounded-md border border-[#D0D5DD] bg-white px-2 text-[12px] text-[#111827] outline-none focus:border-[var(--brand-500)]"
+                                className="h-9 rounded-md border border-[#D0D5DD] bg-white dark:bg-white/[0.03] px-2 text-[12px] text-[#111827] outline-none focus:border-[var(--brand-500)]"
                               />
                             </label>
 
-                            <label className="flex flex-col gap-1 text-[11px] font-medium text-[#6B7280]">
+                            <label className="flex flex-col gap-1 text-[11px] font-medium text-[#6B7280] dark:text-white/55">
                               Plan orders
                               <input
                                 type="number"
@@ -1202,7 +1202,7 @@ export default function OwnerAnalyticsPanel({
                                 step="1"
                                 name="planClosedOrders"
                                 defaultValue={participant.planClosedOrders}
-                                className="h-9 rounded-md border border-[#D0D5DD] bg-white px-2 text-[12px] text-[#111827] outline-none focus:border-[var(--brand-500)]"
+                                className="h-9 rounded-md border border-[#D0D5DD] bg-white dark:bg-white/[0.03] px-2 text-[12px] text-[#111827] outline-none focus:border-[var(--brand-500)]"
                               />
                             </label>
 
@@ -1227,25 +1227,25 @@ export default function OwnerAnalyticsPanel({
           <form
             method="get"
             action={businessSlug ? `/b/${businessSlug}/analytics` : "#"}
-            className="grid grid-cols-1 gap-2 rounded-xl border border-[#E5E7EB] bg-[#FCFCFD] p-3 sm:grid-cols-2 xl:grid-cols-[minmax(0,240px)_minmax(0,240px)_auto]"
+            className="grid grid-cols-1 gap-2 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-[#FCFCFD] p-3 sm:grid-cols-2 xl:grid-cols-[minmax(0,240px)_minmax(0,240px)_auto]"
           >
             {phoneRaw ? <input type="hidden" name="u" value={phoneRaw} /> : null}
             <input type="hidden" name="tab" value="sales" />
-            <label className="flex flex-col gap-1 text-[11px] font-medium text-[#6B7280]">
+            <label className="flex flex-col gap-1 text-[11px] font-medium text-[#6B7280] dark:text-white/55">
               Month
               <input
                 type="month"
                 name="smonth"
                 defaultValue={String(salesFilter?.month ?? "").slice(0, 7)}
-                className="h-10 min-w-[220px] rounded-lg border border-[#D0D5DD] bg-white px-3 text-[14px] leading-5 text-[#111827] outline-none focus:border-[var(--brand-500)]"
+                className="h-10 min-w-[220px] rounded-lg border border-[#D0D5DD] bg-white dark:bg-white/[0.03] px-3 text-[14px] leading-5 text-[#111827] outline-none focus:border-[var(--brand-500)]"
               />
             </label>
-            <label className="flex flex-col gap-1 text-[11px] font-medium text-[#6B7280]">
+            <label className="flex flex-col gap-1 text-[11px] font-medium text-[#6B7280] dark:text-white/55">
               Manager
               <select
                 name="smanager"
                 defaultValue={String(salesFilter?.managerId ?? "")}
-                className="h-10 rounded-lg border border-[#D0D5DD] bg-white px-3 text-[14px] leading-5 text-[#111827] outline-none focus:border-[var(--brand-500)]"
+                className="h-10 rounded-lg border border-[#D0D5DD] bg-white dark:bg-white/[0.03] px-3 text-[14px] leading-5 text-[#111827] outline-none focus:border-[var(--brand-500)]"
               >
                 <option value="">All managers</option>
                 {reportManagerOptions.map((manager) => (
@@ -1268,7 +1268,7 @@ export default function OwnerAnalyticsPanel({
                   "inline-flex h-10 items-center justify-center rounded-lg border px-3 text-[13px] font-semibold transition",
                   hasSalesFilter
                     ? "border-[#D0D5DD] text-[#374151] hover:bg-[#F9FAFB]"
-                    : "pointer-events-none border-[#EAECF0] text-[#98A2B3]",
+                    : "pointer-events-none border-[#EAECF0] text-[#98A2B3] dark:text-white/45",
                 ].join(" ")}
                 aria-disabled={!hasSalesFilter}
               >
@@ -1283,7 +1283,7 @@ export default function OwnerAnalyticsPanel({
                 <LineChart className="icon-button text-[var(--brand-600)]" strokeWidth={2} />
                 Sales Plan vs Fact
               </div>
-              <div className="text-xs text-[#6B7280]">
+              <div className="text-xs text-[#6B7280] dark:text-white/55">
                 Month: {data.sales.start_date} to {data.sales.end_date} • Day {data.sales.days_elapsed} of {data.sales.days_total}
               </div>
             </div>
@@ -1294,7 +1294,7 @@ export default function OwnerAnalyticsPanel({
                   ? "border-[#A6F4C5] bg-[#ECFDF3] text-[#067647]"
                   : data.sales.achievement_pct >= 70
                     ? "border-[#FEDF89] bg-[#FFFAEB] text-[#B54708]"
-                    : "border-[#FECACA] bg-[#FEF2F2] text-[#B42318]",
+                    : "border-[#FECACA] bg-[#FEF2F2] dark:bg-rose-500/10 text-[#B42318]",
               ].join(" ")}
             >
               {formatPercent(data.sales.achievement_pct)} achieved
@@ -1302,44 +1302,44 @@ export default function OwnerAnalyticsPanel({
           </div>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <article className="rounded-xl border border-[#E5E7EB] bg-white p-3">
-              <div className="text-xs font-medium text-[#6B7280]">Plan Amount</div>
+            <article className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3">
+              <div className="text-xs font-medium text-[#6B7280] dark:text-white/55">Plan Amount</div>
               <div className="mt-1 text-2xl font-semibold text-[#111827]">
                 {formatCurrency(data.sales.team_plan_amount)}
               </div>
             </article>
-            <article className="rounded-xl border border-[#E5E7EB] bg-white p-3">
-              <div className="text-xs font-medium text-[#6B7280]">Actual Closed</div>
+            <article className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3">
+              <div className="text-xs font-medium text-[#6B7280] dark:text-white/55">Actual Closed</div>
               <div className="mt-1 text-2xl font-semibold text-[#111827]">
                 {formatCurrency(data.sales.team_actual_amount)}
               </div>
             </article>
-            <article className="rounded-xl border border-[#E5E7EB] bg-white p-3">
-              <div className="text-xs font-medium text-[#6B7280]">Forecast (Month)</div>
+            <article className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3">
+              <div className="text-xs font-medium text-[#6B7280] dark:text-white/55">Forecast (Month)</div>
               <div className="mt-1 text-2xl font-semibold text-[#111827]">
                 {formatCurrency(data.sales.team_forecast_amount)}
               </div>
             </article>
-            <article className="rounded-xl border border-[#E5E7EB] bg-white p-3">
-              <div className="text-xs font-medium text-[#6B7280]">Orders (Plan / Fact / Forecast)</div>
+            <article className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3">
+              <div className="text-xs font-medium text-[#6B7280] dark:text-white/55">Orders (Plan / Fact / Forecast)</div>
               <div className="mt-1 text-2xl font-semibold text-[#111827]">
                 {data.sales.team_plan_closed_orders} / {data.sales.team_closed_orders} / {Math.round(data.sales.team_forecast_closed_orders)}
               </div>
             </article>
-            <article className="rounded-xl border border-[#E5E7EB] bg-white p-3">
-              <div className="text-xs font-medium text-[#6B7280]">Avg Deal Size</div>
+            <article className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3">
+              <div className="text-xs font-medium text-[#6B7280] dark:text-white/55">Avg Deal Size</div>
               <div className="mt-1 text-2xl font-semibold text-[#111827]">
                 {formatCurrency(data.sales.avg_deal_size)}
               </div>
             </article>
-            <article className="rounded-xl border border-[#E5E7EB] bg-white p-3">
-              <div className="text-xs font-medium text-[#6B7280]">Current Completion %</div>
+            <article className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3">
+              <div className="text-xs font-medium text-[#6B7280] dark:text-white/55">Current Completion %</div>
               <div className="mt-1 text-2xl font-semibold text-[#111827]">
                 {formatPercent(data.sales.achievement_pct)}
               </div>
             </article>
-            <article className="rounded-xl border border-[#E5E7EB] bg-white p-3">
-              <div className="text-xs font-medium text-[#6B7280]">Forecast Completion %</div>
+            <article className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3">
+              <div className="text-xs font-medium text-[#6B7280] dark:text-white/55">Forecast Completion %</div>
               <div className="mt-1 text-2xl font-semibold text-[#111827]">
                 {formatPercent(data.sales.forecast_achievement_pct)}
               </div>
@@ -1355,18 +1355,18 @@ export default function OwnerAnalyticsPanel({
             </article>
           </div>
 
-          <div className="rounded-xl border border-[#E5E7EB] p-3">
+          <div className="rounded-xl border border-[#E5E7EB] dark:border-white/10 p-3">
             <div className="mb-2 text-sm font-semibold text-[#111827]">
               Sales by Manager
             </div>
             {data.sales.managers.length === 0 ? (
-              <div className="rounded-lg border border-dashed border-[#D0D5DD] p-3 text-xs text-[#6B7280]">
+              <div className="rounded-lg border border-dashed border-[#D0D5DD] p-3 text-xs text-[#6B7280] dark:text-white/55">
                 No sales data in selected period.
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="min-w-full text-left text-xs">
-                  <thead className="bg-[#F9FAFB] text-[#4B5563]">
+                  <thead className="bg-[#F9FAFB] dark:bg-white/[0.04] text-[#4B5563] dark:text-white/70">
                     <tr>
                       <th className="px-2 py-2">Manager</th>
                       <th className="px-2 py-2">Plan</th>
@@ -1413,7 +1413,7 @@ export default function OwnerAnalyticsPanel({
                     {data.sales.managers.map((manager) => (
                       <tr
                         key={`sales-${manager.manager_id}`}
-                        className="border-t border-[#E5E7EB]"
+                        className="border-t border-[#E5E7EB] dark:border-white/10"
                       >
                         <td className="px-2 py-2 font-medium text-[#111827]">
                           {managerLabel(manager.manager_name)}
@@ -1467,12 +1467,12 @@ export default function OwnerAnalyticsPanel({
           </div>
 
           {data.sales.managers.length > 0 ? (
-            <article className="space-y-2 rounded-xl border border-[#E5E7EB] bg-white p-3">
+            <article className="space-y-2 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3">
               <div className="flex items-center justify-between gap-2">
                 <div className="text-sm font-semibold text-[#111827]">
                   Fact Comparison by Manager
                 </div>
-                <div className="text-[11px] text-[#6B7280]">
+                <div className="text-[11px] text-[#6B7280] dark:text-white/55">
                   Bars are normalized by top Fact value.
                 </div>
               </div>
@@ -1490,11 +1490,11 @@ export default function OwnerAnalyticsPanel({
                         <span className="text-[12px] font-medium text-[#111827]">
                           {managerLabel(manager.manager_name)}
                         </span>
-                        <span className="text-[11px] text-[#475467]">
+                        <span className="text-[11px] text-[#475467] dark:text-white/70">
                           Plan {formatCurrency(manager.planned_amount)} • Fact {formatCurrency(manager.actual_amount)} • Fc {formatCurrency(manager.forecast_amount)}
                         </span>
                       </div>
-                      <div className="h-2 rounded-full bg-[#EEF2FF]">
+                      <div className="h-2 rounded-full bg-[#EEF2FF] dark:bg-[var(--brand-600)]/15">
                         <div
                           className="h-2 rounded-full bg-[var(--brand-600)]"
                           style={{ width: `${factWidth}%` }}
@@ -1510,20 +1510,20 @@ export default function OwnerAnalyticsPanel({
       ) : null}
 
       {showProductivity ? (
-        <article className="space-y-3 rounded-xl border border-[#E5E7EB] p-3">
+        <article className="space-y-3 rounded-xl border border-[#E5E7EB] dark:border-white/10 p-3">
           <div className="flex items-center justify-between">
             <div>
               <div className="flex items-center gap-2 text-sm font-semibold text-[#111827]">
                 <BarChart3 className="icon-button text-[var(--brand-600)]" strokeWidth={2} />
                 Productivity Dashboard
               </div>
-              <div className="text-xs text-[#6B7280]">
+              <div className="text-xs text-[#6B7280] dark:text-white/55">
                 Closed orders and follow-ups from {data.productivity.start_date}{" "}
                 to {data.productivity.end_date}
               </div>
             </div>
             {productivityHrefs ? (
-              <div className="inline-flex rounded-lg border border-[#E5E7EB] bg-white p-1">
+              <div className="inline-flex rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-1">
                 {(
                   [
                     { key: "day", label: "Day", href: productivityHrefs.day },
@@ -1546,7 +1546,7 @@ export default function OwnerAnalyticsPanel({
                       "rounded-md px-3 py-1.5 text-[12px] font-semibold transition",
                       data.productivity.period === period.key
                         ? "bg-[var(--brand-600)] text-white"
-                        : "text-[#6B7280] hover:bg-[#F9FAFB] hover:text-[#1F2937]",
+                        : "text-[#6B7280] dark:text-white/55 hover:bg-[#F9FAFB] hover:text-[#1F2937]",
                     ].join(" ")}
                   >
                     {period.label}
@@ -1557,24 +1557,24 @@ export default function OwnerAnalyticsPanel({
           </div>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <article className="rounded-xl border border-[#E5E7EB] p-3">
-              <div className="text-xs font-medium text-[#6B7280]">
+            <article className="rounded-xl border border-[#E5E7EB] dark:border-white/10 p-3">
+              <div className="text-xs font-medium text-[#6B7280] dark:text-white/55">
                 Team Closed Orders
               </div>
               <div className="mt-1 text-2xl font-semibold text-[#111827]">
                 {data.productivity.team_closed_orders}
               </div>
             </article>
-            <article className="rounded-xl border border-[#E5E7EB] p-3">
-              <div className="text-xs font-medium text-[#6B7280]">
+            <article className="rounded-xl border border-[#E5E7EB] dark:border-white/10 p-3">
+              <div className="text-xs font-medium text-[#6B7280] dark:text-white/55">
                 Team Closed Follow-ups
               </div>
               <div className="mt-1 text-2xl font-semibold text-[#111827]">
                 {data.productivity.team_closed_followups}
               </div>
             </article>
-            <article className="rounded-xl border border-[#E5E7EB] p-3">
-              <div className="text-xs font-medium text-[#6B7280]">
+            <article className="rounded-xl border border-[#E5E7EB] dark:border-white/10 p-3">
+              <div className="text-xs font-medium text-[#6B7280] dark:text-white/55">
                 Total Closed
               </div>
               <div className="mt-1 text-2xl font-semibold text-[#111827]">
@@ -1583,7 +1583,7 @@ export default function OwnerAnalyticsPanel({
             </article>
           </div>
 
-          <div className="rounded-xl border border-[#E5E7EB] p-3">
+          <div className="rounded-xl border border-[#E5E7EB] dark:border-white/10 p-3">
             <div className="mb-2 text-sm font-semibold text-[#111827]">
               By Manager
             </div>
@@ -1597,13 +1597,13 @@ export default function OwnerAnalyticsPanel({
                 return (
                   <div
                     key={manager.manager_id}
-                    className="rounded-lg border border-[#E5E7EB] p-2"
+                    className="rounded-lg border border-[#E5E7EB] dark:border-white/10 p-2"
                   >
                     <div className="flex items-center justify-between text-xs">
                       <span className="font-medium text-[#111827]">
                         {managerLabel(manager.manager_name)}
                       </span>
-                      <span className="text-[#4B5563]">
+                      <span className="text-[#4B5563] dark:text-white/70">
                         Orders {manager.closed_orders} • Follow-ups{" "}
                         {manager.closed_followups} • Total{" "}
                         {manager.total_closed}

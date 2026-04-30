@@ -34,7 +34,7 @@ export default async function NewBusinessSupportRequestPage({
   const adminHref = isAdminEmail(context.user.email) ? getAdminUsersPath() : undefined;
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-transparent text-slate-900">
+    <div className="min-h-screen overflow-x-hidden bg-transparent text-slate-900 dark:text-white">
       <TopBar
         businessSlug={slug}
         role={context.role}

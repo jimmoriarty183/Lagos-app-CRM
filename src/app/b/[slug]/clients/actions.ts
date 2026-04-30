@@ -290,6 +290,57 @@ export async function saveClientProfileData(input: {
   revalidatePath(`${baseClientsPath}/${access.clientId}`);
 }
 
+export async function saveClientAccessNotes(input: {
+  clientId: string;
+  businessSlug: string;
+  gateCode?: string | null;
+  keyLocation?: string | null;
+  pets?: string | null;
+  parking?: string | null;
+  alarmCode?: string | null;
+  instructions?: string | null;
+}) {
+  const access = await requireClientManagerAccess(input.clientId);
+
+  const { data: existing, error: readError } = await access.admin
+    .from("clients")
+    .select("metadata")
+    .eq("id", access.clientId)
+    .maybeSingle();
+  if (readError) throw new Error(readError.message);
+
+  const currentMetadata =
+    (existing?.metadata as Record<string, unknown> | null | undefined) ?? {};
+
+  const accessNotes = {
+    gate_code: cleanText(input.gateCode) || null,
+    key_location: cleanText(input.keyLocation) || null,
+    pets: cleanText(input.pets) || null,
+    parking: cleanText(input.parking) || null,
+    alarm_code: cleanText(input.alarmCode) || null,
+    instructions: cleanText(input.instructions) || null,
+  };
+
+  const allEmpty = Object.values(accessNotes).every((value) => value === null);
+
+  const nextMetadata: Record<string, unknown> = { ...currentMetadata };
+  if (allEmpty) {
+    delete nextMetadata.access_notes;
+  } else {
+    nextMetadata.access_notes = accessNotes;
+  }
+
+  const { error: updateError } = await access.admin
+    .from("clients")
+    .update({ metadata: nextMetadata })
+    .eq("id", access.clientId);
+  if (updateError) throw new Error(updateError.message);
+
+  const baseClientsPath = `/b/${input.businessSlug}/clients`;
+  revalidatePath(baseClientsPath);
+  revalidatePath(`${baseClientsPath}/${access.clientId}`);
+}
+
 export async function saveClientContact(input: {
   clientId: string;
   businessSlug: string;

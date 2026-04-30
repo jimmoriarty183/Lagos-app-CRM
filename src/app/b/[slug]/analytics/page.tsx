@@ -1194,7 +1194,7 @@ export default async function OwnerAnalyticsPage({
       <div className="space-y-4">
         {renderClientPeriodControls()}
         <div className="grid gap-3 md:grid-cols-4">
-          <div className="rounded-xl border border-[#E5E7EB] bg-white p-4">
+          <div className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4">
             <div className="text-xs font-medium text-[#667085]">
               Managers with clients
             </div>
@@ -1202,7 +1202,7 @@ export default async function OwnerAnalyticsPage({
               {managersWithClients}
             </div>
           </div>
-          <div className="rounded-xl border border-[#E5E7EB] bg-white p-4">
+          <div className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4">
             <div className="text-xs font-medium text-[#667085]">
               Total assigned clients
             </div>
@@ -1210,13 +1210,13 @@ export default async function OwnerAnalyticsPage({
               {totalClientsCount}
             </div>
           </div>
-          <div className="rounded-xl border border-[#E5E7EB] bg-white p-4">
+          <div className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4">
             <div className="text-xs font-medium text-[#667085]">Turnover</div>
             <div className="mt-1 text-xl font-semibold text-[#111827]">
               {formatMoney(totalClientTurnover)}
             </div>
           </div>
-          <div className="rounded-xl border border-[#E5E7EB] bg-white p-4">
+          <div className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4">
             <div className="text-xs font-medium text-[#667085]">
               Average order value
             </div>
@@ -1225,10 +1225,10 @@ export default async function OwnerAnalyticsPage({
             </div>
           </div>
         </div>
-        <div className="overflow-hidden rounded-xl border border-[#E5E7EB] bg-white">
+        <div className="overflow-hidden rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03]">
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
-              <thead className="bg-[#F9FAFB] text-left text-xs font-semibold uppercase tracking-wide text-[#667085]">
+              <thead className="bg-[#F9FAFB] dark:bg-white/[0.04] text-left text-xs font-semibold uppercase tracking-wide text-[#667085]">
                 <tr>
                   <th className="px-4 py-3">Manager</th>
                   <th className="px-4 py-3">Clients</th>
@@ -1253,7 +1253,7 @@ export default async function OwnerAnalyticsPage({
                   managersSorted.map((entry) => (
                     <tr
                       key={entry.managerId}
-                      className="border-t border-[#E5E7EB]"
+                      className="border-t border-[#E5E7EB] dark:border-white/10"
                     >
                       <td className="px-4 py-3 font-medium text-[#111827]">
                         {entry.managerName}
@@ -1295,7 +1295,7 @@ export default async function OwnerAnalyticsPage({
       <div className="space-y-4">
         {renderClientPeriodControls()}
         <div className="grid gap-3 md:grid-cols-5">
-          <div className="rounded-xl border border-[#E5E7EB] bg-white p-4">
+          <div className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4">
             <div className="text-xs font-medium text-[#667085]">
               Total clients
             </div>
@@ -1303,25 +1303,25 @@ export default async function OwnerAnalyticsPage({
               {totalClientsCount}
             </div>
           </div>
-          <div className="rounded-xl border border-[#E5E7EB] bg-white p-4">
+          <div className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4">
             <div className="text-xs font-medium text-[#667085]">Individual</div>
             <div className="mt-1 text-xl font-semibold text-[#111827]">
               {totalIndividualCount}
             </div>
           </div>
-          <div className="rounded-xl border border-[#E5E7EB] bg-white p-4">
+          <div className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4">
             <div className="text-xs font-medium text-[#667085]">Company</div>
             <div className="mt-1 text-xl font-semibold text-[#111827]">
               {totalCompanyCount}
             </div>
           </div>
-          <div className="rounded-xl border border-[#E5E7EB] bg-white p-4">
+          <div className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4">
             <div className="text-xs font-medium text-[#667085]">Turnover</div>
             <div className="mt-1 text-xl font-semibold text-[#111827]">
               {formatMoney(totalClientTurnover)}
             </div>
           </div>
-          <div className="rounded-xl border border-[#E5E7EB] bg-white p-4">
+          <div className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4">
             <div className="text-xs font-medium text-[#667085]">
               Average order value
             </div>
@@ -1332,17 +1332,17 @@ export default async function OwnerAnalyticsPage({
         </div>
 
         <div className="grid gap-3 lg:grid-cols-2">
-          <div className="rounded-xl border border-[#E5E7EB] bg-white p-4">
+          <div className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4">
             <h3 className="text-sm font-semibold text-[#111827]">
               Client type distribution
             </h3>
             <div className="mt-3 space-y-2 text-sm">
               <div>
-                <div className="mb-1 flex items-center justify-between text-[#475467]">
+                <div className="mb-1 flex items-center justify-between text-[#475467] dark:text-white/70">
                   <span>Individual</span>
                   <span>{totalIndividualCount}</span>
                 </div>
-                <div className="h-2 rounded-full bg-[#EEF2FF]">
+                <div className="h-2 rounded-full bg-[#EEF2FF] dark:bg-[var(--brand-600)]/15">
                   <div
                     className="h-2 rounded-full bg-[var(--brand-600)]"
                     style={{
@@ -1352,11 +1352,11 @@ export default async function OwnerAnalyticsPage({
                 </div>
               </div>
               <div>
-                <div className="mb-1 flex items-center justify-between text-[#475467]">
+                <div className="mb-1 flex items-center justify-between text-[#475467] dark:text-white/70">
                   <span>Company</span>
                   <span>{totalCompanyCount}</span>
                 </div>
-                <div className="h-2 rounded-full bg-[#EEF2FF]">
+                <div className="h-2 rounded-full bg-[#EEF2FF] dark:bg-[var(--brand-600)]/15">
                   <div
                     className="h-2 rounded-full bg-[#7C8BEF]"
                     style={{
@@ -1367,7 +1367,7 @@ export default async function OwnerAnalyticsPage({
               </div>
             </div>
           </div>
-          <div className="rounded-xl border border-[#E5E7EB] bg-white p-4">
+          <div className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4">
             <h3 className="text-sm font-semibold text-[#111827]">
               Top clients by turnover
             </h3>
@@ -1400,10 +1400,10 @@ export default async function OwnerAnalyticsPage({
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-xl border border-[#E5E7EB] bg-white">
+        <div className="overflow-hidden rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03]">
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
-              <thead className="bg-[#F9FAFB] text-left text-xs font-semibold uppercase tracking-wide text-[#667085]">
+              <thead className="bg-[#F9FAFB] dark:bg-white/[0.04] text-left text-xs font-semibold uppercase tracking-wide text-[#667085]">
                 <tr>
                   <th className="px-4 py-3">Client</th>
                   <th className="px-4 py-3">Type</th>
@@ -1418,7 +1418,7 @@ export default async function OwnerAnalyticsPage({
                 {[...clientMetrics]
                   .sort((a, b) => b.turnover - a.turnover)
                   .map((entry) => (
-                    <tr key={entry.id} className="border-t border-[#E5E7EB]">
+                    <tr key={entry.id} className="border-t border-[#E5E7EB] dark:border-white/10">
                       <td className="px-4 py-3 font-medium text-[#111827]">
                         {entry.displayName}
                       </td>
@@ -1476,13 +1476,13 @@ export default async function OwnerAnalyticsPage({
         ? "bg-[#ECFDF3] text-[#067647]"
         : abc === "B"
           ? "bg-[#FEF7CD] text-[#854A0E]"
-          : "bg-[#FEF2F2] text-[#B42318]";
+          : "bg-[#FEF2F2] dark:bg-rose-500/10 text-[#B42318]";
     const typeLabel = (type: ProductMetric["type"]) =>
       type === "PRODUCT" ? "Product" : type === "SERVICE" ? "Service" : "Custom";
 
     return (
       <div className="space-y-4">
-        <details className="group rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] p-4">
+        <details className="group rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] p-4">
           <summary className="flex cursor-pointer items-center justify-between text-sm font-semibold text-[#111827]">
             <span>About this report</span>
             <span className="text-xs font-normal text-[#667085] group-open:hidden">
@@ -1492,7 +1492,7 @@ export default async function OwnerAnalyticsPage({
               click to collapse
             </span>
           </summary>
-          <div className="mt-3 space-y-2 text-sm leading-relaxed text-[#475467]">
+          <div className="mt-3 space-y-2 text-sm leading-relaxed text-[#475467] dark:text-white/70">
             <p>
               <strong className="text-[#111827]">What you see here:</strong>{" "}
               every product and service sold in the selected period — how many
@@ -1543,7 +1543,7 @@ export default async function OwnerAnalyticsPage({
         />
 
         <div className="grid gap-3 md:grid-cols-4">
-          <div className="rounded-xl border border-[#E5E7EB] bg-white p-4">
+          <div className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4">
             <div className="text-xs font-medium text-[#667085]">
               SKUs / services sold
             </div>
@@ -1554,7 +1554,7 @@ export default async function OwnerAnalyticsPage({
               {productOnly.length} products · {serviceOnly.length} services
             </div>
           </div>
-          <div className="rounded-xl border border-[#E5E7EB] bg-white p-4">
+          <div className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4">
             <div className="text-xs font-medium text-[#667085]">Units sold</div>
             <div className="mt-1 text-xl font-semibold text-[#111827]">
               {productsTotalUnits.toLocaleString("en-GB", {
@@ -1565,14 +1565,14 @@ export default async function OwnerAnalyticsPage({
               {productsTotalOrders} orders
             </div>
           </div>
-          <div className="rounded-xl border border-[#E5E7EB] bg-white p-4">
+          <div className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4">
             <div className="text-xs font-medium text-[#667085]">Revenue</div>
             <div className="mt-1 text-xl font-semibold text-[#111827]">
               {formatMoney(productsTotalRevenue)}
             </div>
             <div className="mt-1 text-xs text-[#667085]">net of tax</div>
           </div>
-          <div className="rounded-xl border border-[#E5E7EB] bg-white p-4">
+          <div className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4">
             <div className="text-xs font-medium text-[#667085]">
               Avg unit price
             </div>
@@ -1583,14 +1583,14 @@ export default async function OwnerAnalyticsPage({
         </div>
 
         {productMetricsWithAbc.length === 0 ? (
-          <div className="rounded-xl border border-[#E5E7EB] bg-white p-6 text-sm text-[#475467]">
+          <div className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-6 text-sm text-[#475467] dark:text-white/70">
             No itemized order lines for the selected period. Older orders that
             were created without line items won&apos;t appear here — only orders
             with products or services will be counted.
           </div>
         ) : (
           <>
-            <div className="rounded-xl border border-[#E5E7EB] bg-white p-4">
+            <div className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4">
               <h3 className="text-sm font-semibold text-[#111827]">
                 Top items by revenue
               </h3>
@@ -1639,10 +1639,10 @@ export default async function OwnerAnalyticsPage({
               </div>
             </div>
 
-            <div className="overflow-hidden rounded-xl border border-[#E5E7EB] bg-white">
+            <div className="overflow-hidden rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03]">
               <div className="overflow-x-auto">
                 <table className="min-w-full text-sm">
-                  <thead className="bg-[#F9FAFB] text-left text-xs font-semibold uppercase tracking-wide text-[#667085]">
+                  <thead className="bg-[#F9FAFB] dark:bg-white/[0.04] text-left text-xs font-semibold uppercase tracking-wide text-[#667085]">
                     <tr>
                       <th className="px-4 py-3">Item</th>
                       <th className="px-4 py-3">Type</th>
@@ -1657,7 +1657,7 @@ export default async function OwnerAnalyticsPage({
                   </thead>
                   <tbody>
                     {productMetricsWithAbc.map((entry) => (
-                      <tr key={entry.key} className="border-t border-[#E5E7EB]">
+                      <tr key={entry.key} className="border-t border-[#E5E7EB] dark:border-white/10">
                         <td className="px-4 py-3 font-medium text-[#111827]">
                           {entry.name}
                         </td>
@@ -1707,14 +1707,14 @@ export default async function OwnerAnalyticsPage({
     if (!hasForecastAccess) {
       return (
         <div className="space-y-4">
-          <div className="rounded-xl border border-[#E5E7EB] bg-white p-6">
+          <div className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-6">
             <div className="text-xs font-semibold uppercase tracking-wide text-[#7C3AED]">
               Business plan feature
             </div>
             <h3 className="mt-2 text-lg font-semibold text-[#111827]">
               Sales forecast is part of the Business plan
             </h3>
-            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[#475467]">
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[#475467] dark:text-white/70">
               Forecasting predicts how much each product or service will sell in
               the next 30 days, calculates a reorder point for stock-managed
               items, and shows an 8-week sales sparkline next to every row. It
@@ -1753,8 +1753,8 @@ export default async function OwnerAnalyticsPage({
         : c === "medium"
           ? "bg-[#FEF7CD] text-[#854A0E]"
           : c === "low"
-            ? "bg-[#FEF2F2] text-[#B42318]"
-            : "bg-[#F2F4F7] text-[#475467]";
+            ? "bg-[#FEF2F2] dark:bg-rose-500/10 text-[#B42318]"
+            : "bg-[#F2F4F7] text-[#475467] dark:text-white/70";
     const methodLabel = (m: ForecastResult["method"]) =>
       m === "moving_average_4w"
         ? "4-week avg"
@@ -1801,7 +1801,7 @@ export default async function OwnerAnalyticsPage({
 
     return (
       <div className="space-y-4">
-        <details className="group rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] p-4">
+        <details className="group rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] p-4">
           <summary className="flex cursor-pointer items-center justify-between text-sm font-semibold text-[#111827]">
             <span>About this forecast</span>
             <span className="text-xs font-normal text-[#667085] group-open:hidden">
@@ -1811,7 +1811,7 @@ export default async function OwnerAnalyticsPage({
               click to collapse
             </span>
           </summary>
-          <div className="mt-3 space-y-2 text-sm leading-relaxed text-[#475467]">
+          <div className="mt-3 space-y-2 text-sm leading-relaxed text-[#475467] dark:text-white/70">
             <p>
               <strong className="text-[#111827]">What you see here:</strong>{" "}
               for each item you sell, an estimate of how many units and how
@@ -1855,7 +1855,7 @@ export default async function OwnerAnalyticsPage({
         </details>
 
         <div className="grid gap-3 md:grid-cols-4">
-          <div className="rounded-xl border border-[#E5E7EB] bg-white p-4">
+          <div className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4">
             <div className="text-xs font-medium text-[#667085]">
               Forecast revenue (next 30 days)
             </div>
@@ -1864,7 +1864,7 @@ export default async function OwnerAnalyticsPage({
             </div>
             <div className="mt-1 text-xs text-[#667085]">across all items</div>
           </div>
-          <div className="rounded-xl border border-[#E5E7EB] bg-white p-4">
+          <div className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4">
             <div className="text-xs font-medium text-[#667085]">
               Forecast units (next 30 days)
             </div>
@@ -1874,7 +1874,7 @@ export default async function OwnerAnalyticsPage({
               })}
             </div>
           </div>
-          <div className="rounded-xl border border-[#E5E7EB] bg-white p-4">
+          <div className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4">
             <div className="text-xs font-medium text-[#667085]">
               Items with signal
             </div>
@@ -1885,7 +1885,7 @@ export default async function OwnerAnalyticsPage({
               {totals.itemsByConfidence.high} high · {totals.itemsByConfidence.medium} medium · {totals.itemsByConfidence.low} low
             </div>
           </div>
-          <div className="rounded-xl border border-[#E5E7EB] bg-white p-4">
+          <div className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4">
             <div className="text-xs font-medium text-[#667085]">
               Lookback window
             </div>
@@ -1899,16 +1899,16 @@ export default async function OwnerAnalyticsPage({
         </div>
 
         {forecastResults.length === 0 ? (
-          <div className="rounded-xl border border-[#E5E7EB] bg-white p-6 text-sm text-[#475467]">
+          <div className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-6 text-sm text-[#475467] dark:text-white/70">
             Not enough order history yet. Forecasts start showing up once you
             have at least a couple of orders with line items in the last 90
             days. Older orders without itemized lines aren&apos;t counted.
           </div>
         ) : (
-          <div className="overflow-hidden rounded-xl border border-[#E5E7EB] bg-white">
+          <div className="overflow-hidden rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03]">
             <div className="overflow-x-auto">
               <table className="min-w-full text-sm">
-                <thead className="bg-[#F9FAFB] text-left text-xs font-semibold uppercase tracking-wide text-[#667085]">
+                <thead className="bg-[#F9FAFB] dark:bg-white/[0.04] text-left text-xs font-semibold uppercase tracking-wide text-[#667085]">
                   <tr>
                     <th className="px-4 py-3">Item</th>
                     <th className="px-4 py-3">Type</th>
@@ -1923,7 +1923,7 @@ export default async function OwnerAnalyticsPage({
                 </thead>
                 <tbody>
                   {top.map((row) => (
-                    <tr key={row.itemKey} className="border-t border-[#E5E7EB]">
+                    <tr key={row.itemKey} className="border-t border-[#E5E7EB] dark:border-white/10">
                       <td className="px-4 py-3 font-medium text-[#111827]">
                         {row.itemName}
                       </td>
@@ -1946,7 +1946,7 @@ export default async function OwnerAnalyticsPage({
                       <td className="px-4 py-3 font-semibold text-[#111827]">
                         {formatMoney(row.forecastRevenueNext30d)}
                       </td>
-                      <td className="px-4 py-3 text-[#475467]">
+                      <td className="px-4 py-3 text-[#475467] dark:text-white/70">
                         {methodLabel(row.method)}
                       </td>
                       <td className="px-4 py-3">
@@ -1967,7 +1967,7 @@ export default async function OwnerAnalyticsPage({
               </table>
             </div>
             {forecastResults.length > top.length ? (
-              <div className="border-t border-[#E5E7EB] px-4 py-3 text-xs text-[#667085]">
+              <div className="border-t border-[#E5E7EB] dark:border-white/10 px-4 py-3 text-xs text-[#667085]">
                 Showing top {top.length} of {forecastResults.length} items by
                 forecast revenue.
               </div>
@@ -1979,7 +1979,7 @@ export default async function OwnerAnalyticsPage({
   };
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-transparent text-slate-900">
+    <div className="min-h-screen overflow-x-hidden bg-transparent text-slate-900 dark:text-white">
       <TopBar
         businessSlug={slug}
         role={role}
@@ -2034,7 +2034,7 @@ export default async function OwnerAnalyticsPage({
           </div>
 
           <div className="min-w-0 space-y-4 pl-2">
-            <div className="inline-flex rounded-lg border border-[#E5E7EB] bg-white p-1">
+            <div className="inline-flex rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-1">
               {ANALYTICS_TABS.map((tab) => (
                 <a
                   key={tab.key}
@@ -2043,7 +2043,7 @@ export default async function OwnerAnalyticsPage({
                     "rounded-md px-3 py-1.5 text-[12px] font-semibold transition",
                     analyticsView === tab.key
                       ? "bg-[var(--brand-600)] text-white"
-                      : "text-[#6B7280] hover:bg-[#F9FAFB] hover:text-[#1F2937]",
+                      : "text-[#6B7280] dark:text-white/55 hover:bg-[#F9FAFB] hover:text-[#1F2937]",
                   ].join(" ")}
                 >
                   {tab.label}
@@ -2123,7 +2123,7 @@ export default async function OwnerAnalyticsPage({
 
         <div className="space-y-4 lg:hidden">
           <div className="-mx-1 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <div className="inline-flex min-w-max rounded-lg border border-[#E5E7EB] bg-white p-1">
+            <div className="inline-flex min-w-max rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-1">
               {ANALYTICS_TABS.map((tab) => (
                 <a
                   key={tab.key}
@@ -2132,7 +2132,7 @@ export default async function OwnerAnalyticsPage({
                     "shrink-0 whitespace-nowrap rounded-md px-3 py-1.5 text-[12px] font-semibold transition",
                     analyticsView === tab.key
                       ? "bg-[var(--brand-600)] text-white"
-                      : "text-[#6B7280] hover:bg-[#F9FAFB] hover:text-[#1F2937]",
+                      : "text-[#6B7280] dark:text-white/55 hover:bg-[#F9FAFB] hover:text-[#1F2937]",
                   ].join(" ")}
                 >
                   {tab.label}

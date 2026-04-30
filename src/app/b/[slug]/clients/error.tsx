@@ -40,7 +40,7 @@ export default function ClientsPageError({ error, reset }: ClientsPageErrorProps
   return (
     <main className="mx-auto flex min-h-screen max-w-[1220px] items-center px-4 py-20 sm:px-6">
       <EmptyState
-        className="w-full rounded-[24px] border border-[#E5E7EB] bg-white p-8 shadow-[0_1px_2px_rgba(16,24,40,0.04)]"
+        className="w-full rounded-[24px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-8 shadow-[0_1px_2px_rgba(16,24,40,0.04)]"
         icon={<AlertIcon />}
         title="No clients created yet"
         description="There are no clients in this workspace yet. Create your first order to add one."

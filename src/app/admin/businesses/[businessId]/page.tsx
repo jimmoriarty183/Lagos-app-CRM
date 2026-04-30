@@ -29,7 +29,7 @@ export default async function AdminBusinessDetailPage({
       title={business.slug || business.name || business.id}
       description="Детальный профиль бизнеса: владелец, участники, приглашения, заказы и недавняя активность."
       actions={
-        <Link href="/admin/businesses" className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:text-slate-900">
+        <Link href="/admin/businesses" className="rounded-xl border border-slate-300 dark:border-white/15 bg-white dark:bg-white/[0.03] px-3 py-2 text-sm font-medium text-slate-700 dark:text-white/80 transition hover:border-slate-400 hover:text-slate-900">
           Назад к списку
         </Link>
       }

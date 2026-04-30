@@ -95,7 +95,7 @@ function Pill({
         ? "border-amber-100 bg-amber-50 text-amber-700"
         : tone === "red"
           ? "border-red-200 bg-red-50 text-red-700"
-          : "border-slate-200 bg-slate-50 text-slate-700";
+          : "border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] text-slate-700 dark:text-white/80";
 
   return (
     <span
@@ -118,7 +118,7 @@ function Section({
   return (
     <section className="min-w-0 max-w-full space-y-2.5 sm:space-y-2">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="product-section-title text-slate-700">
+        <h2 className="product-section-title text-slate-700 dark:text-white/80">
           {title}
           {typeof count === "number" ? ` (${count})` : ""}
         </h2>
@@ -149,7 +149,7 @@ function RowShell({
         "flex w-full min-w-0 max-w-full flex-col gap-2 rounded-xl border p-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)] sm:flex-row sm:items-center sm:justify-between sm:px-4 sm:py-2.5",
         tone === "owner"
           ? "border-blue-100 bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_100%)]"
-          : "border-slate-200 bg-white",
+          : "border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03]",
       ].join(" ")}
     >
       <div className="flex min-w-0 max-w-full items-start gap-3 sm:items-center">
@@ -158,7 +158,7 @@ function RowShell({
             "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border sm:h-10 sm:w-10",
             tone === "owner"
               ? "border-blue-100 bg-blue-50 text-blue-700"
-              : "border-slate-200 bg-slate-50 text-slate-600",
+              : "border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] text-slate-600 dark:text-white/70",
           ].join(" ")}
         >
           {icon}
@@ -166,13 +166,13 @@ function RowShell({
 
         <div className="min-w-0 max-w-full flex-1">
           <div className="flex min-w-0 flex-col items-start gap-1.5 sm:flex-row sm:flex-wrap sm:items-center sm:gap-1.5">
-            <div className="min-w-0 break-words text-[14px] font-semibold leading-5 text-slate-900 sm:text-[14px]">
+            <div className="min-w-0 break-words text-[14px] font-semibold leading-5 text-slate-900 dark:text-white sm:text-[14px]">
               {primary}
             </div>
             {meta ? <div className="flex flex-wrap items-center gap-2">{meta}</div> : null}
           </div>
           {secondary ? (
-            <div className="mt-0.5 min-w-0 break-words text-[12px] leading-5 text-slate-500">
+            <div className="mt-0.5 min-w-0 break-words text-[12px] leading-5 text-slate-500 dark:text-white/55">
               {secondary}
             </div>
           ) : null}
@@ -446,7 +446,7 @@ export default function BusinessPeoplePanel({
           />
           <Link
             href={href}
-            className="block rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-900 hover:bg-slate-50"
+            className="block rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 py-3 text-sm font-semibold text-slate-900 dark:text-white hover:bg-slate-50"
           >
             Manage access →
           </Link>
@@ -470,7 +470,7 @@ export default function BusinessPeoplePanel({
         />
         <Link
           href={href}
-          className="block rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-900 hover:bg-slate-50"
+          className="block rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 py-3 text-sm font-semibold text-slate-900 dark:text-white hover:bg-slate-50"
         >
           Manage access →
         </Link>
@@ -570,7 +570,7 @@ export default function BusinessPeoplePanel({
                       <button
                         type="button"
                         onClick={() => setManagerToRemove(manager)}
-                        className="inline-flex h-9 min-w-[104px] items-center justify-center rounded-xl border border-slate-200 px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 hover:text-slate-900 sm:h-8 sm:min-w-0 sm:rounded-lg sm:px-3 sm:text-xs sm:text-slate-600"
+                        className="inline-flex h-9 min-w-[104px] items-center justify-center rounded-xl border border-slate-200 dark:border-white/10 px-4 text-sm font-semibold text-slate-700 dark:text-white/80 transition hover:bg-slate-50 hover:text-slate-900 sm:h-8 sm:min-w-0 sm:rounded-lg sm:px-3 sm:text-xs sm:text-slate-600"
                       >
                         Remove
                       </button>
@@ -585,7 +585,7 @@ export default function BusinessPeoplePanel({
             <button
               type="button"
               onClick={() => setShowAllManagers((prev) => !prev)}
-              className="inline-flex w-full items-center justify-center rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 hover:text-slate-900 sm:w-auto sm:justify-start sm:border-0 sm:px-0 sm:py-0"
+              className="inline-flex w-full items-center justify-center rounded-xl border border-slate-200 dark:border-white/10 px-4 py-3 text-sm font-semibold text-slate-700 dark:text-white/80 transition hover:bg-slate-50 hover:text-slate-900 sm:w-auto sm:justify-start sm:border-0 sm:px-0 sm:py-0"
             >
               {showAllManagers ? "Show fewer managers" : "Show all managers"}
             </button>
@@ -617,7 +617,7 @@ export default function BusinessPeoplePanel({
                   secondary={
                     <span className="inline-flex items-center gap-2">
                       <span>Pending</span>
-                      <span className="text-slate-300">•</span>
+                      <span className="text-slate-300 dark:text-white/30">•</span>
                       <span>{formatRelativeTime(invite.created_at)}</span>
                     </span>
                   }
@@ -627,7 +627,7 @@ export default function BusinessPeoplePanel({
                         <button
                           type="button"
                           onClick={() => setInviteToRevoke(invite)}
-                          className="inline-flex h-9 min-w-[104px] items-center justify-center rounded-xl border border-slate-200 px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 hover:text-slate-900 sm:h-8 sm:min-w-0 sm:rounded-lg sm:px-3 sm:text-xs sm:text-slate-600"
+                          className="inline-flex h-9 min-w-[104px] items-center justify-center rounded-xl border border-slate-200 dark:border-white/10 px-4 text-sm font-semibold text-slate-700 dark:text-white/80 transition hover:bg-slate-50 hover:text-slate-900 sm:h-8 sm:min-w-0 sm:rounded-lg sm:px-3 sm:text-xs sm:text-slate-600"
                         >
                           Revoke
                         </button>
@@ -646,12 +646,12 @@ export default function BusinessPeoplePanel({
           if (!open && !actionLoading) setManagerToRemove(null);
         }}
       >
-        <AlertDialogContent className="rounded-[24px] border-slate-200 bg-white p-6 shadow-[0_24px_64px_rgba(15,23,42,0.18)] sm:max-w-md">
+        <AlertDialogContent className="rounded-[24px] border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] p-6 shadow-[0_24px_64px_rgba(15,23,42,0.18)] sm:max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle className="product-page-title text-slate-900">
+            <AlertDialogTitle className="product-page-title text-slate-900 dark:text-white">
               Remove manager?
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-sm leading-6 text-slate-500">
+            <AlertDialogDescription className="text-sm leading-6 text-slate-500 dark:text-white/55">
               {managerToRemove
                 ? `${getUserDisplay({
                     full_name: managerToRemove.full_name,
@@ -667,7 +667,7 @@ export default function BusinessPeoplePanel({
           <AlertDialogFooter>
             <AlertDialogCancel
               disabled={actionLoading}
-              className="rounded-xl border-slate-200 text-slate-700 shadow-none"
+              className="rounded-xl border-slate-200 dark:border-white/10 text-slate-700 dark:text-white/80 shadow-none"
             >
               Cancel
             </AlertDialogCancel>
@@ -692,12 +692,12 @@ export default function BusinessPeoplePanel({
           if (!open && !actionLoading) setInviteToRevoke(null);
         }}
       >
-        <AlertDialogContent className="rounded-[24px] border-slate-200 bg-white p-6 shadow-[0_24px_64px_rgba(15,23,42,0.18)] sm:max-w-md">
+        <AlertDialogContent className="rounded-[24px] border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] p-6 shadow-[0_24px_64px_rgba(15,23,42,0.18)] sm:max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle className="product-page-title text-slate-900">
+            <AlertDialogTitle className="product-page-title text-slate-900 dark:text-white">
               Revoke invite?
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-sm leading-6 text-slate-500">
+            <AlertDialogDescription className="text-sm leading-6 text-slate-500 dark:text-white/55">
               {inviteToRevoke
                 ? `Pending invite for ${inviteToRevoke.email} will be revoked.`
                 : "This pending invite will be revoked."}
@@ -706,7 +706,7 @@ export default function BusinessPeoplePanel({
           <AlertDialogFooter>
             <AlertDialogCancel
               disabled={actionLoading}
-              className="rounded-xl border-slate-200 text-slate-700 shadow-none"
+              className="rounded-xl border-slate-200 dark:border-white/10 text-slate-700 dark:text-white/80 shadow-none"
             >
               Cancel
             </AlertDialogCancel>

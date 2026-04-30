@@ -86,7 +86,7 @@ export default function DataMenu({
         <button
           type="button"
           onClick={() => setOpen((prev) => !prev)}
-          className="inline-flex h-10 items-center gap-2 rounded-xl border border-[var(--brand-200)] bg-white px-4 text-sm font-medium text-[var(--brand-700)] transition hover:border-[#A5B4FC] hover:bg-[var(--brand-50)]"
+          className="inline-flex h-10 items-center gap-2 rounded-xl border border-[var(--brand-200)] bg-white dark:bg-white/[0.03] px-4 text-sm font-medium text-[var(--brand-700)] transition hover:border-[#A5B4FC] hover:bg-[var(--brand-50)]"
         >
           <Download className="h-4 w-4" />
           Data
@@ -94,69 +94,69 @@ export default function DataMenu({
         </button>
 
         {open ? (
-          <div className="absolute right-0 z-30 mt-1 w-[260px] overflow-hidden rounded-2xl border border-[#E5E7EB] bg-white shadow-[0_12px_32px_rgba(15,23,42,0.10)]">
-            <div className="border-b border-[#F3F4F6] px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]">
+          <div className="absolute right-0 z-30 mt-1 w-[260px] overflow-hidden rounded-2xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] shadow-[0_12px_32px_rgba(15,23,42,0.10)]">
+            <div className="border-b border-[#F3F4F6] px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF] dark:text-white/40">
               Export {type}
             </div>
             <button
               type="button"
               onClick={() => onExport("xlsx")}
-              className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm font-semibold text-[#1F2937] hover:bg-[#F9FAFB]"
+              className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm font-semibold text-[#1F2937] dark:text-white/90 hover:bg-[#F9FAFB]"
             >
               <span className="inline-flex items-center gap-2">
                 <FileDown className="h-3.5 w-3.5 text-[#4F46E5]" />
                 Excel (.xlsx)
               </span>
-              {!canExport ? <span className="text-[10px] uppercase tracking-wide text-[#9CA3AF]">Pro</span> : null}
+              {!canExport ? <span className="text-[10px] uppercase tracking-wide text-[#9CA3AF] dark:text-white/40">Pro</span> : null}
             </button>
             <button
               type="button"
               onClick={() => onExport("csv")}
-              className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm font-semibold text-[#1F2937] hover:bg-[#F9FAFB]"
+              className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm font-semibold text-[#1F2937] dark:text-white/90 hover:bg-[#F9FAFB]"
             >
               <span className="inline-flex items-center gap-2">
                 <FileDown className="h-3.5 w-3.5 text-[#4F46E5]" />
                 CSV (.csv)
               </span>
-              {!canExport ? <span className="text-[10px] uppercase tracking-wide text-[#9CA3AF]">Pro</span> : null}
+              {!canExport ? <span className="text-[10px] uppercase tracking-wide text-[#9CA3AF] dark:text-white/40">Pro</span> : null}
             </button>
 
-            <div className="border-t border-[#F3F4F6] px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]">
+            <div className="border-t border-[#F3F4F6] px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF] dark:text-white/40">
               Template (free)
             </div>
             <button
               type="button"
               onClick={() => onTemplate("xlsx")}
-              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-semibold text-[#1F2937] hover:bg-[#F9FAFB]"
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-semibold text-[#1F2937] dark:text-white/90 hover:bg-[#F9FAFB]"
             >
-              <FileDown className="h-3.5 w-3.5 text-[#9CA3AF]" />
+              <FileDown className="h-3.5 w-3.5 text-[#9CA3AF] dark:text-white/40" />
               Download Excel template
             </button>
             <button
               type="button"
               onClick={() => onTemplate("csv")}
-              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-semibold text-[#1F2937] hover:bg-[#F9FAFB]"
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-semibold text-[#1F2937] dark:text-white/90 hover:bg-[#F9FAFB]"
             >
-              <FileDown className="h-3.5 w-3.5 text-[#9CA3AF]" />
+              <FileDown className="h-3.5 w-3.5 text-[#9CA3AF] dark:text-white/40" />
               Download CSV template
             </button>
 
             {type !== "orders" ? (
               <>
-                <div className="border-t border-[#F3F4F6] px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]">
+                <div className="border-t border-[#F3F4F6] px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF] dark:text-white/40">
                   Import {type}
                 </div>
                 <button
                   type="button"
                   onClick={onImport}
-                  className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm font-semibold text-[#1F2937] hover:bg-[#F9FAFB]"
+                  className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm font-semibold text-[#1F2937] dark:text-white/90 hover:bg-[#F9FAFB]"
                 >
                   <span className="inline-flex items-center gap-2">
                     <FileUp className="h-3.5 w-3.5 text-[#10B981]" />
                     Upload CSV / Excel
                   </span>
                   {importDisabledReason ? (
-                    <span className="text-[10px] uppercase tracking-wide text-[#9CA3AF]">Business</span>
+                    <span className="text-[10px] uppercase tracking-wide text-[#9CA3AF] dark:text-white/40">Business</span>
                   ) : null}
                 </button>
               </>
@@ -258,16 +258,16 @@ function ImportModal({
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-auto bg-black/30 p-4 pt-16" onClick={onClose}>
       <div
-        className="w-full max-w-[480px] rounded-2xl border border-[#E5E7EB] bg-white p-4 shadow-xl"
+        className="w-full max-w-[480px] rounded-2xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4 shadow-xl"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-[#111827]">Import {type}</h2>
-          <button type="button" onClick={onClose} className="rounded-full p-1.5 text-[#6B7280] hover:bg-[#F3F4F6]">
+          <button type="button" onClick={onClose} className="rounded-full p-1.5 text-[#6B7280] dark:text-white/55 hover:bg-[#F3F4F6]">
             <X className="h-4 w-4" />
           </button>
         </div>
-        <p className="mt-1 text-[13px] leading-5 text-[#6B7280]">
+        <p className="mt-1 text-[13px] leading-5 text-[#6B7280] dark:text-white/55">
           Upload a CSV or Excel file matching the Ordo template. Use the
           <strong> Download template</strong> option in the Data menu first if
           you&apos;re unsure of the format.
@@ -287,7 +287,7 @@ function ImportModal({
         </div>
 
         {error ? (
-          <div className="mt-3 rounded-xl border border-[#FECACA] bg-[#FEF2F2] p-2.5 text-[13px] leading-5 text-[#991B1B]">
+          <div className="mt-3 rounded-xl border border-[#FECACA] bg-[#FEF2F2] dark:bg-rose-500/10 p-2.5 text-[13px] leading-5 text-[#991B1B]">
             {error}
           </div>
         ) : null}
@@ -299,7 +299,7 @@ function ImportModal({
               <div className="mt-1 text-[#92400E]">{result.skipped} rows skipped.</div>
             ) : null}
             {result.errors.length > 0 ? (
-              <details className="mt-2 text-xs text-[#1F2937]">
+              <details className="mt-2 text-xs text-[#1F2937] dark:text-white/90">
                 <summary className="cursor-pointer font-semibold">{result.errors.length} errors</summary>
                 <ul className="mt-1 max-h-[120px] list-disc overflow-auto pl-5">
                   {result.errors.slice(0, 50).map((er, i) => (
@@ -325,7 +325,7 @@ function ImportModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-full border border-[#E5E7EB] bg-white px-3 py-1.5 text-xs font-semibold text-[#374151] hover:bg-[#FCFCFD]"
+                className="rounded-full border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-1.5 text-xs font-semibold text-[#374151] hover:bg-[#FCFCFD]"
               >
                 Cancel
               </button>
@@ -359,18 +359,18 @@ function PaywallModal({
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-auto bg-black/30 p-4 pt-16" onClick={onClose}>
       <div
-        className="w-full max-w-[420px] rounded-2xl border border-[#E5E7EB] bg-white p-4 shadow-xl"
+        className="w-full max-w-[420px] rounded-2xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4 shadow-xl"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-[#111827]">
             {isImport ? "Upgrade to Business" : "Upgrade to Pro"}
           </h2>
-          <button type="button" onClick={onClose} className="rounded-full p-1.5 text-[#6B7280] hover:bg-[#F3F4F6]">
+          <button type="button" onClick={onClose} className="rounded-full p-1.5 text-[#6B7280] dark:text-white/55 hover:bg-[#F3F4F6]">
             <X className="h-4 w-4" />
           </button>
         </div>
-        <p className="mt-2 text-[13px] leading-5 text-[#6B7280]">
+        <p className="mt-2 text-[13px] leading-5 text-[#6B7280] dark:text-white/55">
           {isImport
             ? "Importing CSV / Excel files requires the Business plan."
             : "Exporting your data to CSV / Excel requires the Pro plan or higher."}
@@ -379,7 +379,7 @@ function PaywallModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full border border-[#E5E7EB] bg-white px-3 py-1.5 text-xs font-semibold text-[#374151] hover:bg-[#FCFCFD]"
+            className="rounded-full border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-1.5 text-xs font-semibold text-[#374151] hover:bg-[#FCFCFD]"
           >
             Not now
           </button>

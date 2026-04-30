@@ -3,18 +3,18 @@ import { formatSupportDate } from "@/lib/support/utils";
 
 export function SupportAssignmentsPanel({ items }: { items: SupportAssignmentRecord[] }) {
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-      <h3 className="text-sm font-semibold text-slate-900">Assignments</h3>
+    <section className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] p-4 shadow-sm">
+      <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Assignments</h3>
       {items.length === 0 ? (
-        <p className="mt-2 text-sm text-slate-500">No assignment history.</p>
+        <p className="mt-2 text-sm text-slate-500 dark:text-white/55">No assignment history.</p>
       ) : (
         <div className="mt-3 space-y-2">
           {items.map((item) => (
-            <div key={item.id} className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-              <p className="text-sm text-slate-800">
+            <div key={item.id} className="rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] px-3 py-2">
+              <p className="text-sm text-slate-800 dark:text-white/90">
                 Assigned to <span className="font-medium">{item.assignedToLabel || item.assignedToUserId || "Unassigned"}</span>
               </p>
-              <div className="mt-1 text-xs text-slate-500">
+              <div className="mt-1 text-xs text-slate-500 dark:text-white/55">
                 {formatSupportDate(item.createdAt)}
                 {item.assignedByLabel ? ` • by ${item.assignedByLabel}` : ""}
               </div>

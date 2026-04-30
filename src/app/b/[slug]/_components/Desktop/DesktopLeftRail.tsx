@@ -134,10 +134,10 @@ function RailLink({
       ? "min-h-12 w-full items-start justify-start gap-2.5 rounded-xl px-3 py-2.5"
       : "h-12 w-full items-center justify-center rounded-xl",
     active
-      ? "border-[#D7DEFA] bg-[#F5F7FF] text-[#334155] shadow-[0_4px_12px_rgba(99,102,241,0.08)]"
+      ? "border-[#D7DEFA] bg-[#F5F7FF] text-[#334155] dark:text-white/80 shadow-[0_4px_12px_rgba(99,102,241,0.08)]"
       : disabled
-        ? "cursor-not-allowed border-[#E5E7EB] bg-[#F9FAFB] text-[#9CA3AF] opacity-90"
-        : "cursor-pointer border-[#E5E7EB] bg-white text-[#6B7280] hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937] hover:shadow-[0_10px_24px_rgba(15,23,42,0.08)]",
+        ? "cursor-not-allowed border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] text-[#9CA3AF] dark:text-white/40 opacity-90"
+        : "cursor-pointer border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#6B7280] dark:text-white/55 hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937] hover:shadow-[0_10px_24px_rgba(15,23,42,0.08)]",
     className ?? "",
   ].join(" ");
 
@@ -149,7 +149,7 @@ function RailLink({
           active
             ? "bg-[var(--brand-600)] p-2 text-white shadow-[0_4px_12px_rgba(91,91,179,0.22)]"
             : disabled
-              ? "bg-white/70 p-2 text-[#9CA3AF]"
+              ? "bg-white/70 dark:bg-white/[0.05] p-2 text-[#9CA3AF] dark:text-white/40"
               : "bg-[var(--brand-50)] p-2 text-[var(--brand-600)] group-hover:bg-[var(--brand-100)] group-hover:text-[var(--brand-700)]",
         ].join(" ")}
       >
@@ -172,9 +172,9 @@ function RailLink({
               className={[
                 "block text-[13px] font-semibold leading-5 transition-colors",
                 active
-                  ? "text-[#334155]"
+                  ? "text-[#334155] dark:text-white/80"
                   : disabled
-                    ? "text-[#9CA3AF]"
+                    ? "text-[#9CA3AF] dark:text-white/40"
                     : "text-[#374151] group-hover:text-[var(--brand-700)]",
               ].join(" ")}
             >
@@ -186,12 +186,12 @@ function RailLink({
               </span>
             ) : null}
             {active ? (
-              <span className="inline-flex items-center rounded-full border border-[var(--brand-200)] bg-white px-2 py-0.5 text-[10px] font-semibold text-[var(--brand-600)]">
+              <span className="inline-flex items-center rounded-full border border-[var(--brand-200)] bg-white dark:bg-white/[0.03] px-2 py-0.5 text-[10px] font-semibold text-[var(--brand-600)]">
                 Active
               </span>
             ) : null}
             {disabled ? (
-              <span className="inline-flex items-center rounded-full border border-[#E5E7EB] bg-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[#9CA3AF]">
+              <span className="inline-flex items-center rounded-full border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[#9CA3AF] dark:text-white/40">
                 Soon
               </span>
             ) : null}
@@ -201,10 +201,10 @@ function RailLink({
               className={[
                 "mt-0.5 block text-[11px] font-medium leading-4",
                 active
-                  ? "text-[#4B5563]"
+                  ? "text-[#4B5563] dark:text-white/70"
                   : disabled
-                    ? "text-[#9CA3AF]"
-                    : "text-[#9CA3AF]",
+                    ? "text-[#9CA3AF] dark:text-white/40"
+                    : "text-[#9CA3AF] dark:text-white/40",
               ].join(" ")}
             >
               {description}
@@ -216,7 +216,7 @@ function RailLink({
           <span className="sr-only">{label}</span>
           <span
             className={[
-              "pointer-events-none absolute top-1/2 z-[80] hidden -translate-y-1/2 whitespace-nowrap rounded-xl border bg-white px-2.5 py-1.5 text-xs font-medium shadow-sm transition-colors",
+              "pointer-events-none absolute top-1/2 z-[80] hidden -translate-y-1/2 whitespace-nowrap rounded-xl border bg-white dark:bg-white/[0.03] px-2.5 py-1.5 text-xs font-medium shadow-sm transition-colors",
               tooltipSide === "left"
                 ? "right-[calc(100%+10px)]"
                 : "left-[calc(100%+10px)]",
@@ -224,8 +224,8 @@ function RailLink({
               active
                 ? "border-[var(--brand-200)] text-[var(--brand-600)]"
                 : disabled
-                  ? "border-[#E5E7EB] text-[#9CA3AF]"
-                  : "border-[#E5E7EB] text-[#374151] group-hover:border-[var(--brand-200)] group-hover:bg-[var(--brand-50)] group-hover:text-[var(--brand-700)]",
+                  ? "border-[#E5E7EB] dark:border-white/10 text-[#9CA3AF] dark:text-white/40"
+                  : "border-[#E5E7EB] dark:border-white/10 text-[#374151] group-hover:border-[var(--brand-200)] group-hover:bg-[var(--brand-50)] group-hover:text-[var(--brand-700)]",
             ].join(" ")}
           >
             {label}
@@ -421,7 +421,7 @@ export default function DesktopLeftRail({
               type="button"
               onClick={openCollapsedRail}
               aria-label="Open rail menu"
-              className="fixed left-0 z-50 inline-flex h-[84px] w-7 flex-col items-center justify-center gap-1 rounded-r-xl border border-[#E5E7EB] border-l-0 bg-white/96 text-[#374151] shadow-[0_10px_28px_rgba(15,23,42,0.10)] backdrop-blur transition hover:bg-white hover:text-[#1F2937]"
+              className="fixed left-0 z-50 inline-flex h-[84px] w-7 flex-col items-center justify-center gap-1 rounded-r-xl border border-[#E5E7EB] dark:border-white/10 border-l-0 bg-white/96 text-[#374151] shadow-[0_10px_28px_rgba(15,23,42,0.10)] backdrop-blur transition hover:bg-white hover:text-[#1F2937]"
               style={{ top: topOffset }}
             >
               <ChevronsRight className="h-3.5 w-3.5 shrink-0" />
@@ -435,7 +435,7 @@ export default function DesktopLeftRail({
           ) : (
             <div
               className={[
-                "max-h-[calc(100vh-100px)] rounded-[18px] border border-[#E5E7EB] bg-[#F9FAFB]/96 p-1 shadow-[0_10px_34px_rgba(15,23,42,0.06)] backdrop-blur transition-all",
+                "max-h-[calc(100vh-100px)] rounded-[18px] border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB]/96 p-1 shadow-[0_10px_34px_rgba(15,23,42,0.06)] backdrop-blur transition-all",
                 expanded
                   ? "overflow-x-hidden overflow-y-auto overscroll-contain"
                   : "overflow-visible",
@@ -448,7 +448,7 @@ export default function DesktopLeftRail({
                   <button
                     type="button"
                     onClick={closeCollapsedRail}
-                    className="col-span-2 inline-flex h-9 w-full items-center justify-center rounded-xl border border-[#E5E7EB] bg-white text-[#6B7280] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]"
+                    className="col-span-2 inline-flex h-9 w-full items-center justify-center rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#6B7280] dark:text-white/55 transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]"
                     aria-label="Hide rail menu"
                     title="Hide menu"
                   >
@@ -460,7 +460,7 @@ export default function DesktopLeftRail({
                   <button
                     type="button"
                     onClick={toggleExpanded}
-                    className="col-span-2 inline-flex h-9 w-full items-center justify-center rounded-xl border border-[#E5E7EB] bg-white text-[#6B7280] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]"
+                    className="col-span-2 inline-flex h-9 w-full items-center justify-center rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#6B7280] dark:text-white/55 transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]"
                     aria-label="Open full menu"
                     title="Open full menu"
                   >

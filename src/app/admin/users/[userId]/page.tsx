@@ -31,7 +31,7 @@ export default async function AdminUserDetailPage({
       title={user.fullName || user.email || user.id}
       description="Детальный профиль пользователя: основная информация, привязки к бизнесам, приглашения и последняя активность."
       actions={
-        <Link href="/admin/users" className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:text-slate-900">
+        <Link href="/admin/users" className="rounded-xl border border-slate-300 dark:border-white/15 bg-white dark:bg-white/[0.03] px-3 py-2 text-sm font-medium text-slate-700 dark:text-white/80 transition hover:border-slate-400 hover:text-slate-900">
           Назад к списку
         </Link>
       }
@@ -61,7 +61,7 @@ export default async function AdminUserDetailPage({
             <AdminBadge label={user.hasSignIn ? "HAS_SIGN_IN" : "NEVER_SIGNED_IN"} />
             <AdminBadge label={user.hasBusiness ? "HAS_BUSINESS" : "NO_BUSINESS"} />
             {user.primaryRole === "OWNER"
-              ? user.ownerPlans.map((plan) => <AdminBadge key={`${user.id}-${plan}`} label={plan} tone="bg-slate-100 text-slate-700" />)
+              ? user.ownerPlans.map((plan) => <AdminBadge key={`${user.id}-${plan}`} label={plan} tone="bg-slate-100 dark:bg-white/[0.06] text-slate-700 dark:text-white/80" />)
               : null}
           </div>
         </AdminSectionCard>
@@ -104,7 +104,7 @@ export default async function AdminUserDetailPage({
         </AdminSectionCard>
 
         <AdminSectionCard title="Ограничения">
-          <div className="space-y-2 text-sm text-slate-600">
+          <div className="space-y-2 text-sm text-slate-600 dark:text-white/70">
             <p>Детали собраны из пользователей авторизации, профиля, привязок к бизнесам, приглашений и заказов.</p>
             <p>Полного audit trail по IP, device и числу входов пока нет.</p>
             <p>Безопасные admin actions лучше добавлять позже через отдельный ACL и audit log.</p>

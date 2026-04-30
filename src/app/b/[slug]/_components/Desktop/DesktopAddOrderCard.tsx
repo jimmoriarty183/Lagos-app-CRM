@@ -12,7 +12,7 @@ export default function DesktopAddOrderCard({ businessId, businessSlug }: Props)
   const [open, setOpen] = useState(false);
 
   return (
-    <section className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+    <section className="bg-white dark:bg-white/[0.03] rounded-xl border border-gray-200 dark:border-white/10 shadow-sm p-4">
       {/* Header */}
       <div className="flex items-center justify-between gap-3">
         <button
@@ -24,10 +24,10 @@ export default function DesktopAddOrderCard({ businessId, businessSlug }: Props)
             +
           </span>
           <div>
-            <div className="text-base font-semibold text-gray-900">
+            <div className="text-base font-semibold text-gray-900 dark:text-white">
               Add order
             </div>
-            <div className="text-xs text-gray-500">
+            <div className="text-xs text-gray-500 dark:text-white/55">
               {open ? "Click to hide" : "Click to open"}
             </div>
           </div>
@@ -37,7 +37,7 @@ export default function DesktopAddOrderCard({ businessId, businessSlug }: Props)
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
-          className="h-9 px-3 rounded-lg border border-gray-200 bg-white text-sm font-semibold text-gray-900 hover:bg-gray-50 transition-colors"
+          className="h-9 px-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-white/[0.03] text-sm font-semibold text-gray-900 dark:text-white hover:bg-gray-50 transition-colors"
         >
           {open ? "Hide" : "Open"}
         </button>

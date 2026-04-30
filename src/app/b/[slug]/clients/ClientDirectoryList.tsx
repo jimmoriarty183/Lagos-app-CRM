@@ -355,10 +355,10 @@ export function ClientDirectoryList({
   return (
     <>
       {!mobileOnly ? (
-        <div className="overflow-hidden rounded-[24px] border border-[#E5E7EB] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+        <div className="overflow-hidden rounded-[24px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-[#E5E7EB]">
-              <thead className="bg-[#F9FAFB]">
+              <thead className="bg-[#F9FAFB] dark:bg-white/[0.04]">
                 <tr>
                   <HeaderCell>Client</HeaderCell>
                   <HeaderCell>Type</HeaderCell>
@@ -371,12 +371,12 @@ export function ClientDirectoryList({
                   <HeaderCell />
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#E5E7EB] bg-white">
+              <tbody className="divide-y divide-[#E5E7EB] bg-white dark:bg-white/[0.03]">
                 {normalizedRows.length === 0 ? (
                   <tr>
                     <td
                       colSpan={9}
-                      className="px-4 py-10 text-center text-sm text-slate-500"
+                      className="px-4 py-10 text-center text-sm text-slate-500 dark:text-white/55"
                     >
                       {emptyStateText}
                     </td>
@@ -385,10 +385,10 @@ export function ClientDirectoryList({
                   normalizedRows.map((row) => (
                     <tr key={row.id} className="hover:bg-[#FAFBFF]">
                       <Cell>
-                        <div className="font-semibold text-slate-900">
+                        <div className="font-semibold text-slate-900 dark:text-white">
                           {row.resolved_name}
                         </div>
-                        <div className="mt-1 text-xs text-slate-500">
+                        <div className="mt-1 text-xs text-slate-500 dark:text-white/55">
                           {row.resolved_email ||
                             row.resolved_phone ||
                             row.resolved_postcode ||
@@ -415,7 +415,7 @@ export function ClientDirectoryList({
                           </button>
                           <Link
                             href={`/b/${slug}/clients/${String(row.id)}`}
-                            className="inline-flex h-8 items-center rounded-lg border border-slate-300 bg-white px-2.5 text-xs font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
+                            className="inline-flex h-8 items-center rounded-lg border border-slate-300 dark:border-white/15 bg-white dark:bg-white/[0.03] px-2.5 text-xs font-semibold text-slate-700 dark:text-white/80 transition hover:border-slate-400 hover:text-slate-900"
                           >
                             Open
                           </Link>
@@ -432,18 +432,18 @@ export function ClientDirectoryList({
 
       <div className="space-y-4 lg:hidden">
         {normalizedRows.length === 0 ? (
-          <article className="rounded-[20px] border border-[#E5E7EB] bg-white p-6 text-center shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
-            <p className="text-sm text-slate-500">{emptyStateText}</p>
+          <article className="rounded-[20px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-6 text-center shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+            <p className="text-sm text-slate-500 dark:text-white/55">{emptyStateText}</p>
           </article>
         ) : (
           normalizedRows.map((row) => (
             <article
               key={row.id}
-              className="rounded-[20px] border border-[#E5E7EB] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]"
+              className="rounded-[20px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]"
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <div className="text-sm font-semibold text-slate-900">
+                  <div className="text-sm font-semibold text-slate-900 dark:text-white">
                     {row.resolved_name}
                   </div>
                   <div className="mt-1">
@@ -460,7 +460,7 @@ export function ClientDirectoryList({
                   </button>
                   <Link
                     href={`/b/${slug}/clients/${String(row.id)}`}
-                    className="inline-flex h-8 items-center rounded-lg border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700"
+                    className="inline-flex h-8 items-center rounded-lg border border-slate-300 dark:border-white/15 bg-white dark:bg-white/[0.03] px-3 text-xs font-semibold text-slate-700 dark:text-white/80"
                   >
                     Open
                   </Link>
@@ -481,11 +481,11 @@ export function ClientDirectoryList({
         )}
       </div>
 
-      <div className="mt-4 rounded-[20px] border border-[#E5E7EB] bg-white px-4 py-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+      <div className="mt-4 rounded-[20px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 py-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
         <div className="flex flex-wrap items-center justify-end gap-3">
           <form
             action={`/b/${slug}/clients`}
-            className="flex items-center gap-2 text-xs font-medium text-[#6B7280]"
+            className="flex items-center gap-2 text-xs font-medium text-[#6B7280] dark:text-white/55"
           >
             {phoneRaw ? (
               <input type="hidden" name="u" value={phoneRaw} />
@@ -499,7 +499,7 @@ export function ClientDirectoryList({
               name="perPage"
               defaultValue={String(perPage)}
               onChange={(event) => event.currentTarget.form?.requestSubmit()}
-              className="h-9 min-w-[96px] rounded-xl border border-[#E5E7EB] bg-white pl-3 pr-8 text-sm font-medium text-[#374151] outline-none transition hover:border-[var(--brand-200)] focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
+              className="h-9 min-w-[96px] rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] pl-3 pr-8 text-sm font-medium text-[#374151] outline-none transition hover:border-[var(--brand-200)] focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
             >
               {PAGE_SIZE_OPTIONS.map((option) => (
                 <option key={option} value={option}>
@@ -617,7 +617,7 @@ export function ClientDirectoryList({
             ) : null}
 
             {clientPreview.clientType === "company" ? (
-              <section className="rounded-2xl border border-[#E5E7EB] bg-white p-4">
+              <section className="rounded-2xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4">
                 <div className="text-sm font-semibold text-[#111827]">
                   Key contacts
                 </div>
@@ -630,7 +630,7 @@ export function ClientDirectoryList({
                     {clientPreview.contacts.map((contact) => (
                       <div
                         key={contact.id}
-                        className="rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] p-3"
+                        className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] p-3"
                       >
                         <div className="text-sm font-semibold text-[#111827]">
                           {contact.fullName}
@@ -652,7 +652,7 @@ export function ClientDirectoryList({
               </section>
             ) : null}
 
-            <section className="rounded-2xl border border-[#E5E7EB] bg-white p-4">
+            <section className="rounded-2xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4">
               <div className="text-sm font-semibold text-[#111827]">
                 Recent orders
               </div>
@@ -667,7 +667,7 @@ export function ClientDirectoryList({
                       key={order.id}
                       type="button"
                       onClick={() => setOpenOrderId(String(order.id))}
-                      className="flex w-full items-center justify-between gap-3 rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] px-3 py-2 text-left transition hover:border-[#C7D2FE]"
+                      className="flex w-full items-center justify-between gap-3 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] px-3 py-2 text-left transition hover:border-[#C7D2FE]"
                     >
                       <span className="min-w-0">
                         <span className="block text-sm font-semibold text-[#111827]">
@@ -690,7 +690,7 @@ export function ClientDirectoryList({
             </section>
           </>
         ) : (
-          <div className="rounded-2xl border border-[#E5E7EB] bg-white p-4 text-sm text-[#667085]">
+          <div className="rounded-2xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4 text-sm text-[#667085]">
             {isClientLoading
               ? "Loading client preview…"
               : clientError || "Client preview unavailable"}
@@ -699,7 +699,7 @@ export function ClientDirectoryList({
                 <button
                   type="button"
                   onClick={() => setClientReloadToken((v) => v + 1)}
-                  className="inline-flex h-8 items-center rounded-lg border border-[#E5E7EB] bg-white px-3 text-xs font-semibold text-[#374151] hover:border-[#C7D2FE]"
+                  className="inline-flex h-8 items-center rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-xs font-semibold text-[#374151] hover:border-[#C7D2FE]"
                 >
                   Retry
                 </button>
@@ -764,7 +764,7 @@ export function ClientDirectoryList({
             />
           </>
         ) : (
-          <div className="rounded-2xl border border-[#E5E7EB] bg-white p-4 text-sm text-[#667085]">
+          <div className="rounded-2xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4 text-sm text-[#667085]">
             {isOrderLoading
               ? "Loading order preview…"
               : orderError || "Order preview unavailable"}
@@ -773,7 +773,7 @@ export function ClientDirectoryList({
                 <button
                   type="button"
                   onClick={() => setOrderReloadToken((v) => v + 1)}
-                  className="inline-flex h-8 items-center rounded-lg border border-[#E5E7EB] bg-white px-3 text-xs font-semibold text-[#374151] hover:border-[#C7D2FE]"
+                  className="inline-flex h-8 items-center rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-xs font-semibold text-[#374151] hover:border-[#C7D2FE]"
                 >
                   Retry
                 </button>
@@ -788,29 +788,29 @@ export function ClientDirectoryList({
 
 function HeaderCell({ children }: { children?: React.ReactNode }) {
   return (
-    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
+    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-white/55">
       {children}
     </th>
   );
 }
 
 function Cell({ children }: { children?: React.ReactNode }) {
-  return <td className="px-4 py-3 text-sm text-slate-700">{children}</td>;
+  return <td className="px-4 py-3 text-sm text-slate-700 dark:text-white/80">{children}</td>;
 }
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-slate-50 p-2">
-      <dt className="text-[11px] font-medium text-slate-500">{label}</dt>
-      <dd className="mt-0.5 text-xs font-semibold text-slate-900">{value}</dd>
+    <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] p-2">
+      <dt className="text-[11px] font-medium text-slate-500 dark:text-white/55">{label}</dt>
+      <dd className="mt-0.5 text-xs font-semibold text-slate-900 dark:text-white">{value}</dd>
     </div>
   );
 }
 
 function CardRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-[#E5E7EB] bg-white p-4">
-      <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
+    <div className="rounded-2xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4">
+      <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF] dark:text-white/40">
         {label}
       </div>
       <div className="mt-1 text-sm font-semibold text-[#111827]">{value}</div>

@@ -57,7 +57,6 @@ export default function TopBar({
 
   return (
     <header
-      data-theme="light"
       style={{
         padding: "10px 6px",
         borderBottom: "1px solid var(--neutral-200)",

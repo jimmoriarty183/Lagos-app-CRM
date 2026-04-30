@@ -235,17 +235,17 @@ function isOrderOverdue(
 function KanbanTransitionPlaceholder() {
   return (
     <div className="grid gap-3">
-      <section className="overflow-hidden rounded-[24px] border border-[#E5E7EB] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
-        <div className="rounded-2xl border border-[#E5E7EB] bg-[#F9FAFB] px-4 py-3">
-          <div className="text-sm font-semibold text-[#1F2937]">
+      <section className="overflow-hidden rounded-[24px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+        <div className="rounded-2xl border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] px-4 py-3">
+          <div className="text-sm font-semibold text-[#1F2937] dark:text-white/90">
             Подготавливаю контент
           </div>
-          <div className="mt-1 text-xs text-[#6B7280]">
+          <div className="mt-1 text-xs text-[#6B7280] dark:text-white/55">
             Формируем канбан-колонки из уже загруженных данных
           </div>
         </div>
         <div className="mt-3 grid gap-2">
-          <div className="h-10 w-full animate-pulse rounded-full bg-[#EEF2FF]" />
+          <div className="h-10 w-full animate-pulse rounded-full bg-[#EEF2FF] dark:bg-[var(--brand-600)]/15" />
           <div className="h-28 w-full animate-pulse rounded-[20px] bg-[#F3F4F6]" />
           <div className="h-28 w-full animate-pulse rounded-[20px] bg-[#F3F4F6]" />
         </div>
@@ -750,11 +750,11 @@ export default function MobileOrdersList({
 
   return (
     <section className="grid gap-4 lg:hidden">
-      <div className="rounded-[24px] border border-[#E5E7EB] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+      <div className="rounded-[24px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <div className="text-sm font-semibold text-[#1F2937]">Orders</div>
-            <div className="mt-1 text-xs font-medium text-[#9CA3AF]">
+            <div className="text-sm font-semibold text-[#1F2937] dark:text-white/90">Orders</div>
+            <div className="mt-1 text-xs font-medium text-[#9CA3AF] dark:text-white/40">
               {resultsCount} {resultsCount === 1 ? "result" : "results"} В· Page{" "}
               {currentPage} of {totalPages}
             </div>
@@ -771,7 +771,7 @@ export default function MobileOrdersList({
 
         <div className="mt-4 grid gap-3">
           <div className="flex flex-wrap items-center gap-2">
-            <div className="inline-flex flex-1 items-center rounded-xl border border-[#C7D2FE] bg-[#EEF2FF] p-1">
+            <div className="inline-flex flex-1 items-center rounded-xl border border-[#C7D2FE] dark:border-[var(--brand-500)]/40 bg-[#EEF2FF] dark:bg-[var(--brand-600)]/15 p-1">
               <button
                 type="button"
                 onClick={() => {
@@ -780,8 +780,8 @@ export default function MobileOrdersList({
                 className={[
                   "inline-flex h-9 flex-1 items-center justify-center gap-2 rounded-lg text-sm font-medium transition",
                   viewMode === "list"
-                    ? "border border-[var(--brand-200)] bg-white text-[#1F2937] shadow-[0_8px_18px_rgba(91,91,179,0.12)]"
-                    : "border border-transparent text-[#6B7280] hover:text-[#1F2937]",
+                    ? "border border-[var(--brand-200)] bg-white dark:bg-white/[0.03] text-[#1F2937] dark:text-white/90 shadow-[0_8px_18px_rgba(91,91,179,0.12)]"
+                    : "border border-transparent text-[#6B7280] dark:text-white/55 hover:text-[#1F2937]",
                 ].join(" ")}
               >
                 <List className="h-4 w-4" />
@@ -795,8 +795,8 @@ export default function MobileOrdersList({
                 className={[
                   "inline-flex h-9 flex-1 items-center justify-center gap-2 rounded-lg text-sm font-medium transition",
                   viewMode === "kanban"
-                    ? "border border-[var(--brand-200)] bg-white text-[#1F2937] shadow-[0_8px_18px_rgba(91,91,179,0.12)]"
-                    : "border border-transparent text-[#6B7280] hover:text-[#1F2937]",
+                    ? "border border-[var(--brand-200)] bg-white dark:bg-white/[0.03] text-[#1F2937] dark:text-white/90 shadow-[0_8px_18px_rgba(91,91,179,0.12)]"
+                    : "border border-transparent text-[#6B7280] dark:text-white/55 hover:text-[#1F2937]",
                 ].join(" ")}
               >
                 <Columns3 className="h-4 w-4" />
@@ -806,7 +806,7 @@ export default function MobileOrdersList({
             <button
               type="button"
               onClick={openFilters}
-              className="group inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-lg border-2 border-[var(--brand-600)] bg-white px-4 text-sm font-medium text-[var(--brand-600)] transition hover:bg-[var(--brand-600)] hover:text-white"
+              className="group inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-lg border-2 border-[var(--brand-600)] bg-white dark:bg-white/[0.03] px-4 text-sm font-medium text-[var(--brand-600)] transition hover:bg-[var(--brand-600)] hover:text-white"
             >
               <Search className="icon-button" strokeWidth={2} />
               <SlidersHorizontal className="icon-button" strokeWidth={2} />
@@ -814,35 +814,35 @@ export default function MobileOrdersList({
             </button>
           </div>
 
-          <div className="rounded-2xl border border-[#F3F4F6] bg-[#F9FAFB] px-3 py-3">
+          <div className="rounded-2xl border border-[#F3F4F6] bg-[#F9FAFB] dark:bg-white/[0.04] px-3 py-3">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
-                <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF] dark:text-white/40">
                   Current setup
                 </div>
-                <div className="mt-1 truncate text-sm font-semibold text-[#1F2937]">
+                <div className="mt-1 truncate text-sm font-semibold text-[#1F2937] dark:text-white/90">
                   {searchDraft ? `Search: ${searchDraft}` : "No search query"}
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF] dark:text-white/40">
                   Sort
                 </div>
-                <div className="mt-1 text-sm font-semibold text-[#1F2937]">
+                <div className="mt-1 text-sm font-semibold text-[#1F2937] dark:text-white/90">
                   {SORT_OPTIONS.find((option) => option.value === sortValue)
                     ?.label ?? "Default order"}
                 </div>
               </div>
             </div>
             <div className="mt-2 flex flex-wrap gap-2">
-              <span className="inline-flex items-center rounded-full border border-[#E5E7EB] bg-white px-2.5 py-1 text-[11px] font-medium text-[#4B5563]">
+              <span className="inline-flex items-center rounded-full border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-2.5 py-1 text-[11px] font-medium text-[#4B5563] dark:text-white/70">
                 {managerValue === "ALL"
                   ? "All managers"
                   : (managerOptions.find(
                       (option) => option.value === managerValue,
                     )?.label ?? managerValue)}
               </span>
-              <span className="inline-flex items-center rounded-full border border-[#E5E7EB] bg-white px-2.5 py-1 text-[11px] font-medium text-[#4B5563]">
+              <span className="inline-flex items-center rounded-full border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-2.5 py-1 text-[11px] font-medium text-[#4B5563] dark:text-white/70">
                 {statusMode === "all"
                   ? "All statuses"
                   : `${appliedStatuses.length} status filters`}
@@ -852,19 +852,19 @@ export default function MobileOrdersList({
         </div>
 
         {navigationMessage ? (
-          <div className="mt-3 rounded-2xl border border-[#E5E7EB] bg-[#F9FAFB] px-4 py-3 text-sm text-[#4B5563]">
+          <div className="mt-3 rounded-2xl border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] px-4 py-3 text-sm text-[#4B5563] dark:text-white/70">
             {navigationMessage}
           </div>
         ) : null}
 
         {viewMode === "list" ? (
           <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-[#F3F4F6] pt-3">
-            <div className="text-xs font-medium text-[#6B7280]">
+            <div className="text-xs font-medium text-[#6B7280] dark:text-white/55">
               Showing {list.length === 0 ? 0 : (currentPage - 1) * perPage + 1}-
               {(currentPage - 1) * perPage + list.length} of {resultsCount}
             </div>
 
-            <label className="flex items-center gap-2 text-xs font-medium text-[#6B7280]">
+            <label className="flex items-center gap-2 text-xs font-medium text-[#6B7280] dark:text-white/55">
               <span>Per page</span>
               <select
                 value={String(perPage)}
@@ -873,7 +873,7 @@ export default function MobileOrdersList({
                     paginationHref(1, Number(event.currentTarget.value)),
                   );
                 }}
-                className="h-9 rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm font-medium text-[#374151] outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
+                className="h-9 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm font-medium text-[#374151] outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
               >
                 {PAGE_SIZE_OPTIONS.map((option) => (
                   <option key={option} value={option}>
@@ -913,20 +913,20 @@ export default function MobileOrdersList({
                 if (shouldIgnoreOverlayCloseClick()) return;
                 setOpenId(order.id);
               }}
-              className="cursor-pointer rounded-[20px] border border-[#E5E7EB] bg-white px-3 py-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
+              className="cursor-pointer rounded-[20px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0 flex-1">
-                  <div className="text-sm font-semibold text-[#1F2937]">
+                  <div className="text-sm font-semibold text-[#1F2937] dark:text-white/90">
                     {formatDisplayOrderNumber({
                       orderNumber: order.order_number,
                       orderId: order.id,
                     })}
                   </div>
-                  <div className="mt-0.5 truncate text-sm font-semibold text-[#1F2937]">
+                  <div className="mt-0.5 truncate text-sm font-semibold text-[#1F2937] dark:text-white/90">
                     {clientName}
                   </div>
-                  <div className="mt-0.5 text-[11px] font-medium text-[#9CA3AF]">
+                  <div className="mt-0.5 text-[11px] font-medium text-[#9CA3AF] dark:text-white/40">
                     {formatCreatedAt(order.created_at)}
                   </div>
                 </div>
@@ -949,7 +949,7 @@ export default function MobileOrdersList({
                     <DropdownMenuTrigger asChild>
                       <button
                         type="button"
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-[#E5E7EB] bg-white text-[#6B7280] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#6B7280] dark:text-white/55 transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]"
                         aria-label="Open order actions"
                       >
                         <Ellipsis className="h-4 w-4" />
@@ -957,7 +957,7 @@ export default function MobileOrdersList({
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
                       align="end"
-                      className="w-48 rounded-xl border-[#E5E7EB] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
+                      className="w-48 rounded-xl border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
                     >
                       <DropdownMenuItem
                         className="rounded-lg px-3 py-2 text-sm font-medium"
@@ -1004,10 +1004,10 @@ export default function MobileOrdersList({
                 </div>
               </div>
 
-              <div className="mt-2 grid gap-1.5 text-xs text-[#6B7280]">
+              <div className="mt-2 grid gap-1.5 text-xs text-[#6B7280] dark:text-white/55">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
-                    <span className="mr-1.5 font-semibold uppercase tracking-[0.06em] text-[#9CA3AF]">
+                    <span className="mr-1.5 font-semibold uppercase tracking-[0.06em] text-[#9CA3AF] dark:text-white/40">
                       Manager
                     </span>
                     <span className="font-medium text-[#374151]">
@@ -1015,10 +1015,10 @@ export default function MobileOrdersList({
                     </span>
                   </div>
                   <div className="shrink-0 text-right">
-                    <span className="mr-1.5 font-semibold uppercase tracking-[0.06em] text-[#9CA3AF]">
+                    <span className="mr-1.5 font-semibold uppercase tracking-[0.06em] text-[#9CA3AF] dark:text-white/40">
                       Amount
                     </span>
-                    <span className="font-semibold tabular-nums text-[#1F2937]">
+                    <span className="font-semibold tabular-nums text-[#1F2937] dark:text-white/90">
                       {amount}
                     </span>
                   </div>
@@ -1028,10 +1028,10 @@ export default function MobileOrdersList({
                   <div
                     className={[
                       "min-w-0 inline-flex items-center gap-1.5 font-medium",
-                      isOverdue ? "text-[#d92d20]" : "text-[#4B5563]",
+                      isOverdue ? "text-[#d92d20]" : "text-[#4B5563] dark:text-white/70",
                     ].join(" ")}
                   >
-                    <span className="font-semibold uppercase tracking-[0.06em] text-[#9CA3AF]">
+                    <span className="font-semibold uppercase tracking-[0.06em] text-[#9CA3AF] dark:text-white/40">
                       Due
                     </span>
                     {isOverdue ? (
@@ -1039,7 +1039,7 @@ export default function MobileOrdersList({
                     ) : null}
                     <span className="truncate">{dueDate}</span>
                   </div>
-                  <div className="min-w-0 truncate text-right text-[11px] text-[#9CA3AF]">
+                  <div className="min-w-0 truncate text-right text-[11px] text-[#9CA3AF] dark:text-white/40">
                     {clientPhone}
                   </div>
                 </div>
@@ -1053,7 +1053,7 @@ export default function MobileOrdersList({
           const tone = getStatusTone(column.value, customStatuses);
           return (
             <div className="grid gap-3">
-              <section className="overflow-hidden rounded-[24px] border border-[#E5E7EB] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+              <section className="overflow-hidden rounded-[24px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
                 <div className="relative border-b border-[#F3F4F6] px-4 py-3">
                   {kanbanCanScrollLeft ? (
                     <div className="pointer-events-none absolute left-0 top-0 z-[1] h-full w-10 bg-gradient-to-r from-white via-white/80 to-transparent" />
@@ -1064,14 +1064,14 @@ export default function MobileOrdersList({
 
                   <div className="mb-2 flex items-center justify-between gap-3">
                     <div>
-                      <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
+                      <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF] dark:text-white/40">
                         Status lane
                       </div>
-                      <div className="mt-1 text-xs text-[#6B7280]">
+                      <div className="mt-1 text-xs text-[#6B7280] dark:text-white/55">
                         Swipe horizontally to move between statuses
                       </div>
                     </div>
-                    <div className="flex items-center gap-1 text-[#9CA3AF]">
+                    <div className="flex items-center gap-1 text-[#9CA3AF] dark:text-white/40">
                       <ChevronLeft
                         className={`h-4 w-4 ${kanbanCanScrollLeft ? "opacity-100" : "opacity-30"}`}
                       />
@@ -1103,8 +1103,8 @@ export default function MobileOrdersList({
                             className={[
                               "inline-flex min-h-10 items-center gap-2 rounded-full border px-3 py-2 text-sm font-semibold transition",
                               isSelected
-                                ? "border-transparent text-[#1F2937]"
-                                : "border-[#E5E7EB] bg-white text-[#6B7280]",
+                                ? "border-transparent text-[#1F2937] dark:text-white/90"
+                                : "border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#6B7280] dark:text-white/55",
                             ].join(" ")}
                             style={
                               isSelected
@@ -1117,7 +1117,7 @@ export default function MobileOrdersList({
                               style={{ background: tabTone.dot }}
                             />
                             <span>{statusColumn.label}</span>
-                            <span className="rounded-full bg-white/80 px-1.5 py-0.5 text-[11px] font-semibold text-[#4B5563]">
+                            <span className="rounded-full bg-white/80 dark:bg-white/[0.05] px-1.5 py-0.5 text-[11px] font-semibold text-[#4B5563] dark:text-white/70">
                               {visibleCount}
                             </span>
                           </button>
@@ -1141,11 +1141,11 @@ export default function MobileOrdersList({
                           className="h-3 w-3 shrink-0 rounded-full"
                           style={{ background: tone.dot }}
                         />
-                        <div className="truncate text-sm font-semibold text-[#1F2937]">
+                        <div className="truncate text-sm font-semibold text-[#1F2937] dark:text-white/90">
                           {column.label}
                         </div>
                       </div>
-                      <div className="mt-1 text-xs font-medium text-[#6B7280]">
+                      <div className="mt-1 text-xs font-medium text-[#6B7280] dark:text-white/55">
                         {column.orders.length}{" "}
                         {column.orders.length === 1 ? "order" : "orders"}
                       </div>
@@ -1181,17 +1181,17 @@ export default function MobileOrdersList({
                             if (shouldIgnoreOverlayCloseClick()) return;
                             setOpenId(order.id);
                           }}
-                          className="cursor-pointer rounded-[20px] border border-transparent bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]"
+                          className="cursor-pointer rounded-[20px] border border-transparent bg-white dark:bg-white/[0.03] p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]"
                         >
                           <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0">
-                              <div className="text-sm font-semibold text-[#1F2937]">
+                              <div className="text-sm font-semibold text-[#1F2937] dark:text-white/90">
                                 {formatDisplayOrderNumber({
                                   orderNumber: order.order_number,
                                   orderId: order.id,
                                 })}
                               </div>
-                              <div className="mt-1 text-xs font-medium text-[#9CA3AF]">
+                              <div className="mt-1 text-xs font-medium text-[#9CA3AF] dark:text-white/40">
                                 {formatCreatedAt(order.created_at)}
                               </div>
                             </div>
@@ -1214,7 +1214,7 @@ export default function MobileOrdersList({
                                 <DropdownMenuTrigger asChild>
                                   <button
                                     type="button"
-                                    className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#E5E7EB] bg-white text-[#6B7280] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]"
+                                    className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#6B7280] dark:text-white/55 transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]"
                                     aria-label="Open order actions"
                                   >
                                     <Ellipsis className="h-4 w-4" />
@@ -1222,7 +1222,7 @@ export default function MobileOrdersList({
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent
                                   align="end"
-                                  className="w-48 rounded-xl border-[#E5E7EB] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
+                                  className="w-48 rounded-xl border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
                                 >
                                   <DropdownMenuItem
                                     className="rounded-lg px-3 py-2 text-sm font-medium"
@@ -1274,10 +1274,10 @@ export default function MobileOrdersList({
 
                           <div className="mt-4 grid gap-3">
                             <div className="min-w-0">
-                              <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
+                              <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF] dark:text-white/40">
                                 Client
                               </div>
-                              <div className="mt-1 text-sm font-semibold text-[#1F2937]">
+                              <div className="mt-1 text-sm font-semibold text-[#1F2937] dark:text-white/90">
                                 {order.client_full_name?.trim() ||
                                   order.client_name?.trim() ||
                                   "No client name"}
@@ -1285,7 +1285,7 @@ export default function MobileOrdersList({
                             </div>
                             <div className="grid grid-cols-2 gap-3">
                               <div>
-                                <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
+                                <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF] dark:text-white/40">
                                   Manager
                                 </div>
                                 <div className="mt-1 text-sm font-medium text-[#374151]">
@@ -1297,15 +1297,15 @@ export default function MobileOrdersList({
                                 </div>
                               </div>
                               <div>
-                                <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
+                                <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF] dark:text-white/40">
                                   Amount
                                 </div>
-                                <div className="mt-1 text-sm font-semibold tabular-nums text-[#1F2937]">
+                                <div className="mt-1 text-sm font-semibold tabular-nums text-[#1F2937] dark:text-white/90">
                                   {fmtAmount(Number(order.amount))}
                                 </div>
                               </div>
                             </div>
-                            <div className="inline-flex items-center gap-2 text-sm font-medium text-[#4B5563]">
+                            <div className="inline-flex items-center gap-2 text-sm font-medium text-[#4B5563] dark:text-white/70">
                               {isOverdue ? (
                                 <AlertTriangle className="h-4 w-4 text-[#d92d20]" />
                               ) : null}
@@ -1318,7 +1318,7 @@ export default function MobileOrdersList({
                   </div>
                 ) : (
                   <div className="p-4">
-                    <div className="rounded-[20px] border border-dashed border-[#E5E7EB] bg-[#F9FAFB] px-4 py-5 text-center text-sm text-[#9CA3AF]">
+                    <div className="rounded-[20px] border border-dashed border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] px-4 py-5 text-center text-sm text-[#9CA3AF] dark:text-white/40">
                       No deals in this status yet
                     </div>
                   </div>
@@ -1328,13 +1328,13 @@ export default function MobileOrdersList({
           );
         })()
       ) : (
-        <div className="rounded-[24px] border border-[#E5E7EB] bg-white p-6 text-center text-sm text-[#9CA3AF] shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+        <div className="rounded-[24px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-6 text-center text-sm text-[#9CA3AF] dark:text-white/40 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
           No workflow statuses available
         </div>
       )}
 
       {list.length === 0 ? (
-        <div className="rounded-[24px] border border-[#E5E7EB] bg-white p-6 text-center text-sm text-[#9CA3AF] shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+        <div className="rounded-[24px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-6 text-center text-sm text-[#9CA3AF] dark:text-white/40 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
           {isPending
             ? "Updating orders..."
             : "No deals yet. Add your first one to start building the workflow."}
@@ -1342,7 +1342,7 @@ export default function MobileOrdersList({
       ) : null}
 
       {totalPages > 1 ? (
-        <div className="rounded-[24px] border border-[#E5E7EB] bg-white px-4 py-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+        <div className="rounded-[24px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 py-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
           <Pagination>
             <PaginationContent>
               <PaginationItem>
@@ -1411,12 +1411,12 @@ export default function MobileOrdersList({
           if (!open && !deletingId) setConfirmDeleteId(null);
         }}
       >
-        <AlertDialogContent className="rounded-[24px] border-slate-200 bg-white p-6 shadow-[0_24px_64px_rgba(15,23,42,0.18)] sm:max-w-md">
+        <AlertDialogContent className="rounded-[24px] border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] p-6 shadow-[0_24px_64px_rgba(15,23,42,0.18)] sm:max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle className="product-page-title text-slate-900">
+            <AlertDialogTitle className="product-page-title text-slate-900 dark:text-white">
               Delete order permanently?
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-sm leading-6 text-slate-500">
+            <AlertDialogDescription className="text-sm leading-6 text-slate-500 dark:text-white/55">
               This order will be permanently removed from the orders list,
               analytics, and future dashboard calculations. It cannot be
               restored.
@@ -1424,7 +1424,7 @@ export default function MobileOrdersList({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel
-              className="rounded-xl border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+              className="rounded-xl border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] text-slate-700 dark:text-white/80 hover:bg-slate-50"
               disabled={Boolean(deletingId)}
             >
               Keep order

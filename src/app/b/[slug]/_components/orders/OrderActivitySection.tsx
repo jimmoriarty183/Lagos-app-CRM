@@ -284,11 +284,11 @@ function getRoleBadge(role: "OWNER" | "MANAGER" | "GUEST") {
   if (role === "MANAGER")
     return {
       label: "Manager",
-      className: "border-[#E5E7EB] bg-[#F9FAFB] text-[#4B5563]",
+      className: "border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] text-[#4B5563] dark:text-white/70",
     };
   return {
     label: "Guest",
-    className: "border-[#E5E7EB] bg-[#F9FAFB] text-[#6B7280]",
+    className: "border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] text-[#6B7280] dark:text-white/55",
   };
 }
 
@@ -963,7 +963,7 @@ function ActivityHeader({
   return (
     <div
       className={cn(
-        "border border-[#E5E7EB] bg-[linear-gradient(180deg,#ffffff_0%,#F9FAFB_100%)] shadow-[0_8px_20px_rgba(15,23,42,0.05)]",
+        "border border-[#E5E7EB] dark:border-white/10 bg-[linear-gradient(180deg,#ffffff_0%,#F9FAFB_100%)] shadow-[0_8px_20px_rgba(15,23,42,0.05)]",
         compact ? "rounded-[14px] px-2.5 py-1.5" : "rounded-[20px] px-3 py-2.5",
       )}
     >
@@ -976,11 +976,11 @@ function ActivityHeader({
         <div className="min-w-0">
           <div
             className={cn(
-              "flex items-center gap-2 font-semibold text-[#1F2937]",
+              "flex items-center gap-2 font-semibold text-[#1F2937] dark:text-white/90",
               compact ? "text-[13px]" : "text-sm",
             )}
           >
-            <CalendarClock className="h-4 w-4 text-[#6B7280]" />
+            <CalendarClock className="h-4 w-4 text-[#6B7280] dark:text-white/55" />
             Activity
           </div>
         </div>
@@ -990,11 +990,11 @@ function ActivityHeader({
             setSort(sort === "conversation" ? "newest" : "conversation")
           }
           className={cn(
-            "inline-flex items-center gap-1.5 self-start rounded-full border border-[#E5E7EB] bg-white font-semibold text-[#374151] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB]",
+            "inline-flex items-center gap-1.5 self-start rounded-full border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] font-semibold text-[#374151] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB]",
             compact ? "px-2.5 py-1 text-[11px]" : "px-3 py-1 text-xs",
           )}
         >
-          <Clock3 className="h-3.5 w-3.5 text-[#6B7280]" />
+          <Clock3 className="h-3.5 w-3.5 text-[#6B7280] dark:text-white/55" />
           {sort === "conversation" ? "Newest first" : "Conversation view"}
         </button>
       </div>
@@ -1016,7 +1016,7 @@ function ActivityHeader({
                 : "gap-1.5 px-2.5 py-1 text-[11px]",
               filter === item.value
                 ? "border-[var(--brand-200)] bg-[var(--brand-50)] text-[var(--brand-600)]"
-                : "border-[#E5E7EB] bg-white text-[#6B7280] hover:border-[#C7D2FE] hover:text-[#374151]",
+                : "border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#6B7280] dark:text-white/55 hover:border-[#C7D2FE] hover:text-[#374151]",
             )}
           >
             <span>{item.label}</span>
@@ -1026,8 +1026,8 @@ function ActivityHeader({
                   ? "rounded-full px-1.5 py-0.5 text-[10px]"
                   : "rounded-full px-1.5 py-0.5 text-[11px]",
                 filter === item.value
-                  ? "bg-white/80 text-[var(--brand-600)]"
-                  : "bg-[#F3F4F6] text-[#6B7280]",
+                  ? "bg-white/80 dark:bg-white/[0.05] text-[var(--brand-600)]"
+                  : "bg-[#F3F4F6] text-[#6B7280] dark:text-white/55",
               )}
             >
               {item.count}
@@ -1070,7 +1070,7 @@ function EmojiPicker({
         type="button"
         onClick={() => setOpen((v) => !v)}
         className={cn(
-          "flex shrink-0 items-center justify-center rounded-lg text-[#6B7280] transition hover:bg-[#F3F4F6] hover:text-[#1F2937]",
+          "flex shrink-0 items-center justify-center rounded-lg text-[#6B7280] dark:text-white/55 transition hover:bg-[#F3F4F6] hover:text-[#1F2937]",
           compact ? "h-6 w-6" : "h-8 w-8",
         )}
         aria-label="Emoji"
@@ -1078,7 +1078,7 @@ function EmojiPicker({
         <Smile className={compact ? "h-3.5 w-3.5" : "h-4 w-4"} />
       </button>
       {open ? (
-        <div className="absolute bottom-full right-0 z-20 mb-1 grid w-[220px] grid-cols-10 gap-0.5 rounded-xl border border-[#E5E7EB] bg-white p-1.5 shadow-[0_-8px_24px_rgba(15,23,42,0.12)]">
+        <div className="absolute bottom-full right-0 z-20 mb-1 grid w-[220px] grid-cols-10 gap-0.5 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-1.5 shadow-[0_-8px_24px_rgba(15,23,42,0.12)]">
           {EMOJI_LIST.map((emoji) => (
             <button
               key={emoji}
@@ -1187,13 +1187,13 @@ function CommentComposer({
       )}
     >
       {compact && replyTarget ? (
-        <div className="mb-1.5 flex items-center justify-between rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] px-2 py-1 text-[11px]">
-          <span className="flex items-center gap-1 text-[#9CA3AF]">
+        <div className="mb-1.5 flex items-center justify-between rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] px-2 py-1 text-[11px]">
+          <span className="flex items-center gap-1 text-[#9CA3AF] dark:text-white/40">
             <CornerUpLeft className="h-3 w-3" />
             <span className="font-medium text-[#667085]">{replyTarget.label}</span>
-            <span className="max-w-[200px] truncate text-[#9CA3AF]">{replyTarget.preview}</span>
+            <span className="max-w-[200px] truncate text-[#9CA3AF] dark:text-white/40">{replyTarget.preview}</span>
           </span>
-          <button type="button" onClick={onClearReply} className="ml-2 font-semibold text-[#6B7280] hover:text-[#1F2937]">
+          <button type="button" onClick={onClearReply} className="ml-2 font-semibold text-[#6B7280] dark:text-white/55 hover:text-[#1F2937]">
             &times;
           </button>
         </div>
@@ -1229,7 +1229,7 @@ function CommentComposer({
                 disabled={!canWrite}
                 rows={1}
                 placeholder={canWrite ? "Write a comment..." : "Only Owner / Manager can add comments."}
-                className="w-full resize-none bg-transparent text-[13px] leading-5 text-[#1F2937] outline-none placeholder:text-[#9CA3AF]"
+                className="w-full resize-none bg-transparent text-[13px] leading-5 text-[#1F2937] dark:text-white/90 outline-none placeholder:text-[#9CA3AF]"
                 style={{ minHeight: "20px" }}
                 onKeyDown={(event) => {
                   if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
@@ -1239,15 +1239,15 @@ function CommentComposer({
                 }}
               />
               {filteredMentions.length > 0 ? (
-                <div className="absolute bottom-full left-0 right-0 z-10 mb-1 rounded-xl border border-[#E5E7EB] bg-white p-1.5 shadow-[0_-10px_30px_rgba(15,23,42,0.12)]">
+                <div className="absolute bottom-full left-0 right-0 z-10 mb-1 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-1.5 shadow-[0_-10px_30px_rgba(15,23,42,0.12)]">
                   {filteredMentions.map((actor) => (
                     <button key={actor.id} type="button" onClick={() => applyMention(actor.id, actor.label)} className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left transition hover:bg-[#F9FAFB]">
                       {String(actor.avatar_url ?? "").trim() ? (
-                        <img src={actor.avatar_url!} alt={actor.label} className="h-6 w-6 rounded-lg border border-[#E5E7EB] object-cover" />
+                        <img src={actor.avatar_url!} alt={actor.label} className="h-6 w-6 rounded-lg border border-[#E5E7EB] dark:border-white/10 object-cover" />
                       ) : (
-                        <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-[#F3F4F6] text-[10px] font-semibold text-[#4B5563]">{getInitials(actor.label)}</span>
+                        <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-[#F3F4F6] text-[10px] font-semibold text-[#4B5563] dark:text-white/70">{getInitials(actor.label)}</span>
                       )}
-                      <span className="truncate text-[13px] font-medium text-[#1F2937]">{actor.label}</span>
+                      <span className="truncate text-[13px] font-medium text-[#1F2937] dark:text-white/90">{actor.label}</span>
                     </button>
                   ))}
                 </div>
@@ -1269,7 +1269,7 @@ function CommentComposer({
                 });
               }}
             />
-            <button type="button" onClick={openFilePicker} disabled={!canWrite} className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-[#6B7280] transition hover:bg-[#F3F4F6] hover:text-[#1F2937] disabled:opacity-40" aria-label="Attach file">
+            <button type="button" onClick={openFilePicker} disabled={!canWrite} className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-[#6B7280] dark:text-white/55 transition hover:bg-[#F3F4F6] hover:text-[#1F2937] disabled:opacity-40" aria-label="Attach file">
               <Paperclip className="h-3.5 w-3.5" />
             </button>
             <button
@@ -1278,7 +1278,7 @@ function CommentComposer({
               disabled={submitDisabled}
               className={cn(
                 "flex h-6 w-6 shrink-0 items-center justify-center rounded-lg transition",
-                submitDisabled ? "text-[#D1D5DB]" : "text-[#1F2937] hover:bg-[#F3F4F6]",
+                submitDisabled ? "text-[#D1D5DB]" : "text-[#1F2937] dark:text-white/90 hover:bg-[#F3F4F6]",
               )}
               aria-label="Comment"
             >
@@ -1288,17 +1288,17 @@ function CommentComposer({
           {attachments.length > 0 ? (
             <div className="mt-1 flex flex-wrap gap-1 pl-7">
               {attachments.map((attachment) => (
-                <span key={attachment.id} className="inline-flex items-center gap-1 rounded-full border border-[#E5E7EB] bg-[#F9FAFB] px-2 py-0.5 text-[11px] font-medium text-[#4B5563]">
-                  <Paperclip className="h-3 w-3 text-[#6B7280]" />
+                <span key={attachment.id} className="inline-flex items-center gap-1 rounded-full border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] px-2 py-0.5 text-[11px] font-medium text-[#4B5563] dark:text-white/70">
+                  <Paperclip className="h-3 w-3 text-[#6B7280] dark:text-white/55" />
                   <span className="max-w-[120px] truncate">{attachment.file.name}</span>
-                  <button type="button" onClick={() => onRemoveAttachment(attachment.id)} className="rounded-full p-px text-[#9CA3AF] hover:text-[#374151]" aria-label={`Remove ${attachment.file.name}`}>
+                  <button type="button" onClick={() => onRemoveAttachment(attachment.id)} className="rounded-full p-px text-[#9CA3AF] dark:text-white/40 hover:text-[#374151]" aria-label={`Remove ${attachment.file.name}`}>
                     <Trash2 className="h-3 w-3" />
                   </button>
                 </span>
               ))}
             </div>
           ) : null}
-          <div className="mt-1 pl-7 text-[10px] text-[#9CA3AF]">
+          <div className="mt-1 pl-7 text-[10px] text-[#9CA3AF] dark:text-white/40">
             @ to mention &middot; Ctrl+Enter sends
           </div>
         </>
@@ -1314,21 +1314,21 @@ function CommentComposer({
           </Avatar>
           <div className="min-w-0 flex-1">
             {replyTarget ? (
-              <div className="mb-2 rounded-[18px] border border-[#E5E7EB] bg-[#F9FAFB] px-3.5 py-3">
+              <div className="mb-2 rounded-[18px] border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] px-3.5 py-3">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <div className="product-section-label flex items-center gap-2 text-[#9CA3AF]">
+                    <div className="product-section-label flex items-center gap-2 text-[#9CA3AF] dark:text-white/40">
                       <CornerUpLeft className="h-3.5 w-3.5" />
                       Replying to {replyTarget.kind}
                     </div>
-                    <div className="mt-1 text-sm font-semibold text-[#1F2937]">{replyTarget.label}</div>
-                    <div className="mt-1 text-xs leading-5 text-[#6B7280]">{replyTarget.preview}</div>
+                    <div className="mt-1 text-sm font-semibold text-[#1F2937] dark:text-white/90">{replyTarget.label}</div>
+                    <div className="mt-1 text-xs leading-5 text-[#6B7280] dark:text-white/55">{replyTarget.preview}</div>
                   </div>
-                  <button type="button" onClick={onClearReply} className="text-xs font-semibold text-[#6B7280] transition hover:text-[#1F2937]">Clear</button>
+                  <button type="button" onClick={onClearReply} className="text-xs font-semibold text-[#6B7280] dark:text-white/55 transition hover:text-[#1F2937]">Clear</button>
                 </div>
               </div>
             ) : null}
-            <div className="relative rounded-[18px] border border-[#E5E7EB] bg-[linear-gradient(180deg,#FFFFFF_0%,#F9FAFB_100%)] px-3.5 py-2.5 transition focus-within:border-[var(--brand-600)] focus-within:bg-white">
+            <div className="relative rounded-[18px] border border-[#E5E7EB] dark:border-white/10 bg-[linear-gradient(180deg,#FFFFFF_0%,#F9FAFB_100%)] px-3.5 py-2.5 transition focus-within:border-[var(--brand-600)] focus-within:bg-white">
               <textarea
                 ref={textareaRef}
                 value={value}
@@ -1345,7 +1345,7 @@ function CommentComposer({
                 disabled={!canWrite}
                 rows={1}
                 placeholder={canWrite ? "Write a comment..." : "Only Owner / Manager can add comments."}
-                className="min-h-[24px] w-full resize-none bg-transparent text-sm leading-5 text-[#1F2937] outline-none placeholder:text-[#9CA3AF]"
+                className="min-h-[24px] w-full resize-none bg-transparent text-sm leading-5 text-[#1F2937] dark:text-white/90 outline-none placeholder:text-[#9CA3AF]"
                 onKeyDown={(event) => {
                   if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
                     event.preventDefault();
@@ -1354,19 +1354,19 @@ function CommentComposer({
                 }}
               />
               {filteredMentions.length > 0 ? (
-                <div className="absolute left-4 right-4 top-full z-10 mt-2 rounded-2xl border border-[#E5E7EB] bg-white p-2 shadow-[0_20px_40px_rgba(15,23,42,0.12)]">
+                <div className="absolute left-4 right-4 top-full z-10 mt-2 rounded-2xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-2 shadow-[0_20px_40px_rgba(15,23,42,0.12)]">
                   {filteredMentions.map((actor) => (
                     <button key={actor.id} type="button" onClick={() => applyMention(actor.id, actor.label)} className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-[#F9FAFB]">
                       {String(actor.avatar_url ?? "").trim() ? (
-                        <img src={actor.avatar_url!} alt={actor.label} className="h-8 w-8 rounded-xl border border-[#E5E7EB] object-cover" />
+                        <img src={actor.avatar_url!} alt={actor.label} className="h-8 w-8 rounded-xl border border-[#E5E7EB] dark:border-white/10 object-cover" />
                       ) : (
-                        <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-[#F3F4F6] text-[11px] font-semibold text-[#4B5563]">{getInitials(actor.label)}</span>
+                        <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-[#F3F4F6] text-[11px] font-semibold text-[#4B5563] dark:text-white/70">{getInitials(actor.label)}</span>
                       )}
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm font-semibold text-[#1F2937]">{actor.label}</span>
-                        <span className="block text-xs text-[#6B7280]">{actor.kind}</span>
+                        <span className="block truncate text-sm font-semibold text-[#1F2937] dark:text-white/90">{actor.label}</span>
+                        <span className="block text-xs text-[#6B7280] dark:text-white/55">{actor.kind}</span>
                       </span>
-                      <AtSign className="h-4 w-4 text-[#9CA3AF]" />
+                      <AtSign className="h-4 w-4 text-[#9CA3AF] dark:text-white/40" />
                     </button>
                   ))}
                 </div>
@@ -1375,10 +1375,10 @@ function CommentComposer({
             {attachments.length > 0 ? (
               <div className="mt-2 flex flex-wrap gap-2">
                 {attachments.map((attachment) => (
-                  <span key={attachment.id} className="inline-flex items-center gap-2 rounded-full border border-[#E5E7EB] bg-[#F9FAFB] px-3 py-1.5 text-xs font-medium text-[#4B5563]">
-                    <Paperclip className="h-3.5 w-3.5 text-[#6B7280]" />
+                  <span key={attachment.id} className="inline-flex items-center gap-2 rounded-full border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] px-3 py-1.5 text-xs font-medium text-[#4B5563] dark:text-white/70">
+                    <Paperclip className="h-3.5 w-3.5 text-[#6B7280] dark:text-white/55" />
                     <span className="max-w-[180px] truncate">{attachment.file.name}</span>
-                    <button type="button" onClick={() => onRemoveAttachment(attachment.id)} className="rounded-full p-0.5 text-[#9CA3AF] transition hover:bg-white hover:text-[#374151]" aria-label={`Remove ${attachment.file.name}`}>
+                    <button type="button" onClick={() => onRemoveAttachment(attachment.id)} className="rounded-full p-0.5 text-[#9CA3AF] dark:text-white/40 transition hover:bg-white hover:text-[#374151]" aria-label={`Remove ${attachment.file.name}`}>
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
                   </span>
@@ -1386,7 +1386,7 @@ function CommentComposer({
               </div>
             ) : null}
             <div className="mt-2 flex flex-col gap-2 border-t border-[#EEF2FF] pt-2.5 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex flex-wrap items-center gap-2 text-xs text-[#6B7280]">
+              <div className="flex flex-wrap items-center gap-2 text-xs text-[#6B7280] dark:text-white/55">
                 <EmojiPicker
                   onSelect={(emoji) => {
                     const ta = textareaRef.current;
@@ -1402,7 +1402,7 @@ function CommentComposer({
                     });
                   }}
                 />
-                <button type="button" onClick={openFilePicker} disabled={!canWrite} className="inline-flex h-10 items-center gap-2 rounded-[16px] border border-[#E5E7EB] bg-white px-3.5 text-sm font-semibold text-[#4B5563] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937] disabled:cursor-not-allowed disabled:opacity-50">
+                <button type="button" onClick={openFilePicker} disabled={!canWrite} className="inline-flex h-10 items-center gap-2 rounded-[16px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3.5 text-sm font-semibold text-[#4B5563] dark:text-white/70 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937] disabled:cursor-not-allowed disabled:opacity-50">
                   <Paperclip className="h-3.5 w-3.5" />
                   Attach file
                 </button>
@@ -1416,8 +1416,8 @@ function CommentComposer({
                   className={cn(
                     "inline-flex h-10 items-center justify-center gap-2 rounded-[16px] border px-4 text-sm font-semibold transition",
                     submitDisabled
-                      ? "cursor-not-allowed border-[#E5E7EB] bg-[#F3F4F6] text-[#9CA3AF]"
-                      : "border-[#E5E7EB] bg-white text-[#1F2937] shadow-[0_1px_2px_rgba(16,24,40,0.04)] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]",
+                      ? "cursor-not-allowed border-[#E5E7EB] dark:border-white/10 bg-[#F3F4F6] text-[#9CA3AF] dark:text-white/40"
+                      : "border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#1F2937] dark:text-white/90 shadow-[0_1px_2px_rgba(16,24,40,0.04)] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]",
                   )}
                 >
                   <Send className="h-4 w-4" />
@@ -1453,16 +1453,16 @@ function DateSeparator({
     <div
       className={cn("flex items-center", compact ? "gap-2 py-1" : "gap-3 py-2")}
     >
-      <div className="h-px flex-1 bg-[#EEF2FF]" />
+      <div className="h-px flex-1 bg-[#EEF2FF] dark:bg-[var(--brand-600)]/15" />
       <span
         className={cn(
-          "product-section-label rounded-full border border-[#E5E7EB] bg-white",
+          "product-section-label rounded-full border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03]",
           compact ? "px-2.5 py-0.5 text-[10px]" : "px-3 py-1",
         )}
       >
         {label}
       </span>
-      <div className="h-px flex-1 bg-[#EEF2FF]" />
+      <div className="h-px flex-1 bg-[#EEF2FF] dark:bg-[var(--brand-600)]/15" />
     </div>
   );
 }
@@ -1484,9 +1484,9 @@ function AuditValue({
         compact
           ? "rounded-[12px] border px-2 py-1.5"
           : "rounded-2xl border px-3 py-2.5",
-        tone === "old" && "border-[#FECACA] bg-[#FFF1F2]",
+        tone === "old" && "border-[#FECACA] bg-[#FFF1F2] dark:bg-rose-500/10",
         tone === "new" && "border-[#A7F3D0] bg-[#ECFDF3]",
-        tone === "neutral" && "border-[#E5E7EB] bg-[#F9FAFB]",
+        tone === "neutral" && "border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04]",
       )}
     >
       <div
@@ -1499,7 +1499,7 @@ function AuditValue({
       </div>
       <div
         className={cn(
-          "font-semibold text-[#1F2937]",
+          "font-semibold text-[#1F2937] dark:text-white/90",
           compact ? "mt-0.5 text-sm leading-5" : "mt-1 text-sm",
         )}
       >
@@ -1541,7 +1541,7 @@ function EventDelta({
           <span
             key={`added-${value}`}
             className={cn(
-              "inline-flex rounded-full border border-[#d1fadf] bg-[#f0fdf4] font-semibold text-[#067647]",
+              "inline-flex rounded-full border border-[#d1fadf] bg-[#f0fdf4] dark:bg-emerald-500/10 font-semibold text-[#067647]",
               compact ? "px-1.5 py-px text-[10px]" : "px-3 py-1 text-xs",
             )}
           >
@@ -1571,10 +1571,10 @@ function EventDelta({
       );
       return (
         <div className="mt-0.5 flex flex-wrap items-center gap-1 text-[11px]">
-          <span className="rounded border border-[#FECACA] bg-[#FFF1F2] px-1.5 py-px font-medium text-[#991b1b]">
+          <span className="rounded border border-[#FECACA] bg-[#FFF1F2] dark:bg-rose-500/10 px-1.5 py-px font-medium text-[#991b1b]">
             {fromVal}
           </span>
-          <span className="text-[#9CA3AF]">&rarr;</span>
+          <span className="text-[#9CA3AF] dark:text-white/40">&rarr;</span>
           <span className="rounded border border-[#A7F3D0] bg-[#ECFDF3] px-1.5 py-px font-medium text-[#065f46]">
             {toVal}
           </span>
@@ -1592,7 +1592,7 @@ function EventDelta({
           )}
           tone="old"
         />
-        <div className="hidden text-center text-sm font-semibold text-[#9CA3AF] sm:block">
+        <div className="hidden text-center text-sm font-semibold text-[#9CA3AF] dark:text-white/40 sm:block">
           -&gt;
         </div>
         <AuditValue
@@ -1638,7 +1638,7 @@ function EventGlyph({
       : "flex h-9 w-9 items-center justify-center rounded-2xl border",
     tone === "success" && "border-[#A7F3D0] bg-[#ECFDF3] text-[#059669]",
     tone === "warning" && "border-[#FDE68A] bg-[#FFFBEB] text-[#D97706]",
-    tone === "muted" && "border-[#E5E7EB] bg-[#F9FAFB] text-[#6B7280]",
+    tone === "muted" && "border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] text-[#6B7280] dark:text-white/55",
     tone === "default" &&
       "border-[var(--brand-200)] bg-[var(--brand-50)] text-[var(--brand-600)]",
   );
@@ -1739,7 +1739,7 @@ function AttachmentCard({
   return (
     <div
       className={cn(
-        "border border-[#E5E7EB] bg-[#F9FAFB]",
+        "border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04]",
         compact ? "mt-1 rounded-lg px-2 py-1.5" : "mt-3 rounded-[18px] p-3.5",
       )}
     >
@@ -1775,7 +1775,7 @@ function AttachmentCard({
               target="_blank"
               rel="noreferrer"
               className={cn(
-                "inline-flex items-center gap-1.5 rounded-lg border border-[#E5E7EB] bg-white font-semibold text-[#4B5563] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]",
+                "inline-flex items-center gap-1.5 rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] font-semibold text-[#4B5563] dark:text-white/70 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]",
                 compact ? "h-6 px-2 text-[11px]" : "h-10 px-4 text-sm",
               )}
             >
@@ -1788,7 +1788,7 @@ function AttachmentCard({
               href={downloadUrl}
               download={payload.fileName}
               className={cn(
-                "inline-flex items-center gap-1.5 rounded-lg border border-[#E5E7EB] bg-white font-semibold text-[#4B5563] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]",
+                "inline-flex items-center gap-1.5 rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] font-semibold text-[#4B5563] dark:text-white/70 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]",
                 compact ? "h-6 px-2 text-[11px]" : "h-10 px-4 text-sm",
               )}
             >
@@ -1817,13 +1817,13 @@ function SystemEventItem({
 
   if (compact) {
     return (
-      <div className="flex items-start gap-1.5 rounded-xl border border-[#EEF2FF] bg-[#FAFBFF] px-2 py-1.5 text-[12px] leading-[18px] text-[#475467]">
+      <div className="flex items-start gap-1.5 rounded-xl border border-[#EEF2FF] bg-[#FAFBFF] px-2 py-1.5 text-[12px] leading-[18px] text-[#475467] dark:text-white/70">
         <EventGlyph eventType={item.eventType} tone={item.tone} compact />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
             <span className="font-medium text-[#101828]">{item.title}</span>
             {item.payload?.field ? (
-              <span className="text-[11px] text-[#98a2b3]">
+              <span className="text-[11px] text-[#98a2b3] dark:text-white/45">
                 {formatFieldLabel(item.payload.field)}
               </span>
             ) : null}
@@ -1839,7 +1839,7 @@ function SystemEventItem({
           ) : (
             <EventDelta payload={item.payload} compact />
           )}
-          <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-[11px] text-[#98a2b3]">
+          <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-[11px] text-[#98a2b3] dark:text-white/45">
             <span className="font-medium text-[#667085]">
               {item.actorName}
             </span>
@@ -1878,7 +1878,7 @@ function SystemEventItem({
 
   return (
     <div
-      className="flex gap-3 rounded-[20px] border border-[#E5E7EB] bg-[linear-gradient(180deg,#FFFFFF_0%,#F9FAFB_100%)] px-4 py-3 transition hover:border-[#C7D2FE] hover:shadow-[0_10px_24px_rgba(15,23,42,0.05)]"
+      className="flex gap-3 rounded-[20px] border border-[#E5E7EB] dark:border-white/10 bg-[linear-gradient(180deg,#FFFFFF_0%,#F9FAFB_100%)] px-4 py-3 transition hover:border-[#C7D2FE] hover:shadow-[0_10px_24px_rgba(15,23,42,0.05)]"
     >
       <div className="flex w-12 flex-col items-center">
         <EventGlyph
@@ -1893,13 +1893,13 @@ function SystemEventItem({
             {item.title}
           </span>
           {item.payload?.field ? (
-            <span className="text-xs font-medium text-[#98a2b3]">
+            <span className="text-xs font-medium text-[#98a2b3] dark:text-white/45">
               {formatFieldLabel(item.payload.field)}
             </span>
           ) : null}
         </div>
         {item.detail ? (
-          <div className="mt-1 text-sm leading-6 text-[#475467]">
+          <div className="mt-1 text-sm leading-6 text-[#475467] dark:text-white/70">
             {item.detail}
           </div>
         ) : null}
@@ -1909,7 +1909,7 @@ function SystemEventItem({
         ) : (
           <EventDelta payload={item.payload} />
         )}
-        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#98a2b3]">
+        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#98a2b3] dark:text-white/45">
           <span className="font-medium text-[#667085]">{item.actorName}</span>
           <span
             className={cn(
@@ -1955,7 +1955,7 @@ function ReplyPreview({
   if (!reply) return null;
 
   return (
-    <div className="mb-2 rounded-[12px] border border-[#e5edf8] bg-[#f8fbff] px-2.5 py-2">
+    <div className="mb-2 rounded-[12px] border border-[#e5edf8] bg-[#f8fbff] dark:bg-[var(--bg-app)] px-2.5 py-2">
       <div className="product-section-label flex items-center gap-1.5 text-[#7c8aa5]">
         <CornerUpLeft className="h-3 w-3" />
         <span>{reply.label}</span>
@@ -2021,7 +2021,7 @@ function CommentItem({
   return (
     <div
       className={cn(
-        "group flex border border-[#E5E7EB] bg-white shadow-[0_8px_20px_rgba(15,23,42,0.04)] transition hover:border-[#C7D2FE] hover:shadow-[0_12px_24px_rgba(15,23,42,0.06)]",
+        "group flex border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] shadow-[0_8px_20px_rgba(15,23,42,0.04)] transition hover:border-[#C7D2FE] hover:shadow-[0_12px_24px_rgba(15,23,42,0.06)]",
         compact ? "gap-2 rounded-[14px] px-2.5 py-2" : "gap-3 rounded-[20px] px-4 py-3",
         item.replyToCommentId && "ml-4 border-[#e5edf8] bg-[#fcfdff]",
       )}
@@ -2055,7 +2055,7 @@ function CommentItem({
                 {badge.label}
               </span>
               {item.replyToCommentId ? (
-                <span className="inline-flex rounded-full border border-[#e5edf8] bg-[#f8fbff] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#52607a]">
+                <span className="inline-flex rounded-full border border-[#e5edf8] bg-[#f8fbff] dark:bg-[var(--bg-app)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#52607a]">
                   Reply
                 </span>
               ) : null}
@@ -2066,7 +2066,7 @@ function CommentItem({
               ) : null}
               <span
                 className={cn(
-                  "text-[#98a2b3]",
+                  "text-[#98a2b3] dark:text-white/45",
                   compact ? "text-[11px]" : "text-xs",
                 )}
               >
@@ -2087,7 +2087,7 @@ function CommentItem({
                       preview: getCompactPreview(item.body, actorNames),
                     })
                   }
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-transparent bg-[#F9FAFB] text-[#6B7280] transition hover:border-[#E5E7EB] hover:bg-white hover:text-[#1F2937]"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-transparent bg-[#F9FAFB] dark:bg-white/[0.04] text-[#6B7280] dark:text-white/55 transition hover:border-[#E5E7EB] hover:bg-white hover:text-[#1F2937]"
                   aria-label="Reply to comment"
                 >
                   <CornerUpLeft className="h-4 w-4" />
@@ -2097,7 +2097,7 @@ function CommentItem({
                 <button
                   type="button"
                   onClick={() => onStartEdit(item)}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-transparent bg-[#F9FAFB] text-[#6B7280] transition hover:border-[#E5E7EB] hover:bg-white hover:text-[#1F2937]"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-transparent bg-[#F9FAFB] dark:bg-white/[0.04] text-[#6B7280] dark:text-white/55 transition hover:border-[#E5E7EB] hover:bg-white hover:text-[#1F2937]"
                   aria-label="Edit comment"
                 >
                   <Pencil className="h-4 w-4" />
@@ -2122,7 +2122,7 @@ function CommentItem({
               value={editingValue}
               onChange={(event) => setEditingValue(event.target.value)}
               rows={4}
-              className="min-h-[120px] w-full resize-none rounded-[18px] border border-[#E5E7EB] bg-[#F9FAFB] px-4 py-3 text-sm leading-6 text-[#1F2937] outline-none transition focus:border-[var(--brand-600)] focus:bg-white"
+              className="min-h-[120px] w-full resize-none rounded-[18px] border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] px-4 py-3 text-sm leading-6 text-[#1F2937] dark:text-white/90 outline-none transition focus:border-[var(--brand-600)] focus:bg-white"
             />
             <div
               className={cn(
@@ -2133,7 +2133,7 @@ function CommentItem({
               <button
                 type="button"
                 onClick={onCancelEdit}
-                className="inline-flex h-10 items-center justify-center rounded-2xl border border-[#E5E7EB] px-4 text-sm font-semibold text-[#4B5563] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
+                className="inline-flex h-10 items-center justify-center rounded-2xl border border-[#E5E7EB] dark:border-white/10 px-4 text-sm font-semibold text-[#4B5563] dark:text-white/70 transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
               >
                 Cancel
               </button>
@@ -2152,7 +2152,7 @@ function CommentItem({
             <ReplyPreview snapshot={item.replySnapshot} actorNames={actorNames} />
             <div
               className={cn(
-                "whitespace-pre-wrap text-sm text-[#1F2937]",
+                "whitespace-pre-wrap text-sm text-[#1F2937] dark:text-white/90",
                 compact ? "leading-5" : "leading-6",
                 shouldCollapse &&
                   !isExpanded &&
@@ -2165,7 +2165,7 @@ function CommentItem({
               <button
                 type="button"
                 onClick={() => toggleExpanded(item.id)}
-                className="mt-1.5 inline-flex items-center gap-1 text-xs font-semibold text-[#6B7280] transition hover:text-[#1F2937]"
+                className="mt-1.5 inline-flex items-center gap-1 text-xs font-semibold text-[#6B7280] dark:text-white/55 transition hover:text-[#1F2937]"
               >
                 {isExpanded ? "Show less" : "Show more"}
                 <ChevronDown
@@ -2181,7 +2181,7 @@ function CommentItem({
                 <button
                   type="button"
                   onClick={() => setShowChanges((prev) => !prev)}
-                  className="inline-flex items-center gap-1 text-xs font-semibold text-[#6B7280] transition hover:text-[#1F2937]"
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-[#6B7280] dark:text-white/55 transition hover:text-[#1F2937]"
                 >
                   {showChanges ? "Hide changes" : "Show changes"}
                   <ChevronDown
@@ -2203,14 +2203,14 @@ function CommentItem({
                   "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium transition",
                   reactions.some((r) => r.user_id === currentUserId)
                     ? "border-[var(--brand-200)] bg-[var(--brand-50)] text-[var(--brand-600)]"
-                    : "border-[#E5E7EB] bg-white text-[#6B7280] hover:border-[var(--brand-200)] hover:bg-[var(--brand-50)]",
+                    : "border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#6B7280] dark:text-white/55 hover:border-[var(--brand-200)] hover:bg-[var(--brand-50)]",
                 )}
               >
                 <ThumbsUp className="h-3 w-3" />
                 {reactions.length > 0 ? reactions.length : null}
               </button>
               {reactions.length > 0 ? (
-                <span className="text-[10px] text-[#9CA3AF]">
+                <span className="text-[10px] text-[#9CA3AF] dark:text-white/40">
                   {reactions.map((r) => r.user_name).join(", ")}
                 </span>
               ) : null}
@@ -2369,19 +2369,19 @@ function ActivityTimeline({
   return (
     <div
       className={cn(
-        "border border-[#E5E7EB] bg-[linear-gradient(180deg,#FFFFFF_0%,#F9FAFB_100%)] shadow-[0_10px_24px_rgba(15,23,42,0.05)]",
+        "border border-[#E5E7EB] dark:border-white/10 bg-[linear-gradient(180deg,#FFFFFF_0%,#F9FAFB_100%)] shadow-[0_10px_24px_rgba(15,23,42,0.05)]",
         compact ? "rounded-[16px] p-1.5" : "rounded-[22px] p-3",
       )}
     >
       {items.length === 0 ? (
-        <div className="rounded-[22px] border border-dashed border-[#E5E7EB] bg-white px-5 py-10 text-center">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F3F4F6] text-[#6B7280]">
+        <div className="rounded-[22px] border border-dashed border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-5 py-10 text-center">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F3F4F6] text-[#6B7280] dark:text-white/55">
             <MessageSquareText className="h-5 w-5" />
           </div>
-          <div className="mt-4 text-sm font-semibold text-[#1F2937]">
+          <div className="mt-4 text-sm font-semibold text-[#1F2937] dark:text-white/90">
             No activity yet
           </div>
-          <p className="mt-1 text-sm leading-6 text-[#6B7280]">
+          <p className="mt-1 text-sm leading-6 text-[#6B7280] dark:text-white/55">
             Comments, assignments, checklist progress, and deal updates will
             appear here as one structured timeline.
           </p>
@@ -2420,7 +2420,7 @@ function ActivityTimeline({
           <button
             type="button"
             onClick={onLoadMore}
-            className="inline-flex items-center gap-2 rounded-full border border-[#E5E7EB] bg-white px-4 py-2 text-sm font-semibold text-[#374151] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
+            className="inline-flex items-center gap-2 rounded-full border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 py-2 text-sm font-semibold text-[#374151] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
           >
             Load {Math.min(20, hiddenCount)} older activities
           </button>
@@ -2430,18 +2430,18 @@ function ActivityTimeline({
       {threadViewId && threadChain.length > 0 ? (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/30 backdrop-blur-sm" onClick={() => setThreadViewId(null)}>
           <div
-            className="mx-4 flex max-h-[80vh] w-full max-w-lg flex-col rounded-2xl border border-[#E5E7EB] bg-white shadow-[0_25px_50px_rgba(15,23,42,0.15)]"
+            className="mx-4 flex max-h-[80vh] w-full max-w-lg flex-col rounded-2xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] shadow-[0_25px_50px_rgba(15,23,42,0.15)]"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b border-[#EEF2FF] px-4 py-3">
-              <div className="flex items-center gap-2 text-sm font-semibold text-[#1F2937]">
+              <div className="flex items-center gap-2 text-sm font-semibold text-[#1F2937] dark:text-white/90">
                 <MessageSquareText className="h-4 w-4 text-[var(--brand-600)]" />
                 Thread ({threadChain.length} messages)
               </div>
               <button
                 type="button"
                 onClick={() => setThreadViewId(null)}
-                className="flex h-7 w-7 items-center justify-center rounded-lg text-[#6B7280] transition hover:bg-[#F3F4F6] hover:text-[#1F2937]"
+                className="flex h-7 w-7 items-center justify-center rounded-lg text-[#6B7280] dark:text-white/55 transition hover:bg-[#F3F4F6] hover:text-[#1F2937]"
               >
                 &times;
               </button>
@@ -3200,7 +3200,7 @@ export function OrderActivitySection({
         compact={compact}
       />
       {loading ? (
-        <div className="rounded-[24px] border border-[#E5E7EB] bg-white px-4 py-10 text-sm text-[#6B7280] shadow-[0_12px_30px_rgba(15,23,42,0.05)]">
+        <div className="rounded-[24px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 py-10 text-sm text-[#6B7280] dark:text-white/55 shadow-[0_12px_30px_rgba(15,23,42,0.05)]">
           Loading activity...
         </div>
       ) : (

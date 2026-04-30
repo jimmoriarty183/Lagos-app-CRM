@@ -81,11 +81,11 @@ export function ClientTypeEditor({
         className={
           compact
             ? "flex items-center gap-2"
-            : "rounded-2xl border border-slate-200 bg-slate-50 p-4"
+            : "rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] p-4"
         }
       >
         {!compact ? (
-          <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-white/55">
             Client type
           </div>
         ) : null}
@@ -118,12 +118,12 @@ export function ClientTypeEditor({
       </div>
 
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <AlertDialogContent className="rounded-2xl border-[#E5E7EB] bg-white sm:max-w-xl">
+        <AlertDialogContent className="rounded-2xl border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] sm:max-w-xl">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-xl leading-tight text-slate-900">
+            <AlertDialogTitle className="text-xl leading-tight text-slate-900 dark:text-white">
               Confirm client type conversion
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-sm text-slate-600">
+            <AlertDialogDescription className="text-sm text-slate-600 dark:text-white/70">
               This changes the normalized profile structure from{" "}
               <b>{currentType}</b> to <b>{nextType}</b>. Compatible data is
               preserved where possible.
@@ -131,7 +131,7 @@ export function ClientTypeEditor({
           </AlertDialogHeader>
 
           <label className="grid gap-1.5">
-            <span className="text-xs font-semibold text-slate-600">
+            <span className="text-xs font-semibold text-slate-600 dark:text-white/70">
               New client type
             </span>
             <select
@@ -141,7 +141,7 @@ export function ClientTypeEditor({
                   event.currentTarget.value as "individual" | "company",
                 )
               }
-              className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none"
+              className="h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm text-slate-900 dark:text-white outline-none"
             >
               <option value="individual">Individual</option>
               <option value="company">Company</option>
@@ -151,7 +151,7 @@ export function ClientTypeEditor({
           {nextType === "company" ? (
             <div className="grid gap-2">
               <label className="grid gap-1.5">
-                <span className="text-xs font-semibold text-slate-600">
+                <span className="text-xs font-semibold text-slate-600 dark:text-white/70">
                   Company name
                 </span>
                 <input
@@ -159,10 +159,10 @@ export function ClientTypeEditor({
                   onChange={(event) =>
                     setCompanyName(event.currentTarget.value)
                   }
-                  className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none"
+                  className="h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none"
                 />
               </label>
-              <label className="inline-flex items-center gap-2 text-sm text-slate-700">
+              <label className="inline-flex items-center gap-2 text-sm text-slate-700 dark:text-white/80">
                 <input
                   type="checkbox"
                   checked={useIndividualAsPrimaryContact}
@@ -171,14 +171,14 @@ export function ClientTypeEditor({
                       event.currentTarget.checked,
                     )
                   }
-                  className="h-4 w-4 rounded border-slate-300"
+                  className="h-4 w-4 rounded border-slate-300 dark:border-white/15"
                 />
                 Use existing personal data as primary company contact
               </label>
             </div>
           ) : (
             <div className="grid gap-2">
-              <label className="inline-flex items-center gap-2 text-sm text-slate-700">
+              <label className="inline-flex items-center gap-2 text-sm text-slate-700 dark:text-white/80">
                 <input
                   type="checkbox"
                   checked={usePrimaryContactAsIndividual}
@@ -188,12 +188,12 @@ export function ClientTypeEditor({
                     )
                   }
                   disabled={!hasPrimaryContact}
-                  className="h-4 w-4 rounded border-slate-300"
+                  className="h-4 w-4 rounded border-slate-300 dark:border-white/15"
                 />
                 Use primary company contact as individual identity
               </label>
               {!hasPrimaryContact ? (
-                <div className="text-xs text-slate-500">
+                <div className="text-xs text-slate-500 dark:text-white/55">
                   No active company contact found. Existing profile/client data
                   will be used.
                 </div>
@@ -206,7 +206,7 @@ export function ClientTypeEditor({
           ) : null}
 
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isPending} className="text-slate-700">
+            <AlertDialogCancel disabled={isPending} className="text-slate-700 dark:text-white/80">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction onClick={submit} disabled={isPending}>

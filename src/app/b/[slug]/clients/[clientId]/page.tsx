@@ -9,12 +9,14 @@ import { RelatedOrdersPreview } from "@/app/b/[slug]/clients/[clientId]/RelatedO
 import { Button } from "@/components/ui/button";
 import {
   deactivateClientContact,
+  saveClientAccessNotes,
   saveClientLocation,
   saveClientProfileData,
   saveClientContact,
   setClientCurrentManager,
 } from "@/app/b/[slug]/clients/actions";
 import { getAdminUsersPath, isAdminEmail } from "@/lib/admin-access";
+import { isCleaningSegment } from "@/lib/business-segments";
 import { getBusinessClientsContext } from "@/lib/clients/context";
 import { isTurnoverEligibleStatus } from "@/lib/orders/display";
 import { supabaseServerReadOnly } from "@/lib/supabase/server";
@@ -38,9 +40,39 @@ type ClientRow = {
   postcode: string | null;
   city: string | null;
   country_code: string | null;
+  metadata: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
 };
+
+type AccessNotes = {
+  gate_code: string | null;
+  key_location: string | null;
+  pets: string | null;
+  parking: string | null;
+  alarm_code: string | null;
+  instructions: string | null;
+};
+
+function readAccessNotes(metadata: Record<string, unknown> | null): AccessNotes {
+  const raw =
+    (metadata?.access_notes as Record<string, unknown> | null | undefined) ??
+    null;
+  const pick = (key: string) => {
+    const value = raw?.[key];
+    return typeof value === "string" && value.trim().length > 0
+      ? value.trim()
+      : null;
+  };
+  return {
+    gate_code: pick("gate_code"),
+    key_location: pick("key_location"),
+    pets: pick("pets"),
+    parking: pick("parking"),
+    alarm_code: pick("alarm_code"),
+    instructions: pick("instructions"),
+  };
+}
 
 type IndividualProfileRow = {
   client_id: string;
@@ -231,7 +263,7 @@ export default async function ClientDetailPage({
   const { data: clientData, error: clientError } = await supabase
     .from("clients")
     .select(
-      "id, business_id, client_type, display_name, primary_email, primary_phone, postcode, city, country_code, created_at, updated_at",
+      "id, business_id, client_type, display_name, primary_email, primary_phone, postcode, city, country_code, metadata, created_at, updated_at",
     )
     .eq("id", clientId)
     .eq("business_id", context.business.id)
@@ -608,8 +640,12 @@ export default async function ClientDetailPage({
     return type.startsWith("client.") || type.startsWith("order.");
   });
 
+  const isCleaning = isCleaningSegment(context.business.business_segment);
+  const accessNotes = readAccessNotes(client.metadata);
+  const hasAccessNotes = Object.values(accessNotes).some((value) => value);
+
   return (
-    <div className="min-h-screen overflow-x-hidden bg-transparent text-slate-900">
+    <div className="min-h-screen overflow-x-hidden bg-transparent text-slate-900 dark:text-white">
       <TopBar
         businessSlug={slug}
         role={context.role}
@@ -669,28 +705,28 @@ export default async function ClientDetailPage({
           <section id="client-main-content" className="min-w-0 space-y-3">
             <div
               id="client-hero-card"
-              className="rounded-[16px] border border-[#E5E7EB] bg-white p-3.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]"
+              className="rounded-[16px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]"
             >
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="min-w-0">
                   <div className="product-page-kicker">Client Detail</div>
-                  <h1 className="mt-1 text-[30px] font-semibold leading-tight tracking-tight text-slate-900">
+                  <h1 className="mt-1 text-[30px] font-semibold leading-tight tracking-tight text-slate-900 dark:text-white">
                     {resolvedName || "Unnamed client"}
                   </h1>
                   <div className="mt-3 flex flex-wrap gap-2">
                     <span className="inline-flex items-center rounded-full border border-[var(--brand-200)] bg-[var(--brand-50)] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--brand-700)]">
                       {client.client_type}
                     </span>
-                    <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
+                    <span className="inline-flex items-center rounded-full bg-slate-100 dark:bg-white/[0.06] px-2.5 py-1 text-xs font-medium text-slate-700 dark:text-white/80">
                       Manager: {currentManagerName}
                     </span>
                     {client.client_type === "company" ? (
-                      <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
+                      <span className="inline-flex items-center rounded-full bg-slate-100 dark:bg-white/[0.06] px-2.5 py-1 text-xs font-medium text-slate-700 dark:text-white/80">
                         Primary contact: {primaryContactName}
                       </span>
                     ) : null}
                   </div>
-                  <p className="mt-2 text-sm text-slate-500">
+                  <p className="mt-2 text-sm text-slate-500 dark:text-white/55">
                     {resolvedEmail} • {resolvedPhone}
                   </p>
                 </div>
@@ -698,7 +734,7 @@ export default async function ClientDetailPage({
                 <div className="flex flex-wrap items-center gap-2">
                   <Link
                     href="#profile-data"
-                    className="inline-flex h-9 items-center rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400"
+                    className="inline-flex h-9 items-center rounded-lg border border-slate-300 dark:border-white/15 bg-white dark:bg-white/[0.03] px-3 text-sm font-semibold text-slate-700 dark:text-white/80 transition hover:border-slate-400"
                   >
                     Edit
                   </Link>
@@ -719,7 +755,7 @@ export default async function ClientDetailPage({
                   />
                   <Link
                     href={clientsHref}
-                    className="inline-flex h-9 items-center rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400"
+                    className="inline-flex h-9 items-center rounded-lg border border-slate-300 dark:border-white/15 bg-white dark:bg-white/[0.03] px-3 text-sm font-semibold text-slate-700 dark:text-white/80 transition hover:border-slate-400"
                   >
                     Back
                   </Link>
@@ -756,7 +792,7 @@ export default async function ClientDetailPage({
             <div className="grid gap-3 xl:grid-cols-[minmax(0,1.85fr)_minmax(0,1fr)]">
               <div className="space-y-3">
                 <section className="rounded-[16px] border border-[var(--brand-200)] bg-[var(--brand-50)]/70 p-3.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
-                  <h2 className="text-sm font-semibold text-slate-900">
+                  <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
                     Revenue
                   </h2>
                   <dl className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
@@ -778,9 +814,9 @@ export default async function ClientDetailPage({
 
                 <section
                   id="profile-data"
-                  className="rounded-[16px] bg-white p-3.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]"
+                  className="rounded-[16px] bg-white dark:bg-white/[0.03] p-3.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]"
                 >
-                  <h2 className="text-sm font-semibold text-slate-900">
+                  <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
                     Profile data
                   </h2>
                   <dl className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
@@ -792,8 +828,8 @@ export default async function ClientDetailPage({
                       />
                     ))}
                   </dl>
-                  <details className="mt-2.5 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-2.5">
-                    <summary className="cursor-pointer list-none text-sm font-semibold text-slate-800">
+                  <details className="mt-2.5 rounded-lg border border-dashed border-slate-300 dark:border-white/15 bg-slate-50 dark:bg-white/[0.04] p-2.5">
+                    <summary className="cursor-pointer list-none text-sm font-semibold text-slate-800 dark:text-white/90">
                       Edit profile data
                     </summary>
 
@@ -848,7 +884,7 @@ export default async function ClientDetailPage({
                               cleanText(client.display_name)
                             }
                             placeholder="Company name"
-                            className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none"
+                            className="h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none"
                           />
                           <input
                             name="registration_number"
@@ -856,19 +892,19 @@ export default async function ClientDetailPage({
                               company?.registration_number,
                             )}
                             placeholder="Registration number"
-                            className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none"
+                            className="h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none"
                           />
                           <input
                             name="vat_number"
                             defaultValue={cleanText(company?.vat_number)}
                             placeholder="VAT number"
-                            className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none"
+                            className="h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none"
                           />
                           <input
                             name="website"
                             defaultValue={cleanText(company?.website)}
                             placeholder="Website"
-                            className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none"
+                            className="h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none"
                           />
                         </>
                       ) : (
@@ -880,19 +916,19 @@ export default async function ClientDetailPage({
                               cleanText(client.display_name)
                             }
                             placeholder="Full name"
-                            className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none md:col-span-2"
+                            className="h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none md:col-span-2"
                           />
                           <input
                             name="first_name"
                             defaultValue={cleanText(individual?.first_name)}
                             placeholder="First name"
-                            className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none"
+                            className="h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none"
                           />
                           <input
                             name="last_name"
                             defaultValue={cleanText(individual?.last_name)}
                             placeholder="Last name"
-                            className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none"
+                            className="h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none"
                           />
                           <input
                             name="phone"
@@ -902,7 +938,7 @@ export default async function ClientDetailPage({
                               cleanText(client.primary_phone)
                             }
                             placeholder="Phone"
-                            className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none"
+                            className="h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none"
                           />
                           <input
                             name="email"
@@ -912,7 +948,7 @@ export default async function ClientDetailPage({
                               cleanText(client.primary_email)
                             }
                             placeholder="Email"
-                            className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none"
+                            className="h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none"
                           />
                         </>
                       )}
@@ -925,7 +961,7 @@ export default async function ClientDetailPage({
                             : cleanText(individual?.address_line1)
                         }
                         placeholder="Address line 1"
-                        className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none md:col-span-2"
+                        className="h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none md:col-span-2"
                       />
                       <input
                         name="address_line2"
@@ -935,7 +971,7 @@ export default async function ClientDetailPage({
                             : cleanText(individual?.address_line2)
                         }
                         placeholder="Address line 2"
-                        className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none"
+                        className="h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none"
                       />
                       <input
                         name="county"
@@ -945,7 +981,7 @@ export default async function ClientDetailPage({
                             : cleanText(individual?.county)
                         }
                         placeholder="County / Region"
-                        className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none"
+                        className="h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none"
                       />
                       <input
                         name="city"
@@ -956,7 +992,7 @@ export default async function ClientDetailPage({
                             : cleanText(individual?.city))
                         }
                         placeholder="City"
-                        className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none"
+                        className="h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none"
                       />
                       <input
                         name="postcode"
@@ -967,16 +1003,16 @@ export default async function ClientDetailPage({
                             : cleanText(individual?.postcode))
                         }
                         placeholder="Postcode"
-                        className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none"
+                        className="h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none"
                       />
                       <div className="md:col-span-2">
                         <input
                           name="country_code"
                           defaultValue={cleanText(client.country_code) || "GB"}
                           placeholder="Country code (ISO), e.g. GB"
-                          className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm uppercase outline-none"
+                          className="h-10 w-full rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm uppercase outline-none"
                         />
-                        <p className="mt-1 text-xs text-slate-500">
+                        <p className="mt-1 text-xs text-slate-500 dark:text-white/55">
                           Country code is not currency. Currency is configured
                           in Billing &amp; Payment.
                         </p>
@@ -991,6 +1027,114 @@ export default async function ClientDetailPage({
                     </form>
                   </details>
                 </section>
+
+                {isCleaning ? (
+                  <section
+                    id="access-notes"
+                    className="rounded-[16px] border border-[var(--brand-200)] bg-[var(--brand-50)]/60 dark:border-white/10 dark:bg-white/[0.04] p-3.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
+                          Access notes
+                        </h2>
+                        <p className="mt-0.5 text-xs text-slate-500 dark:text-white/55">
+                          Gate codes, where the key is, pets, parking — every cleaner sees this on the job.
+                        </p>
+                      </div>
+                      {hasAccessNotes ? (
+                        <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-emerald-700">
+                          On file
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center rounded-full border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:border-white/15 dark:bg-white/[0.06] dark:text-white/55">
+                          Not set
+                        </span>
+                      )}
+                    </div>
+
+                    {hasAccessNotes ? (
+                      <dl className="mt-3 grid gap-2 sm:grid-cols-2">
+                        <InfoRow label="Gate code" value={accessNotes.gate_code || "—"} />
+                        <InfoRow label="Key location" value={accessNotes.key_location || "—"} />
+                        <InfoRow label="Pets" value={accessNotes.pets || "—"} />
+                        <InfoRow label="Parking" value={accessNotes.parking || "—"} />
+                        <InfoRow label="Alarm code" value={accessNotes.alarm_code || "—"} />
+                        <InfoRow label="Instructions" value={accessNotes.instructions || "—"} />
+                      </dl>
+                    ) : null}
+
+                    <details className="mt-2.5 rounded-lg border border-dashed border-slate-300 dark:border-white/15 bg-white dark:bg-white/[0.04] p-2.5">
+                      <summary className="cursor-pointer list-none text-sm font-semibold text-slate-800 dark:text-white/90">
+                        {hasAccessNotes ? "Edit access notes" : "Add access notes"}
+                      </summary>
+
+                      <form
+                        action={async (formData) => {
+                          "use server";
+                          await saveClientAccessNotes({
+                            clientId: client.id,
+                            businessSlug: slug,
+                            gateCode: cleanText(formData.get("gate_code")) || null,
+                            keyLocation:
+                              cleanText(formData.get("key_location")) || null,
+                            pets: cleanText(formData.get("pets")) || null,
+                            parking: cleanText(formData.get("parking")) || null,
+                            alarmCode:
+                              cleanText(formData.get("alarm_code")) || null,
+                            instructions:
+                              cleanText(formData.get("instructions")) || null,
+                          });
+                        }}
+                        className="mt-3 grid gap-2 md:grid-cols-2"
+                      >
+                        <input
+                          name="gate_code"
+                          defaultValue={accessNotes.gate_code ?? ""}
+                          placeholder="Gate / building code"
+                          className="h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none"
+                        />
+                        <input
+                          name="key_location"
+                          defaultValue={accessNotes.key_location ?? ""}
+                          placeholder="Where is the key? (e.g. lockbox, neighbour)"
+                          className="h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none"
+                        />
+                        <input
+                          name="pets"
+                          defaultValue={accessNotes.pets ?? ""}
+                          placeholder="Pets (e.g. dog in kitchen)"
+                          className="h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none"
+                        />
+                        <input
+                          name="parking"
+                          defaultValue={accessNotes.parking ?? ""}
+                          placeholder="Parking instructions"
+                          className="h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none"
+                        />
+                        <input
+                          name="alarm_code"
+                          defaultValue={accessNotes.alarm_code ?? ""}
+                          placeholder="Alarm code"
+                          className="h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none"
+                        />
+                        <textarea
+                          name="instructions"
+                          defaultValue={accessNotes.instructions ?? ""}
+                          placeholder="Other instructions (ladder, fragile items, etc.)"
+                          rows={2}
+                          className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-2 text-sm outline-none md:col-span-2"
+                        />
+                        <Button
+                          type="submit"
+                          className="h-10 rounded-lg px-4 text-sm font-semibold md:col-span-2"
+                        >
+                          Save access notes
+                        </Button>
+                      </form>
+                    </details>
+                  </section>
+                ) : null}
 
                 {client.client_type === "company" ? (
                   <ClientBillingPaymentEditor
@@ -1069,18 +1213,18 @@ export default async function ClientDetailPage({
                 ) : null}
 
                 {client.client_type === "company" ? (
-                  <section className="rounded-[16px] bg-white p-3.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                  <section className="rounded-[16px] bg-white dark:bg-white/[0.03] p-3.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
                     <div className="flex items-center justify-between gap-3">
-                      <h2 className="text-sm font-semibold text-slate-900">
+                      <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
                         Company contacts
                       </h2>
-                      <span className="text-xs text-slate-500">
+                      <span className="text-xs text-slate-500 dark:text-white/55">
                         {contacts.filter((c) => c.is_active).length} active
                       </span>
                     </div>
 
                     {contacts.length === 0 ? (
-                      <p className="mt-3 text-sm text-slate-500">
+                      <p className="mt-3 text-sm text-slate-500 dark:text-white/55">
                         No contacts yet.
                       </p>
                     ) : (
@@ -1088,11 +1232,11 @@ export default async function ClientDetailPage({
                         {contacts.map((contact) => (
                           <div
                             key={contact.id}
-                            className="rounded-lg bg-slate-50 p-2.5"
+                            className="rounded-lg bg-slate-50 dark:bg-white/[0.04] p-2.5"
                           >
                             <div className="flex flex-wrap items-center justify-between gap-2">
                               <div>
-                                <div className="text-sm font-semibold text-slate-900">
+                                <div className="text-sm font-semibold text-slate-900 dark:text-white">
                                   {cleanText(contact.full_name) ||
                                     `${cleanText(contact.first_name)} ${cleanText(contact.last_name)}`.trim() ||
                                     "Unnamed contact"}
@@ -1107,7 +1251,7 @@ export default async function ClientDetailPage({
                                     </span>
                                   ) : null}
                                 </div>
-                                <div className="mt-1 text-xs text-slate-500">
+                                <div className="mt-1 text-xs text-slate-500 dark:text-white/55">
                                   {[
                                     cleanText(contact.job_title),
                                     cleanText(contact.email),
@@ -1142,8 +1286,8 @@ export default async function ClientDetailPage({
                       </div>
                     )}
 
-                    <details className="mt-2.5 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-2.5">
-                      <summary className="cursor-pointer list-none text-sm font-semibold text-slate-800">
+                    <details className="mt-2.5 rounded-lg border border-dashed border-slate-300 dark:border-white/15 bg-slate-50 dark:bg-white/[0.04] p-2.5">
+                      <summary className="cursor-pointer list-none text-sm font-semibold text-slate-800 dark:text-white/90">
                         + Add contact
                       </summary>
                       <form
@@ -1178,54 +1322,54 @@ export default async function ClientDetailPage({
                         <input
                           name="first_name"
                           placeholder="First name"
-                          className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none"
+                          className="h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none"
                         />
                         <input
                           name="last_name"
                           placeholder="Last name"
-                          className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none"
+                          className="h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none"
                         />
                         <input
                           name="full_name"
                           placeholder="Full name (optional)"
-                          className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none md:col-span-2"
+                          className="h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none md:col-span-2"
                         />
                         <input
                           name="email"
                           placeholder="Email"
-                          className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none"
+                          className="h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none"
                         />
                         <input
                           name="phone"
                           placeholder="Phone"
-                          className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none"
+                          className="h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none"
                         />
                         <input
                           name="job_title"
                           placeholder="Job title"
-                          className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none md:col-span-2"
+                          className="h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none md:col-span-2"
                         />
-                        <label className="inline-flex items-center gap-2 text-sm text-slate-700 md:col-span-2">
+                        <label className="inline-flex items-center gap-2 text-sm text-slate-700 dark:text-white/80 md:col-span-2">
                           <input
                             type="checkbox"
                             name="is_primary"
-                            className="h-4 w-4 rounded border-slate-300"
+                            className="h-4 w-4 rounded border-slate-300 dark:border-white/15"
                           />
                           Set as primary contact
                         </label>
-                        <label className="inline-flex items-center gap-2 text-sm text-slate-700 md:col-span-2">
+                        <label className="inline-flex items-center gap-2 text-sm text-slate-700 dark:text-white/80 md:col-span-2">
                           <input
                             type="checkbox"
                             name="is_billing_contact"
-                            className="h-4 w-4 rounded border-slate-300"
+                            className="h-4 w-4 rounded border-slate-300 dark:border-white/15"
                           />
                           Mark as billing contact
                         </label>
-                        <label className="inline-flex items-center gap-2 text-sm text-slate-700 md:col-span-2">
+                        <label className="inline-flex items-center gap-2 text-sm text-slate-700 dark:text-white/80 md:col-span-2">
                           <input
                             type="checkbox"
                             name="is_decision_maker"
-                            className="h-4 w-4 rounded border-slate-300"
+                            className="h-4 w-4 rounded border-slate-300 dark:border-white/15"
                           />
                           Mark as decision maker
                         </label>
@@ -1240,8 +1384,8 @@ export default async function ClientDetailPage({
                   </section>
                 ) : null}
 
-                <section className="rounded-[16px] bg-white p-3.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
-                  <h2 className="text-sm font-semibold text-slate-900">
+                <section className="rounded-[16px] bg-white dark:bg-white/[0.03] p-3.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                  <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
                     Related orders
                   </h2>
                   <RelatedOrdersPreview
@@ -1253,11 +1397,11 @@ export default async function ClientDetailPage({
               </div>
 
               <aside className="space-y-3 xl:sticky xl:top-[88px] xl:self-start">
-                <section className="rounded-[16px] bg-white p-3.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
-                  <h2 className="text-sm font-semibold text-slate-900">
+                <section className="rounded-[16px] bg-white dark:bg-white/[0.03] p-3.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                  <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
                     Manager
                   </h2>
-                  <p className="mt-1 text-xs text-slate-500">
+                  <p className="mt-1 text-xs text-slate-500 dark:text-white/55">
                     One active owner/manager per client.
                   </p>
                   <form
@@ -1278,7 +1422,7 @@ export default async function ClientDetailPage({
                     <select
                       name="manager_id"
                       defaultValue={cleanText(currentAssignment?.manager_id)}
-                      className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
+                      className="h-10 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
                     >
                       {!cleanText(currentAssignment?.manager_id) ? (
                         <option value="" disabled>
@@ -1294,7 +1438,7 @@ export default async function ClientDetailPage({
                     <input
                       name="note"
                       placeholder="Optional note"
-                      className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
+                      className="h-10 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
                     />
                     <Button
                       type="submit"
@@ -1305,12 +1449,12 @@ export default async function ClientDetailPage({
                   </form>
                 </section>
 
-                <section className="rounded-[16px] bg-white p-3.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
-                  <h2 className="text-sm font-semibold text-slate-900">
+                <section className="rounded-[16px] bg-white dark:bg-white/[0.03] p-3.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                  <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
                     Assignment history
                   </h2>
                   {assignments.length === 0 ? (
-                    <p className="mt-3 text-sm text-slate-500">
+                    <p className="mt-3 text-sm text-slate-500 dark:text-white/55">
                       No assignment history yet.
                     </p>
                   ) : (
@@ -1318,22 +1462,22 @@ export default async function ClientDetailPage({
                       {assignments.map((row) => (
                         <li
                           key={row.id}
-                          className="rounded-lg bg-slate-50 p-2.5 text-sm"
+                          className="rounded-lg bg-slate-50 dark:bg-white/[0.04] p-2.5 text-sm"
                         >
-                          <div className="font-semibold text-slate-900">
+                          <div className="font-semibold text-slate-900 dark:text-white">
                             {cleanText(row.manager_id)
                               ? profileNameById.get(
                                   cleanText(row.manager_id),
                                 ) || cleanText(row.manager_id)
                               : "Unassigned"}
                           </div>
-                          <div className="mt-1 text-xs text-slate-500">
+                          <div className="mt-1 text-xs text-slate-500 dark:text-white/55">
                             {formatDateTime(row.assigned_at)}
                             {row.unassigned_at
                               ? ` → ${formatDateTime(row.unassigned_at)}`
                               : " → active"}
                           </div>
-                          <div className="mt-1 text-xs text-slate-500">
+                          <div className="mt-1 text-xs text-slate-500 dark:text-white/55">
                             by{" "}
                             {cleanText(row.assigned_by)
                               ? profileNameById.get(
@@ -1342,7 +1486,7 @@ export default async function ClientDetailPage({
                               : "system"}
                           </div>
                           {cleanText(row.note) ? (
-                            <div className="mt-1 text-xs text-slate-600">
+                            <div className="mt-1 text-xs text-slate-600 dark:text-white/70">
                               {cleanText(row.note)}
                             </div>
                           ) : null}
@@ -1353,8 +1497,8 @@ export default async function ClientDetailPage({
                 </section>
 
                 {visibleActivityEvents.length > 0 ? (
-                  <section className="rounded-[16px] bg-white p-3.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
-                    <h2 className="text-sm font-semibold text-slate-900">
+                  <section className="rounded-[16px] bg-white dark:bg-white/[0.03] p-3.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                    <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
                       Client activity
                     </h2>
                     <ul className="mt-3 space-y-2">
@@ -1377,12 +1521,12 @@ export default async function ClientDetailPage({
                         return (
                           <li
                             key={event.id}
-                            className="rounded-lg bg-slate-50 p-2.5 text-sm"
+                            className="rounded-lg bg-slate-50 dark:bg-white/[0.04] p-2.5 text-sm"
                           >
-                            <div className="font-semibold text-slate-900">
+                            <div className="font-semibold text-slate-900 dark:text-white">
                               {message}
                             </div>
-                            <div className="mt-1 text-xs text-slate-500">
+                            <div className="mt-1 text-xs text-slate-500 dark:text-white/55">
                               by {actorName} •{" "}
                               {formatDateTime(event.created_at)}
                             </div>
@@ -1398,17 +1542,17 @@ export default async function ClientDetailPage({
         </div>
 
         <div className="space-y-3 lg:hidden">
-          <section className="rounded-[16px] border border-[#E5E7EB] bg-white p-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
-            <div className="text-sm font-semibold text-slate-900">
+          <section className="rounded-[16px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+            <div className="text-sm font-semibold text-slate-900 dark:text-white">
               {resolvedName}
             </div>
-            <div className="mt-1 text-xs text-slate-500">
+            <div className="mt-1 text-xs text-slate-500 dark:text-white/55">
               {client.client_type.toUpperCase()} • {resolvedEmail} •{" "}
               {resolvedPhone}
             </div>
             <Link
               href={clientsHref}
-              className="mt-3 inline-flex h-9 items-center rounded-xl border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700"
+              className="mt-3 inline-flex h-9 items-center rounded-xl border border-slate-300 dark:border-white/15 bg-white dark:bg-white/[0.03] px-3 text-xs font-semibold text-slate-700 dark:text-white/80"
             >
               Back to clients
             </Link>
@@ -1421,20 +1565,20 @@ export default async function ClientDetailPage({
 
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-slate-50 p-2.5">
-      <dt className="text-[11px] font-medium text-slate-500">{label}</dt>
-      <dd className="mt-0.5 text-sm font-semibold text-slate-900">{value}</dd>
+    <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] p-2.5">
+      <dt className="text-[11px] font-medium text-slate-500 dark:text-white/55">{label}</dt>
+      <dd className="mt-0.5 text-sm font-semibold text-slate-900 dark:text-white">{value}</dd>
     </div>
   );
 }
 
 function MetricStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg bg-white/90 p-2.5">
-      <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+    <div className="rounded-lg bg-white/90 dark:bg-white/[0.05] p-2.5">
+      <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-white/55">
         {label}
       </div>
-      <div className="mt-0.5 text-base font-semibold tracking-tight text-slate-900">
+      <div className="mt-0.5 text-base font-semibold tracking-tight text-slate-900 dark:text-white">
         {value}
       </div>
     </div>

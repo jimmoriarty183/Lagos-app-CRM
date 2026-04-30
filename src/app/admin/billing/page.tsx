@@ -59,7 +59,7 @@ export default async function AdminBillingPage() {
                   {row.name ?? "Untitled account"}
                 </RowPrimaryLink>
               </AdminCell>
-              <AdminCell className="font-mono text-xs text-slate-500">{row.id}</AdminCell>
+              <AdminCell className="font-mono text-xs text-slate-500 dark:text-white/55">{row.id}</AdminCell>
               <AdminCell>{formatDateTime(row.created_at)}</AdminCell>
             </AdminTableRow>
           ))}

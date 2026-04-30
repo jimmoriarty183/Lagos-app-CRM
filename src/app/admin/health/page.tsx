@@ -80,7 +80,7 @@ export default async function AdminHealthPage() {
 
       <div className="mt-4">
         <AdminSectionCard title="Что считается приближенной оценкой">
-          <div className="space-y-2 text-sm text-slate-600">
+          <div className="space-y-2 text-sm text-slate-600 dark:text-white/70">
             <p>Активные и неактивные бизнесы считаются по доступным activity timestamps, а не по отдельной аналитической витрине.</p>
             <p>Сигналы по пользователям уже достаточно точны для контроля продуктовой воронки.</p>
             <p>Если понадобятся более строгие health-метрики, следующим шагом нужен materialized metrics слой или полноценный event pipeline.</p>

@@ -1385,7 +1385,7 @@ export default async function Page({ params, searchParams }: PageProps) {
   });
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-transparent text-slate-900">
+    <div className="min-h-screen overflow-x-hidden bg-transparent text-slate-900 dark:text-white">
       <TopBar
         businessSlug={slug}
         role={userRole}

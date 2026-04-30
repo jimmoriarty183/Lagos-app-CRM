@@ -22,7 +22,7 @@ export default async function SurveyStatsPage({ params }: { params: Promise<{ ca
       actions={
         <Link
           href={`/admin/campaigns/${campaignId}`}
-          className="inline-flex h-10 items-center rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-slate-300"
+          className="inline-flex h-10 items-center rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 text-sm font-semibold text-slate-700 dark:text-white/80 transition hover:border-slate-300"
         >
           Назад к кампании
         </Link>

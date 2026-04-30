@@ -198,7 +198,7 @@ export default async function CatalogProductsPage({
   });
 
   return (
-    <div className="min-h-[100svh] overflow-x-clip bg-transparent text-[#1F2937]">
+    <div className="min-h-[100svh] overflow-x-clip bg-transparent text-[#1F2937] dark:text-white/90">
       <TeamAccessTopBar
         ordersHref={`/b/${slug}`}
         userLabel={currentUserName}
@@ -246,7 +246,7 @@ export default async function CatalogProductsPage({
             activeSection="catalog"
           />
 
-          <section className="w-full min-w-0 max-w-full rounded-[14px] border border-[#E5E7EB] bg-white p-3 pb-5 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:rounded-[18px] sm:p-4">
+          <section className="w-full min-w-0 max-w-full rounded-[14px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3 pb-5 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:rounded-[18px] sm:p-4">
             <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
               <div>
                 <div className="product-page-kicker">Catalog</div>
@@ -274,7 +274,7 @@ export default async function CatalogProductsPage({
         </div>
 
         <div className="mx-auto w-full max-w-[920px] min-w-0 lg:hidden">
-          <section className="w-full min-w-0 max-w-full rounded-[14px] border border-[#E5E7EB] bg-white p-3 pb-5 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:rounded-[18px] sm:p-4">
+          <section className="w-full min-w-0 max-w-full rounded-[14px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3 pb-5 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:rounded-[18px] sm:p-4">
             <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
               <div>
                 <div className="product-page-kicker">Catalog</div>

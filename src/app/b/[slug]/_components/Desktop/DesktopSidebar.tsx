@@ -11,19 +11,19 @@ export default function DesktopSidebar({
 }: Props) {
   const itemBase =
     "flex w-full items-start justify-between gap-3 rounded-lg px-3 py-3 text-sm transition-colors";
-  const itemIdle = "text-gray-700 hover:bg-gray-50";
-  const metaIdle = "text-xs text-gray-500 tabular-nums";
+  const itemIdle = "text-gray-700 dark:text-white/80 hover:bg-gray-50";
+  const metaIdle = "text-xs text-gray-500 dark:text-white/55 tabular-nums";
 
   return (
     <aside className="desktopOnly">
-      <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:p-4">
+      <div className="rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/[0.03] p-3 shadow-sm sm:p-4">
         <nav className="space-y-2">
           <a className={`${itemBase} ${itemIdle}`} href={businessHref}>
             <span className="flex min-w-0 items-start gap-2">
               <Building2 className="mt-0.5 h-4 w-4 shrink-0" />
               <span>
                 <span className="block font-semibold">Business</span>
-                <span className="mt-0.5 block text-xs text-gray-500">
+                <span className="mt-0.5 block text-xs text-gray-500 dark:text-white/55">
                   Manage access and add managers
                 </span>
               </span>
@@ -31,7 +31,7 @@ export default function DesktopSidebar({
             <span className={metaIdle}>Open</span>
           </a>
 
-          <div className={`${itemBase} cursor-default text-gray-400 opacity-70`}>
+          <div className={`${itemBase} cursor-default text-gray-400 dark:text-white/45 opacity-70`}>
             <span className="flex min-w-0 items-start gap-2">
               <Settings className="mt-0.5 h-4 w-4 shrink-0" />
               <span>

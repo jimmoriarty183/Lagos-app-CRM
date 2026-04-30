@@ -249,7 +249,7 @@ export function TrackerModule({
   return (
     <div className="min-h-screen bg-[#F5F6F8] pt-[64px] text-[var(--neutral-900)]">
       <div className="flex min-h-screen w-full">
-        <aside className="relative w-[272px] border-r border-[var(--neutral-200)] bg-white">
+        <aside className="relative w-[272px] border-r border-[var(--neutral-200)] bg-white dark:bg-white/[0.03]">
           <div className="border-b border-[var(--neutral-200)] px-4 py-3">
             <div className="flex items-center gap-2">
               <div className="flex h-7 w-7 items-center justify-center rounded bg-[var(--brand-500)] text-xs font-bold text-white">
@@ -328,7 +328,7 @@ export function TrackerModule({
           </div>
         </aside>
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="flex h-14 shrink-0 items-center gap-4 border-b border-[var(--neutral-200)] bg-white px-4">
+          <header className="flex h-14 shrink-0 items-center gap-4 border-b border-[var(--neutral-200)] bg-white dark:bg-white/[0.03] px-4">
             <Button variant="ghost" size="icon" className="h-8 w-8">
               <Layers className="h-4 w-4 text-[var(--neutral-600)]" />
             </Button>
@@ -400,7 +400,7 @@ export function TrackerModule({
                       <button
                         key={p.id}
                         onClick={() => void reload(p.id)}
-                        className="h-full rounded-lg border border-[var(--neutral-200)] bg-white p-3 text-left transition hover:shadow-sm"
+                        className="h-full rounded-lg border border-[var(--neutral-200)] bg-white dark:bg-white/[0.03] p-3 text-left transition hover:shadow-sm"
                       >
                         <div className="flex items-center gap-3">
                           <span className="rounded-lg bg-[var(--brand-50)] p-2 text-[var(--brand-500)]">
@@ -447,7 +447,7 @@ export function TrackerModule({
             {snapshot && page === "my_work" ? (
               <div className="space-y-4">
                 <h1 className="text-xl font-semibold">My Work</h1>
-                <div className="overflow-hidden rounded-lg border border-[var(--neutral-200)] bg-white">
+                <div className="overflow-hidden rounded-lg border border-[var(--neutral-200)] bg-white dark:bg-white/[0.03]">
                   <div className="divide-y divide-[var(--neutral-200)]">
                     {items
                       .filter((i) => i.assignee_user_id === currentUserId)
@@ -517,7 +517,7 @@ export function TrackerModule({
                               onDragStart={(e) =>
                                 e.dataTransfer.setData("text/plain", i.id)
                               }
-                              className="w-full rounded-lg border border-[var(--neutral-200)] bg-white p-3 text-left transition hover:shadow-md"
+                              className="w-full rounded-lg border border-[var(--neutral-200)] bg-white dark:bg-white/[0.03] p-3 text-left transition hover:shadow-md"
                             >
                               <div className="flex items-start gap-2">
                                 {ico(i.type)}
@@ -545,7 +545,7 @@ export function TrackerModule({
                 <h1 className="text-lg font-semibold">
                   {snapshot.project.name} - Issues
                 </h1>
-                <div className="overflow-hidden rounded-lg border border-[var(--neutral-200)] bg-white">
+                <div className="overflow-hidden rounded-lg border border-[var(--neutral-200)] bg-white dark:bg-white/[0.03]">
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-[var(--neutral-100)]/50">

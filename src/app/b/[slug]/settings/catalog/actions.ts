@@ -1,8 +1,60 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { isCleaningSegment } from "@/lib/business-segments";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { supabaseServer } from "@/lib/supabase/server";
+
+const CLEANING_SERVICE_TEMPLATES: ReadonlyArray<{
+  service_code: string;
+  name: string;
+  description: string;
+  default_unit_price: number;
+  default_duration_minutes: number;
+}> = [
+  {
+    service_code: "REGULAR-CLEAN",
+    name: "Regular cleaning",
+    description: "Standard maintenance clean — kitchen, bathrooms, dust, hoover, mop.",
+    default_unit_price: 18,
+    default_duration_minutes: 120,
+  },
+  {
+    service_code: "DEEP-CLEAN",
+    name: "Deep clean",
+    description: "Top-to-bottom one-off clean. Skirting boards, inside oven, lime scale, doors and frames.",
+    default_unit_price: 28,
+    default_duration_minutes: 240,
+  },
+  {
+    service_code: "EOT-CLEAN",
+    name: "End of tenancy",
+    description: "Move-out clean to letting-agent standard. Inside cupboards, oven, fridge, white-glove finish.",
+    default_unit_price: 35,
+    default_duration_minutes: 300,
+  },
+  {
+    service_code: "CARPET-CLEAN",
+    name: "Carpet cleaning",
+    description: "Hot water extraction or steam clean per room. Pre-treatment included.",
+    default_unit_price: 25,
+    default_duration_minutes: 60,
+  },
+  {
+    service_code: "OFFICE-CLEAN",
+    name: "Office cleaning",
+    description: "Recurring commercial clean. Desks, kitchens, washrooms, bins.",
+    default_unit_price: 22,
+    default_duration_minutes: 90,
+  },
+  {
+    service_code: "WINDOW-CLEAN",
+    name: "Window cleaning",
+    description: "External window clean per property. Frames and sills wiped.",
+    default_unit_price: 20,
+    default_duration_minutes: 45,
+  },
+];
 
 function cleanText(value: unknown) {
   return String(value ?? "").trim();
@@ -524,6 +576,100 @@ export async function updateCatalogService(input: {
     revalidatePath(`/b/${input.businessSlug}/catalog/services`);
     revalidatePath(`/b/${input.businessSlug}/settings/catalog/services`);
     return { ok: true as const };
+  } catch (error) {
+    return { ok: false as const, error: normalizeCatalogError(error) };
+  }
+}
+
+export async function seedCleaningServiceTemplates(input: {
+  businessSlug: string;
+}) {
+  try {
+    const { admin, userId, businessId } = await requireCatalogManagerAccess(
+      input.businessSlug,
+    );
+
+    const { data: bizRow, error: bizErr } = await admin
+      .from("businesses")
+      .select("business_segment")
+      .eq("id", businessId)
+      .maybeSingle();
+    if (bizErr) throw new Error(bizErr.message);
+    if (!isCleaningSegment(bizRow?.business_segment ?? null)) {
+      throw new Error(
+        "Cleaning templates are only available for businesses with the 'Cleaning company' segment.",
+      );
+    }
+
+    const codes = CLEANING_SERVICE_TEMPLATES.map((t) => t.service_code);
+    let existingResult = await admin
+      .from("catalog_services")
+      .select("service_code")
+      .eq("business_id", businessId)
+      .in("service_code", codes);
+    if (
+      existingResult.error &&
+      isMissingBusinessIdColumnError(existingResult.error.message, "catalog_services")
+    ) {
+      existingResult = await admin
+        .from("catalog_services")
+        .select("service_code")
+        .eq("created_by", userId)
+        .in("service_code", codes);
+    }
+    if (existingResult.error) throw new Error(existingResult.error.message);
+
+    const existingCodes = new Set(
+      ((existingResult.data ?? []) as { service_code: string }[]).map((row) =>
+        cleanText(row.service_code),
+      ),
+    );
+
+    const toInsert = CLEANING_SERVICE_TEMPLATES.filter(
+      (template) => !existingCodes.has(template.service_code),
+    );
+
+    if (toInsert.length === 0) {
+      return { ok: true as const, inserted: 0, skipped: codes.length };
+    }
+
+    const payloadBase = toInsert.map((template) => ({
+      service_code: template.service_code,
+      name: template.name,
+      description: template.description,
+      default_unit_price: template.default_unit_price,
+      default_tax_rate: 20,
+      currency_code: "GBP",
+      default_sla_minutes: null,
+      default_duration_minutes: template.default_duration_minutes,
+      requires_assignee: true,
+      status: "ACTIVE",
+      created_by: userId,
+      updated_by: userId,
+    }));
+    const payloadWithBusiness = payloadBase.map((row) => ({
+      ...row,
+      business_id: businessId,
+    }));
+
+    let insertResult = await admin
+      .from("catalog_services")
+      .insert(payloadWithBusiness);
+    if (
+      insertResult.error &&
+      isMissingBusinessIdColumnError(insertResult.error.message, "catalog_services")
+    ) {
+      insertResult = await admin.from("catalog_services").insert(payloadBase);
+    }
+    if (insertResult.error) throw new Error(insertResult.error.message);
+
+    revalidatePath(`/b/${input.businessSlug}/catalog/services`);
+    revalidatePath(`/b/${input.businessSlug}/settings/catalog/services`);
+    return {
+      ok: true as const,
+      inserted: toInsert.length,
+      skipped: existingCodes.size,
+    };
   } catch (error) {
     return { ok: false as const, error: normalizeCatalogError(error) };
   }

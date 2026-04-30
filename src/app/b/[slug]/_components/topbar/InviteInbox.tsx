@@ -103,11 +103,11 @@ function NotificationIcon({
         "mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition-colors",
         isSurveyIcon
           ? emphasized
-            ? "border-violet-200 bg-violet-50/70 text-slate-600"
-            : "border-violet-100 bg-violet-50/45 text-slate-500 group-hover:text-slate-600"
+            ? "border-violet-200 bg-violet-50/70 text-slate-600 dark:text-white/70"
+            : "border-violet-100 bg-violet-50/45 text-slate-500 dark:text-white/55 group-hover:text-slate-600"
           : emphasized
-            ? "border-sky-200 bg-sky-50/70 text-slate-600"
-            : "border-sky-100 bg-sky-50/45 text-slate-500 group-hover:text-slate-600",
+            ? "border-sky-200 bg-sky-50/70 text-slate-600 dark:text-white/70"
+            : "border-sky-100 bg-sky-50/45 text-slate-500 dark:text-white/55 group-hover:text-slate-600",
       )}
       aria-hidden="true"
     >
@@ -542,17 +542,17 @@ export default function InviteInbox({
         aria-label="Inbox"
         title={title}
         className={cn(
-          "relative flex h-9 w-9 items-center justify-center rounded-xl border bg-white/90 shadow-sm transition",
+          "relative flex h-9 w-9 items-center justify-center rounded-xl border bg-white/90 dark:bg-white/[0.05] shadow-sm transition",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-2",
           open
             ? "border-blue-300 bg-blue-50/80"
-            : "border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-[#FCFCFD]",
+            : "border-slate-200 dark:border-white/10 text-slate-700 dark:text-white/80 hover:border-slate-300 hover:bg-[#FCFCFD]",
         )}
       >
         {open || unreadCount > 0 ? (
           <BellRing className="h-4 w-4 text-[var(--brand-600)] transition" />
         ) : (
-          <Bell className="h-4 w-4 text-slate-700 transition" />
+          <Bell className="h-4 w-4 text-slate-700 dark:text-white/80 transition" />
         )}
         {unreadCount > 0 ? (
           <span className="absolute -right-1 -top-1 inline-flex min-w-5 items-center justify-center rounded-full bg-[var(--brand-600)] px-1.5 py-0.5 text-[10px] font-bold text-white">
@@ -570,15 +570,15 @@ export default function InviteInbox({
             className="fixed inset-0 z-40"
           />
 
-          <div className="fixed left-4 right-4 top-[calc(env(safe-area-inset-top)+5rem)] z-50 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_20px_44px_-22px_rgba(15,23,42,0.65)] sm:absolute sm:left-auto sm:right-0 sm:top-[calc(100%+0.5rem)] sm:mt-0 sm:w-[430px] sm:max-w-[calc(100vw-1.5rem)]">
-            <div className="border-b border-slate-100 bg-white/95 px-4 py-3 backdrop-blur">
+          <div className="fixed left-4 right-4 top-[calc(env(safe-area-inset-top)+5rem)] z-50 overflow-hidden rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] shadow-[0_20px_44px_-22px_rgba(15,23,42,0.65)] sm:absolute sm:left-auto sm:right-0 sm:top-[calc(100%+0.5rem)] sm:mt-0 sm:w-[430px] sm:max-w-[calc(100vw-1.5rem)]">
+            <div className="border-b border-slate-100 dark:border-white/[0.06] bg-white/95 px-4 py-3 backdrop-blur">
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <div className="text-[15px] font-semibold text-slate-950">
+                    <div className="text-[15px] font-semibold text-slate-950 dark:text-white">
                       Inbox
                     </div>
-                    <div className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600">
+                    <div className="rounded-full bg-slate-100 dark:bg-white/[0.06] px-2 py-0.5 text-[11px] font-medium text-slate-600 dark:text-white/70">
                       {summaryLabel}
                     </div>
                   </div>
@@ -588,7 +588,7 @@ export default function InviteInbox({
                     type="button"
                     onClick={markAllAsRead}
                     disabled={isPending || unreadCount === 0}
-                    className="inline-flex h-8 shrink-0 items-center rounded-lg px-2.5 text-[12px] font-medium text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex h-8 shrink-0 items-center rounded-lg px-2.5 text-[12px] font-medium text-slate-500 dark:text-white/55 transition hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     Mark all as read
                   </button>
@@ -627,28 +627,28 @@ export default function InviteInbox({
             <div className="max-h-[420px] overflow-auto">
               {loading ? (
                 <div className="flex items-center justify-center px-4 py-8">
-                  <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
-                  <span className="ml-2 text-sm text-slate-500">
+                  <Loader2 className="h-5 w-5 animate-spin text-slate-400 dark:text-white/45" />
+                  <span className="ml-2 text-sm text-slate-500 dark:text-white/55">
                     Loading...
                   </span>
                 </div>
               ) : items.length === 0 ? (
                 <div className="flex flex-col items-center justify-center px-4 py-12">
-                  <Bell className="h-8 w-8 text-slate-300" />
-                  <div className="mt-3 text-sm font-medium text-slate-900">
+                  <Bell className="h-8 w-8 text-slate-300 dark:text-white/30" />
+                  <div className="mt-3 text-sm font-medium text-slate-900 dark:text-white">
                     Inbox is clear
                   </div>
-                  <div className="mt-1 text-xs text-slate-500">
+                  <div className="mt-1 text-xs text-slate-500 dark:text-white/55">
                     No notifications at the moment
                   </div>
                 </div>
               ) : visibleItemsCount === 0 ? (
                 <div className="flex flex-col items-center justify-center px-4 py-12">
-                  <Bell className="h-8 w-8 text-slate-300" />
-                  <div className="mt-3 text-sm font-medium text-slate-900">
+                  <Bell className="h-8 w-8 text-slate-300 dark:text-white/30" />
+                  <div className="mt-3 text-sm font-medium text-slate-900 dark:text-white">
                     No matching items
                   </div>
-                  <div className="mt-1 text-xs text-slate-500">
+                  <div className="mt-1 text-xs text-slate-500 dark:text-white/55">
                     Try another filter
                   </div>
                 </div>
@@ -656,7 +656,7 @@ export default function InviteInbox({
                 <div className="space-y-3 px-3 py-3">
                   {newNotifications.length > 0 ? (
                     <div>
-                      <div className="sticky top-0 z-[1] bg-white/95 px-1 py-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400 backdrop-blur">
+                      <div className="sticky top-0 z-[1] bg-white/95 px-1 py-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400 dark:text-white/45 backdrop-blur">
                         New
                       </div>
                       <div className="space-y-2">
@@ -681,7 +681,7 @@ export default function InviteInbox({
 
                   {earlierNotifications.length > 0 ? (
                     <div>
-                      <div className="sticky top-0 z-[1] bg-white/95 px-1 py-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400 backdrop-blur">
+                      <div className="sticky top-0 z-[1] bg-white/95 px-1 py-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400 dark:text-white/45 backdrop-blur">
                         Earlier
                       </div>
                       <div className="space-y-2">
@@ -778,8 +778,8 @@ function NotificationItem({
             className={cn(
               "min-w-0 flex-1 truncate text-[13px] leading-5",
               displayState.emphasized
-                ? "font-semibold text-slate-800"
-                : "font-medium text-slate-700",
+                ? "font-semibold text-slate-800 dark:text-white/90"
+                : "font-medium text-slate-700 dark:text-white/80",
             )}
           >
             {notification.title}
@@ -791,7 +791,7 @@ function NotificationItem({
             />
           </div>
         </div>
-        <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-slate-400">
+        <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-slate-400 dark:text-white/45">
           <span
             className={cn(
               "inline-flex h-5 items-center rounded-md border px-1.5 text-[10px] font-medium",
@@ -807,10 +807,10 @@ function NotificationItem({
             aria-hidden="true"
           />
           <span>{formatNotificationTime(notification.created_at)}</span>
-          <span className="text-slate-300" aria-hidden="true">
+          <span className="text-slate-300 dark:text-white/30" aria-hidden="true">
             ·
           </span>
-          <span className="text-slate-500">{exactTime}</span>
+          <span className="text-slate-500 dark:text-white/55">{exactTime}</span>
         </div>
         {isInvite ? (
           <div className="mt-2 flex items-center gap-2">
@@ -837,7 +837,7 @@ function NotificationItem({
                 event.stopPropagation();
                 onDeclineInvite(notification);
               }}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-slate-600 hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-2.5 py-1.5 text-[11px] font-semibold text-slate-600 dark:text-white/70 hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <X className="h-3.5 w-3.5" />
               Decline
@@ -874,7 +874,7 @@ function InboxFilterChip({
             : tone === "notification"
               ? "border-sky-200 bg-sky-50 text-sky-700"
               : "border-[var(--brand-200)] bg-[var(--brand-50)] text-[var(--brand-700)]"
-          : "border-slate-200 bg-white text-slate-500 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-600",
+          : "border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] text-slate-500 dark:text-white/55 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-600",
       )}
     >
       {label}
@@ -927,7 +927,7 @@ function NotificationStatusIndicator({
   }
 
   return (
-    <span className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-500">
+    <span className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] text-slate-500 dark:text-white/55">
       <Check className="h-3 w-3" />
       <span className="sr-only">Read</span>
     </span>

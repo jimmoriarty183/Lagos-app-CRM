@@ -46,7 +46,7 @@ export default async function AdminCampaignEditPage({
           {campaign.type === "survey" ? (
             <Link
               href={`/admin/campaigns/${campaign.id}/stats`}
-              className="inline-flex h-10 items-center rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-slate-300"
+              className="inline-flex h-10 items-center rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 text-sm font-semibold text-slate-700 dark:text-white/80 transition hover:border-slate-300"
             >
               Survey stats
             </Link>
@@ -59,7 +59,7 @@ export default async function AdminCampaignEditPage({
           </Link>
           <Link
             href={`/admin/campaigns/${campaign.id}?view=details`}
-            className="inline-flex h-10 items-center rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-slate-300"
+            className="inline-flex h-10 items-center rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 text-sm font-semibold text-slate-700 dark:text-white/80 transition hover:border-slate-300"
           >
             View / Preview
           </Link>
@@ -67,41 +67,41 @@ export default async function AdminCampaignEditPage({
       }
     >
       {showPreview && preview ? (
-        <div className="mb-3 rounded-lg border border-slate-200 bg-white p-3">
-          <div className="grid gap-1.5 text-sm text-slate-700 md:grid-cols-2">
-            <div className="flex items-center gap-2"><span className="font-semibold text-slate-900">Status:</span> <CampaignStatusBadge status={preview.status} /></div>
-            <div className="flex items-center gap-2"><span className="font-semibold text-slate-900">Type:</span> <CampaignTypeBadge type={preview.campaign.type} /></div>
-            <div><span className="font-semibold text-slate-900">Sent by:</span> {preview.sentByLabel ?? "-"}</div>
-            <div><span className="font-semibold text-slate-900">Sent at:</span> {formatDateTime(preview.sentAt)}</div>
-            <div><span className="font-semibold text-slate-900">Audience roles:</span> {preview.targetRoles.length ? preview.targetRoles.join(", ") : "All roles"}</div>
-            <div><span className="font-semibold text-slate-900">Audience segments:</span> {preview.targetSegments.length ? preview.targetSegments.join(", ") : "All segments"}</div>
-            <div className="md:col-span-2 flex items-center gap-2"><span className="font-semibold text-slate-900">Channels:</span> <CampaignDeliveryBadge channels={preview.campaign.channels} /></div>
-            <div className="md:col-span-2"><span className="font-semibold text-slate-900">Recipients count:</span> {preview.sentRecipientCount}</div>
-            <div className="md:col-span-2 mt-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
-              <div className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Analytics</div>
-              <div className="grid gap-2 text-xs text-slate-700 md:grid-cols-4">
-                <div><span className="font-semibold text-slate-900">Delivered:</span> {preview.analytics.deliveredCount}</div>
-                <div><span className="font-semibold text-slate-900">Shown:</span> {preview.analytics.shownCount}</div>
-                <div><span className="font-semibold text-slate-900">Opened:</span> {preview.analytics.openedCount}</div>
-                <div><span className="font-semibold text-slate-900">Clicked:</span> {preview.analytics.clickedCount}</div>
-                <div><span className="font-semibold text-slate-900">Read:</span> {preview.analytics.readCount}</div>
-                <div><span className="font-semibold text-slate-900">Unread:</span> {preview.analytics.unreadCount}</div>
-                <div><span className="font-semibold text-slate-900">Dismissed:</span> {preview.analytics.dismissedCount}</div>
-                <div><span className="font-semibold text-slate-900">Failed delivery:</span> {preview.analytics.failedDeliveryCount}</div>
-                <div><span className="font-semibold text-slate-900">Bell shown:</span> {preview.analytics.bellShownCount}</div>
-                <div><span className="font-semibold text-slate-900">Popup shown:</span> {preview.analytics.popupShownCount}</div>
-                <div><span className="font-semibold text-slate-900">Bell opened:</span> {preview.analytics.bellOpenedCount}</div>
-                <div><span className="font-semibold text-slate-900">Popup opened:</span> {preview.analytics.popupOpenedCount}</div>
+        <div className="mb-3 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] p-3">
+          <div className="grid gap-1.5 text-sm text-slate-700 dark:text-white/80 md:grid-cols-2">
+            <div className="flex items-center gap-2"><span className="font-semibold text-slate-900 dark:text-white">Status:</span> <CampaignStatusBadge status={preview.status} /></div>
+            <div className="flex items-center gap-2"><span className="font-semibold text-slate-900 dark:text-white">Type:</span> <CampaignTypeBadge type={preview.campaign.type} /></div>
+            <div><span className="font-semibold text-slate-900 dark:text-white">Sent by:</span> {preview.sentByLabel ?? "-"}</div>
+            <div><span className="font-semibold text-slate-900 dark:text-white">Sent at:</span> {formatDateTime(preview.sentAt)}</div>
+            <div><span className="font-semibold text-slate-900 dark:text-white">Audience roles:</span> {preview.targetRoles.length ? preview.targetRoles.join(", ") : "All roles"}</div>
+            <div><span className="font-semibold text-slate-900 dark:text-white">Audience segments:</span> {preview.targetSegments.length ? preview.targetSegments.join(", ") : "All segments"}</div>
+            <div className="md:col-span-2 flex items-center gap-2"><span className="font-semibold text-slate-900 dark:text-white">Channels:</span> <CampaignDeliveryBadge channels={preview.campaign.channels} /></div>
+            <div className="md:col-span-2"><span className="font-semibold text-slate-900 dark:text-white">Recipients count:</span> {preview.sentRecipientCount}</div>
+            <div className="md:col-span-2 mt-2 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] p-3">
+              <div className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-white/55">Analytics</div>
+              <div className="grid gap-2 text-xs text-slate-700 dark:text-white/80 md:grid-cols-4">
+                <div><span className="font-semibold text-slate-900 dark:text-white">Delivered:</span> {preview.analytics.deliveredCount}</div>
+                <div><span className="font-semibold text-slate-900 dark:text-white">Shown:</span> {preview.analytics.shownCount}</div>
+                <div><span className="font-semibold text-slate-900 dark:text-white">Opened:</span> {preview.analytics.openedCount}</div>
+                <div><span className="font-semibold text-slate-900 dark:text-white">Clicked:</span> {preview.analytics.clickedCount}</div>
+                <div><span className="font-semibold text-slate-900 dark:text-white">Read:</span> {preview.analytics.readCount}</div>
+                <div><span className="font-semibold text-slate-900 dark:text-white">Unread:</span> {preview.analytics.unreadCount}</div>
+                <div><span className="font-semibold text-slate-900 dark:text-white">Dismissed:</span> {preview.analytics.dismissedCount}</div>
+                <div><span className="font-semibold text-slate-900 dark:text-white">Failed delivery:</span> {preview.analytics.failedDeliveryCount}</div>
+                <div><span className="font-semibold text-slate-900 dark:text-white">Bell shown:</span> {preview.analytics.bellShownCount}</div>
+                <div><span className="font-semibold text-slate-900 dark:text-white">Popup shown:</span> {preview.analytics.popupShownCount}</div>
+                <div><span className="font-semibold text-slate-900 dark:text-white">Bell opened:</span> {preview.analytics.bellOpenedCount}</div>
+                <div><span className="font-semibold text-slate-900 dark:text-white">Popup opened:</span> {preview.analytics.popupOpenedCount}</div>
               </div>
             </div>
             <div className="md:col-span-2">
-              <div className="font-semibold text-slate-900">Recipients preview:</div>
+              <div className="font-semibold text-slate-900 dark:text-white">Recipients preview:</div>
               {preview.recipientsPreview.length === 0 ? (
-                <div className="text-slate-500">No recipients snapshot yet.</div>
+                <div className="text-slate-500 dark:text-white/55">No recipients snapshot yet.</div>
               ) : (
-                <ul className="mt-1 max-h-44 overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-2 text-xs">
+                <ul className="mt-1 max-h-44 overflow-auto rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] p-2 text-xs">
                   {preview.recipientsPreview.map((recipient) => (
-                    <li key={recipient.userId} className="py-1 text-slate-700">
+                    <li key={recipient.userId} className="py-1 text-slate-700 dark:text-white/80">
                       {recipient.label}
                       {recipient.email ? ` (${recipient.email})` : ""}
                       {recipient.role ? ` | ${recipient.role}` : ""}

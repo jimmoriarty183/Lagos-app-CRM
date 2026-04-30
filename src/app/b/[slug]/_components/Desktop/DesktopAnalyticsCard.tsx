@@ -104,14 +104,14 @@ function SummaryCard({
     tone === "blue"
       ? {
           iconWrap: "bg-[#eef4ff] text-[#2459d3]",
-          value: "text-[#1F2937]",
-          meta: "text-[#6B7280]",
+          value: "text-[#1F2937] dark:text-white/90",
+          meta: "text-[#6B7280] dark:text-white/55",
         }
       : tone === "green"
         ? {
             iconWrap: "bg-[#ecfdf3] text-[#067647]",
-            value: "text-[#1F2937]",
-            meta: "text-[#6B7280]",
+            value: "text-[#1F2937] dark:text-white/90",
+            meta: "text-[#6B7280] dark:text-white/55",
           }
         : tone === "red"
           ? {
@@ -120,9 +120,9 @@ function SummaryCard({
               meta: "text-[#b42318]",
             }
           : {
-              iconWrap: "bg-[#f2f4f7] text-[#6B7280]",
-              value: "text-[#1F2937]",
-              meta: "text-[#6B7280]",
+              iconWrap: "bg-[#f2f4f7] text-[#6B7280] dark:text-white/55",
+              value: "text-[#1F2937] dark:text-white/90",
+              meta: "text-[#6B7280] dark:text-white/55",
             };
 
   const trendClasses =
@@ -130,7 +130,7 @@ function SummaryCard({
       ? "text-[#067647]"
       : trendTone === "negative"
         ? "text-[#b42318]"
-        : "text-[#9CA3AF]";
+        : "text-[#9CA3AF] dark:text-white/40";
 
   const TrendIcon =
     trendDirection === "up"
@@ -140,9 +140,9 @@ function SummaryCard({
         : null;
 
   return (
-    <article className="flex h-full min-w-0 flex-col rounded-xl border border-[#E5E7EB] bg-white p-5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+    <article className="flex h-full min-w-0 flex-col rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
       <div className="flex items-center justify-between gap-3">
-        <div className="text-[12px] font-medium text-[#6B7280]">{label}</div>
+        <div className="text-[12px] font-medium text-[#6B7280] dark:text-white/55">{label}</div>
         <div
           className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl ${toneClasses.iconWrap}`}
         >
@@ -151,7 +151,7 @@ function SummaryCard({
       </div>
 
       {isZeroState ? (
-        <div className="mt-5 max-w-[18rem] text-[13px] font-medium leading-5 text-[#6B7280]">
+        <div className="mt-5 max-w-[18rem] text-[13px] font-medium leading-5 text-[#6B7280] dark:text-white/55">
           {emptyStateCopy}
         </div>
       ) : (
@@ -231,19 +231,19 @@ export default function DesktopAnalyticsCard({
   return (
     <section id="analytics" className="min-w-0 space-y-3">
       <div className="flex items-center justify-between px-1">
-        <div className="flex items-center gap-2 text-[13px] font-semibold text-[#1F2937]">
-          <BarChart3 className="h-4 w-4 text-[#9CA3AF]" />
+        <div className="flex items-center gap-2 text-[13px] font-semibold text-[#1F2937] dark:text-white/90">
+          <BarChart3 className="h-4 w-4 text-[#9CA3AF] dark:text-white/40" />
           Summary
         </div>
         {hidden ? (
           <div className="flex items-center gap-3">
-            <div className="text-[12px] font-medium text-[#6B7280]">
+            <div className="text-[12px] font-medium text-[#6B7280] dark:text-white/55">
               Summary is hidden. Open it to view analytics.
             </div>
             <button
               type="button"
               onClick={() => setHidden(!hidden)}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[#E5E7EB] bg-white text-[#6B7280] transition hover:border-[#C7D2FE] hover:text-[#1F2937]"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#6B7280] dark:text-white/55 transition hover:border-[#C7D2FE] hover:text-[#1F2937]"
               aria-label={hidden ? "Show summary" : "Hide summary"}
               title={hidden ? "Show summary" : "Hide summary"}
             >
@@ -256,7 +256,7 @@ export default function DesktopAnalyticsCard({
           </div>
         ) : (
           <div className="flex items-center gap-3">
-            <div className="inline-flex rounded-full border border-[#E5E7EB] bg-white p-1">
+            <div className="inline-flex rounded-full border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-1">
               {periodOptions.map((option) => (
                 <a
                   key={option.label}
@@ -265,7 +265,7 @@ export default function DesktopAnalyticsCard({
                     "rounded-md px-3 py-1.5 text-[11px] font-semibold transition",
                     option.active
                       ? "bg-[var(--brand-600)] text-white"
-                      : "text-[#6B7280] hover:bg-[#F9FAFB] hover:text-[#1F2937]",
+                      : "text-[#6B7280] dark:text-white/55 hover:bg-[#F9FAFB] hover:text-[#1F2937]",
                   ].join(" ")}
                 >
                   {option.shortLabel}
@@ -274,11 +274,11 @@ export default function DesktopAnalyticsCard({
             </div>
             {extendedOptions.length > 0 ? (
               <details className="relative">
-                <summary className="flex h-9 cursor-pointer list-none items-center gap-1 rounded-full border border-[#E5E7EB] bg-white px-3 text-[11px] font-semibold text-[#475467]">
+                <summary className="flex h-9 cursor-pointer list-none items-center gap-1 rounded-full border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-[11px] font-semibold text-[#475467] dark:text-white/70">
                   More
-                  <ChevronDown className="h-3.5 w-3.5 text-[#9CA3AF]" />
+                  <ChevronDown className="h-3.5 w-3.5 text-[#9CA3AF] dark:text-white/40" />
                 </summary>
-                <div className="absolute right-0 top-11 z-20 min-w-[140px] rounded-2xl border border-[#E5E7EB] bg-white p-1 shadow-[0_12px_24px_rgba(16,24,40,0.12)]">
+                <div className="absolute right-0 top-11 z-20 min-w-[140px] rounded-2xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-1 shadow-[0_12px_24px_rgba(16,24,40,0.12)]">
                   {extendedOptions.map((option) => (
                     <a
                       key={option.label}
@@ -296,7 +296,7 @@ export default function DesktopAnalyticsCard({
                 </div>
               </details>
             ) : null}
-            <div className="text-[11px] font-medium text-[#9CA3AF]">
+            <div className="text-[11px] font-medium text-[#9CA3AF] dark:text-white/40">
               {hasComparison && comparisonLabel
                 ? `${periodLabel} vs ${comparisonLabel}`
                 : periodLabel}
@@ -304,7 +304,7 @@ export default function DesktopAnalyticsCard({
             <button
               type="button"
               onClick={() => setHidden(!hidden)}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[#E5E7EB] bg-white text-[#6B7280] transition hover:border-[#C7D2FE] hover:text-[#1F2937]"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#6B7280] dark:text-white/55 transition hover:border-[#C7D2FE] hover:text-[#1F2937]"
               aria-label={hidden ? "Show summary" : "Hide summary"}
               title={hidden ? "Show summary" : "Hide summary"}
             >
@@ -319,7 +319,7 @@ export default function DesktopAnalyticsCard({
           {customRange?.active ? (
             <form
               method="get"
-              className="space-y-3 rounded-2xl border border-[#E5E7EB] bg-white px-3 py-3"
+              className="space-y-3 rounded-2xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-3"
             >
               <input type="hidden" name="u" value={customRange.phoneRaw} />
               {customRange.tableQuery.q ? (
@@ -376,30 +376,30 @@ export default function DesktopAnalyticsCard({
               <input type="hidden" name="srange" value="custom" />
               <div className="flex items-end gap-3">
                 <label className="flex min-w-0 flex-1 flex-col gap-1">
-                  <span className="text-[11px] font-medium text-[#6B7280]">
+                  <span className="text-[11px] font-medium text-[#6B7280] dark:text-white/55">
                     Start
                   </span>
                   <input
                     type="date"
                     name="sstart"
                     defaultValue={customRange.startDate ?? ""}
-                    className="h-11 rounded-xl border border-[#E5E7EB] bg-white px-4 text-sm font-medium text-[#374151] outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
+                    className="h-11 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 text-sm font-medium text-[#374151] outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
                   />
                 </label>
                 <label className="flex min-w-0 flex-1 flex-col gap-1">
-                  <span className="text-[11px] font-medium text-[#6B7280]">
+                  <span className="text-[11px] font-medium text-[#6B7280] dark:text-white/55">
                     End
                   </span>
                   <input
                     type="date"
                     name="send"
                     defaultValue={customRange.endDate ?? ""}
-                    className="h-11 rounded-xl border border-[#E5E7EB] bg-white px-4 text-sm font-medium text-[#374151] outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
+                    className="h-11 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 text-sm font-medium text-[#374151] outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
                   />
                 </label>
                 <a
                   href={customRange.resetHref}
-                  className="inline-flex h-11 min-w-[112px] shrink-0 items-center justify-center rounded-xl border border-[#E5E7EB] bg-white px-4 text-sm font-semibold text-[#374151] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
+                  className="inline-flex h-11 min-w-[112px] shrink-0 items-center justify-center rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 text-sm font-semibold text-[#374151] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
                 >
                   Reset
                 </a>

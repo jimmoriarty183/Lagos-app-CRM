@@ -35,7 +35,7 @@ function RolePill({ role }: { role: Props["role"] }) {
       ? "bg-blue-50 text-blue-700 border-blue-100"
       : role === "MANAGER"
         ? "bg-emerald-50 text-emerald-700 border-emerald-100"
-        : "bg-gray-50 text-gray-700 border-gray-200";
+        : "bg-gray-50 dark:bg-white/[0.04] text-gray-700 dark:text-white/80 border-gray-200 dark:border-white/10";
 
   return (
     <span
@@ -56,16 +56,16 @@ export default function DesktopBusinessCard({
   currentUserId,
 }: Props) {
   return (
-    <section className="desktopOnly rounded-2xl border border-gray-100 bg-white/90 shadow-sm backdrop-blur">
+    <section className="desktopOnly rounded-2xl border border-gray-100 dark:border-white/[0.06] bg-white/90 dark:bg-white/[0.05] shadow-sm backdrop-blur">
       <div className="flex items-start justify-between gap-4 px-5 pt-5">
         <div className="min-w-0">
-          <div className="text-[11px] font-semibold tracking-wide text-gray-500">
+          <div className="text-[11px] font-semibold tracking-wide text-gray-500 dark:text-white/55">
             BUSINESS
           </div>
-          <div className="mt-1 min-w-0 truncate text-base font-semibold text-gray-900">
+          <div className="mt-1 min-w-0 truncate text-base font-semibold text-gray-900 dark:text-white">
             {business.slug}
           </div>
-          <div className="mt-1 text-xs text-gray-500">Access overview</div>
+          <div className="mt-1 text-xs text-gray-500 dark:text-white/55">Access overview</div>
         </div>
 
         <RolePill role={role} />

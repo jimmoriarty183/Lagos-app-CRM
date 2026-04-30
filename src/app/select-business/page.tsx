@@ -35,9 +35,9 @@ function normalizeRole(role: string | null) {
 
 function roleBadgeClass(role: string) {
   const value = role.toUpperCase();
-  if (value === "OWNER") return "border-[#C7D2FE] bg-[#EEF2FF] text-[#3645A0]";
-  if (value === "MANAGER") return "border-[#E5E7EB] bg-[#F9FAFB] text-[#475467]";
-  return "border-[#E5E7EB] bg-white text-[#98A2B3]";
+  if (value === "OWNER") return "border-[#C7D2FE] dark:border-[var(--brand-500)]/40 bg-[#EEF2FF] dark:bg-[var(--brand-600)]/15 text-[#3645A0] dark:text-[var(--brand-300)]";
+  if (value === "MANAGER") return "border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] text-[#475467] dark:text-white/70";
+  return "border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#98A2B3] dark:text-white/45";
 }
 
 export default async function SelectBusinessPage() {
@@ -89,25 +89,24 @@ export default async function SelectBusinessPage() {
 
   return (
     <main
-      data-theme="light"
-      className="min-h-screen bg-[#f6f8fb] px-4 py-8 text-slate-900 sm:px-6"
+      className="min-h-screen bg-[#f6f8fb] dark:bg-[var(--bg-app)] px-4 py-8 text-slate-900 dark:text-white sm:px-6"
     >
       <div className="mx-auto max-w-3xl">
-        <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_20px_60px_-42px_rgba(15,23,42,0.35)]">
-          <div className="border-b border-slate-200 bg-white px-6 py-8 sm:px-8">
+        <div className="overflow-hidden rounded-[28px] border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] shadow-[0_20px_60px_-42px_rgba(15,23,42,0.35)]">
+          <div className="border-b border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-6 py-8 sm:px-8">
             <div className="flex items-center gap-3">
               <BrandIcon size={24} />
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400 dark:text-white/45">
                   Ordo access
                 </p>
                 <BrandWordmark variant="gradient" height={22} className="mt-1 h-[22px] w-auto" />
-                <h1 className="mt-1 text-[1.85rem] font-semibold tracking-tight text-slate-900 sm:text-[2rem]">
+                <h1 className="mt-1 text-[1.85rem] font-semibold tracking-tight text-slate-900 dark:text-white sm:text-[2rem]">
                   Select a workspace
                 </h1>
               </div>
             </div>
-            <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
+            <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-600 dark:text-white/70 sm:text-base">
               You have access to multiple workspaces. Choose where you want to continue working in Ordo.
             </p>
           </div>
@@ -117,10 +116,10 @@ export default async function SelectBusinessPage() {
               <a
                 key={option.id}
                 href={`/api/workspace/select?slug=${encodeURIComponent(option.slug)}`}
-                className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 transition hover:border-slate-300 hover:bg-white"
+                className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] px-4 py-4 transition hover:border-slate-300 hover:bg-white"
               >
                 <div className="min-w-0">
-                  <div className="truncate text-base font-semibold text-slate-900">
+                  <div className="truncate text-base font-semibold text-slate-900 dark:text-white">
                     {option.name}
                   </div>
                 </div>

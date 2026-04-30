@@ -2,8 +2,10 @@ import { redirect } from "next/navigation";
 import { supabaseServerReadOnly } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { getAdminUsersPath, isAdminEmail } from "@/lib/admin-access";
+import { isCleaningSegment } from "@/lib/business-segments";
 import TeamAccessTopBar from "../../settings/team/TeamAccessTopBar";
 import CatalogTabs from "../../settings/catalog/CatalogTabs";
+import CleaningTemplatesButton from "../../settings/catalog/CleaningTemplatesButton";
 import DesktopLeftRail from "@/app/b/[slug]/_components/Desktop/DesktopLeftRail";
 import ServiceCatalogManager from "../../settings/catalog/ServiceCatalogManager";
 import { loadUserProfileSafe } from "@/lib/profile";
@@ -102,7 +104,7 @@ export default async function CatalogServicesPage({
 
   const { data: business, error: bizErr } = await admin
     .from("businesses")
-    .select("id,slug,plan")
+    .select("id,slug,plan,business_segment")
     .eq("slug", slug)
     .single();
 
@@ -181,7 +183,7 @@ export default async function CatalogServicesPage({
   }));
 
   return (
-    <div className="min-h-[100svh] overflow-x-clip bg-transparent text-[#1F2937]">
+    <div className="min-h-[100svh] overflow-x-clip bg-transparent text-[#1F2937] dark:text-white/90">
       <TeamAccessTopBar
         ordersHref={`/b/${slug}`}
         userLabel={currentUserName}
@@ -229,7 +231,7 @@ export default async function CatalogServicesPage({
             activeSection="catalog"
           />
 
-          <section className="w-full min-w-0 max-w-full rounded-[14px] border border-[#E5E7EB] bg-white p-3 pb-5 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:rounded-[18px] sm:p-4">
+          <section className="w-full min-w-0 max-w-full rounded-[14px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3 pb-5 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:rounded-[18px] sm:p-4">
             <div className="mb-3">
               <div className="product-page-kicker">Catalog</div>
               <h1 className="product-page-title mt-1.5">Services</h1>
@@ -239,6 +241,9 @@ export default async function CatalogServicesPage({
             </div>
 
             <CatalogTabs slug={business.slug} active="services" />
+            {isCleaningSegment(business.business_segment) ? (
+              <CleaningTemplatesButton businessSlug={business.slug} />
+            ) : null}
             <ServiceCatalogManager
               businessSlug={business.slug}
               rows={rows}
@@ -248,7 +253,7 @@ export default async function CatalogServicesPage({
         </div>
 
         <div className="mx-auto w-full max-w-[920px] min-w-0 lg:hidden">
-          <section className="w-full min-w-0 max-w-full rounded-[14px] border border-[#E5E7EB] bg-white p-3 pb-5 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:rounded-[18px] sm:p-4">
+          <section className="w-full min-w-0 max-w-full rounded-[14px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3 pb-5 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:rounded-[18px] sm:p-4">
             <div className="mb-3">
               <div className="product-page-kicker">Catalog</div>
               <h1 className="product-page-title mt-1.5">Services</h1>
@@ -258,6 +263,9 @@ export default async function CatalogServicesPage({
             </div>
 
             <CatalogTabs slug={business.slug} active="services" />
+            {isCleaningSegment(business.business_segment) ? (
+              <CleaningTemplatesButton businessSlug={business.slug} />
+            ) : null}
             <ServiceCatalogManager
               businessSlug={business.slug}
               rows={rows}

@@ -43,7 +43,7 @@ function PasswordInput({
 
   return (
     <label className="block">
-      <div className="text-xs font-medium text-gray-700">{label}</div>
+      <div className="text-xs font-medium text-gray-700 dark:text-white/80">{label}</div>
       <div className="relative mt-1">
         <input
           name={name}
@@ -51,12 +51,12 @@ function PasswordInput({
           required
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full rounded-xl border border-gray-300 bg-white px-3 py-2 pr-11 text-sm outline-none focus:ring-2 focus:ring-blue-200"
+          className="w-full rounded-xl border border-gray-300 dark:border-white/15 bg-white dark:bg-white/[0.03] px-3 py-2 pr-11 text-sm outline-none focus:ring-2 focus:ring-blue-200"
         />
         <button
           type="button"
           onClick={() => setShow((s) => !s)}
-          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg px-2 py-1 text-[11px] font-semibold text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg px-2 py-1 text-[11px] font-semibold text-gray-600 dark:text-white/70 hover:bg-gray-100 hover:text-gray-900"
         >
           {show ? "Hide" : "Show"}
         </button>
@@ -131,13 +131,13 @@ export default function ResetPasswordUI() {
   }
 
   return (
-    <div className="w-full overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
-      <div className="border-b border-gray-100 p-4">
+    <div className="w-full overflow-hidden rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/[0.03] shadow-sm">
+      <div className="border-b border-gray-100 dark:border-white/[0.06] p-4">
         <LoginBrand variant="dark" height={24} />
-        <div className="mt-1 text-xl font-bold text-gray-900">
+        <div className="mt-1 text-xl font-bold text-gray-900 dark:text-white">
           Create a new password
         </div>
-        <div className="mt-0.5 text-xs text-gray-600">
+        <div className="mt-0.5 text-xs text-gray-600 dark:text-white/70">
           Set a new password for your account and continue to your Ordo
           workspace.
         </div>

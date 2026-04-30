@@ -56,8 +56,8 @@ function colorButtonClass(selected: boolean) {
   return [
     "inline-flex h-11 items-center gap-2 rounded-xl border px-3 text-sm font-medium transition",
     selected
-      ? "border-slate-900 bg-slate-50 text-slate-900 shadow-[0_0_0_2px_rgba(15,23,42,0.08)]"
-      : "border-[#E5E7EB] bg-white text-[#4B5563] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]",
+      ? "border-slate-900 bg-slate-50 dark:bg-white/[0.04] text-slate-900 dark:text-white shadow-[0_0_0_2px_rgba(15,23,42,0.08)]"
+      : "border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#4B5563] dark:text-white/70 hover:border-[#C7D2FE] hover:bg-[#F9FAFB]",
   ].join(" ");
 }
 
@@ -655,10 +655,10 @@ export default function BusinessStatusesPanel({
   };
 
   return (
-    <section className="mt-5 rounded-[20px] border border-[#E5E7EB] bg-[#F9FAFB] p-4 sm:p-5">
+    <section className="mt-5 rounded-[20px] border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] p-4 sm:p-5">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <div className="product-section-label text-[#6B7280]">Statuses</div>
+          <div className="product-section-label text-[#6B7280] dark:text-white/55">Statuses</div>
           <h2 className="product-section-title mt-1.5">Workflow statuses</h2>
           <p className="product-page-subtitle mt-1.5 max-w-[700px]">
             Edit the workflow locally first. Nothing is published until you save
@@ -679,7 +679,7 @@ export default function BusinessStatusesPanel({
             type="button"
             onClick={handleReset}
             disabled={isSaving || !isDirty}
-            className="inline-flex h-10 items-center rounded-full border border-[#E5E7EB] bg-white px-4 text-sm font-semibold text-[#4B5563] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937] disabled:cursor-not-allowed disabled:opacity-45"
+            className="inline-flex h-10 items-center rounded-full border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 text-sm font-semibold text-[#4B5563] dark:text-white/70 transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937] disabled:cursor-not-allowed disabled:opacity-45"
           >
             Reset
           </button>
@@ -695,10 +695,10 @@ export default function BusinessStatusesPanel({
         </div>
       </div>
 
-      <div className="mt-4 grid gap-3 rounded-[18px] border border-[#E5E7EB] bg-white p-3.5 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
+      <div className="mt-4 grid gap-3 rounded-[18px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3.5 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
         <div className="grid gap-3">
           <label className="grid gap-1">
-            <span className="text-xs font-semibold text-slate-600">
+            <span className="text-xs font-semibold text-slate-600 dark:text-white/70">
               {isEditing ? "Rename status" : "Status name"}
             </span>
             <input
@@ -711,11 +711,11 @@ export default function BusinessStatusesPanel({
               className={[
                 "h-11 rounded-xl border px-3 text-sm outline-none transition",
                 isEditing
-                  ? "border-[#f4c77d] bg-[#fff8ec] text-slate-900 shadow-[0_0_0_3px_rgba(245,158,11,0.12)] focus:border-[#d97706] focus:ring-2 focus:ring-[#f59e0b]/20"
-                  : "border-[#E5E7EB] bg-white focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15",
+                  ? "border-[#f4c77d] bg-[#fff8ec] text-slate-900 dark:text-white shadow-[0_0_0_3px_rgba(245,158,11,0.12)] focus:border-[#d97706] focus:ring-2 focus:ring-[#f59e0b]/20"
+                  : "border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15",
               ].join(" ")}
             />
-            <span className="text-[11px] text-slate-400">
+            <span className="text-[11px] text-slate-400 dark:text-white/45">
               {isEditing
                 ? `Internal value stays ${editingValue}`
                 : `Value: ${generatedValue || "WILL_BE_GENERATED"}`}
@@ -725,7 +725,7 @@ export default function BusinessStatusesPanel({
 
         <div className="grid gap-3">
           <div className="grid gap-1">
-            <span className="text-xs font-semibold text-slate-600">Color</span>
+            <span className="text-xs font-semibold text-slate-600 dark:text-white/70">Color</span>
             <div className="flex flex-wrap gap-2">
               {STATUS_COLOR_OPTIONS.map((option) => {
                 const selected = option.value === draftColor;
@@ -766,16 +766,16 @@ export default function BusinessStatusesPanel({
           </div>
 
           {draftColor === "custom" ? (
-            <label className="flex items-center gap-3 rounded-xl border border-[#E5E7EB] bg-white px-3 py-2">
+            <label className="flex items-center gap-3 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-2">
               <input
                 type="color"
                 value={customColor}
                 onChange={(event) =>
                   setCustomColor(event.currentTarget.value.toUpperCase())
                 }
-                className="h-8 w-10 cursor-pointer rounded-md border border-[#E5E7EB] bg-white"
+                className="h-8 w-10 cursor-pointer rounded-md border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03]"
               />
-              <span className="text-xs font-medium text-slate-500">
+              <span className="text-xs font-medium text-slate-500 dark:text-white/55">
                 {customColor.toUpperCase()} will be softened for badges while
                 preserving the chosen color.
               </span>
@@ -806,7 +806,7 @@ export default function BusinessStatusesPanel({
               <button
                 type="button"
                 onClick={resetEditor}
-                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-[#E5E7EB] bg-white px-4 text-sm font-semibold text-[#4B5563] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 text-sm font-semibold text-[#4B5563] dark:text-white/70 transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
               >
                 <X className="h-4 w-4" />
                 Cancel
@@ -816,9 +816,9 @@ export default function BusinessStatusesPanel({
         </div>
       </div>
 
-      <div className="mt-4 rounded-[18px] border border-[#E5E7EB] bg-white p-3.5">
+      <div className="mt-4 rounded-[18px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3.5">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-white/55">
             Active workflow
           </div>
           <div className="flex gap-2">
@@ -826,7 +826,7 @@ export default function BusinessStatusesPanel({
               type="button"
               onClick={() => moveWorkflowStatus(-1)}
               disabled={selectedWorkflowIndex <= 0}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#E5E7EB] bg-white text-[#6B7280] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] disabled:cursor-not-allowed disabled:opacity-35"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#6B7280] dark:text-white/55 transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] disabled:cursor-not-allowed disabled:opacity-35"
               aria-label="Move selected status left"
             >
               <ArrowLeft className="h-4 w-4" />
@@ -838,7 +838,7 @@ export default function BusinessStatusesPanel({
                 selectedWorkflowIndex < 0 ||
                 selectedWorkflowIndex >= workflowStatuses.length - 1
               }
-              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#E5E7EB] bg-white text-[#6B7280] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] disabled:cursor-not-allowed disabled:opacity-35"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#6B7280] dark:text-white/55 transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] disabled:cursor-not-allowed disabled:opacity-35"
               aria-label="Move selected status right"
             >
               <ArrowRight className="h-4 w-4" />
@@ -872,7 +872,7 @@ export default function BusinessStatusesPanel({
             return (
               <Fragment key={status.value}>
                 {draggedValue && dragOverIndex === index ? (
-                  <div className="h-9 w-6 rounded-full border border-dashed border-slate-400 bg-slate-100" />
+                  <div className="h-9 w-6 rounded-full border border-dashed border-slate-400 bg-slate-100 dark:bg-white/[0.06]" />
                 ) : null}
 
                 <div
@@ -929,10 +929,10 @@ export default function BusinessStatusesPanel({
           })}
 
           {draggedValue && dragOverIndex === workflowStatuses.length ? (
-            <div className="h-9 w-6 rounded-full border border-dashed border-slate-400 bg-slate-100" />
+            <div className="h-9 w-6 rounded-full border border-dashed border-slate-400 bg-slate-100 dark:bg-white/[0.06]" />
           ) : null}
         </div>
-        <div className="mt-2 text-[11px] text-slate-400">
+        <div className="mt-2 text-[11px] text-slate-400 dark:text-white/45">
           Click a status to select it. Drag the marker to reorder it anywhere in
           the active workflow, or use arrows as a fallback.
         </div>
@@ -944,7 +944,7 @@ export default function BusinessStatusesPanel({
 
       <div className="mt-5 grid gap-5 lg:grid-cols-2">
         <div>
-          <div className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+          <div className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-white/55">
             Default statuses
           </div>
           <div className="flex flex-wrap gap-2">
@@ -980,7 +980,7 @@ export default function BusinessStatusesPanel({
                     />
                     {status.label}
                     {isLocked ? (
-                      <span className="rounded-full bg-white/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                      <span className="rounded-full bg-white/80 dark:bg-white/[0.05] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-white/55">
                         Locked
                       </span>
                     ) : null}
@@ -988,18 +988,18 @@ export default function BusinessStatusesPanel({
                 );
               })}
           </div>
-          <div className="mt-2 text-[11px] text-slate-400">
+          <div className="mt-2 text-[11px] text-slate-400 dark:text-white/45">
             New, In progress, Done, and Canceled are fixed. Waiting payment can
             be removed from the active workflow if needed.
           </div>
         </div>
 
         <div>
-          <div className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+          <div className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-white/55">
             Custom statuses
           </div>
           {customStatuses.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-[#E5E7EB] bg-white px-4 py-5 text-sm text-[#6B7280]">
+            <div className="rounded-2xl border border-dashed border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 py-5 text-sm text-[#6B7280] dark:text-white/55">
               No custom statuses yet. Add your first one to keep the workflow
               clear for the team.
             </div>
@@ -1013,7 +1013,7 @@ export default function BusinessStatusesPanel({
                 return (
                   <div
                     key={status.value}
-                    className="flex items-center justify-between gap-3 rounded-2xl border border-[#E5E7EB] bg-white px-4 py-3"
+                    className="flex items-center justify-between gap-3 rounded-2xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 py-3"
                   >
                     <button
                       type="button"
@@ -1037,7 +1037,7 @@ export default function BusinessStatusesPanel({
                         />
                         {status.label}
                       </div>
-                      <div className="mt-1 text-xs uppercase tracking-[0.08em] text-slate-400">
+                      <div className="mt-1 text-xs uppercase tracking-[0.08em] text-slate-400 dark:text-white/45">
                         {inWorkflow ? "In workflow" : "Inactive"} В·{" "}
                         {status.value}
                       </div>
@@ -1050,8 +1050,8 @@ export default function BusinessStatusesPanel({
                         className={[
                           "inline-flex h-9 items-center gap-2 rounded-xl border px-3 text-xs font-semibold transition",
                           editing
-                            ? "border-slate-900 bg-slate-50 text-slate-900"
-                            : "border-[#E5E7EB] bg-white text-[#4B5563] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]",
+                            ? "border-slate-900 bg-slate-50 dark:bg-white/[0.04] text-slate-900 dark:text-white"
+                            : "border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#4B5563] dark:text-white/70 hover:border-[#C7D2FE] hover:bg-[#F9FAFB]",
                         ].join(" ")}
                       >
                         <PencilLine className="h-3.5 w-3.5" />
@@ -1067,7 +1067,7 @@ export default function BusinessStatusesPanel({
                           "inline-flex h-9 items-center gap-2 rounded-xl px-3 text-xs font-semibold transition",
                           inWorkflow
                             ? "border border-[#f3d5d8] bg-[#fff5f5] text-red-600 hover:border-[#efb8bf] hover:bg-[#ffe8e8]"
-                            : "border border-[#E5E7EB] bg-white text-[#4B5563] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]",
+                            : "border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#4B5563] dark:text-white/70 hover:border-[#C7D2FE] hover:bg-[#F9FAFB]",
                         ].join(" ")}
                       >
                         {inWorkflow
@@ -1091,7 +1091,7 @@ export default function BusinessStatusesPanel({
               })}
             </div>
           )}
-          <div className="mt-2 text-[11px] text-slate-400">
+          <div className="mt-2 text-[11px] text-slate-400 dark:text-white/45">
             Rename, remove from workflow, or mark a custom status for permanent
             deletion in the current draft.
           </div>
@@ -1099,7 +1099,7 @@ export default function BusinessStatusesPanel({
       </div>
 
       {inactiveStatuses.length > 0 ? (
-        <div className="mt-4 text-[11px] text-slate-400">
+        <div className="mt-4 text-[11px] text-slate-400 dark:text-white/45">
           Inactive statuses remain available historically and can be returned to
           the workflow at any time.
         </div>

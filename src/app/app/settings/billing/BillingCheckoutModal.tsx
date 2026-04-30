@@ -293,7 +293,7 @@ export default function BillingCheckoutModal(props: BillingCheckoutModalProps) {
 
   if (!props.isOwner) {
     return (
-      <span className="inline-flex cursor-not-allowed items-center gap-2 rounded-full border border-[#E5E7EB] bg-[#F9FAFB] px-4 py-2 text-sm font-semibold text-[#9CA3AF]">
+      <span className="inline-flex cursor-not-allowed items-center gap-2 rounded-full border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] px-4 py-2 text-sm font-semibold text-[#9CA3AF] dark:text-white/40">
         Upgrade plan (owner only)
       </span>
     );
@@ -302,7 +302,7 @@ export default function BillingCheckoutModal(props: BillingCheckoutModalProps) {
   if (props.isDemo) {
     return (
       <span
-        className="inline-flex cursor-not-allowed items-center gap-2 rounded-full border border-[#E5E7EB] bg-[#F9FAFB] px-4 py-2 text-sm font-semibold text-[#9CA3AF]"
+        className="inline-flex cursor-not-allowed items-center gap-2 rounded-full border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] px-4 py-2 text-sm font-semibold text-[#9CA3AF] dark:text-white/40"
         title="Billing is disabled for the demo account."
       >
         Upgrade plan (demo)
@@ -330,32 +330,32 @@ export default function BillingCheckoutModal(props: BillingCheckoutModalProps) {
             onClick={(event) => event.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex flex-none items-center justify-between gap-3 border-b border-[#E2E8F0] px-4 py-2.5">
+            <div className="flex flex-none items-center justify-between gap-3 border-b border-[#E2E8F0] dark:border-white/10 px-4 py-2.5">
               <div className="flex items-center gap-3">
                 <div>
                   <div className="flex items-center gap-2.5">
-                    <span className="rounded-full border border-[#C7D2FE] bg-[#EEF2FF] px-2.5 py-0.5 text-[10px] font-semibold text-[#4F46E5]">
+                    <span className="rounded-full border border-[#C7D2FE] dark:border-[var(--brand-500)]/40 bg-[#EEF2FF] dark:bg-[var(--brand-600)]/15 px-2.5 py-0.5 text-[10px] font-semibold text-[#4F46E5]">
                       UK launch pricing
                     </span>
-                    <h3 className="text-base font-semibold tracking-[-0.02em] text-[#0F172A] sm:text-lg">
+                    <h3 className="text-base font-semibold tracking-[-0.02em] text-[#0F172A] dark:text-white sm:text-lg">
                       Control execution. Not just tasks.
                     </h3>
                   </div>
-                  <p className="mt-0.5 text-[12px] text-[#475569]">
+                  <p className="mt-0.5 text-[12px] text-[#475569] dark:text-white/70">
                     A CRM built for real operations — track orders, manage follow-ups, and keep your team accountable.
                   </p>
                 </div>
               </div>
 
               <div className="flex flex-none items-center gap-2.5">
-                <div className="inline-flex items-center gap-0.5 rounded-lg border border-[#D6E0EC] bg-[#F8FAFC] p-0.5">
+                <div className="inline-flex items-center gap-0.5 rounded-lg border border-[#D6E0EC] bg-[#F8FAFC] dark:bg-white/[0.04] p-0.5">
                   <button
                     type="button"
                     onClick={() => setInterval("monthly")}
                     className={`rounded-md px-2.5 py-1 text-[12px] font-semibold ${
                       interval === "monthly"
-                        ? "bg-white text-[#111827] shadow-[0_1px_2px_rgba(15,23,42,0.08)]"
-                        : "text-[#64748B]"
+                        ? "bg-white dark:bg-white/[0.03] text-[#111827] shadow-[0_1px_2px_rgba(15,23,42,0.08)]"
+                        : "text-[#64748B] dark:text-white/55"
                     }`}
                   >
                     Monthly
@@ -365,12 +365,12 @@ export default function BillingCheckoutModal(props: BillingCheckoutModalProps) {
                     onClick={() => setInterval("yearly")}
                     className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[12px] font-semibold ${
                       interval === "yearly"
-                        ? "bg-white text-[#111827] shadow-[0_1px_2px_rgba(15,23,42,0.08)]"
-                        : "text-[#64748B]"
+                        ? "bg-white dark:bg-white/[0.03] text-[#111827] shadow-[0_1px_2px_rgba(15,23,42,0.08)]"
+                        : "text-[#64748B] dark:text-white/55"
                     }`}
                   >
                     Yearly
-                    <span className="rounded-full bg-[#EEF2FF] px-1.5 py-px text-[9px] font-bold text-[#4F46E5]">
+                    <span className="rounded-full bg-[#EEF2FF] dark:bg-[var(--brand-600)]/15 px-1.5 py-px text-[9px] font-bold text-[#4F46E5]">
                       -2mo
                     </span>
                   </button>
@@ -379,7 +379,7 @@ export default function BillingCheckoutModal(props: BillingCheckoutModalProps) {
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
-                  className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-[#E5E7EB] text-[#6B7280] hover:bg-[#F9FAFB]"
+                  className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-[#E5E7EB] dark:border-white/10 text-[#6B7280] dark:text-white/55 hover:bg-[#F9FAFB]"
                   aria-label="Close"
                 >
                   <X className="h-3.5 w-3.5" />
@@ -394,10 +394,10 @@ export default function BillingCheckoutModal(props: BillingCheckoutModalProps) {
                   <article
                     key={option.code}
                     onClick={() => setPlan(option.code)}
-                    className={`relative flex cursor-pointer flex-col rounded-xl border bg-white px-3 py-2.5 transition ${
+                    className={`relative flex cursor-pointer flex-col rounded-xl border bg-white dark:bg-white/[0.03] px-3 py-2.5 transition ${
                       plan === option.code
                         ? "border-[#818CF8] ring-1 ring-[#818CF8] shadow-[0_4px_16px_rgba(79,70,229,0.10)]"
-                        : "border-[#E2E8F0] hover:border-[#C7D2FE]"
+                        : "border-[#E2E8F0] dark:border-white/10 hover:border-[#C7D2FE]"
                     }`}
                   >
                     {currentPlanCode && option.code === currentPlanCode ? (
@@ -406,34 +406,34 @@ export default function BillingCheckoutModal(props: BillingCheckoutModalProps) {
                       </span>
                     ) : null}
                     {!currentPlanCode && option.code === "business" ? (
-                      <span className="absolute right-2 top-2 rounded-full border border-[#C7D2FE] bg-[#EEF2FF] px-1.5 py-px text-[9px] font-semibold text-[#4F46E5]">
+                      <span className="absolute right-2 top-2 rounded-full border border-[#C7D2FE] dark:border-[var(--brand-500)]/40 bg-[#EEF2FF] dark:bg-[var(--brand-600)]/15 px-1.5 py-px text-[9px] font-semibold text-[#4F46E5]">
                         Popular
                       </span>
                     ) : null}
 
-                    <h4 className="text-[14px] font-semibold text-[#0F172A]">{option.label}</h4>
-                    <p className="text-[10px] leading-[1.3] text-[#64748B]">{option.description}</p>
+                    <h4 className="text-[14px] font-semibold text-[#0F172A] dark:text-white">{option.label}</h4>
+                    <p className="text-[10px] leading-[1.3] text-[#64748B] dark:text-white/55">{option.description}</p>
 
-                    <div className="mt-1.5 flex items-baseline gap-0.5 text-[#0F172A]">
+                    <div className="mt-1.5 flex items-baseline gap-0.5 text-[#0F172A] dark:text-white">
                       <span className="text-base font-bold leading-none">£</span>
                       <span className="text-[28px] font-bold leading-none tracking-[-0.03em]">
                         {interval === "monthly" ? option.launchAmount : `${option.launchAmount}0`}
                       </span>
-                      <span className="ml-0.5 text-[11px] font-semibold text-[#64748B]">
+                      <span className="ml-0.5 text-[11px] font-semibold text-[#64748B] dark:text-white/55">
                         /{interval === "monthly" ? "mo" : "yr"}
                       </span>
-                      <span className="ml-1 text-[10px] font-medium text-[#94A3B8] line-through">
+                      <span className="ml-1 text-[10px] font-medium text-[#94A3B8] dark:text-white/45 line-through">
                         £{interval === "monthly" ? option.regularAmount : `${option.regularAmount}0`}
                       </span>
                     </div>
 
-                    <p className="text-[10px] font-medium text-[#64748B]">
+                    <p className="text-[10px] font-medium text-[#64748B] dark:text-white/55">
                       {interval === "yearly"
                         ? `£${option.monthlyLaunchAmount}/mo billed annually`
                         : option.note[interval]}
                     </p>
 
-                    <ul className="mt-1.5 flex-1 space-y-px border-t border-[#F1F5F9] pt-1.5 text-[10px] leading-[1.5] text-[#334155]">
+                    <ul className="mt-1.5 flex-1 space-y-px border-t border-[#F1F5F9] pt-1.5 text-[10px] leading-[1.5] text-[#334155] dark:text-white/80">
                       {option.features.map((feature) => (
                         <li key={feature} className="flex items-center gap-1">
                           <svg className="h-2.5 w-2.5 flex-none text-[#4F46E5]" viewBox="0 0 16 16" fill="none">
@@ -457,7 +457,7 @@ export default function BillingCheckoutModal(props: BillingCheckoutModalProps) {
                           ? "cursor-not-allowed border-[#D1FAE5] bg-[#ECFDF3] text-[#047857]"
                           : option.code === "business"
                             ? "border-[#4F46E5] bg-[#4F46E5] text-white hover:bg-[#4338CA]"
-                            : "border-[#CBD5E1] bg-white text-[#0F172A] hover:border-[#A5B4FC] hover:bg-[#F5F3FF]"
+                            : "border-[#CBD5E1] bg-white dark:bg-white/[0.03] text-[#0F172A] dark:text-white hover:border-[#A5B4FC] hover:bg-[#F5F3FF]"
                       } disabled:opacity-60`}
                     >
                       {option.code === currentPlanCode ? "Current plan" : option.cta}
@@ -468,14 +468,14 @@ export default function BillingCheckoutModal(props: BillingCheckoutModalProps) {
             </div>
 
             {/* Footer */}
-            <div className="flex flex-none items-center gap-2 border-t border-[#E2E8F0] px-4 py-1.5 text-[10px] text-[#64748B]">
+            <div className="flex flex-none items-center gap-2 border-t border-[#E2E8F0] dark:border-white/10 px-4 py-1.5 text-[10px] text-[#64748B] dark:text-white/55">
               <span className="font-semibold text-[#4F46E5]">Launch pricing</span>
               <span>·</span>
               <span>{props.customerEmail || "Email will be requested at checkout"}</span>
             </div>
 
             {error ? (
-              <div className="border-t border-[#FECACA] bg-[#FEF2F2] px-5 py-2 text-[12px] text-[#991B1B]">
+              <div className="border-t border-[#FECACA] bg-[#FEF2F2] dark:bg-rose-500/10 px-5 py-2 text-[12px] text-[#991B1B]">
                 {error}
               </div>
             ) : null}

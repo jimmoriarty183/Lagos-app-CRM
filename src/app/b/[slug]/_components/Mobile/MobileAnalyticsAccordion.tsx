@@ -46,7 +46,7 @@ function KpiCard({
   const subCls = tone === "red" ? "text-[#b42318]" : "text-[#667085]";
 
   return (
-    <div className="flex min-h-[136px] flex-col rounded-3xl border border-[#dde3ee] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+    <div className="flex min-h-[136px] flex-col rounded-3xl border border-[#dde3ee] bg-white dark:bg-white/[0.03] p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
       <div className="flex items-center justify-between gap-3">
         <div className="text-xs font-semibold text-[#667085]">{title}</div>
         <div className={`inline-flex h-9 w-9 items-center justify-center rounded-2xl ${toneBg}`}>
@@ -75,7 +75,7 @@ export default function MobileAnalyticsAccordion({
     <MobileAccordion
       title={
         <span className="inline-flex items-center gap-2">
-          <BarChart3 className="h-4 w-4 text-gray-400" />
+          <BarChart3 className="h-4 w-4 text-gray-400 dark:text-white/45" />
           Summary
         </span>
       }

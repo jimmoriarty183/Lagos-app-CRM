@@ -229,7 +229,7 @@ export function RightCampaignPopup() {
   return (
     <>
       <div className="fixed inset-0 z-[70] bg-slate-900/24 backdrop-blur-[1px]" />
-      <aside className="fixed left-1/2 top-1/2 z-[80] w-[420px] max-w-[calc(100vw-1.25rem)] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_24px_60px_-24px_rgba(15,23,42,0.45)]">
+      <aside className="fixed left-1/2 top-1/2 z-[80] w-[420px] max-w-[calc(100vw-1.25rem)] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] p-4 shadow-[0_24px_60px_-24px_rgba(15,23,42,0.45)]">
         {error ? (
           <div className="mb-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-600">{error}</div>
         ) : null}
@@ -249,14 +249,14 @@ export function RightCampaignPopup() {
             onClick={dismiss}
             disabled={dismissBusy}
             aria-label="Close popup"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition hover:border-slate-300 hover:text-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] text-slate-500 dark:text-white/55 transition hover:border-slate-300 hover:text-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
-        <div className="mt-2 text-[18px] font-semibold leading-6 text-slate-900">{item.title}</div>
+        <div className="mt-2 text-[18px] font-semibold leading-6 text-slate-900 dark:text-white">{item.title}</div>
 
-        {item.body ? <p className="mt-2 text-sm leading-6 text-slate-600">{item.body}</p> : null}
+        {item.body ? <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-white/70">{item.body}</p> : null}
 
         <div className="mt-4">
           {isSurvey ? (
@@ -281,7 +281,7 @@ export function RightCampaignPopup() {
                 }}
               />
             ) : (
-              <div className="text-sm text-slate-500">Loading survey...</div>
+              <div className="text-sm text-slate-500 dark:text-white/55">Loading survey...</div>
             )
           ) : (
             <div className="flex flex-wrap gap-2">
@@ -300,7 +300,7 @@ export function RightCampaignPopup() {
                 size="sm"
                 onClick={dismiss}
                 disabled={dismissBusy}
-                className="h-9 border-slate-300 bg-white px-3.5 text-slate-700 hover:border-slate-400 hover:text-slate-900 disabled:opacity-60"
+                className="h-9 border-slate-300 dark:border-white/15 bg-white dark:bg-white/[0.03] px-3.5 text-slate-700 dark:text-white/80 hover:border-slate-400 hover:text-slate-900 disabled:opacity-60"
               >
                 Close for now
               </Button>

@@ -225,13 +225,13 @@ export default function MobileFiltersAccordion({
   }, [isOpen]);
 
   const inputCls =
-    "h-11 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm text-[#374151] outline-none transition " +
+    "h-11 w-full rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm text-[#374151] outline-none transition " +
     "focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15";
   const selectTriggerCls =
-    "h-11 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm text-[#374151] shadow-none transition " +
+    "h-11 w-full rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm text-[#374151] shadow-none transition " +
     "focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15 data-[placeholder]:text-[#9CA3AF]";
   const selectContentCls =
-    "z-[130] rounded-xl border border-[#E5E7EB] bg-white p-1 shadow-[0_16px_40px_rgba(15,23,42,0.12)]";
+    "z-[130] rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-1 shadow-[0_16px_40px_rgba(15,23,42,0.12)]";
 
   const defaultVisibleStatuses = getDefaultVisibleStatusFilters(customStatuses);
   const activeCount = [
@@ -291,16 +291,16 @@ export default function MobileFiltersAccordion({
         className="absolute inset-0 bg-[#0f172a]/32 backdrop-blur-[2px]"
       />
 
-      <section className="absolute inset-x-0 bottom-0 max-h-[88vh] overflow-hidden rounded-t-[28px] border border-[#E5E7EB] bg-white shadow-[0_-20px_60px_rgba(15,23,42,0.12)]">
+      <section className="absolute inset-x-0 bottom-0 max-h-[88vh] overflow-hidden rounded-t-[28px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] shadow-[0_-20px_60px_rgba(15,23,42,0.12)]">
         <div className="mx-auto mt-3 h-1.5 w-14 rounded-full bg-[#E5E7EB]" />
 
         <div className="flex items-center justify-between gap-3 border-b border-[#F3F4F6] px-4 py-4">
           <div className="min-w-0">
-            <div className="inline-flex items-center gap-2 text-sm font-semibold text-[#1F2937]">
-              <SlidersHorizontal className="icon-button text-[#6B7280]" strokeWidth={2} />
+            <div className="inline-flex items-center gap-2 text-sm font-semibold text-[#1F2937] dark:text-white/90">
+              <SlidersHorizontal className="icon-button text-[#6B7280] dark:text-white/55" strokeWidth={2} />
               Search & Filters
             </div>
-            <div className="mt-1 text-xs text-[#9CA3AF]">
+            <div className="mt-1 text-xs text-[#9CA3AF] dark:text-white/40">
               {hasFiltersApplied
                 ? `${activeCount} active`
                 : "No active filters"}
@@ -311,7 +311,7 @@ export default function MobileFiltersAccordion({
             {hasActiveFilters ? (
               <a
                 href={clearHref}
-                className="inline-flex h-8 items-center justify-center rounded-lg border border-[#E5E7EB] bg-white px-3 text-xs font-semibold text-[#374151] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
+                className="inline-flex h-8 items-center justify-center rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-xs font-semibold text-[#374151] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
               >
                 Reset
               </a>
@@ -319,7 +319,7 @@ export default function MobileFiltersAccordion({
             <button
               type="button"
               onClick={() => setIsOpen(false)}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[#E5E7EB] bg-white text-[#6B7280] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#6B7280] dark:text-white/55 transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]"
             >
               <X className="h-4 w-4" />
             </button>
@@ -344,11 +344,11 @@ export default function MobileFiltersAccordion({
           ) : null}
 
           <label className="grid gap-2">
-            <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF] dark:text-white/40">
               Search
             </span>
             <div className="relative">
-              <Search className="icon-button pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#9CA3AF]" strokeWidth={2} />
+              <Search className="icon-button pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#9CA3AF] dark:text-white/40" strokeWidth={2} />
               <input
                 name="q"
                 defaultValue={filters.q}
@@ -360,7 +360,7 @@ export default function MobileFiltersAccordion({
 
           <div className="grid grid-cols-2 gap-3">
             <label className="grid gap-2">
-              <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF] dark:text-white/40">
                 Period
               </span>
               <Select
@@ -388,7 +388,7 @@ export default function MobileFiltersAccordion({
             </label>
 
             <label className="grid gap-2">
-              <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF] dark:text-white/40">
                 Assignee
               </span>
               <Select value={actorValue} onValueChange={setActorValue}>
@@ -407,7 +407,7 @@ export default function MobileFiltersAccordion({
           </div>
 
           <label className="grid gap-2">
-            <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF] dark:text-white/40">
               Sort
             </span>
             <Select
@@ -428,10 +428,10 @@ export default function MobileFiltersAccordion({
           </label>
 
           <div className="grid gap-2">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF] dark:text-white/40">
               Statuses
             </div>
-            <div className="flex flex-wrap gap-2 rounded-[20px] border border-[#E5E7EB] bg-[#F9FAFB] p-2.5">
+            <div className="flex flex-wrap gap-2 rounded-[20px] border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] p-2.5">
               {statusOptions.map((option) => (
                 <label key={option.value} className="cursor-pointer">
                   <input
@@ -446,13 +446,13 @@ export default function MobileFiltersAccordion({
                     }
                     className="peer sr-only"
                   />
-                  <span className="inline-flex min-h-9 items-center rounded-full border border-[#E5E7EB] bg-white px-3 py-2 text-[12px] font-medium leading-4 text-[#374151] transition peer-checked:border-[var(--brand-600)] peer-checked:bg-[var(--brand-600)] peer-checked:text-white">
+                  <span className="inline-flex min-h-9 items-center rounded-full border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-2 text-[12px] font-medium leading-4 text-[#374151] transition peer-checked:border-[var(--brand-600)] peer-checked:bg-[var(--brand-600)] peer-checked:text-white">
                     {option.label}
                   </span>
                 </label>
               ))}
             </div>
-            <div className="text-[11px] text-[#9CA3AF]">
+            <div className="text-[11px] text-[#9CA3AF] dark:text-white/40">
               {shouldKeepDefaultStatuses
                 ? "Default view shows all statuses."
                 : "Choose one or several statuses."}
@@ -462,7 +462,7 @@ export default function MobileFiltersAccordion({
           {showCustomRange ? (
             <div className="grid grid-cols-2 gap-3">
               <label className="grid gap-2">
-                <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF] dark:text-white/40">
                   Start
                 </span>
                 <input
@@ -476,7 +476,7 @@ export default function MobileFiltersAccordion({
                 />
               </label>
               <label className="grid gap-2">
-                <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF] dark:text-white/40">
                   End
                 </span>
                 <input
@@ -490,11 +490,11 @@ export default function MobileFiltersAccordion({
             </div>
           ) : null}
 
-          <div className="sticky bottom-0 grid grid-cols-[minmax(0,1fr)_120px] gap-3 border-t border-[#F3F4F6] bg-white pb-1 pt-4">
+          <div className="sticky bottom-0 grid grid-cols-[minmax(0,1fr)_120px] gap-3 border-t border-[#F3F4F6] bg-white dark:bg-white/[0.03] pb-1 pt-4">
             <button
               type="button"
               onClick={() => setIsOpen(false)}
-              className="inline-flex h-11 items-center justify-center rounded-xl border border-[#E5E7EB] bg-white px-4 text-sm font-semibold text-[#374151] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
+              className="inline-flex h-11 items-center justify-center rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 text-sm font-semibold text-[#374151] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
             >
               Cancel
             </button>

@@ -44,9 +44,9 @@ function QuestionBlock({
   };
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3">
+    <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/70 p-3">
       {!hideTitle ? (
-        <div className="text-sm font-semibold text-slate-900">
+        <div className="text-sm font-semibold text-slate-900 dark:text-white">
           {question.title}
         </div>
       ) : null}
@@ -65,12 +65,12 @@ function QuestionBlock({
                     : "rounded-full border px-3.5 py-1.5 text-sm font-medium",
                   selected
                     ? "border-emerald-300 bg-emerald-50 text-emerald-800"
-                    : "border-slate-200 bg-white text-slate-500",
+                    : "border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] text-slate-500 dark:text-white/55",
                 ].join(" ")}
               >
                 {optionLayout === "numbered_column" ? (
                   <>
-                    <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full border border-slate-200 bg-slate-50 px-1 text-[11px] font-semibold text-slate-600">
+                    <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] px-1 text-[11px] font-semibold text-slate-600 dark:text-white/70">
                       {option.optionOrder}
                     </span>
                     <span>{option.label}</span>
@@ -93,13 +93,13 @@ function QuestionBlock({
                   : "rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors",
                 selected
                   ? "border-[var(--brand-300)] bg-[var(--brand-50)] text-[var(--brand-800)]"
-                  : "border-slate-200 bg-white text-slate-700 hover:border-[var(--brand-200)] hover:bg-[var(--brand-50)]",
+                  : "border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] text-slate-700 dark:text-white/80 hover:border-[var(--brand-200)] hover:bg-[var(--brand-50)]",
                 readOnly ? "cursor-default opacity-95" : "",
               ].join(" ")}
             >
               {optionLayout === "numbered_column" ? (
                 <>
-                  <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full border border-slate-200 bg-slate-50 px-1 text-[11px] font-semibold text-slate-600">
+                  <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] px-1 text-[11px] font-semibold text-slate-600 dark:text-white/70">
                     {option.optionOrder}
                   </span>
                   <span>{option.label}</span>
@@ -211,7 +211,7 @@ export function SurveyForm({
   return (
     <div className="space-y-3">
       {helperText ? (
-        <p className="text-xs leading-5 text-slate-500">{helperText}</p>
+        <p className="text-xs leading-5 text-slate-500 dark:text-white/55">{helperText}</p>
       ) : null}
       {survey.questions.map((question) => (
         <QuestionBlock
@@ -251,7 +251,7 @@ export function SurveyForm({
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex h-9 items-center rounded-lg border border-slate-300 bg-white px-3.5 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
+            className="inline-flex h-9 items-center rounded-lg border border-slate-300 dark:border-white/15 bg-white dark:bg-white/[0.03] px-3.5 text-sm font-semibold text-slate-700 dark:text-white/80 transition hover:border-slate-400 hover:bg-slate-50"
           >
             Close for now
           </button>

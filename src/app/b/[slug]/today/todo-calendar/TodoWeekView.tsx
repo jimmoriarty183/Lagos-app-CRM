@@ -25,7 +25,7 @@ function HourLabels() {
         return (
           <div
             key={hour}
-            className="absolute left-0 right-0 -translate-y-1/2 px-3 text-[11px] font-medium text-[#98A2B3]"
+            className="absolute left-0 right-0 -translate-y-1/2 px-3 text-[11px] font-medium text-[#98A2B3] dark:text-white/45"
             style={{ top: index * 64 }}
           >
             {format(new Date(2026, 0, 1, hour), "h a")}
@@ -54,9 +54,9 @@ export function TodoWeekView({
   const days = getWeekDays(anchorDate);
 
   return (
-    <div className="overflow-hidden rounded-[22px] border border-[#E5E7EB] bg-white shadow-[0_12px_30px_rgba(15,23,42,0.05)]">
+    <div className="overflow-hidden rounded-[22px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] shadow-[0_12px_30px_rgba(15,23,42,0.05)]">
       <div className="grid grid-cols-[72px_repeat(7,minmax(0,1fr))] border-b border-[#F2F4F7] bg-[#FCFCFD]">
-        <div className="border-r border-[#F2F4F7] px-3 py-3 text-[11px] font-semibold uppercase tracking-[0.06em] text-[#98A2B3]">
+        <div className="border-r border-[#F2F4F7] px-3 py-3 text-[11px] font-semibold uppercase tracking-[0.06em] text-[#98A2B3] dark:text-white/45">
           Time
         </div>
         {days.map((day) => {
@@ -72,15 +72,15 @@ export function TodoWeekView({
                 selected && "bg-[#F9FAFF]",
               )}
             >
-              <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[#98A2B3]">{format(day, "EEE")}</div>
-              <div className={cn("mt-1 text-[16px] font-semibold text-[#111827]", today && "text-[#3645A0]")}>{format(day, "d")}</div>
+              <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[#98A2B3] dark:text-white/45">{format(day, "EEE")}</div>
+              <div className={cn("mt-1 text-[16px] font-semibold text-[#111827]", today && "text-[#3645A0] dark:text-[var(--brand-300)]")}>{format(day, "d")}</div>
             </button>
           );
         })}
       </div>
 
       <div className="grid grid-cols-[72px_repeat(7,minmax(0,1fr))] border-b border-[#F2F4F7]">
-        <div className="border-r border-[#F2F4F7] px-3 py-3 text-[11px] font-semibold uppercase tracking-[0.06em] text-[#98A2B3]">
+        <div className="border-r border-[#F2F4F7] px-3 py-3 text-[11px] font-semibold uppercase tracking-[0.06em] text-[#98A2B3] dark:text-white/45">
           All day
         </div>
         {days.map((day) => {
@@ -89,7 +89,7 @@ export function TodoWeekView({
             <div key={day.toISOString()} className="min-h-[88px] border-r border-[#F2F4F7] px-2 py-2">
               <div className="space-y-1.5">
                 {dayItems.length === 0 ? (
-                  <div className="rounded-[12px] border border-dashed border-[#E5E7EB] px-2 py-2 text-[11px] text-[#98A2B3]">No all-day items</div>
+                  <div className="rounded-[12px] border border-dashed border-[#E5E7EB] dark:border-white/10 px-2 py-2 text-[11px] text-[#98A2B3] dark:text-white/45">No all-day items</div>
                 ) : (
                   dayItems.map((item) => (
                     <TodoCalendarItemCard

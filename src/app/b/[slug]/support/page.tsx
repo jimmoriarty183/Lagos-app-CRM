@@ -51,7 +51,7 @@ export default async function BusinessSupportPage({
   const adminHref = isAdminEmail(context.user.email) ? getAdminUsersPath() : undefined;
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-transparent text-slate-900">
+    <div className="min-h-screen overflow-x-hidden bg-transparent text-slate-900 dark:text-white">
       <TopBar
         businessSlug={slug}
         role={context.role}
@@ -102,8 +102,8 @@ export default async function BusinessSupportPage({
             />
           </div>
 
-          <section className="min-w-0 rounded-[16px] border border-slate-200 bg-white p-3 shadow-sm sm:p-4">
-            <div className="flex flex-wrap items-end justify-between gap-3 border-b border-slate-200 pb-4">
+          <section className="min-w-0 rounded-[16px] border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] p-3 shadow-sm sm:p-4">
+            <div className="flex flex-wrap items-end justify-between gap-3 border-b border-slate-200 dark:border-white/10 pb-4">
               <div>
                 <div className="product-page-kicker">Support</div>
                 <h1 className="product-page-title mt-1">Support requests</h1>
@@ -119,12 +119,12 @@ export default async function BusinessSupportPage({
                 name="q"
                 defaultValue={query}
                 placeholder="Search subject or message"
-                className="h-10 min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
+                className="h-10 min-w-0 flex-1 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
               />
               <Button
                 type="submit"
                 variant="outline"
-                className="h-10 px-4 text-sm font-semibold text-slate-700 hover:border-slate-400 hover:text-slate-900"
+                className="h-10 px-4 text-sm font-semibold text-slate-700 dark:text-white/80 hover:border-slate-400 hover:text-slate-900"
               >
                 Search
               </Button>
@@ -142,8 +142,8 @@ export default async function BusinessSupportPage({
         </div>
 
         <div className="space-y-4 lg:hidden">
-          <section className="rounded-[16px] border border-slate-200 bg-white p-3 shadow-sm">
-            <div className="flex flex-wrap items-end justify-between gap-3 border-b border-slate-200 pb-4">
+          <section className="rounded-[16px] border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] p-3 shadow-sm">
+            <div className="flex flex-wrap items-end justify-between gap-3 border-b border-slate-200 dark:border-white/10 pb-4">
               <div>
                 <div className="product-page-kicker">Support</div>
                 <h1 className="product-page-title mt-1">Support requests</h1>
@@ -157,12 +157,12 @@ export default async function BusinessSupportPage({
                 name="q"
                 defaultValue={query}
                 placeholder="Search subject or message"
-                className="h-10 min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
+                className="h-10 min-w-0 flex-1 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
               />
               <Button
                 type="submit"
                 variant="outline"
-                className="h-10 px-4 text-sm font-semibold text-slate-700 hover:border-slate-400 hover:text-slate-900"
+                className="h-10 px-4 text-sm font-semibold text-slate-700 dark:text-white/80 hover:border-slate-400 hover:text-slate-900"
               >
                 Search
               </Button>

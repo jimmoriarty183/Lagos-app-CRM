@@ -100,21 +100,21 @@ export function SupportRequestForm({ businessSlug }: { businessSlug: string }) {
   }
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-      <h2 className="text-lg font-semibold text-slate-900">New support request</h2>
-      <p className="mt-1 text-sm text-slate-500">Fill in the issue details. Business and submitter are derived from your session.</p>
+    <section className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] p-4 shadow-sm sm:p-5">
+      <h2 className="text-lg font-semibold text-slate-900 dark:text-white">New support request</h2>
+      <p className="mt-1 text-sm text-slate-500 dark:text-white/55">Fill in the issue details. Business and submitter are derived from your session.</p>
 
       <form className="mt-4 space-y-4" onSubmit={onSubmit}>
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="space-y-1.5 text-sm">
-            <span className="font-medium text-slate-700">Type</span>
+            <span className="font-medium text-slate-700 dark:text-white/80">Type</span>
             <select
               value={state.type}
               onChange={(event) =>
                 setState((prev) => ({ ...prev, type: event.target.value }))
               }
               required
-              className="h-10 w-full rounded-[var(--radius)] border border-[var(--neutral-200)] bg-white px-4 text-[0.9375rem] text-[var(--neutral-900)] outline-none transition focus:border-[var(--brand-600)] focus:ring-0"
+              className="h-10 w-full rounded-[var(--radius)] border border-[var(--neutral-200)] bg-white dark:bg-white/[0.03] px-4 text-[0.9375rem] text-[var(--neutral-900)] outline-none transition focus:border-[var(--brand-600)] focus:ring-0"
             >
               {TYPE_SUGGESTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -125,14 +125,14 @@ export function SupportRequestForm({ businessSlug }: { businessSlug: string }) {
           </label>
 
           <label className="space-y-1.5 text-sm">
-            <span className="font-medium text-slate-700">Priority</span>
+            <span className="font-medium text-slate-700 dark:text-white/80">Priority</span>
             <select
               value={state.priority}
               onChange={(event) =>
                 setState((prev) => ({ ...prev, priority: event.target.value }))
               }
               required
-              className="h-10 w-full rounded-[var(--radius)] border border-[var(--neutral-200)] bg-white px-4 text-[0.9375rem] text-[var(--neutral-900)] outline-none transition focus:border-[var(--brand-600)] focus:ring-0"
+              className="h-10 w-full rounded-[var(--radius)] border border-[var(--neutral-200)] bg-white dark:bg-white/[0.03] px-4 text-[0.9375rem] text-[var(--neutral-900)] outline-none transition focus:border-[var(--brand-600)] focus:ring-0"
             >
               {PRIORITY_SUGGESTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -144,47 +144,47 @@ export function SupportRequestForm({ businessSlug }: { businessSlug: string }) {
         </div>
 
         <label className="space-y-1.5 text-sm">
-          <span className="font-medium text-slate-700">Subject</span>
+          <span className="font-medium text-slate-700 dark:text-white/80">Subject</span>
           <input
             value={state.subject}
             onChange={(event) => setState((prev) => ({ ...prev, subject: event.target.value }))}
-            className="h-10 w-full rounded-[var(--radius)] border border-[var(--neutral-200)] bg-white px-4 text-[0.9375rem] text-[var(--neutral-900)] outline-none transition focus:border-[var(--brand-600)] focus:ring-0"
+            className="h-10 w-full rounded-[var(--radius)] border border-[var(--neutral-200)] bg-white dark:bg-white/[0.03] px-4 text-[0.9375rem] text-[var(--neutral-900)] outline-none transition focus:border-[var(--brand-600)] focus:ring-0"
             minLength={3}
             required
           />
         </label>
 
         <label className="space-y-1.5 text-sm">
-          <span className="font-medium text-slate-700">Message</span>
+          <span className="font-medium text-slate-700 dark:text-white/80">Message</span>
           <textarea
             value={state.message}
             onChange={(event) => setState((prev) => ({ ...prev, message: event.target.value }))}
-            className="min-h-[100px] w-full rounded-[var(--radius)] border border-[var(--neutral-200)] bg-white px-4 py-3 text-[0.9375rem] text-[var(--neutral-900)] outline-none transition resize-y focus:border-[var(--brand-600)] focus:ring-0"
+            className="min-h-[100px] w-full rounded-[var(--radius)] border border-[var(--neutral-200)] bg-white dark:bg-white/[0.03] px-4 py-3 text-[0.9375rem] text-[var(--neutral-900)] outline-none transition resize-y focus:border-[var(--brand-600)] focus:ring-0"
             minLength={3}
             required
           />
-          <span className="text-xs text-slate-500">Minimum 3 characters.</span>
+          <span className="text-xs text-slate-500 dark:text-white/55">Minimum 3 characters.</span>
         </label>
 
         <div className="grid gap-4 sm:grid-cols-1">
           <label className="space-y-1.5 text-sm">
-            <span className="font-medium text-slate-700">Contact email</span>
+            <span className="font-medium text-slate-700 dark:text-white/80">Contact email</span>
           <input
             type="email"
             value={state.contactEmail}
             onChange={(event) => setState((prev) => ({ ...prev, contactEmail: event.target.value }))}
-            className="h-10 w-full rounded-[var(--radius)] border border-[var(--neutral-200)] bg-white px-4 text-[0.9375rem] text-[var(--neutral-900)] outline-none transition focus:border-[var(--brand-600)] focus:ring-0"
+            className="h-10 w-full rounded-[var(--radius)] border border-[var(--neutral-200)] bg-white dark:bg-white/[0.03] px-4 text-[0.9375rem] text-[var(--neutral-900)] outline-none transition focus:border-[var(--brand-600)] focus:ring-0"
             placeholder="you@company.com"
           />
           </label>
         </div>
 
         <label className="space-y-1.5 text-sm">
-          <span className="font-medium text-slate-700">Attachment (optional)</span>
+          <span className="font-medium text-slate-700 dark:text-white/80">Attachment (optional)</span>
           <input
             type="file"
             onChange={(event) => setState((prev) => ({ ...prev, file: event.target.files?.[0] ?? null }))}
-            className="block w-full cursor-pointer rounded-[var(--radius)] border border-[var(--neutral-200)] bg-white px-4 py-2 text-[0.9375rem] text-[var(--neutral-900)] outline-none transition file:mr-3 file:rounded-lg file:border-0 file:bg-[var(--neutral-100)] file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-[var(--neutral-700)] focus:border-[var(--brand-600)] focus:ring-0"
+            className="block w-full cursor-pointer rounded-[var(--radius)] border border-[var(--neutral-200)] bg-white dark:bg-white/[0.03] px-4 py-2 text-[0.9375rem] text-[var(--neutral-900)] outline-none transition file:mr-3 file:rounded-lg file:border-0 file:bg-[var(--neutral-100)] file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-[var(--neutral-700)] focus:border-[var(--brand-600)] focus:ring-0"
           />
         </label>
 
@@ -198,11 +198,11 @@ export function SupportRequestForm({ businessSlug }: { businessSlug: string }) {
           </div>
         ) : null}
 
-        <div className="flex items-center justify-end gap-3 border-t border-slate-100 pt-2">
+        <div className="flex items-center justify-end gap-3 border-t border-slate-100 dark:border-white/[0.06] pt-2">
           <button
             type="button"
             onClick={() => router.push(`/b/${businessSlug}/support`)}
-            className="inline-flex h-10 items-center rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
+            className="inline-flex h-10 items-center rounded-xl border border-slate-300 dark:border-white/15 bg-white dark:bg-white/[0.03] px-4 text-sm font-semibold text-slate-700 dark:text-white/80 transition hover:border-slate-400 hover:text-slate-900"
           >
             Back
           </button>

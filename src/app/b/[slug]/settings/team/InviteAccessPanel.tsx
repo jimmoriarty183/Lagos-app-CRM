@@ -18,7 +18,7 @@ export default function InviteAccessPanel({
       {canManage ? (
         <Link
           href="/app/settings/team"
-          className="flex items-center justify-between gap-3 rounded-[18px] border border-[#C7D2FE] bg-[#EEF2FF] px-4 py-3 text-sm text-[#312E81] transition hover:border-[#A5B4FC] hover:bg-[#E0E7FF]"
+          className="flex items-center justify-between gap-3 rounded-[18px] border border-[#C7D2FE] dark:border-[var(--brand-500)]/40 bg-[#EEF2FF] dark:bg-[var(--brand-600)]/15 px-4 py-3 text-sm text-[#312E81] transition hover:border-[#A5B4FC] hover:bg-[#E0E7FF]"
         >
           <span className="min-w-0">
             <span className="block font-semibold text-[#3730A3]">

@@ -315,8 +315,8 @@ export function TodoWorkspaceView({
           <div className="rounded-[24px] border border-[#D9E2FF] bg-[linear-gradient(135deg,#FFFFFF_0%,#F8FAFF_62%,#EEF2FF_100%)] px-5 py-4.5 shadow-[0_16px_38px_rgba(15,23,42,0.08)]">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <div className="product-page-title text-[#0F172A]">Today</div>
-                <p className="mt-1 product-body-sm text-[#475467]">
+                <div className="product-page-title text-[#0F172A] dark:text-white">Today</div>
+                <p className="mt-1 product-body-sm text-[#475467] dark:text-white/70">
                   Calendar mode is the planning surface for dated work. List mode stays compact and execution-focused.
                 </p>
               </div>
@@ -341,7 +341,7 @@ export function TodoWorkspaceView({
                   <Button
                     type="button"
                     variant="outline"
-                    className="h-10 rounded-[14px] border-[#CBD5E1] bg-white px-3.5 text-[13px] font-semibold text-[#1E293B] shadow-[0_3px_12px_rgba(15,23,42,0.06)] hover:border-[#C7D2FE] hover:text-[#3645A0]"
+                    className="h-10 rounded-[14px] border-[#CBD5E1] bg-white dark:bg-white/[0.03] px-3.5 text-[13px] font-semibold text-[#1E293B] dark:text-white/90 shadow-[0_3px_12px_rgba(15,23,42,0.06)] hover:border-[#C7D2FE] hover:text-[#3645A0]"
                     onClick={openCreateFollowUp}
                   >
                     <CalendarPlus className="mr-1.5 h-4 w-4" />
@@ -371,7 +371,7 @@ export function TodoWorkspaceView({
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <div>
                 <div className="product-section-title">Planning calendar</div>
-                <p className="mt-1 text-[13px] text-[#475467]">
+                <p className="mt-1 text-[13px] text-[#475467] dark:text-white/70">
                   Dated follow-ups, order deadlines, and checklist due dates stay on their original dates.
                 </p>
               </div>
@@ -380,7 +380,7 @@ export function TodoWorkspaceView({
           </div>
 
           {filteredItems.length === 0 ? (
-            <div className="rounded-[24px] border border-dashed border-[#D0D5DD] bg-white px-6 py-12 text-center shadow-[0_10px_30px_rgba(15,23,42,0.05)]">
+            <div className="rounded-[24px] border border-dashed border-[#D0D5DD] bg-white dark:bg-white/[0.03] px-6 py-12 text-center shadow-[0_10px_30px_rgba(15,23,42,0.05)]">
               <div className="product-page-title text-[#111827]">No scheduled items yet</div>
               <p className="mt-2 text-[14px] text-[#667085]">
                 Add due dates or follow-ups to see them on the calendar.
@@ -441,26 +441,26 @@ export function TodoWorkspaceView({
           if (!nextOpen) setCreateError(null);
         }}
       >
-        <DialogContent className="max-w-[560px] rounded-[24px] border border-[#E5E7EB] bg-white p-0 shadow-[0_24px_64px_rgba(15,23,42,0.18)]">
+        <DialogContent className="max-w-[560px] rounded-[24px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-0 shadow-[0_24px_64px_rgba(15,23,42,0.18)]">
           <div className="space-y-4 px-5 py-5">
             <DialogHeader className="space-y-1 text-left">
               <DialogTitle className="text-[19px] font-semibold text-[#111827]">
                 Create follow-up
               </DialogTitle>
-              <DialogDescription className="text-sm leading-6 text-[#6B7280]">
+              <DialogDescription className="text-sm leading-6 text-[#6B7280] dark:text-white/55">
                 Follow-up can be standalone or linked to an order.
               </DialogDescription>
             </DialogHeader>
 
             <div className="space-y-3">
-              <label className="flex flex-col gap-1 text-[12px] font-semibold text-[#475467]">
+              <label className="flex flex-col gap-1 text-[12px] font-semibold text-[#475467] dark:text-white/70">
                 Type
                 <select
                   value={createKind}
                   onChange={(event) =>
                     setCreateKind(event.currentTarget.value as FollowUpCreateKind)
                   }
-                  className="h-10 rounded-xl border border-[#D0D5DD] bg-white px-3 text-[14px] text-[#111827] outline-none focus:border-[var(--brand-500)]"
+                  className="h-10 rounded-xl border border-[#D0D5DD] bg-white dark:bg-white/[0.03] px-3 text-[14px] text-[#111827] outline-none focus:border-[var(--brand-500)]"
                 >
                   {FOLLOW_UP_KIND_OPTIONS.map((option) => (
                     <option key={`follow-up-kind-${option.value}`} value={option.value}>
@@ -470,43 +470,43 @@ export function TodoWorkspaceView({
                 </select>
               </label>
 
-              <label className="flex flex-col gap-1 text-[12px] font-semibold text-[#475467]">
+              <label className="flex flex-col gap-1 text-[12px] font-semibold text-[#475467] dark:text-white/70">
                 Title
                 <input
                   value={createTitle}
                   onChange={(event) => setCreateTitle(event.currentTarget.value)}
                   placeholder="Call client about proposal"
-                  className="h-10 rounded-xl border border-[#D0D5DD] bg-white px-3 text-[14px] text-[#111827] outline-none focus:border-[var(--brand-500)]"
+                  className="h-10 rounded-xl border border-[#D0D5DD] bg-white dark:bg-white/[0.03] px-3 text-[14px] text-[#111827] outline-none focus:border-[var(--brand-500)]"
                 />
               </label>
 
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                <label className="flex flex-col gap-1 text-[12px] font-semibold text-[#475467]">
+                <label className="flex flex-col gap-1 text-[12px] font-semibold text-[#475467] dark:text-white/70">
                   Date
                   <input
                     type="date"
                     value={createDate}
                     onChange={(event) => setCreateDate(event.currentTarget.value)}
-                    className="h-10 rounded-xl border border-[#D0D5DD] bg-white px-3 text-[14px] text-[#111827] outline-none focus:border-[var(--brand-500)]"
+                    className="h-10 rounded-xl border border-[#D0D5DD] bg-white dark:bg-white/[0.03] px-3 text-[14px] text-[#111827] outline-none focus:border-[var(--brand-500)]"
                   />
                 </label>
-                <label className="flex flex-col gap-1 text-[12px] font-semibold text-[#475467]">
+                <label className="flex flex-col gap-1 text-[12px] font-semibold text-[#475467] dark:text-white/70">
                   Time (optional)
                   <input
                     type="time"
                     value={createTime}
                     onChange={(event) => setCreateTime(event.currentTarget.value)}
-                    className="h-10 rounded-xl border border-[#D0D5DD] bg-white px-3 text-[14px] text-[#111827] outline-none focus:border-[var(--brand-500)]"
+                    className="h-10 rounded-xl border border-[#D0D5DD] bg-white dark:bg-white/[0.03] px-3 text-[14px] text-[#111827] outline-none focus:border-[var(--brand-500)]"
                   />
                 </label>
               </div>
 
-              <label className="flex flex-col gap-1 text-[12px] font-semibold text-[#475467]">
+              <label className="flex flex-col gap-1 text-[12px] font-semibold text-[#475467] dark:text-white/70">
                 Link to order (optional)
                 <select
                   value={createOrderId}
                   onChange={(event) => setCreateOrderId(event.currentTarget.value)}
-                  className="h-10 rounded-xl border border-[#D0D5DD] bg-white px-3 text-[14px] text-[#111827] outline-none focus:border-[var(--brand-500)]"
+                  className="h-10 rounded-xl border border-[#D0D5DD] bg-white dark:bg-white/[0.03] px-3 text-[14px] text-[#111827] outline-none focus:border-[var(--brand-500)]"
                 >
                   <option value="">No order</option>
                   {orderOptions.map((option) => (
@@ -517,20 +517,20 @@ export function TodoWorkspaceView({
                 </select>
               </label>
 
-              <label className="flex flex-col gap-1 text-[12px] font-semibold text-[#475467]">
+              <label className="flex flex-col gap-1 text-[12px] font-semibold text-[#475467] dark:text-white/70">
                 Note (optional)
                 <textarea
                   rows={3}
                   value={createNote}
                   onChange={(event) => setCreateNote(event.currentTarget.value)}
                   placeholder="Context, next step, expected outcome"
-                  className="resize-y rounded-xl border border-[#D0D5DD] bg-white px-3 py-2 text-[14px] text-[#111827] outline-none focus:border-[var(--brand-500)]"
+                  className="resize-y rounded-xl border border-[#D0D5DD] bg-white dark:bg-white/[0.03] px-3 py-2 text-[14px] text-[#111827] outline-none focus:border-[var(--brand-500)]"
                 />
               </label>
             </div>
 
             {createError ? (
-              <div className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3 py-2 text-[12px] text-[#B42318]">
+              <div className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] dark:bg-rose-500/10 px-3 py-2 text-[12px] text-[#B42318]">
                 {createError}
               </div>
             ) : null}
@@ -566,13 +566,13 @@ export function TodoWorkspaceView({
           setCreateOrderOpen(nextOpen);
         }}
       >
-        <DialogContent className="max-h-[92vh] w-[calc(100vw-24px)] overflow-hidden rounded-[24px] border border-[#E5E7EB] bg-white p-0 shadow-[0_24px_64px_rgba(15,23,42,0.18)] sm:w-full sm:max-w-[760px]">
+        <DialogContent className="max-h-[92vh] w-[calc(100vw-24px)] overflow-hidden rounded-[24px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-0 shadow-[0_24px_64px_rgba(15,23,42,0.18)] sm:w-full sm:max-w-[760px]">
           <div className="flex max-h-[92vh] flex-col">
-            <DialogHeader className="space-y-1 border-b border-[#E5E7EB] px-5 pb-3 pt-5 text-left">
+            <DialogHeader className="space-y-1 border-b border-[#E5E7EB] dark:border-white/10 px-5 pb-3 pt-5 text-left">
               <DialogTitle className="text-[19px] font-semibold text-[#111827]">
                 Create order
               </DialogTitle>
-              <DialogDescription className="text-sm leading-6 text-[#6B7280]">
+              <DialogDescription className="text-sm leading-6 text-[#6B7280] dark:text-white/55">
                 Type-driven creation with live duplicate checking
               </DialogDescription>
             </DialogHeader>
@@ -590,7 +590,7 @@ export function TodoWorkspaceView({
                       <button
                         type="button"
                         onClick={reset}
-                        className="inline-flex h-9 items-center justify-center rounded-lg border border-rose-300 bg-white px-3 text-xs font-semibold text-rose-700 hover:bg-rose-100"
+                        className="inline-flex h-9 items-center justify-center rounded-lg border border-rose-300 bg-white dark:bg-white/[0.03] px-3 text-xs font-semibold text-rose-700 hover:bg-rose-100"
                       >
                         Try again
                       </button>
@@ -600,7 +600,7 @@ export function TodoWorkspaceView({
                           reset();
                           router.refresh();
                         }}
-                        className="inline-flex h-9 items-center justify-center rounded-lg border border-rose-300 bg-white px-3 text-xs font-semibold text-rose-700 hover:bg-rose-100"
+                        className="inline-flex h-9 items-center justify-center rounded-lg border border-rose-300 bg-white dark:bg-white/[0.03] px-3 text-xs font-semibold text-rose-700 hover:bg-rose-100"
                       >
                         Refresh data
                       </button>

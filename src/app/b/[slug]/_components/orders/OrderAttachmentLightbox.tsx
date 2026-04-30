@@ -13,7 +13,7 @@ type Props = {
 export function OrderAttachmentLightbox({
   fileName,
   src,
-  triggerClassName = "inline-flex h-8 items-center gap-1 rounded-full border border-[#d9e2ec] bg-white px-3 text-xs font-semibold text-[#344054] transition hover:border-[#c7d1dd] hover:bg-[#f8fafc]",
+  triggerClassName = "inline-flex h-8 items-center gap-1 rounded-full border border-[#d9e2ec] bg-white dark:bg-white/[0.03] px-3 text-xs font-semibold text-[#344054] transition hover:border-[#c7d1dd] hover:bg-[#f8fafc]",
 }: Props) {
   return (
     <DialogPrimitive.Root>

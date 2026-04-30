@@ -159,22 +159,22 @@ export function UserMenu({
       <div
         className={
           compact
-            ? "inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#E5E7EB] bg-white text-[#4B5563] shadow-[0_1px_2px_rgba(16,24,40,0.04)]"
-            : "inline-flex h-9 items-center gap-2 rounded-xl border border-[#E5E7EB] bg-white pl-1.5 pr-2.5 text-[#4B5563] shadow-[0_1px_2px_rgba(16,24,40,0.04)]"
+            ? "inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#4B5563] dark:text-white/70 shadow-[0_1px_2px_rgba(16,24,40,0.04)]"
+            : "inline-flex h-9 items-center gap-2 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] pl-1.5 pr-2.5 text-[#4B5563] dark:text-white/70 shadow-[0_1px_2px_rgba(16,24,40,0.04)]"
         }
       >
         {userAvatarUrl ? (
           <img
             src={userAvatarUrl}
             alt="User avatar"
-            className="h-7 w-7 rounded-full border border-[#E5E7EB] object-cover"
+            className="h-7 w-7 rounded-full border border-[#E5E7EB] dark:border-white/10 object-cover"
           />
         ) : (
           <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#111827] text-xs font-semibold text-white">
             {userLabel[0]?.toUpperCase() || "U"}
           </span>
         )}
-        {compact ? null : <ChevronDown className="h-4 w-4 text-[#9CA3AF]" />}
+        {compact ? null : <ChevronDown className="h-4 w-4 text-[#9CA3AF] dark:text-white/40" />}
       </div>
     );
   }
@@ -187,15 +187,15 @@ export function UserMenu({
           aria-label="Open user menu"
           className={
             compact
-              ? "inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#E5E7EB] bg-white text-[#4B5563] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#D1D5DB] hover:bg-[#F9FAFB]"
-              : "inline-flex h-9 items-center gap-2 rounded-xl border border-[#E5E7EB] bg-white pl-1.5 pr-2.5 text-[#4B5563] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#D1D5DB] hover:bg-[#F9FAFB]"
+              ? "inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#4B5563] dark:text-white/70 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#D1D5DB] hover:bg-[#F9FAFB]"
+              : "inline-flex h-9 items-center gap-2 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] pl-1.5 pr-2.5 text-[#4B5563] dark:text-white/70 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#D1D5DB] hover:bg-[#F9FAFB]"
           }
         >
           {userAvatarUrl ? (
             <img
               src={userAvatarUrl}
               alt="User avatar"
-              className="h-7 w-7 rounded-full border border-[#E5E7EB] object-cover"
+              className="h-7 w-7 rounded-full border border-[#E5E7EB] dark:border-white/10 object-cover"
             />
           ) : (
             <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#111827] text-xs font-semibold text-white">
@@ -204,10 +204,10 @@ export function UserMenu({
           )}
           {compact ? null : (
             <>
-              <span className="hidden max-w-[132px] truncate text-[13px] font-semibold text-[#1F2937] lg:inline">
+              <span className="hidden max-w-[132px] truncate text-[13px] font-semibold text-[#1F2937] dark:text-white/90 lg:inline">
                 {userLabel}
               </span>
-              <ChevronDown className="h-4 w-4 text-[#9CA3AF]" />
+              <ChevronDown className="h-4 w-4 text-[#9CA3AF] dark:text-white/40" />
             </>
           )}
         </button>
@@ -215,17 +215,17 @@ export function UserMenu({
 
       <DropdownMenuContent align="end" sideOffset={10} className="w-[220px]">
         <DropdownMenuLabel className="px-3 py-2">
-          <div className="truncate text-sm font-semibold text-[#1F2937]">
+          <div className="truncate text-sm font-semibold text-[#1F2937] dark:text-white/90">
             {userLabel}
           </div>
-          <div className="pt-0.5 text-[11px] font-medium capitalize text-[#9CA3AF]">
+          <div className="pt-0.5 text-[11px] font-medium capitalize text-[#9CA3AF] dark:text-white/40">
             {roleLabel}
           </div>
           <div
             className={`mt-2 inline-flex max-w-full items-center rounded-md px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.04em] ${
               planMeta.isFallback
-                ? "border border-[#E5E7EB] bg-[#F9FAFB] text-[#667085]"
-                : "border border-[#C7D2FE] bg-[#EEF2FF] text-[#3645A0]"
+                ? "border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] text-[#667085]"
+                : "border border-[#C7D2FE] dark:border-[var(--brand-500)]/40 bg-[#EEF2FF] dark:bg-[var(--brand-600)]/15 text-[#3645A0] dark:text-[var(--brand-300)]"
             }`}
           >
             <span className="truncate">Current plan: {planMeta.label}</span>

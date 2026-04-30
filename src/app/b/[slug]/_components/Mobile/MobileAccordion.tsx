@@ -40,12 +40,12 @@ export default function MobileAccordion({
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
         className={[
-          "flex w-full items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm",
+          "flex w-full items-center justify-between gap-3 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 py-3 shadow-sm",
           "transition-colors hover:bg-gray-50",
         ].join(" ")}
       >
         <div className="min-w-0 flex items-center gap-2">
-          <span className="truncate text-sm font-extrabold text-gray-900">{title}</span>
+          <span className="truncate text-sm font-extrabold text-gray-900 dark:text-white">{title}</span>
         </div>
 
         <div className="flex items-center gap-2">
@@ -57,7 +57,7 @@ export default function MobileAccordion({
 
           <span
             className={[
-              "inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600",
+              "inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-white/[0.03] text-gray-600 dark:text-white/70",
               "transition-transform",
               open ? "rotate-180" : "rotate-0",
             ].join(" ")}

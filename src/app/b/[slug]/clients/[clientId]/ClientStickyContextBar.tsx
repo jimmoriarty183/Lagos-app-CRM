@@ -90,19 +90,19 @@ export function ClientStickyContextBar({
 
   return (
     <div
-      className="sticky top-[78px] z-20 rounded-2xl border border-slate-200/80 bg-white/90 p-3 shadow-[0_10px_24px_-18px_rgba(15,23,42,0.35)] backdrop-blur supports-[backdrop-filter]:bg-white/75"
+      className="sticky top-[78px] z-20 rounded-2xl border border-slate-200/80 bg-white/90 dark:bg-white/[0.05] p-3 shadow-[0_10px_24px_-18px_rgba(15,23,42,0.35)] backdrop-blur supports-[backdrop-filter]:bg-white/75"
       aria-hidden={false}
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
-          <div className="truncate text-sm font-semibold text-slate-900">
+          <div className="truncate text-sm font-semibold text-slate-900 dark:text-white">
             {clientName}
           </div>
           <div className="mt-1 flex flex-wrap gap-2">
-            <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700">
+            <span className="inline-flex items-center rounded-full bg-slate-100 dark:bg-white/[0.06] px-2 py-0.5 text-[11px] font-medium text-slate-700 dark:text-white/80">
               {clientType}
             </span>
-            <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700">
+            <span className="inline-flex items-center rounded-full bg-slate-100 dark:bg-white/[0.06] px-2 py-0.5 text-[11px] font-medium text-slate-700 dark:text-white/80">
               {managerName}
             </span>
           </div>
@@ -121,11 +121,11 @@ export function ClientStickyContextBar({
 
 function StickyKpi({ label, value }: { label: string; value: string }) {
   return (
-    <div className="min-w-[84px] rounded-lg bg-slate-50 px-2 py-1.5">
-      <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+    <div className="min-w-[84px] rounded-lg bg-slate-50 dark:bg-white/[0.04] px-2 py-1.5">
+      <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-white/55">
         {label}
       </div>
-      <div className="mt-0.5 text-xs font-semibold text-slate-900">{value}</div>
+      <div className="mt-0.5 text-xs font-semibold text-slate-900 dark:text-white">{value}</div>
     </div>
   );
 }

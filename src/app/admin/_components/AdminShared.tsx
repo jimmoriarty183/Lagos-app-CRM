@@ -142,7 +142,7 @@ export function statusTone(status: string) {
     case "INACTIVE":
       return "bg-rose-100 text-rose-700";
     default:
-      return "bg-slate-100 text-slate-700";
+      return "bg-slate-100 dark:bg-white/[0.06] text-slate-700 dark:text-white/80";
   }
 }
 
@@ -170,7 +170,7 @@ export function EmptyState({
     <UiEmptyState
       title={title}
       description={description}
-      className="rounded-xl border-dashed border-slate-300 bg-slate-50 px-3 py-5"
+      className="rounded-xl border-dashed border-slate-300 dark:border-white/15 bg-slate-50 dark:bg-white/[0.04] px-3 py-5"
     />
   );
 }
@@ -183,7 +183,7 @@ export function AdminTable({
   children: React.ReactNode;
 }) {
   return (
-    <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] shadow-sm">
       <table className="min-w-[700px] w-full table-auto border-collapse md:table-fixed">
         <thead className="bg-slate-50/80">{head}</thead>
         <tbody>{children}</tbody>
@@ -193,7 +193,7 @@ export function AdminTable({
 }
 
 export function AdminTableHeaderRow({ children }: { children: React.ReactNode }) {
-  return <tr className="border-b border-slate-200">{children}</tr>;
+  return <tr className="border-b border-slate-200 dark:border-white/10">{children}</tr>;
 }
 
 export function AdminTableRow({
@@ -204,11 +204,11 @@ export function AdminTableRow({
   href?: string;
 }) {
   if (!href) {
-    return <tr className="border-b border-slate-100 transition-colors hover:bg-slate-50/70">{children}</tr>;
+    return <tr className="border-b border-slate-100 dark:border-white/[0.06] transition-colors hover:bg-slate-50/70">{children}</tr>;
   }
 
   return (
-    <tr className="group border-b border-slate-100 transition-colors hover:bg-[#f7faff]">
+    <tr className="group border-b border-slate-100 dark:border-white/[0.06] transition-colors hover:bg-[#f7faff]">
       {children}
     </tr>
   );
@@ -225,8 +225,8 @@ export function RowPrimaryLink({
 }) {
   return (
     <Link href={href} className="block rounded-xl px-1 py-0.5 transition hover:text-blue-700">
-      <div className="font-semibold text-slate-900">{children}</div>
-      {meta ? <div className="mt-0.5 hidden text-xs text-slate-500 group-hover:text-slate-600 sm:block">{meta}</div> : null}
+      <div className="font-semibold text-slate-900 dark:text-white">{children}</div>
+      {meta ? <div className="mt-0.5 hidden text-xs text-slate-500 dark:text-white/55 group-hover:text-slate-600 sm:block">{meta}</div> : null}
     </Link>
   );
 }
@@ -240,7 +240,7 @@ export function AdminHeadCell({
 }) {
   return (
     <th
-      className={`px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500 ${className}`}
+      className={`px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-white/55 ${className}`}
     >
       {children}
     </th>
@@ -254,7 +254,7 @@ export function AdminCell({
   children: React.ReactNode;
   className?: string;
 }) {
-  return <td className={`px-3 py-2.5 align-top text-xs text-slate-700 whitespace-nowrap sm:text-sm ${className}`}>{children}</td>;
+  return <td className={`px-3 py-2.5 align-top text-xs text-slate-700 dark:text-white/80 whitespace-nowrap sm:text-sm ${className}`}>{children}</td>;
 }
 
 export function PaginationBar({
@@ -274,7 +274,7 @@ export function PaginationBar({
 
   return (
     <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-      <div className="text-sm text-slate-500">
+      <div className="text-sm text-slate-500 dark:text-white/55">
         Страница {currentPage} из {totalPages}
       </div>
 
@@ -285,8 +285,8 @@ export function PaginationBar({
           className={[
             "inline-flex h-8 items-center rounded-lg border px-2.5 text-sm font-medium",
             currentPage === 1
-              ? "pointer-events-none border-slate-200 bg-slate-100 text-slate-400"
-              : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:text-slate-900",
+              ? "pointer-events-none border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/[0.06] text-slate-400 dark:text-white/45"
+              : "border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] text-slate-700 dark:text-white/80 hover:border-slate-300 hover:text-slate-900",
           ].join(" ")}
         >
           Назад
@@ -298,14 +298,14 @@ export function PaginationBar({
 
           return (
             <div key={page} className="flex items-center gap-2">
-              {needsEllipsis ? <span className="px-1 text-slate-400">…</span> : null}
+              {needsEllipsis ? <span className="px-1 text-slate-400 dark:text-white/45">…</span> : null}
               <Link
                 href={buildAdminHref(pathname, currentParams, { page })}
                 className={[
                   "inline-flex h-8 min-w-8 items-center justify-center rounded-lg border px-2.5 text-sm font-medium",
                   page === currentPage
-                    ? "border-[#bfd0ea] bg-[#eef5ff] text-slate-900"
-                    : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:text-slate-900",
+                    ? "border-[#bfd0ea] dark:border-white/15 bg-[#eef5ff] dark:bg-[var(--brand-600)]/15 text-slate-900 dark:text-white"
+                    : "border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] text-slate-700 dark:text-white/80 hover:border-slate-300 hover:text-slate-900",
                 ].join(" ")}
               >
                 {page}
@@ -320,8 +320,8 @@ export function PaginationBar({
           className={[
             "inline-flex h-8 items-center rounded-lg border px-2.5 text-sm font-medium",
             currentPage === totalPages
-              ? "pointer-events-none border-slate-200 bg-slate-100 text-slate-400"
-              : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:text-slate-900",
+              ? "pointer-events-none border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/[0.06] text-slate-400 dark:text-white/45"
+              : "border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] text-slate-700 dark:text-white/80 hover:border-slate-300 hover:text-slate-900",
           ].join(" ")}
         >
           Вперед
@@ -339,9 +339,9 @@ export function InlineKeyValue({
   value: React.ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-slate-50 p-2.5">
-      <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">{label}</div>
-      <div className="mt-1 text-sm text-slate-700">{value}</div>
+    <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] p-2.5">
+      <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-white/55">{label}</div>
+      <div className="mt-1 text-sm text-slate-700 dark:text-white/80">{value}</div>
     </div>
   );
 }
@@ -363,9 +363,9 @@ export function SectionList({
     <div className="space-y-2">
       {items.map((item, index) => {
         const body = (
-          <div className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 transition hover:border-slate-300">
-            <div className="text-sm font-semibold text-slate-900">{item.title}</div>
-            {item.meta ? <div className="mt-1 text-sm text-slate-500">{item.meta}</div> : null}
+          <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-2.5 transition hover:border-slate-300">
+            <div className="text-sm font-semibold text-slate-900 dark:text-white">{item.title}</div>
+            {item.meta ? <div className="mt-1 text-sm text-slate-500 dark:text-white/55">{item.meta}</div> : null}
           </div>
         );
 

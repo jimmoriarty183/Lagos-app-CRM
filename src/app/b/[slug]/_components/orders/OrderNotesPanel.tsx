@@ -104,10 +104,10 @@ export function OrderNoteComposer({
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <div className="text-sm font-semibold text-[#1F2937]">
+            <div className="text-sm font-semibold text-[#1F2937] dark:text-white/90">
               {mode === "create" ? "New internal note" : "Edit note"}
             </div>
-            <p className="mt-1 text-xs leading-5 text-[#6B7280]">
+            <p className="mt-1 text-xs leading-5 text-[#6B7280] dark:text-white/55">
               Capture internal context, blockers, or next steps for the order
               team.
             </p>
@@ -118,8 +118,8 @@ export function OrderNoteComposer({
             className={cn(
               "inline-flex h-9 items-center gap-2 rounded-full border px-3 text-xs font-semibold transition",
               isPinned
-                ? "border-[#d5ddf6] bg-[#eef2ff] text-[#3645a0]"
-                : "border-[#E5E7EB] bg-[#F9FAFB] text-[#6B7280] hover:border-[#C7D2FE] hover:bg-white hover:text-[#374151]",
+                ? "border-[#d5ddf6] bg-[#eef2ff] dark:bg-[var(--brand-600)]/15 text-[#3645a0] dark:text-[var(--brand-300)]"
+                : "border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] text-[#6B7280] dark:text-white/55 hover:border-[#C7D2FE] hover:bg-white hover:text-[#374151]",
             )}
             aria-pressed={isPinned}
           >
@@ -134,14 +134,14 @@ export function OrderNoteComposer({
           value={body}
           onChange={(event) => setBody(event.currentTarget.value)}
           placeholder="Add private notes for this order"
-          className="min-h-[112px] rounded-[20px] border-[#E5E7EB] bg-[#F9FAFB] px-4 py-3 text-sm leading-6 text-[#1F2937] placeholder:text-[#9CA3AF] focus-visible:border-[var(--brand-600)] focus-visible:ring-[var(--brand-600)]/15"
+          className="min-h-[112px] rounded-[20px] border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] px-4 py-3 text-sm leading-6 text-[#1F2937] dark:text-white/90 placeholder:text-[#9CA3AF] focus-visible:border-[var(--brand-600)] focus-visible:ring-[var(--brand-600)]/15"
         />
 
         <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end">
           <button
             type="button"
             onClick={onCancel}
-            className="inline-flex h-11 items-center justify-center rounded-xl border border-[#E5E7EB] bg-white px-5 text-base font-semibold text-[#374151] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
+            className="inline-flex h-11 items-center justify-center rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-5 text-base font-semibold text-[#374151] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
           >
             Cancel
           </button>
@@ -215,17 +215,17 @@ export function OrderNoteItem({
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="space-y-1">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-sm font-semibold text-[#1F2937]">
+                <span className="text-sm font-semibold text-[#1F2937] dark:text-white/90">
                   {note.authorName}
                 </span>
                 {note.isPinned ? (
-                  <span className="inline-flex items-center gap-1 rounded-full border border-[#d5ddf6] bg-[#eef2ff] px-2.5 py-1 text-[11px] font-semibold text-[#3645a0]">
+                  <span className="inline-flex items-center gap-1 rounded-full border border-[#d5ddf6] bg-[#eef2ff] dark:bg-[var(--brand-600)]/15 px-2.5 py-1 text-[11px] font-semibold text-[#3645a0] dark:text-[var(--brand-300)]">
                     <Pin className="h-3 w-3 fill-current" />
                     Pinned
                   </span>
                 ) : null}
               </div>
-              <div className="flex flex-wrap items-center gap-2 text-xs text-[#9CA3AF]">
+              <div className="flex flex-wrap items-center gap-2 text-xs text-[#9CA3AF] dark:text-white/40">
                 <span>{formatDateTime(note.createdAt)}</span>
                 {wasEdited ? (
                   <span>Edited {formatDateTime(updatedAt!)}</span>
@@ -238,7 +238,7 @@ export function OrderNoteItem({
                 <DropdownMenuTrigger asChild>
                   <button
                     type="button"
-                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-transparent bg-[#F9FAFB] text-[#6B7280] transition hover:border-[#E5E7EB] hover:bg-white hover:text-[#1F2937]"
+                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-transparent bg-[#F9FAFB] dark:bg-white/[0.04] text-[#6B7280] dark:text-white/55 transition hover:border-[#E5E7EB] hover:bg-white hover:text-[#1F2937]"
                     aria-label={`Manage note from ${note.authorName}`}
                   >
                     <Ellipsis className="h-4 w-4" />
@@ -246,7 +246,7 @@ export function OrderNoteItem({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   align="end"
-                  className="w-40 rounded-xl border-[#E5E7EB]"
+                  className="w-40 rounded-xl border-[#E5E7EB] dark:border-white/10"
                 >
                   <DropdownMenuItem onSelect={onEdit}>
                     <PencilLine className="h-4 w-4" />
@@ -287,14 +287,14 @@ export function OrderNotesEmptyState({
   onAddFirstNote: () => void;
 }) {
   return (
-    <div className="rounded-[24px] border border-dashed border-[#E5E7EB] bg-white/80 px-5 py-8 text-center">
-      <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F9FAFB] text-[#6B7280]">
+    <div className="rounded-[24px] border border-dashed border-[#E5E7EB] dark:border-white/10 bg-white/80 dark:bg-white/[0.05] px-5 py-8 text-center">
+      <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F9FAFB] dark:bg-white/[0.04] text-[#6B7280] dark:text-white/55">
         <MessageSquareText className="h-5 w-5" />
       </div>
-      <div className="mt-3 text-sm font-semibold text-[#1F2937]">
+      <div className="mt-3 text-sm font-semibold text-[#1F2937] dark:text-white/90">
         No notes yet
       </div>
-      <p className="mt-1 text-sm leading-6 text-[#6B7280]">
+      <p className="mt-1 text-sm leading-6 text-[#6B7280] dark:text-white/55">
         Add internal notes so the team keeps context, decisions, and handoffs in
         one place.
       </p>
@@ -373,7 +373,7 @@ export function OrderNotesPanel({
   return (
     <section
       className={cn(
-        "rounded-[28px] border border-[#E5E7EB] bg-[linear-gradient(180deg,#ffffff_0%,#F9FAFB_100%)] p-4 shadow-[0_10px_30px_rgba(15,23,42,0.06)] sm:p-5",
+        "rounded-[28px] border border-[#E5E7EB] dark:border-white/10 bg-[linear-gradient(180deg,#ffffff_0%,#F9FAFB_100%)] p-4 shadow-[0_10px_30px_rgba(15,23,42,0.06)] sm:p-5",
         className,
       )}
     >
@@ -382,20 +382,20 @@ export function OrderNotesPanel({
           <div className="space-y-2">
             <div>
               <div className="product-section-title flex items-center gap-2">
-                <MessageSquareText className="h-4 w-4 text-[#6B7280]" />
+                <MessageSquareText className="h-4 w-4 text-[#6B7280] dark:text-white/55" />
                 <span>Internal notes</span>
               </div>
-              <p className="mt-1 text-sm text-[#6B7280]">
+              <p className="mt-1 text-sm text-[#6B7280] dark:text-white/55">
                 Private notes visible only to managers
               </p>
             </div>
 
             <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
-              <span className="inline-flex items-center rounded-full bg-[#EEF2FF] px-3 py-1 text-[#374151]">
+              <span className="inline-flex items-center rounded-full bg-[#EEF2FF] dark:bg-[var(--brand-600)]/15 px-3 py-1 text-[#374151]">
                 {noteCountLabel}
               </span>
               {pinnedNotes.length > 0 ? (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-[#F9FAFB] px-3 py-1 text-[#4B5563]">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-[#F9FAFB] dark:bg-white/[0.04] px-3 py-1 text-[#4B5563] dark:text-white/70">
                   <Pin className="h-3.5 w-3.5 fill-current text-[var(--brand-600)]" />
                   {pinnedNotes.length} pinned
                 </span>
@@ -407,7 +407,7 @@ export function OrderNotesPanel({
             <button
               type="button"
               onClick={openCreateComposer}
-              className="inline-flex h-11 items-center justify-center rounded-[18px] border border-[#E5E7EB] bg-white px-5 text-base font-semibold text-[#374151] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
+              className="inline-flex h-11 items-center justify-center rounded-[18px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-5 text-base font-semibold text-[#374151] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
             >
               Add note
             </button>
@@ -424,7 +424,7 @@ export function OrderNotesPanel({
         ) : null}
 
         {!canManage ? (
-          <div className="rounded-[24px] border border-[#E5E7EB] bg-white/85 px-5 py-6 text-sm leading-6 text-[#6B7280]">
+          <div className="rounded-[24px] border border-[#E5E7EB] dark:border-white/10 bg-white/85 px-5 py-6 text-sm leading-6 text-[#6B7280] dark:text-white/55">
             Only managers can view and add internal notes for this order.
           </div>
         ) : notes.length === 0 ? (
@@ -437,7 +437,7 @@ export function OrderNotesPanel({
             {pinnedNotes.length > 0 ? (
               <div className="space-y-3">
                 <div className="product-section-label flex items-center gap-2 px-1">
-                  <Pin className="h-3.5 w-3.5 text-[#6B7280]" />
+                  <Pin className="h-3.5 w-3.5 text-[#6B7280] dark:text-white/55" />
                   Pinned notes
                 </div>
                 {pinnedNotes.map((note) => (

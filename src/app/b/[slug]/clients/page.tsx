@@ -443,7 +443,7 @@ export default async function ClientsPage({
   });
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-transparent text-slate-900">
+    <div className="min-h-screen overflow-x-hidden bg-transparent text-slate-900 dark:text-white">
       <TopBar
         businessSlug={slug}
         role={context.role}
@@ -504,7 +504,7 @@ export default async function ClientsPage({
           </div>
 
           <section className="min-w-0 space-y-3">
-            <div className="rounded-[16px] border border-[#E5E7EB] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+            <div className="rounded-[16px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <div className="product-page-kicker">CRM Clients</div>
@@ -556,12 +556,12 @@ export default async function ClientsPage({
                   name="q"
                   defaultValue={query}
                   placeholder="Search name, email, phone, postcode, company numbers"
-                  className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
+                  className="h-10 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
                 />
                 <select
                   name="manager"
                   defaultValue={managerFilter}
-                  className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
+                  className="h-10 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
                 >
                   <option value="all">
                     {context.role === "OWNER" ? "All managers" : "My clients"}
@@ -577,7 +577,7 @@ export default async function ClientsPage({
                 <select
                   name="type"
                   defaultValue={typeFilter}
-                  className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
+                  className="h-10 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
                 >
                   <option value="all">All types</option>
                   <option value="individual">Individuals</option>
@@ -608,7 +608,7 @@ export default async function ClientsPage({
         </div>
 
         <div className="space-y-3 lg:hidden">
-          <section className="rounded-[16px] border border-[#E5E7EB] bg-white p-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+          <section className="rounded-[16px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
             <div className="product-page-kicker">CRM Clients</div>
             <h1 className="product-page-title mt-1.5">Client Directory</h1>
             <p className="product-page-subtitle mt-1.5">
@@ -636,9 +636,9 @@ export default async function ClientsPage({
 
 function MetricCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] p-2.5">
-      <div className="text-xs font-medium text-slate-500">{label}</div>
-      <div className="mt-0.5 text-base font-semibold text-slate-900">{value}</div>
+    <div className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] p-2.5">
+      <div className="text-xs font-medium text-slate-500 dark:text-white/55">{label}</div>
+      <div className="mt-0.5 text-base font-semibold text-slate-900 dark:text-white">{value}</div>
     </div>
   );
 }

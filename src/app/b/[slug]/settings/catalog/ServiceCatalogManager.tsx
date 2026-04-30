@@ -258,7 +258,7 @@ export default function ServiceCatalogManager({
 
   return (
     <div className="space-y-4">
-      <section className="rounded-[16px] border border-[#E5E7EB] bg-[#FCFCFD] p-3 sm:p-4">
+      <section className="rounded-[16px] border border-[#E5E7EB] dark:border-white/10 bg-[#FCFCFD] p-3 sm:p-4">
         {schemaWarning ? (
           <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
             {schemaWarning}
@@ -266,13 +266,13 @@ export default function ServiceCatalogManager({
         ) : null}
         <div className="flex items-center justify-between">
           <div>
-            <div className="product-section-label text-[#6B7280]">Catalog</div>
+            <div className="product-section-label text-[#6B7280] dark:text-white/55">Catalog</div>
             <h2 className="product-section-title mt-1">Create service</h2>
           </div>
           <button
             type="button"
             onClick={() => setShowCreateForm((v) => !v)}
-            className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[#D0D5DD] bg-white px-3.5 text-sm font-medium text-[#344054] transition hover:bg-[#F9FAFB]"
+            className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[#D0D5DD] bg-white dark:bg-white/[0.03] px-3.5 text-sm font-medium text-[#344054] transition hover:bg-[#F9FAFB]"
           >
             {showCreateForm ? "Hide form" : "+ New service"}
           </button>
@@ -298,7 +298,7 @@ export default function ServiceCatalogManager({
                 setForm((s) => ({ ...s, serviceCode: e.target.value }))
               }
               placeholder="e.g. SVC-001"
-              className="h-11 rounded-xl border-[#E5E7EB] px-3.5 text-sm"
+              className="h-11 rounded-xl border-[#E5E7EB] dark:border-white/10 px-3.5 text-sm"
             />
           </div>
 
@@ -314,7 +314,7 @@ export default function ServiceCatalogManager({
               value={form.name}
               onChange={(e) => setForm((s) => ({ ...s, name: e.target.value }))}
               placeholder="e.g. Consulting hour"
-              className="h-11 rounded-xl border-[#E5E7EB] px-3.5 text-sm"
+              className="h-11 rounded-xl border-[#E5E7EB] dark:border-white/10 px-3.5 text-sm"
             />
           </div>
 
@@ -333,7 +333,7 @@ export default function ServiceCatalogManager({
             >
               <SelectTrigger
                 id="svc-currency"
-                className="h-11 rounded-xl border-[#E5E7EB] px-3.5 text-sm"
+                className="h-11 rounded-xl border-[#E5E7EB] dark:border-white/10 px-3.5 text-sm"
               >
                 <SelectValue placeholder="Select currency" />
               </SelectTrigger>
@@ -364,7 +364,7 @@ export default function ServiceCatalogManager({
               type="number"
               min="0"
               step="0.01"
-              className="h-11 rounded-xl border-[#E5E7EB] px-3.5 text-sm [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+              className="h-11 rounded-xl border-[#E5E7EB] dark:border-white/10 px-3.5 text-sm [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
             />
           </div>
 
@@ -399,7 +399,7 @@ export default function ServiceCatalogManager({
               >
                 <SelectTrigger
                   id="svc-tax-rate"
-                  className="h-11 rounded-xl border-[#E5E7EB] px-3.5 text-sm"
+                  className="h-11 rounded-xl border-[#E5E7EB] dark:border-white/10 px-3.5 text-sm"
                 >
                   <SelectValue placeholder="Select tax rate" />
                 </SelectTrigger>
@@ -433,7 +433,7 @@ export default function ServiceCatalogManager({
                   type="number"
                   min="0"
                   step="0.01"
-                  className="h-11 rounded-xl border-[#E5E7EB] px-3.5 text-sm"
+                  className="h-11 rounded-xl border-[#E5E7EB] dark:border-white/10 px-3.5 text-sm"
                 />
               ) : (
                 <div className="hidden sm:block" aria-hidden="true" />
@@ -464,7 +464,7 @@ export default function ServiceCatalogManager({
               >
                 <SelectTrigger
                   id="svc-sla"
-                  className="h-11 rounded-xl border-[#E5E7EB] px-3.5 text-sm"
+                  className="h-11 rounded-xl border-[#E5E7EB] dark:border-white/10 px-3.5 text-sm"
                 >
                   <SelectValue placeholder="Select SLA" />
                 </SelectTrigger>
@@ -497,7 +497,7 @@ export default function ServiceCatalogManager({
                   type="number"
                   min="1"
                   step="1"
-                  className="h-11 rounded-xl border-[#E5E7EB] px-3.5 text-sm"
+                  className="h-11 rounded-xl border-[#E5E7EB] dark:border-white/10 px-3.5 text-sm"
                 />
               ) : (
                 <div className="hidden sm:block" aria-hidden="true" />
@@ -528,7 +528,7 @@ export default function ServiceCatalogManager({
               >
                 <SelectTrigger
                   id="svc-duration"
-                  className="h-11 rounded-xl border-[#E5E7EB] px-3.5 text-sm"
+                  className="h-11 rounded-xl border-[#E5E7EB] dark:border-white/10 px-3.5 text-sm"
                 >
                   <SelectValue placeholder="Select duration" />
                 </SelectTrigger>
@@ -561,7 +561,7 @@ export default function ServiceCatalogManager({
                   type="number"
                   min="1"
                   step="1"
-                  className="h-11 rounded-xl border-[#E5E7EB] px-3.5 text-sm"
+                  className="h-11 rounded-xl border-[#E5E7EB] dark:border-white/10 px-3.5 text-sm"
                 />
               ) : (
                 <div className="hidden sm:block" aria-hidden="true" />
@@ -584,7 +584,7 @@ export default function ServiceCatalogManager({
               setForm((s) => ({ ...s, description: e.target.value }))
             }
             placeholder="e.g. Service notes or scope details"
-            className="min-h-[92px] rounded-xl border-[#E5E7EB] px-3.5 py-3 text-sm"
+            className="min-h-[92px] rounded-xl border-[#E5E7EB] dark:border-white/10 px-3.5 py-3 text-sm"
           />
         </div>
         <div className="mt-3 flex justify-start xl:justify-end">
@@ -606,10 +606,10 @@ export default function ServiceCatalogManager({
         ) : null}
       </section>
 
-      <section className="rounded-[16px] border border-[#E5E7EB] bg-white p-3 sm:p-4">
+      <section className="rounded-[16px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3 sm:p-4">
         <div className="mb-3 flex items-center justify-between gap-3">
           <div>
-            <div className="product-section-label text-[#6B7280]">Catalog</div>
+            <div className="product-section-label text-[#6B7280] dark:text-white/55">Catalog</div>
             <h2 className="product-section-title mt-1">Services</h2>
           </div>
           <div className="text-sm text-[#667085]">
@@ -625,7 +625,7 @@ export default function ServiceCatalogManager({
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(0); }}
             placeholder="Search by name or code..."
-            className="h-9 min-w-0 flex-1 rounded-lg border border-[#E5E7EB] bg-white px-3 text-sm text-[#344054] placeholder:text-[#9CA3AF] focus:border-[var(--brand-600)] focus:outline-none"
+            className="h-9 min-w-0 flex-1 rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm text-[#344054] placeholder:text-[#9CA3AF] focus:border-[var(--brand-600)] focus:outline-none"
           />
           <select
             value={`${sortBy}:${sortDir}`}
@@ -635,7 +635,7 @@ export default function ServiceCatalogManager({
               setSortDir(dir);
               setPage(0);
             }}
-            className="h-9 shrink-0 rounded-lg border border-[#E5E7EB] bg-white px-2.5 text-xs text-[#344054] focus:border-[var(--brand-600)] focus:outline-none"
+            className="h-9 shrink-0 rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-2.5 text-xs text-[#344054] focus:border-[var(--brand-600)] focus:outline-none"
           >
             <option value="updated:desc">Newest first</option>
             <option value="updated:asc">Oldest first</option>
@@ -656,7 +656,7 @@ export default function ServiceCatalogManager({
             <>
               <div className="space-y-1.5">
                 {filtered.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed border-[#E5E7EB] bg-[#F9FAFB] px-4 py-6 text-sm text-[#667085]">
+                  <div className="rounded-2xl border border-dashed border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] px-4 py-6 text-sm text-[#667085]">
                     {rows.length === 0 ? "No services yet." : "No services match your search."}
                   </div>
                 ) : (
@@ -664,9 +664,9 @@ export default function ServiceCatalogManager({
                     <article
                       key={row.id}
                       onClick={() => openEdit(row)}
-                      className="flex cursor-pointer items-center gap-3 rounded-xl border border-[#E5E7EB] bg-[#FCFCFD] px-3.5 py-2.5 transition hover:border-[#C7D2FE] hover:bg-white"
+                      className="flex cursor-pointer items-center gap-3 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-[#FCFCFD] px-3.5 py-2.5 transition hover:border-[#C7D2FE] hover:bg-white"
                     >
-                      <span className="w-6 shrink-0 text-xs font-medium text-[#9CA3AF] text-right">
+                      <span className="w-6 shrink-0 text-xs font-medium text-[#9CA3AF] dark:text-white/40 text-right">
                         {start + i + 1}
                       </span>
                       <div className="min-w-0 flex-1">
@@ -687,7 +687,7 @@ export default function ServiceCatalogManager({
                           "inline-flex shrink-0 items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
                           row.status === "ACTIVE"
                             ? "bg-emerald-50 text-emerald-700"
-                            : "bg-slate-100 text-slate-600",
+                            : "bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-white/70",
                         ].join(" ")}
                       >
                         {row.status}
@@ -735,10 +735,10 @@ export default function ServiceCatalogManager({
       {/* Edit Modal */}
       {editingService ? (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/30 backdrop-blur-sm" onClick={() => setEditingService(null)}>
-          <div className="mx-4 w-full max-w-lg rounded-2xl border border-[#E5E7EB] bg-white p-6 shadow-[0_25px_50px_rgba(15,23,42,0.15)]" onClick={(e) => e.stopPropagation()}>
+          <div className="mx-4 w-full max-w-lg rounded-2xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-6 shadow-[0_25px_50px_rgba(15,23,42,0.15)]" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-[#101828]">Edit Service</h3>
-              <button type="button" onClick={() => setEditingService(null)} className="flex h-8 w-8 items-center justify-center rounded-lg text-[#6B7280] hover:bg-[#F3F4F6]">&times;</button>
+              <button type="button" onClick={() => setEditingService(null)} className="flex h-8 w-8 items-center justify-center rounded-lg text-[#6B7280] dark:text-white/55 hover:bg-[#F3F4F6]">&times;</button>
             </div>
             {editError ? <div className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{editError}</div> : null}
             <div className="mt-4 space-y-3">
@@ -789,7 +789,7 @@ export default function ServiceCatalogManager({
               </label>
             </div>
             <div className="mt-5 flex justify-end gap-2">
-              <button type="button" onClick={() => setEditingService(null)} className="h-9 rounded-lg border border-[#D0D5DD] bg-white px-4 text-sm font-medium text-[#344054] hover:bg-[#F9FAFB]">Cancel</button>
+              <button type="button" onClick={() => setEditingService(null)} className="h-9 rounded-lg border border-[#D0D5DD] bg-white dark:bg-white/[0.03] px-4 text-sm font-medium text-[#344054] hover:bg-[#F9FAFB]">Cancel</button>
               <button type="button" onClick={saveEdit} disabled={isPending} className="h-9 rounded-lg bg-[var(--brand-600)] px-4 text-sm font-medium text-white hover:bg-[var(--brand-700)] disabled:opacity-60">
                 {isPending ? "Saving..." : "Save changes"}
               </button>

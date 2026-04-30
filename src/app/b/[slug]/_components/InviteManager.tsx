@@ -63,15 +63,15 @@ export default function InviteManager({
   };
 
   return (
-    <div className="w-full min-w-0 max-w-full rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
-      <div className="text-sm font-semibold text-slate-900">Invite manager</div>
-      <div className="mt-1 text-xs text-slate-500">
+    <div className="w-full min-w-0 max-w-full rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+      <div className="text-sm font-semibold text-slate-900 dark:text-white">Invite manager</div>
+      <div className="mt-1 text-xs text-slate-500 dark:text-white/55">
         Invitation will remain pending until accepted.
       </div>
 
       <div className="mt-3 flex min-w-0 max-w-full flex-col gap-2 sm:flex-row sm:items-center">
         <label className="relative block min-w-0 flex-1">
-          <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-white/45" />
           <input
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -82,7 +82,7 @@ export default function InviteManager({
             onKeyDown={(e) => {
               if (e.key === "Enter") onInvite();
             }}
-            className="h-11 w-full min-w-0 max-w-full rounded-xl border border-slate-200 bg-white px-10 text-sm font-medium outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
+            className="h-11 w-full min-w-0 max-w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-10 text-sm font-medium outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
           />
         </label>
 
@@ -95,7 +95,7 @@ export default function InviteManager({
               ? "bg-[#111827] text-white"
               : emailOk
                 ? "bg-[#111827] text-white hover:bg-[#0f172a] active:scale-[0.98]"
-                : "border border-slate-200 bg-slate-50 text-slate-400",
+                : "border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] text-slate-400 dark:text-white/45",
           ].join(" ")}
         >
           {loading ? (
@@ -105,8 +105,8 @@ export default function InviteManager({
             </>
           ) : (
             <>
-              <Send className={emailOk ? "h-4 w-4 text-white" : "h-4 w-4 text-slate-400"} />
-              <span className={emailOk ? "text-white" : "text-slate-400"}>
+              <Send className={emailOk ? "h-4 w-4 text-white" : "h-4 w-4 text-slate-400 dark:text-white/45"} />
+              <span className={emailOk ? "text-white" : "text-slate-400 dark:text-white/45"}>
                 Send invite
               </span>
             </>
@@ -122,7 +122,7 @@ export default function InviteManager({
               ? "border-emerald-200 bg-emerald-50 text-emerald-800"
               : msg.type === "error"
                 ? "border-red-200 bg-red-50 text-red-800"
-                : "border-slate-200 bg-slate-50 text-slate-700",
+                : "border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] text-slate-700 dark:text-white/80",
           ].join(" ")}
         >
           {msg.text}

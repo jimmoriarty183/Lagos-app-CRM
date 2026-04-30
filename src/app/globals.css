@@ -168,6 +168,24 @@
   --text-muted: rgba(255, 255, 255, 0.45);
   --text-on-brand: #FFFFFF;
 
+  /* SEMANTIC FLIP — neutral palette is rebound to dark surrogates so
+     ANY component that uses Tailwind arbitrary values like
+     `border-[var(--neutral-200)]` or `text-[var(--neutral-700)]` flips
+     automatically without per-class `dark:` modifiers. The light values
+     in :root keep their semantic role; here we provide dark equivalents
+     of the same role (50 = app bg, 900 = primary text, etc.). */
+  --neutral-50: #0B0B14;
+  --neutral-100: rgba(255, 255, 255, 0.04);
+  --neutral-200: rgba(255, 255, 255, 0.10);
+  --neutral-300: rgba(255, 255, 255, 0.15);
+  --neutral-400: rgba(255, 255, 255, 0.40);
+  --neutral-500: rgba(255, 255, 255, 0.50);
+  --neutral-600: rgba(255, 255, 255, 0.65);
+  --neutral-700: rgba(255, 255, 255, 0.80);
+  --neutral-800: rgba(255, 255, 255, 0.90);
+  --neutral-900: #FFFFFF;
+  --neutral-950: #FFFFFF;
+
   --background:
     radial-gradient(900px 420px at 50% -10%, rgba(91, 91, 179, 0.45) 0%, rgba(91, 91, 179, 0) 70%),
     linear-gradient(180deg, #0B0B14 0%, #0B0B14 60%, #0E0E1B 100%);

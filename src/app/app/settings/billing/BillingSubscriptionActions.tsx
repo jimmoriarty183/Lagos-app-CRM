@@ -81,17 +81,17 @@ export default function BillingSubscriptionActions(
         type="button"
         onClick={handleCancel}
         disabled={!canCancel || loading}
-        className="inline-flex items-center justify-center rounded-full border border-[#B91C1C] bg-white px-4 py-2 text-sm font-semibold text-[#B91C1C] transition hover:bg-[#FEF2F2] disabled:cursor-not-allowed disabled:border-[#E5E7EB] disabled:text-[#9CA3AF]"
+        className="inline-flex items-center justify-center rounded-full border border-[#B91C1C] bg-white dark:bg-white/[0.03] px-4 py-2 text-sm font-semibold text-[#B91C1C] transition hover:bg-[#FEF2F2] disabled:cursor-not-allowed disabled:border-[#E5E7EB] disabled:text-[#9CA3AF]"
       >
         {loading ? "Requesting..." : "Cancel subscription"}
       </button>
       {message ? (
-        <div className="rounded-xl border border-[#BFDBFE] bg-[#EFF6FF] px-3 py-2 text-xs text-[#1E3A8A]">
+        <div className="rounded-xl border border-[#BFDBFE] bg-[#EFF6FF] dark:bg-[var(--brand-600)]/15 px-3 py-2 text-xs text-[#1E3A8A]">
           {message}
         </div>
       ) : null}
       {error ? (
-        <div className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3 py-2 text-xs text-[#991B1B]">
+        <div className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] dark:bg-rose-500/10 px-3 py-2 text-xs text-[#991B1B]">
           {error}
         </div>
       ) : null}

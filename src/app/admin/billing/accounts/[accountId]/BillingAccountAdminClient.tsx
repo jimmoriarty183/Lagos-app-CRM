@@ -283,9 +283,9 @@ export default function BillingAccountAdminClient({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+      <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] p-3 text-sm text-slate-700 dark:text-white/80">
         Account: <span className="font-semibold">{accountName}</span>{" "}
-        <span className="font-mono text-xs text-slate-500">({accountId})</span>
+        <span className="font-mono text-xs text-slate-500 dark:text-white/55">({accountId})</span>
       </div>
 
       <div className="flex items-center gap-3">
@@ -293,7 +293,7 @@ export default function BillingAccountAdminClient({
           type="button"
           onClick={loadData}
           disabled={loading}
-          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+          className="rounded-lg border border-slate-300 dark:border-white/15 bg-white dark:bg-white/[0.03] px-3 py-2 text-sm font-medium text-slate-700 dark:text-white/80 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {loading ? "Loading..." : "Refresh"}
         </button>
@@ -359,18 +359,18 @@ export default function BillingAccountAdminClient({
           ))}
         </AdminTable>
         {entitlements.length === 0 ? (
-          <p className="mt-3 text-sm text-slate-500">No entitlements loaded.</p>
+          <p className="mt-3 text-sm text-slate-500 dark:text-white/55">No entitlements loaded.</p>
         ) : null}
       </AdminSectionCard>
 
       <AdminSectionCard title="Overrides">
-        <form onSubmit={onCreateOverride} className="mb-3 grid gap-2.5 rounded-lg border border-slate-200 bg-slate-50 p-2.5 md:grid-cols-2 xl:grid-cols-3">
+        <form onSubmit={onCreateOverride} className="mb-3 grid gap-2.5 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] p-2.5 md:grid-cols-2 xl:grid-cols-3">
           <label className="flex flex-col gap-1 text-sm">
-            <span className="text-slate-600">Feature</span>
+            <span className="text-slate-600 dark:text-white/70">Feature</span>
             <select
               value={featureCode}
               onChange={(event) => setFeatureCode(event.target.value)}
-              className="rounded-md border border-slate-300 bg-white px-2 py-2"
+              className="rounded-md border border-slate-300 dark:border-white/15 bg-white dark:bg-white/[0.03] px-2 py-2"
             >
               {features.map((feature) => (
                 <option key={feature.id} value={feature.code}>
@@ -381,13 +381,13 @@ export default function BillingAccountAdminClient({
           </label>
 
           <label className="flex flex-col gap-1 text-sm">
-            <span className="text-slate-600">Override Type</span>
+            <span className="text-slate-600 dark:text-white/70">Override Type</span>
             <select
               value={overrideType}
               onChange={(event) =>
                 setOverrideType(event.target.value as "grant" | "revoke" | "set_limit")
               }
-              className="rounded-md border border-slate-300 bg-white px-2 py-2"
+              className="rounded-md border border-slate-300 dark:border-white/15 bg-white dark:bg-white/[0.03] px-2 py-2"
             >
               <option value="grant">grant</option>
               <option value="revoke">revoke</option>
@@ -397,11 +397,11 @@ export default function BillingAccountAdminClient({
 
           {selectedFeature?.value_type === "boolean" ? (
             <label className="flex flex-col gap-1 text-sm">
-              <span className="text-slate-600">Value (boolean)</span>
+              <span className="text-slate-600 dark:text-white/70">Value (boolean)</span>
               <select
                 value={String(valueBool)}
                 onChange={(event) => setValueBool(event.target.value === "true")}
-                className="rounded-md border border-slate-300 bg-white px-2 py-2"
+                className="rounded-md border border-slate-300 dark:border-white/15 bg-white dark:bg-white/[0.03] px-2 py-2"
               >
                 <option value="true">true</option>
                 <option value="false">false</option>
@@ -411,45 +411,45 @@ export default function BillingAccountAdminClient({
 
           {selectedFeature?.value_type === "integer" ? (
             <label className="flex flex-col gap-1 text-sm">
-              <span className="text-slate-600">Value (integer)</span>
+              <span className="text-slate-600 dark:text-white/70">Value (integer)</span>
               <input
                 type="number"
                 value={valueInt}
                 onChange={(event) => setValueInt(Number(event.target.value))}
-                className="rounded-md border border-slate-300 bg-white px-2 py-2"
+                className="rounded-md border border-slate-300 dark:border-white/15 bg-white dark:bg-white/[0.03] px-2 py-2"
               />
             </label>
           ) : null}
 
           {selectedFeature?.value_type === "text" ? (
             <label className="flex flex-col gap-1 text-sm">
-              <span className="text-slate-600">Value (text)</span>
+              <span className="text-slate-600 dark:text-white/70">Value (text)</span>
               <input
                 type="text"
                 value={valueText}
                 onChange={(event) => setValueText(event.target.value)}
-                className="rounded-md border border-slate-300 bg-white px-2 py-2"
+                className="rounded-md border border-slate-300 dark:border-white/15 bg-white dark:bg-white/[0.03] px-2 py-2"
               />
             </label>
           ) : null}
 
           <label className="flex flex-col gap-1 text-sm">
-            <span className="text-slate-600">Expires At</span>
+            <span className="text-slate-600 dark:text-white/70">Expires At</span>
             <input
               type="datetime-local"
               value={expiresAt}
               onChange={(event) => setExpiresAt(event.target.value)}
-              className="rounded-md border border-slate-300 bg-white px-2 py-2"
+              className="rounded-md border border-slate-300 dark:border-white/15 bg-white dark:bg-white/[0.03] px-2 py-2"
             />
           </label>
 
           <label className="flex flex-col gap-1 text-sm">
-            <span className="text-slate-600">Reason</span>
+            <span className="text-slate-600 dark:text-white/70">Reason</span>
             <input
               type="text"
               value={reason}
               onChange={(event) => setReason(event.target.value)}
-              className="rounded-md border border-slate-300 bg-white px-2 py-2"
+              className="rounded-md border border-slate-300 dark:border-white/15 bg-white dark:bg-white/[0.03] px-2 py-2"
             />
           </label>
 
@@ -457,7 +457,7 @@ export default function BillingAccountAdminClient({
             <button
               type="submit"
               disabled={loading || !selectedFeature}
-              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+              className="w-full rounded-md border border-slate-300 dark:border-white/15 bg-white dark:bg-white/[0.03] px-3 py-2 text-sm font-medium text-slate-700 dark:text-white/80 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
             >
               Create Override
             </button>
@@ -493,12 +493,12 @@ export default function BillingAccountAdminClient({
                       type="button"
                       onClick={() => onDeactivateOverride(row.id)}
                       disabled={loading}
-                      className="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="rounded-md border border-slate-300 dark:border-white/15 bg-white dark:bg-white/[0.03] px-2 py-1 text-xs font-medium text-slate-700 dark:text-white/80 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       Deactivate
                     </button>
                   ) : (
-                    <span className="text-slate-400">-</span>
+                    <span className="text-slate-400 dark:text-white/45">-</span>
                   )}
                 </AdminCell>
               </AdminTableRow>
@@ -506,7 +506,7 @@ export default function BillingAccountAdminClient({
           })}
         </AdminTable>
         {overrides.length === 0 ? (
-          <p className="mt-3 text-sm text-slate-500">No overrides.</p>
+          <p className="mt-3 text-sm text-slate-500 dark:text-white/55">No overrides.</p>
         ) : null}
       </AdminSectionCard>
     </div>

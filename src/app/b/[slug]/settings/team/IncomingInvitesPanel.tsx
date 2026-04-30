@@ -129,16 +129,16 @@ export default function IncomingInvitesPanel({
   };
 
   return (
-    <section className="rounded-[18px] border border-[#E5E7EB] bg-white p-4 shadow-[0_4px_14px_rgba(15,23,42,0.04)]">
-      <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#6B7280]">
-        <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] text-[#6B7280]">
+    <section className="rounded-[18px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4 shadow-[0_4px_14px_rgba(15,23,42,0.04)]">
+      <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#6B7280] dark:text-white/55">
+        <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] text-[#6B7280] dark:text-white/55">
           <Mail className="h-4 w-4" />
         </span>
         Accept invite
       </div>
 
-      <div className="mt-3 text-sm font-semibold text-[#1F2937]">{title}</div>
-      <div className="mt-1 text-xs leading-5 text-[#6B7280]">
+      <div className="mt-3 text-sm font-semibold text-[#1F2937] dark:text-white/90">{title}</div>
+      <div className="mt-1 text-xs leading-5 text-[#6B7280] dark:text-white/55">
         Accept access to another business or decline it here, not only from the
         bell.
       </div>
@@ -151,11 +151,11 @@ export default function IncomingInvitesPanel({
 
       <div className="mt-3 space-y-3">
         {loading ? (
-          <div className="rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] px-3 py-4 text-sm text-[#6B7280]">
+          <div className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] px-3 py-4 text-sm text-[#6B7280] dark:text-white/55">
             Loading invites...
           </div>
         ) : items.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-[#E5E7EB] bg-[#F9FAFB] px-3 py-4 text-sm text-[#6B7280]">
+          <div className="rounded-xl border border-dashed border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] px-3 py-4 text-sm text-[#6B7280] dark:text-white/55">
             No pending business invites.
           </div>
         ) : (
@@ -164,9 +164,9 @@ export default function IncomingInvitesPanel({
             return (
               <div
                 key={invite.id}
-                className="rounded-2xl border border-[#E5E7EB] bg-white px-3 py-3"
+                className="rounded-2xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-3"
               >
-                <div className="text-sm font-semibold text-[#1F2937]">
+                <div className="text-sm font-semibold text-[#1F2937] dark:text-white/90">
                   {invite.source === "account" && (invite.businesses?.length ?? 0) > 1
                     ? `Access to ${invite.businesses!.length} businesses`
                     : (invite.business.name || invite.business.slug)}
@@ -176,18 +176,18 @@ export default function IncomingInvitesPanel({
                     {invite.businesses.map((b) => (
                       <span
                         key={b.id}
-                        className="inline-flex items-center rounded-full bg-[#F9FAFB] px-2 py-0.5 text-[11px] font-semibold text-[#4B5563] ring-1 ring-inset ring-[#E5E7EB]"
+                        className="inline-flex items-center rounded-full bg-[#F9FAFB] dark:bg-white/[0.04] px-2 py-0.5 text-[11px] font-semibold text-[#4B5563] dark:text-white/70 ring-1 ring-inset ring-[#E5E7EB] dark:ring-white/10"
                       >
                         {b.name || b.slug}
                       </span>
                     ))}
                   </div>
                 ) : (
-                  <div className="mt-1 text-xs text-[#6B7280]">
+                  <div className="mt-1 text-xs text-[#6B7280] dark:text-white/55">
                     /{invite.business.slug}
                   </div>
                 )}
-                <div className="mt-2 text-xs text-[#9CA3AF]">
+                <div className="mt-2 text-xs text-[#9CA3AF] dark:text-white/40">
                   Invited: {formatDateTime(invite.created_at)}
                 </div>
 
@@ -210,7 +210,7 @@ export default function IncomingInvitesPanel({
                     type="button"
                     disabled={busy}
                     onClick={() => void declineInvite(invite.id)}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#E5E7EB] bg-white px-3 py-2 text-sm font-semibold text-[#4B5563] hover:border-[#C7D2FE] hover:bg-[#F9FAFB] disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-2 text-sm font-semibold text-[#4B5563] dark:text-white/70 hover:border-[#C7D2FE] hover:bg-[#F9FAFB] disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <X className="h-4 w-4" />
                     Decline

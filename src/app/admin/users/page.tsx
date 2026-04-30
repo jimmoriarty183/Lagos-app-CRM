@@ -102,8 +102,8 @@ export default async function AdminUsersPage({
       title="Пользователи"
       description="Список зарегистрированных пользователей с акцентом на onboarding, подтверждение почты, первый вход и наличие бизнеса."
       actions={
-        <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600">
-          Вход как <span className="font-semibold text-slate-900">{user.email}</span>
+        <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-2 text-sm text-slate-600 dark:text-white/70">
+          Вход как <span className="font-semibold text-slate-900 dark:text-white">{user.email}</span>
         </div>
       }
     >
@@ -124,36 +124,36 @@ export default async function AdminUsersPage({
               name="q"
               defaultValue={q}
               placeholder="Поиск по имени, email, ID, телефону или бизнесу"
-              className="h-10 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
+              className="h-10 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3.5 text-sm text-slate-900 dark:text-white outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
             />
-            <select name="status" defaultValue={status} className="h-10 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
+            <select name="status" defaultValue={status} className="h-10 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3.5 text-sm text-slate-900 dark:text-white outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
               <option value="all">Любая почта</option>
               <option value="confirmed">Подтверждена</option>
               <option value="unconfirmed">Не подтверждена</option>
             </select>
-            <select name="signIn" defaultValue={signIn} className="h-10 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
+            <select name="signIn" defaultValue={signIn} className="h-10 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3.5 text-sm text-slate-900 dark:text-white outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
               <option value="all">Любой вход</option>
               <option value="has">Был вход</option>
               <option value="never">Без входа</option>
             </select>
-            <select name="business" defaultValue={business} className="h-10 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
+            <select name="business" defaultValue={business} className="h-10 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3.5 text-sm text-slate-900 dark:text-white outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
               <option value="all">Любой бизнес</option>
               <option value="has">Есть бизнес</option>
               <option value="none">Нет бизнеса</option>
             </select>
-            <select name="window" defaultValue={window} className="h-10 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
+            <select name="window" defaultValue={window} className="h-10 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3.5 text-sm text-slate-900 dark:text-white outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
               <option value="all">Весь период</option>
               <option value="24h">24 часа</option>
               <option value="7d">7 дней</option>
               <option value="30d">30 дней</option>
             </select>
-            <select name="sort" defaultValue={sort} className="h-10 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
+            <select name="sort" defaultValue={sort} className="h-10 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3.5 text-sm text-slate-900 dark:text-white outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
               <option value="created_desc">Сначала новые</option>
               <option value="last_sign_in_desc">Последний вход</option>
               <option value="email_asc">Email А-Я</option>
             </select>
             <div className="flex gap-3">
-              <select name="perPage" defaultValue={String(perPage)} className="h-10 min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
+              <select name="perPage" defaultValue={String(perPage)} className="h-10 min-w-0 flex-1 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3.5 text-sm text-slate-900 dark:text-white outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
                 {PER_PAGE_OPTIONS.map((value) => (
                   <option key={value} value={value}>
                     {value}
@@ -166,7 +166,7 @@ export default async function AdminUsersPage({
             </div>
           </form>
 
-          <div className="mt-3 text-sm text-slate-500">
+          <div className="mt-3 text-sm text-slate-500 dark:text-white/55">
             Показано {rows.length ? start + 1 : 0}-{start + rows.length} из {formatNumber(filtered.length)} пользователей.
           </div>
         </AdminSectionCard>
@@ -192,7 +192,7 @@ export default async function AdminUsersPage({
                     meta={
                       <>
                         <div>{item.email || "Без email"}</div>
-                        <div className="mt-1 font-mono text-[11px] text-slate-400">{item.id}</div>
+                        <div className="mt-1 font-mono text-[11px] text-slate-400 dark:text-white/45">{item.id}</div>
                       </>
                     }
                   >
@@ -206,8 +206,8 @@ export default async function AdminUsersPage({
                   </div>
                 </AdminCell>
                 <AdminCell>
-                  <div className="font-semibold text-slate-900">{item.businessesCount}</div>
-                  <div className="mt-1 text-xs text-slate-500">
+                  <div className="font-semibold text-slate-900 dark:text-white">{item.businessesCount}</div>
+                  <div className="mt-1 text-xs text-slate-500 dark:text-white/55">
                     {item.businessesCount > 0
                       ? item.businesses
                           .slice(0, 2)
@@ -224,7 +224,7 @@ export default async function AdminUsersPage({
                     {item.primaryRole === "OWNER" && item.ownerPlans.length > 0 ? (
                       <div className="flex flex-wrap gap-1.5">
                         {item.ownerPlans.map((plan) => (
-                          <AdminBadge key={`${item.id}-${plan}`} label={plan} tone="bg-slate-100 text-slate-700" />
+                          <AdminBadge key={`${item.id}-${plan}`} label={plan} tone="bg-slate-100 dark:bg-white/[0.06] text-slate-700 dark:text-white/80" />
                         ))}
                       </div>
                     ) : null}

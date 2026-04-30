@@ -79,7 +79,7 @@ function StatusChip({ status }: { status: string | null }) {
   const normalized = normalizeStatus(status);
   if (!normalized) {
     return (
-      <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-600">
+      <span className="inline-flex items-center rounded-full border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/[0.06] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-white/70">
         Unknown
       </span>
     );
@@ -194,37 +194,37 @@ export function RelatedOrdersPreview({
   return (
     <>
       {normalizedOrders.length === 0 ? (
-        <p className="mt-3 text-sm text-slate-500">No linked orders yet.</p>
+        <p className="mt-3 text-sm text-slate-500 dark:text-white/55">No linked orders yet.</p>
       ) : (
         <div className="mt-3 overflow-hidden rounded-xl bg-slate-50/70">
-          <table className="min-w-full divide-y divide-slate-200">
-            <thead className="bg-slate-50">
+          <table className="min-w-full divide-y divide-slate-200 dark:divide-white/10">
+            <thead className="bg-slate-50 dark:bg-white/[0.04]">
               <tr>
-                <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
+                <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-white/55">
                   Order
                 </th>
-                <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
+                <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-white/55">
                   Amount
                 </th>
-                <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
+                <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-white/55">
                   Status
                 </th>
-                <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
+                <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-white/55">
                   Due
                 </th>
-                <th className="px-3 py-2 text-right text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
+                <th className="px-3 py-2 text-right text-xs font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-white/55">
                   Preview
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200 bg-white">
+            <tbody className="divide-y divide-slate-200 dark:divide-white/10 bg-white dark:bg-white/[0.03]">
               {normalizedOrders.map((order) => (
                 <tr
                   key={order.id}
                   onClick={() => setOpenOrderId(String(order.id))}
                   className="cursor-pointer transition hover:bg-[#F8FAFF]"
                 >
-                  <td className="px-3 py-2 text-sm text-slate-700">
+                  <td className="px-3 py-2 text-sm text-slate-700 dark:text-white/80">
                     <button
                       type="button"
                       onClick={(event) => {
@@ -239,13 +239,13 @@ export function RelatedOrdersPreview({
                       })}
                     </button>
                   </td>
-                  <td className="px-3 py-2 text-sm text-slate-700">
+                  <td className="px-3 py-2 text-sm text-slate-700 dark:text-white/80">
                     {formatMoney(order.amount)}
                   </td>
-                  <td className="px-3 py-2 text-sm text-slate-700">
+                  <td className="px-3 py-2 text-sm text-slate-700 dark:text-white/80">
                     <StatusChip status={order.status} />
                   </td>
-                  <td className="px-3 py-2 text-sm text-slate-700">
+                  <td className="px-3 py-2 text-sm text-slate-700 dark:text-white/80">
                     {formatDate(order.due_date)}
                   </td>
                   <td className="px-3 py-2 text-right">
@@ -334,7 +334,7 @@ export function RelatedOrdersPreview({
               label="Due date"
               value={formatDate(selectedOrder.due_date)}
             />
-            <div className="rounded-2xl border border-[#E5E7EB] bg-white p-4 text-sm text-[#667085]">
+            <div className="rounded-2xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4 text-sm text-[#667085]">
               {isOrderLoading
                 ? "Loading full order details…"
                 : orderError
@@ -345,7 +345,7 @@ export function RelatedOrdersPreview({
                   <button
                     type="button"
                     onClick={() => loadOrderPreview(openOrderId)}
-                    className="inline-flex h-8 items-center rounded-lg border border-[#E5E7EB] bg-white px-3 text-xs font-semibold text-[#374151] hover:border-[#C7D2FE]"
+                    className="inline-flex h-8 items-center rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-xs font-semibold text-[#374151] hover:border-[#C7D2FE]"
                   >
                     Retry
                   </button>
@@ -354,7 +354,7 @@ export function RelatedOrdersPreview({
             </div>
           </div>
         ) : (
-          <div className="rounded-2xl border border-[#E5E7EB] bg-white p-4 text-sm text-[#667085]">
+          <div className="rounded-2xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4 text-sm text-[#667085]">
             {isOrderLoading
               ? "Loading order preview…"
               : orderError
@@ -365,7 +365,7 @@ export function RelatedOrdersPreview({
                 <button
                   type="button"
                   onClick={() => loadOrderPreview(openOrderId)}
-                  className="inline-flex h-8 items-center rounded-lg border border-[#E5E7EB] bg-white px-3 text-xs font-semibold text-[#374151] hover:border-[#C7D2FE]"
+                  className="inline-flex h-8 items-center rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-xs font-semibold text-[#374151] hover:border-[#C7D2FE]"
                 >
                   Retry
                 </button>
@@ -380,8 +380,8 @@ export function RelatedOrdersPreview({
 
 function CardRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-[#E5E7EB] bg-white p-4">
-      <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
+    <div className="rounded-2xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4">
+      <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF] dark:text-white/40">
         {label}
       </div>
       <div className="mt-1 text-sm font-semibold text-[#111827]">{value}</div>

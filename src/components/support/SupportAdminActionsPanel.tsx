@@ -90,16 +90,16 @@ export function SupportAdminActionsPanel({
   }
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-      <h3 className="text-sm font-semibold text-slate-900">Actions</h3>
+    <section className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] p-4 shadow-sm">
+      <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Actions</h3>
 
       <div className="mt-3 space-y-3">
         <label className="space-y-1.5 text-sm">
-          <span className="font-medium text-slate-700">Status</span>
+          <span className="font-medium text-slate-700 dark:text-white/80">Status</span>
           <select
             value={status}
             onChange={(event) => setStatus(event.target.value)}
-            className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
+            className="h-10 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm text-slate-900 dark:text-white outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
           >
             {STATUS_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
@@ -109,20 +109,20 @@ export function SupportAdminActionsPanel({
           </select>
         </label>
         <label className="space-y-1.5 text-sm">
-          <span className="font-medium text-slate-700">Priority (fixed after creation)</span>
+          <span className="font-medium text-slate-700 dark:text-white/80">Priority (fixed after creation)</span>
           <input
             value={initialPriority || "-"}
             readOnly
-            className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-600 outline-none"
+            className="h-10 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] px-3 text-sm text-slate-600 dark:text-white/70 outline-none"
           />
         </label>
         <label className="space-y-1.5 text-sm">
-          <span className="font-medium text-slate-700">Customer reply (visible to requester)</span>
+          <span className="font-medium text-slate-700 dark:text-white/80">Customer reply (visible to requester)</span>
           <textarea
             value={customerReply}
             onChange={(event) => setCustomerReply(event.target.value)}
             placeholder="Type reply that requester should see..."
-            className="min-h-[84px] w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
+            className="min-h-[84px] w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-2 text-sm outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
           />
         </label>
 
@@ -138,20 +138,20 @@ export function SupportAdminActionsPanel({
         {updateSuccess ? <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{updateSuccess}</div> : null}
       </div>
 
-      <div className="mt-4 border-t border-slate-200 pt-4">
+      <div className="mt-4 border-t border-slate-200 dark:border-white/10 pt-4">
         <label className="space-y-1.5 text-sm">
-          <span className="font-medium text-slate-700">Add internal note (team only)</span>
+          <span className="font-medium text-slate-700 dark:text-white/80">Add internal note (team only)</span>
           <textarea
             value={note}
             onChange={(event) => setNote(event.target.value)}
-            className="min-h-[100px] w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
+            className="min-h-[100px] w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-2 text-sm outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
           />
         </label>
         <button
           type="button"
           onClick={addInternalNote}
           disabled={isAddingNote || !note.trim()}
-          className="mt-3 inline-flex h-10 items-center rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
+          className="mt-3 inline-flex h-10 items-center rounded-xl border border-slate-300 dark:border-white/15 bg-white dark:bg-white/[0.03] px-4 text-sm font-semibold text-slate-700 dark:text-white/80 transition hover:border-slate-400 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isAddingNote ? "Adding..." : "Add note"}
         </button>

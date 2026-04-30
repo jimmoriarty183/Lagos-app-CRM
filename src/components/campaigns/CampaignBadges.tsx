@@ -28,7 +28,7 @@ export function CampaignDeliveryBadge({ channels }: DeliveryProps) {
     );
   }
   return (
-    <Badge className="border-slate-200 bg-slate-100 text-slate-700">Bell</Badge>
+    <Badge className="border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/[0.06] text-slate-700 dark:text-white/80">Bell</Badge>
   );
 }
 
@@ -45,7 +45,7 @@ export function CampaignStatusBadge({
     );
   if (status === "archived")
     return (
-      <Badge className="border-slate-200 bg-slate-100 text-slate-700">
+      <Badge className="border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/[0.06] text-slate-700 dark:text-white/80">
         Archived
       </Badge>
     );
@@ -70,7 +70,7 @@ export function CampaignTypeBadge({ type }: { type: Campaign["type"] }) {
 
 export function CampaignReadBadge({ isRead }: { isRead: boolean }) {
   return isRead ? (
-    <Badge className="border-slate-200 bg-slate-100 text-slate-700">Read</Badge>
+    <Badge className="border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/[0.06] text-slate-700 dark:text-white/80">Read</Badge>
   ) : (
     <Badge className="border-blue-200 bg-blue-50 text-blue-700">Unread</Badge>
   );

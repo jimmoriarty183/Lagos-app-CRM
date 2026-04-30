@@ -597,17 +597,17 @@ export function ClientOrderForm({
   }
 
   const panelCls = compact
-    ? "rounded-2xl border border-[#E5E7EB] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]"
-    : "rounded-2xl border border-[#E5E7EB] bg-white p-4";
+    ? "rounded-2xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]"
+    : "rounded-2xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4";
   const inputCls =
-    "h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15";
+    "h-10 w-full rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15";
   const textareaCls =
-    "min-h-[92px] w-full rounded-xl border border-[#E5E7EB] bg-white px-3 py-2 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15";
+    "min-h-[92px] w-full rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-2 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15";
 
   return (
     <div className="space-y-3">
       <section className={panelCls}>
-        <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
+        <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF] dark:text-white/40">
           Client type
         </div>
         <div className="mt-2 grid grid-cols-2 gap-2">
@@ -618,7 +618,7 @@ export function ClientOrderForm({
               "inline-flex h-10 items-center justify-center gap-2 rounded-xl border text-sm font-semibold transition",
               clientType === "individual"
                 ? "border-[var(--brand-600)] bg-[var(--brand-50)] text-[var(--brand-700)]"
-                : "border-[#E5E7EB] bg-white text-[#475467] hover:border-[#C7D2FE]",
+                : "border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#475467] dark:text-white/70 hover:border-[#C7D2FE]",
             ].join(" ")}
           >
             <UserRound className="h-4 w-4" />
@@ -631,7 +631,7 @@ export function ClientOrderForm({
               "inline-flex h-10 items-center justify-center gap-2 rounded-xl border text-sm font-semibold transition",
               clientType === "company"
                 ? "border-[var(--brand-600)] bg-[var(--brand-50)] text-[var(--brand-700)]"
-                : "border-[#E5E7EB] bg-white text-[#475467] hover:border-[#C7D2FE]",
+                : "border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#475467] dark:text-white/70 hover:border-[#C7D2FE]",
             ].join(" ")}
           >
             <Building2 className="h-4 w-4" />
@@ -658,8 +658,8 @@ export function ClientOrderForm({
             </div>
           ) : null}
         </div>
-        <div className="mt-2 rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] p-3">
-          <div className="text-sm font-semibold text-[#1F2937]">
+        <div className="mt-2 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] p-3">
+          <div className="text-sm font-semibold text-[#1F2937] dark:text-white/90">
             {matchResult
               ? stateBadgeText(matchResult.state)
               : "Enter identifiers to start matching"}
@@ -672,7 +672,7 @@ export function ClientOrderForm({
                 .map((candidate) => (
                   <label
                     key={candidate.clientId}
-                    className="flex cursor-pointer items-start gap-2 rounded-lg border border-[#E5E7EB] bg-white p-2.5"
+                    className="flex cursor-pointer items-start gap-2 rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-2.5"
                   >
                     <input
                       type="radio"
@@ -681,10 +681,10 @@ export function ClientOrderForm({
                       onChange={() =>
                         setSelectedExistingClientId(candidate.clientId)
                       }
-                      className="mt-0.5 h-4 w-4 rounded border-slate-300"
+                      className="mt-0.5 h-4 w-4 rounded border-slate-300 dark:border-white/15"
                     />
                     <span className="min-w-0">
-                      <span className="block text-sm font-semibold text-[#1F2937]">
+                      <span className="block text-sm font-semibold text-[#1F2937] dark:text-white/90">
                         {candidate.displayName}
                       </span>
                       <span className="block text-xs text-[#667085]">
@@ -967,7 +967,7 @@ export function ClientOrderForm({
                 </Field>
               ) : null}
             </div>
-            <label className="mt-3 inline-flex items-center gap-2 text-sm text-[#475467]">
+            <label className="mt-3 inline-flex items-center gap-2 text-sm text-[#475467] dark:text-white/70">
               <input
                 type="checkbox"
                 checked={contact.isPrimary}
@@ -975,7 +975,7 @@ export function ClientOrderForm({
                   const checked = Boolean(e.currentTarget?.checked);
                   setContact((v) => ({ ...v, isPrimary: checked }));
                 }}
-                className="h-4 w-4 rounded border-slate-300"
+                className="h-4 w-4 rounded border-slate-300 dark:border-white/15"
               />
               Set as primary contact
             </label>
@@ -1051,7 +1051,7 @@ export function ClientOrderForm({
           </Field>
         </div>
 
-        <div className="mt-4 rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] p-3">
+        <div className="mt-4 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] p-3">
           <div className="flex items-center justify-between gap-3">
             <div>
               <div className="text-sm font-semibold text-[#111827]">
@@ -1065,7 +1065,7 @@ export function ClientOrderForm({
             <button
               type="button"
               onClick={addOrderLine}
-              className="inline-flex h-9 items-center justify-center rounded-lg border border-[#D0D5DD] bg-white px-3 text-xs font-semibold text-[#344054] hover:bg-[#F2F4F7]"
+              className="inline-flex h-9 items-center justify-center rounded-lg border border-[#D0D5DD] bg-white dark:bg-white/[0.03] px-3 text-xs font-semibold text-[#344054] hover:bg-[#F2F4F7]"
             >
               + Add line
             </button>
@@ -1084,7 +1084,7 @@ export function ClientOrderForm({
                 return (
                   <div
                     key={line.id}
-                    className="grid gap-2 rounded-lg border border-[#E5E7EB] bg-white p-2 sm:grid-cols-[120px_minmax(0,1fr)_100px_120px_90px]"
+                    className="grid gap-2 rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-2 sm:grid-cols-[120px_minmax(0,1fr)_100px_120px_90px]"
                   >
                     <select
                       value={line.lineType}
@@ -1246,7 +1246,7 @@ function Field({
 }) {
   return (
     <label className={`grid gap-1.5 ${className}`}>
-      <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
+      <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF] dark:text-white/40">
         {label}
       </span>
       {children}

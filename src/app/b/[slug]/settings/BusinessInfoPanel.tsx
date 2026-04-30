@@ -69,18 +69,18 @@ function ReadonlyCard({
   hint?: string;
 }) {
   return (
-    <div className="rounded-[18px] border border-[#E5E7EB] bg-white p-4 shadow-[0_4px_14px_rgba(15,23,42,0.04)]">
-      <div className="product-section-label flex items-center gap-2 text-[#6B7280]">
-        <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] text-[#6B7280]">
+    <div className="rounded-[18px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4 shadow-[0_4px_14px_rgba(15,23,42,0.04)]">
+      <div className="product-section-label flex items-center gap-2 text-[#6B7280] dark:text-white/55">
+        <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] text-[#6B7280] dark:text-white/55">
           {icon}
         </span>
         {label}
       </div>
-      <div className="mt-3 break-all text-sm font-semibold text-[#1F2937]">
+      <div className="mt-3 break-all text-sm font-semibold text-[#1F2937] dark:text-white/90">
         {value}
       </div>
       {hint ? (
-        <div className="mt-1 text-xs leading-5 text-[#6B7280]">{hint}</div>
+        <div className="mt-1 text-xs leading-5 text-[#6B7280] dark:text-white/55">{hint}</div>
       ) : null}
     </div>
   );
@@ -106,10 +106,10 @@ function EditableCard({
   children: ReactNode;
 }) {
   return (
-    <div className="rounded-[18px] border border-[#E5E7EB] bg-white p-4 shadow-[0_4px_14px_rgba(15,23,42,0.04)]">
+    <div className="rounded-[18px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4 shadow-[0_4px_14px_rgba(15,23,42,0.04)]">
       <div className="flex items-center justify-between gap-3">
-        <div className="product-section-label flex items-center gap-2 text-[#6B7280]">
-          <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] text-[#6B7280]">
+        <div className="product-section-label flex items-center gap-2 text-[#6B7280] dark:text-white/55">
+          <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] text-[#6B7280] dark:text-white/55">
             {icon}
           </span>
           {label}
@@ -124,7 +124,7 @@ function EditableCard({
             "inline-flex h-9 w-9 items-center justify-center rounded-xl border transition",
             editing
               ? "border-[var(--brand-600)] bg-[var(--brand-50)] text-[var(--brand-600)] shadow-[0_0_0_3px_rgba(91,91,179,0.12)]"
-              : "border-[#E5E7EB] bg-white text-[#4B5563] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]",
+              : "border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#4B5563] dark:text-white/70 hover:border-[#C7D2FE] hover:bg-[#F9FAFB]",
           ].join(" ")}
           aria-label={editing ? `Close ${label} editing` : `Edit ${label}`}
         >
@@ -138,10 +138,10 @@ function EditableCard({
         ) : (
           <div
             className={[
-              "min-h-11 rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] px-3.5 py-3 text-sm",
+              "min-h-11 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] px-3.5 py-3 text-sm",
               displayValue
-                ? "border-[#E5E7EB] bg-[#F9FAFB] text-[#1F2937]"
-                : "border-[#E5E7EB] bg-[#F9FAFB] text-[#9CA3AF]",
+                ? "border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] text-[#1F2937] dark:text-white/90"
+                : "border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] text-[#9CA3AF] dark:text-white/40",
             ].join(" ")}
           >
             {displayValue || placeholder}
@@ -150,14 +150,14 @@ function EditableCard({
       </div>
 
       {hint ? (
-        <div className="mt-2 text-xs leading-5 text-[#6B7280]">{hint}</div>
+        <div className="mt-2 text-xs leading-5 text-[#6B7280] dark:text-white/55">{hint}</div>
       ) : null}
     </div>
   );
 }
 
 const inputClassName =
-  "h-11 w-full rounded-xl border border-[#E5E7EB] bg-white px-3.5 text-sm text-[#1F2937] outline-none transition placeholder:text-[#9CA3AF] hover:border-[var(--brand-200)] focus:border-[var(--brand-600)] focus:ring-4 focus:ring-[var(--brand-600)]/15";
+  "h-11 w-full rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3.5 text-sm text-[#1F2937] dark:text-white/90 outline-none transition placeholder:text-[#9CA3AF] hover:border-[var(--brand-200)] focus:border-[var(--brand-600)] focus:ring-4 focus:ring-[var(--brand-600)]/15";
 
 export default function BusinessInfoPanel({
   businessId,
@@ -332,10 +332,10 @@ export default function BusinessInfoPanel({
   };
 
   return (
-    <section className="mt-5 rounded-[20px] border border-[#E5E7EB] bg-[#F9FAFB] p-4 sm:p-5">
+    <section className="mt-5 rounded-[20px] border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] p-4 sm:p-5">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <div className="product-section-label text-[#6B7280]">Business</div>
+          <div className="product-section-label text-[#6B7280] dark:text-white/55">Business</div>
           <h2 className="product-section-title mt-1.5">Business info</h2>
           <p className="product-page-subtitle mt-1.5 max-w-[700px]">
             Keep the business card editable here: contact phone, address,
@@ -349,7 +349,7 @@ export default function BusinessInfoPanel({
               type="button"
               onClick={discardChanges}
               disabled={status === "saving"}
-              className="inline-flex h-11 items-center rounded-full border border-[#E5E7EB] bg-white px-5 text-sm font-semibold text-[#4B5563] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex h-11 items-center rounded-full border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-5 text-sm font-semibold text-[#4B5563] dark:text-white/70 transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] disabled:cursor-not-allowed disabled:opacity-60"
             >
               Discard changes
             </button>
@@ -456,15 +456,15 @@ export default function BusinessInfoPanel({
               closeEditor();
             }}
           >
-            <SelectTrigger className="h-11 w-full rounded-xl border border-[#E5E7EB] bg-white px-3.5 text-sm text-[#1F2937] outline-none transition hover:border-[var(--brand-200)] focus:border-[var(--brand-600)] focus:ring-4 focus:ring-[var(--brand-600)]/15 data-[placeholder]:text-[#9CA3AF]">
+            <SelectTrigger className="h-11 w-full rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3.5 text-sm text-[#1F2937] dark:text-white/90 outline-none transition hover:border-[var(--brand-200)] focus:border-[var(--brand-600)] focus:ring-4 focus:ring-[var(--brand-600)]/15 data-[placeholder]:text-[#9CA3AF]">
               <SelectValue placeholder="Select business segment" />
             </SelectTrigger>
-            <SelectContent className="rounded-xl border border-[#E5E7EB] bg-white p-1 shadow-[0_12px_30px_rgba(15,23,42,0.12)]">
+            <SelectContent className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-1 shadow-[0_12px_30px_rgba(15,23,42,0.12)]">
               {BUSINESS_SEGMENTS.map((option) => (
                 <SelectItem
                   key={option}
                   value={option}
-                  className="rounded-lg px-3 py-2 text-sm text-[#4B5563] focus:bg-[var(--brand-50)] focus:text-[var(--brand-600)]"
+                  className="rounded-lg px-3 py-2 text-sm text-[#4B5563] dark:text-white/70 focus:bg-[var(--brand-50)] focus:text-[var(--brand-600)]"
                 >
                   {option}
                 </SelectItem>

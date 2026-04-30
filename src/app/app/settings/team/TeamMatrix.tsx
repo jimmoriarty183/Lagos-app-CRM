@@ -130,12 +130,12 @@ export default function TeamMatrix({
   return (
     <div className="mt-4 space-y-4">
       {/* Header: seat counter + invite button */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#E5E7EB] bg-white p-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3">
         <div className="min-w-[220px]">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]">Team seats</div>
+          <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF] dark:text-white/40">Team seats</div>
           <div className="mt-0.5 text-lg font-semibold text-[#111827]">
             {seatsUsed} {seatLimit === null ? "" : `/ ${seatLimit}`}
-            {seatLimit === null ? <span className="ml-1 text-sm font-normal text-[#6B7280]">unlimited</span> : null}
+            {seatLimit === null ? <span className="ml-1 text-sm font-normal text-[#6B7280] dark:text-white/55">unlimited</span> : null}
           </div>
           <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-[#F3F4F6]">
             <div className={`h-full ${progressTone}`} style={{ width: `${progress}%` }} />
@@ -153,18 +153,18 @@ export default function TeamMatrix({
       </div>
 
       {error ? (
-        <div className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] p-3 text-[13px] leading-5 text-[#991B1B]">
+        <div className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] dark:bg-rose-500/10 p-3 text-[13px] leading-5 text-[#991B1B]">
           {error}
         </div>
       ) : null}
 
       {/* Members */}
-      <div className="overflow-hidden rounded-2xl border border-[#E5E7EB] bg-white">
-        <div className="border-b border-[#F3F4F6] bg-[#F9FAFB] px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#6B7280]">
+      <div className="overflow-hidden rounded-2xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03]">
+        <div className="border-b border-[#F3F4F6] bg-[#F9FAFB] dark:bg-white/[0.04] px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#6B7280] dark:text-white/55">
           Members ({members.length})
         </div>
         {members.length === 0 ? (
-          <div className="p-4 text-sm text-[#6B7280]">No members yet.</div>
+          <div className="p-4 text-sm text-[#6B7280] dark:text-white/55">No members yet.</div>
         ) : (
           <div className="divide-y divide-[#F3F4F6]">
             {members.map((m) => (
@@ -186,8 +186,8 @@ export default function TeamMatrix({
 
       {/* Pending invites */}
       {pendingInvites.length > 0 ? (
-        <div className="overflow-hidden rounded-2xl border border-[#E5E7EB] bg-white">
-          <div className="border-b border-[#F3F4F6] bg-[#F9FAFB] px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#6B7280]">
+        <div className="overflow-hidden rounded-2xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03]">
+          <div className="border-b border-[#F3F4F6] bg-[#F9FAFB] dark:bg-white/[0.04] px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#6B7280] dark:text-white/55">
             Pending invites ({pendingInvites.length})
           </div>
           <div className="divide-y divide-[#F3F4F6]">
@@ -253,7 +253,7 @@ function MemberRowView({
   return (
     <div className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex min-w-0 items-center gap-3">
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#EEF2FF] text-[#4F46E5]">
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#EEF2FF] dark:bg-[var(--brand-600)]/15 text-[#4F46E5]">
           {member.avatarUrl ? (
             /* eslint-disable-next-line @next/next/no-img-element */
             <img src={member.avatarUrl} alt="" className="h-8 w-8 rounded-full object-cover" />
@@ -267,10 +267,10 @@ function MemberRowView({
             {member.isOwner ? (
               <span className="inline-flex items-center rounded-full bg-[#111827] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">Owner</span>
             ) : (
-              <span className="inline-flex items-center rounded-full bg-[#F3F4F6] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#4B5563]">Manager</span>
+              <span className="inline-flex items-center rounded-full bg-[#F3F4F6] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#4B5563] dark:text-white/70">Manager</span>
             )}
           </div>
-          <div className="truncate text-xs text-[#6B7280]">{member.email}</div>
+          <div className="truncate text-xs text-[#6B7280] dark:text-white/55">{member.email}</div>
         </div>
       </div>
 
@@ -288,7 +288,7 @@ function MemberRowView({
                 "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold transition",
                 has
                   ? "bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-200 hover:bg-emerald-100"
-                  : "bg-[#F9FAFB] text-[#6B7280] ring-1 ring-inset ring-[#E5E7EB] hover:bg-[#F3F4F6]",
+                  : "bg-[#F9FAFB] dark:bg-white/[0.04] text-[#6B7280] dark:text-white/55 ring-1 ring-inset ring-[#E5E7EB] dark:ring-white/10 hover:bg-[#F3F4F6]",
                 disabled ? "opacity-60" : "",
               ].join(" ")}
               title={member.isOwner ? "Owner is in all businesses" : has ? `Remove from ${b.name}` : `Add to ${b.name}`}
@@ -300,7 +300,7 @@ function MemberRowView({
         })}
 
         {!member.isOwner ? (
-          <label className="ml-1 inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-[#E5E7EB] bg-white px-2.5 py-1 text-xs text-[#374151] hover:bg-[#FCFCFD]">
+          <label className="ml-1 inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-2.5 py-1 text-xs text-[#374151] hover:bg-[#FCFCFD]">
             <input
               type="checkbox"
               className="h-3.5 w-3.5"
@@ -318,7 +318,7 @@ function MemberRowView({
             type="button"
             onClick={onRemove}
             disabled={busy === `del:${member.userId}`}
-            className="ml-1 inline-flex items-center gap-1 rounded-full border border-[#FECACA] bg-white px-2.5 py-1 text-xs font-semibold text-[#991B1B] transition hover:bg-[#FEF2F2]"
+            className="ml-1 inline-flex items-center gap-1 rounded-full border border-[#FECACA] bg-white dark:bg-white/[0.03] px-2.5 py-1 text-xs font-semibold text-[#991B1B] transition hover:bg-[#FEF2F2]"
           >
             <Trash2 className="h-3 w-3" />
             Remove
@@ -359,14 +359,14 @@ function InviteRowView({
               </span>
             ) : null}
           </div>
-          <div className="truncate text-xs text-[#6B7280]">
+          <div className="truncate text-xs text-[#6B7280] dark:text-white/55">
             Expires {new Date(invite.expiresAt).toLocaleDateString("en-GB")}
           </div>
         </div>
       </div>
       <div className="flex flex-wrap items-center gap-1.5">
         {invite.businessIds.map((id) => (
-          <span key={id} className="inline-flex items-center gap-1 rounded-full bg-[#F9FAFB] px-2.5 py-1 text-xs font-semibold text-[#4B5563] ring-1 ring-inset ring-[#E5E7EB]">
+          <span key={id} className="inline-flex items-center gap-1 rounded-full bg-[#F9FAFB] dark:bg-white/[0.04] px-2.5 py-1 text-xs font-semibold text-[#4B5563] dark:text-white/70 ring-1 ring-inset ring-[#E5E7EB] dark:ring-white/10">
             <span className="max-w-[120px] truncate">{namesById.get(id) ?? id}</span>
           </span>
         ))}
@@ -380,7 +380,7 @@ function InviteRowView({
           type="button"
           onClick={onRevoke}
           disabled={busy === `inv:${invite.id}`}
-          className="inline-flex items-center gap-1 rounded-full border border-[#FECACA] bg-white px-2.5 py-1 text-xs font-semibold text-[#991B1B] transition hover:bg-[#FEF2F2]"
+          className="inline-flex items-center gap-1 rounded-full border border-[#FECACA] bg-white dark:bg-white/[0.03] px-2.5 py-1 text-xs font-semibold text-[#991B1B] transition hover:bg-[#FEF2F2]"
         >
           <X className="h-3 w-3" />
           Revoke
@@ -458,29 +458,29 @@ function InviteModal({
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-auto bg-black/30 p-4 pt-16" onClick={onClose}>
       <div
-        className="w-full max-w-[480px] rounded-2xl border border-[#E5E7EB] bg-white p-4 shadow-xl"
+        className="w-full max-w-[480px] rounded-2xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4 shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-[#111827]">Invite team member</h2>
-          <button type="button" onClick={onClose} className="rounded-full p-1.5 text-[#6B7280] hover:bg-[#F3F4F6]">
+          <button type="button" onClick={onClose} className="rounded-full p-1.5 text-[#6B7280] dark:text-white/55 hover:bg-[#F3F4F6]">
             <X className="h-4 w-4" />
           </button>
         </div>
-        <p className="mt-1 text-[13px] leading-5 text-[#6B7280]">
+        <p className="mt-1 text-[13px] leading-5 text-[#6B7280] dark:text-white/55">
           If this email already belongs to your team, we&apos;ll add them to the selected businesses without an invite email.
         </p>
 
-        <div className="mt-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]">Email</div>
+        <div className="mt-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF] dark:text-white/40">Email</div>
         <input
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="name@example.com"
-          className="mt-1 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 py-2 text-sm text-[#111827] outline-none focus:border-[#4F46E5]"
+          className="mt-1 w-full rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-2 text-sm text-[#111827] outline-none focus:border-[#4F46E5]"
         />
 
-        <div className="mt-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]">Access to businesses</div>
+        <div className="mt-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF] dark:text-white/40">Access to businesses</div>
         <div className="mt-1 flex flex-wrap gap-1.5">
           {businesses.map((b) => {
             const has = selectedBizIds.includes(b.id);
@@ -495,7 +495,7 @@ function InviteModal({
                   "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold transition",
                   has
                     ? "bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-200"
-                    : "bg-[#F9FAFB] text-[#6B7280] ring-1 ring-inset ring-[#E5E7EB] hover:bg-[#F3F4F6]",
+                    : "bg-[#F9FAFB] dark:bg-white/[0.04] text-[#6B7280] dark:text-white/55 ring-1 ring-inset ring-[#E5E7EB] dark:ring-white/10 hover:bg-[#F3F4F6]",
                 ].join(" ")}
               >
                 {has ? <Check className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
@@ -505,7 +505,7 @@ function InviteModal({
           })}
         </div>
 
-        <label className="mt-3 inline-flex cursor-pointer items-center gap-2 rounded-full border border-[#E5E7EB] bg-white px-3 py-1.5 text-xs text-[#374151]">
+        <label className="mt-3 inline-flex cursor-pointer items-center gap-2 rounded-full border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-1.5 text-xs text-[#374151]">
           <input
             type="checkbox"
             checked={canManageTeam}
@@ -517,20 +517,20 @@ function InviteModal({
         </label>
 
         {localError ? (
-          <div className="mt-3 rounded-xl border border-[#FECACA] bg-[#FEF2F2] p-2.5 text-[13px] leading-5 text-[#991B1B]">
+          <div className="mt-3 rounded-xl border border-[#FECACA] bg-[#FEF2F2] dark:bg-rose-500/10 p-2.5 text-[13px] leading-5 text-[#991B1B]">
             {localError}
           </div>
         ) : null}
 
         <div className="mt-4 flex items-center justify-between">
-          <div className="text-xs text-[#6B7280]">
+          <div className="text-xs text-[#6B7280] dark:text-white/55">
             {seatLimit === null ? `${currentSeats} seats used` : `${currentSeats} of ${seatLimit} seats used`}
           </div>
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={onClose}
-              className="rounded-full border border-[#E5E7EB] bg-white px-3 py-1.5 text-xs font-semibold text-[#374151] hover:bg-[#FCFCFD]"
+              className="rounded-full border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-1.5 text-xs font-semibold text-[#374151] hover:bg-[#FCFCFD]"
             >
               Cancel
             </button>

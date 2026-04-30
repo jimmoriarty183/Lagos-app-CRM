@@ -69,8 +69,7 @@ export default function TeamAccessTopBar({
 
   return (
     <header
-      data-theme="light"
-      className="fixed inset-x-0 top-0 z-50 overflow-x-clip border-b border-[var(--neutral-200)] bg-white"
+      className="fixed inset-x-0 top-0 z-50 overflow-x-clip border-b border-[var(--neutral-200)] bg-white dark:bg-white/[0.03]"
     >
       <div className="pt-[env(safe-area-inset-top)]">
         <div className="mx-auto grid h-[48px] max-w-[1200px] grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 overflow-x-clip px-3 sm:flex sm:justify-between sm:gap-3 sm:px-4 sm:py-0">
@@ -85,7 +84,7 @@ export default function TeamAccessTopBar({
 
             <Link
               href={ordersHref}
-              className="inline-flex h-9 w-10 items-center justify-center rounded-xl border border-[#E5E7EB] bg-white text-[13px] font-semibold text-[#4B5563] shadow-sm transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937] sm:hidden"
+              className="inline-flex h-9 w-10 items-center justify-center rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[13px] font-semibold text-[#4B5563] dark:text-white/70 shadow-sm transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937] sm:hidden"
             >
               <BrandIcon size={18} />
             </Link>
@@ -102,10 +101,10 @@ export default function TeamAccessTopBar({
               </div>
             ) : null}
 
-            <nav className="hidden items-center rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] p-1 lg:inline-flex">
+            <nav className="hidden items-center rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] p-1 lg:inline-flex">
               <Link
                 href={ordersHref}
-                className="inline-flex h-7 items-center rounded-md bg-white px-3 text-[12px] font-semibold text-[#3645A0] shadow-[0_1px_2px_rgba(16,24,40,0.08)]"
+                className="inline-flex h-7 items-center rounded-md bg-white dark:bg-white/[0.03] px-3 text-[12px] font-semibold text-[#3645A0] dark:text-[var(--brand-300)] shadow-[0_1px_2px_rgba(16,24,40,0.08)]"
               >
                 CRM
               </Link>

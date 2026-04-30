@@ -139,7 +139,7 @@ export function getItemTypeLabel(type: TodoCalendarItemType) {
 export function getItemTypeClasses(type: TodoCalendarItemType, status?: TodoCalendarItem["status"]) {
   if (status === "overdue") {
     return {
-      tint: "bg-[#FEF2F2] text-[#B42318] border-[#FECACA]",
+      tint: "bg-[#FEF2F2] dark:bg-rose-500/10 text-[#B42318] border-[#FECACA]",
       dot: "bg-[#D92D20]",
       soft: "bg-[#FFF6F5]",
     };
@@ -147,7 +147,7 @@ export function getItemTypeClasses(type: TodoCalendarItemType, status?: TodoCale
 
   if (type === "follow_up") {
     return {
-      tint: "bg-[#EEF2FF] text-[#3645A0] border-[#C7D2FE]",
+      tint: "bg-[#EEF2FF] dark:bg-[var(--brand-600)]/15 text-[#3645A0] dark:text-[var(--brand-300)] border-[#C7D2FE] dark:border-[var(--brand-500)]/40",
       dot: "bg-[#5558E3]",
       soft: "bg-[#F8FAFF]",
     };
@@ -155,7 +155,7 @@ export function getItemTypeClasses(type: TodoCalendarItemType, status?: TodoCale
 
   if (type === "order") {
     return {
-      tint: "bg-[#F3F4F6] text-[#475467] border-[#D0D5DD]",
+      tint: "bg-[#F3F4F6] text-[#475467] dark:text-white/70 border-[#D0D5DD]",
       dot: "bg-[#667085]",
       soft: "bg-[#FBFCFE]",
     };

@@ -263,7 +263,7 @@ export default function DesktopSidebarFilters({
       : "ALL";
 
   const inputCls =
-    "h-9 w-full rounded-lg border border-[#E5E7EB] bg-white px-3 text-sm font-medium text-[#374151] outline-none transition placeholder:text-[#9CA3AF] focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15";
+    "h-9 w-full rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm font-medium text-[#374151] outline-none transition placeholder:text-[#9CA3AF] focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15";
 
   const toggleStatus = (status: SidebarStatus) => {
     if (!statusTouched) setStatusValues(baseStatusValues);
@@ -342,16 +342,16 @@ export default function DesktopSidebarFilters({
   }, [businessId]);
 
   return (
-    <section className="max-h-[calc(100vh-100px)] overflow-y-auto rounded-xl border border-[#E5E7EB] bg-white p-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)] overscroll-contain">
+    <section className="max-h-[calc(100vh-100px)] overflow-y-auto rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)] overscroll-contain">
       <div className="mb-3 flex items-center justify-between gap-3">
-        <div className="text-[12px] font-semibold uppercase tracking-[0.18em] text-[#9CA3AF]">
+        <div className="text-[12px] font-semibold uppercase tracking-[0.18em] text-[#9CA3AF] dark:text-white/40">
           Filters
         </div>
 
         {hasActiveFilters && clearHref ? (
           <a
             href={clearHref}
-            className="inline-flex h-7 items-center justify-center rounded-lg border border-[#E5E7EB] px-2.5 text-[11px] font-semibold text-[#6B7280] transition hover:border-[#C7D2FE] hover:text-[#1F2937]"
+            className="inline-flex h-7 items-center justify-center rounded-lg border border-[#E5E7EB] dark:border-white/10 px-2.5 text-[11px] font-semibold text-[#6B7280] dark:text-white/55 transition hover:border-[#C7D2FE] hover:text-[#1F2937]"
           >
             Reset
           </a>
@@ -386,12 +386,12 @@ export default function DesktopSidebarFilters({
           ))}
 
         <label className="block">
-          <span className="mb-1 block text-[11px] font-medium text-[#6B7280]">
+          <span className="mb-1 block text-[11px] font-medium text-[#6B7280] dark:text-white/55">
             Search
           </span>
           <div className="flex items-center gap-2">
             <label className="relative block flex-1">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9CA3AF]" strokeWidth={2} />
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9CA3AF] dark:text-white/40" strokeWidth={2} />
               <input
                 name="q"
                 defaultValue={q}
@@ -401,7 +401,7 @@ export default function DesktopSidebarFilters({
             </label>
             <button
               type="submit"
-              className="inline-flex h-9 shrink-0 items-center justify-center rounded-lg border border-[#E5E7EB] bg-white px-3 text-sm font-semibold text-[#374151] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937] disabled:cursor-not-allowed disabled:opacity-45"
+              className="inline-flex h-9 shrink-0 items-center justify-center rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm font-semibold text-[#374151] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937] disabled:cursor-not-allowed disabled:opacity-45"
               disabled={!customRangeReady}
             >
               <span className="leading-none">Search</span>
@@ -410,7 +410,7 @@ export default function DesktopSidebarFilters({
         </label>
 
         <label className="block">
-          <span className="mb-1 block text-[11px] font-medium text-[#6B7280]">
+          <span className="mb-1 block text-[11px] font-medium text-[#6B7280] dark:text-white/55">
             Status
           </span>
           <DropdownMenu
@@ -421,7 +421,7 @@ export default function DesktopSidebarFilters({
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="inline-flex h-9 w-full items-center justify-between rounded-lg border border-[#E5E7EB] bg-white px-3 text-sm font-medium text-[#374151] outline-none transition hover:border-[var(--brand-200)] focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
+                className="inline-flex h-9 w-full items-center justify-between rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm font-medium text-[#374151] outline-none transition hover:border-[var(--brand-200)] focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
               >
                 <span className="truncate">
                   {getStatusTriggerLabel(
@@ -430,7 +430,7 @@ export default function DesktopSidebarFilters({
                     inactiveStatusOptions,
                   )}
                 </span>
-                <ChevronDown className="ml-3 h-4 w-4 shrink-0 text-[#9CA3AF]" />
+                <ChevronDown className="ml-3 h-4 w-4 shrink-0 text-[#9CA3AF] dark:text-white/40" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuPortal>
@@ -438,7 +438,7 @@ export default function DesktopSidebarFilters({
                 align="start"
                 side="top"
                 sideOffset={8}
-                className="z-[140] w-56 rounded-xl border-[#E5E7EB] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
+                className="z-[140] w-56 rounded-xl border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
                 onCloseAutoFocus={(event) => event.preventDefault()}
               >
                 <div className="flex items-center justify-between gap-2 px-2 pb-1 pt-1">
@@ -460,13 +460,13 @@ export default function DesktopSidebarFilters({
                       setStatusTouched(true);
                       setStatusValues([]);
                     }}
-                    className="text-[11px] font-semibold text-[#6B7280] transition hover:text-[#1F2937]"
+                    className="text-[11px] font-semibold text-[#6B7280] dark:text-white/55 transition hover:text-[#1F2937]"
                   >
                     Clear all
                   </button>
                 </div>
                 <DropdownMenuSeparator />
-                <div className="px-2 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
+                <div className="px-2 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF] dark:text-white/40">
                   Active
                 </div>
                 {activeStatusOptions.map((statusValue) => {
@@ -511,7 +511,7 @@ export default function DesktopSidebarFilters({
                   );
                 })}
                 <DropdownMenuSeparator />
-                <div className="px-2 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
+                <div className="px-2 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF] dark:text-white/40">
                   Inactive
                 </div>
                 {inactiveStatusOptions.map((statusValue) => {
@@ -561,7 +561,7 @@ export default function DesktopSidebarFilters({
         </label>
 
         <label className="block">
-          <span className="mb-1 block text-[11px] font-medium text-[#6B7280]">
+          <span className="mb-1 block text-[11px] font-medium text-[#6B7280] dark:text-white/55">
             Period
           </span>
           <DropdownMenu
@@ -572,21 +572,21 @@ export default function DesktopSidebarFilters({
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="inline-flex h-9 w-full items-center justify-between rounded-lg border border-[#E5E7EB] bg-white px-3 text-sm font-medium text-[#374151] outline-none transition hover:border-[var(--brand-200)] focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
+                className="inline-flex h-9 w-full items-center justify-between rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm font-medium text-[#374151] outline-none transition hover:border-[var(--brand-200)] focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
               >
                 <span className="truncate">
                   {DASHBOARD_RANGE_OPTIONS.find(
                     (option) => option.value === rangeValue,
                   )?.label ?? "All time"}
                 </span>
-                <ChevronDown className="ml-3 h-4 w-4 shrink-0 text-[#9CA3AF]" />
+                <ChevronDown className="ml-3 h-4 w-4 shrink-0 text-[#9CA3AF] dark:text-white/40" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuPortal>
               <DropdownMenuContent
                 align="start"
                 sideOffset={8}
-                className="z-[140] w-56 rounded-xl border-[#E5E7EB] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
+                className="z-[140] w-56 rounded-xl border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
                 onCloseAutoFocus={(event) => event.preventDefault()}
               >
                 <DropdownMenuRadioGroup value={rangeValue}>
@@ -617,7 +617,7 @@ export default function DesktopSidebarFilters({
         {showCustomRange ? (
           <div className="grid grid-cols-2 gap-2">
             <label className="block">
-              <span className="mb-1 block text-[11px] font-medium text-[#6B7280]">
+              <span className="mb-1 block text-[11px] font-medium text-[#6B7280] dark:text-white/55">
                 Start date
               </span>
               <input
@@ -628,7 +628,7 @@ export default function DesktopSidebarFilters({
               />
             </label>
             <label className="block">
-              <span className="mb-1 block text-[11px] font-medium text-[#6B7280]">
+              <span className="mb-1 block text-[11px] font-medium text-[#6B7280] dark:text-white/55">
                 End date
               </span>
               <input
@@ -642,7 +642,7 @@ export default function DesktopSidebarFilters({
         ) : null}
 
         <label className="block">
-          <span className="mb-1 block text-[11px] font-medium text-[#6B7280]">
+          <span className="mb-1 block text-[11px] font-medium text-[#6B7280] dark:text-white/55">
             Team
           </span>
           <DropdownMenu
@@ -653,19 +653,19 @@ export default function DesktopSidebarFilters({
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="inline-flex h-9 w-full items-center justify-between rounded-lg border border-[#E5E7EB] bg-white px-3 text-sm font-medium text-[#374151] outline-none transition hover:border-[var(--brand-200)] focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
+                className="inline-flex h-9 w-full items-center justify-between rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm font-medium text-[#374151] outline-none transition hover:border-[var(--brand-200)] focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
               >
                 <span className="truncate">
                   {getManagerTriggerLabel(normalizedActorValue, actorOptions)}
                 </span>
-                <ChevronDown className="ml-3 h-4 w-4 shrink-0 text-[#9CA3AF]" />
+                <ChevronDown className="ml-3 h-4 w-4 shrink-0 text-[#9CA3AF] dark:text-white/40" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuPortal>
               <DropdownMenuContent
                 align="start"
                 sideOffset={8}
-                className="z-[140] w-64 rounded-xl border-[#E5E7EB] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
+                className="z-[140] w-64 rounded-xl border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
                 onCloseAutoFocus={(event) => event.preventDefault()}
               >
                 <DropdownMenuRadioGroup
@@ -721,7 +721,7 @@ export default function DesktopSidebarFilters({
         </label>
 
         <label className="block">
-          <span className="mb-1 block text-[11px] font-medium text-[#6B7280]">
+          <span className="mb-1 block text-[11px] font-medium text-[#6B7280] dark:text-white/55">
             Sort
           </span>
           <DropdownMenu
@@ -732,20 +732,20 @@ export default function DesktopSidebarFilters({
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="inline-flex h-9 w-full items-center justify-between rounded-lg border border-[#E5E7EB] bg-white px-3 text-sm font-medium text-[#374151] outline-none transition hover:border-[var(--brand-200)] focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
+                className="inline-flex h-9 w-full items-center justify-between rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm font-medium text-[#374151] outline-none transition hover:border-[var(--brand-200)] focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
               >
                 <span className="truncate">
                   {SORT_OPTIONS.find((option) => option.value === sortValue)
                     ?.label ?? "Default order"}
                 </span>
-                <ChevronDown className="ml-3 h-4 w-4 shrink-0 text-[#9CA3AF]" />
+                <ChevronDown className="ml-3 h-4 w-4 shrink-0 text-[#9CA3AF] dark:text-white/40" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuPortal>
               <DropdownMenuContent
                 align="start"
                 sideOffset={8}
-                className="z-[140] w-56 rounded-xl border-[#E5E7EB] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
+                className="z-[140] w-56 rounded-xl border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
                 onCloseAutoFocus={(event) => event.preventDefault()}
               >
                 <DropdownMenuRadioGroup value={sortValue}>
@@ -771,7 +771,7 @@ export default function DesktopSidebarFilters({
 
         <button
           type="submit"
-          className="inline-flex h-9 w-full items-center justify-center rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm font-semibold text-[#374151] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937] disabled:cursor-not-allowed disabled:opacity-45"
+          className="inline-flex h-9 w-full items-center justify-center rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm font-semibold text-[#374151] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937] disabled:cursor-not-allowed disabled:opacity-45"
           disabled={!customRangeReady}
         >
           <span className="leading-none">

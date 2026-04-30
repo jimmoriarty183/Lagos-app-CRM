@@ -323,8 +323,8 @@ export default async function AdminDashboardPage({
       title="Сводка"
       description="Главная панель владельца продукта: регистрации, входы, бизнесы, приглашения, заказы и проблемные зоны."
       actions={
-        <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600">
-          Вход как <span className="font-semibold text-slate-900">{user.email}</span>
+        <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-2 text-sm text-slate-600 dark:text-white/70">
+          Вход как <span className="font-semibold text-slate-900 dark:text-white">{user.email}</span>
         </div>
       }
     >
@@ -333,7 +333,7 @@ export default async function AdminDashboardPage({
           <select
             name="period"
             defaultValue={period.preset}
-            className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
+            className="h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm text-slate-900 dark:text-white outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
           >
             <option value="today">Сегодня</option>
             <option value="yesterday">Вчера</option>
@@ -347,13 +347,13 @@ export default async function AdminDashboardPage({
             type="date"
             name="from"
             defaultValue={period.fromInput}
-            className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
+            className="h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm text-slate-900 dark:text-white outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
           />
           <input
             type="date"
             name="to"
             defaultValue={period.toInput}
-            className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
+            className="h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm text-slate-900 dark:text-white outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
           />
           <Button
             type="submit"
@@ -362,7 +362,7 @@ export default async function AdminDashboardPage({
             Применить
           </Button>
         </form>
-        <div className="mt-2 text-xs text-slate-500">Текущий фильтр: {period.label}</div>
+        <div className="mt-2 text-xs text-slate-500 dark:text-white/55">Текущий фильтр: {period.label}</div>
       </AdminSectionCard>
 
       <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-8">
@@ -391,7 +391,7 @@ export default async function AdminDashboardPage({
         <AdminSectionCard
           title="Последние регистрации"
           actions={
-            <Link href="/admin/users" className="text-sm font-medium text-slate-600 hover:text-slate-900">
+            <Link href="/admin/users" className="text-sm font-medium text-slate-600 dark:text-white/70 hover:text-slate-900">
               Открыть список
             </Link>
           }
@@ -410,7 +410,7 @@ export default async function AdminDashboardPage({
         <AdminSectionCard
           title="Последние бизнесы"
           actions={
-            <Link href="/admin/businesses" className="text-sm font-medium text-slate-600 hover:text-slate-900">
+            <Link href="/admin/businesses" className="text-sm font-medium text-slate-600 dark:text-white/70 hover:text-slate-900">
               Открыть список
             </Link>
           }
@@ -431,7 +431,7 @@ export default async function AdminDashboardPage({
         <AdminSectionCard
           title="Последняя активность"
           actions={
-            <Link href="/admin/activity" className="text-sm font-medium text-slate-600 hover:text-slate-900">
+            <Link href="/admin/activity" className="text-sm font-medium text-slate-600 dark:text-white/70 hover:text-slate-900">
               Открыть ленту
             </Link>
           }
@@ -449,7 +449,7 @@ export default async function AdminDashboardPage({
         <AdminSectionCard
           title="Требует внимания"
           actions={
-            <Link href="/admin/health" className="text-sm font-medium text-slate-600 hover:text-slate-900">
+            <Link href="/admin/health" className="text-sm font-medium text-slate-600 dark:text-white/70 hover:text-slate-900">
               Открыть контроль
             </Link>
           }

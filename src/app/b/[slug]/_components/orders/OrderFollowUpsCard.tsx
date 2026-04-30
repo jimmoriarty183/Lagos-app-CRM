@@ -119,13 +119,13 @@ function ActionButton({
         "flex flex-1 flex-col items-center justify-center gap-1 rounded-xl border-2 p-3 transition-all",
         active
           ? "border-[var(--brand-600)] bg-[var(--brand-600)]/10"
-          : "border-[#E5E7EB] bg-white hover:border-[var(--brand-200)] hover:bg-[var(--brand-50)]",
+          : "border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] hover:border-[var(--brand-200)] hover:bg-[var(--brand-50)]",
       )}
     >
       <Icon
         className={cn(
           "h-5 w-5",
-          active ? "text-[var(--brand-600)]" : "text-[#6B7280]",
+          active ? "text-[var(--brand-600)]" : "text-[#6B7280] dark:text-white/55",
         )}
       />
       <span
@@ -267,7 +267,7 @@ function MeetingQuickForm({
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
-                className="h-9 w-full justify-start rounded-full border-[#E5E7EB] bg-white text-sm font-normal"
+                className="h-9 w-full justify-start rounded-full border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-sm font-normal"
               >
                 <CalendarDays className="mr-2 h-3.5 w-3.5" />
                 {data.date ? (
@@ -280,12 +280,12 @@ function MeetingQuickForm({
                     formatFollowUpDate(String(data.date))
                   )
                 ) : (
-                  <span className="text-[#9CA3AF]">Pick date</span>
+                  <span className="text-[#9CA3AF] dark:text-white/40">Pick date</span>
                 )}
               </Button>
             </PopoverTrigger>
             <PopoverContent
-              className="w-auto rounded-xl border border-[#E5E7EB] bg-white p-0 shadow-lg"
+              className="w-auto rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-0 shadow-lg"
               align="start"
             >
               <Calendar
@@ -311,7 +311,7 @@ function MeetingQuickForm({
             value={String(data.time || "")}
             onValueChange={(value) => onChange({ ...data, time: value })}
           >
-            <SelectTrigger className="h-9 rounded-full border-[#E5E7EB] bg-white text-sm">
+            <SelectTrigger className="h-9 rounded-full border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-sm">
               {data.time ? (
                 <span>
                   {data.time} ({formatTimeWithAmPm(String(data.time))})
@@ -351,7 +351,7 @@ function MeetingQuickForm({
             })
           }
         >
-          <SelectTrigger className="h-9 rounded-full border-[#E5E7EB] bg-white text-sm">
+          <SelectTrigger className="h-9 rounded-full border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-sm">
             <SelectValue placeholder="Select duration" />
           </SelectTrigger>
           <SelectContent>
@@ -390,7 +390,7 @@ function MeetingQuickForm({
               })
             }
             placeholder="e.g. 150"
-            className="h-9 rounded-full border-[#E5E7EB] bg-white text-sm"
+            className="h-9 rounded-full border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-sm"
           />
         </div>
       ) : null}
@@ -407,7 +407,7 @@ function MeetingQuickForm({
           value={String(data.description || "")}
           onChange={(e) => onChange({ ...data, description: e.target.value })}
           placeholder="Meeting description..."
-          className="min-h-[60px] rounded-[16px] border-[#E5E7EB] bg-white text-sm"
+          className="min-h-[60px] rounded-[16px] border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-sm"
           rows={2}
         />
       </div>
@@ -487,7 +487,7 @@ function ReminderQuickForm({
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
-                className="h-9 w-full justify-start rounded-full border-[#E5E7EB] bg-white text-sm font-normal"
+                className="h-9 w-full justify-start rounded-full border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-sm font-normal"
               >
                 <Bell className="mr-2 h-3.5 w-3.5" />
                 {data.dateTime ? (
@@ -503,12 +503,12 @@ function ReminderQuickForm({
                     );
                   })()
                 ) : (
-                  <span className="text-[#9CA3AF]">Pick date</span>
+                  <span className="text-[#9CA3AF] dark:text-white/40">Pick date</span>
                 )}
               </Button>
             </PopoverTrigger>
             <PopoverContent
-              className="w-auto rounded-xl border border-[#E5E7EB] bg-white p-0 shadow-lg"
+              className="w-auto rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-0 shadow-lg"
               align="start"
             >
               <Calendar
@@ -557,7 +557,7 @@ function ReminderQuickForm({
               onChange({ ...data, dateTime: current.toISOString() });
             }}
           >
-            <SelectTrigger className="h-9 rounded-full border-[#E5E7EB] bg-white text-sm">
+            <SelectTrigger className="h-9 rounded-full border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-sm">
               {data.dateTime ? (
                 (() => {
                   const timeValue = formatDateTimeLocalInput(
@@ -596,7 +596,7 @@ function ReminderQuickForm({
           value={String(data.note || "")}
           onChange={(e) => onChange({ ...data, note: e.target.value })}
           placeholder="Reminder note..."
-          className="h-9 rounded-full border-[#E5E7EB] bg-white text-sm"
+          className="h-9 rounded-full border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-sm"
         />
       </div>
     </>
@@ -675,7 +675,7 @@ function TaskQuickForm({
           value={String(data.title || "")}
           onChange={(e) => onChange({ ...data, title: e.target.value })}
           placeholder="Task title..."
-          className="h-9 rounded-full border-[#E5E7EB] bg-white text-sm"
+          className="h-9 rounded-full border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-sm"
         />
       </div>
 
@@ -691,7 +691,7 @@ function TaskQuickForm({
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
-                className="h-9 w-full justify-start rounded-full border-[#E5E7EB] bg-white text-sm font-normal"
+                className="h-9 w-full justify-start rounded-full border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-sm font-normal"
               >
                 <CheckSquare className="mr-2 h-3.5 w-3.5" />
                 {data.deadline ? (
@@ -704,12 +704,12 @@ function TaskQuickForm({
                     formatFollowUpDate(String(data.deadline))
                   )
                 ) : (
-                  <span className="text-[#9CA3AF]">Pick deadline</span>
+                  <span className="text-[#9CA3AF] dark:text-white/40">Pick deadline</span>
                 )}
               </Button>
             </PopoverTrigger>
             <PopoverContent
-              className="w-auto rounded-xl border border-[#E5E7EB] bg-white p-0 shadow-lg"
+              className="w-auto rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-0 shadow-lg"
               align="start"
             >
               <Calendar
@@ -734,13 +734,13 @@ function TaskQuickForm({
             htmlFor="task-time"
             className="text-xs font-medium text-[#374151]"
           >
-            Time <span className="text-[#9CA3AF] font-normal">(optional)</span>
+            Time <span className="text-[#9CA3AF] dark:text-white/40 font-normal">(optional)</span>
           </Label>
           <Select
             value={String(data.time || "")}
             onValueChange={(value) => onChange({ ...data, time: value })}
           >
-            <SelectTrigger className="h-9 rounded-full border-[#E5E7EB] bg-white text-sm">
+            <SelectTrigger className="h-9 rounded-full border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-sm">
               {data.time ? (
                 <span>
                   {data.time} ({formatTimeWithAmPm(String(data.time))})
@@ -772,7 +772,7 @@ function TaskQuickForm({
           value={String(data.description || "")}
           onChange={(e) => onChange({ ...data, description: e.target.value })}
           placeholder="Task description..."
-          className="min-h-[60px] rounded-[16px] border-[#E5E7EB] bg-white text-sm"
+          className="min-h-[60px] rounded-[16px] border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-sm"
           rows={2}
         />
       </div>
@@ -802,7 +802,7 @@ function MessageQuickForm({
           value={String(data.recipient || "")}
           onChange={(e) => onChange({ ...data, recipient: e.target.value })}
           placeholder="email@example.com"
-          className="h-9 rounded-full border-[#E5E7EB] bg-white text-sm"
+          className="h-9 rounded-full border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-sm"
         />
       </div>
 
@@ -818,7 +818,7 @@ function MessageQuickForm({
           value={String(data.subject || "")}
           onChange={(e) => onChange({ ...data, subject: e.target.value })}
           placeholder="Email subject..."
-          className="h-9 rounded-full border-[#E5E7EB] bg-white text-sm"
+          className="h-9 rounded-full border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-sm"
         />
       </div>
 
@@ -834,7 +834,7 @@ function MessageQuickForm({
           value={String(data.body || "")}
           onChange={(e) => onChange({ ...data, body: e.target.value })}
           placeholder="Write your message..."
-          className="min-h-[80px] rounded-[16px] border-[#E5E7EB] bg-white text-sm"
+          className="min-h-[80px] rounded-[16px] border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-sm"
           rows={3}
         />
       </div>
@@ -852,10 +852,10 @@ function DueBadge({ dueDate }: { dueDate: string }) {
       className={cn(
         "inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold",
         overdue
-          ? "border-[#FECACA] bg-[#FEF2F2] text-[#B42318]"
+          ? "border-[#FECACA] bg-[#FEF2F2] dark:bg-rose-500/10 text-[#B42318]"
           : dueDate === today
-            ? "border-[#C7D2FE] bg-[#EEF2FF] text-[#3645A0]"
-            : "border-[#E5E7EB] bg-[#F9FAFB] text-[#4B5563]",
+            ? "border-[#C7D2FE] dark:border-[var(--brand-500)]/40 bg-[#EEF2FF] dark:bg-[var(--brand-600)]/15 text-[#3645A0] dark:text-[var(--brand-300)]"
+            : "border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] text-[#4B5563] dark:text-white/70",
       )}
       title={formatFollowUpDate(dueDate)}
     >
@@ -883,8 +883,8 @@ function FollowUpItemRow({
       className={cn(
         "rounded-[18px] border px-3.5 py-3 transition",
         completed
-          ? "border-[#E5E7EB] bg-[#FBFBFC]"
-          : "border-[#E8ECF3] bg-white shadow-[0_4px_14px_rgba(15,23,42,0.04)]",
+          ? "border-[#E5E7EB] dark:border-white/10 bg-[#FBFBFC]"
+          : "border-[#E8ECF3] bg-white dark:bg-white/[0.03] shadow-[0_4px_14px_rgba(15,23,42,0.04)]",
       )}
     >
       <div className="flex items-start gap-3">
@@ -896,7 +896,7 @@ function FollowUpItemRow({
             "mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition",
             completed
               ? "border-[#D1FADF] bg-[#ECFDF3] text-[#067647]"
-              : "border-[#D9E2EC] bg-[#F9FAFB] text-[#9CA3AF] hover:border-[var(--brand-200)] hover:text-[var(--brand-700)]",
+              : "border-[#D9E2EC] bg-[#F9FAFB] dark:bg-white/[0.04] text-[#9CA3AF] dark:text-white/40 hover:border-[var(--brand-200)] hover:text-[var(--brand-700)]",
           )}
           aria-label={completed ? "Reopen follow-up" : "Mark follow-up as done"}
         >
@@ -913,7 +913,7 @@ function FollowUpItemRow({
               <div
                 className={cn(
                   "text-sm font-semibold",
-                  completed ? "text-[#6B7280] line-through" : "text-[#1F2937]",
+                  completed ? "text-[#6B7280] dark:text-white/55 line-through" : "text-[#1F2937] dark:text-white/90",
                 )}
               >
                 {item.title}
@@ -924,18 +924,18 @@ function FollowUpItemRow({
             </div>
             <DueBadge dueDate={item.due_date} />
             {item.status === "cancelled" ? (
-              <span className="inline-flex items-center rounded-full border border-[#E5E7EB] bg-[#F9FAFB] px-2.5 py-1 text-[11px] font-semibold text-[#6B7280]">
+              <span className="inline-flex items-center rounded-full border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] px-2.5 py-1 text-[11px] font-semibold text-[#6B7280] dark:text-white/55">
                 Cancelled
               </span>
             ) : null}
           </div>
           {item.note?.trim() ? (
-            <p className="mt-1.5 whitespace-pre-wrap text-xs leading-5 text-[#6B7280]">
+            <p className="mt-1.5 whitespace-pre-wrap text-xs leading-5 text-[#6B7280] dark:text-white/55">
               {item.note.trim()}
             </p>
           ) : null}
           {item.completion_note?.trim() ? (
-            <p className="mt-1.5 whitespace-pre-wrap text-xs leading-5 text-[#475467]">
+            <p className="mt-1.5 whitespace-pre-wrap text-xs leading-5 text-[#475467] dark:text-white/70">
               Completed note: {item.completion_note.trim()}
             </p>
           ) : null}
@@ -1271,17 +1271,17 @@ export function OrderFollowUpsCard({
   }
 
   return (
-    <div className="rounded-[20px] border border-[#E5E7EB] bg-[linear-gradient(180deg,#ffffff_0%,#F9FAFB_100%)] p-4 shadow-[0_10px_30px_rgba(15,23,42,0.06)]">
+    <div className="rounded-[20px] border border-[#E5E7EB] dark:border-white/10 bg-[linear-gradient(180deg,#ffffff_0%,#F9FAFB_100%)] p-4 shadow-[0_10px_30px_rgba(15,23,42,0.06)]">
       <div className="space-y-3">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <div className="product-section-title flex items-center gap-2">
               <span>Follow-up</span>
-              <span className="text-xs font-semibold text-[#9CA3AF]">
+              <span className="text-xs font-semibold text-[#9CA3AF] dark:text-white/40">
                 ({openItems.length})
               </span>
             </div>
-            <p className="mt-1 text-sm text-[#6B7280]">
+            <p className="mt-1 text-sm text-[#6B7280] dark:text-white/55">
               Planned future actions for this order, separate from notes,
               activity, and checklist.
             </p>
@@ -1292,7 +1292,7 @@ export function OrderFollowUpsCard({
               variant="outline"
               size="sm"
               onClick={() => setQuickActionType("meeting")}
-              className="h-9 gap-2 rounded-full border-[#E5E7EB] bg-white text-sm font-semibold text-[#374151] hover:border-[var(--brand-200)] hover:bg-[var(--brand-50)] hover:text-[var(--brand-600)]"
+              className="h-9 gap-2 rounded-full border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-sm font-semibold text-[#374151] hover:border-[var(--brand-200)] hover:bg-[var(--brand-50)] hover:text-[var(--brand-600)]"
             >
               <CirclePlus className="h-4 w-4" />
               Quick Action
@@ -1301,9 +1301,9 @@ export function OrderFollowUpsCard({
         </div>
 
         {canManage && quickActionType && (
-          <div className="rounded-[18px] border border-[#C7D2FE] bg-[#EEF2FF] p-4">
+          <div className="rounded-[18px] border border-[#C7D2FE] dark:border-[var(--brand-500)]/40 bg-[#EEF2FF] dark:bg-[var(--brand-600)]/15 p-4">
             <div className="mb-3 flex items-center justify-between">
-              <span className="text-sm font-semibold text-[#3645A0]">
+              <span className="text-sm font-semibold text-[#3645A0] dark:text-[var(--brand-300)]">
                 Create{" "}
                 {quickActionType === "meeting"
                   ? "Meeting"
@@ -1319,7 +1319,7 @@ export function OrderFollowUpsCard({
                   setQuickActionType(null);
                   setQuickActionData({});
                 }}
-                className="text-xs font-medium text-[#6B7280] hover:text-[#EF4444] transition"
+                className="text-xs font-medium text-[#6B7280] dark:text-white/55 hover:text-[#EF4444] transition"
               >
                 Cancel
               </button>
@@ -1410,15 +1410,15 @@ export function OrderFollowUpsCard({
         )}
 
         {loading ? (
-          <div className="rounded-[18px] border border-[#E5E7EB] bg-white px-4 py-8 text-sm text-[#6B7280] shadow-[0_4px_14px_rgba(15,23,42,0.04)]">
+          <div className="rounded-[18px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 py-8 text-sm text-[#6B7280] dark:text-white/55 shadow-[0_4px_14px_rgba(15,23,42,0.04)]">
             Loading follow-ups...
           </div>
         ) : openItems.length === 0 ? (
-          <div className="rounded-[18px] border border-dashed border-[#E5E7EB] bg-white/80 px-4 py-8 text-center">
-            <div className="text-sm font-semibold text-[#1F2937]">
+          <div className="rounded-[18px] border border-dashed border-[#E5E7EB] dark:border-white/10 bg-white/80 dark:bg-white/[0.05] px-4 py-8 text-center">
+            <div className="text-sm font-semibold text-[#1F2937] dark:text-white/90">
               No open follow-ups yet
             </div>
-            <p className="mt-1 text-sm leading-6 text-[#6B7280]">
+            <p className="mt-1 text-sm leading-6 text-[#6B7280] dark:text-white/55">
               Add the next action for this order so future commitments do not
               get lost in notes.
             </p>
@@ -1443,19 +1443,19 @@ export function OrderFollowUpsCard({
 
         {completedItems.length > 0 ? (
           <Collapsible open={completedOpen} onOpenChange={setCompletedOpen}>
-            <div className="rounded-[18px] border border-[#E5E7EB] bg-white/70 px-3.5 py-3">
+            <div className="rounded-[18px] border border-[#E5E7EB] dark:border-white/10 bg-white/70 dark:bg-white/[0.05] px-3.5 py-3">
               <CollapsibleTrigger className="flex w-full items-center justify-between gap-3 text-left">
                 <div>
-                  <div className="text-sm font-semibold text-[#1F2937]">
+                  <div className="text-sm font-semibold text-[#1F2937] dark:text-white/90">
                     Completed and cancelled
                   </div>
-                  <div className="mt-1 text-xs text-[#9CA3AF]">
+                  <div className="mt-1 text-xs text-[#9CA3AF] dark:text-white/40">
                     {completedItems.length} items
                   </div>
                 </div>
                 <ChevronDown
                   className={cn(
-                    "h-4 w-4 text-[#6B7280] transition",
+                    "h-4 w-4 text-[#6B7280] dark:text-white/55 transition",
                     completedOpen ? "rotate-180" : "",
                   )}
                 />

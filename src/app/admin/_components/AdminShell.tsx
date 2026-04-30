@@ -133,22 +133,21 @@ export function AdminShell({
 
   return (
     <div
-      data-theme="light"
-      className="min-h-[100svh] bg-[#f6f8fb] text-slate-900"
+      className="min-h-[100svh] bg-[#f6f8fb] dark:bg-[var(--bg-app)] text-slate-900 dark:text-white"
     >
       <div className="mx-auto max-w-[1320px] px-3 py-3 sm:px-4 sm:py-4 xl:px-6 2xl:px-8">
         <div
           className={`grid gap-3 ${navCollapsed ? "xl:grid-cols-[92px_minmax(0,1fr)]" : "xl:grid-cols-[250px_minmax(0,1fr)]"}`}
         >
           <aside className="xl:sticky xl:top-4 xl:self-start">
-            <div className="rounded-[16px] border border-white/70 bg-white/80 p-2 shadow-[0_20px_60px_-35px_rgba(15,23,42,0.35)] backdrop-blur-md xl:p-1.5">
+            <div className="rounded-[16px] border border-white/70 bg-white/80 dark:bg-white/[0.05] p-2 shadow-[0_20px_60px_-35px_rgba(15,23,42,0.35)] backdrop-blur-md xl:p-1.5">
               <div className="mb-2 hidden xl:flex xl:justify-end">
                 <button
                   type="button"
                   onClick={handleToggleNav}
                   aria-label={navCollapsed ? "Expand menu" : "Collapse menu"}
                   title={navCollapsed ? "Expand menu" : "Collapse menu"}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] text-slate-600 dark:text-white/70 transition hover:border-slate-300 hover:text-slate-900"
                 >
                   {navCollapsed ? (
                     <ChevronRight className="h-4 w-4" />
@@ -160,17 +159,17 @@ export function AdminShell({
               <Link
                 href={workspaceHref}
                 className={[
-                  "flex items-center gap-2.5 rounded-xl border border-slate-200 bg-white px-2.5 py-2.5 shadow-sm transition hover:border-slate-300",
+                  "flex items-center gap-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-2.5 py-2.5 shadow-sm transition hover:border-slate-300",
                   navCollapsed ? "xl:justify-center xl:px-2" : "xl:px-2.5",
                 ].join(" ")}
                 title="Ordo Admin"
               >
                 <BrandLockup iconSize={30} textClassName="text-[1.5rem]" />
                 <div className={`min-w-0 ${navCollapsed ? "xl:hidden" : ""}`}>
-                  <div className="truncate text-sm font-semibold tracking-tight text-slate-900">
+                  <div className="truncate text-sm font-semibold tracking-tight text-slate-900 dark:text-white">
                     Ordo Admin
                   </div>
-                  <div className="hidden text-[11px] text-slate-500 xl:block">
+                  <div className="hidden text-[11px] text-slate-500 dark:text-white/55 xl:block">
                     Перейти во внутренний кабинет
                   </div>
                 </div>
@@ -191,16 +190,16 @@ export function AdminShell({
                           ? "xl:justify-center xl:px-2"
                           : "xl:px-2.5",
                         active
-                          ? "border-[#bfd0ea] bg-[#eef5ff] shadow-sm"
-                          : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50",
+                          ? "border-[#bfd0ea] dark:border-white/15 bg-[#eef5ff] dark:bg-[var(--brand-600)]/15 shadow-sm"
+                          : "border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] hover:border-slate-300 hover:bg-slate-50",
                       ].join(" ")}
                     >
                       <span
                         className={[
                           "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg xl:mt-0.5",
                           active
-                            ? "bg-white text-[#1d4ed8]"
-                            : "bg-slate-100 text-slate-500",
+                            ? "bg-white dark:bg-white/[0.03] text-[#1d4ed8]"
+                            : "bg-slate-100 dark:bg-white/[0.06] text-slate-500 dark:text-white/55",
                         ].join(" ")}
                       >
                         {item.icon}
@@ -208,10 +207,10 @@ export function AdminShell({
                       <div
                         className={`min-w-0 ${navCollapsed ? "xl:hidden" : ""}`}
                       >
-                        <div className="truncate text-xs font-semibold text-slate-900 sm:text-sm">
+                        <div className="truncate text-xs font-semibold text-slate-900 dark:text-white sm:text-sm">
                           {item.label}
                         </div>
-                        <div className="mt-0.5 hidden text-[11px] leading-4 text-slate-500 xl:block">
+                        <div className="mt-0.5 hidden text-[11px] leading-4 text-slate-500 dark:text-white/55 xl:block">
                           {item.description}
                         </div>
                       </div>
@@ -220,23 +219,23 @@ export function AdminShell({
                 })}
               </nav>
 
-              <div className="mt-2 border-t border-slate-200 pt-2">
+              <div className="mt-2 border-t border-slate-200 dark:border-white/10 pt-2">
                 <Link
                   href={workspaceHref}
                   className={[
-                    "flex items-center gap-2.5 rounded-xl border border-slate-200 bg-white px-2.5 py-2.5 transition hover:border-slate-300 hover:bg-slate-50",
+                    "flex items-center gap-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-2.5 py-2.5 transition hover:border-slate-300 hover:bg-slate-50",
                     navCollapsed ? "xl:justify-center xl:px-2" : "xl:px-2.5",
                   ].join(" ")}
                   title="Назад в приложение"
                 >
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500 xl:mt-0.5">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-100 dark:bg-white/[0.06] text-slate-500 dark:text-white/55 xl:mt-0.5">
                     <ArrowLeftCircle className="h-4 w-4" />
                   </span>
                   <div className={navCollapsed ? "xl:hidden" : ""}>
-                    <div className="truncate text-xs font-semibold text-slate-900 sm:text-sm">
+                    <div className="truncate text-xs font-semibold text-slate-900 dark:text-white sm:text-sm">
                       Назад в приложение
                     </div>
-                    <div className="mt-0.5 hidden text-[11px] leading-4 text-slate-500 xl:block">
+                    <div className="mt-0.5 hidden text-[11px] leading-4 text-slate-500 dark:text-white/55 xl:block">
                       Выйти из режима администрирования и вернуться в рабочее
                       пространство
                     </div>
@@ -247,8 +246,8 @@ export function AdminShell({
           </aside>
 
           <main className="min-w-0">
-            <section className="rounded-[16px] border border-white/70 bg-white/80 p-3 shadow-[0_20px_60px_-35px_rgba(15,23,42,0.35)] backdrop-blur-md sm:p-4 xl:p-5">
-              <div className="flex flex-col gap-2 border-b border-slate-200 pb-3 lg:flex-row lg:items-end lg:justify-between">
+            <section className="rounded-[16px] border border-white/70 bg-white/80 dark:bg-white/[0.05] p-3 shadow-[0_20px_60px_-35px_rgba(15,23,42,0.35)] backdrop-blur-md sm:p-4 xl:p-5">
+              <div className="flex flex-col gap-2 border-b border-slate-200 dark:border-white/10 pb-3 lg:flex-row lg:items-end lg:justify-between">
                 <div className="min-w-0">
                   <div className="product-page-kicker">Администрирование</div>
                   <h1 className="product-page-title mt-1">{title}</h1>

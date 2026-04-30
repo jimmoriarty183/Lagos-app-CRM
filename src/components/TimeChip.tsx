@@ -11,9 +11,9 @@ export function TimeChip({
   status?: TimeChipStatus;
 }) {
   const statusClasses: Record<TimeChipStatus, string> = {
-    normal: "bg-[#F1F5F9] text-[#475467] border-[#E0E7FF] hover:bg-[#EEF2FF]",
+    normal: "bg-[#F1F5F9] dark:bg-white/[0.06] text-[#475467] dark:text-white/70 border-[#E0E7FF] hover:bg-[#EEF2FF]",
     upcoming: "bg-[#FFF7ED] text-[#92400E] border-[#FED7AA] hover:bg-[#FEE2D5]",
-    overdue: "bg-[#FEF2F2] text-[#B42318] border-[#FECACA] hover:bg-[#FEE4E2]",
+    overdue: "bg-[#FEF2F2] dark:bg-rose-500/10 text-[#B42318] border-[#FECACA] hover:bg-[#FEE4E2]",
   };
 
   return (

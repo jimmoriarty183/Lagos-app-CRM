@@ -52,7 +52,7 @@ function compactActionClass(
     return "h-9 justify-start rounded-lg border border-[#D1FADF] bg-[#ECFDF3] px-3 text-sm font-semibold text-[#067647] shadow-none hover:border-[#A6F4C5] hover:bg-[#DCFCE7] disabled:opacity-100";
   }
   if (tone === "neutral") {
-    return "h-9 justify-start rounded-lg border border-[#E5E7EB] bg-white px-3 text-sm font-semibold text-[#374151] shadow-none hover:border-[#D6DAE1] hover:bg-[#FCFCFD] disabled:opacity-100";
+    return "h-9 justify-start rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm font-semibold text-[#374151] shadow-none hover:border-[#D6DAE1] hover:bg-[#FCFCFD] disabled:opacity-100";
   }
   return "h-9 justify-start rounded-lg border border-[var(--brand-600)] bg-[var(--brand-600)] px-3 text-sm font-semibold !text-white shadow-[0_1px_2px_rgba(16,24,40,0.10)] hover:border-[var(--brand-700)] hover:bg-[var(--brand-700)] disabled:opacity-100 disabled:!text-white";
 }
@@ -69,7 +69,7 @@ function desktopActionClass(
   if (tone === "success") {
     return "inline-flex h-8 items-center rounded-lg border border-[#D1FADF] bg-[#ECFDF3] px-3 text-[12px] font-semibold text-[#067647] shadow-sm transition hover:border-[#A6F4C5] hover:bg-[#D1FADF] disabled:opacity-100";
   }
-  return "inline-flex h-8 items-center rounded-lg border border-[#E5E7EB] bg-white px-3 text-[12px] font-semibold text-[#374151] shadow-sm transition hover:border-[#D6DAE1] hover:bg-[#FCFCFD] disabled:opacity-100";
+  return "inline-flex h-8 items-center rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-[12px] font-semibold text-[#374151] shadow-sm transition hover:border-[#D6DAE1] hover:bg-[#FCFCFD] disabled:opacity-100";
 }
 
 function formatElapsedTime(totalSeconds: number) {
@@ -242,7 +242,7 @@ export function WorkDayControls({
     return (
       <div className="space-y-2">
         {showTimer ? (
-          <div className="inline-flex h-9 items-center rounded-lg border border-[#E5E7EB] bg-white px-3 text-sm font-semibold text-[#374151] shadow-none">
+          <div className="inline-flex h-9 items-center rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm font-semibold text-[#374151] shadow-none">
             <Clock3 className="h-4 w-4" />
             <span className="ml-2 font-semibold tabular-nums">
               {elapsedLabel}
@@ -338,7 +338,7 @@ export function WorkDayControls({
                 "inline-flex h-8 items-center rounded-lg border px-3 text-[12px] font-semibold shadow-sm transition",
                 isPaused
                   ? "border-[#FDE68A] bg-[#FFFBEB] text-[#B54708] hover:border-[#FCD34D] hover:bg-[#FEF3C7]"
-                  : "border-[#C7D2FE] bg-[#EEF2FF] text-[#3645A0] hover:border-[#A5B4FC] hover:bg-[#E0E7FF]",
+                  : "border-[#C7D2FE] dark:border-[var(--brand-500)]/40 bg-[#EEF2FF] dark:bg-[var(--brand-600)]/15 text-[#3645A0] dark:text-[var(--brand-300)] hover:border-[#A5B4FC] hover:bg-[#E0E7FF]",
               ].join(" ")}
             >
               <Clock3 className="h-4 w-4" />
@@ -349,7 +349,7 @@ export function WorkDayControls({
           <DropdownMenuContent
             align="start"
             sideOffset={8}
-            className="w-[190px] rounded-xl border-[#E5E7EB] bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.12)]"
+            className="w-[190px] rounded-xl border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.12)]"
           >
             {isActive ? (
               <DropdownMenuItem
@@ -374,7 +374,7 @@ export function WorkDayControls({
                 onClick={() => setEndDayOpen(true)}
                 className="rounded-lg px-3 py-2 text-[13px] font-medium text-[#374151]"
               >
-                <MoonStar className="h-4 w-4 text-[#6B7280]" />
+                <MoonStar className="h-4 w-4 text-[#6B7280] dark:text-white/55" />
                 End day
               </DropdownMenuItem>
             ) : null}

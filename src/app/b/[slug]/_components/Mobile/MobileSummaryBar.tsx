@@ -87,20 +87,20 @@ export default function MobileSummaryBar({
   };
 
   return (
-    <section className="rounded-xl border border-[#E5E7EB] bg-[#F9FAFB]/92 p-3 shadow-[0_10px_30px_rgba(15,23,42,0.06)] backdrop-blur lg:hidden">
+    <section className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB]/92 p-3 shadow-[0_10px_30px_rgba(15,23,42,0.06)] backdrop-blur lg:hidden">
       <div className="min-w-0">
         <div className="flex items-baseline justify-between gap-3">
           <div className="min-w-0 flex-1">
             <div className="product-page-kicker">Summary</div>
           </div>
           <div className="flex items-center gap-2">
-            <div className="text-[11px] font-medium text-[#9CA3AF]">
+            <div className="text-[11px] font-medium text-[#9CA3AF] dark:text-white/40">
               {periodLabel}
             </div>
             <button
               type="button"
               onClick={() => setHidden(!hidden)}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[#E5E7EB] bg-white text-[#6B7280] transition hover:border-[#C7D2FE] hover:text-[#1F2937]"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#6B7280] dark:text-white/55 transition hover:border-[#C7D2FE] hover:text-[#1F2937]"
               aria-label={hidden ? "Show summary" : "Hide summary"}
               title={hidden ? "Show summary" : "Hide summary"}
             >
@@ -115,7 +115,7 @@ export default function MobileSummaryBar({
 
         {hidden ? null : (
           <>
-            <div className="mt-2 inline-flex rounded-lg border border-[#E5E7EB] bg-white p-1">
+            <div className="mt-2 inline-flex rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-1">
               {periodOptions.map((option) => (
                 <a
                   key={option.label}
@@ -124,7 +124,7 @@ export default function MobileSummaryBar({
                     "rounded-md px-2.5 py-1.5 text-[11px] font-semibold transition",
                     option.active
                       ? "bg-[var(--brand-600)] text-white"
-                      : "text-[#6B7280] hover:bg-[#F9FAFB] hover:text-[#1F2937]",
+                      : "text-[#6B7280] dark:text-white/55 hover:bg-[#F9FAFB] hover:text-[#1F2937]",
                   ].join(" ")}
                 >
                   {option.shortLabel}
@@ -133,7 +133,7 @@ export default function MobileSummaryBar({
             </div>
 
             {extendedOptions.length > 0 ? (
-              <details className="mt-2 rounded-xl border border-[#E5E7EB] bg-white p-2">
+              <details className="mt-2 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-2">
                 <summary className="cursor-pointer list-none text-[11px] font-semibold text-[#374151]">
                   More analytics
                 </summary>
@@ -146,7 +146,7 @@ export default function MobileSummaryBar({
                         "rounded-xl px-3 py-2 text-[12px] font-medium transition",
                         option.active
                           ? "bg-[var(--brand-600)] text-white"
-                          : "border border-[#E5E7EB] text-[#374151]",
+                          : "border border-[#E5E7EB] dark:border-white/10 text-[#374151]",
                       ].join(" ")}
                     >
                       {option.label}
@@ -159,7 +159,7 @@ export default function MobileSummaryBar({
             {customRange?.active ? (
               <form
                 method="get"
-                className="mt-2 grid gap-2 rounded-xl border border-[#E5E7EB] bg-white p-3"
+                className="mt-2 grid gap-2 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3"
               >
                 <input type="hidden" name="u" value={customRange.phoneRaw} />
                 {customRange.tableQuery.q ? (
@@ -218,13 +218,13 @@ export default function MobileSummaryBar({
                   type="date"
                   name="sstart"
                   defaultValue={customRange.startDate ?? ""}
-                  className="h-10 rounded-lg border border-[#E5E7EB] px-3 text-sm outline-none focus:border-[var(--brand-600)]"
+                  className="h-10 rounded-lg border border-[#E5E7EB] dark:border-white/10 px-3 text-sm outline-none focus:border-[var(--brand-600)]"
                 />
                 <input
                   type="date"
                   name="send"
                   defaultValue={customRange.endDate ?? ""}
-                  className="h-10 rounded-lg border border-[#E5E7EB] px-3 text-sm outline-none focus:border-[var(--brand-600)]"
+                  className="h-10 rounded-lg border border-[#E5E7EB] dark:border-white/10 px-3 text-sm outline-none focus:border-[var(--brand-600)]"
                 />
                 <button
                   type="submit"
@@ -242,11 +242,11 @@ export default function MobileSummaryBar({
                     ? "text-[#067647]"
                     : card.trendTone === "negative"
                       ? "text-[#b42318]"
-                      : "text-[#98a2b3]";
+                      : "text-[#98a2b3] dark:text-white/45";
                 const valueCls =
                   card.tone === "red" ? "text-[#d92d20]" : "text-[#111827]";
                 const borderCls =
-                  card.tone === "red" ? "border-[#ffd5d2]" : "border-[#E5E7EB]";
+                  card.tone === "red" ? "border-[#ffd5d2]" : "border-[#E5E7EB] dark:border-white/10";
                 const TrendIcon =
                   card.trendDirection === "up"
                     ? TrendingUp
@@ -257,9 +257,9 @@ export default function MobileSummaryBar({
                 return (
                   <article
                     key={card.label}
-                    className={`min-w-[148px] snap-start rounded-xl border bg-white p-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)] ${borderCls}`}
+                    className={`min-w-[148px] snap-start rounded-xl border bg-white dark:bg-white/[0.03] p-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)] ${borderCls}`}
                   >
-                    <div className="text-[11px] font-semibold text-[#6B7280]">
+                    <div className="text-[11px] font-semibold text-[#6B7280] dark:text-white/55">
                       {card.label}
                     </div>
                     <div
@@ -267,7 +267,7 @@ export default function MobileSummaryBar({
                     >
                       {card.value}
                     </div>
-                    <div className="mt-1 text-[11px] font-medium text-[#9CA3AF]">
+                    <div className="mt-1 text-[11px] font-medium text-[#9CA3AF] dark:text-white/40">
                       {periodLabel}
                     </div>
                     {card.trendText ? (
@@ -285,7 +285,7 @@ export default function MobileSummaryBar({
               })}
             </div>
 
-            <div className="mt-2 text-[11px] font-medium text-[#9CA3AF]">
+            <div className="mt-2 text-[11px] font-medium text-[#9CA3AF] dark:text-white/40">
               {hasComparison
                 ? `${periodLabel} vs ${comparisonLabel ?? "previous period"}`
                 : "All-time summary"}

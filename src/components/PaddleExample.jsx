@@ -22,7 +22,7 @@ export default function PaddleExample() {
       {/* Header */}
       <div className="mb-12 text-center">
         <h1 className="text-4xl font-bold mb-4">Paddle Integration Example</h1>
-        <p className="text-gray-600 mb-8">
+        <p className="text-gray-600 dark:text-white/70 mb-8">
           Click any button below to open Paddle checkout
         </p>
       </div>
@@ -30,9 +30,9 @@ export default function PaddleExample() {
       {/* Basic Buy Buttons */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
         {/* Example 1: Basic Button */}
-        <div className="p-6 border border-gray-200 rounded-lg">
+        <div className="p-6 border border-gray-200 dark:border-white/10 rounded-lg">
           <h2 className="text-xl font-semibold mb-4">Basic Plan</h2>
-          <p className="text-gray-600 mb-6">$29/month</p>
+          <p className="text-gray-600 dark:text-white/70 mb-6">$29/month</p>
           <BuyButton
             priceId="pri_01h2xcejqy55r61nf5pj194ysa"
             label="Buy Basic"
@@ -42,9 +42,9 @@ export default function PaddleExample() {
         </div>
 
         {/* Example 2: Premium Button */}
-        <div className="p-6 border border-gray-200 rounded-lg">
+        <div className="p-6 border border-gray-200 dark:border-white/10 rounded-lg">
           <h2 className="text-xl font-semibold mb-4">Premium Plan</h2>
-          <p className="text-gray-600 mb-6">$99/month</p>
+          <p className="text-gray-600 dark:text-white/70 mb-6">$99/month</p>
           <BuyButton
             priceId="pri_01h2xcejqy55r61nf5pj194ysb"
             label="Buy Premium"
@@ -58,7 +58,7 @@ export default function PaddleExample() {
       {/* Information Section */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mt-12">
         <h3 className="text-lg font-semibold mb-4">Setup Instructions</h3>
-        <ol className="list-decimal list-inside space-y-3 text-gray-700">
+        <ol className="list-decimal list-inside space-y-3 text-gray-700 dark:text-white/80">
           <li>
             Add this to your <code className="bg-gray-200 px-2 py-1 rounded">.env.local</code>:
             <pre className="bg-gray-800 text-gray-100 p-3 rounded mt-2 overflow-x-auto">

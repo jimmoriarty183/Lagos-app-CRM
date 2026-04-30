@@ -133,8 +133,8 @@ export function SurveyOptionEditor({
   };
 
   return (
-    <div className="space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
-      <div className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-500">
+    <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] p-3">
+      <div className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-500 dark:text-white/55">
         Варианты ответов
       </div>
       <div className="space-y-2">
@@ -143,7 +143,7 @@ export function SurveyOptionEditor({
           return (
             <div
               key={option.id}
-              className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700"
+              className="rounded-md border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-2 text-sm text-slate-700 dark:text-white/80"
             >
               {isEditing ? (
                 <div className="space-y-2">
@@ -152,13 +152,13 @@ export function SurveyOptionEditor({
                       value={editLabel}
                       onChange={(event) => setEditLabel(event.target.value)}
                       placeholder="Текст варианта"
-                      className="h-9 rounded-md border border-slate-200 px-2 text-xs"
+                      className="h-9 rounded-md border border-slate-200 dark:border-white/10 px-2 text-xs"
                     />
                     <input
                       value={editValue}
                       onChange={(event) => setEditValue(event.target.value)}
                       placeholder="Значение (необязательно)"
-                      className="h-9 rounded-md border border-slate-200 px-2 text-xs"
+                      className="h-9 rounded-md border border-slate-200 dark:border-white/10 px-2 text-xs"
                     />
                   </div>
                   <div className="flex items-center gap-2">
@@ -174,7 +174,7 @@ export function SurveyOptionEditor({
                       type="button"
                       onClick={() => setEditingOptionId(null)}
                       disabled={actionBusy}
-                      className="inline-flex h-8 items-center rounded-md border border-slate-300 bg-white px-2.5 text-xs font-semibold text-slate-700 disabled:opacity-60"
+                      className="inline-flex h-8 items-center rounded-md border border-slate-300 dark:border-white/15 bg-white dark:bg-white/[0.03] px-2.5 text-xs font-semibold text-slate-700 dark:text-white/80 disabled:opacity-60"
                     >
                       Отмена
                     </button>
@@ -214,13 +214,13 @@ export function SurveyOptionEditor({
           value={label}
           onChange={(event) => setLabel(event.target.value)}
           placeholder="Текст варианта"
-          className="h-10 rounded-lg border border-slate-200 px-3 text-sm"
+          className="h-10 rounded-lg border border-slate-200 dark:border-white/10 px-3 text-sm"
         />
         <input
           value={value}
           onChange={(event) => setValue(event.target.value)}
           placeholder="Значение (необязательно)"
-          className="h-10 rounded-lg border border-slate-200 px-3 text-sm"
+          className="h-10 rounded-lg border border-slate-200 dark:border-white/10 px-3 text-sm"
         />
       </div>
       {error ? <div className="text-xs text-rose-600">{error}</div> : null}

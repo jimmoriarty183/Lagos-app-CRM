@@ -268,19 +268,19 @@ export function EndOfDayDialog({
             className={
               triggerClassName ??
               (compact
-                ? "flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-semibold text-gray-800 transition-colors hover:bg-gray-50"
-                : "inline-flex h-10 items-center rounded-lg border border-[#E5E7EB] bg-white px-3 text-[12px] font-semibold text-[#374151] shadow-sm transition hover:border-[#C7D2FE] hover:text-[#1F2937]")
+                ? "flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-semibold text-gray-800 dark:text-white/90 transition-colors hover:bg-gray-50"
+                : "inline-flex h-10 items-center rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-[12px] font-semibold text-[#374151] shadow-sm transition hover:border-[#C7D2FE] hover:text-[#1F2937]")
             }
           >
             <MoonStar
-              className={compact ? "h-4 w-4 text-gray-500" : "mr-2 h-4 w-4"}
+              className={compact ? "h-4 w-4 text-gray-500 dark:text-white/55" : "mr-2 h-4 w-4"}
             />
             <span>{triggerLabel ?? "End day"}</span>
           </button>
         </DialogTrigger>
       ) : null}
 
-      <DialogContent className="flex max-h-[calc(100vh-2rem)] max-w-[680px] flex-col overflow-hidden rounded-[28px] border-[#E5E7EB] bg-white p-0 shadow-[0_24px_80px_rgba(15,23,42,0.18)]">
+      <DialogContent className="flex max-h-[calc(100vh-2rem)] max-w-[680px] flex-col overflow-hidden rounded-[28px] border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-0 shadow-[0_24px_80px_rgba(15,23,42,0.18)]">
         <div className="flex min-h-0 flex-1 flex-col rounded-[28px] bg-[linear-gradient(180deg,#ffffff_0%,#F9FAFB_100%)]">
           <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6 sm:px-7 sm:py-7">
             <DialogHeader>
@@ -289,7 +289,7 @@ export function EndOfDayDialog({
                   <DialogTitle className="text-[22px] tracking-[-0.02em] text-[#111827]">
                     End day
                   </DialogTitle>
-                  <DialogDescription className="mt-1 text-sm leading-6 text-[#6B7280]">
+                  <DialogDescription className="mt-1 text-sm leading-6 text-[#6B7280] dark:text-white/55">
                     Wrap up today, save a concise summary, and add any missing
                     actions for tomorrow as follow-ups.
                   </DialogDescription>
@@ -305,30 +305,30 @@ export function EndOfDayDialog({
 
             <div className="mt-6 space-y-5">
               {isLoading ? (
-                <div className="rounded-[20px] border border-[#E5E7EB] bg-white px-4 py-8 text-sm text-[#6B7280]">
+                <div className="rounded-[20px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 py-8 text-sm text-[#6B7280] dark:text-white/55">
                   Loading today&apos;s work day...
                 </div>
               ) : (
                 <>
-                  <section className="rounded-[22px] border border-[#E5E7EB] bg-white p-4 shadow-[0_8px_20px_rgba(15,23,42,0.04)]">
-                    <div className="text-sm font-semibold text-[#1F2937]">
+                  <section className="rounded-[22px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4 shadow-[0_8px_20px_rgba(15,23,42,0.04)]">
+                    <div className="text-sm font-semibold text-[#1F2937] dark:text-white/90">
                       What did you get done today?
                     </div>
-                    <p className="mt-1 text-xs leading-5 text-[#9CA3AF]">
+                    <p className="mt-1 text-xs leading-5 text-[#9CA3AF] dark:text-white/40">
                       Completed follow-ups are pulled in as a draft. Edit the
                       summary and add any manual context you want to keep for
                       the future work day tracker.
                     </p>
                     {completedToday.length > 0 ? (
-                      <div className="mt-3 rounded-[18px] border border-[#E5E7EB] bg-[#F9FAFB] px-4 py-3">
-                        <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#6B7280]">
+                      <div className="mt-3 rounded-[18px] border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] px-4 py-3">
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#6B7280] dark:text-white/55">
                           Auto-captured from completed follow-ups
                         </div>
                         <div className="mt-2 space-y-2">
                           {completedToday.map((item) => (
                             <div
                               key={item.id}
-                              className="rounded-[14px] border border-white bg-white px-3 py-2 text-sm text-[#374151] shadow-[0_4px_12px_rgba(15,23,42,0.04)]"
+                              className="rounded-[14px] border border-white bg-white dark:bg-white/[0.03] px-3 py-2 text-sm text-[#374151] shadow-[0_4px_12px_rgba(15,23,42,0.04)]"
                             >
                               {item.title}
                             </div>
@@ -343,17 +343,17 @@ export function EndOfDayDialog({
                         setDailySummary(event.currentTarget.value)
                       }
                       placeholder="Summarize completed work, decisions, blockers cleared, and outcomes."
-                      className="mt-3 min-h-[96px] rounded-[18px] border-[#E5E7EB] bg-[#F9FAFB] text-sm leading-6 text-[#1F2937] shadow-none focus-visible:border-[var(--brand-600)] focus-visible:ring-[var(--brand-600)]/15"
+                      className="mt-3 min-h-[96px] rounded-[18px] border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] text-sm leading-6 text-[#1F2937] dark:text-white/90 shadow-none focus-visible:border-[var(--brand-600)] focus-visible:ring-[var(--brand-600)]/15"
                     />
                   </section>
 
-                  <section className="rounded-[22px] border border-[#E5E7EB] bg-white p-4 shadow-[0_8px_20px_rgba(15,23,42,0.04)]">
+                  <section className="rounded-[22px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4 shadow-[0_8px_20px_rgba(15,23,42,0.04)]">
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <div className="text-sm font-semibold text-[#1F2937]">
+                        <div className="text-sm font-semibold text-[#1F2937] dark:text-white/90">
                           What should happen tomorrow?
                         </div>
-                        <p className="mt-1 text-xs leading-5 text-[#9CA3AF]">
+                        <p className="mt-1 text-xs leading-5 text-[#9CA3AF] dark:text-white/40">
                           Existing tomorrow follow-ups are shown first. Only the
                           new items you type below will create additional
                           follow-ups due tomorrow.
@@ -363,7 +363,7 @@ export function EndOfDayDialog({
                         type="button"
                         variant="outline"
                         size="sm"
-                        className="h-9 rounded-[14px] border-[#E5E7EB] bg-white px-3 text-xs text-[#374151] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
+                        className="h-9 rounded-[14px] border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-xs text-[#374151] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
                         onClick={() =>
                           setTomorrowItems((current) => [
                             ...current,
@@ -377,15 +377,15 @@ export function EndOfDayDialog({
                     </div>
 
                     {existingTomorrowFollowUps.length > 0 ? (
-                      <div className="mt-4 rounded-[18px] border border-[#E5E7EB] bg-[#F9FAFB] px-4 py-3">
-                        <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#6B7280]">
+                      <div className="mt-4 rounded-[18px] border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] px-4 py-3">
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#6B7280] dark:text-white/55">
                           Already scheduled for tomorrow
                         </div>
                         <div className="mt-2 space-y-2">
                           {existingTomorrowFollowUps.map((item) => (
                             <div
                               key={item.id}
-                              className="flex items-center gap-2 rounded-[14px] border border-white bg-white px-3 py-2 text-sm text-[#374151] shadow-[0_4px_12px_rgba(15,23,42,0.04)]"
+                              className="flex items-center gap-2 rounded-[14px] border border-white bg-white dark:bg-white/[0.03] px-3 py-2 text-sm text-[#374151] shadow-[0_4px_12px_rgba(15,23,42,0.04)]"
                             >
                               <span className="inline-flex h-2 w-2 rounded-full bg-[var(--brand-600)]" />
                               <span>{item.title}</span>
@@ -398,7 +398,7 @@ export function EndOfDayDialog({
                     <div className="mt-4 space-y-3">
                       {tomorrowItems.map((item, index) => (
                         <div key={item.id} className="flex items-center gap-2">
-                          <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] bg-[#F9FAFB] text-xs font-semibold text-[#6B7280]">
+                          <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] bg-[#F9FAFB] dark:bg-white/[0.04] text-xs font-semibold text-[#6B7280] dark:text-white/55">
                             {index + 1}
                           </span>
                           <Input
@@ -416,7 +416,7 @@ export function EndOfDayDialog({
                               )
                             }
                             placeholder="Add a follow-up for tomorrow"
-                            className="h-10 rounded-[14px] border-[#E5E7EB] bg-[#F9FAFB] text-sm shadow-none focus-visible:border-[var(--brand-600)] focus-visible:ring-[var(--brand-600)]/15"
+                            className="h-10 rounded-[14px] border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] text-sm shadow-none focus-visible:border-[var(--brand-600)] focus-visible:ring-[var(--brand-600)]/15"
                           />
                           <button
                             type="button"
@@ -430,7 +430,7 @@ export function EndOfDayDialog({
                                     ),
                               )
                             }
-                            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] border border-[#E5E7EB] bg-white text-[#6B7280] transition hover:border-[#FECACA] hover:text-[#B42318] disabled:cursor-not-allowed disabled:opacity-40"
+                            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#6B7280] dark:text-white/55 transition hover:border-[#FECACA] hover:text-[#B42318] disabled:cursor-not-allowed disabled:opacity-40"
                             aria-label="Remove tomorrow item"
                           >
                             <Trash2 className="h-4 w-4" />
@@ -443,18 +443,18 @@ export function EndOfDayDialog({
               )}
 
               {errorMessage ? (
-                <div className="rounded-[18px] border border-[#FECACA] bg-[#FEF2F2] px-4 py-3 text-sm font-medium text-[#B42318]">
+                <div className="rounded-[18px] border border-[#FECACA] bg-[#FEF2F2] dark:bg-rose-500/10 px-4 py-3 text-sm font-medium text-[#B42318]">
                   {errorMessage}
                 </div>
               ) : null}
             </div>
           </div>
 
-          <DialogFooter className="border-t border-[#E5E7EB] px-6 py-4 sm:px-7">
+          <DialogFooter className="border-t border-[#E5E7EB] dark:border-white/10 px-6 py-4 sm:px-7">
             <Button
               type="button"
               variant="outline"
-              className="rounded-[16px] border-[#E5E7EB] bg-white text-[#374151] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
+              className="rounded-[16px] border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#374151] hover:border-[#C7D2FE] hover:bg-[#F9FAFB]"
               onClick={() => {
                 armOverlayCloseGuard();
                 setOpen(false);

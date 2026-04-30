@@ -53,17 +53,17 @@ export function StartDayNudge({
 
   return (
     <div className="fixed bottom-6 right-6 z-50 w-full max-w-sm animate-in fade-in slide-in-from-bottom-4 duration-300">
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg">
+      <div className="overflow-hidden rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] shadow-lg">
         <div className="flex items-start gap-3 p-4">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#EEF2FF]">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#EEF2FF] dark:bg-[var(--brand-600)]/15">
             <CheckCircle2 className="h-5 w-5 text-[var(--brand-600)]" />
           </div>
 
           <div className="min-w-0 flex-1">
-            <div className="text-sm font-semibold text-slate-900">
+            <div className="text-sm font-semibold text-slate-900 dark:text-white">
               You have {todoCount} {todoCount === 1 ? "item" : "items"} in To do
             </div>
-            <div className="mt-1 text-xs text-slate-500">
+            <div className="mt-1 text-xs text-slate-500 dark:text-white/55">
               Start your day by reviewing pending tasks
             </div>
 
@@ -79,7 +79,7 @@ export function StartDayNudge({
               <button
                 type="button"
                 onClick={handleDismiss}
-                className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-2 py-1.5 text-slate-500 transition hover:bg-slate-50"
+                className="inline-flex items-center justify-center rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-2 py-1.5 text-slate-500 dark:text-white/55 transition hover:bg-slate-50"
                 aria-label="Dismiss"
               >
                 <X className="h-4 w-4" />

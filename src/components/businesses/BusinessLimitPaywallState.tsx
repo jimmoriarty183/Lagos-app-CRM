@@ -41,15 +41,15 @@ export function BusinessLimitPaywallState({
   const nextLimitLabel = formatLimit(nextLimit);
 
   return (
-    <section className="w-full overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-[0_20px_60px_-42px_rgba(15,23,42,0.35)]">
-      <div className="border-b border-slate-200 px-6 py-6">
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
+    <section className="w-full overflow-hidden rounded-[24px] border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] shadow-[0_20px_60px_-42px_rgba(15,23,42,0.35)]">
+      <div className="border-b border-slate-200 dark:border-white/10 px-6 py-6">
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400 dark:text-white/45">
           Business limit reached
         </p>
-        <h1 className="mt-2 text-[1.55rem] font-semibold tracking-tight text-slate-900">
+        <h1 className="mt-2 text-[1.55rem] font-semibold tracking-tight text-slate-900 dark:text-white">
           You have reached your business limit
         </h1>
-        <p className="mt-2 text-sm leading-6 text-slate-600">
+        <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-white/70">
           Upgrade to {planName} to create up to {nextLimitLabel} businesses and keep
           expanding without interruption.
         </p>
@@ -57,19 +57,19 @@ export function BusinessLimitPaywallState({
 
       <div className="space-y-4 px-6 py-6">
         <div className="grid grid-cols-2 gap-3">
-          <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+          <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] px-3 py-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-white/55">
               Current usage
             </p>
-            <p className="mt-1 text-xl font-semibold text-slate-900">
+            <p className="mt-1 text-xl font-semibold text-slate-900 dark:text-white">
               {currentUsage ?? "-"}
             </p>
           </div>
-          <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+          <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] px-3 py-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-white/55">
               Plan limit
             </p>
-            <p className="mt-1 text-xl font-semibold text-slate-900">
+            <p className="mt-1 text-xl font-semibold text-slate-900 dark:text-white">
               {formatLimit(limit)}
             </p>
           </div>

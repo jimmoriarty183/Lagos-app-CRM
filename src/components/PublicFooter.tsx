@@ -19,7 +19,7 @@ export function PublicFooter() {
                 Ordo
               </p>
             </div>
-            <p className="mt-1 text-sm leading-6 text-slate-700 dark:text-white/65">
+            <p className="mt-1 text-sm leading-6 text-slate-700 dark:text-white/80 dark:text-white/65">
               CRM for managing orders and customers
             </p>
           </div>
@@ -32,24 +32,24 @@ export function PublicFooter() {
               <Link
                 key={link.href}
                 href={link.href}
-                className="text-sm font-medium text-slate-700 transition-colors hover:text-[var(--brand-600)] dark:text-white/70 dark:hover:text-[var(--brand-300)]"
+                className="text-sm font-medium text-slate-700 dark:text-white/80 transition-colors hover:text-[var(--brand-600)] dark:text-white/70 dark:hover:text-[var(--brand-300)]"
               >
                 {link.label}
               </Link>
             ))}
-            <span className="hidden text-slate-300 md:inline dark:text-white/20" aria-hidden>
+            <span className="hidden text-slate-300 dark:text-white/30 md:inline dark:text-white/20" aria-hidden>
               |
             </span>
             <a
               href="mailto:support@ordo.uno"
-              className="text-sm font-medium text-slate-700 transition-colors hover:text-[var(--brand-600)] dark:text-white/70 dark:hover:text-[var(--brand-300)]"
+              className="text-sm font-medium text-slate-700 dark:text-white/80 transition-colors hover:text-[var(--brand-600)] dark:text-white/70 dark:hover:text-[var(--brand-300)]"
             >
               support@ordo.uno
             </a>
           </nav>
         </div>
 
-        <div className="border-t border-slate-200 pt-2 text-xs font-medium text-slate-600 dark:border-white/10 dark:text-white/50">
+        <div className="border-t border-slate-200 pt-2 text-xs font-medium text-slate-600 dark:text-white/70 dark:border-white/10 dark:text-white/50">
           (c) 2026 ORDO
         </div>
       </div>

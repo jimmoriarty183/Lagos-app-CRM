@@ -22,7 +22,7 @@ export function AdminStatCard({
   );
 
   const className =
-    "rounded-xl border border-slate-200 bg-white p-3 shadow-sm transition hover:border-slate-300";
+    "rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] p-3 shadow-sm transition hover:border-slate-300";
 
   return href ? (
     <Link href={href} className={className}>
@@ -43,7 +43,7 @@ export function AdminSectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+    <section className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] p-3 shadow-sm">
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <h2 className="product-section-title">{title}</h2>
         {actions}

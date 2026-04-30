@@ -78,15 +78,15 @@ export default async function AdminInvitesPage({
       <div className="mt-4">
         <AdminSectionCard title="Фильтры и поиск">
           <form action="/admin/invites" className="grid gap-2.5 lg:grid-cols-[minmax(0,1.4fr)_180px_120px_120px]">
-            <input name="q" defaultValue={q} placeholder="Поиск по email, бизнесу или автору приглашения" className="h-10 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100" />
-            <select name="status" defaultValue={status} className="h-10 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
+            <input name="q" defaultValue={q} placeholder="Поиск по email, бизнесу или автору приглашения" className="h-10 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3.5 text-sm text-slate-900 dark:text-white outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100" />
+            <select name="status" defaultValue={status} className="h-10 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3.5 text-sm text-slate-900 dark:text-white outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
               <option value="all">Все статусы</option>
               <option value="pending">Ожидают</option>
               <option value="accepted">Приняты</option>
               <option value="revoked">Отозваны</option>
               <option value="expired">Истекли</option>
             </select>
-            <select name="perPage" defaultValue={String(perPage)} className="h-10 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
+            <select name="perPage" defaultValue={String(perPage)} className="h-10 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3.5 text-sm text-slate-900 dark:text-white outline-none transition hover:border-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
               {PER_PAGE_OPTIONS.map((value) => <option key={value} value={value}>{value}</option>)}
             </select>
             <Button type="submit" className="h-10 px-5 text-sm font-semibold">
@@ -112,8 +112,8 @@ export default async function AdminInvitesPage({
             {rows.map((item) => (
               <AdminTableRow key={item.id}>
                 <AdminCell>
-                  <div className="font-semibold text-slate-900">{item.email}</div>
-                  <div className="mt-1 text-xs text-slate-500">{translateLabel(item.role)}</div>
+                  <div className="font-semibold text-slate-900 dark:text-white">{item.email}</div>
+                  <div className="mt-1 text-xs text-slate-500 dark:text-white/55">{translateLabel(item.role)}</div>
                 </AdminCell>
                 <AdminCell>{item.businessLabel}</AdminCell>
                 <AdminCell>{item.invitedByLabel || "Неизвестно"}</AdminCell>

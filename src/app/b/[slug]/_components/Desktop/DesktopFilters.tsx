@@ -42,26 +42,26 @@ export default function DesktopFilters({
   card,
 }: Props) {
   const inputCls =
-    "h-10 w-full rounded-[var(--radius)] border border-[var(--neutral-200)] bg-white px-4 text-[0.9375rem] text-[var(--neutral-900)] outline-none transition focus:border-[var(--brand-600)] focus:ring-0";
+    "h-10 w-full rounded-[var(--radius)] border border-[var(--neutral-200)] bg-white dark:bg-white/[0.03] px-4 text-[0.9375rem] text-[var(--neutral-900)] outline-none transition focus:border-[var(--brand-600)] focus:ring-0";
 
   return (
     <section
-      className="desktopOnly rounded-2xl border border-gray-200 bg-white/95 p-4 shadow-sm backdrop-blur"
+      className="desktopOnly rounded-2xl border border-gray-200 dark:border-white/10 bg-white/95 p-4 shadow-sm backdrop-blur"
       style={card}
     >
       <div className="mb-3 flex items-center justify-between gap-3">
         <div>
-          <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-500">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-500 dark:text-white/55">
             Filters
           </div>
-          <div className="mt-1 text-sm text-gray-700">
+          <div className="mt-1 text-sm text-gray-700 dark:text-white/80">
             Narrow the orders list
           </div>
         </div>
         {hasActiveFilters ? (
           <a
             href={clearHref}
-            className="rounded-full border border-gray-200 px-2.5 py-1 text-xs font-medium text-gray-600 transition hover:border-gray-300 hover:text-gray-900"
+            className="rounded-full border border-gray-200 dark:border-white/10 px-2.5 py-1 text-xs font-medium text-gray-600 dark:text-white/70 transition hover:border-gray-300 hover:text-gray-900"
           >
             Reset
           </a>
@@ -75,7 +75,7 @@ export default function DesktopFilters({
         <input type="hidden" name="q" value={filters.q} />
 
         <label className="block">
-          <span className="mb-1.5 block text-xs font-medium text-gray-500">
+          <span className="mb-1.5 block text-xs font-medium text-gray-500 dark:text-white/55">
             Status
           </span>
           <select name="status" defaultValue={filters.status} className={inputCls}>
@@ -89,7 +89,7 @@ export default function DesktopFilters({
         </label>
 
         <label className="block">
-          <span className="mb-1.5 block text-xs font-medium text-gray-500">
+          <span className="mb-1.5 block text-xs font-medium text-gray-500 dark:text-white/55">
             Period
           </span>
           <select name="range" defaultValue={filters.range} className={inputCls}>
@@ -102,7 +102,7 @@ export default function DesktopFilters({
         </label>
 
         <label className="block">
-          <span className="mb-1.5 block text-xs font-medium text-gray-500">
+          <span className="mb-1.5 block text-xs font-medium text-gray-500 dark:text-white/55">
             Team
           </span>
           <select name="actor" defaultValue={actor} className={inputCls}>

@@ -194,7 +194,7 @@ export function MarketingLandingPage() {
   }, [demoView]);
 
   return (
-    <div className="min-h-screen bg-white text-slate-900 dark:bg-[var(--bg-app)] dark:text-white">
+    <div className="min-h-screen bg-white dark:bg-white/[0.03] text-slate-900 dark:bg-[var(--bg-app)] dark:text-white">
       <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
         <motion.div
           aria-hidden
@@ -218,19 +218,19 @@ export function MarketingLandingPage() {
         />
       </div>
 
-      <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/90 backdrop-blur dark:border-white/5 dark:bg-[#0B0B14]/85">
+      <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/90 dark:bg-white/[0.05] backdrop-blur dark:border-white/5 dark:bg-[#0B0B14]/85">
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-5 py-3 sm:px-6 lg:px-8">
           <BrandLockup iconSize={32} />
           <div className="flex items-center gap-2">
             <Link
               href="/pricing"
-              className="hidden rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 sm:inline-flex dark:border-white/10 dark:text-white/75 dark:hover:border-white/20 dark:hover:bg-white/[0.04]"
+              className="hidden rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 dark:text-white/80 transition hover:bg-slate-50 sm:inline-flex dark:border-white/10 dark:text-white/75 dark:hover:border-white/20 dark:hover:bg-white/[0.04]"
             >
               Pricing
             </Link>
             <Link
               href="/login"
-              className="rounded-xl px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 dark:text-white/75 dark:hover:bg-white/[0.05]"
+              className="rounded-xl px-4 py-2 text-sm font-medium text-slate-700 dark:text-white/80 transition hover:bg-slate-100 dark:text-white/75 dark:hover:bg-white/[0.05]"
             >
               Sign in
             </Link>
@@ -316,7 +316,7 @@ export function MarketingLandingPage() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.9, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}
             whileHover={{ y: -4 }}
-            className="relative rounded-3xl border border-slate-200/70 bg-white/80 p-4 shadow-[0_30px_60px_-20px_rgba(15,23,42,0.18)] backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.03] dark:shadow-[0_30px_60px_-20px_rgba(0,0,0,0.6)] sm:p-6"
+            className="relative rounded-3xl border border-slate-200/70 bg-white/80 dark:bg-white/[0.05] p-4 shadow-[0_30px_60px_-20px_rgba(15,23,42,0.18)] backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.03] dark:shadow-[0_30px_60px_-20px_rgba(0,0,0,0.6)] sm:p-6"
           >
             <div
               aria-hidden
@@ -324,7 +324,7 @@ export function MarketingLandingPage() {
             />
             <div className="relative">
               <div className="mb-5 flex items-center justify-between">
-                <p className="text-sm font-semibold text-slate-700 dark:text-white/85">
+                <p className="text-sm font-semibold text-slate-700 dark:text-white/80 dark:text-white/85">
                   Product interface
                 </p>
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 dark:border-emerald-400/30 dark:bg-emerald-500/10 dark:text-emerald-300">
@@ -453,7 +453,7 @@ export function MarketingLandingPage() {
           </ScrollReveal>
 
           <ScrollReveal delay={0.1}>
-            <div className="relative mt-6 overflow-hidden rounded-3xl border border-slate-200/70 bg-white/80 p-4 shadow-[0_30px_60px_-30px_rgba(91,91,179,0.35)] backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.03] dark:shadow-[0_30px_60px_-30px_rgba(91,91,179,0.45)] sm:mt-10 sm:p-7">
+            <div className="relative mt-6 overflow-hidden rounded-3xl border border-slate-200/70 bg-white/80 dark:bg-white/[0.05] p-4 shadow-[0_30px_60px_-30px_rgba(91,91,179,0.35)] backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.03] dark:shadow-[0_30px_60px_-30px_rgba(91,91,179,0.45)] sm:mt-10 sm:p-7">
               <div
                 aria-hidden
                 className="pointer-events-none absolute -top-32 -right-20 h-[320px] w-[320px] rounded-full bg-[radial-gradient(circle,_rgba(91,91,179,0.18)_0%,_rgba(91,91,179,0)_70%)]"
@@ -492,7 +492,7 @@ export function MarketingLandingPage() {
                 </motion.div>
 
                 <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200/60 pt-5 dark:border-white/10">
-                  <p className="text-sm text-slate-600 dark:text-white/65">
+                  <p className="text-sm text-slate-600 dark:text-white/70 dark:text-white/65">
                     Demo mode:{" "}
                     <strong className="text-slate-900 dark:text-white">
                       {demoLabel}
@@ -575,14 +575,14 @@ export function MarketingLandingPage() {
 
           <ScrollReveal delay={0.1}>
             <div className="mt-6 flex flex-wrap items-center justify-between gap-3 sm:mt-8">
-              <div className="inline-flex rounded-xl border border-slate-200 bg-white/70 p-1 shadow-sm backdrop-blur dark:border-white/10 dark:bg-white/[0.04]">
+              <div className="inline-flex rounded-xl border border-slate-200 bg-white/70 dark:bg-white/[0.05] p-1 shadow-sm backdrop-blur dark:border-white/10 dark:bg-white/[0.04]">
                 <button
                   type="button"
                   onClick={() => setBillingCycle("monthly")}
                   className={`relative rounded-lg px-4 py-2 text-sm font-semibold transition ${
                     billingCycle === "monthly"
                       ? "bg-[var(--brand-600)] text-white shadow"
-                      : "text-slate-600 hover:text-slate-900 dark:text-white/65 dark:hover:text-white"
+                      : "text-slate-600 dark:text-white/70 hover:text-slate-900 dark:text-white/65 dark:hover:text-white"
                   }`}
                 >
                   Monthly
@@ -593,7 +593,7 @@ export function MarketingLandingPage() {
                   className={`relative inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold transition ${
                     billingCycle === "yearly"
                       ? "bg-[var(--brand-600)] text-white shadow"
-                      : "text-slate-600 hover:text-slate-900 dark:text-white/65 dark:hover:text-white"
+                      : "text-slate-600 dark:text-white/70 hover:text-slate-900 dark:text-white/65 dark:hover:text-white"
                   }`}
                 >
                   Yearly
@@ -648,7 +648,7 @@ export function MarketingLandingPage() {
                   className={`relative flex flex-col p-5 sm:p-6 ${stackBorder} ${cellBorder} ${
                     plan.highlight
                       ? "bg-[var(--brand-50)]/40 dark:bg-[var(--brand-600)]/10"
-                      : "bg-white transition hover:bg-slate-50 dark:bg-transparent dark:hover:bg-white/[0.04]"
+                      : "bg-white dark:bg-white/[0.03] transition hover:bg-slate-50 dark:bg-transparent dark:hover:bg-white/[0.04]"
                   }`}
                 >
                   {plan.highlight ? (
@@ -673,12 +673,12 @@ export function MarketingLandingPage() {
                     ) : null}
                   </div>
 
-                  <p className="mt-1.5 text-[13px] leading-snug text-slate-600 dark:text-white/60 md:min-h-[34px]">
+                  <p className="mt-1.5 text-[13px] leading-snug text-slate-600 dark:text-white/70 dark:text-white/60 md:min-h-[34px]">
                     {plan.description}
                   </p>
 
                   <div className="mt-4">
-                    <p className="text-[12px] text-slate-400 line-through decoration-slate-300 dark:text-white/40 dark:decoration-white/20">
+                    <p className="text-[12px] text-slate-400 dark:text-white/45 line-through decoration-slate-300 dark:text-white/40 dark:decoration-white/20">
                       £{regularPrice} reg.
                     </p>
                     <p className="mt-0.5 flex items-baseline tracking-tight text-slate-950 dark:text-white">
@@ -700,11 +700,11 @@ export function MarketingLandingPage() {
                     ) : null}
                   </div>
 
-                  <p className="mt-3 text-[12px] font-semibold text-slate-700 dark:text-white/70">
+                  <p className="mt-3 text-[12px] font-semibold text-slate-700 dark:text-white/80 dark:text-white/70">
                     {plan.note}
                   </p>
 
-                  <div className="my-4 h-px bg-slate-200 dark:bg-white/10" />
+                  <div className="my-4 h-px bg-slate-200 dark:bg-white/[0.08] dark:bg-white/10" />
 
                   <ul className="flex-1 space-y-1.5 text-[13px] leading-snug text-slate-700 dark:text-white/80">
                     {plan.features.map((feature) => (
@@ -732,10 +732,10 @@ export function MarketingLandingPage() {
                       className={`inline-flex w-full items-center justify-center rounded-lg px-4 py-2.5 text-sm font-semibold transition disabled:cursor-wait disabled:opacity-70 ${
                         plan.highlight
                           ? "brand-primary-btn shadow-[0_10px_24px_-14px_rgba(91,91,179,0.7)]"
-                          : "border border-slate-300 bg-white text-slate-900 hover:border-[var(--brand-300)] hover:bg-[var(--brand-50)] hover:text-[var(--brand-700)] dark:border-white/15 dark:bg-white/[0.04] dark:text-white dark:hover:border-[var(--brand-500)]/40 dark:hover:bg-white/[0.07] dark:hover:text-white"
+                          : "border border-slate-300 bg-white dark:bg-white/[0.03] text-slate-900 hover:border-[var(--brand-300)] hover:bg-[var(--brand-50)] hover:text-[var(--brand-700)] dark:border-white/15 dark:bg-white/[0.04] dark:text-white dark:hover:border-[var(--brand-500)]/40 dark:hover:bg-white/[0.07] dark:hover:text-white"
                       }`}
                     />
-                    <p className="mt-2 text-center text-[11px] text-slate-500 dark:text-white/45">
+                    <p className="mt-2 text-center text-[11px] text-slate-500 dark:text-white/55 dark:text-white/45">
                       14-day free trial · cancel before day 15
                     </p>
                   </div>
@@ -772,7 +772,7 @@ export function MarketingLandingPage() {
                   size={28}
                   className="absolute right-5 top-5 text-[var(--brand-200)] transition group-hover:text-[var(--brand-300)] dark:text-[var(--brand-500)]/40 dark:group-hover:text-[var(--brand-400)]/70"
                 />
-                <p className="relative text-lg leading-relaxed text-slate-800 dark:text-white/85">
+                <p className="relative text-lg leading-relaxed text-slate-800 dark:text-white/90 dark:text-white/85">
                   &ldquo;{item.quote}&rdquo;
                 </p>
                 <div className="mt-6 flex items-center gap-3">
@@ -822,14 +822,14 @@ export function MarketingLandingPage() {
                   </span>
                   .
                 </h2>
-                <p className="mt-4 max-w-2xl text-base text-slate-300 sm:text-lg">
+                <p className="mt-4 max-w-2xl text-base text-slate-300 dark:text-white/30 sm:text-lg">
                   Roll out Ordo across your team, run workflows live, and give
                   managers one operating model for customers and orders.
                 </p>
                 <div className="mt-8 flex flex-wrap gap-3">
                   <Link
                     href="/login"
-                    className="group inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3.5 text-sm font-semibold text-slate-900 shadow-[0_14px_30px_-12px_rgba(255,255,255,0.4)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_40px_-12px_rgba(255,255,255,0.5)] active:scale-[0.98]"
+                    className="group inline-flex items-center gap-2 rounded-xl bg-white dark:bg-white/[0.03] px-6 py-3.5 text-sm font-semibold text-slate-900 dark:text-white shadow-[0_14px_30px_-12px_rgba(255,255,255,0.4)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_40px_-12px_rgba(255,255,255,0.5)] active:scale-[0.98]"
                   >
                     Start free
                     <ArrowRight
@@ -844,7 +844,7 @@ export function MarketingLandingPage() {
                     Try demo
                   </Link>
                 </div>
-                <p className="mt-5 text-xs text-slate-400">
+                <p className="mt-5 text-xs text-slate-400 dark:text-white/45">
                   No credit card required · 14-day free trial · Cancel anytime
                 </p>
               </div>
@@ -875,7 +875,7 @@ function SectionTitle({
       <h2 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950 dark:text-white sm:text-4xl">
         {title}
       </h2>
-      <p className="mt-3 text-base leading-relaxed text-slate-600 dark:text-white/65">
+      <p className="mt-3 text-base leading-relaxed text-slate-600 dark:text-white/70 dark:text-white/65">
         {text}
       </p>
     </div>
@@ -884,7 +884,7 @@ function SectionTitle({
 
 function Stat({ value, label }: { value: string; label: string }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 dark:border-white/10 dark:bg-white/[0.04]">
+    <div className="rounded-xl border border-slate-200 bg-white dark:bg-white/[0.03] px-4 py-3 dark:border-white/10 dark:bg-white/[0.04]">
       <p className="text-xl font-semibold leading-tight text-slate-900 dark:text-white">
         {value}
       </p>
@@ -922,7 +922,7 @@ function KanbanColumn({
         {cards.map((card) => (
           <div
             key={card}
-            className="rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-xs font-medium text-slate-700 dark:border-white/10 dark:bg-white/[0.05] dark:text-white/80"
+            className="rounded-lg border border-slate-200 bg-white dark:bg-white/[0.03] px-2.5 py-2 text-xs font-medium text-slate-700 dark:border-white/10 dark:bg-white/[0.05] dark:text-white/80"
           >
             {card}
           </div>
@@ -943,10 +943,10 @@ function MiniMetric({
 }) {
   return (
     <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-white/[0.04]">
-      <div className="mb-2 inline-flex rounded-md bg-white p-1.5 text-slate-600 dark:bg-white/[0.06] dark:text-white/70">
+      <div className="mb-2 inline-flex rounded-md bg-white dark:bg-white/[0.03] p-1.5 text-slate-600 dark:bg-white/[0.06] dark:text-white/70">
         <Icon size={14} />
       </div>
-      <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-white/50">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-white/55 dark:text-white/50">
         {label}
       </p>
       <p className="text-xl font-semibold text-slate-900 dark:text-white">
@@ -974,7 +974,7 @@ function DemoTab({
       className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-semibold transition ${
         active
           ? "border-[var(--brand-300)] bg-[var(--brand-100)] text-[var(--brand-700)] dark:border-[var(--brand-500)]/50 dark:bg-[var(--brand-600)]/15 dark:text-[var(--brand-200)]"
-          : "border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-white/10 dark:text-white/65 dark:hover:bg-white/[0.05] dark:hover:text-white"
+          : "border-slate-200 text-slate-600 dark:text-white/70 hover:bg-slate-50 dark:border-white/10 dark:text-white/65 dark:hover:bg-white/[0.05] dark:hover:text-white"
       }`}
     >
       <Icon size={15} />
@@ -1010,7 +1010,7 @@ function CrmCardDemo() {
     <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/[0.04]">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-white/50">
+          <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-white/55 dark:text-white/50">
             ORDER CARD
           </p>
           <p className="text-base font-semibold text-slate-900 dark:text-white">
@@ -1046,8 +1046,8 @@ function AnalyticsDemo() {
 
 function MiniBlock({ title, value }: { title: string; value: string }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-3 dark:border-white/10 dark:bg-white/[0.05]">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-white/50">
+    <div className="rounded-xl border border-slate-200 bg-white dark:bg-white/[0.03] p-3 dark:border-white/10 dark:bg-white/[0.05]">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-white/55 dark:text-white/50">
         {title}
       </p>
       <p className="mt-1 text-base font-semibold text-slate-900 dark:text-white">
@@ -1077,7 +1077,7 @@ function StepCard({
         {number}
       </div>
       <p className="text-base font-semibold text-slate-900 dark:text-white">{title}</p>
-      <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-white/65">{text}</p>
+      <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-white/70 dark:text-white/65">{text}</p>
     </motion.article>
   );
 }
@@ -1120,7 +1120,7 @@ function BentoCard({
     <motion.article
       variants={scrollFadeUp}
       whileHover={{ y: -3 }}
-      className={`group relative flex flex-col overflow-hidden rounded-3xl border border-slate-200/70 bg-white/80 p-6 backdrop-blur-xl transition hover:border-[var(--brand-300)] hover:shadow-[0_24px_60px_-30px_rgba(91,91,179,0.45)] dark:border-white/10 dark:bg-white/[0.04] dark:hover:border-[var(--brand-500)]/40 dark:hover:shadow-[0_24px_60px_-30px_rgba(91,91,179,0.6)] sm:p-7 ${className}`}
+      className={`group relative flex flex-col overflow-hidden rounded-3xl border border-slate-200/70 bg-white/80 dark:bg-white/[0.05] p-6 backdrop-blur-xl transition hover:border-[var(--brand-300)] hover:shadow-[0_24px_60px_-30px_rgba(91,91,179,0.45)] dark:border-white/10 dark:bg-white/[0.04] dark:hover:border-[var(--brand-500)]/40 dark:hover:shadow-[0_24px_60px_-30px_rgba(91,91,179,0.6)] sm:p-7 ${className}`}
     >
       <div
         aria-hidden
@@ -1131,14 +1131,14 @@ function BentoCard({
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--brand-100)] to-[var(--brand-200)] text-[var(--brand-700)] shadow-sm dark:from-[var(--brand-500)]/30 dark:to-[var(--brand-700)]/20 dark:text-[var(--brand-200)]">
             <Icon size={17} />
           </div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-500 dark:text-white/50">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-500 dark:text-white/55 dark:text-white/50">
             {eyebrow}
           </p>
         </div>
         <h3 className="text-lg font-semibold leading-snug tracking-tight text-slate-900 dark:text-white sm:text-xl">
           {title}
         </h3>
-        <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-white/65">
+        <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-white/70 dark:text-white/65">
           {description}
         </p>
       </div>
@@ -1178,7 +1178,7 @@ function BentoKanbanPreview() {
           {col.items.map((item) => (
             <div
               key={item}
-              className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-[11px] font-medium text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow dark:border-white/10 dark:bg-white/[0.06] dark:text-white/85 dark:shadow-none"
+              className="rounded-lg border border-slate-200 bg-white dark:bg-white/[0.03] px-2 py-1.5 text-[11px] font-medium text-slate-700 dark:text-white/80 shadow-sm transition hover:-translate-y-0.5 hover:shadow dark:border-white/10 dark:bg-white/[0.06] dark:text-white/85 dark:shadow-none"
             >
               {item}
             </div>
@@ -1216,7 +1216,7 @@ function BentoCustomerPreview() {
         ].map((row) => (
           <div
             key={row.label}
-            className="flex items-center justify-between rounded-lg bg-white px-2 py-1.5 text-[11px] dark:bg-white/[0.06]"
+            className="flex items-center justify-between rounded-lg bg-white dark:bg-white/[0.03] px-2 py-1.5 text-[11px] dark:bg-white/[0.06]"
           >
             <span className="text-slate-500 dark:text-white/55">{row.label}</span>
             <span className="font-semibold text-slate-800 dark:text-white/90">
@@ -1276,11 +1276,11 @@ function BentoTeamPreview() {
             {m.initials}
           </div>
         ))}
-        <div className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-white bg-slate-100 text-[10px] font-bold text-slate-600 shadow-sm dark:border-[#0F0F1B] dark:bg-white/[0.08] dark:text-white/70">
+        <div className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-white bg-slate-100 dark:bg-white/[0.06] text-[10px] font-bold text-slate-600 shadow-sm dark:border-[#0F0F1B] dark:bg-white/[0.08] dark:text-white/70">
           +6
         </div>
       </div>
-      <div className="mt-3 rounded-lg bg-white p-2 text-[11px] dark:bg-white/[0.06]">
+      <div className="mt-3 rounded-lg bg-white dark:bg-white/[0.03] p-2 text-[11px] dark:bg-white/[0.06]">
         <p className="font-semibold text-slate-800 dark:text-white/90">
           Emma → ORD-395
         </p>
@@ -1300,13 +1300,13 @@ function BentoAutomationPreview() {
       ].map((rule) => (
         <div
           key={rule.trigger}
-          className="flex items-center gap-2 rounded-lg bg-white px-2 py-1.5 text-[11px] dark:bg-white/[0.06]"
+          className="flex items-center gap-2 rounded-lg bg-white dark:bg-white/[0.03] px-2 py-1.5 text-[11px] dark:bg-white/[0.06]"
         >
           <div className="flex h-5 w-5 items-center justify-center rounded bg-[var(--brand-100)] text-[var(--brand-700)] dark:bg-[var(--brand-600)]/25 dark:text-[var(--brand-200)]">
             <rule.icon size={11} />
           </div>
-          <span className="font-medium text-slate-700 dark:text-white/85">{rule.trigger}</span>
-          <ArrowRight size={10} className="text-slate-400 dark:text-white/40" />
+          <span className="font-medium text-slate-700 dark:text-white/80 dark:text-white/85">{rule.trigger}</span>
+          <ArrowRight size={10} className="text-slate-400 dark:text-white/45 dark:text-white/40" />
           <span className="text-slate-500 dark:text-white/55">{rule.action}</span>
         </div>
       ))}

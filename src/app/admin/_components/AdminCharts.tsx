@@ -43,10 +43,10 @@ export function AdminTrendChart({
   color?: string;
 }) {
   return (
-    <div className="rounded-[16px] border border-slate-200 bg-white p-3 shadow-sm">
+    <div className="rounded-[16px] border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] p-3 shadow-sm">
       <div className="mb-2">
-        <div className="text-sm font-semibold text-slate-900">{title}</div>
-        <div className="text-xs text-slate-500">{subtitle || "Динамика по выбранному периоду"}</div>
+        <div className="text-sm font-semibold text-slate-900 dark:text-white">{title}</div>
+        <div className="text-xs text-slate-500 dark:text-white/55">{subtitle || "Динамика по выбранному периоду"}</div>
       </div>
       <ChartContainer
         className="h-[240px] w-full"
@@ -86,10 +86,10 @@ export function AdminPieChartBlock({
   data: PiePoint[];
 }) {
   return (
-    <div className="rounded-[16px] border border-slate-200 bg-white p-3 shadow-sm">
+    <div className="rounded-[16px] border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] p-3 shadow-sm">
       <div className="mb-2">
-        <div className="text-sm font-semibold text-slate-900">{title}</div>
-        <div className="text-xs text-slate-500">{subtitle || "Распределение по текущему срезу данных"}</div>
+        <div className="text-sm font-semibold text-slate-900 dark:text-white">{title}</div>
+        <div className="text-xs text-slate-500 dark:text-white/55">{subtitle || "Распределение по текущему срезу данных"}</div>
       </div>
       <ChartContainer
         className="h-[240px] w-full"
@@ -129,10 +129,10 @@ export function AdminStatusBarChart({
   color?: string;
 }) {
   return (
-    <div className="rounded-[16px] border border-slate-200 bg-white p-3 shadow-sm">
+    <div className="rounded-[16px] border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] p-3 shadow-sm">
       <div className="mb-2">
-        <div className="text-sm font-semibold text-slate-900">{title}</div>
-        <div className="text-xs text-slate-500">{subtitle || "Текущий срез по статусам"}</div>
+        <div className="text-sm font-semibold text-slate-900 dark:text-white">{title}</div>
+        <div className="text-xs text-slate-500 dark:text-white/55">{subtitle || "Текущий срез по статусам"}</div>
       </div>
       <ChartContainer
         className="h-[240px] w-full"
@@ -167,35 +167,35 @@ export function AdminFunnelChart({
   const maxValue = Math.max(...steps.map((step) => step.value), 1);
 
   return (
-    <div className="rounded-[16px] border border-slate-200 bg-white p-3 shadow-sm">
+    <div className="rounded-[16px] border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] p-3 shadow-sm">
       <div className="mb-3">
-        <div className="text-sm font-semibold text-slate-900">{title}</div>
-        <div className="text-xs text-slate-500">{subtitle || "Последовательность ключевых шагов"}</div>
+        <div className="text-sm font-semibold text-slate-900 dark:text-white">{title}</div>
+        <div className="text-xs text-slate-500 dark:text-white/55">{subtitle || "Последовательность ключевых шагов"}</div>
       </div>
 
       <div className="space-y-3">
         {steps.map((step, index) => (
-          <div key={step.key} className="rounded-xl border border-slate-200 bg-slate-50 p-2.5">
+          <div key={step.key} className="rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] p-2.5">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <div className="text-sm font-semibold text-slate-900">
+                <div className="text-sm font-semibold text-slate-900 dark:text-white">
                   {index + 1}. {step.label}
                 </div>
-                <div className="mt-1 text-xs text-slate-500">
+                <div className="mt-1 text-xs text-slate-500 dark:text-white/55">
                   {step.rateFromPrevious === null
                     ? "Для первого шага конверсия не считается"
                     : `Конверсия с предыдущего шага: ${step.rateFromPrevious.toFixed(1)}%`}
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-lg font-semibold text-slate-900">{formatNumber(step.value)}</div>
-                <div className="text-xs text-slate-500">
+                <div className="text-lg font-semibold text-slate-900 dark:text-white">{formatNumber(step.value)}</div>
+                <div className="text-xs text-slate-500 dark:text-white/55">
                   {step.rateFromStart === null ? "Нет базы" : `${step.rateFromStart.toFixed(1)}% от всех`}
                 </div>
               </div>
             </div>
 
-            <div className="mt-3 h-3 overflow-hidden rounded-full bg-slate-200">
+            <div className="mt-3 h-3 overflow-hidden rounded-full bg-slate-200 dark:bg-white/[0.08]">
               <div
                 className="h-full rounded-full bg-gradient-to-r from-[#1d4ed8] to-[#0f766e]"
                 style={{ width: `${Math.max(8, (step.value / maxValue) * 100)}%` }}

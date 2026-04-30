@@ -10,7 +10,7 @@ export default function DesktopCreateOrderAccordion({
   return (
     <details
       id="desktop-create-order"
-      className="group rounded-2xl border border-[#dde3ee] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)]"
+      className="group rounded-2xl border border-[#dde3ee] bg-white dark:bg-white/[0.03] shadow-[0_1px_2px_rgba(16,24,40,0.04)]"
     >
       <summary className="list-none cursor-pointer select-none">
         <div className="flex items-center justify-between gap-3 px-5 py-4">
@@ -20,7 +20,7 @@ export default function DesktopCreateOrderAccordion({
             </div>
             <div>
               <div className="text-sm font-semibold text-[#111827]">New Order</div>
-              <div className="text-xs text-[#98a2b3]">Fill the form for incoming work</div>
+              <div className="text-xs text-[#98a2b3] dark:text-white/45">Fill the form for incoming work</div>
             </div>
           </div>
 
