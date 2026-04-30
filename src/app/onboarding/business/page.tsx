@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { resolveCurrentWorkspace } from "@/lib/platform/workspace";
-import { supabaseAdmin } from "@/lib/supabase/admin";
 import { OnboardingBusinessForm } from "./ui";
 
 export const dynamic = "force-dynamic";
@@ -23,46 +22,44 @@ export default async function OnboardingBusinessPage({
   const resolved = (await searchParams) ?? {};
   const isAdditional = String(resolved.new ?? "").trim() === "1";
 
+  // Plan/interval intent can be carried across the email-confirm → create
+  // business → pick plan funnel. We just preserve the params for the form
+  // to forward them to /onboarding/plan after a successful creation.
+  const planParam = String(resolved.plan ?? "").trim();
+  const intervalParam = String(resolved.interval ?? "").trim();
+
   const { user, workspace } = await resolveCurrentWorkspace();
 
+  const selfQuery = (() => {
+    const params = new URLSearchParams();
+    if (isAdditional) params.set("new", "1");
+    if (planParam) params.set("plan", planParam);
+    if (intervalParam) params.set("interval", intervalParam);
+    const query = params.toString();
+    return query ? `?${query}` : "";
+  })();
+
   if (!user) {
-    const nextPath = isAdditional
-      ? "/onboarding/business?new=1"
-      : "/onboarding/business";
-    redirect(`/login?next=${encodeURIComponent(nextPath)}`);
+    redirect(
+      `/login?next=${encodeURIComponent(`/onboarding/business${selfQuery}`)}`,
+    );
   }
 
-  // First-time onboarding: user landed here right after signup without any
-  // workspace. If they already have one, send them to the CRM — unless they
-  // explicitly requested to create an additional business via `?new=1`.
+  // Already has a workspace and didn't ask for a new business: send them to
+  // the CRM. With ?new=1 we still allow the form (settings → "Add business").
   if (workspace && !isAdditional) {
     redirect("/app/crm");
   }
 
-  // Without a billing account the create-business flow throws
-  // "Billing account not found for owner user" before the form ever submits.
-  // Send the user to /pricing to subscribe first (Paddle webhook then
-  // provisions the account+trial subscription via owner_user_id).
-  if (!workspace) {
-    const admin = supabaseAdmin();
-    const { data: accountRow } = await admin
-      .from("accounts")
-      .select("id")
-      .eq("primary_owner_user_id", user.id)
-      .limit(1)
-      .maybeSingle();
-    if (!accountRow?.id) {
-      redirect("/pricing");
-    }
-  }
-
   return (
     <main
-      data-theme="light"
-      className="min-h-screen bg-[#f6f8fb] px-4 py-8 text-slate-900 sm:px-6"
+      className="min-h-screen bg-[#f6f8fb] dark:bg-[var(--bg-app)] px-4 py-8 text-slate-900 dark:text-white sm:px-6"
     >
       <div className="mx-auto flex max-w-md items-center justify-center pt-8 sm:pt-14">
-        <OnboardingBusinessForm />
+        <OnboardingBusinessForm
+          planIntent={planParam}
+          intervalIntent={intervalParam}
+        />
       </div>
     </main>
   );

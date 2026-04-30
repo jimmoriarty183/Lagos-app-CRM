@@ -100,22 +100,11 @@ export async function loginAction(
     if (memErr) return { ok: false, error: memErr.message, next: "" };
 
     if (!mems || mems.length === 0) {
-      // No business yet. If the user also has no billing account, they
-      // never finished subscribing — route them through /pricing first so
-      // the Paddle webhook can provision the account+subscription before
-      // /onboarding/business runs its entitlement-dependent flow.
-      const { data: accountRow } = await supabase
-        .from("accounts")
-        .select("id")
-        .eq("primary_owner_user_id", user.id)
-        .limit(1)
-        .maybeSingle();
-      const hasAccount = Boolean(accountRow?.id);
-      return {
-        ok: true,
-        error: "",
-        next: hasAccount ? "/onboarding/business" : "/pricing",
-      };
+      // No business yet. Whether or not they have a Paddle account, the
+      // owner must first create a business (with the auto-trial). The plan
+      // picker comes after creation so the user is in a logged-in cabinet
+      // with their email visible — never on the public /pricing page.
+      return { ok: true, error: "", next: "/onboarding/business" };
     }
 
     if (mems.length > 1) {
@@ -223,14 +212,14 @@ export async function registerOwnerAction(
 
     const { data: signedInData } = await supabase.auth.getUser();
     if (signedInData.user) {
-      // Fresh signups go to /pricing first to subscribe (Paddle webhook
-      // creates the account + trial subscription). Once the trial is live,
-      // they can create their business — otherwise /onboarding/business
-      // would fail with "Billing account not found".
+      // Fresh signups go straight to business creation (the auto-trial in
+      // resolveMaxBusinessesEntitlement lets them create their first business
+      // without a Paddle subscription). After creation the form forwards them
+      // to /onboarding/plan to subscribe with their email clearly visible.
       return {
         ok: true,
         error: "",
-        next: safeNext || "/pricing",
+        next: safeNext || "/onboarding/business",
       };
     }
 

@@ -94,7 +94,17 @@ function toLimitErrorState(payload: Partial<CreateBusinessApiError>): LimitError
   };
 }
 
-export function OnboardingBusinessForm() {
+type OnboardingBusinessFormProps = {
+  /** Plan code chosen on a public Buy click (preserved through the funnel). */
+  planIntent?: string;
+  /** Billing interval chosen on a public Buy click. */
+  intervalIntent?: string;
+};
+
+export function OnboardingBusinessForm({
+  planIntent = "",
+  intervalIntent = "",
+}: OnboardingBusinessFormProps = {}) {
   const [pending, setPending] = React.useState(false);
   const [upgradePending, setUpgradePending] = React.useState(false);
   const [continuePending, setContinuePending] = React.useState(false);
@@ -125,7 +135,19 @@ export function OnboardingBusinessForm() {
 
       if (response.ok && payload.ok) {
         clearCreateBusinessIntent();
-        window.location.href = "/app/crm";
+        // Fresh signup just got their first business + auto-trial. Send them
+        // to the in-app plan picker so they can subscribe to a paid plan with
+        // their identity clearly visible (the topbar/email banner is the
+        // "cabinet" the user asked for). Any plan/interval intent carried
+        // through from a public Buy click resumes checkout there.
+        const params = new URLSearchParams();
+        if (planIntent) params.set("plan", planIntent);
+        if (intervalIntent) params.set("interval", intervalIntent);
+        if (planIntent && intervalIntent) params.set("autocheckout", "1");
+        const query = params.toString();
+        window.location.href = query
+          ? `/onboarding/plan?${query}`
+          : "/onboarding/plan";
         return;
       }
 
@@ -141,7 +163,7 @@ export function OnboardingBusinessForm() {
 
       setLocalError(errorPayload.message || "Failed to create business");
     },
-    [],
+    [planIntent, intervalIntent],
   );
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -294,15 +316,15 @@ export function OnboardingBusinessForm() {
   }
 
   return (
-    <section className="w-full overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-[0_20px_60px_-42px_rgba(15,23,42,0.35)]">
-      <div className="border-b border-slate-200 px-6 py-6">
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
+    <section className="w-full overflow-hidden rounded-[24px] border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] shadow-[0_20px_60px_-42px_rgba(15,23,42,0.35)]">
+      <div className="border-b border-slate-200 dark:border-white/10 px-6 py-6">
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400 dark:text-white/45">
           Ordo onboarding
         </p>
-        <h1 className="mt-2 text-[1.55rem] font-semibold tracking-tight text-slate-900">
+        <h1 className="mt-2 text-[1.55rem] font-semibold tracking-tight text-slate-900 dark:text-white">
           Create your business
         </h1>
-        <p className="mt-2 text-sm leading-6 text-slate-600">
+        <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-white/70">
           Add a business name to continue. You can change it later in settings.
         </p>
       </div>
@@ -311,7 +333,7 @@ export function OnboardingBusinessForm() {
         <ErrorBox text={localError} />
 
         <label className="block">
-          <div className="mb-1.5 text-[13px] font-semibold text-slate-700">Business name</div>
+          <div className="mb-1.5 text-[13px] font-semibold text-slate-700 dark:text-white/80">Business name</div>
           <input
             name="business_name"
             type="text"
@@ -319,7 +341,7 @@ export function OnboardingBusinessForm() {
             value={businessName}
             onChange={(e) => setBusinessName(e.target.value)}
             placeholder="Acme Operations"
-            className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-[var(--brand-600)] focus:ring-4 focus:ring-[rgba(91,91,179,0.14)]"
+            className="h-11 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3.5 text-sm text-slate-900 dark:text-white outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-[var(--brand-600)] focus:ring-4 focus:ring-[rgba(91,91,179,0.14)]"
           />
         </label>
 

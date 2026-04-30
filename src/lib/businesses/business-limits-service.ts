@@ -15,7 +15,7 @@ export type BusinessLimitError = {
 export type BusinessCreationLimitCheck = {
   allowed: boolean;
   error: BusinessLimitError | null;
-  accountId: string;
+  accountId: string | null;
   maxBusinesses: number | null;
   ownerOwnedBusinessCount: number;
 };
@@ -162,10 +162,15 @@ export async function countOwnerBusinesses(
 export async function resolveMaxBusinessesEntitlement(
   admin: SupabaseClient,
   ownerUserId: string,
-): Promise<{ accountId: string; maxBusinesses: number | null }> {
+): Promise<{ accountId: string | null; maxBusinesses: number | null }> {
   const accountId = await resolveOwnerAccountId(admin, ownerUserId);
   if (!accountId) {
-    throw new Error("Billing account not found for owner user");
+    // Fresh signup with no Paddle subscription yet. Owners are entitled to
+    // their first business as a built-in trial — the paid account/entitlement
+    // is provisioned by the Paddle webhook the first time they subscribe.
+    // Without this fallback /onboarding/business deadlocks with "Billing
+    // account not found" before they can even reach the plan picker.
+    return { accountId: null, maxBusinesses: 1 };
   }
 
   const entitlement = await getFeatureValue(

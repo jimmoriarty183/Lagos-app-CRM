@@ -1,32 +1,34 @@
 "use client";
 
 import { useState } from "react";
-import { openCheckout } from "@/components/BuyButton";
 
 export type BuyCtaButtonProps = {
   /** Internal plan code stored in DB / Paddle (`solo` | `starter` | `business` | `pro`). */
   planCode: "solo" | "starter" | "business" | "pro";
   interval: "monthly" | "yearly";
-  priceId: string;
+  /** Kept for backwards compat with /pricing call sites. The cabinet looks
+   *  the price up itself — public pages never talk to Paddle directly. */
+  priceId?: string;
   label: string;
   className?: string;
-  /** Path to land on after auth so checkout auto-resumes. */
+  /** Optional override of the destination after auth (advanced use). */
   postAuthPath?: string;
 };
 
 const CHECKOUT_SOURCE = "homepage_pricing";
 
-function buildBillingPath(
+function buildPlanQuery(
   planCode: BuyCtaButtonProps["planCode"],
   interval: BuyCtaButtonProps["interval"],
+  options: { autoCheckout?: boolean } = {},
 ) {
   const params = new URLSearchParams({
     plan: planCode,
     interval,
-    autocheckout: "1",
     src: CHECKOUT_SOURCE,
   });
-  return `/app/settings/billing?${params.toString()}`;
+  if (options.autoCheckout) params.set("autocheckout", "1");
+  return params.toString();
 }
 
 type AuthState = {
@@ -66,7 +68,6 @@ async function fetchAuthState(): Promise<AuthState> {
 export default function BuyCtaButton({
   planCode,
   interval,
-  priceId,
   label,
   className,
   postAuthPath,
@@ -79,51 +80,45 @@ export default function BuyCtaButton({
     setBusy(true);
     setDemoBlocked(false);
 
-    const billingPath = postAuthPath ?? buildBillingPath(planCode, interval);
-
     try {
       const auth = await fetchAuthState();
 
-      if (!auth.authenticated) {
-        // Preserve checkout intent through login: post-auth lands on the billing
-        // page with autocheckout=1 so Paddle reopens without a second click.
-        window.location.href = `/login?next=${encodeURIComponent(billingPath)}`;
-        return;
-      }
-
-      if (auth.isDemo) {
+      if (auth.authenticated && auth.isDemo) {
         // Demo account is a shared sandbox — Paddle billing is intentionally
-        // disabled. Surface that here instead of letting the modal/Paddle open
-        // for a transaction that the server would reject anyway.
+        // disabled. Block here so the user sees the reason instead of getting
+        // a generic server error from /api/billing/* later in the funnel.
         setDemoBlocked(true);
         return;
       }
 
-      // Authenticated, non-demo: open Paddle directly. For first-time users
-      // (no business yet) we land them on onboarding so they can finish setup
-      // right after the trial subscription is created by the webhook.
-      const successPath = auth.hasBusiness
-        ? "/app/settings/billing?checkout=success&source=homepage"
-        : "/onboarding/business?checkout=success";
-      // owner_user_id lets the billing webhook resolve (or create) an
-      // accounts row for brand-new signups that don't have one yet —
-      // see resolveOwnerAccountId / ensureAccountForOwner in webhooks.ts.
-      const customData: Record<string, string> = {
-        plan_code: planCode,
-        billing_interval: interval,
-        source: CHECKOUT_SOURCE,
-      };
-      if (auth.userId) customData.owner_user_id = auth.userId;
-      const opened = await openCheckout(priceId, {
-        customData,
-        successUrl: `${window.location.origin}${successPath}`,
+      // Per product requirement: from public surfaces (/, /pricing) we never
+      // open Paddle directly. The user always passes through a logged-in
+      // cabinet first so they can verify which email they're subscribing
+      // under. The cabinet (=/onboarding/plan or /app/settings/billing) is
+      // the surface that actually triggers Paddle, with autocheckout=1 to
+      // resume the picked plan without a second click.
+      const planQuery = buildPlanQuery(planCode, interval, {
+        autoCheckout: true,
       });
 
-      if (!opened) {
-        // Paddle failed to load (network / token issue) — fall back to the
-        // settings/billing page so the user can retry from a stable surface.
-        window.location.href = billingPath;
+      let destination: string;
+      if (!auth.authenticated) {
+        // Through login the user lands on /onboarding/business (with intent
+        // preserved). After business creation the form forwards them to
+        // /onboarding/plan?...&autocheckout=1 which fires Paddle.
+        const next = postAuthPath ?? `/onboarding/business?${planQuery}`;
+        destination = `/login?next=${encodeURIComponent(next)}`;
+      } else if (!auth.hasBusiness) {
+        // Authed but no workspace yet — same path as fresh signup, just
+        // skipping the login step.
+        destination = postAuthPath ?? `/onboarding/business?${planQuery}`;
+      } else {
+        // Established owner: take them straight to the in-app billing
+        // surface where the topbar already shows their identity.
+        destination = `/app/settings/billing?${planQuery}`;
       }
+
+      window.location.href = destination;
     } finally {
       setBusy(false);
     }
