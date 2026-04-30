@@ -18,7 +18,7 @@ type AuthAction = (prev: State, formData: FormData) => Promise<State>;
 function ErrorBox({ text }: { text?: string }) {
   if (!text) return null;
   return (
-    <div className="rounded-2xl border border-red-200/80 bg-red-50/90 px-3.5 py-2.5 text-xs text-red-700 shadow-sm">
+    <div className="rounded-2xl border border-red-200/80 bg-red-50/90 px-3.5 py-2.5 text-xs text-red-700 shadow-sm dark:border-red-400/30 dark:bg-red-500/10 dark:text-red-300 dark:shadow-none">
       {text}
     </div>
   );
@@ -27,7 +27,7 @@ function ErrorBox({ text }: { text?: string }) {
 function SuccessBox({ text }: { text?: string }) {
   if (!text) return null;
   return (
-    <div className="rounded-2xl border border-emerald-200/80 bg-emerald-50/90 px-3.5 py-2.5 text-xs text-emerald-800 shadow-sm">
+    <div className="rounded-2xl border border-emerald-200/80 bg-emerald-50/90 px-3.5 py-2.5 text-xs text-emerald-800 shadow-sm dark:border-emerald-400/30 dark:bg-emerald-500/10 dark:text-emerald-300 dark:shadow-none">
       {text}
     </div>
   );
@@ -35,17 +35,23 @@ function SuccessBox({ text }: { text?: string }) {
 
 function OverlayLoader({ text }: { text: string }) {
   return (
-    <div className="absolute inset-0 z-50 flex items-center justify-center rounded-[20px] bg-white/70 backdrop-blur-sm">
-      <div className="flex flex-col items-center gap-3 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-lg shadow-slate-900/5">
+    <div className="absolute inset-0 z-50 flex items-center justify-center rounded-[20px] bg-white/70 backdrop-blur-sm dark:bg-[#0B0B14]/70">
+      <div className="flex flex-col items-center gap-3 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-lg shadow-slate-900/5 dark:border-white/10 dark:bg-white/[0.06] dark:shadow-black/40">
         <Spinner className="h-8 w-8" />
-        <div className="text-sm font-semibold text-slate-800">{text}</div>
+        <div className="text-sm font-semibold text-slate-800 dark:text-white">
+          {text}
+        </div>
       </div>
     </div>
   );
 }
 
 function Hint({ children }: { children: React.ReactNode }) {
-  return <div className="text-xs leading-snug text-slate-500">{children}</div>;
+  return (
+    <div className="text-xs leading-snug text-slate-500 dark:text-white/55">
+      {children}
+    </div>
+  );
 }
 
 function Input({
@@ -69,7 +75,7 @@ function Input({
 }) {
   return (
     <label className="block">
-      <div className="mb-1.5 text-[13px] font-semibold text-slate-700">
+      <div className="mb-1.5 text-[13px] font-semibold text-slate-700 dark:text-white/85">
         {label}
       </div>
       <input
@@ -80,7 +86,7 @@ function Input({
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange?.(e.target.value)}
-        className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-[var(--brand-600)] focus:ring-4 focus:ring-[rgba(91,91,179,0.14)]"
+        className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-[var(--brand-600)] focus:ring-4 focus:ring-[rgba(91,91,179,0.14)] dark:border-white/15 dark:bg-white/[0.04] dark:text-white dark:placeholder:text-white/40 dark:hover:border-white/25 dark:focus:border-[var(--brand-400)]"
       />
     </label>
   );
@@ -114,7 +120,7 @@ function PasswordInput({
 
   return (
     <label className="block">
-      <div className="mb-1.5 text-[13px] font-semibold text-slate-700">
+      <div className="mb-1.5 text-[13px] font-semibold text-slate-700 dark:text-white/85">
         {label}
       </div>
       <div className="relative">
@@ -126,7 +132,7 @@ function PasswordInput({
           placeholder={placeholder}
           value={value}
           onChange={(e) => onChange?.(e.target.value)}
-          className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-3.5 pr-[4.75rem] text-sm text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-[var(--brand-600)] focus:ring-4 focus:ring-[rgba(91,91,179,0.14)]"
+          className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-3.5 pr-[4.75rem] text-sm text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-[var(--brand-600)] focus:ring-4 focus:ring-[rgba(91,91,179,0.14)] dark:border-white/15 dark:bg-white/[0.04] dark:text-white dark:placeholder:text-white/40 dark:hover:border-white/25 dark:focus:border-[var(--brand-400)]"
         />
         <button
           type="button"
@@ -134,7 +140,7 @@ function PasswordInput({
             if (isControlled) onToggleShow?.();
             else setLocalShow((s) => !s);
           }}
-          className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold text-slate-600 transition hover:border-slate-300 hover:bg-white hover:text-slate-900"
+          className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold text-slate-600 transition hover:border-slate-300 hover:bg-white hover:text-slate-900 dark:border-white/10 dark:bg-white/[0.06] dark:text-white/70 dark:hover:border-white/20 dark:hover:bg-white/[0.1] dark:hover:text-white"
         >
           {isShown ? "Hide" : "Show"}
         </button>
@@ -270,7 +276,7 @@ export default function LoginUI({
   }
 
   return (
-    <div className="relative overflow-hidden rounded-[20px] border border-white/70 bg-white/95 shadow-[0_28px_80px_-36px_rgba(15,23,42,0.38),0_10px_24px_-18px_rgba(15,23,42,0.26)] backdrop-blur-sm">
+    <div className="relative overflow-hidden rounded-[20px] border border-white/70 bg-white/95 shadow-[0_28px_80px_-36px_rgba(15,23,42,0.38),0_10px_24px_-18px_rgba(15,23,42,0.26)] backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04] dark:shadow-[0_28px_80px_-36px_rgba(0,0,0,0.7)]">
       {regPending && (
         <OverlayLoader
           text={inviteId ? "Joining workspace..." : "Creating your account..."}
@@ -279,12 +285,12 @@ export default function LoginUI({
       {loginPending && <OverlayLoader text="Signing in..." />}
       {resetPending && <OverlayLoader text="Sending reset link..." />}
 
-      <div className="border-b border-slate-100/80 px-6 pb-5 pt-6 sm:px-7">
-        <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">
+      <div className="border-b border-slate-100/80 px-6 pb-5 pt-6 dark:border-white/10 sm:px-7">
+        <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500 dark:text-[var(--brand-300)]">
           ORDO
         </div>
 
-        <h1 className="mt-2 text-[1.45rem] font-semibold tracking-tight text-slate-900 sm:text-[1.55rem]">
+        <h1 className="mt-2 text-[1.45rem] font-semibold tracking-tight text-slate-900 dark:text-white sm:text-[1.55rem]">
           {mode === "login"
             ? "Sign in"
             : mode === "register"
@@ -292,7 +298,7 @@ export default function LoginUI({
               : "Reset password"}
         </h1>
 
-        <p className="mt-1.5 text-sm leading-relaxed text-slate-600">
+        <p className="mt-1.5 text-sm leading-relaxed text-slate-600 dark:text-white/65">
           {mode === "login"
             ? "Sign in to continue working in Ordo."
             : mode === "register"
@@ -303,7 +309,7 @@ export default function LoginUI({
         </p>
 
         {mode !== "reset" ? (
-          <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-1">
+          <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-1 dark:border-white/10 dark:bg-white/[0.04]">
             <div className="grid grid-cols-2 gap-1">
               <button
                 type="button"
@@ -314,8 +320,8 @@ export default function LoginUI({
                 className={[
                   "rounded-[10px] px-3 py-2 text-xs font-semibold transition",
                   mode === "login"
-                    ? "bg-white text-slate-900 shadow-sm shadow-slate-900/5"
-                    : "text-slate-600 hover:text-slate-900",
+                    ? "bg-white text-slate-900 shadow-sm shadow-slate-900/5 dark:bg-white/[0.1] dark:text-white dark:shadow-none"
+                    : "text-slate-600 hover:text-slate-900 dark:text-white/60 dark:hover:text-white",
                 ].join(" ")}
               >
                 Sign in
@@ -329,8 +335,8 @@ export default function LoginUI({
                 className={[
                   "rounded-[10px] px-3 py-2 text-xs font-semibold transition",
                   mode === "register"
-                    ? "bg-white text-slate-900 shadow-sm shadow-slate-900/5"
-                    : "text-slate-600 hover:text-slate-900",
+                    ? "bg-white text-slate-900 shadow-sm shadow-slate-900/5 dark:bg-white/[0.1] dark:text-white dark:shadow-none"
+                    : "text-slate-600 hover:text-slate-900 dark:text-white/60 dark:hover:text-white",
                 ].join(" ")}
               >
                 Create account
@@ -345,7 +351,7 @@ export default function LoginUI({
                 setMode("login");
                 setLocalError("");
               }}
-              className="text-xs font-semibold text-slate-600 transition hover:text-slate-900"
+              className="text-xs font-semibold text-slate-600 transition hover:text-slate-900 dark:text-white/60 dark:hover:text-white"
             >
               Back to sign in
             </button>
@@ -404,7 +410,7 @@ export default function LoginUI({
                   setLocalError("");
                   setEmailReset(emailLogin);
                 }}
-                className="text-xs font-semibold text-slate-600 transition hover:text-[var(--brand-600)]"
+                className="text-xs font-semibold text-slate-600 transition hover:text-[var(--brand-600)] dark:text-white/60 dark:hover:text-[var(--brand-300)]"
               >
                 Forgot password?
               </button>
@@ -420,7 +426,7 @@ export default function LoginUI({
 
             <a
               href="/demo?next=%2Fapp%2Fcrm"
-              className="flex h-11 w-full items-center justify-center rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-white"
+              className="flex h-11 w-full items-center justify-center rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-white dark:border-white/15 dark:bg-white/[0.04] dark:text-white/85 dark:hover:border-white/25 dark:hover:bg-white/[0.07] dark:hover:text-white"
             >
               Continue with demo account
             </a>
@@ -494,25 +500,25 @@ export default function LoginUI({
               onToggleShow={() => setShowRegPasswords((s) => !s)}
             />
 
-            <label className="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50/90 px-3.5 py-3">
+            <label className="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50/90 px-3.5 py-3 dark:border-white/10 dark:bg-white/[0.04]">
               <Checkbox
                 checked={agree}
                 onCheckedChange={(checked) => setAgree(Boolean(checked))}
                 className="mt-0.5"
                 aria-label="Agree to terms and privacy policy"
               />
-              <div className="text-xs leading-snug text-slate-700">
+              <div className="text-xs leading-snug text-slate-700 dark:text-white/80">
                 I agree to the{" "}
                 <a
                   href="/terms"
-                  className="font-semibold text-[var(--brand-600)] hover:underline"
+                  className="font-semibold text-[var(--brand-600)] hover:underline dark:text-[var(--brand-300)]"
                 >
                   Terms of Service
                 </a>{" "}
                 and{" "}
                 <a
                   href="/privacy"
-                  className="font-semibold text-[var(--brand-600)] hover:underline"
+                  className="font-semibold text-[var(--brand-600)] hover:underline dark:text-[var(--brand-300)]"
                 >
                   Privacy Policy
                 </a>

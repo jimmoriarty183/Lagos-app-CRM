@@ -22,7 +22,10 @@ export default function LegalDocumentPage({
   sections,
 }: Props) {
   return (
-    <div className="flex min-h-screen flex-col bg-[#f7fafc] text-slate-900">
+    <div
+      data-theme="light"
+      className="flex min-h-screen flex-col bg-[#f7fafc] text-slate-900"
+    >
       <main className="flex-1 px-4 py-10 sm:px-6 sm:py-14">
         <div className="mx-auto max-w-3xl">
           <Link

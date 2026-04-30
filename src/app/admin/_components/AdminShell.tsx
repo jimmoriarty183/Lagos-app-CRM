@@ -132,7 +132,10 @@ export function AdminShell({
   }
 
   return (
-    <div className="min-h-[100svh] bg-[#f6f8fb] text-slate-900">
+    <div
+      data-theme="light"
+      className="min-h-[100svh] bg-[#f6f8fb] text-slate-900"
+    >
       <div className="mx-auto max-w-[1320px] px-3 py-3 sm:px-4 sm:py-4 xl:px-6 2xl:px-8">
         <div
           className={`grid gap-3 ${navCollapsed ? "xl:grid-cols-[92px_minmax(0,1fr)]" : "xl:grid-cols-[250px_minmax(0,1fr)]"}`}

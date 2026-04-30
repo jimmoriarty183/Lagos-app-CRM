@@ -2,11 +2,12 @@
 
 import { useEffect } from "react";
 import { AuthHashHandler } from "@/components/AuthHashHandler";
+import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { useCookieBotCleanup } from "@/lib/use-cookiebot-cleanup";
 
 /**
  * Client-side wrapper for RootLayout
- * Handles CookieBot lifecycle management for SPA navigation
+ * Handles CookieBot lifecycle management for SPA navigation + theme provider.
  */
 export function RootLayoutClient({ children }: { children: React.ReactNode }) {
   // Prevent duplicate CookieBot initialization on route changes
@@ -20,9 +21,9 @@ export function RootLayoutClient({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <>
+    <ThemeProvider>
       <AuthHashHandler />
       {children}
-    </>
+    </ThemeProvider>
   );
 }

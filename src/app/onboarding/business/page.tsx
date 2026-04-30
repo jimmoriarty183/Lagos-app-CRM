@@ -57,7 +57,10 @@ export default async function OnboardingBusinessPage({
   }
 
   return (
-    <main className="min-h-screen bg-[#f6f8fb] px-4 py-8 text-slate-900 sm:px-6">
+    <main
+      data-theme="light"
+      className="min-h-screen bg-[#f6f8fb] px-4 py-8 text-slate-900 sm:px-6"
+    >
       <div className="mx-auto flex max-w-md items-center justify-center pt-8 sm:pt-14">
         <OnboardingBusinessForm />
       </div>

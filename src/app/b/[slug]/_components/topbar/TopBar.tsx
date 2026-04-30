@@ -135,7 +135,10 @@ export default function TopBar({
   };
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50 border-b border-[var(--neutral-200)] bg-white">
+    <header
+      data-theme="light"
+      className="fixed inset-x-0 top-0 z-50 border-b border-[var(--neutral-200)] bg-white"
+    >
       <div className="pt-[env(safe-area-inset-top)]">
         <div className="mx-auto flex h-[48px] max-w-[1200px] items-center justify-between gap-3 px-4">
           <div className="flex min-w-0 shrink-0 items-center gap-2">

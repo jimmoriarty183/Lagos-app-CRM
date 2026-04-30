@@ -142,9 +142,13 @@ export function BrandLockup({
   variant?: "default" | "dark-bg";
 }) {
   const isDarkBg = variant === "dark-bg";
+  // Single brand mark across both themes: purple box with white grid pattern.
+  // dark-bg variant inverts to a white box with purple grid for explicit
+  // overrides on inherently dark surfaces (kept for backwards compatibility).
+  // Text colour follows --text-primary so the wordmark reads in both themes.
   const bgColor = isDarkBg ? "#FFFFFF" : "var(--brand-600)";
   const patternColor = isDarkBg ? "var(--brand-600)" : "#FFFFFF";
-  const textColor = isDarkBg ? "#FFFFFF" : "var(--neutral-900)";
+  const textColor = isDarkBg ? "#FFFFFF" : "var(--text-primary)";
   const boxSize = iconSize * 1.125;
   const svgSize = iconSize * 0.625;
   const textSize = iconSize * 0.625;

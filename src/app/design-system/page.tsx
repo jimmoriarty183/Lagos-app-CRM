@@ -95,7 +95,10 @@ function Swatch({ token, value }: { token: string; value: string }) {
 
 export default function DesignSystemPage() {
   return (
-    <main className="min-h-screen bg-[var(--background)] px-4 py-6 md:px-8 md:py-10 xl:px-16">
+    <main
+      data-theme="light"
+      className="min-h-screen bg-[var(--background)] px-4 py-6 md:px-8 md:py-10 xl:px-16"
+    >
       <div className="mx-auto flex max-w-[1200px] flex-col gap-8">
         <section className="overflow-hidden rounded-[28px] border border-[var(--neutral-200)] bg-white shadow-[var(--shadow-sm)]">
           <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[var(--neutral-200)] px-6 py-5 md:px-8">

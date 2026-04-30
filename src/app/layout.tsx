@@ -17,8 +17,11 @@ const geistMono = Geist_Mono({
 });
 
 export const viewport: Viewport = {
-  colorScheme: "light",
-  themeColor: "var(--brand-600)",
+  colorScheme: "light dark",
+  themeColor: [
+    { media: "(prefers-color-scheme: dark)", color: "#0B0B14" },
+    { media: "(prefers-color-scheme: light)", color: "#FAFBFC" },
+  ],
 };
 
 export const metadata: Metadata = {
@@ -60,10 +63,13 @@ export default function RootLayout({
   const shouldEnableGoogleTag = process.env.VERCEL_ENV === "production";
 
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
-        <meta name="color-scheme" content="light only" />
-        <meta name="theme-color" content="#f5f6f8" />
+        {/* Apply theme synchronously before paint to avoid FOUC.
+            Default = dark; existing prefs preserved via localStorage("theme"). */}
+        <Script id="theme-init" strategy="beforeInteractive">
+          {`(function(){try{var t=localStorage.getItem('theme');if(t!=='light'&&t!=='dark')t='dark';document.documentElement.setAttribute('data-theme',t);document.documentElement.style.colorScheme=t;}catch(e){document.documentElement.setAttribute('data-theme','dark');document.documentElement.style.colorScheme='dark';}})();`}
+        </Script>
         <Script
           id="Cookiebot"
           src="https://consent.cookiebot.com/uc.js"

@@ -1,22 +1,28 @@
 @import "tailwindcss";
 
-/* MVP: force light theme */
+/* Tailwind v4 dark variant — driven by [data-theme="dark"] on <html> so we
+   can toggle without depending on prefers-color-scheme. Works for the
+   `dark:` modifier and any descendant selector under [data-theme="dark"]. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* Theme-invariant tokens (brand palette, neutrals, semantics, spacing,
+   type scale). Theme-dependent surfaces/text live in the per-theme blocks
+   below (`:root` defaults to dark; [data-theme="light"] overrides). */
 :root {
-  color-scheme: light;
-  
-  /* Brand Colors - Muted Purple (#5B5BB3) */
+  /* Brand Colors - Muted Purple (#5B5BB3) — same in both themes */
   --brand-50: #F7F7FC;
   --brand-100: #EDEDF9;
   --brand-200: #DCDCF3;
   --brand-300: #C4C4E8;
   --brand-400: #A8A8DA;
   --brand-500: #7C7CC8;
-  --brand-600: #5B5BB3;  /* PRIMARY - основной цвет бренда */
+  --brand-600: #5B5BB3;  /* PRIMARY */
   --brand-700: #4444A0;
   --brand-800: #333387;
   --brand-900: #262670;
-  
-  /* Neutral Palette - Gray Scale */
+
+  /* Neutral Palette - Gray Scale (raw values — use surface/text tokens
+     below for theme-aware surfaces). */
   --neutral-50: #FAFBFC;
   --neutral-100: #F5F6F7;
   --neutral-200: #EBEDEF;
@@ -28,7 +34,7 @@
   --neutral-800: #262B35;
   --neutral-900: #0F1419;
   --neutral-950: #080A0D;
-  
+
   /* Semantic Colors */
   --success-500: #0EA971;
   --success-50: #EDFBF5;
@@ -66,25 +72,48 @@
   --brand-primary-soft: var(--brand-100);
   --brand-primary-border: var(--brand-300);
   --brand-primary-text: var(--brand-700);
-  
-  /* Layout & Typography */
+
+  /* Theme-aware surface / text / border tokens.
+     Defaults below = DARK theme (matches /for-cleaning-companies palette).
+     Override block at [data-theme="light"] flips to the legacy light look. */
+
+  /* Surfaces */
+  --bg-app: #0B0B14;
+  --bg-elevated: rgba(255, 255, 255, 0.03);
+  --bg-elevated-strong: rgba(255, 255, 255, 0.05);
+  --bg-overlay: #0E0E1B;
+  --bg-inverse: #FFFFFF;
+
+  /* Borders */
+  --border-default: rgba(255, 255, 255, 0.10);
+  --border-strong: rgba(255, 255, 255, 0.20);
+  --border-subtle: rgba(255, 255, 255, 0.06);
+
+  /* Text */
+  --text-primary: #FFFFFF;
+  --text-secondary: rgba(255, 255, 255, 0.85);
+  --text-tertiary: rgba(255, 255, 255, 0.65);
+  --text-muted: rgba(255, 255, 255, 0.45);
+  --text-on-brand: #FFFFFF;
+
+  /* Page background — radial brand glow on near-black. */
   --background:
-    radial-gradient(1300px 600px at 10% -10%, rgba(91, 91, 179, 0.16) 0%, rgba(91, 91, 179, 0) 64%),
-    radial-gradient(1100px 520px at 88% -12%, rgba(124, 124, 200, 0.13) 0%, rgba(124, 124, 200, 0) 66%),
-    radial-gradient(900px 360px at 50% -18%, rgba(168, 168, 218, 0.12) 0%, rgba(168, 168, 218, 0) 68%),
-    linear-gradient(to bottom, var(--neutral-50) 0%, var(--neutral-100) 100%);
-  --foreground: var(--neutral-900);
-  --card: #FFFFFF;
-  --muted: var(--neutral-500);
-  --border: var(--neutral-200);
+    radial-gradient(900px 420px at 50% -10%, rgba(91, 91, 179, 0.45) 0%, rgba(91, 91, 179, 0) 70%),
+    linear-gradient(180deg, #0B0B14 0%, #0B0B14 60%, #0E0E1B 100%);
+  --foreground: var(--text-primary);
+  --card: var(--bg-elevated);
+  --muted: var(--text-tertiary);
+  --border: var(--border-default);
   --radius: 8px;
-  --shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 3px rgba(16, 24, 40, 0.1);
-  --shadow-md: 0 10px 24px rgba(15, 23, 42, 0.10);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.45), 0 1px 3px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 16px 36px rgba(0, 0, 0, 0.55);
   --brand-dark: var(--neutral-800);
   --brand-light: var(--neutral-50);
   --brand-accent: var(--success-500);
   --brand-warning: var(--warning-500);
-  --brand-ring: rgba(91, 91, 179, 0.2);
+  --brand-ring: rgba(91, 91, 179, 0.35);
+
+  color-scheme: dark;
   
   /* Typography Scale - Geist (compact) */
   --font-h1: 1.75rem;       /* 28px */
@@ -116,6 +145,79 @@
   --fw-regular: 400;
   --fw-medium: 500;
   --fw-semibold: 600;
+}
+
+/* Subtree opt-in: any element with data-theme="dark" rebinds the dark tokens
+   so it works even when the closest ancestor html is in light mode. Mirrors
+   the :root defaults above. Without this rule, a dark island inside a light
+   page would inherit light vars and a light scrollbar. */
+[data-theme="dark"] {
+  --bg-app: #0B0B14;
+  --bg-elevated: rgba(255, 255, 255, 0.03);
+  --bg-elevated-strong: rgba(255, 255, 255, 0.05);
+  --bg-overlay: #0E0E1B;
+  --bg-inverse: #FFFFFF;
+
+  --border-default: rgba(255, 255, 255, 0.10);
+  --border-strong: rgba(255, 255, 255, 0.20);
+  --border-subtle: rgba(255, 255, 255, 0.06);
+
+  --text-primary: #FFFFFF;
+  --text-secondary: rgba(255, 255, 255, 0.85);
+  --text-tertiary: rgba(255, 255, 255, 0.65);
+  --text-muted: rgba(255, 255, 255, 0.45);
+  --text-on-brand: #FFFFFF;
+
+  --background:
+    radial-gradient(900px 420px at 50% -10%, rgba(91, 91, 179, 0.45) 0%, rgba(91, 91, 179, 0) 70%),
+    linear-gradient(180deg, #0B0B14 0%, #0B0B14 60%, #0E0E1B 100%);
+  --foreground: var(--text-primary);
+  --card: var(--bg-elevated);
+  --muted: var(--text-tertiary);
+  --border: var(--border-default);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.45), 0 1px 3px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 16px 36px rgba(0, 0, 0, 0.55);
+  --brand-ring: rgba(91, 91, 179, 0.35);
+
+  color-scheme: dark;
+}
+
+/* LIGHT theme overrides — restores the legacy palette when the user toggles
+   to light. Brand, neutrals, and semantics inherit from :root unchanged. */
+[data-theme="light"] {
+  /* Surfaces */
+  --bg-app: var(--neutral-50);
+  --bg-elevated: #FFFFFF;
+  --bg-elevated-strong: #FFFFFF;
+  --bg-overlay: #FFFFFF;
+  --bg-inverse: #0B0B14;
+
+  /* Borders */
+  --border-default: var(--neutral-200);
+  --border-strong: var(--neutral-300);
+  --border-subtle: var(--neutral-100);
+
+  /* Text */
+  --text-primary: var(--neutral-900);
+  --text-secondary: var(--neutral-800);
+  --text-tertiary: var(--neutral-600);
+  --text-muted: var(--neutral-500);
+  --text-on-brand: #FFFFFF;
+
+  --background:
+    radial-gradient(1300px 600px at 10% -10%, rgba(91, 91, 179, 0.16) 0%, rgba(91, 91, 179, 0) 64%),
+    radial-gradient(1100px 520px at 88% -12%, rgba(124, 124, 200, 0.13) 0%, rgba(124, 124, 200, 0) 66%),
+    radial-gradient(900px 360px at 50% -18%, rgba(168, 168, 218, 0.12) 0%, rgba(168, 168, 218, 0) 68%),
+    linear-gradient(to bottom, var(--neutral-50) 0%, var(--neutral-100) 100%);
+  --foreground: var(--text-primary);
+  --card: var(--bg-elevated);
+  --muted: var(--text-muted);
+  --border: var(--border-default);
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 3px rgba(16, 24, 40, 0.1);
+  --shadow-md: 0 10px 24px rgba(15, 23, 42, 0.10);
+  --brand-ring: rgba(91, 91, 179, 0.2);
+
+  color-scheme: light;
 }
 
 html,
@@ -427,7 +529,7 @@ h4 {
   margin: var(--space-4) 0;
 }
 
-/* Form Elements */
+/* Form Elements — theme-aware via tokens (work in both dark and light) */
 input[type="text"],
 input[type="email"],
 input[type="password"],
@@ -441,10 +543,10 @@ input[type="datetime-local"],
 select,
 textarea {
   padding: 6px 12px;
-  border: 1px solid var(--neutral-200);
+  border: 1px solid var(--border-default);
   border-radius: var(--radius);
-  color: var(--neutral-900);
-  background-color: #FFFFFF;
+  color: var(--text-primary);
+  background-color: var(--bg-elevated);
   font-size: 0.8125rem;
   transition: border-color 150ms;
 }
@@ -477,8 +579,8 @@ input[type="time"]:disabled,
 input[type="datetime-local"]:disabled,
 select:disabled,
 textarea:disabled {
-  background-color: var(--neutral-100);
-  color: var(--neutral-500);
+  background-color: var(--bg-elevated-strong);
+  color: var(--text-muted);
   cursor: not-allowed;
 }
 
@@ -489,20 +591,20 @@ textarea.error {
 
 textarea {
   padding: 8px 12px;
-  border: 1px solid var(--neutral-200);
+  border: 1px solid var(--border-default);
   border-radius: var(--radius);
-  color: var(--neutral-900);
-  background-color: #FFFFFF;
+  color: var(--text-primary);
+  background-color: var(--bg-elevated);
   resize: vertical;
   min-height: 80px;
 }
 
 select {
   padding: 6px 36px 6px 12px;
-  border: 1px solid var(--neutral-200);
+  border: 1px solid var(--border-default);
   border-radius: var(--radius);
-  color: var(--neutral-900);
-  background-color: #FFFFFF;
+  color: var(--text-primary);
+  background-color: var(--bg-elevated);
   appearance: none;
   cursor: pointer;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%235F6672' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
@@ -777,25 +879,26 @@ input[type="radio"]:disabled {
 }
 
 .brand-secondary-btn {
-  background: var(--neutral-100);
-  color: var(--neutral-900);
+  background: var(--bg-elevated-strong);
+  color: var(--text-primary);
   padding: var(--space-2) var(--space-4);
   border-radius: var(--radius);
   font-weight: var(--fw-medium);
   font-size: var(--font-body-sm);
-  border: none;
-  transition: background-color 150ms;
+  border: 1px solid var(--border-default);
+  transition: background-color 150ms, border-color 150ms;
   cursor: pointer;
 }
 
 .brand-secondary-btn:hover {
-  background: var(--neutral-200);
+  background: var(--bg-elevated-strong);
+  border-color: var(--border-strong);
 }
 
 .brand-secondary-outline-btn {
   background: transparent;
-  border: 1px solid var(--neutral-200);
-  color: var(--neutral-900);
+  border: 1px solid var(--border-default);
+  color: var(--text-primary);
   padding: var(--space-2) var(--space-4);
   border-radius: var(--radius);
   font-weight: var(--fw-medium);
@@ -805,7 +908,7 @@ input[type="radio"]:disabled {
 
 .brand-ghost-btn {
   background: transparent;
-  color: var(--neutral-700);
+  color: var(--text-secondary);
   padding: var(--space-2) var(--space-4);
   border-radius: var(--radius);
   font-weight: var(--fw-medium);
@@ -814,7 +917,7 @@ input[type="radio"]:disabled {
 }
 
 .brand-ghost-btn:hover {
-  background: var(--neutral-100);
+  background: var(--bg-elevated-strong);
 }
 
 .brand-ghost-brand-btn {
@@ -863,6 +966,12 @@ input[type="radio"]:disabled {
 }
 
 .brand-soft-chip {
+  background: rgba(91, 91, 179, 0.15);
+  color: var(--brand-200);
+  border-color: rgba(124, 124, 200, 0.35);
+}
+
+[data-theme="light"] .brand-soft-chip {
   background: var(--brand-primary-soft);
   color: var(--brand-primary-text);
   border-color: var(--brand-primary-border);

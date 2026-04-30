@@ -88,7 +88,10 @@ export default async function SelectBusinessPage() {
   if (options.length === 1) redirect(`/b/${options[0].slug}`);
 
   return (
-    <main className="min-h-screen bg-[#f6f8fb] px-4 py-8 text-slate-900 sm:px-6">
+    <main
+      data-theme="light"
+      className="min-h-screen bg-[#f6f8fb] px-4 py-8 text-slate-900 sm:px-6"
+    >
       <div className="mx-auto max-w-3xl">
         <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_20px_60px_-42px_rgba(15,23,42,0.35)]">
           <div className="border-b border-slate-200 bg-white px-6 py-8 sm:px-8">

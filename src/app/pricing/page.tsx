@@ -6,6 +6,7 @@ import { BrandLockup } from "@/components/Brand";
 
 import BuyCtaButton from "@/components/BuyCtaButton";
 import { PublicFooter } from "@/components/PublicFooter";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
 type BillingCycle = "monthly" | "yearly";
 
@@ -446,12 +447,15 @@ export default function PricingPage() {
               <button className="active">Pricing</button>
               <button onClick={() => router.push("/login")}>Log in</button>
             </div>
-            <button
-              className="primary"
-              onClick={() => router.push("/login?next=%2Fb%2Ftest")}
-            >
-              Open system
-            </button>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <button
+                className="primary"
+                onClick={() => router.push("/login?next=%2Fb%2Ftest")}
+              >
+                Open system
+              </button>
+              <ThemeToggle size="sm" />
+            </div>
           </nav>
 
           <section className="hero card">
@@ -889,10 +893,14 @@ export default function PricingPage() {
         </div>
 
         <style jsx>{`
+          /* THEME-AWARE: surface/text/border colours come from CSS vars
+             defined in globals.css ([:root] = dark, [data-theme="light"] = light).
+             Brand-tinted accents use --brand-* directly so they read OK in
+             both themes. */
           .page {
             min-height: 100vh;
-            background: #f8fbff;
-            color: #0f172a;
+            background: var(--bg-app);
+            color: var(--text-primary);
             padding: 20px 16px 44px;
             overflow-x: hidden;
           }
@@ -904,10 +912,10 @@ export default function PricingPage() {
             min-width: 0;
           }
           .card {
-            background: #ffffff;
-            border: 1px solid #dbe5f1;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
             border-radius: 18px;
-            box-shadow: 0 6px 20px rgba(15, 23, 42, 0.05);
+            box-shadow: var(--shadow);
             min-width: 0;
           }
           .topNav {
@@ -915,8 +923,8 @@ export default function PricingPage() {
             align-items: center;
             justify-content: space-between;
             gap: 12px;
-            background: #ffffff;
-            border: 1px solid #dbe5f1;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
             border-radius: 16px;
             padding: 12px;
             min-width: 0;
@@ -926,7 +934,7 @@ export default function PricingPage() {
             background: transparent;
             font-size: 20px;
             font-weight: 800;
-            color: #1e3a8a;
+            color: var(--text-primary);
             cursor: pointer;
             min-width: 0;
           }
@@ -940,11 +948,11 @@ export default function PricingPage() {
             padding: 8px 10px;
             border-radius: 10px;
             cursor: pointer;
-            color: #334155;
+            color: var(--text-secondary);
             font-weight: 600;
           }
           .links .active {
-            background: #eff6ff;
+            background: rgba(91, 91, 179, 0.12);
             color: var(--brand-600);
           }
           button.primary,
@@ -957,15 +965,15 @@ export default function PricingPage() {
             cursor: pointer;
           }
           button.primary {
-            box-shadow: 0 10px 20px -12px rgba(99, 102, 241, 0.72);
+            box-shadow: 0 10px 20px -12px rgba(91, 91, 179, 0.6);
             border: 1px solid var(--brand-600);
             background: var(--brand-600);
             color: white;
           }
           button.secondary {
-            border: 1px solid #c7d7eb;
-            background: #fff;
-            color: #0f172a;
+            border: 1px solid var(--border-strong);
+            background: var(--bg-elevated);
+            color: var(--text-primary);
           }
           .hero {
             padding: 30px;
@@ -974,13 +982,16 @@ export default function PricingPage() {
           .eyebrow {
             margin: 0;
             display: inline-block;
-            border: 1px solid #c7d2fe;
-            background: #eef2ff;
+            border: 1px solid rgba(124, 124, 200, 0.4);
+            background: rgba(91, 91, 179, 0.12);
             color: var(--brand-600);
             font-size: 12px;
             font-weight: 600;
             border-radius: 999px;
             padding: 6px 12px;
+          }
+          [data-theme="dark"] .eyebrow {
+            color: var(--brand-200);
           }
           h1 {
             margin: 14px 0 8px;
@@ -991,7 +1002,7 @@ export default function PricingPage() {
           }
           .heroCopy {
             margin: 0;
-            color: #475569;
+            color: var(--text-tertiary);
             font-size: 16px;
           }
           .billingToggle {
@@ -1000,23 +1011,26 @@ export default function PricingPage() {
             align-items: center;
             gap: 6px;
             padding: 6px;
-            background: #f8fafc;
-            border: 1px solid #dbe5f1;
+            background: var(--bg-elevated-strong);
+            border: 1px solid var(--border-default);
             border-radius: 14px;
             flex-wrap: wrap;
           }
           .toggle {
             border: none;
             background: transparent;
-            color: #475569;
+            color: var(--text-tertiary);
             display: inline-flex;
             align-items: center;
             gap: 8px;
           }
           .toggle.active {
-            background: #ffffff;
-            color: #0f172a;
-            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+            background: var(--bg-elevated);
+            color: var(--text-primary);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+          }
+          [data-theme="dark"] .toggle.active {
+            background: rgba(255, 255, 255, 0.1);
           }
           .toggleBadge {
             display: inline-flex;
@@ -1025,15 +1039,21 @@ export default function PricingPage() {
             padding: 3px 8px;
             font-size: 11px;
             font-weight: 700;
-            background: #eef2ff;
-            color: #4f46e5;
-            border: 1px solid #c7d2fe;
+            background: rgba(91, 91, 179, 0.15);
+            color: var(--brand-600);
+            border: 1px solid rgba(124, 124, 200, 0.4);
+          }
+          [data-theme="dark"] .toggleBadge {
+            color: var(--brand-200);
           }
           .launchBanner {
             margin: 12px 0 0;
-            color: #4f46e5;
+            color: var(--brand-600);
             font-size: 14px;
             font-weight: 600;
+          }
+          [data-theme="dark"] .launchBanner {
+            color: var(--brand-300);
           }
           .heroCtas {
             margin-top: 18px;
@@ -1052,24 +1072,38 @@ export default function PricingPage() {
             position: relative;
             display: flex;
             flex-direction: column;
-            border-color: #e2e8f0;
+            border-color: var(--border-default);
           }
           .plan.highlight {
-            border-color: #818cf8;
-            box-shadow: 0 6px 16px rgba(79, 70, 229, 0.08);
-            background: linear-gradient(180deg, #ffffff 0%, #fcfdff 100%);
+            border-color: rgba(124, 124, 200, 0.6);
+            box-shadow: 0 6px 16px rgba(91, 91, 179, 0.18);
+            background: linear-gradient(
+              180deg,
+              var(--bg-elevated) 0%,
+              rgba(91, 91, 179, 0.04) 100%
+            );
+          }
+          [data-theme="dark"] .plan.highlight {
+            background: linear-gradient(
+              180deg,
+              rgba(91, 91, 179, 0.12) 0%,
+              rgba(91, 91, 179, 0.02) 100%
+            );
           }
           .pill {
             position: absolute;
             top: 12px;
             right: 12px;
-            background: #eef2ff;
-            color: #4f46e5;
-            border: 1px solid #c7d2fe;
+            background: rgba(91, 91, 179, 0.15);
+            color: var(--brand-600);
+            border: 1px solid rgba(124, 124, 200, 0.4);
             border-radius: 999px;
             font-size: 11px;
             font-weight: 600;
             padding: 4px 9px;
+          }
+          [data-theme="dark"] .pill {
+            color: var(--brand-200);
           }
           h2 {
             margin: 0;
@@ -1077,7 +1111,7 @@ export default function PricingPage() {
           }
           .note {
             margin: 8px 0 0;
-            color: #475569;
+            color: var(--text-tertiary);
             line-height: 1.45;
             min-height: 78px;
           }
@@ -1095,12 +1129,15 @@ export default function PricingPage() {
             padding: 5px 10px;
             font-size: 11px;
             font-weight: 700;
-            background: #eef2ff;
-            color: #4f46e5;
-            border: 1px solid #c7d2fe;
+            background: rgba(91, 91, 179, 0.15);
+            color: var(--brand-600);
+            border: 1px solid rgba(124, 124, 200, 0.4);
+          }
+          [data-theme="dark"] .launchPill {
+            color: var(--brand-200);
           }
           .launchText {
-            color: #64748b;
+            color: var(--text-muted);
             font-size: 12px;
             font-weight: 600;
           }
@@ -1119,10 +1156,10 @@ export default function PricingPage() {
             display: inline-flex;
             align-items: baseline;
             gap: 4px;
-            color: #94a3b8;
+            color: var(--text-muted);
             text-decoration: line-through;
             text-decoration-thickness: 2px;
-            text-decoration-color: #cbd5e1;
+            text-decoration-color: var(--border-strong);
             line-height: 1;
           }
           .oldCurrency {
@@ -1155,41 +1192,44 @@ export default function PricingPage() {
           }
           .period {
             font-size: 20px;
-            color: #334155;
+            color: var(--text-secondary);
             font-weight: 600;
             letter-spacing: -0.01em;
           }
           .vatNote {
             margin: 4px 0 0;
-            color: #64748b;
+            color: var(--text-muted);
             font-weight: 600;
             font-size: 12px;
             letter-spacing: 0.02em;
           }
           .yearlySavings {
             margin: 8px 0 0;
-            color: #4f46e5;
+            color: var(--brand-600);
             font-weight: 600;
             font-size: 13px;
             min-height: 20px;
           }
+          [data-theme="dark"] .yearlySavings {
+            color: var(--brand-300);
+          }
           .priceNote {
             margin: 8px 0 0;
-            color: #475569;
+            color: var(--text-tertiary);
             font-weight: 600;
             font-size: 14px;
             min-height: 22px;
           }
           .trialNote {
             margin: 4px 0 0;
-            color: #475569;
+            color: var(--text-tertiary);
             font-size: 12px;
             font-weight: 500;
           }
           .plan ul {
             margin: 14px 0 0;
             padding-left: 20px;
-            color: #1f2937;
+            color: var(--text-primary);
             line-height: 1.58;
             flex: 1 1 auto;
           }
@@ -1218,7 +1258,7 @@ export default function PricingPage() {
           }
           .enterpriseCta p {
             margin: 0;
-            color: #475569;
+            color: var(--text-tertiary);
           }
           .enterpriseContact {
             margin-top: 6px !important;
@@ -1229,11 +1269,14 @@ export default function PricingPage() {
             text-decoration: none;
             font-weight: 600;
           }
+          [data-theme="dark"] .enterpriseContact a {
+            color: var(--brand-300);
+          }
           .enterpriseContact a:hover {
             text-decoration: underline;
           }
           .salesForm {
-            border-top: 1px solid #e2e8f0;
+            border-top: 1px solid var(--border-default);
             padding-top: 14px;
             display: grid;
             gap: 12px;
@@ -1252,7 +1295,7 @@ export default function PricingPage() {
           }
           .salesForm label > span {
             font-size: 13px;
-            color: #334155;
+            color: var(--text-secondary);
             font-weight: 600;
           }
           .fieldError {
@@ -1260,14 +1303,17 @@ export default function PricingPage() {
             font-size: 12px;
             line-height: 1.3;
           }
+          [data-theme="dark"] .fieldError {
+            color: #fb7185;
+          }
           .salesForm input,
           .salesForm select,
           .salesForm textarea {
             width: 100%;
-            border: 1px solid #cbd5e1;
+            border: 1px solid var(--border-strong);
             border-radius: 10px;
-            background: #fff;
-            color: #0f172a;
+            background: var(--bg-elevated);
+            color: var(--text-primary);
             outline: none;
             font-size: 14px;
             padding: 10px 12px;
@@ -1284,7 +1330,7 @@ export default function PricingPage() {
           }
           .salesForm .invalid {
             border-color: #fb7185;
-            background: #fff1f2;
+            background: rgba(251, 113, 133, 0.08);
           }
           .salesActions {
             display: flex;
@@ -1299,14 +1345,24 @@ export default function PricingPage() {
             font-size: 14px;
           }
           .salesError {
-            border: 1px solid #fecdd3;
-            background: #fff1f2;
+            border: 1px solid rgba(254, 205, 211, 1);
+            background: rgba(255, 241, 242, 1);
             color: #be123c;
           }
+          [data-theme="dark"] .salesError {
+            border-color: rgba(251, 113, 133, 0.35);
+            background: rgba(232, 69, 69, 0.1);
+            color: #fda4af;
+          }
           .salesSuccess {
-            border: 1px solid #bbf7d0;
-            background: #f0fdf4;
+            border: 1px solid rgba(187, 247, 208, 1);
+            background: rgba(240, 253, 244, 1);
             color: #166534;
+          }
+          [data-theme="dark"] .salesSuccess {
+            border-color: rgba(74, 222, 128, 0.35);
+            background: rgba(14, 169, 113, 0.1);
+            color: #6ee7b7;
           }
           .honey {
             position: absolute;
@@ -1330,7 +1386,7 @@ export default function PricingPage() {
             width: 100%;
             min-width: 660px;
             border-collapse: collapse;
-            border: 1px solid #dbe5f1;
+            border: 1px solid var(--border-default);
             border-radius: 12px;
             overflow: hidden;
           }
@@ -1338,12 +1394,12 @@ export default function PricingPage() {
           td {
             padding: 12px;
             text-align: left;
-            border-bottom: 1px solid #e5edf6;
-            color: #334155;
+            border-bottom: 1px solid var(--border-default);
+            color: var(--text-secondary);
           }
           th {
-            background: #f8fbff;
-            color: #0f172a;
+            background: var(--bg-elevated-strong);
+            color: var(--text-primary);
             font-weight: 600;
           }
           .whoIsFor {
@@ -1355,7 +1411,7 @@ export default function PricingPage() {
             gap: 12px;
           }
           .steps article {
-            border: 1px solid #e2e8f0;
+            border: 1px solid var(--border-default);
             border-radius: 14px;
             padding: 14px;
           }
@@ -1366,7 +1422,7 @@ export default function PricingPage() {
           .steps p,
           .faq p {
             margin: 0;
-            color: #475569;
+            color: var(--text-tertiary);
             line-height: 1.6;
           }
           .faq {
@@ -1378,7 +1434,7 @@ export default function PricingPage() {
             gap: 12px;
           }
           .faqGrid article {
-            border: 1px solid #e2e8f0;
+            border: 1px solid var(--border-default);
             border-radius: 14px;
             padding: 14px;
           }

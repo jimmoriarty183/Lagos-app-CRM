@@ -28,7 +28,7 @@ import {
   Users,
   Wrench,
 } from "lucide-react";
-import { BrandIconDarkBg, BrandLockup } from "@/components/Brand";
+import { BrandIcon, BrandLockup } from "@/components/Brand";
 
 const SIGNUP_HREF = "/login?mode=register";
 const PROMO_CODE = "FOUNDING50";
@@ -356,7 +356,7 @@ export function CleaningLanding() {
       <header className="relative z-10 border-b border-white/5">
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-5 py-4 sm:px-8">
           <Link href="/" aria-label="Ordo home" className="flex items-center">
-            <BrandLockup variant="dark-bg" iconSize={28} />
+            <BrandLockup iconSize={28} />
           </Link>
           <div className="flex items-center gap-2 sm:gap-3">
             <Link
@@ -991,7 +991,7 @@ function DarkFooter() {
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="max-w-sm">
             <div className="flex items-center gap-3">
-              <BrandIconDarkBg size={30} />
+              <BrandIcon size={30} />
               <p className="text-base font-semibold tracking-tight text-white">
                 Ordo
               </p>
