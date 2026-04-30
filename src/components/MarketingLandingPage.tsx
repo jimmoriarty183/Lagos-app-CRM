@@ -7,7 +7,6 @@ import {
   ArrowRight,
   BarChart3,
   BriefcaseBusiness,
-  Check,
   ChartNoAxesCombined,
   CheckCircle2,
   Clock3,
@@ -45,6 +44,15 @@ const scrollFadeUp: Variants = {
 const scrollStagger: Variants = {
   hidden: {},
   visible: { transition: { staggerChildren: 0.08 } },
+};
+
+const rowSlideIn: Variants = {
+  hidden: { opacity: 0, x: -16 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] },
+  },
 };
 
 type BillingCycle = "monthly" | "yearly";
@@ -236,9 +244,9 @@ export function MarketingLandingPage() {
       </header>
 
       <main>
-        <section className="mx-auto grid w-full max-w-7xl gap-8 px-5 pb-14 pt-10 sm:px-6 lg:grid-cols-[1fr_1.05fr] lg:gap-12 lg:px-8 lg:pt-20">
+        <section className="mx-auto grid w-full max-w-7xl gap-6 px-5 pb-10 pt-8 sm:gap-8 sm:pb-14 sm:pt-10 sm:px-6 lg:grid-cols-[1fr_1.05fr] lg:gap-12 lg:px-8 lg:pt-20">
           <motion.div
-            className="space-y-6"
+            className="space-y-5 sm:space-y-6"
             variants={heroStagger}
             initial="hidden"
             animate="visible"
@@ -274,7 +282,7 @@ export function MarketingLandingPage() {
             >
               <Link
                 href="/login"
-                className="brand-primary-btn group inline-flex items-center gap-2 rounded-xl px-5 py-3 font-semibold shadow-[0_10px_30px_-12px_rgba(91,91,179,0.6)] transition-all hover:-translate-y-0.5 hover:shadow-[0_14px_36px_-12px_rgba(91,91,179,0.7)]"
+                className="brand-primary-btn group inline-flex items-center gap-2 rounded-xl px-5 py-3 font-semibold shadow-[0_10px_30px_-12px_rgba(91,91,179,0.6)] transition-all hover:-translate-y-0.5 hover:shadow-[0_14px_36px_-12px_rgba(91,91,179,0.7)] active:scale-[0.98]"
               >
                 Start free
                 <ArrowRight
@@ -284,7 +292,7 @@ export function MarketingLandingPage() {
               </Link>
               <Link
                 href="/demo?next=%2Fapp%2Fcrm"
-                className="brand-secondary-btn inline-flex items-center rounded-xl px-5 py-3 font-semibold transition-all hover:-translate-y-0.5"
+                className="brand-secondary-btn inline-flex items-center rounded-xl px-5 py-3 font-semibold transition-all hover:-translate-y-0.5 active:scale-[0.98]"
               >
                 Try demo
               </Link>
@@ -361,7 +369,7 @@ export function MarketingLandingPage() {
 
         <section
           id="features"
-          className="mx-auto w-full max-w-7xl px-5 pb-20 pt-10 sm:px-6 lg:px-8"
+          className="mx-auto w-full max-w-7xl px-5 pb-14 pt-6 sm:pb-20 sm:pt-10 sm:px-6 lg:px-8"
         >
           <ScrollReveal>
             <SectionTitle
@@ -376,7 +384,7 @@ export function MarketingLandingPage() {
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-80px" }}
-            className="mt-10 grid auto-rows-[minmax(0,1fr)] gap-4 lg:grid-cols-6"
+            className="mt-6 grid gap-3 sm:mt-10 sm:gap-4 lg:auto-rows-[minmax(0,1fr)] lg:grid-cols-6"
           >
             <BentoCard
               className="lg:col-span-4"
@@ -432,7 +440,7 @@ export function MarketingLandingPage() {
 
         <section
           id="demo"
-          className="relative mx-auto w-full max-w-7xl px-5 pb-20 sm:px-6 lg:px-8"
+          className="relative mx-auto w-full max-w-7xl px-5 pb-14 sm:pb-20 sm:px-6 lg:px-8"
         >
           <ScrollReveal>
             <SectionTitle
@@ -443,7 +451,7 @@ export function MarketingLandingPage() {
           </ScrollReveal>
 
           <ScrollReveal delay={0.1}>
-            <div className="relative mt-10 overflow-hidden rounded-3xl border border-slate-200/70 bg-white/80 p-5 shadow-[0_30px_60px_-30px_rgba(91,91,179,0.35)] backdrop-blur-xl sm:p-7">
+            <div className="relative mt-6 overflow-hidden rounded-3xl border border-slate-200/70 bg-white/80 p-4 shadow-[0_30px_60px_-30px_rgba(91,91,179,0.35)] backdrop-blur-xl sm:mt-10 sm:p-7">
               <div
                 aria-hidden
                 className="pointer-events-none absolute -top-32 -right-20 h-[320px] w-[320px] rounded-full bg-[radial-gradient(circle,_rgba(91,91,179,0.18)_0%,_rgba(91,91,179,0)_70%)]"
@@ -510,7 +518,7 @@ export function MarketingLandingPage() {
           </ScrollReveal>
         </section>
 
-        <section className="mx-auto w-full max-w-7xl px-5 pb-20 sm:px-6 lg:px-8">
+        <section className="mx-auto w-full max-w-7xl px-5 pb-14 sm:pb-20 sm:px-6 lg:px-8">
           <ScrollReveal>
             <SectionTitle
               badge="How it works"
@@ -524,7 +532,7 @@ export function MarketingLandingPage() {
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-80px" }}
-            className="relative mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-4"
+            className="relative mt-6 grid gap-3 sm:mt-10 sm:gap-4 md:grid-cols-2 lg:grid-cols-4"
           >
             <div
               aria-hidden
@@ -555,7 +563,7 @@ export function MarketingLandingPage() {
 
         <section
           id="pricing"
-          className="mx-auto w-full max-w-7xl px-5 pb-20 sm:px-6 lg:px-8"
+          className="mx-auto w-full max-w-7xl px-5 pb-14 sm:pb-20 sm:px-6 lg:px-8"
         >
           <ScrollReveal>
             <SectionTitle
@@ -566,7 +574,7 @@ export function MarketingLandingPage() {
           </ScrollReveal>
 
           <ScrollReveal delay={0.1}>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="mt-6 flex flex-wrap items-center justify-between gap-3 sm:mt-8">
               <div className="inline-flex rounded-xl border border-slate-200 bg-white/70 p-1 shadow-sm backdrop-blur">
                 <button
                   type="button"
@@ -600,8 +608,8 @@ export function MarketingLandingPage() {
                   </span>
                 </button>
               </div>
-              <p className="text-sm font-semibold text-[var(--brand-700)]">
-                Founding launch pricing — limited period.
+              <p className="text-[12px] font-semibold uppercase tracking-[0.1em] text-[var(--brand-700)]">
+                ● Founding launch — limited period
               </p>
             </div>
           </ScrollReveal>
@@ -611,106 +619,125 @@ export function MarketingLandingPage() {
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-60px" }}
-            className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4"
+            className="mt-5 overflow-hidden rounded-2xl border border-slate-200 bg-white sm:mt-6 md:grid md:grid-cols-2 xl:grid-cols-4"
           >
-            {plans.map((plan) => {
+            {plans.map((plan, idx) => {
               const launchPrice = plan.launch[billingCycle];
               const regularPrice = plan.regular[billingCycle];
               const period = billingCycle === "monthly" ? "mo" : "yr";
+
+              // 4 cells: stack at <md, 2x2 at md, 1x4 at xl. Borders by index.
+              const cellBorder = (() => {
+                switch (idx) {
+                  case 0:
+                    return "md:border-r md:border-b md:border-slate-200 xl:border-b-0";
+                  case 1:
+                    return "md:border-b md:border-slate-200 xl:border-b-0 xl:border-r xl:border-slate-200";
+                  case 2:
+                    return "md:border-r md:border-slate-200";
+                  default:
+                    return "";
+                }
+              })();
+              const stackBorder = idx < 3 ? "border-b border-slate-200 md:border-b-0" : "";
+
               return (
                 <motion.article
                   key={plan.name}
                   variants={scrollFadeUp}
-                  whileHover={{ y: -4 }}
-                  className={`group relative flex flex-col rounded-2xl border bg-white p-6 transition ${
+                  className={`relative flex flex-col p-5 sm:p-6 ${stackBorder} ${cellBorder} ${
                     plan.highlight
-                      ? "border-[var(--brand-300)] shadow-[0_20px_50px_-20px_rgba(91,91,179,0.45)] ring-1 ring-[var(--brand-200)]"
-                      : "border-slate-200 hover:border-slate-300 hover:shadow-lg"
+                      ? "bg-[var(--brand-50)]/40"
+                      : "bg-white transition hover:bg-slate-50"
                   }`}
                 >
                   {plan.highlight ? (
-                    <>
-                      <div
-                        aria-hidden
-                        className="pointer-events-none absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-[var(--brand-500)] to-transparent"
-                      />
-                      <span className="absolute right-4 top-4 inline-flex items-center gap-1 rounded-full border border-[var(--brand-300)] bg-[var(--brand-100)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--brand-700)]">
-                        <Sparkles size={11} />
+                    <motion.span
+                      aria-hidden
+                      initial={{ scaleX: 0 }}
+                      whileInView={{ scaleX: 1 }}
+                      viewport={{ once: true, margin: "-60px" }}
+                      transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
+                      className="absolute inset-x-0 top-0 h-[3px] origin-left bg-[var(--brand-600)]"
+                    />
+                  ) : null}
+
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="text-[18px] font-semibold text-slate-950">
+                      {plan.name}
+                    </h3>
+                    {plan.highlight ? (
+                      <span className="inline-flex items-center gap-1 rounded-md bg-[var(--brand-600)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
                         Most popular
                       </span>
-                    </>
-                  ) : null}
-                  <h3 className="text-lg font-semibold text-slate-900">
-                    {plan.name}
-                  </h3>
-                  <p className="mt-2 min-h-[40px] text-sm leading-relaxed text-slate-600">
+                    ) : null}
+                  </div>
+
+                  <p className="mt-1.5 text-[13px] leading-snug text-slate-600 md:min-h-[34px]">
                     {plan.description}
                   </p>
 
-                  <span className="mt-4 inline-flex w-fit items-center rounded-full border border-[var(--brand-200)] bg-[var(--brand-50)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-[var(--brand-700)]">
-                    Launch price
-                  </span>
-                  <p className="mt-1 text-[11px] font-semibold text-slate-500">
-                    Limited-time founding offer
-                  </p>
-
-                  <div className="mt-2.5">
-                    <p className="text-sm text-slate-400 line-through decoration-slate-300 decoration-2">
-                      <span className="text-base font-bold">£{regularPrice}</span>
-                      <span className="ml-1">/ {period === "mo" ? "month" : "year"}</span>
+                  <div className="mt-4">
+                    <p className="text-[12px] text-slate-400 line-through decoration-slate-300">
+                      £{regularPrice} reg.
                     </p>
-                    <p className="mt-1 flex items-baseline tracking-tight text-slate-950">
-                      <span className="text-2xl font-bold">£</span>
-                      <span className="text-5xl font-bold">{launchPrice}</span>
-                      <span className="ml-1.5 text-lg font-semibold text-slate-700">
-                        / {period === "mo" ? "month" : "year"}
+                    <p className="mt-0.5 flex items-baseline tracking-tight text-slate-950">
+                      <span className="text-lg font-semibold">£</span>
+                      <span className="text-[40px] font-bold leading-none">
+                        {launchPrice}
+                      </span>
+                      <span className="ml-1.5 text-sm font-medium text-slate-500">
+                        /{period}
+                      </span>
+                      <span className="ml-2 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                        + VAT
                       </span>
                     </p>
+                    {billingCycle === "yearly" ? (
+                      <p className="mt-1 text-[11px] font-semibold text-[var(--brand-700)]">
+                        £{plan.launch.monthly}/mo billed annually
+                      </p>
+                    ) : null}
                   </div>
-                  <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    + VAT
-                  </p>
-                  {billingCycle === "yearly" ? (
-                    <p className="mt-1.5 text-xs font-semibold text-[var(--brand-700)]">
-                      Equivalent to £{plan.launch.monthly}/month, billed annually
-                    </p>
-                  ) : null}
 
-                  <p className="mt-3 text-sm font-semibold text-slate-700">
+                  <p className="mt-3 text-[12px] font-semibold text-slate-700">
                     {plan.note}
                   </p>
-                  <p className="mt-1 text-xs text-slate-500">
-                    14-day free trial · Cancel anytime before day 15
-                  </p>
 
-                  <ul className="my-5 space-y-2.5 text-sm text-slate-600">
+                  <div className="my-4 h-px bg-slate-200" />
+
+                  <ul className="flex-1 space-y-1.5 text-[13px] leading-snug text-slate-700">
                     {plan.features.map((feature) => (
-                      <li key={feature} className="flex items-start gap-2">
+                      <li key={feature} className="flex items-baseline gap-2">
                         <span
-                          className={`mt-0.5 flex h-4 w-4 flex-none items-center justify-center rounded-full ${
+                          className={`flex-none text-[14px] leading-none ${
                             plan.highlight
-                              ? "bg-[var(--brand-600)] text-white"
-                              : "bg-[var(--brand-100)] text-[var(--brand-700)]"
+                              ? "text-[var(--brand-600)]"
+                              : "text-[var(--brand-500)]"
                           }`}
                         >
-                          <Check size={10} strokeWidth={3} />
+                          +
                         </span>
                         <span>{feature}</span>
                       </li>
                     ))}
                   </ul>
-                  <div className="mt-auto flex flex-col gap-2">
+
+                  <div className="mt-5">
                     <BuyCtaButton
                       planCode={plan.code}
                       interval={billingCycle}
                       priceId={plan.priceIds[billingCycle]}
                       label={plan.cta}
-                      className={`inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-sm font-semibold transition disabled:cursor-wait disabled:opacity-70 ${
+                      className={`inline-flex w-full items-center justify-center rounded-lg px-4 py-2.5 text-sm font-semibold transition disabled:cursor-wait disabled:opacity-70 ${
                         plan.highlight
-                          ? "brand-primary-btn shadow-[0_10px_24px_-12px_rgba(91,91,179,0.6)]"
-                          : "border border-slate-200 bg-white text-slate-900 hover:border-[var(--brand-300)] hover:bg-[var(--brand-50)] hover:text-[var(--brand-700)]"
+                          ? "brand-primary-btn shadow-[0_10px_24px_-14px_rgba(91,91,179,0.7)]"
+                          : "border border-slate-300 bg-white text-slate-900 hover:border-[var(--brand-300)] hover:bg-[var(--brand-50)] hover:text-[var(--brand-700)]"
                       }`}
                     />
+                    <p className="mt-2 text-center text-[11px] text-slate-500">
+                      14-day free trial · cancel before day 15
+                    </p>
                   </div>
                 </motion.article>
               );
@@ -718,7 +745,7 @@ export function MarketingLandingPage() {
           </motion.div>
         </section>
 
-        <section className="mx-auto w-full max-w-7xl px-5 pb-20 sm:px-6 lg:px-8">
+        <section className="mx-auto w-full max-w-7xl px-5 pb-14 sm:pb-20 sm:px-6 lg:px-8">
           <ScrollReveal>
             <SectionTitle
               badge="Social Proof"
@@ -732,7 +759,7 @@ export function MarketingLandingPage() {
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-60px" }}
-            className="mt-10 grid gap-4 md:grid-cols-2"
+            className="mt-6 grid gap-3 sm:mt-10 sm:gap-4 md:grid-cols-2"
           >
             {testimonials.map((item) => (
               <motion.article
@@ -766,9 +793,9 @@ export function MarketingLandingPage() {
           </motion.div>
         </section>
 
-        <section className="mx-auto w-full max-w-7xl px-5 pb-16 sm:px-6 lg:px-8">
+        <section className="mx-auto w-full max-w-7xl px-5 pb-12 sm:pb-16 sm:px-6 lg:px-8">
           <ScrollReveal>
-            <div className="relative overflow-hidden rounded-3xl border border-slate-800 bg-gradient-to-br from-slate-950 via-slate-900 to-[#1a1a3a] p-8 text-white sm:p-12">
+            <div className="relative overflow-hidden rounded-3xl border border-slate-800 bg-gradient-to-br from-slate-950 via-slate-900 to-[#1a1a3a] p-6 text-white sm:p-12">
               <div
                 aria-hidden
                 className="pointer-events-none absolute -top-24 -right-24 h-[400px] w-[400px] rounded-full bg-[radial-gradient(circle,_rgba(124,124,200,0.45)_0%,_rgba(124,124,200,0)_70%)]"
@@ -802,7 +829,7 @@ export function MarketingLandingPage() {
                 <div className="mt-8 flex flex-wrap gap-3">
                   <Link
                     href="/login"
-                    className="group inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3.5 text-sm font-semibold text-slate-900 shadow-[0_14px_30px_-12px_rgba(255,255,255,0.4)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_40px_-12px_rgba(255,255,255,0.5)]"
+                    className="group inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3.5 text-sm font-semibold text-slate-900 shadow-[0_14px_30px_-12px_rgba(255,255,255,0.4)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_40px_-12px_rgba(255,255,255,0.5)] active:scale-[0.98]"
                   >
                     Start free
                     <ArrowRight
@@ -812,7 +839,7 @@ export function MarketingLandingPage() {
                   </Link>
                   <Link
                     href="/demo?next=%2Fapp%2Fcrm"
-                    className="inline-flex items-center rounded-xl border border-white/20 bg-white/5 px-6 py-3.5 text-sm font-semibold text-white backdrop-blur transition hover:-translate-y-0.5 hover:border-white/40 hover:bg-white/10"
+                    className="inline-flex items-center rounded-xl border border-white/20 bg-white/5 px-6 py-3.5 text-sm font-semibold text-white backdrop-blur transition hover:-translate-y-0.5 hover:border-white/40 hover:bg-white/10 active:scale-[0.98]"
                   >
                     Try demo
                   </Link>
@@ -1033,9 +1060,10 @@ function StepCard({
 }) {
   return (
     <motion.article
-      variants={scrollFadeUp}
+      variants={rowSlideIn}
       whileHover={{ y: -4 }}
-      className="group relative rounded-2xl border border-slate-200 bg-white p-6 transition hover:border-[var(--brand-300)] hover:shadow-[0_20px_40px_-20px_rgba(91,91,179,0.35)]"
+      whileTap={{ scale: 0.98 }}
+      className="group relative rounded-2xl border border-slate-200 bg-white p-5 transition hover:border-[var(--brand-300)] hover:shadow-[0_20px_40px_-20px_rgba(91,91,179,0.35)] sm:p-6"
     >
       <div className="mb-4 flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--brand-100)] to-[var(--brand-200)] text-sm font-bold text-[var(--brand-700)] shadow-sm transition group-hover:from-[var(--brand-500)] group-hover:to-[var(--brand-700)] group-hover:text-white">
         {number}
