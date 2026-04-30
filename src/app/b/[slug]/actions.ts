@@ -399,23 +399,26 @@ function normalizeNameForMatch(value: string | null | undefined) {
   return String(value ?? "").trim().replace(/\s+/g, " ").toLowerCase();
 }
 
-export const CLEANING_RECURRENCE_LABELS = [
+// Internal helpers — kept un-exported because this file is "use server" and
+// Next.js requires every export to be an async function. These constants and
+// type guards are only referenced inside this module.
+const CLEANING_RECURRENCE_LABELS = [
   "one-off",
   "weekly",
   "fortnightly",
   "monthly",
 ] as const;
-export type CleaningRecurrenceLabel = (typeof CLEANING_RECURRENCE_LABELS)[number];
+type CleaningRecurrenceLabel = (typeof CLEANING_RECURRENCE_LABELS)[number];
 
-export const CLEANING_PROPERTY_TYPES = [
+const CLEANING_PROPERTY_TYPES = [
   "residential",
   "office",
   "commercial",
   "specialist",
 ] as const;
-export type CleaningPropertyType = (typeof CLEANING_PROPERTY_TYPES)[number];
+type CleaningPropertyType = (typeof CLEANING_PROPERTY_TYPES)[number];
 
-export function isCleaningRecurrenceLabel(
+function isCleaningRecurrenceLabel(
   value: unknown,
 ): value is CleaningRecurrenceLabel {
   return (
@@ -424,7 +427,7 @@ export function isCleaningRecurrenceLabel(
   );
 }
 
-export function isCleaningPropertyType(
+function isCleaningPropertyType(
   value: unknown,
 ): value is CleaningPropertyType {
   return (
