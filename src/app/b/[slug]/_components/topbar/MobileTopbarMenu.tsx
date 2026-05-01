@@ -79,7 +79,7 @@ export default function MobileTopbarMenu({
       </button>
 
       {open ? (
-        <div className="absolute left-0 top-[calc(100%+10px)] z-[60] w-60 rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/[0.03] p-2 shadow-[0_12px_28px_rgba(16,24,40,0.12)]">
+        <div className="absolute left-0 top-[calc(100%+10px)] z-[60] w-60 rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0E0E1B] p-2 shadow-[0_12px_28px_rgba(16,24,40,0.12)] dark:shadow-[0_16px_36px_rgba(0,0,0,0.55)]">
           <div className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] px-3 py-3">
             <div className="truncate text-sm font-semibold text-[#1F2937] dark:text-white/90">
               {userLabel}

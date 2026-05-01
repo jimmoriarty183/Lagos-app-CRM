@@ -134,7 +134,7 @@ function RailLink({
       ? "min-h-12 w-full items-start justify-start gap-2.5 rounded-xl px-3 py-2.5"
       : "h-12 w-full items-center justify-center rounded-xl",
     active
-      ? "border-[#D7DEFA] bg-[#F5F7FF] text-[#334155] dark:text-white/80 shadow-[0_4px_12px_rgba(99,102,241,0.08)]"
+      ? "border-[#D7DEFA] dark:border-[var(--brand-500)]/40 bg-[#F5F7FF] dark:bg-[var(--brand-600)]/15 text-[#334155] dark:text-white/80 shadow-[0_4px_12px_rgba(99,102,241,0.08)]"
       : disabled
         ? "cursor-not-allowed border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] text-[#9CA3AF] dark:text-white/40 opacity-90"
         : "cursor-pointer border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#6B7280] dark:text-white/55 hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06] hover:text-[#1F2937] dark:hover:text-white hover:shadow-[0_10px_24px_rgba(15,23,42,0.08)]",
@@ -147,10 +147,10 @@ function RailLink({
         className={[
           "relative shrink-0 rounded-lg transition-colors duration-150",
           active
-            ? "bg-[var(--brand-600)] p-2 text-white shadow-[0_4px_12px_rgba(91,91,179,0.22)]"
+            ? "bg-[var(--brand-600)] p-2 text-white shadow-[0_4px_12px_rgba(91,91,179,0.22)] dark:shadow-[0_4px_12px_rgba(91,91,179,0.45)]"
             : disabled
               ? "bg-white/70 dark:bg-white/[0.05] p-2 text-[#9CA3AF] dark:text-white/40"
-              : "bg-[var(--brand-50)] p-2 text-[var(--brand-600)] group-hover:bg-[var(--brand-100)] group-hover:text-[var(--brand-700)]",
+              : "bg-[var(--brand-50)] dark:bg-[var(--brand-600)]/15 p-2 text-[var(--brand-600)] dark:text-[var(--brand-300)] group-hover:bg-[var(--brand-100)] dark:group-hover:bg-[var(--brand-600)]/25 group-hover:text-[var(--brand-700)] dark:group-hover:text-[var(--brand-200)]",
         ].join(" ")}
       >
         {icon}
@@ -172,10 +172,10 @@ function RailLink({
               className={[
                 "block text-[13px] font-semibold leading-5 transition-colors",
                 active
-                  ? "text-[#334155] dark:text-white/80"
+                  ? "text-[#334155] dark:text-white"
                   : disabled
                     ? "text-[#9CA3AF] dark:text-white/40"
-                    : "text-[#374151] group-hover:text-[var(--brand-700)]",
+                    : "text-[#374151] dark:text-white/90 group-hover:text-[var(--brand-700)] dark:group-hover:text-white",
               ].join(" ")}
             >
               {label}
@@ -201,10 +201,10 @@ function RailLink({
               className={[
                 "mt-0.5 block text-[11px] font-medium leading-4",
                 active
-                  ? "text-[#4B5563] dark:text-white/70"
+                  ? "text-[#4B5563] dark:text-white/75"
                   : disabled
                     ? "text-[#9CA3AF] dark:text-white/40"
-                    : "text-[#9CA3AF] dark:text-white/40",
+                    : "text-[#9CA3AF] dark:text-white/55",
               ].join(" ")}
             >
               {description}
@@ -216,7 +216,7 @@ function RailLink({
           <span className="sr-only">{label}</span>
           <span
             className={[
-              "pointer-events-none absolute top-1/2 z-[80] hidden -translate-y-1/2 whitespace-nowrap rounded-xl border bg-white dark:bg-white/[0.03] px-2.5 py-1.5 text-xs font-medium shadow-sm transition-colors",
+              "pointer-events-none absolute top-1/2 z-[80] hidden -translate-y-1/2 whitespace-nowrap rounded-xl border bg-white dark:bg-[#0E0E1B] px-2.5 py-1.5 text-xs font-medium shadow-sm dark:shadow-[0_8px_18px_rgba(0,0,0,0.55)] transition-colors",
               tooltipSide === "left"
                 ? "right-[calc(100%+10px)]"
                 : "left-[calc(100%+10px)]",
@@ -421,7 +421,7 @@ export default function DesktopLeftRail({
               type="button"
               onClick={openCollapsedRail}
               aria-label="Open rail menu"
-              className="fixed left-0 z-50 inline-flex h-[84px] w-7 flex-col items-center justify-center gap-1 rounded-r-xl border border-[#E5E7EB] dark:border-white/10 border-l-0 bg-white/96 text-[#374151] shadow-[0_10px_28px_rgba(15,23,42,0.10)] backdrop-blur transition hover:bg-white dark:hover:bg-white/[0.07] hover:text-[#1F2937] dark:hover:text-white"
+              className="fixed left-0 z-50 inline-flex h-[84px] w-7 flex-col items-center justify-center gap-1 rounded-r-xl border border-[#E5E7EB] dark:border-white/10 border-l-0 bg-white/96 dark:bg-[#0E0E1B]/90 text-[#374151] dark:text-white/80 shadow-[0_10px_28px_rgba(15,23,42,0.10)] dark:shadow-[0_10px_28px_rgba(0,0,0,0.55)] backdrop-blur transition hover:bg-white dark:hover:bg-white/[0.07] hover:text-[#1F2937] dark:hover:text-white"
               style={{ top: topOffset }}
             >
               <ChevronsRight className="h-3.5 w-3.5 shrink-0" />
@@ -435,7 +435,7 @@ export default function DesktopLeftRail({
           ) : (
             <div
               className={[
-                "max-h-[calc(100vh-100px)] rounded-[18px] border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB]/96 p-1 shadow-[0_10px_34px_rgba(15,23,42,0.06)] backdrop-blur transition-all",
+                "max-h-[calc(100vh-100px)] rounded-[18px] border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB]/96 dark:bg-[#0E0E1B]/85 p-1 shadow-[0_10px_34px_rgba(15,23,42,0.06)] dark:shadow-[0_10px_34px_rgba(0,0,0,0.55)] backdrop-blur transition-all",
                 expanded
                   ? "overflow-x-hidden overflow-y-auto overscroll-contain"
                   : "overflow-visible",
@@ -522,9 +522,9 @@ export default function DesktopLeftRail({
                 ) : null}
 
                 {expanded ? (
-                  <div className="my-1 h-px bg-[#E5E7EB]" />
+                  <div className="my-1 h-px bg-[#E5E7EB] dark:bg-white/10" />
                 ) : (
-                  <div className="col-span-2 my-0.5 h-px bg-[#E5E7EB]" />
+                  <div className="col-span-2 my-0.5 h-px bg-[#E5E7EB] dark:bg-white/10" />
                 )}
                 {secondaryModules.map((item) => {
                   const href = item.href;

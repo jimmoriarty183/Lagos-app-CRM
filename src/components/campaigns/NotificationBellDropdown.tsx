@@ -27,7 +27,7 @@ function formatRelative(value: string | null) {
 
 export function NotificationBellDropdown({ items, loading, error, onItemClick }: Props) {
   return (
-    <div className="absolute right-0 top-[calc(100%+8px)] z-50 w-[360px] overflow-hidden rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] shadow-xl">
+    <div className="absolute right-0 top-[calc(100%+8px)] z-50 w-[360px] overflow-hidden rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0E0E1B] shadow-xl dark:shadow-[0_16px_36px_rgba(0,0,0,0.55)]">
       <div className="border-b border-slate-100 dark:border-white/[0.06] px-4 py-3">
         <div className="text-sm font-semibold text-slate-900 dark:text-white">Notifications</div>
         <div className="mt-0.5 text-xs text-slate-500 dark:text-white/55">

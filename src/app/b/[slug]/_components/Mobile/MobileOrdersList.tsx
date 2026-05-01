@@ -282,6 +282,7 @@ export default function MobileOrdersList({
   rangeEndDate,
   actorFilter,
   hiddenKanbanCounts,
+  isCleaning = false,
 }: {
   list?: OrderRow[];
   todayISO: string;
@@ -310,6 +311,7 @@ export default function MobileOrdersList({
   rangeEndDate: string | null;
   actorFilter: string;
   hiddenKanbanCounts: HiddenKanbanCounts;
+  isCleaning?: boolean;
 }) {
   const router = useRouter();
   const { customStatuses, statuses } = useBusinessStatuses(businessId);
@@ -957,7 +959,7 @@ export default function MobileOrdersList({
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
                       align="end"
-                      className="w-48 rounded-xl border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
+                      className="w-48 rounded-xl border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-[#0E0E1B] p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)] dark:shadow-[0_16px_40px_rgba(0,0,0,0.55)]"
                     >
                       <DropdownMenuItem
                         className="rounded-lg px-3 py-2 text-sm font-medium"
@@ -1222,7 +1224,7 @@ export default function MobileOrdersList({
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent
                                   align="end"
-                                  className="w-48 rounded-xl border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
+                                  className="w-48 rounded-xl border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-[#0E0E1B] p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)] dark:shadow-[0_16px_40px_rgba(0,0,0,0.55)]"
                                 >
                                   <DropdownMenuItem
                                     className="rounded-lg px-3 py-2 text-sm font-medium"
@@ -1456,6 +1458,7 @@ export default function MobileOrdersList({
         actors={effectiveActors}
         supabase={supabase}
         mode={createPreviewOpen ? "create" : "view"}
+        isCleaning={isCleaning}
         onClose={() => {
           setOpenId(null);
           setCreatePreviewOpen(false);

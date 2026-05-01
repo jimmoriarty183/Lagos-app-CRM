@@ -24,7 +24,7 @@ export function TodoCalendarToolbar({
   actions?: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-3 rounded-[24px] border border-[#DDE3F1] bg-[linear-gradient(125deg,#FFFFFF_0%,#F8FAFF_55%,#F1F5FF_100%)] px-4 py-4 shadow-[0_16px_34px_rgba(15,23,42,0.08)] lg:flex-row lg:items-center lg:justify-between">
+    <div className="flex flex-col gap-3 rounded-[24px] border border-[#DDE3F1] dark:border-white/10 bg-[#F1F5FF] dark:bg-white/[0.04] px-4 py-4 shadow-[0_16px_34px_rgba(15,23,42,0.08)] dark:shadow-[0_16px_34px_rgba(0,0,0,0.45)] lg:flex-row lg:items-center lg:justify-between">
       <div className="flex flex-wrap items-center gap-2.5">
         <div className="inline-flex rounded-[16px] border border-[#D8DFEA] bg-white dark:bg-white/[0.03] p-1 shadow-[0_4px_14px_rgba(15,23,42,0.08)]">
           <button

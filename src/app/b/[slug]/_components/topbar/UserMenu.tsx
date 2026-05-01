@@ -235,7 +235,7 @@ export function UserMenu({
 
         <DropdownMenuItem
           asChild
-          className="rounded-xl px-3 py-2 text-sm font-medium text-[#374151]"
+          className="rounded-xl px-3 py-2 text-sm font-medium text-[#374151] dark:text-white/85"
         >
           <Link href={profileHref}>
             <UserCircle2 className="h-4 w-4" />
@@ -246,7 +246,7 @@ export function UserMenu({
         {billingHref ? (
           <DropdownMenuItem
             asChild
-            className="rounded-xl px-3 py-2 text-sm font-medium text-[#374151]"
+            className="rounded-xl px-3 py-2 text-sm font-medium text-[#374151] dark:text-white/85"
           >
             <Link href={billingHref}>
               <CreditCard className="h-4 w-4" />
@@ -258,7 +258,7 @@ export function UserMenu({
         {adminHref ? (
           <DropdownMenuItem
             asChild
-            className="rounded-xl px-3 py-2 text-sm font-medium text-[#374151]"
+            className="rounded-xl px-3 py-2 text-sm font-medium text-[#374151] dark:text-white/85"
           >
             <Link href={adminHref}>
               <Shield className="h-4 w-4" />
@@ -269,7 +269,7 @@ export function UserMenu({
 
         <DropdownMenuItem
           asChild
-          className="rounded-xl px-3 py-2 text-sm font-medium text-[#374151]"
+          className="rounded-xl px-3 py-2 text-sm font-medium text-[#374151] dark:text-white/85"
         >
           <Link href={settingsHref}>
             <Settings className="h-4 w-4" />
@@ -282,7 +282,7 @@ export function UserMenu({
         <DropdownMenuItem
           onClick={() => void handleLogout()}
           disabled={isLoggingOut}
-          className="rounded-xl px-3 py-2 text-sm font-medium text-[#B42318] focus:text-[#B42318]"
+          className="rounded-xl px-3 py-2 text-sm font-medium text-[#B42318] focus:text-[#B42318] dark:text-rose-300 dark:focus:text-rose-200 dark:focus:bg-rose-500/15"
         >
           <LogOut className="h-4 w-4" />
           {isLoggingOut ? "Logging out..." : "Logout"}

@@ -7,6 +7,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { getVisiblePlatformModules } from "@/config/modules";
 
 import { BrandIcon, BrandLockup } from "@/components/Brand";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import BusinessSwitcher, { BusinessOption } from "./BusinessSwitcher";
 import InviteInbox from "./InviteInbox";
 import MobileTopbarMenu from "./MobileTopbarMenu";
@@ -136,7 +137,7 @@ export default function TopBar({
 
   return (
     <header
-      className="fixed inset-x-0 top-0 z-50 border-b border-[var(--neutral-200)] bg-white dark:bg-white/[0.03]"
+      className="fixed inset-x-0 top-0 z-50 border-b border-[var(--neutral-200)] bg-white dark:bg-[#0E0E1B]/95 dark:backdrop-blur"
     >
       <div className="pt-[env(safe-area-inset-top)]">
         <div className="mx-auto flex h-[48px] max-w-[1200px] items-center justify-between gap-3 px-4">
@@ -275,6 +276,7 @@ export default function TopBar({
             ) : null}
 
             <div className="flex items-center gap-2">
+              <ThemeToggle variant="outline" size="sm" className="rounded-xl" />
               <InviteInbox
                 businessId={businessId}
                 currentBusinessSlug={businessSlug}
@@ -294,6 +296,7 @@ export default function TopBar({
           </div>
 
           <div className="flex shrink-0 items-center gap-2 sm:hidden">
+            <ThemeToggle variant="outline" size="sm" className="rounded-xl" />
             <InviteInbox
               businessId={businessId}
               currentBusinessSlug={businessSlug}

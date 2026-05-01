@@ -119,6 +119,7 @@ type Props = {
   actors: TeamActor[];
   supabase: SupabaseClient;
   mode?: "view" | "create";
+  isCleaning?: boolean;
   onClose: () => void;
 };
 
@@ -487,9 +488,11 @@ function DrawerStatusSelect({
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            align="start"
+            align="end"
             sideOffset={8}
-            className="z-[120] w-72 rounded-xl border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
+            collisionPadding={12}
+            avoidCollisions
+            className="z-[120] w-72 max-w-[calc(100vw-1.5rem)] rounded-xl border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-[#0E0E1B] p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)] dark:shadow-[0_16px_40px_rgba(0,0,0,0.55)]"
             onCloseAutoFocus={(event) => event.preventDefault()}
           >
             {reasonTarget === "CANCELED" ? (
@@ -609,7 +612,7 @@ function DrawerStatusSelect({
               onClick={() => {
                 router.push(`/b/${businessSlug}/settings/statuses`);
               }}
-              className="inline-flex h-7 items-center rounded-full border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-2.5 text-[12px] font-semibold text-[#374151] transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]"
+              className="inline-flex h-7 items-center rounded-full border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.04] px-2.5 text-[12px] font-semibold text-[#374151] dark:text-white/85 transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.08] hover:text-[#1F2937] dark:hover:text-white"
             >
               Status settings
             </button>
@@ -619,7 +622,7 @@ function DrawerStatusSelect({
                 setIsCreateOpen((prev) => !prev);
                 setCreateError(null);
               }}
-              className="inline-flex h-7 items-center gap-1 rounded-full border border-[#E5E7EB] dark:border-white/10 bg-[var(--brand-50)] px-2.5 text-[12px] font-semibold text-[var(--brand-600)] transition hover:border-[var(--brand-200)] hover:bg-[var(--brand-50)]"
+              className="inline-flex h-7 items-center gap-1 rounded-full border border-[#E5E7EB] dark:border-[var(--brand-500)]/40 bg-[var(--brand-50)] dark:bg-[var(--brand-600)]/20 px-2.5 text-[12px] font-semibold text-[var(--brand-600)] dark:text-[var(--brand-300)] transition hover:border-[var(--brand-200)] hover:bg-[var(--brand-50)] dark:hover:bg-[var(--brand-600)]/30"
             >
               <Plus className="h-3.5 w-3.5" />
               Add status
@@ -732,9 +735,9 @@ function DrawerStatusSelect({
 
 function MetaItem({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="rounded-[18px] border border-[#F3F4F6] bg-[#F9FAFB] dark:bg-white/[0.04] px-3.5 py-2.5">
+    <div className="rounded-[14px] border border-[#F3F4F6] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] px-3 py-2">
       <div className="product-section-label">{label}</div>
-      <div className="mt-1 text-sm font-medium leading-5 text-[#1F2937] dark:text-white/90">
+      <div className="mt-0.5 text-sm font-medium leading-5 text-[#1F2937] dark:text-white/90">
         {value}
       </div>
     </div>
@@ -778,7 +781,7 @@ function FilesSection({
             type="button"
             onClick={onAddFiles}
             disabled={uploading}
-            className="inline-flex h-10 items-center gap-2 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 text-sm font-semibold text-[#374151] transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06] disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex h-10 items-center gap-2 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.04] px-4 text-sm font-semibold text-[#374151] dark:text-white/85 transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-60"
           >
             <Plus className="h-4 w-4" />
             {uploading ? "Uploading..." : "Add file"}
@@ -969,7 +972,7 @@ function LabelsSection({
         )}
       </div>
 
-      <div className="mt-2 flex flex-wrap gap-1">
+      <div className="mt-1.5 flex flex-wrap gap-1">
         {suggestedLabels
           .filter(
             (label) =>
@@ -980,14 +983,14 @@ function LabelsSection({
               key={label}
               type="button"
               onClick={() => addLabel(label)}
-              className="inline-flex items-center rounded-full border border-dashed border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-2.5 py-1 text-[11px] font-semibold text-[#6B7280] dark:text-white/55 transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:text-[#1F2937] dark:hover:text-white"
+              className="inline-flex items-center rounded-full border border-dashed border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-2 py-0.5 text-[10px] font-semibold text-[#6B7280] dark:text-white/55 transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:text-[#1F2937] dark:hover:text-white"
             >
               + {label}
             </button>
           ))}
       </div>
 
-      <div className="mt-2 flex gap-1.5">
+      <div className="mt-2 flex min-w-0 gap-1.5">
         <input
           value={draft}
           onChange={(event) => setDraft(event.currentTarget.value)}
@@ -998,20 +1001,21 @@ function LabelsSection({
             }
           }}
           placeholder="Add label"
-          className="h-8 flex-1 rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] px-2.5 text-[13px] outline-none transition focus:border-[var(--brand-600)] focus:bg-white focus:ring-2 focus:ring-[var(--brand-600)]/15"
+          className="h-8 min-w-0 flex-1 rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] px-2.5 text-[13px] text-[#1F2937] dark:text-white/90 placeholder:text-[#9CA3AF] dark:placeholder:text-white/40 outline-none transition focus:border-[var(--brand-600)] focus:bg-white dark:focus:bg-white/[0.06] focus:ring-2 focus:ring-[var(--brand-600)]/15"
         />
-        <button
-          type="button"
-          onClick={() => addLabel(draft)}
-          disabled={!draft.trim()}
-          className="rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-[13px] font-semibold text-[#374151] transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]"
-        >
-          {draft.trim() ? `Add "${draft.trim()}"` : "+ Add label"}
-        </button>
+        {draft.trim() ? (
+          <button
+            type="button"
+            onClick={() => addLabel(draft)}
+            className="shrink-0 rounded-lg border border-[var(--brand-200)] dark:border-[var(--brand-500)]/40 bg-[var(--brand-50)] dark:bg-[var(--brand-600)]/20 px-3 text-[13px] font-semibold text-[var(--brand-600)] dark:text-[var(--brand-300)] transition hover:bg-[var(--brand-100)] dark:hover:bg-[var(--brand-600)]/30"
+          >
+            Add
+          </button>
+        ) : null}
       </div>
 
-      <p className="mt-2 text-[11px] leading-4 text-[#9CA3AF] dark:text-white/40">
-        Labels are currently session-only UI until backend storage is connected.
+      <p className="mt-1.5 text-[10px] leading-3.5 text-[#9CA3AF] dark:text-white/35">
+        Session-only UI for now.
       </p>
     </div>
   );
@@ -1030,6 +1034,7 @@ export function OrderPreview({
   actors,
   supabase,
   mode = "view",
+  isCleaning = false,
   onClose,
 }: Props) {
   const router = useRouter();
@@ -1169,6 +1174,51 @@ export function OrderPreview({
     if (!labelStorageKey || typeof window === "undefined") return;
     window.localStorage.setItem(labelStorageKey, JSON.stringify(labels));
   }, [labelStorageKey, labels]);
+
+  const [cleaningTags, setCleaningTags] = React.useState<{
+    recurrence_label: string | null;
+    property_type: string | null;
+  }>({ recurrence_label: null, property_type: null });
+
+  React.useEffect(() => {
+    if (!isCleaning) return;
+    const orderId = previewOrder?.id;
+    if (!orderId) {
+      setCleaningTags({ recurrence_label: null, property_type: null });
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      const { data, error } = await supabase
+        .from("orders")
+        .select("metadata")
+        .eq("id", orderId)
+        .maybeSingle();
+      if (cancelled) return;
+      if (error || !data) {
+        setCleaningTags({ recurrence_label: null, property_type: null });
+        return;
+      }
+      const metadata = (data as { metadata?: Record<string, unknown> | null })
+        .metadata;
+      const cleaning =
+        (metadata?.cleaning as Record<string, unknown> | null | undefined) ??
+        null;
+      const pickStr = (key: string) => {
+        const value = cleaning?.[key];
+        return typeof value === "string" && value.trim().length > 0
+          ? value.trim()
+          : null;
+      };
+      setCleaningTags({
+        recurrence_label: pickStr("recurrence_label"),
+        property_type: pickStr("property_type"),
+      });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isCleaning, previewOrder?.id, supabase]);
 
   const client = normalizeOrderClient({
     client_name: previewOrder?.client_name,
@@ -1564,7 +1614,7 @@ export function OrderPreview({
         side="right"
         showClose={false}
         className={[
-          "h-auto w-[calc(100vw-24px)] overflow-hidden border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-0 transition-[max-width] duration-200",
+          "h-auto w-[calc(100vw-24px)] overflow-hidden border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-[#0E0E1B] p-0 transition-[max-width] duration-200",
           // Normal mode: stick to right
           !isWideLayout && "top-3 right-3 bottom-3 sm:max-w-[700px]",
           // Wide mode: center on screen
@@ -1589,7 +1639,7 @@ export function OrderPreview({
 
         {isCreateMode ? (
           <div className="flex h-full min-h-0 flex-col">
-            <div className="sticky top-0 z-20 border-b border-[#E5E7EB] dark:border-white/10 bg-white/95 backdrop-blur">
+            <div className="sticky top-0 z-20 border-b border-[#E5E7EB] dark:border-white/10 bg-white/95 dark:bg-[#0E0E1B]/95 backdrop-blur">
               <div className="flex items-start justify-between gap-4 px-5 py-4 sm:px-6">
                 <div>
                   <div className="text-lg font-semibold text-[#1F2937] dark:text-white/90">
@@ -1678,6 +1728,7 @@ export function OrderPreview({
                     businessSlug={businessSlug}
                     actors={managerOptions}
                     compact
+                    isCleaning={isCleaning}
                     onCreated={() => {
                       router.refresh();
                       onClose();
@@ -1852,7 +1903,7 @@ export function OrderPreview({
               </div>
             </div>
 
-            <div className="sticky top-0 z-30 bg-white dark:bg-white/[0.03] shadow-[0_8px_18px_rgba(15,23,42,0.06)]">
+            <div className="sticky top-0 z-30 bg-white dark:bg-[#0E0E1B] shadow-[0_8px_18px_rgba(15,23,42,0.06)] dark:shadow-[0_8px_18px_rgba(0,0,0,0.45)]">
               <div
                 className={[
                   "px-4 sm:px-5 transition-all",
@@ -1865,7 +1916,7 @@ export function OrderPreview({
               >
                 <TabsList
                   className={[
-                    "grid h-auto w-full grid-cols-6 border border-[#E5E7EB] dark:border-white/10 bg-[linear-gradient(180deg,#F9FAFB_0%,#EEF2FF_100%)] shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)]",
+                    "grid h-auto w-full grid-cols-6 border border-[#E5E7EB] dark:border-white/10 bg-[#EEF2FF] dark:bg-white/[0.04] shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)]",
                     isUltraCompactTop
                       ? "gap-0.5 rounded-[16px] p-0.5"
                       : "gap-1 rounded-[26px] p-1.5",
@@ -1883,12 +1934,11 @@ export function OrderPreview({
                       key={value}
                       value={value}
                       className={[
-                        "min-w-0 border border-transparent font-semibold text-[#6B7280] dark:text-white/55 shadow-none transition data-[state=active]:border-[#C7D2FE] data-[state=active]:bg-white data-[state=active]:text-[#1F2937] data-[state=active]:shadow-[0_6px_16px_rgba(15,23,42,0.08)]",
+                        "min-w-0 border border-transparent font-semibold text-[#6B7280] dark:text-white/60 shadow-none transition data-[state=active]:border-[#C7D2FE] dark:data-[state=active]:border-[var(--brand-500)]/40 data-[state=active]:bg-white dark:data-[state=active]:bg-[var(--brand-600)]/20 data-[state=active]:text-[#1F2937] dark:data-[state=active]:text-white data-[state=active]:shadow-[0_6px_16px_rgba(15,23,42,0.08)]",
                         isUltraCompactTop
                           ? "rounded-[12px] px-2 py-1 text-xs"
                           : "rounded-[20px] px-3 py-3 text-base",
                       ].join(" ")}
-                      style={{ color: "#6B7280" }}
                     >
                       {label}
                     </TabsTrigger>
@@ -1898,8 +1948,8 @@ export function OrderPreview({
               <div
                 className={
                   isUltraCompactTop
-                    ? "h-1 border-t border-[#F3F4F6] bg-white dark:bg-white/[0.03]"
-                    : "h-2 border-t border-[#F3F4F6] bg-white dark:bg-white/[0.03]"
+                    ? "h-1 border-t border-[#F3F4F6] dark:border-white/10 bg-white dark:bg-[#0E0E1B]"
+                    : "h-2 border-t border-[#F3F4F6] dark:border-white/10 bg-white dark:bg-[#0E0E1B]"
                 }
               />
             </div>
@@ -1907,16 +1957,16 @@ export function OrderPreview({
             <ScrollArea className="min-h-0 flex-1">
               <div
                 className={[
-                  "space-y-3 px-4 pb-4 sm:px-5",
+                  "space-y-2 px-3 pb-3 sm:px-4",
                   isUltraCompactTop ? "pt-0.5" : "pt-1",
                 ].join(" ")}
               >
-                <div className="grid gap-3 lg:grid-cols-[minmax(0,4fr)_minmax(180px,1fr)]">
-                  <div className="min-w-0 space-y-3">
+                <div className="grid gap-2.5 lg:grid-cols-[minmax(0,4fr)_minmax(180px,1fr)]">
+                  <div className="min-w-0 space-y-2">
                     <TabsContent value="overview" className="mt-0">
-                      <div className="space-y-3">
+                      <div className="space-y-2">
                         {canManage ? (
-                          <div className="flex flex-wrap items-center justify-between gap-3 rounded-[20px] border border-[#F3F4F6] bg-white dark:bg-white/[0.03] px-4 py-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                          <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-[20px] border border-[#F3F4F6] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-2 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
                             <div>
                               <div className="flex flex-wrap items-center gap-2">
                                 <div className="text-sm font-semibold text-[#1F2937] dark:text-white/90">
@@ -1927,6 +1977,16 @@ export function OrderPreview({
                                 >
                                   {clientTypeLabel}
                                 </span>
+                                {isCleaning && cleaningTags.recurrence_label ? (
+                                  <span className="inline-flex items-center rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-xs font-semibold uppercase tracking-[0.08em] text-sky-700">
+                                    {cleaningTags.recurrence_label}
+                                  </span>
+                                ) : null}
+                                {isCleaning && cleaningTags.property_type ? (
+                                  <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-semibold uppercase tracking-[0.08em] text-amber-700">
+                                    {cleaningTags.property_type}
+                                  </span>
+                                ) : null}
                               </div>
                               <p className="text-xs text-[#6B7280] dark:text-white/55">
                                 {isEditingOverview
@@ -1946,7 +2006,7 @@ export function OrderPreview({
                                   <Button
                                     type="button"
                                     variant="outline"
-                                    className="h-10 min-w-24 rounded-xl border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-5 text-sm font-semibold text-[#374151] hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]"
+                                    className="h-10 min-w-24 rounded-xl border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.04] px-5 text-sm font-semibold text-[#374151] dark:text-white/85 hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.08] hover:text-[#1F2937] dark:hover:text-white"
                                     onClick={() => {
                                       setIsEditingOverview(false);
                                       setDraft({
@@ -2283,7 +2343,7 @@ export function OrderPreview({
                                   </DropdownMenuTrigger>
                                   <DropdownMenuContent
                                     align="end"
-                                    className="z-[120] w-44 rounded-xl border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
+                                    className="z-[120] w-44 rounded-xl border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-[#0E0E1B] p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)] dark:shadow-[0_16px_40px_rgba(0,0,0,0.55)]"
                                   >
                                     <DropdownMenuItem
                                       className="rounded-lg px-3 py-2 text-sm font-medium text-[#1F2937] dark:text-white/90 focus:bg-[#F9FAFB] focus:text-[#1F2937]"
@@ -2323,7 +2383,7 @@ export function OrderPreview({
                           </div>
                         ) : null}
 
-                        <div className="grid gap-2.5 sm:grid-cols-2">
+                        <div className="grid gap-2 sm:grid-cols-2">
                           <MetaItem
                             label="First Name"
                             value={
@@ -2485,7 +2545,7 @@ export function OrderPreview({
                           />
                         </div>
 
-                        <div className="rounded-[20px] border border-[#F3F4F6] bg-white dark:bg-white/[0.03] p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                        <div className="rounded-[18px] border border-[#F3F4F6] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
                           <div className="text-sm font-semibold text-[#1F2937] dark:text-white/90">
                             Description
                           </div>
@@ -2510,7 +2570,7 @@ export function OrderPreview({
                         </div>
 
                         {canManage ? (
-                          <div className="rounded-[20px] border border-[#F3F4F6] bg-white dark:bg-white/[0.03] p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                          <div className="rounded-[18px] border border-[#F3F4F6] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
                             <div className="flex flex-wrap items-center justify-between gap-2">
                               <div>
                                 <div className="text-sm font-semibold text-[#1F2937] dark:text-white/90">
@@ -2524,7 +2584,7 @@ export function OrderPreview({
                                 <Button
                                   type="button"
                                   variant="outline"
-                                  className="h-9 rounded-xl border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm font-semibold text-[#374151] hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]"
+                                  className="h-9 rounded-xl border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.04] px-3 text-sm font-semibold text-[#374151] dark:text-white/85 hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.08]"
                                   onClick={() => {
                                     setShowAddLineCard(true);
                                     setLineActionError(null);
@@ -2560,7 +2620,7 @@ export function OrderPreview({
                                             : "PRODUCT";
                                         resetAddLineDraft(nextType);
                                       }}
-                                      className="h-10 w-full rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
+                                      className="h-10 w-full rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.04] px-3 text-sm text-[#1F2937] dark:text-white/90 outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15 [color-scheme:light] dark:[color-scheme:dark]"
                                     >
                                       <option value="PRODUCT">Product</option>
                                       <option value="SERVICE">Service</option>
@@ -2599,7 +2659,7 @@ export function OrderPreview({
                                         isLoadingCatalogOptions ||
                                         activeLineOptions.length === 0
                                       }
-                                      className="h-10 w-full rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15 disabled:bg-[#F3F4F6]"
+                                      className="h-10 w-full rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.04] px-3 text-sm text-[#1F2937] dark:text-white/90 outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15 disabled:bg-[#F3F4F6] dark:disabled:bg-white/[0.02] [color-scheme:light] dark:[color-scheme:dark]"
                                     >
                                       <option value="">
                                         {isLoadingCatalogOptions
@@ -2718,7 +2778,7 @@ export function OrderPreview({
                                   <Button
                                     type="button"
                                     variant="outline"
-                                    className="h-9 rounded-xl border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm font-semibold text-[#374151] hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]"
+                                    className="h-9 rounded-xl border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.04] px-3 text-sm font-semibold text-[#374151] dark:text-white/85 hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.08] hover:text-[#1F2937] dark:hover:text-white"
                                     onClick={() => {
                                       setShowAddLineCard(false);
                                       resetAddLineDraft();
@@ -2917,7 +2977,7 @@ export function OrderPreview({
                       />
                     </TabsContent>
                   </div>
-                  <aside className="space-y-2">
+                  <aside className="space-y-2 lg:sticky lg:top-0 lg:self-start lg:max-h-[calc(100vh-220px)] lg:overflow-y-auto lg:pr-1 [scrollbar-width:thin]">
                     <div className="rounded-[16px] border border-[#F3F4F6] bg-white dark:bg-white/[0.03] p-2.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
                       <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[#6B7280] dark:text-white/55">
                         Status
@@ -2999,7 +3059,7 @@ export function OrderPreview({
                             <Button
                               type="button"
                               variant="outline"
-                              className="h-8 w-full rounded-lg border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-2.5 text-[13px] font-semibold text-[#374151] hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]"
+                              className="h-8 w-full rounded-lg border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.04] px-2.5 text-[13px] font-semibold text-[#374151] dark:text-white/85 hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.08]"
                               onClick={openOverviewFilePicker}
                               disabled={isUploadingOverviewFiles}
                             >

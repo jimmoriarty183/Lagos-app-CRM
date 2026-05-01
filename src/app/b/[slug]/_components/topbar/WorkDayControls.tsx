@@ -349,12 +349,12 @@ export function WorkDayControls({
           <DropdownMenuContent
             align="start"
             sideOffset={8}
-            className="w-[190px] rounded-xl border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.12)]"
+            className="w-[190px] rounded-xl border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-[#0E0E1B] p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.12)] dark:shadow-[0_16px_40px_rgba(0,0,0,0.55)]"
           >
             {isActive ? (
               <DropdownMenuItem
                 onClick={() => void handleAction("pause")}
-                className="rounded-lg px-3 py-2 text-[13px] font-medium text-[#374151]"
+                className="rounded-lg px-3 py-2 text-[13px] font-medium text-[#374151] dark:text-white/85"
               >
                 <Pause className="h-4 w-4 text-[#B54708]" />
                 Pause day
@@ -363,7 +363,7 @@ export function WorkDayControls({
             {isPaused ? (
               <DropdownMenuItem
                 onClick={() => void handleAction("resume")}
-                className="rounded-lg px-3 py-2 text-[13px] font-medium text-[#374151]"
+                className="rounded-lg px-3 py-2 text-[13px] font-medium text-[#374151] dark:text-white/85"
               >
                 <Play className="h-4 w-4 text-[#067647]" />
                 Resume day
@@ -372,7 +372,7 @@ export function WorkDayControls({
             {showEndDay ? (
               <DropdownMenuItem
                 onClick={() => setEndDayOpen(true)}
-                className="rounded-lg px-3 py-2 text-[13px] font-medium text-[#374151]"
+                className="rounded-lg px-3 py-2 text-[13px] font-medium text-[#374151] dark:text-white/85"
               >
                 <MoonStar className="h-4 w-4 text-[#6B7280] dark:text-white/55" />
                 End day

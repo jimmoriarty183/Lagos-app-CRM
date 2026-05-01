@@ -22,6 +22,7 @@ import {
 import { StatusCell } from "../../InlineCells";
 import { setOrderManager, setOrderStatus } from "../../actions";
 import { CANCELED_REASONS } from "../../order-status-reasons";
+import { StyledDateInput } from "@/components/ui/styled-date-input";
 import { OrderPreview } from "../orders/OrderPreview";
 import {
   DropdownMenu,
@@ -164,6 +165,7 @@ type Props = {
   currentUserName: string;
   initialOpenOrderId?: string | null;
   initialCreateOrderOpen?: boolean;
+  isCleaning?: boolean;
   dataMenuSlot?: React.ReactNode;
 };
 
@@ -648,7 +650,7 @@ function ManagerAssignmentCell({
         canManage ? "cursor-pointer" : "cursor-default",
         isUnassigned
           ? "border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] text-[#6B7280] dark:text-white/55"
-          : "border-transparent bg-transparent px-0 text-[#374151] hover:text-[#1F2937] dark:hover:text-white",
+          : "border-transparent bg-transparent px-0 text-[#374151] dark:text-white/85 hover:text-[#1F2937] dark:hover:text-white",
       ].join(" ")}
     >
       {isUnassigned ? (
@@ -675,7 +677,7 @@ function ManagerAssignmentCell({
       <DropdownMenuContent
         align="start"
         sideOffset={8}
-        className="w-[236px] rounded-xl border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
+        className="w-[236px] rounded-xl border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-[#0E0E1B] p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)] dark:shadow-[0_16px_40px_rgba(0,0,0,0.55)]"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="px-3 pb-1.5 pt-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF] dark:text-white/40">
@@ -833,6 +835,7 @@ export default function DesktopOrdersTable({
   currentUserName,
   initialOpenOrderId = null,
   initialCreateOrderOpen = false,
+  isCleaning = false,
   dataMenuSlot,
 }: Props) {
   const router = useRouter();
@@ -1796,7 +1799,7 @@ export default function DesktopOrdersTable({
 
             {dataMenuSlot && viewMode === "list" ? dataMenuSlot : null}
 
-            <div className="inline-flex items-center rounded-xl border border-[var(--brand-200)] bg-[var(--brand-50)] p-1">
+            <div className="inline-flex items-center rounded-xl border border-[var(--brand-200)] dark:border-[var(--brand-500)]/30 bg-[var(--brand-50)] dark:bg-[var(--brand-600)]/10 p-1">
               <button
                 type="button"
                 onClick={() => {
@@ -1807,7 +1810,7 @@ export default function DesktopOrdersTable({
                 className={[
                   "inline-flex h-9 items-center gap-2 rounded-lg px-3.5 text-[15px] font-medium transition",
                   viewMode === "list"
-                    ? "border border-[var(--brand-200)] bg-white dark:bg-white/[0.03] text-[#1F2937] dark:text-white/90 shadow-[0_8px_18px_rgba(91,91,179,0.12)]"
+                    ? "border border-[var(--brand-200)] dark:border-[var(--brand-500)]/40 bg-white dark:bg-[var(--brand-600)]/25 text-[#1F2937] dark:text-white shadow-[0_8px_18px_rgba(91,91,179,0.12)]"
                     : "border border-transparent text-[#6B7280] dark:text-white/55 hover:text-[#1F2937] dark:hover:text-white",
                 ].join(" ")}
               >
@@ -1822,7 +1825,7 @@ export default function DesktopOrdersTable({
                 className={[
                   "inline-flex h-9 items-center gap-2 rounded-lg px-3.5 text-[15px] font-medium transition",
                   viewMode === "kanban"
-                    ? "border border-[var(--brand-200)] bg-white dark:bg-white/[0.03] text-[#1F2937] dark:text-white/90 shadow-[0_8px_18px_rgba(91,91,179,0.12)]"
+                    ? "border border-[var(--brand-200)] dark:border-[var(--brand-500)]/40 bg-white dark:bg-[var(--brand-600)]/25 text-[#1F2937] dark:text-white shadow-[0_8px_18px_rgba(91,91,179,0.12)]"
                     : "border border-transparent text-[#6B7280] dark:text-white/55 hover:text-[#1F2937] dark:hover:text-white",
                 ].join(" ")}
               >
@@ -1889,7 +1892,7 @@ export default function DesktopOrdersTable({
                 align="start"
                 side="top"
                 sideOffset={8}
-                className="w-56 rounded-xl border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
+                className="w-56 rounded-xl border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-[#0E0E1B] p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)] dark:shadow-[0_16px_40px_rgba(0,0,0,0.55)]"
                 onClick={(event) => event.stopPropagation()}
                 onCloseAutoFocus={(event) => event.preventDefault()}
               >
@@ -1938,7 +1941,7 @@ export default function DesktopOrdersTable({
               <DropdownMenuContent
                 align="start"
                 sideOffset={8}
-                className="w-56 rounded-xl border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
+                className="w-56 rounded-xl border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-[#0E0E1B] p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)] dark:shadow-[0_16px_40px_rgba(0,0,0,0.55)]"
                 onClick={(event) => event.stopPropagation()}
                 onCloseAutoFocus={(event) => event.preventDefault()}
               >
@@ -2076,7 +2079,7 @@ export default function DesktopOrdersTable({
               <DropdownMenuContent
                 align="start"
                 sideOffset={8}
-                className="w-56 rounded-xl border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
+                className="w-56 rounded-xl border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-[#0E0E1B] p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)] dark:shadow-[0_16px_40px_rgba(0,0,0,0.55)]"
                 onClick={(event) => event.stopPropagation()}
                 onCloseAutoFocus={(event) => event.preventDefault()}
               >
@@ -2139,23 +2142,25 @@ export default function DesktopOrdersTable({
 
           {showCustomRange ? (
             <div className="flex min-w-[260px] flex-wrap items-center gap-3 xl:flex-none">
-              <input
-                type="date"
+              <StyledDateInput
                 value={customStart}
-                onChange={(event) => {
-                  setCustomStart(event.currentTarget.value);
+                onChange={(next) => {
+                  setCustomStart(next);
                   setRangeTouched(true);
                 }}
-                className="h-11 min-w-[170px] flex-1 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 text-sm font-medium text-[#374151] outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
+                placeholder="Pick start"
+                ariaLabel="Custom range start"
+                className="min-w-[170px] flex-1"
               />
-              <input
-                type="date"
+              <StyledDateInput
                 value={customEnd}
-                onChange={(event) => {
-                  setCustomEnd(event.currentTarget.value);
+                onChange={(next) => {
+                  setCustomEnd(next);
                   setRangeTouched(true);
                 }}
-                className="h-11 min-w-[170px] flex-1 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 text-sm font-medium text-[#374151] outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
+                placeholder="Pick end"
+                ariaLabel="Custom range end"
+                className="min-w-[170px] flex-1"
               />
             </div>
           ) : null}
@@ -2196,7 +2201,7 @@ export default function DesktopOrdersTable({
       </div>
 
       {viewMode === "list" ? (
-        <div className="overflow-x-auto overflow-y-visible">
+        <div className="overflow-x-auto overflow-y-visible min-h-[1100px]">
           <table className="min-w-[1040px] w-full border-collapse">
             <thead>
               <tr className="border-b border-[#F3F4F6] text-left">
@@ -2344,7 +2349,7 @@ export default function DesktopOrdersTable({
                           </DropdownMenuTrigger>
                           <DropdownMenuContent
                             align="end"
-                            className="w-48 rounded-xl border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
+                            className="w-48 rounded-xl border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-[#0E0E1B] p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)] dark:shadow-[0_16px_40px_rgba(0,0,0,0.55)]"
                           >
                             <DropdownMenuItem
                               className="rounded-lg px-3 py-2 text-sm font-medium"
@@ -2524,8 +2529,8 @@ export default function DesktopOrdersTable({
                         style={{
                           background:
                             dropStatusValue === column.value
-                              ? `linear-gradient(180deg, ${tone.selectedBackground} 0%, #EEF2FF 28%, #ffffff 100%)`
-                              : `linear-gradient(180deg, ${tone.background} 0%, #F9FAFB 22%, #ffffff 100%)`,
+                              ? `linear-gradient(180deg, ${tone.selectedBackground} 0%, var(--kanban-col-mid) 12%, var(--kanban-col-end) 100%)`
+                              : `linear-gradient(180deg, ${tone.background} 0%, var(--kanban-col-mid) 8%, var(--kanban-col-end) 100%)`,
                         }}
                         onDragOver={(event) => {
                           if (!canManage) return;
@@ -2576,7 +2581,7 @@ export default function DesktopOrdersTable({
                             <div className="min-w-0">
                               <div
                                 className={[
-                                  "font-semibold text-[#1F2937] dark:text-white/90",
+                                  "font-semibold text-[#1F2937]",
                                   isCollapsedColumn
                                     ? "text-[13px] leading-4 whitespace-normal"
                                     : "truncate text-[15px]",
@@ -2586,7 +2591,7 @@ export default function DesktopOrdersTable({
                               </div>
                               <div
                                 className={[
-                                  "font-medium text-[#9CA3AF] dark:text-white/40",
+                                  "font-medium text-[#6B7280]",
                                   isCollapsedColumn
                                     ? "text-[11px] leading-4"
                                     : "text-xs",
@@ -2649,8 +2654,8 @@ export default function DesktopOrdersTable({
                                       ? "h-6 min-w-[42px] px-1.5 text-[10px] font-semibold"
                                       : "h-7 min-w-[48px] px-2 text-[11px] font-semibold"
                                     : isCollapsedColumn
-                                      ? "h-6 min-w-[42px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-1.5 text-[10px] font-semibold text-[#6B7280] dark:text-white/55 hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06] hover:text-[#1F2937] dark:hover:text-white"
-                                      : "h-7 min-w-[48px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-2 text-[11px] font-semibold text-[#6B7280] dark:text-white/55 hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06] hover:text-[#1F2937] dark:hover:text-white",
+                                      ? "h-6 min-w-[42px] border border-[#E5E7EB] bg-white px-1.5 text-[10px] font-semibold text-[#6B7280] hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]"
+                                      : "h-7 min-w-[48px] border border-[#E5E7EB] bg-white px-2 text-[11px] font-semibold text-[#6B7280] hover:border-[#C7D2FE] hover:bg-[#F9FAFB] hover:text-[#1F2937]",
                                 ].join(" ")}
                                 style={
                                   hiddenByFilter || hiddenByPreference
@@ -2674,7 +2679,7 @@ export default function DesktopOrdersTable({
                           style={{
                             background: isCollapsedColumn
                               ? `${tone.background}80`
-                              : "rgba(255,255,255,0.4)",
+                              : "var(--kanban-col-inner)",
                           }}
                         >
                           {hiddenByFilter || hiddenByPreference ? (
@@ -2687,11 +2692,11 @@ export default function DesktopOrdersTable({
                               ].join(" ")}
                               style={{
                                 borderColor: `${tone.dot}33`,
-                                background: "rgba(255,255,255,0.72)",
+                                background: "var(--kanban-col-mid)",
                               }}
                             >
                               <div
-                                className={`font-semibold text-[#374151] ${
+                                className={`font-semibold text-[#374151] dark:text-white/85 ${
                                   isCollapsedColumn
                                     ? "text-[13px] leading-5"
                                     : "text-sm"
@@ -2749,10 +2754,10 @@ export default function DesktopOrdersTable({
                                       setDropStatusValue(null);
                                     }}
                                     className={[
-                                      "group rounded-[16px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-2.5 py-2 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition",
+                                      "group rounded-[16px] border border-[#E5E7EB] dark:border-white/15 bg-gradient-to-b from-white to-[#F9FAFF] dark:from-white/[0.08] dark:to-white/[0.02] px-2.5 py-2 shadow-[0_1px_2px_rgba(16,24,40,0.04)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.35)] transition",
                                       isDragging
-                                        ? "scale-[0.99] border-[#C7D2FE] dark:border-[var(--brand-500)]/40 bg-[#F9FAFB] dark:bg-white/[0.04] opacity-90 shadow-[0_18px_36px_rgba(15,23,42,0.14)]"
-                                        : "hover:-translate-y-0.5 hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:shadow-[0_16px_32px_rgba(15,23,42,0.08)]",
+                                        ? "scale-[0.99] border-[#C7D2FE] dark:border-[var(--brand-500)]/50 from-[#F9FAFB] to-[#F9FAFB] dark:from-white/[0.10] dark:to-white/[0.04] opacity-90 shadow-[0_18px_36px_rgba(15,23,42,0.14)]"
+                                        : "hover:-translate-y-0.5 hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:shadow-[0_16px_32px_rgba(15,23,42,0.08)] dark:hover:shadow-[0_18px_36px_rgba(0,0,0,0.55)]",
                                       canManage && !isSavingCard
                                         ? "cursor-grab active:cursor-grabbing"
                                         : "",
@@ -2818,7 +2823,7 @@ export default function DesktopOrdersTable({
                                           </DropdownMenuTrigger>
                                           <DropdownMenuContent
                                             align="end"
-                                            className="w-48 rounded-xl border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
+                                            className="w-48 rounded-xl border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-[#0E0E1B] p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)] dark:shadow-[0_16px_40px_rgba(0,0,0,0.55)]"
                                           >
                                             <DropdownMenuItem
                                               className="rounded-lg px-3 py-2 text-sm font-medium"
@@ -2979,7 +2984,16 @@ export default function DesktopOrdersTable({
                               })}
 
                               {column.orders.length === 0 ? (
-                                <div className="flex min-h-[160px] items-center justify-center rounded-[20px] border border-dashed border-[#E5E7EB] dark:border-white/10 bg-white/70 dark:bg-white/[0.05] px-4 text-center text-sm text-[#9CA3AF] dark:text-white/40">
+                                <div
+                                  className="flex min-h-[160px] items-center justify-center rounded-[20px] border border-dashed px-4 text-center text-sm text-[#9CA3AF] dark:text-white/35"
+                                  style={{
+                                    borderColor:
+                                      dropStatusValue === column.value
+                                        ? `${tone.dot}66`
+                                        : `${tone.dot}26`,
+                                    background: "transparent",
+                                  }}
+                                >
                                   {dropStatusValue === column.value
                                     ? "Drop order here"
                                     : "No deals in this status yet"}
@@ -2995,7 +3009,7 @@ export default function DesktopOrdersTable({
               </div>
 
               {canManage && draggingOrder ? (
-                <div className="pointer-events-none absolute top-6 right-6 z-20 flex w-[220px] flex-col gap-2 rounded-[24px] border border-[#E5E7EB] dark:border-white/10 bg-white/96 p-3 shadow-[0_20px_48px_rgba(15,23,42,0.16)] backdrop-blur">
+                <div className="pointer-events-none absolute top-6 right-6 z-20 flex w-[220px] flex-col gap-2 rounded-[24px] border border-[#E5E7EB] dark:border-white/10 bg-white/96 dark:bg-[#0E0E1B]/95 p-3 shadow-[0_20px_48px_rgba(15,23,42,0.16)] dark:shadow-[0_20px_48px_rgba(0,0,0,0.55)] backdrop-blur">
                   <div className="px-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF] dark:text-white/40">
                     Move order
                   </div>
@@ -3050,8 +3064,8 @@ export default function DesktopOrdersTable({
                             isCurrentStatus
                               ? "border-transparent bg-[#F9FAFB] dark:bg-white/[0.04] text-[#9CA3AF] dark:text-white/40"
                               : isActiveTarget
-                                ? "border-[var(--brand-200)] bg-[var(--brand-50)] text-[#1F2937] dark:text-white/90"
-                                : "border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#374151]",
+                                ? "border-[var(--brand-200)] dark:border-[var(--brand-500)]/40 bg-[var(--brand-50)] dark:bg-[var(--brand-600)]/20 text-[#1F2937] dark:text-white/90"
+                                : "border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.04] text-[#374151] dark:text-white/85",
                           ].join(" ")}
                         >
                           <div className="flex min-w-0 items-center gap-2">
@@ -3082,7 +3096,7 @@ export default function DesktopOrdersTable({
       )}
 
       {viewMode === "list" ? (
-        <div className="border-t border-[#F3F4F6] px-5 py-4">
+        <div className="border-t border-[#F3F4F6] dark:border-white/10 px-5 pt-5 pb-8">
           <div className="flex flex-wrap items-center justify-end gap-3">
             <div className="flex items-center gap-2 text-xs font-medium text-[#6B7280] dark:text-white/55">
               <span>Per page</span>
@@ -3103,7 +3117,7 @@ export default function DesktopOrdersTable({
                 <DropdownMenuContent
                   align="end"
                   sideOffset={8}
-                  className="z-[70] w-24 rounded-xl border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
+                  className="z-[70] w-24 rounded-xl border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-[#0E0E1B] p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)] dark:shadow-[0_16px_40px_rgba(0,0,0,0.55)]"
                   onCloseAutoFocus={(event) => event.preventDefault()}
                 >
                   <DropdownMenuRadioGroup value={String(perPage)}>
@@ -3207,6 +3221,7 @@ export default function DesktopOrdersTable({
         currentUserName={currentUserName}
         supabase={supabase}
         mode={createPreviewOpen ? "create" : "view"}
+        isCleaning={isCleaning}
         onClose={() => {
           setOpenId(null);
           setCreatePreviewOpen(false);

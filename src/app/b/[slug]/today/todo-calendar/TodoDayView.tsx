@@ -47,23 +47,23 @@ export function TodoDayView({
   }, []);
 
   return (
-    <div className="overflow-hidden rounded-[22px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] shadow-[0_12px_30px_rgba(15,23,42,0.05)]">
-      <div className="border-b border-[#F2F4F7] bg-[#FCFCFD] px-4 py-4">
+    <div className="overflow-hidden rounded-[22px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.04] shadow-[0_12px_30px_rgba(15,23,42,0.05)] dark:shadow-[0_12px_30px_rgba(0,0,0,0.45)]">
+      <div className="border-b border-[#F2F4F7] dark:border-white/10 bg-[#FCFCFD] dark:bg-white/[0.03] px-4 py-4">
         <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[#98A2B3] dark:text-white/45">
           Focused day
         </div>
-        <div className="mt-1 text-[20px] font-semibold text-[#111827]">
+        <div className="mt-1 text-[20px] font-semibold text-[#111827] dark:text-white/90">
           {format(anchorDate, "EEEE, MMMM d")}
         </div>
       </div>
 
-      <div className="border-b border-[#F2F4F7] px-4 py-4">
+      <div className="border-b border-[#F2F4F7] dark:border-white/10 px-4 py-4">
         <div className="mb-3 text-[11px] font-semibold uppercase tracking-[0.06em] text-[#98A2B3] dark:text-white/45">
           All day
         </div>
         <div className="space-y-2">
           {allDayItems.length === 0 ? (
-            <div className="rounded-[14px] border border-dashed border-[#E5E7EB] dark:border-white/10 bg-[#FCFCFD] px-4 py-4 text-sm text-[#667085]">
+            <div className="rounded-[14px] border border-dashed border-[#E5E7EB] dark:border-white/10 bg-[#FCFCFD] dark:bg-white/[0.03] px-4 py-4 text-sm text-[#667085] dark:text-white/55">
               No all-day items planned.
             </div>
           ) : (
@@ -82,7 +82,7 @@ export function TodoDayView({
       <div ref={timelineRef} className="overflow-x-auto overflow-y-auto">
         <div className="grid min-w-[720px] grid-cols-[72px_minmax(0,1fr)]">
           <div
-            className="relative w-[72px] shrink-0 border-r border-[#F2F4F7] bg-[#FCFCFD]"
+            className="relative w-[72px] shrink-0 border-r border-[#F2F4F7] dark:border-white/10 bg-[#FCFCFD] dark:bg-white/[0.03]"
             style={{ height: CALENDAR_TIMELINE_HEIGHT }}
           >
             {Array.from({ length: CALENDAR_HOUR_COUNT }).map((_, index) => {
@@ -108,7 +108,7 @@ export function TodoDayView({
             {Array.from({ length: CALENDAR_HOUR_COUNT }).map((_, index) => (
               <div
                 key={index}
-                className="absolute left-0 right-0 border-t border-[#F2F4F7]"
+                className="absolute left-0 right-0 border-t border-[#F2F4F7] dark:border-white/10"
                 style={{ top: index * CALENDAR_HOUR_HEIGHT }}
               />
             ))}
@@ -123,7 +123,7 @@ export function TodoDayView({
             ) : null}
 
             {timedItems.length === 0 ? (
-              <div className="absolute inset-x-4 top-6 rounded-[16px] border border-dashed border-[#E5E7EB] dark:border-white/10 bg-[#FCFCFD] px-4 py-5 text-sm text-[#667085]">
+              <div className="absolute inset-x-4 top-6 rounded-[16px] border border-dashed border-[#E5E7EB] dark:border-white/10 bg-[#FCFCFD] dark:bg-white/[0.03] px-4 py-5 text-sm text-[#667085] dark:text-white/55">
                 No timed items for this day.
               </div>
             ) : (

@@ -229,7 +229,7 @@ export function RightCampaignPopup() {
   return (
     <>
       <div className="fixed inset-0 z-[70] bg-slate-900/24 backdrop-blur-[1px]" />
-      <aside className="fixed left-1/2 top-1/2 z-[80] w-[420px] max-w-[calc(100vw-1.25rem)] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] p-4 shadow-[0_24px_60px_-24px_rgba(15,23,42,0.45)]">
+      <aside className="fixed left-1/2 top-1/2 z-[80] w-[420px] max-w-[calc(100vw-1.25rem)] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0E0E1B] p-4 shadow-[0_24px_60px_-24px_rgba(15,23,42,0.45)] dark:shadow-[0_24px_60px_-24px_rgba(0,0,0,0.85)]">
         {error ? (
           <div className="mb-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-600">{error}</div>
         ) : null}

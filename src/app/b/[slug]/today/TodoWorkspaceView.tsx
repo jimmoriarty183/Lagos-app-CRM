@@ -6,6 +6,7 @@ import { CalendarPlus, Plus } from "lucide-react";
 
 import { createFollowUp } from "@/app/b/[slug]/actions";
 import { ClientOrderForm } from "@/app/b/[slug]/_components/orders/ClientOrderForm";
+import { StyledDateInput } from "@/components/ui/styled-date-input";
 import {
   type TodayFollowUpItem,
   type ManagerMonthlyPlanProgress,
@@ -24,6 +25,7 @@ import type {
 } from "@/app/b/[slug]/today/todo-calendar/types";
 import {
   filterCalendarItems,
+  getItemDate,
   getItemsForDate,
   getPeriodLabel,
   getSelectedDateFallback,
@@ -75,6 +77,7 @@ export function TodoWorkspaceView({
   orderOptions = [],
   initialMode,
   managerPlanProgress,
+  isCleaning = false,
 }: {
   businessId: string;
   businessSlug: string;
@@ -84,6 +87,7 @@ export function TodoWorkspaceView({
   orderOptions?: TodoOrderOption[];
   initialMode: TodoDisplayMode;
   managerPlanProgress?: ManagerMonthlyPlanProgress | null;
+  isCleaning?: boolean;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -159,10 +163,17 @@ export function TodoWorkspaceView({
   );
 
   const selectedDate = parseDateOnly(selectedDateKey);
+  // The saved selection wins whenever it exists in the current filter — that
+  // way clicking an overdue item from the side list shows its details below
+  // without yanking the calendar's selected day to that item's date.
+  // handleSelectDate keeps selectedItemId in sync when the user clicks a
+  // different calendar cell, so we don't get stale selections from there.
+  const savedSelectedItem = filteredItems.find(
+    (item) => item.id === selectedItemId,
+  );
+  const itemsOnSelectedDate = getItemsForDate(filteredItems, selectedDate);
   const selectedItem =
-    filteredItems.find((item) => item.id === selectedItemId) ??
-    getItemsForDate(filteredItems, selectedDate)[0] ??
-    null;
+    savedSelectedItem ?? itemsOnSelectedDate[0] ?? null;
 
   const handleSelectDate = React.useCallback((date: Date) => {
     const key = toDateKey(date);
@@ -171,6 +182,16 @@ export function TodoWorkspaceView({
     setSelectedItemId(nextItem?.id ?? null);
     setDetailsCollapsed(false);
   }, [filteredItems]);
+
+  // Stable ref so the URL → state sync effect does not depend on
+  // handleSelectDate's identity. handleSelectDate changes whenever
+  // filteredItems change, which would otherwise cause this effect to
+  // re-run and reset calendarView/anchorDate back to URL defaults
+  // (snapping the user back to "day" + today after they navigate).
+  const handleSelectDateRef = React.useRef(handleSelectDate);
+  React.useEffect(() => {
+    handleSelectDateRef.current = handleSelectDate;
+  }, [handleSelectDate]);
 
   React.useEffect(() => {
     const modeParam = String(searchParams.get("mode") ?? "")
@@ -181,15 +202,18 @@ export function TodoWorkspaceView({
     const viewParam = String(searchParams.get("view") ?? "")
       .trim()
       .toLowerCase();
-    const nextView: TodoCalendarView =
-      viewParam === "month" || viewParam === "week" || viewParam === "day"
-        ? viewParam
-        : "day";
-    setCalendarView((current) => (current === nextView ? current : nextView));
+    const hasViewParam =
+      viewParam === "month" || viewParam === "week" || viewParam === "day";
+    if (hasViewParam) {
+      const nextView = viewParam as TodoCalendarView;
+      setCalendarView((current) => (current === nextView ? current : nextView));
+    }
 
     const rawDateParam = String(searchParams.get("date") ?? "").trim().toLowerCase();
+    if (!rawDateParam) return;
+
     let targetDate: Date | null = null;
-    if (!rawDateParam || rawDateParam === "today") {
+    if (rawDateParam === "today") {
       targetDate = new Date();
     } else if (/^\d{4}-\d{2}-\d{2}$/.test(rawDateParam)) {
       const parsed = parseDateOnly(rawDateParam);
@@ -202,11 +226,17 @@ export function TodoWorkspaceView({
         ? current
         : (targetDate as Date),
     );
-    handleSelectDate(targetDate);
-  }, [searchParams, handleSelectDate]);
+    handleSelectDateRef.current(targetDate);
+  }, [searchParams]);
 
+  // Clicking any item in the side list always jumps the calendar grid to
+  // that item's date, exactly like the "Show in calendar" button — otherwise
+  // the right panel header reads "Saturday, April 11" while the visible grid
+  // is still on May, which is confusing.
   const handleSelectItem = React.useCallback((item: TodoCalendarItem) => {
-    setSelectedDateKey(item.date);
+    const target = getItemDate(item);
+    setAnchorDate(target);
+    setSelectedDateKey(toDateKey(target));
     setSelectedItemId(item.id);
     setDetailsCollapsed(false);
   }, []);
@@ -225,6 +255,21 @@ export function TodoWorkspaceView({
       handleSelectDate(nextAnchor);
     }
   }, [anchorDate, calendarView, handleSelectDate]);
+
+  // Jump the calendar to the date of a specific item (typically the selected
+  // detail) and switch to a wide-context view (month by default) so the user
+  // can see the item in the timeline. Auto-selects the item once we land.
+  const handleShowInCalendar = React.useCallback(
+    (item: TodoCalendarItem, view: TodoCalendarView = "month") => {
+      const target = getItemDate(item);
+      setCalendarView(view);
+      setAnchorDate(target);
+      setSelectedDateKey(toDateKey(target));
+      setSelectedItemId(item.id);
+      setDetailsCollapsed(false);
+    },
+    [],
+  );
 
   const openCreateFollowUp = React.useCallback(() => {
     const selected = selectedDateKey || toDateKey(new Date());
@@ -312,7 +357,7 @@ export function TodoWorkspaceView({
         </div>
       ) : (
         <div className="relative space-y-5">
-          <div className="rounded-[24px] border border-[#D9E2FF] bg-[linear-gradient(135deg,#FFFFFF_0%,#F8FAFF_62%,#EEF2FF_100%)] px-5 py-4.5 shadow-[0_16px_38px_rgba(15,23,42,0.08)]">
+          <div className="rounded-[24px] border border-[#D9E2FF] dark:border-white/10 bg-[#EEF2FF] dark:bg-white/[0.04] px-5 py-4.5 shadow-[0_16px_38px_rgba(15,23,42,0.08)] dark:shadow-[0_16px_38px_rgba(0,0,0,0.45)]">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
               <div>
                 <div className="product-page-title text-[#0F172A] dark:text-white">Today</div>
@@ -367,7 +412,7 @@ export function TodoWorkspaceView({
             onNext={() => handleMovePeriod(1)}
           />
 
-          <div className="rounded-[24px] border border-[#E4E7EC] bg-[linear-gradient(180deg,#FFFFFF_0%,#F8FAFC_100%)] px-5 py-4 shadow-[0_14px_32px_rgba(15,23,42,0.06)]">
+          <div className="rounded-[24px] border border-[#E4E7EC] dark:border-white/10 bg-white dark:bg-white/[0.04] px-5 py-4 shadow-[0_14px_32px_rgba(15,23,42,0.06)] dark:shadow-[0_14px_32px_rgba(0,0,0,0.45)]">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <div>
                 <div className="product-section-title">Planning calendar</div>
@@ -428,6 +473,7 @@ export function TodoWorkspaceView({
                 collapsed={detailsCollapsed}
                 onToggleCollapsed={() => setDetailsCollapsed((current) => !current)}
                 onSelectItem={handleSelectItem}
+                onShowInCalendar={handleShowInCalendar}
               />
             </div>
           )}
@@ -441,10 +487,10 @@ export function TodoWorkspaceView({
           if (!nextOpen) setCreateError(null);
         }}
       >
-        <DialogContent className="max-w-[560px] rounded-[24px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-0 shadow-[0_24px_64px_rgba(15,23,42,0.18)]">
+        <DialogContent className="max-w-[560px] rounded-[24px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-[#0E0E1B] p-0 shadow-[0_24px_64px_rgba(15,23,42,0.18)] dark:shadow-[0_24px_64px_rgba(0,0,0,0.55)]">
           <div className="space-y-4 px-5 py-5">
             <DialogHeader className="space-y-1 text-left">
-              <DialogTitle className="text-[19px] font-semibold text-[#111827]">
+              <DialogTitle className="text-[19px] font-semibold text-[#111827] dark:text-white/90">
                 Create follow-up
               </DialogTitle>
               <DialogDescription className="text-sm leading-6 text-[#6B7280] dark:text-white/55">
@@ -460,7 +506,7 @@ export function TodoWorkspaceView({
                   onChange={(event) =>
                     setCreateKind(event.currentTarget.value as FollowUpCreateKind)
                   }
-                  className="h-10 rounded-xl border border-[#D0D5DD] bg-white dark:bg-white/[0.03] px-3 text-[14px] text-[#111827] outline-none focus:border-[var(--brand-500)]"
+                  className="h-10 rounded-xl border border-[#D0D5DD] dark:border-white/10 bg-white dark:bg-white/[0.04] px-3 text-[14px] text-[#111827] dark:text-white/90 placeholder:text-[#9CA3AF] dark:placeholder:text-white/40 outline-none focus:border-[var(--brand-500)] [color-scheme:light] dark:[color-scheme:dark]"
                 >
                   {FOLLOW_UP_KIND_OPTIONS.map((option) => (
                     <option key={`follow-up-kind-${option.value}`} value={option.value}>
@@ -476,18 +522,19 @@ export function TodoWorkspaceView({
                   value={createTitle}
                   onChange={(event) => setCreateTitle(event.currentTarget.value)}
                   placeholder="Call client about proposal"
-                  className="h-10 rounded-xl border border-[#D0D5DD] bg-white dark:bg-white/[0.03] px-3 text-[14px] text-[#111827] outline-none focus:border-[var(--brand-500)]"
+                  className="h-10 rounded-xl border border-[#D0D5DD] dark:border-white/10 bg-white dark:bg-white/[0.04] px-3 text-[14px] text-[#111827] dark:text-white/90 placeholder:text-[#9CA3AF] dark:placeholder:text-white/40 outline-none focus:border-[var(--brand-500)] [color-scheme:light] dark:[color-scheme:dark]"
                 />
               </label>
 
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 <label className="flex flex-col gap-1 text-[12px] font-semibold text-[#475467] dark:text-white/70">
                   Date
-                  <input
-                    type="date"
+                  <StyledDateInput
                     value={createDate}
-                    onChange={(event) => setCreateDate(event.currentTarget.value)}
-                    className="h-10 rounded-xl border border-[#D0D5DD] bg-white dark:bg-white/[0.03] px-3 text-[14px] text-[#111827] outline-none focus:border-[var(--brand-500)]"
+                    onChange={setCreateDate}
+                    placeholder="Pick date"
+                    ariaLabel="Follow-up date"
+                    className="w-full"
                   />
                 </label>
                 <label className="flex flex-col gap-1 text-[12px] font-semibold text-[#475467] dark:text-white/70">
@@ -496,7 +543,7 @@ export function TodoWorkspaceView({
                     type="time"
                     value={createTime}
                     onChange={(event) => setCreateTime(event.currentTarget.value)}
-                    className="h-10 rounded-xl border border-[#D0D5DD] bg-white dark:bg-white/[0.03] px-3 text-[14px] text-[#111827] outline-none focus:border-[var(--brand-500)]"
+                    className="h-10 rounded-xl border border-[#D0D5DD] dark:border-white/10 bg-white dark:bg-white/[0.04] px-3 text-[14px] text-[#111827] dark:text-white/90 placeholder:text-[#9CA3AF] dark:placeholder:text-white/40 outline-none focus:border-[var(--brand-500)] [color-scheme:light] dark:[color-scheme:dark]"
                   />
                 </label>
               </div>
@@ -506,7 +553,7 @@ export function TodoWorkspaceView({
                 <select
                   value={createOrderId}
                   onChange={(event) => setCreateOrderId(event.currentTarget.value)}
-                  className="h-10 rounded-xl border border-[#D0D5DD] bg-white dark:bg-white/[0.03] px-3 text-[14px] text-[#111827] outline-none focus:border-[var(--brand-500)]"
+                  className="h-10 rounded-xl border border-[#D0D5DD] dark:border-white/10 bg-white dark:bg-white/[0.04] px-3 text-[14px] text-[#111827] dark:text-white/90 placeholder:text-[#9CA3AF] dark:placeholder:text-white/40 outline-none focus:border-[var(--brand-500)] [color-scheme:light] dark:[color-scheme:dark]"
                 >
                   <option value="">No order</option>
                   {orderOptions.map((option) => (
@@ -524,7 +571,7 @@ export function TodoWorkspaceView({
                   value={createNote}
                   onChange={(event) => setCreateNote(event.currentTarget.value)}
                   placeholder="Context, next step, expected outcome"
-                  className="resize-y rounded-xl border border-[#D0D5DD] bg-white dark:bg-white/[0.03] px-3 py-2 text-[14px] text-[#111827] outline-none focus:border-[var(--brand-500)]"
+                  className="resize-y rounded-xl border border-[#D0D5DD] dark:border-white/10 bg-white dark:bg-white/[0.04] px-3 py-2 text-[14px] text-[#111827] dark:text-white/90 placeholder:text-[#9CA3AF] dark:placeholder:text-white/40 outline-none focus:border-[var(--brand-500)]"
                 />
               </label>
             </div>
@@ -535,11 +582,11 @@ export function TodoWorkspaceView({
               </div>
             ) : null}
 
-            <DialogFooter className="gap-2 border-t border-[#F3F4F6] pt-4 sm:justify-between">
+            <DialogFooter className="gap-2 border-t border-[#F3F4F6] dark:border-white/10 pt-4 sm:justify-between">
               <Button
                 type="button"
                 variant="outline"
-                className="h-10 rounded-xl border-[#D0D5DD] px-4 text-sm font-semibold text-[#374151]"
+                className="h-10 rounded-xl border-[#D0D5DD] dark:border-white/10 bg-white dark:bg-white/[0.04] px-4 text-sm font-semibold text-[#374151] dark:text-white/85 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.08] hover:text-[#1F2937] dark:hover:text-white"
                 disabled={createSaving}
                 onClick={() => {
                   setCreateOpen(false);
@@ -566,7 +613,7 @@ export function TodoWorkspaceView({
           setCreateOrderOpen(nextOpen);
         }}
       >
-        <DialogContent className="max-h-[92vh] w-[calc(100vw-24px)] overflow-hidden rounded-[24px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-0 shadow-[0_24px_64px_rgba(15,23,42,0.18)] sm:w-full sm:max-w-[760px]">
+        <DialogContent className="max-h-[92vh] w-[calc(100vw-24px)] overflow-hidden rounded-[24px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-[#0E0E1B] p-0 shadow-[0_24px_64px_rgba(15,23,42,0.18)] dark:shadow-[0_24px_64px_rgba(0,0,0,0.55)] sm:w-full sm:max-w-[760px]">
           <div className="flex max-h-[92vh] flex-col">
             <DialogHeader className="space-y-1 border-b border-[#E5E7EB] dark:border-white/10 px-5 pb-3 pt-5 text-left">
               <DialogTitle className="text-[19px] font-semibold text-[#111827]">
@@ -612,6 +659,7 @@ export function TodoWorkspaceView({
                   businessId={businessId}
                   businessSlug={businessSlug}
                   compact
+                  isCleaning={isCleaning}
                   onCreated={() => {
                     router.refresh();
                     setCreateOrderOpen(false);

@@ -963,7 +963,7 @@ function ActivityHeader({
   return (
     <div
       className={cn(
-        "border border-[#E5E7EB] dark:border-white/10 bg-[linear-gradient(180deg,#ffffff_0%,#F9FAFB_100%)] shadow-[0_8px_20px_rgba(15,23,42,0.05)]",
+        "border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.04] shadow-[0_8px_20px_rgba(15,23,42,0.05)] dark:shadow-[0_8px_20px_rgba(0,0,0,0.45)]",
         compact ? "rounded-[14px] px-2.5 py-1.5" : "rounded-[20px] px-3 py-2.5",
       )}
     >
@@ -990,7 +990,7 @@ function ActivityHeader({
             setSort(sort === "conversation" ? "newest" : "conversation")
           }
           className={cn(
-            "inline-flex items-center gap-1.5 self-start rounded-full border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] font-semibold text-[#374151] transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]",
+            "inline-flex items-center gap-1.5 self-start rounded-full border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.04] font-semibold text-[#374151] dark:text-white/85 transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.08] hover:text-[#1F2937] dark:hover:text-white",
             compact ? "px-2.5 py-1 text-[11px]" : "px-3 py-1 text-xs",
           )}
         >
@@ -1026,8 +1026,8 @@ function ActivityHeader({
                   ? "rounded-full px-1.5 py-0.5 text-[10px]"
                   : "rounded-full px-1.5 py-0.5 text-[11px]",
                 filter === item.value
-                  ? "bg-white/80 dark:bg-white/[0.05] text-[var(--brand-600)]"
-                  : "bg-[#F3F4F6] text-[#6B7280] dark:text-white/55",
+                  ? "bg-white/80 dark:bg-white/[0.10] text-[var(--brand-600)] dark:text-[var(--brand-300)]"
+                  : "bg-[#F3F4F6] dark:bg-white/[0.06] text-[#6B7280] dark:text-white/55",
               )}
             >
               {item.count}
@@ -1078,7 +1078,7 @@ function EmojiPicker({
         <Smile className={compact ? "h-3.5 w-3.5" : "h-4 w-4"} />
       </button>
       {open ? (
-        <div className="absolute bottom-full right-0 z-20 mb-1 grid w-[220px] grid-cols-10 gap-0.5 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-1.5 shadow-[0_-8px_24px_rgba(15,23,42,0.12)]">
+        <div className="absolute bottom-full right-0 z-20 mb-1 grid w-[220px] grid-cols-10 gap-0.5 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-[#0E0E1B] p-1.5 shadow-[0_-8px_24px_rgba(15,23,42,0.12)] dark:shadow-[0_-12px_30px_rgba(0,0,0,0.55)]">
           {EMOJI_LIST.map((emoji) => (
             <button
               key={emoji}
@@ -1182,7 +1182,7 @@ function CommentComposer({
   return (
     <div
       className={cn(
-        "border border-[#e6ebf2] bg-white/96 shadow-[0_10px_24px_rgba(15,23,42,0.08)] backdrop-blur",
+        "border border-[#e6ebf2] dark:border-white/10 bg-white/96 dark:bg-white/[0.05] shadow-[0_10px_24px_rgba(15,23,42,0.08)] dark:shadow-[0_10px_24px_rgba(0,0,0,0.45)] backdrop-blur",
         compact ? "rounded-xl p-1.5" : "rounded-[22px] p-2.5",
       )}
     >
@@ -1239,7 +1239,7 @@ function CommentComposer({
                 }}
               />
               {filteredMentions.length > 0 ? (
-                <div className="absolute bottom-full left-0 right-0 z-10 mb-1 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-1.5 shadow-[0_-10px_30px_rgba(15,23,42,0.12)]">
+                <div className="absolute bottom-full left-0 right-0 z-10 mb-1 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-[#0E0E1B] p-1.5 shadow-[0_-10px_30px_rgba(15,23,42,0.12)] dark:shadow-[0_-12px_30px_rgba(0,0,0,0.55)]">
                   {filteredMentions.map((actor) => (
                     <button key={actor.id} type="button" onClick={() => applyMention(actor.id, actor.label)} className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left transition hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]">
                       {String(actor.avatar_url ?? "").trim() ? (
@@ -1328,7 +1328,7 @@ function CommentComposer({
                 </div>
               </div>
             ) : null}
-            <div className="relative rounded-[18px] border border-[#E5E7EB] dark:border-white/10 bg-[linear-gradient(180deg,#FFFFFF_0%,#F9FAFB_100%)] px-3.5 py-2.5 transition focus-within:border-[var(--brand-600)] focus-within:bg-white">
+            <div className="relative rounded-[18px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.04] px-3.5 py-2.5 transition focus-within:border-[var(--brand-600)] focus-within:bg-white dark:focus-within:bg-white/[0.07]">
               <textarea
                 ref={textareaRef}
                 value={value}
@@ -1354,7 +1354,7 @@ function CommentComposer({
                 }}
               />
               {filteredMentions.length > 0 ? (
-                <div className="absolute left-4 right-4 top-full z-10 mt-2 rounded-2xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-2 shadow-[0_20px_40px_rgba(15,23,42,0.12)]">
+                <div className="absolute left-4 right-4 top-full z-10 mt-2 rounded-2xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-[#0E0E1B] p-2 shadow-[0_20px_40px_rgba(15,23,42,0.12)] dark:shadow-[0_20px_40px_rgba(0,0,0,0.55)]">
                   {filteredMentions.map((actor) => (
                     <button key={actor.id} type="button" onClick={() => applyMention(actor.id, actor.label)} className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]">
                       {String(actor.avatar_url ?? "").trim() ? (
@@ -1747,7 +1747,7 @@ function AttachmentCard({
         <div className="min-w-0">
           <div
             className={cn(
-              "flex items-center font-semibold text-[#101828]",
+              "flex items-center font-semibold text-[#101828] dark:text-white/90",
               compact ? "gap-1.5 text-[12px]" : "gap-2 text-sm",
             )}
           >
@@ -1821,7 +1821,7 @@ function SystemEventItem({
         <EventGlyph eventType={item.eventType} tone={item.tone} compact />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
-            <span className="font-medium text-[#101828]">{item.title}</span>
+            <span className="font-medium text-[#101828] dark:text-white/90">{item.title}</span>
             {item.payload?.field ? (
               <span className="text-[11px] text-[#98a2b3] dark:text-white/45">
                 {formatFieldLabel(item.payload.field)}
@@ -1864,7 +1864,7 @@ function SystemEventItem({
                       item.payload?.fileName || item.detail || "Attachment",
                   })
                 }
-                className="inline-flex items-center gap-0.5 font-semibold text-[#667085] transition hover:text-[#101828]"
+                className="inline-flex items-center gap-0.5 font-semibold text-[#667085] transition hover:text-[#101828] dark:text-white/90"
               >
                 <CornerUpLeft className="h-3 w-3" />
                 Reply
@@ -1878,18 +1878,18 @@ function SystemEventItem({
 
   return (
     <div
-      className="flex gap-3 rounded-[20px] border border-[#E5E7EB] dark:border-white/10 bg-[linear-gradient(180deg,#FFFFFF_0%,#F9FAFB_100%)] px-4 py-3 transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:shadow-[0_10px_24px_rgba(15,23,42,0.05)]"
+      className="flex gap-3 rounded-[20px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.04] px-4 py-3 transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:shadow-[0_10px_24px_rgba(15,23,42,0.05)]"
     >
       <div className="flex w-12 flex-col items-center">
         <EventGlyph
           eventType={item.eventType}
           tone={item.tone}
         />
-        <div className="mt-2 h-full w-px bg-[#edf1f5]" />
+        <div className="mt-2 h-full w-px bg-[#edf1f5] dark:bg-white/10" />
       </div>
       <div className="min-w-0 flex-1 pb-2">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm font-semibold text-[#101828]">
+          <span className="text-sm font-semibold text-[#101828] dark:text-white/90">
             {item.title}
           </span>
           {item.payload?.field ? (
@@ -1932,7 +1932,7 @@ function SystemEventItem({
                     item.payload?.fileName || item.detail || "Attachment",
                 })
               }
-              className="inline-flex items-center gap-1 font-semibold text-[#667085] transition hover:text-[#101828]"
+              className="inline-flex items-center gap-1 font-semibold text-[#667085] transition hover:text-[#101828] dark:text-white/90"
             >
               <CornerUpLeft className="h-3.5 w-3.5" />
               Reply
@@ -1955,12 +1955,12 @@ function ReplyPreview({
   if (!reply) return null;
 
   return (
-    <div className="mb-2 rounded-[12px] border border-[#e5edf8] bg-[#f8fbff] dark:bg-[var(--bg-app)] px-2.5 py-2">
-      <div className="product-section-label flex items-center gap-1.5 text-[#7c8aa5]">
+    <div className="mb-2 rounded-[12px] border border-[#e5edf8] dark:border-white/10 bg-[#f8fbff] dark:bg-white/[0.05] px-2.5 py-2">
+      <div className="product-section-label flex items-center gap-1.5 text-[#7c8aa5] dark:text-white/55">
         <CornerUpLeft className="h-3 w-3" />
         <span>{reply.label}</span>
       </div>
-      <div className="mt-0.5 line-clamp-2 text-[13px] leading-5 text-[#52607a]">
+      <div className="mt-0.5 line-clamp-2 text-[13px] leading-5 text-[#52607a] dark:text-white/70">
         {resolveMentionsPlain(reply.preview, actorNames)}
       </div>
     </div>
@@ -2023,7 +2023,7 @@ function CommentItem({
       className={cn(
         "group flex border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] shadow-[0_8px_20px_rgba(15,23,42,0.04)] transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:shadow-[0_12px_24px_rgba(15,23,42,0.06)]",
         compact ? "gap-2 rounded-[14px] px-2.5 py-2" : "gap-3 rounded-[20px] px-4 py-3",
-        item.replyToCommentId && "ml-4 border-[#e5edf8] bg-[#fcfdff]",
+        item.replyToCommentId && "ml-4 border-[#e5edf8] dark:border-white/15 bg-[#fcfdff] dark:bg-white/[0.05]",
       )}
     >
       <Avatar className={cn(compact ? "h-7 w-7 rounded-xl" : "h-10 w-10 rounded-2xl")}>
@@ -2040,7 +2040,7 @@ function CommentItem({
             <div className="flex flex-wrap items-center gap-2">
               <span
                 className={cn(
-                  "text-[#101828]",
+                  "text-[#101828] dark:text-white/90",
                   compact ? "text-sm font-medium" : "text-sm font-semibold",
                 )}
               >
@@ -2055,7 +2055,7 @@ function CommentItem({
                 {badge.label}
               </span>
               {item.replyToCommentId ? (
-                <span className="inline-flex rounded-full border border-[#e5edf8] bg-[#f8fbff] dark:bg-[var(--bg-app)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#52607a]">
+                <span className="inline-flex rounded-full border border-[#e5edf8] dark:border-white/10 bg-[#f8fbff] dark:bg-white/[0.05] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#52607a] dark:text-white/70">
                   Reply
                 </span>
               ) : null}
@@ -2122,7 +2122,7 @@ function CommentItem({
               value={editingValue}
               onChange={(event) => setEditingValue(event.target.value)}
               rows={4}
-              className="min-h-[120px] w-full resize-none rounded-[18px] border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] px-4 py-3 text-sm leading-6 text-[#1F2937] dark:text-white/90 outline-none transition focus:border-[var(--brand-600)] focus:bg-white"
+              className="min-h-[120px] w-full resize-none rounded-[18px] border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] px-4 py-3 text-sm leading-6 text-[#1F2937] dark:text-white/90 outline-none transition focus:border-[var(--brand-600)] focus:bg-white dark:focus:bg-white/[0.07]"
             />
             <div
               className={cn(
@@ -2133,7 +2133,7 @@ function CommentItem({
               <button
                 type="button"
                 onClick={onCancelEdit}
-                className="inline-flex h-10 items-center justify-center rounded-2xl border border-[#E5E7EB] dark:border-white/10 px-4 text-sm font-semibold text-[#4B5563] dark:text-white/70 transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]"
+                className="inline-flex h-10 items-center justify-center rounded-2xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.04] px-4 text-sm font-semibold text-[#4B5563] dark:text-white/85 transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.08] hover:text-[#1F2937] dark:hover:text-white"
               >
                 Cancel
               </button>
@@ -2141,7 +2141,7 @@ function CommentItem({
                 type="button"
                 onClick={() => onSaveEdit(item)}
                 disabled={!editingValue.trim()}
-                className="inline-flex h-10 items-center justify-center rounded-2xl border border-[var(--brand-200)] bg-[var(--brand-50)] px-4 text-sm font-semibold text-[var(--brand-600)] transition disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex h-10 items-center justify-center rounded-2xl border border-[var(--brand-200)] dark:border-[var(--brand-500)]/40 bg-[var(--brand-50)] dark:bg-[var(--brand-600)]/20 px-4 text-sm font-semibold text-[var(--brand-600)] dark:text-[var(--brand-300)] transition disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Save
               </button>
@@ -2329,6 +2329,28 @@ function ActivityTimeline({
     [getThreadChain, threadViewId],
   );
 
+  // Lock background scroll while the thread modal is open. Without this,
+  // wheeling outside the modal scrolls the underlying order drawer / page,
+  // which feels broken because the modal looks like a dialog.
+  React.useEffect(() => {
+    if (!threadViewId) return;
+    const previousBody = document.body.style.overflow;
+    const previousHtml = document.documentElement.style.overflow;
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setThreadViewId(null);
+    };
+    document.addEventListener("keydown", onKey);
+
+    return () => {
+      document.body.style.overflow = previousBody;
+      document.documentElement.style.overflow = previousHtml;
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [threadViewId]);
+
   const renderComment = (item: TimelineComment, showThreadBtn = false) => (
     <div key={item.id}>
       <CommentItem
@@ -2369,7 +2391,7 @@ function ActivityTimeline({
   return (
     <div
       className={cn(
-        "border border-[#E5E7EB] dark:border-white/10 bg-[linear-gradient(180deg,#FFFFFF_0%,#F9FAFB_100%)] shadow-[0_10px_24px_rgba(15,23,42,0.05)]",
+        "border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.04] shadow-[0_10px_24px_rgba(15,23,42,0.05)]",
         compact ? "rounded-[16px] p-1.5" : "rounded-[22px] p-3",
       )}
     >
@@ -2428,9 +2450,14 @@ function ActivityTimeline({
       ) : null}
       {/* Thread view overlay */}
       {threadViewId && threadChain.length > 0 ? (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/30 backdrop-blur-sm" onClick={() => setThreadViewId(null)}>
+        <div
+          className="fixed inset-0 z-[200] flex items-center justify-center overscroll-contain bg-black/30 backdrop-blur-sm"
+          onClick={() => setThreadViewId(null)}
+          onWheel={(event) => event.stopPropagation()}
+          onTouchMove={(event) => event.stopPropagation()}
+        >
           <div
-            className="mx-4 flex max-h-[80vh] w-full max-w-lg flex-col rounded-2xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] shadow-[0_25px_50px_rgba(15,23,42,0.15)]"
+            className="mx-4 flex max-h-[80vh] w-full max-w-lg flex-col overscroll-contain rounded-2xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-[#0E0E1B] shadow-[0_25px_50px_rgba(15,23,42,0.15)] dark:shadow-[0_25px_50px_rgba(0,0,0,0.55)]"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b border-[#EEF2FF] px-4 py-3">
@@ -3241,7 +3268,7 @@ export function OrderActivitySection({
       )}
       <div
         className={cn(
-          "sticky bottom-0 z-20 -mx-1 rounded-[28px] bg-[linear-gradient(180deg,rgba(248,250,252,0)_0%,rgba(248,250,252,0.94)_22%,rgba(248,250,252,1)_100%)] px-1",
+          "sticky bottom-0 z-20 -mx-1 rounded-[28px] bg-[linear-gradient(180deg,rgba(248,250,252,0)_0%,rgba(248,250,252,0.94)_22%,rgba(248,250,252,1)_100%)] dark:bg-[linear-gradient(180deg,rgba(11,11,20,0)_0%,rgba(11,11,20,0.94)_22%,rgba(11,11,20,1)_100%)] px-1",
           compact ? "pt-2" : "pt-2.5",
         )}
       >

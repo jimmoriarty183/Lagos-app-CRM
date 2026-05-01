@@ -19,7 +19,7 @@ export function TodoViewModeSwitch<T extends string>({
   size?: "sm" | "md";
 }) {
   return (
-    <div className="inline-flex rounded-[18px] border border-[#D6DEEC] bg-[linear-gradient(180deg,#F8FAFF_0%,#EEF2FA_100%)] p-1 shadow-[inset_0_1px_2px_rgba(15,23,42,0.05)]">
+    <div className="inline-flex rounded-[18px] border border-[#D6DEEC] dark:border-white/10 bg-[#EEF2FA] dark:bg-white/[0.04] p-1 shadow-[inset_0_1px_2px_rgba(15,23,42,0.05)]">
       {options.map((option) => {
         const active = option.value === value;
         return (
@@ -32,7 +32,7 @@ export function TodoViewModeSwitch<T extends string>({
               size === "sm" ? "h-8 text-[12px]" : "h-9.5 text-[13px]",
               active
                 ? "border-[var(--brand-600)] bg-[var(--brand-600)] !text-white shadow-[0_8px_18px_rgba(91,91,179,0.24)] hover:border-[var(--brand-700)] hover:bg-[var(--brand-700)] hover:!text-white"
-                : "border-transparent text-[#667085] hover:bg-white/80 hover:text-[#334155]",
+                : "border-transparent text-[#667085] dark:text-white/65 hover:bg-[#F1F5F9] dark:hover:!bg-white/[0.08] hover:text-[#334155] dark:hover:!text-white",
             )}
             aria-pressed={active}
           >

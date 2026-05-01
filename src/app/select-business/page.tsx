@@ -1,6 +1,6 @@
 ﻿import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { BrandIcon, BrandWordmark } from "@/components/Brand";
+import { BrandLockup } from "@/components/Brand";
 import { supabaseServerReadOnly } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -93,29 +93,18 @@ export default async function SelectBusinessPage() {
     >
       <div className="mx-auto max-w-3xl">
         <div className="overflow-hidden rounded-[28px] border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] shadow-[0_20px_60px_-42px_rgba(15,23,42,0.35)]">
-          <div className="border-b border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-6 py-8 sm:px-8">
-            <div className="flex items-center gap-3">
-              <BrandIcon size={24} />
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400 dark:text-white/45">
-                  Ordo access
-                </p>
-                <BrandWordmark
-                  variant="gradient"
-                  height={22}
-                  className="mt-1 h-[22px] w-auto dark:hidden"
-                />
-                <BrandWordmark
-                  variant="light"
-                  height={22}
-                  className="mt-1 hidden h-[22px] w-auto dark:inline-block"
-                />
-                <h1 className="mt-1 text-[1.85rem] font-semibold tracking-tight text-slate-900 dark:text-white sm:text-[2rem]">
-                  Select a workspace
-                </h1>
-              </div>
+          <div className="border-b border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-6 py-6 sm:px-8 sm:py-7">
+            <div className="flex items-center gap-2.5">
+              <BrandLockup iconSize={28} textClassName="text-[1.4rem]" />
+              <span className="hidden h-5 w-px bg-slate-200 dark:bg-white/10 sm:inline-block" />
+              <p className="hidden text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400 dark:text-white/45 sm:block">
+                Workspace access
+              </p>
             </div>
-            <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-600 dark:text-white/70 sm:text-base">
+            <h1 className="mt-4 text-[1.5rem] font-semibold tracking-tight text-slate-900 dark:text-white sm:text-[1.75rem]">
+              Select a workspace
+            </h1>
+            <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-slate-600 dark:text-white/70">
               You have access to multiple workspaces. Choose where you want to continue working in Ordo.
             </p>
           </div>

@@ -570,8 +570,8 @@ export default function InviteInbox({
             className="fixed inset-0 z-40"
           />
 
-          <div className="fixed left-4 right-4 top-[calc(env(safe-area-inset-top)+5rem)] z-50 overflow-hidden rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] shadow-[0_20px_44px_-22px_rgba(15,23,42,0.65)] sm:absolute sm:left-auto sm:right-0 sm:top-[calc(100%+0.5rem)] sm:mt-0 sm:w-[430px] sm:max-w-[calc(100vw-1.5rem)]">
-            <div className="border-b border-slate-100 dark:border-white/[0.06] bg-white/95 px-4 py-3 backdrop-blur">
+          <div className="fixed left-4 right-4 top-[calc(env(safe-area-inset-top)+5rem)] z-50 overflow-hidden rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0E0E1B] shadow-[0_20px_44px_-22px_rgba(15,23,42,0.65)] dark:shadow-[0_20px_44px_-22px_rgba(0,0,0,0.85)] sm:absolute sm:left-auto sm:right-0 sm:top-[calc(100%+0.5rem)] sm:mt-0 sm:w-[430px] sm:max-w-[calc(100vw-1.5rem)]">
+            <div className="border-b border-slate-100 dark:border-white/[0.06] bg-white/95 dark:bg-[#0E0E1B]/95 px-4 py-3 backdrop-blur">
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">

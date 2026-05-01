@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { StyledDateInput } from "@/components/ui/styled-date-input";
 
 type MonthOption = { value: string; label: string };
 
@@ -96,20 +97,22 @@ export default function ClientPeriodForm({
             <div className="hidden md:block" />
             <label className="grid gap-1 text-xs font-medium text-[#475467] dark:text-white/70">
               From
-              <input
-                type="date"
+              <StyledDateInput
                 name="cfrom"
                 defaultValue={customFrom}
-                className="h-10 rounded-lg border border-[#D0D5DD] bg-white dark:bg-white/[0.03] px-3 text-sm text-[#111827]"
+                placeholder="Pick start"
+                ariaLabel="Custom from date"
+                className="w-full"
               />
             </label>
             <label className="grid gap-1 text-xs font-medium text-[#475467] dark:text-white/70">
               To
-              <input
-                type="date"
+              <StyledDateInput
                 name="cto"
                 defaultValue={customTo}
-                className="h-10 rounded-lg border border-[#D0D5DD] bg-white dark:bg-white/[0.03] px-3 text-sm text-[#111827]"
+                placeholder="Pick end"
+                ariaLabel="Custom to date"
+                className="w-full"
               />
             </label>
           </>

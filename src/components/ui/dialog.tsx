@@ -57,13 +57,13 @@ function DialogContent({
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
-          "bg-white data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-2xl border border-[#E5E7EB] p-6 text-[#1F2937] shadow-[0_24px_60px_-24px_rgba(15,23,42,0.45)] duration-200 sm:max-w-lg",
+          "bg-white dark:bg-[#0E0E1B] dark:text-white/90 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-2xl border border-[#E5E7EB] dark:border-white/10 p-6 text-[#1F2937] shadow-[0_24px_60px_-24px_rgba(15,23,42,0.45)] dark:shadow-[0_24px_60px_-24px_rgba(0,0,0,0.85)] duration-200 sm:max-w-lg",
           className,
         )}
         {...props}
       >
         {children}
-        <DialogPrimitive.Close className="absolute top-4 right-4 inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#E5E7EB] bg-white text-[#6B7280] opacity-100 transition-colors hover:border-[#D1D5DB] hover:text-[#1F2937] focus:outline-hidden focus:ring-2 focus:ring-[rgba(99,102,241,0.18)] focus:ring-offset-2 disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4">
+        <DialogPrimitive.Close className="absolute top-4 right-4 inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.04] text-[#6B7280] dark:text-white/70 opacity-100 transition-colors hover:border-[#D1D5DB] dark:hover:border-white/20 hover:text-[#1F2937] dark:hover:text-white focus:outline-hidden focus:ring-2 focus:ring-[rgba(99,102,241,0.18)] focus:ring-offset-2 disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4">
           <XIcon />
           <span className="sr-only">Close</span>
         </DialogPrimitive.Close>

@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { StyledDateInput } from "@/components/ui/styled-date-input";
 import { Textarea } from "@/components/ui/textarea";
 
 export type FollowUpCompletionValue = {
@@ -88,15 +89,15 @@ export function FollowUpCompleteDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[560px] rounded-[24px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-0 shadow-[0_24px_64px_rgba(15,23,42,0.18)]">
-        <div className="space-y-5 px-5 py-5 sm:px-6 sm:py-6">
+      <DialogContent className="flex max-h-[calc(100vh-2rem)] max-w-[560px] flex-col overflow-hidden rounded-[24px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-[#0E0E1B] p-0 shadow-[0_24px_64px_rgba(15,23,42,0.18)] dark:shadow-[0_24px_64px_rgba(0,0,0,0.55)]">
+        <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-5 py-5 sm:px-6 sm:py-6">
           <DialogHeader className="space-y-1 text-left">
-            <DialogTitle className="text-[18px] font-semibold text-[#111827]">
+            <DialogTitle className="text-[18px] font-semibold text-[#111827] dark:text-white/90">
               Complete follow-up
             </DialogTitle>
             <DialogDescription className="text-sm leading-6 text-[#6B7280] dark:text-white/55">
               Close{" "}
-              <span className="font-medium text-[#374151]">
+              <span className="font-medium text-[#374151] dark:text-white/85">
                 {item?.title ?? "this follow-up"}
               </span>{" "}
               or turn it into the next scheduled step.
@@ -115,11 +116,11 @@ export function FollowUpCompleteDialog({
               value={completionNote}
               onChange={(event) => setCompletionNote(event.currentTarget.value)}
               placeholder="Optional outcome or result"
-              className="min-h-[92px] rounded-[18px] border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] text-sm leading-6 text-[#111827] shadow-none focus-visible:border-[var(--brand-600)] focus-visible:ring-[var(--brand-600)]/15"
+              className="min-h-[92px] rounded-[18px] border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] text-sm leading-6 text-[#111827] dark:text-white/90 placeholder:text-[#9CA3AF] dark:placeholder:text-white/40 shadow-none focus-visible:border-[var(--brand-600)] focus-visible:ring-[var(--brand-600)]/15"
             />
           </div>
 
-          <div className="rounded-[20px] border border-[#E5E7EB] dark:border-white/10 bg-[#FBFCFE] p-4">
+          <div className="rounded-[20px] border border-[#E5E7EB] dark:border-white/10 bg-[#FBFCFE] dark:bg-white/[0.04] p-4">
             <label className="flex items-start gap-3">
               <Checkbox
                 checked={createNext}
@@ -153,7 +154,7 @@ export function FollowUpCompleteDialog({
                       setNextTitle(event.currentTarget.value)
                     }
                     placeholder="For example: send proposal"
-                    className="h-11 rounded-[16px] border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-sm shadow-none focus-visible:border-[var(--brand-600)] focus-visible:ring-[var(--brand-600)]/15"
+                    className="h-11 rounded-[16px] border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.05] text-sm text-[#111827] dark:text-white/90 placeholder:text-[#9CA3AF] dark:placeholder:text-white/40 shadow-none focus-visible:border-[var(--brand-600)] focus-visible:ring-[var(--brand-600)]/15 [color-scheme:light] dark:[color-scheme:dark]"
                   />
                 </div>
 
@@ -164,14 +165,12 @@ export function FollowUpCompleteDialog({
                   >
                     Due date
                   </Label>
-                  <Input
-                    id="next-follow-up-date"
-                    type="date"
+                  <StyledDateInput
                     value={nextDueDate}
-                    onChange={(event) =>
-                      setNextDueDate(event.currentTarget.value)
-                    }
-                    className="h-11 rounded-[16px] border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-sm shadow-none focus-visible:border-[var(--brand-600)] focus-visible:ring-[var(--brand-600)]/15"
+                    onChange={setNextDueDate}
+                    placeholder="Pick due date"
+                    ariaLabel="Next follow-up due date"
+                    className="w-full"
                   />
                 </div>
 
@@ -203,7 +202,7 @@ export function FollowUpCompleteDialog({
                         setNextDueAt(parseDateTimeLocalInput(combined));
                       }
                     }}
-                    className="h-11 rounded-[16px] border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-sm shadow-none focus-visible:border-[var(--brand-600)] focus-visible:ring-[var(--brand-600)]/15"
+                    className="h-11 rounded-[16px] border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.05] text-sm text-[#111827] dark:text-white/90 placeholder:text-[#9CA3AF] dark:placeholder:text-white/40 shadow-none focus-visible:border-[var(--brand-600)] focus-visible:ring-[var(--brand-600)]/15 [color-scheme:light] dark:[color-scheme:dark]"
                   />
                 </div>
 
@@ -219,7 +218,7 @@ export function FollowUpCompleteDialog({
                     value={nextNote}
                     onChange={(event) => setNextNote(event.currentTarget.value)}
                     placeholder="Optional context for the next step"
-                    className="min-h-[84px] rounded-[16px] border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-sm leading-6 shadow-none focus-visible:border-[var(--brand-600)] focus-visible:ring-[var(--brand-600)]/15"
+                    className="min-h-[84px] rounded-[16px] border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.05] text-sm leading-6 text-[#111827] dark:text-white/90 placeholder:text-[#9CA3AF] dark:placeholder:text-white/40 shadow-none focus-visible:border-[var(--brand-600)] focus-visible:ring-[var(--brand-600)]/15"
                   />
                 </div>
               </div>
@@ -227,46 +226,46 @@ export function FollowUpCompleteDialog({
           </div>
 
           {nextTitleMissing || nextDateMissing ? (
-            <div className="rounded-[16px] border border-[#FDE68A] bg-[#FFFBEB] px-3 py-2.5 text-sm text-[#92400E]">
+            <div className="rounded-[16px] border border-[#FDE68A] dark:border-amber-500/30 bg-[#FFFBEB] dark:bg-amber-500/10 px-3 py-2.5 text-sm text-[#92400E] dark:text-amber-200">
               {nextTitleMissing
                 ? "Next follow-up title is required."
                 : "Next follow-up due date is required."}
             </div>
           ) : null}
+        </div>
 
-          <DialogFooter className="gap-2 border-t border-[#F3F4F6] pt-4 sm:justify-between">
-            <Button
-              type="button"
-              variant="outline"
-              className="h-10 rounded-[16px] px-4"
-              onClick={() => onOpenChange(false)}
-              disabled={submitting}
-            >
-              Cancel
-            </Button>
-            <div className="flex flex-col-reverse gap-2 sm:flex-row">
-              {createNext ? (
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="h-10 rounded-[16px] px-4"
-                  onClick={() => submit(false)}
-                  disabled={submitting}
-                >
-                  Complete only
-                </Button>
-              ) : null}
+        <DialogFooter className="shrink-0 gap-2 border-t border-[#F3F4F6] dark:border-white/10 bg-white dark:bg-[#0E0E1B] px-5 py-4 sm:px-6 sm:justify-between">
+          <Button
+            type="button"
+            variant="outline"
+            className="h-10 rounded-[16px] px-4 dark:bg-white/[0.04] dark:text-white/85 dark:border-white/10 dark:hover:bg-white/[0.08] dark:hover:text-white"
+            onClick={() => onOpenChange(false)}
+            disabled={submitting}
+          >
+            Cancel
+          </Button>
+          <div className="flex flex-col-reverse gap-2 sm:flex-row">
+            {createNext ? (
               <Button
                 type="button"
-                className="h-10 rounded-[16px] px-4"
-                onClick={() => submit(createNext)}
-                disabled={submitting || nextTitleMissing || nextDateMissing}
+                variant="outline"
+                className="h-10 rounded-[16px] px-4 dark:bg-white/[0.04] dark:text-white/85 dark:border-white/10 dark:hover:bg-white/[0.08] dark:hover:text-white"
+                onClick={() => submit(false)}
+                disabled={submitting}
               >
-                {createNext ? "Complete and create next" : "Complete"}
+                Complete only
               </Button>
-            </div>
-          </DialogFooter>
-        </div>
+            ) : null}
+            <Button
+              type="button"
+              className="h-10 rounded-[16px] bg-[var(--brand-600)] px-4 !text-white shadow-[0_6px_18px_rgba(91,91,179,0.26)] hover:bg-[var(--brand-700)] hover:!text-white disabled:opacity-50"
+              onClick={() => submit(createNext)}
+              disabled={submitting || nextTitleMissing || nextDateMissing}
+            >
+              {createNext ? "Complete and create next" : "Complete"}
+            </Button>
+          </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

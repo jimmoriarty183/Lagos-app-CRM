@@ -53,39 +53,39 @@ function LoginPageContent() {
         </div>
       </header>
 
-      <main className="relative z-10 mx-auto flex w-full max-w-6xl flex-1 items-center px-4 py-8 sm:px-8 sm:py-10">
+      <main className="relative z-10 mx-auto flex w-full max-w-6xl flex-1 items-center px-4 py-4 sm:px-8 sm:py-6">
         <div
           className={[
-            "mx-auto grid w-full items-center gap-8 lg:gap-10",
+            "mx-auto grid w-full items-center gap-6 lg:gap-8",
             showPromo
-              ? "max-w-5xl lg:grid-cols-[1fr_440px]"
-              : "max-w-[460px]",
+              ? "max-w-5xl lg:grid-cols-[1fr_420px]"
+              : "max-w-[440px]",
           ].join(" ")}
         >
           {showPromo ? (
-            <section className="hidden rounded-[24px] border border-white/60 bg-white/55 p-10 shadow-[0_20px_60px_-35px_rgba(15,23,42,0.35)] backdrop-blur-md dark:border-white/10 dark:bg-white/[0.03] dark:shadow-[0_20px_60px_-35px_rgba(0,0,0,0.7)] lg:block">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-[var(--brand-300)]">
+            <section className="hidden rounded-[24px] border border-white/60 bg-white/55 p-6 shadow-[0_20px_60px_-35px_rgba(15,23,42,0.35)] backdrop-blur-md dark:border-white/10 dark:bg-white/[0.03] dark:shadow-[0_20px_60px_-35px_rgba(0,0,0,0.7)] lg:block">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-[var(--brand-300)]">
                 Ordo
               </p>
-              <div className="mb-6">
-                <BrandLockup iconSize={36} textClassName="text-[2rem]" />
+              <div className="mb-3">
+                <BrandLockup iconSize={28} textClassName="text-[1.5rem]" />
               </div>
-              <h2 className="mt-3 max-w-md text-[2rem] font-semibold tracking-tight text-slate-900 dark:text-white sm:text-[2.15rem]">
+              <h2 className="mt-2 max-w-md text-[1.5rem] font-semibold tracking-tight text-slate-900 dark:text-white sm:text-[1.65rem]">
                 Bring your business into order.
               </h2>
-              <p className="mt-4 max-w-md text-sm leading-relaxed text-slate-600 dark:text-white/70">
+              <p className="mt-2 max-w-md text-[13px] leading-snug text-slate-600 dark:text-white/70">
                 Ordo is a business management system that keeps clients, tasks,
                 and team workflows in one place. Start with CRM and scale the
                 system without process chaos.
               </p>
 
-              <ul className="mt-8 space-y-3">
+              <ul className="mt-4 space-y-2">
                 {benefits.map((benefit) => (
                   <li
                     key={benefit}
-                    className="flex items-center gap-3 rounded-xl border border-slate-200/90 bg-white/80 px-4 py-3 text-sm font-medium text-slate-700 dark:border-white/10 dark:bg-white/[0.04] dark:text-white/85"
+                    className="flex items-center gap-2.5 rounded-lg border border-slate-200/90 bg-white/80 px-3 py-2 text-[13px] font-medium text-slate-700 dark:border-white/10 dark:bg-white/[0.04] dark:text-white/85"
                   >
-                    <span className="h-2 w-2 rounded-full bg-[#315efb] dark:bg-[var(--brand-300)]" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#315efb] dark:bg-[var(--brand-300)]" />
                     {benefit}
                   </li>
                 ))}
@@ -101,7 +101,7 @@ function LoginPageContent() {
                 </div>
               }
             >
-              <div className="mx-auto w-full max-w-[460px]">
+              <div className="mx-auto w-full max-w-[440px]">
                 <LoginUI mode={mode} onModeChange={setMode} />
               </div>
             </React.Suspense>

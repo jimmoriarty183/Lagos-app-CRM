@@ -9,6 +9,7 @@ import {
   type CreateOrderClientPayloadInput,
 } from "@/app/b/[slug]/actions";
 import { Button } from "@/components/ui/button";
+import { StyledDateInput } from "@/components/ui/styled-date-input";
 
 type TeamActor = {
   id: string;
@@ -72,7 +73,44 @@ type Props = {
   actors?: TeamActor[];
   compact?: boolean;
   onCreated?: () => void;
+  isCleaning?: boolean;
 };
+
+type CleaningRecurrenceValue =
+  | ""
+  | "one-off"
+  | "weekly"
+  | "fortnightly"
+  | "monthly";
+
+type CleaningPropertyTypeValue =
+  | ""
+  | "residential"
+  | "office"
+  | "commercial"
+  | "specialist";
+
+const CLEANING_RECURRENCE_OPTIONS: ReadonlyArray<{
+  value: CleaningRecurrenceValue;
+  label: string;
+}> = [
+  { value: "", label: "—" },
+  { value: "one-off", label: "One-off" },
+  { value: "weekly", label: "Weekly" },
+  { value: "fortnightly", label: "Fortnightly" },
+  { value: "monthly", label: "Monthly" },
+];
+
+const CLEANING_PROPERTY_TYPE_OPTIONS: ReadonlyArray<{
+  value: CleaningPropertyTypeValue;
+  label: string;
+}> = [
+  { value: "", label: "—" },
+  { value: "residential", label: "Residential" },
+  { value: "office", label: "Office" },
+  { value: "commercial", label: "Commercial" },
+  { value: "specialist", label: "Specialist (carpet, window, etc.)" },
+];
 
 type OrderLineDraft = {
   id: string;
@@ -144,6 +182,7 @@ export function ClientOrderForm({
   actors = [],
   compact = false,
   onCreated,
+  isCleaning = false,
 }: Props) {
   const normalizedActors = React.useMemo(
     () => normalizeActors(actors),
@@ -200,6 +239,10 @@ export function ClientOrderForm({
     dueTime: "",
     description: "",
   });
+  const [cleaningRecurrence, setCleaningRecurrence] =
+    React.useState<CleaningRecurrenceValue>("");
+  const [cleaningPropertyType, setCleaningPropertyType] =
+    React.useState<CleaningPropertyTypeValue>("");
   const [catalogProducts, setCatalogProducts] = React.useState<
     CatalogOrderLineOption[]
   >([]);
@@ -560,6 +603,10 @@ export function ClientOrderForm({
       individual: clientType === "individual" ? individual : null,
       company: clientType === "company" ? company : null,
       contact: clientType === "company" ? contact : null,
+      recurrenceLabel:
+        isCleaning && cleaningRecurrence ? cleaningRecurrence : null,
+      propertyType:
+        isCleaning && cleaningPropertyType ? cleaningPropertyType : null,
       orderLines: orderLines.map((line) => ({
         lineType: line.lineType,
         catalogItemId:
@@ -983,6 +1030,53 @@ export function ClientOrderForm({
         </>
       )}
 
+      {isCleaning ? (
+        <section className={panelCls}>
+          <div className="text-sm font-semibold text-[#111827] dark:text-white">
+            Cleaning details
+          </div>
+          <div className="mt-1 text-xs text-[#667085] dark:text-white/55">
+            Tag the visit so you can spot recurring contracts and property types at a glance.
+          </div>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <Field label="Recurrence">
+              <select
+                value={cleaningRecurrence}
+                onChange={(e) => {
+                  const value = (e.currentTarget?.value ??
+                    "") as CleaningRecurrenceValue;
+                  setCleaningRecurrence(value);
+                }}
+                className={inputCls}
+              >
+                {CLEANING_RECURRENCE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Property type">
+              <select
+                value={cleaningPropertyType}
+                onChange={(e) => {
+                  const value = (e.currentTarget?.value ??
+                    "") as CleaningPropertyTypeValue;
+                  setCleaningPropertyType(value);
+                }}
+                className={inputCls}
+              >
+                {CLEANING_PROPERTY_TYPE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          </div>
+        </section>
+      ) : null}
+
       <section className={panelCls}>
         <div className="text-sm font-semibold text-[#111827]">
           Order details
@@ -1017,14 +1111,14 @@ export function ClientOrderForm({
             />
           </Field>
           <Field label="Due date">
-            <input
-              type="date"
+            <StyledDateInput
               value={order.dueDate}
-              onChange={(e) => {
-                const value = e.currentTarget?.value ?? "";
+              onChange={(value) => {
                 setOrder((v) => ({ ...v, dueDate: value }));
               }}
-              className={inputCls}
+              placeholder="Pick due date"
+              ariaLabel="Order due date"
+              className="w-full"
             />
           </Field>
           <Field label="Due time">

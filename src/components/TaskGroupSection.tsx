@@ -20,24 +20,37 @@ export function TaskGroupSection({
   persistenceKey?: string;
   children: React.ReactNode;
 }) {
-  const [isOpen, setIsOpen] = React.useState(defaultOpen);
   const storageKey = persistenceKey
     ? `task-group-section:${persistenceKey}`
     : null;
 
-  React.useEffect(() => {
-    if (!storageKey) return;
+  // Read the persisted state synchronously during the first client render so
+  // we never paint with the default-open state and then collapse — that flicker
+  // is what users perceive as "the section reopens when I switch pages".
+  // SSR returns defaultOpen because window is undefined there; on hydration
+  // we re-sync to the persisted value if it differs.
+  const [isOpen, setIsOpen] = React.useState(() => {
+    if (typeof window === "undefined" || !storageKey) return defaultOpen;
     try {
       const saved = window.localStorage.getItem(storageKey);
-      if (saved === "1") setIsOpen(true);
-      if (saved === "0") setIsOpen(false);
+      if (saved === "1") return true;
+      if (saved === "0") return false;
     } catch {
       // ignore storage errors
     }
-  }, [storageKey]);
+    return defaultOpen;
+  });
 
+  // Skip the very first save effect run — the initial state already came from
+  // localStorage, so writing it back is redundant and risks racing with the
+  // load on rehydration. Persist every subsequent toggle.
+  const skipFirstSaveRef = React.useRef(true);
   React.useEffect(() => {
     if (!storageKey) return;
+    if (skipFirstSaveRef.current) {
+      skipFirstSaveRef.current = false;
+      return;
+    }
     try {
       window.localStorage.setItem(storageKey, isOpen ? "1" : "0");
     } catch {
@@ -57,7 +70,7 @@ export function TaskGroupSection({
       <button
         type="button"
         onClick={() => setIsOpen((current) => !current)}
-        className="flex w-full items-center justify-between gap-3 rounded-[14px] px-1 py-1 text-left transition hover:bg-[#F8FAFC]"
+        className="flex w-full items-center justify-between gap-3 rounded-[14px] px-1 py-1 text-left transition hover:bg-[#F8FAFC] dark:hover:bg-white/[0.06]"
         aria-expanded={isOpen}
       >
         <div>

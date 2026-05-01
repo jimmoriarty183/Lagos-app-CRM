@@ -84,6 +84,11 @@
   --bg-overlay: #0E0E1B;
   --bg-inverse: #FFFFFF;
 
+  /* Kanban column gradient stops (top tinted by status, mid/end neutral) */
+  --kanban-col-mid: rgba(255, 255, 255, 0.04);
+  --kanban-col-end: rgba(255, 255, 255, 0.02);
+  --kanban-col-inner: rgba(255, 255, 255, 0.02);
+
   /* Borders */
   --border-default: rgba(255, 255, 255, 0.10);
   --border-strong: rgba(255, 255, 255, 0.20);
@@ -158,6 +163,10 @@
   --bg-overlay: #0E0E1B;
   --bg-inverse: #FFFFFF;
 
+  --kanban-col-mid: rgba(255, 255, 255, 0.04);
+  --kanban-col-end: rgba(255, 255, 255, 0.02);
+  --kanban-col-inner: rgba(255, 255, 255, 0.02);
+
   --border-default: rgba(255, 255, 255, 0.10);
   --border-strong: rgba(255, 255, 255, 0.20);
   --border-subtle: rgba(255, 255, 255, 0.06);
@@ -209,6 +218,10 @@
   --bg-elevated-strong: #FFFFFF;
   --bg-overlay: #FFFFFF;
   --bg-inverse: #0B0B14;
+
+  --kanban-col-mid: #F9FAFB;
+  --kanban-col-end: #FFFFFF;
+  --kanban-col-inner: rgba(255, 255, 255, 0.4);
 
   /* Borders */
   --border-default: var(--neutral-200);
@@ -277,6 +290,28 @@ body {
 
 * {
   -webkit-text-size-adjust: 100%;
+}
+
+/* Highlight the table row whose status dropdown is open so the user can see
+   which deal they're editing. Uses :has() — supported in all modern browsers.
+   The StatusCell wrapper sets data-status-open="true" while its menu is open. */
+tr:has([data-status-open="true"]) {
+  background-color: color-mix(in srgb, var(--brand-600) 6%, transparent);
+}
+[data-theme="dark"] tr:has([data-status-open="true"]) {
+  background-color: color-mix(in srgb, var(--brand-500) 12%, transparent);
+}
+
+/* Native <select> dark-mode dropdown panel.
+   Browsers render the option list with their UA styling unless we hint a
+   color-scheme. Without this, the popup defaults to light/white in dark
+   theme and highlights with a stark blue selection bar. */
+[data-theme="dark"] select {
+  color-scheme: dark;
+}
+[data-theme="dark"] select option {
+  background-color: #0E0E1B;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 /* Mobile touch improvements */
@@ -1014,13 +1049,13 @@ input[type="radio"]:disabled {
   line-height: 1.2;
   font-weight: 600;
   letter-spacing: -0.01em;
-  color: #1f2937;
+  color: var(--text-primary);
 }
 
 .product-page-subtitle {
   font-size: 12px;
   line-height: 1.4;
-  color: #6b7280;
+  color: var(--text-tertiary);
 }
 
 .product-section-title {
@@ -1028,7 +1063,7 @@ input[type="radio"]:disabled {
   line-height: 1.35;
   font-weight: 600;
   letter-spacing: normal;
-  color: #1f2937;
+  color: var(--text-primary);
 }
 
 .product-section-label {
@@ -1037,19 +1072,19 @@ input[type="radio"]:disabled {
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #9ca3af;
+  color: var(--text-muted);
 }
 
 .product-body-sm {
   font-size: 14px;
   line-height: 1.5;
-  color: #374151;
+  color: var(--text-secondary);
 }
 
 .product-body-xs {
   font-size: 12px;
   line-height: 1.45;
-  color: #6b7280;
+  color: var(--text-tertiary);
 }
 
 .product-stat-value {

@@ -17,6 +17,7 @@ import {
   type FollowUpCompletionValue,
 } from "@/app/b/[slug]/_components/orders/FollowUpCompleteDialog";
 import { Button } from "@/components/ui/button";
+import { StyledDateInput } from "@/components/ui/styled-date-input";
 import {
   Popover,
   PopoverContent,
@@ -151,7 +152,7 @@ function RescheduleMenu({
       <PopoverContent
         align="end"
         sideOffset={8}
-        className="z-[140] w-[min(280px,calc(100vw-1.5rem))] rounded-[18px] border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-2 shadow-[0_16px_40px_rgba(15,23,42,0.18)] max-h-[min(360px,var(--radix-popover-content-available-height))] overflow-y-auto overscroll-contain"
+        className="z-[140] w-[min(280px,calc(100vw-1.5rem))] rounded-[18px] border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-[#0E0E1B] p-2 shadow-[0_16px_40px_rgba(15,23,42,0.18)] dark:shadow-[0_16px_40px_rgba(0,0,0,0.55)] max-h-[min(360px,var(--radix-popover-content-available-height))] overflow-y-auto overscroll-contain"
       >
         <div className="space-y-1.5">
           <button
@@ -180,18 +181,17 @@ function RescheduleMenu({
               <Check className="h-4 w-4 text-[#5558E3]" />
             ) : null}
           </button>
-          <div className="rounded-[14px] border border-[#F3F4F6] bg-[#FBFCFE] p-3">
+          <div className="rounded-[14px] border border-[#F3F4F6] dark:border-white/10 bg-[#FBFCFE] dark:bg-white/[0.04] p-3">
             <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.06em] text-[#9CA3AF] dark:text-white/40">
               <CalendarDays className="h-3.5 w-3.5" />
               Pick date
             </div>
-            <input
-              type="date"
+            <StyledDateInput
               defaultValue={item.due_date}
-              min={minDate}
-              className="h-10 w-full rounded-[12px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-[13px] font-medium text-[#1F2937] dark:text-white/90 outline-none transition focus:border-[#C7D2FE] focus:ring-4 focus:ring-[#E0E7FF]"
-              onChange={(event) => {
-                const nextDate = event.currentTarget.value;
+              placeholder="Pick date"
+              ariaLabel="Reschedule follow-up"
+              className="w-full"
+              onChange={(nextDate) => {
                 if (!nextDate) return;
                 onReschedule(item, nextDate);
                 setCalendarOpen(false);
@@ -222,7 +222,7 @@ function FollowUpTodayRow({
   const timeLabel = item.due_at ? formatFollowUpDateTime(item.due_at) : null;
 
   return (
-    <article className="rounded-[16px] border border-[#E8ECF3] bg-white dark:bg-white/[0.03] px-3 py-2 transition-colors hover:bg-[#FBFCFE]">
+    <article className="rounded-[16px] border border-[#E8ECF3] dark:border-white/10 bg-white dark:bg-white/[0.04] px-3 py-2 transition-colors hover:bg-[#FBFCFE] dark:hover:bg-white/[0.07]">
       <div className="flex items-start gap-2">
         {canManage ? (
           <button
@@ -414,7 +414,7 @@ export function TodayFollowUpsView({
 
   return (
     <div className="space-y-3.5">
-      <div className="rounded-[22px] border border-[#E5E7EB] dark:border-white/10 bg-[linear-gradient(180deg,#ffffff_0%,#F9FAFB_100%)] px-4 py-3 shadow-[0_10px_30px_rgba(15,23,42,0.05)]">
+      <div className="rounded-[22px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.04] px-4 py-3 shadow-[0_10px_30px_rgba(15,23,42,0.05)] dark:shadow-[0_10px_30px_rgba(0,0,0,0.45)]">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="product-page-title text-[#111827]">Today</div>

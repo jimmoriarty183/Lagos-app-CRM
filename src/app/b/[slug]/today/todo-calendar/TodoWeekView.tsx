@@ -19,7 +19,7 @@ import { cn } from "@/components/ui/utils";
 
 function HourLabels() {
   return (
-    <div className="relative w-[72px] shrink-0 border-r border-[#F2F4F7] bg-[#FCFCFD]">
+    <div className="relative w-[72px] shrink-0 border-r border-[#F2F4F7] dark:border-white/10 dark:border-white/10 bg-[#FCFCFD] dark:bg-white/[0.03]">
       {Array.from({ length: CALENDAR_HOUR_COUNT + 1 }).map((_, index) => {
         const hour = CALENDAR_HOUR_START + index;
         return (
@@ -54,9 +54,9 @@ export function TodoWeekView({
   const days = getWeekDays(anchorDate);
 
   return (
-    <div className="overflow-hidden rounded-[22px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] shadow-[0_12px_30px_rgba(15,23,42,0.05)]">
-      <div className="grid grid-cols-[72px_repeat(7,minmax(0,1fr))] border-b border-[#F2F4F7] bg-[#FCFCFD]">
-        <div className="border-r border-[#F2F4F7] px-3 py-3 text-[11px] font-semibold uppercase tracking-[0.06em] text-[#98A2B3] dark:text-white/45">
+    <div className="overflow-hidden rounded-[22px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.04] shadow-[0_12px_30px_rgba(15,23,42,0.05)] dark:shadow-[0_12px_30px_rgba(0,0,0,0.45)]">
+      <div className="grid grid-cols-[72px_repeat(7,minmax(0,1fr))] border-b border-[#F2F4F7] dark:border-white/10 dark:border-white/10 bg-[#FCFCFD] dark:bg-white/[0.03]">
+        <div className="border-r border-[#F2F4F7] dark:border-white/10 px-3 py-3 text-[11px] font-semibold uppercase tracking-[0.06em] text-[#98A2B3] dark:text-white/45">
           Time
         </div>
         {days.map((day) => {
@@ -68,25 +68,25 @@ export function TodoWeekView({
               type="button"
               onClick={() => onSelectDate(day)}
               className={cn(
-                "border-r border-[#F2F4F7] px-3 py-3 text-left transition hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]",
-                selected && "bg-[#F9FAFF]",
+                "border-r border-[#F2F4F7] dark:border-white/10 dark:border-white/10 px-3 py-3 text-left transition hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]",
+                selected && "bg-[#F9FAFF] dark:bg-[var(--brand-600)]/15",
               )}
             >
               <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[#98A2B3] dark:text-white/45">{format(day, "EEE")}</div>
-              <div className={cn("mt-1 text-[16px] font-semibold text-[#111827]", today && "text-[#3645A0] dark:text-[var(--brand-300)]")}>{format(day, "d")}</div>
+              <div className={cn("mt-1 text-[16px] font-semibold text-[#111827] dark:text-white/90", today && "text-[#3645A0] dark:text-[var(--brand-300)]")}>{format(day, "d")}</div>
             </button>
           );
         })}
       </div>
 
-      <div className="grid grid-cols-[72px_repeat(7,minmax(0,1fr))] border-b border-[#F2F4F7]">
-        <div className="border-r border-[#F2F4F7] px-3 py-3 text-[11px] font-semibold uppercase tracking-[0.06em] text-[#98A2B3] dark:text-white/45">
+      <div className="grid grid-cols-[72px_repeat(7,minmax(0,1fr))] border-b border-[#F2F4F7] dark:border-white/10">
+        <div className="border-r border-[#F2F4F7] dark:border-white/10 px-3 py-3 text-[11px] font-semibold uppercase tracking-[0.06em] text-[#98A2B3] dark:text-white/45">
           All day
         </div>
         {days.map((day) => {
           const dayItems = getItemsForDate(items, day).filter((item) => item.allDay || !isTimedItem(item));
           return (
-            <div key={day.toISOString()} className="min-h-[88px] border-r border-[#F2F4F7] px-2 py-2">
+            <div key={day.toISOString()} className="min-h-[88px] border-r border-[#F2F4F7] dark:border-white/10 px-2 py-2">
               <div className="space-y-1.5">
                 {dayItems.length === 0 ? (
                   <div className="rounded-[12px] border border-dashed border-[#E5E7EB] dark:border-white/10 px-2 py-2 text-[11px] text-[#98A2B3] dark:text-white/45">No all-day items</div>
@@ -116,11 +116,11 @@ export function TodoWeekView({
             const showNow = isToday(day) && isCurrentHourVisible();
 
             return (
-              <div key={day.toISOString()} className="relative border-r border-[#F2F4F7]" style={{ height: CALENDAR_TIMELINE_HEIGHT }}>
+              <div key={day.toISOString()} className="relative border-r border-[#F2F4F7] dark:border-white/10" style={{ height: CALENDAR_TIMELINE_HEIGHT }}>
                 {Array.from({ length: CALENDAR_HOUR_COUNT }).map((_, index) => (
                   <div
                     key={index}
-                    className="absolute left-0 right-0 border-t border-[#F2F4F7]"
+                    className="absolute left-0 right-0 border-t border-[#F2F4F7] dark:border-white/10"
                     style={{ top: index * 64 }}
                   />
                 ))}

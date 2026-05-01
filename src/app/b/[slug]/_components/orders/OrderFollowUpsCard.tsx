@@ -119,7 +119,7 @@ function ActionButton({
         "flex flex-1 flex-col items-center justify-center gap-1 rounded-xl border-2 p-3 transition-all",
         active
           ? "border-[var(--brand-600)] bg-[var(--brand-600)]/10"
-          : "border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] hover:border-[var(--brand-200)] hover:bg-[var(--brand-50)]",
+          : "border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.04] hover:border-[var(--brand-200)] dark:hover:border-[var(--brand-500)]/40 hover:bg-[var(--brand-50)] dark:hover:bg-[var(--brand-600)]/15",
       )}
     >
       <Icon
@@ -131,7 +131,7 @@ function ActionButton({
       <span
         className={cn(
           "text-xs font-medium",
-          active ? "text-[var(--brand-600)]" : "text-[#374151]",
+          active ? "text-[var(--brand-600)]" : "text-[#374151] dark:text-white/85",
         )}
       >
         {label}
@@ -259,7 +259,7 @@ function MeetingQuickForm({
         <div className="space-y-1.5">
           <Label
             htmlFor="meeting-date"
-            className="text-xs font-medium text-[#374151]"
+            className="text-xs font-medium text-[#374151] dark:text-white/80"
           >
             Date
           </Label>
@@ -285,7 +285,7 @@ function MeetingQuickForm({
               </Button>
             </PopoverTrigger>
             <PopoverContent
-              className="w-auto rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-0 shadow-lg"
+              className="w-auto rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-[#0E0E1B] p-0 shadow-lg dark:shadow-[0_16px_36px_rgba(0,0,0,0.55)]"
               align="start"
             >
               <Calendar
@@ -303,7 +303,7 @@ function MeetingQuickForm({
         <div className="space-y-1.5">
           <Label
             htmlFor="meeting-time"
-            className="text-xs font-medium text-[#374151]"
+            className="text-xs font-medium text-[#374151] dark:text-white/80"
           >
             Time
           </Label>
@@ -334,7 +334,7 @@ function MeetingQuickForm({
       <div className="space-y-1.5">
         <Label
           htmlFor="meeting-duration"
-          className="text-xs font-medium text-[#374151]"
+          className="text-xs font-medium text-[#374151] dark:text-white/80"
         >
           Duration
         </Label>
@@ -371,7 +371,7 @@ function MeetingQuickForm({
         <div className="space-y-1.5">
           <Label
             htmlFor="meeting-custom-duration"
-            className="text-xs font-medium text-[#374151]"
+            className="text-xs font-medium text-[#374151] dark:text-white/80"
           >
             Custom duration (minutes)
           </Label>
@@ -398,7 +398,7 @@ function MeetingQuickForm({
       <div className="space-y-1.5">
         <Label
           htmlFor="meeting-description"
-          className="text-xs font-medium text-[#374151]"
+          className="text-xs font-medium text-[#374151] dark:text-white/80"
         >
           Description
         </Label>
@@ -479,7 +479,7 @@ function ReminderQuickForm({
         <div className="space-y-1.5">
           <Label
             htmlFor="reminder-date"
-            className="text-xs font-medium text-[#374151]"
+            className="text-xs font-medium text-[#374151] dark:text-white/80"
           >
             Date
           </Label>
@@ -508,7 +508,7 @@ function ReminderQuickForm({
               </Button>
             </PopoverTrigger>
             <PopoverContent
-              className="w-auto rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-0 shadow-lg"
+              className="w-auto rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-[#0E0E1B] p-0 shadow-lg dark:shadow-[0_16px_36px_rgba(0,0,0,0.55)]"
               align="start"
             >
               <Calendar
@@ -536,7 +536,7 @@ function ReminderQuickForm({
         <div className="space-y-1.5">
           <Label
             htmlFor="reminder-time"
-            className="text-xs font-medium text-[#374151]"
+            className="text-xs font-medium text-[#374151] dark:text-white/80"
           >
             Time
           </Label>
@@ -587,7 +587,7 @@ function ReminderQuickForm({
       <div className="space-y-1.5">
         <Label
           htmlFor="reminder-note"
-          className="text-xs font-medium text-[#374151]"
+          className="text-xs font-medium text-[#374151] dark:text-white/80"
         >
           Note
         </Label>
@@ -666,7 +666,7 @@ function TaskQuickForm({
       <div className="space-y-1.5">
         <Label
           htmlFor="task-title"
-          className="text-xs font-medium text-[#374151]"
+          className="text-xs font-medium text-[#374151] dark:text-white/80"
         >
           Title
         </Label>
@@ -683,7 +683,7 @@ function TaskQuickForm({
         <div className="space-y-1.5">
           <Label
             htmlFor="task-deadline"
-            className="text-xs font-medium text-[#374151]"
+            className="text-xs font-medium text-[#374151] dark:text-white/80"
           >
             Deadline
           </Label>
@@ -709,7 +709,7 @@ function TaskQuickForm({
               </Button>
             </PopoverTrigger>
             <PopoverContent
-              className="w-auto rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-0 shadow-lg"
+              className="w-auto rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-[#0E0E1B] p-0 shadow-lg dark:shadow-[0_16px_36px_rgba(0,0,0,0.55)]"
               align="start"
             >
               <Calendar
@@ -732,7 +732,7 @@ function TaskQuickForm({
         <div className="space-y-1.5">
           <Label
             htmlFor="task-time"
-            className="text-xs font-medium text-[#374151]"
+            className="text-xs font-medium text-[#374151] dark:text-white/80"
           >
             Time <span className="text-[#9CA3AF] dark:text-white/40 font-normal">(optional)</span>
           </Label>
@@ -763,7 +763,7 @@ function TaskQuickForm({
       <div className="space-y-1.5">
         <Label
           htmlFor="task-description"
-          className="text-xs font-medium text-[#374151]"
+          className="text-xs font-medium text-[#374151] dark:text-white/80"
         >
           Description
         </Label>
@@ -792,7 +792,7 @@ function MessageQuickForm({
       <div className="space-y-1.5">
         <Label
           htmlFor="message-recipient"
-          className="text-xs font-medium text-[#374151]"
+          className="text-xs font-medium text-[#374151] dark:text-white/80"
         >
           Recipient
         </Label>
@@ -809,7 +809,7 @@ function MessageQuickForm({
       <div className="space-y-1.5">
         <Label
           htmlFor="message-subject"
-          className="text-xs font-medium text-[#374151]"
+          className="text-xs font-medium text-[#374151] dark:text-white/80"
         >
           Subject
         </Label>
@@ -825,7 +825,7 @@ function MessageQuickForm({
       <div className="space-y-1.5">
         <Label
           htmlFor="message-body"
-          className="text-xs font-medium text-[#374151]"
+          className="text-xs font-medium text-[#374151] dark:text-white/80"
         >
           Message
         </Label>
@@ -1271,7 +1271,7 @@ export function OrderFollowUpsCard({
   }
 
   return (
-    <div className="rounded-[20px] border border-[#E5E7EB] dark:border-white/10 bg-[linear-gradient(180deg,#ffffff_0%,#F9FAFB_100%)] p-4 shadow-[0_10px_30px_rgba(15,23,42,0.06)]">
+    <div className="rounded-[20px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.04] p-4 shadow-[0_10px_30px_rgba(15,23,42,0.06)] dark:shadow-[0_10px_30px_rgba(0,0,0,0.45)]">
       <div className="space-y-3">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
@@ -1292,7 +1292,7 @@ export function OrderFollowUpsCard({
               variant="outline"
               size="sm"
               onClick={() => setQuickActionType("meeting")}
-              className="h-9 gap-2 rounded-full border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-sm font-semibold text-[#374151] hover:border-[var(--brand-200)] hover:bg-[var(--brand-50)] hover:text-[var(--brand-600)]"
+              className="h-9 gap-2 rounded-full border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.04] text-sm font-semibold text-[#374151] dark:text-white/85 hover:border-[var(--brand-200)] hover:bg-[var(--brand-50)] dark:hover:bg-[var(--brand-600)]/15 hover:text-[var(--brand-600)] dark:hover:text-[var(--brand-300)]"
             >
               <CirclePlus className="h-4 w-4" />
               Quick Action

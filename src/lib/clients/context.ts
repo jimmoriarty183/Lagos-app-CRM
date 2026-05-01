@@ -14,6 +14,7 @@ type BusinessRow = {
   slug: string;
   name: string | null;
   plan: string | null;
+  business_segment: string | null;
 };
 
 type ProfileRow = {
@@ -64,7 +65,7 @@ export async function getBusinessClientsContext(
   const businessIds = membershipRows.map((entry) => entry.business_id);
   const { data: businesses, error: businessesError } = await supabase
     .from("businesses")
-    .select("id, slug, name, plan")
+    .select("id, slug, name, plan, business_segment")
     .in("id", businessIds);
   if (businessesError) throw new Error(businessesError.message);
 

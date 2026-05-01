@@ -10,6 +10,12 @@ import {
   Trash2,
 } from "lucide-react";
 import { emitOrderActivityRefresh } from "@/app/b/[slug]/_components/orders/order-activity";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 type ChecklistItem = {
   id: string;
@@ -340,7 +346,7 @@ export function OrderChecklist({
   };
 
   return (
-    <div className="rounded-[20px] border border-[#E5E7EB] dark:border-white/10 bg-[linear-gradient(180deg,#ffffff_0%,#F9FAFB_100%)] p-4 shadow-[0_10px_30px_rgba(15,23,42,0.06)]">
+    <div className="rounded-[20px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.04] p-4 shadow-[0_10px_30px_rgba(15,23,42,0.06)] dark:shadow-[0_10px_30px_rgba(0,0,0,0.45)]">
       <div className="space-y-2.5">
         <div>
           <div className="product-section-title">
@@ -371,8 +377,8 @@ export function OrderChecklist({
         </div>
       </div>
 
-      <div className="-mx-1 rounded-[24px] bg-[#F8FAFC] dark:bg-white/[0.04] px-1 pb-3 pt-3">
-        <div className="rounded-[18px] border border-[#E5E7EB] dark:border-white/10 bg-white/95 px-4 py-3 shadow-[0_10px_24px_rgba(15,23,42,0.06)] backdrop-blur">
+      <div className="-mx-1 rounded-[24px] bg-[#F8FAFC] dark:bg-white/[0.03] px-1 pb-3 pt-3">
+        <div className="rounded-[18px] border border-[#E5E7EB] dark:border-white/10 bg-white/95 dark:bg-white/[0.05] px-4 py-3 shadow-[0_10px_24px_rgba(15,23,42,0.06)] dark:shadow-[0_10px_24px_rgba(0,0,0,0.45)] backdrop-blur">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <div className="product-section-label">Checklist progress</div>
@@ -393,7 +399,7 @@ export function OrderChecklist({
               </div>
             </div>
           </div>
-          <div className="mt-3 h-2 overflow-hidden rounded-full bg-[#eef2f6]">
+          <div className="mt-3 h-2 overflow-hidden rounded-full bg-[#eef2f6] dark:bg-white/10">
             <div
               className="h-full rounded-full bg-[var(--brand-600)] transition-[width] duration-300"
               style={{ width: `${progress}%` }}
@@ -431,8 +437,8 @@ export function OrderChecklist({
               className={[
                 "group flex flex-col gap-2.5 rounded-[22px] border px-4 py-3.5 text-sm shadow-[0_1px_2px_rgba(16,24,40,0.03)] transition sm:flex-row sm:items-start sm:justify-between",
                 item.is_done
-                  ? "border-[#dbe5dc] bg-[#f6fbf7]"
-                  : "border-[#e8edf3] bg-white dark:bg-white/[0.03] hover:border-[#d5dce6] hover:bg-[#fcfdff]",
+                  ? "border-[#dbe5dc] dark:border-emerald-500/30 bg-[#f6fbf7] dark:bg-emerald-500/[0.08]"
+                  : "border-[#e8edf3] dark:border-white/10 bg-white dark:bg-white/[0.04] hover:border-[#d5dce6] dark:hover:border-white/20 hover:bg-[#fcfdff] dark:hover:bg-white/[0.07]",
               ].join(" ")}
             >
               <label className="flex min-w-0 flex-1 items-start gap-3 text-[#1F2937] dark:text-white/90">
@@ -448,7 +454,7 @@ export function OrderChecklist({
                       "block text-[15px] font-medium",
                       item.is_done
                         ? "text-[#9CA3AF] dark:text-white/40 line-through"
-                        : "text-[#374151]",
+                        : "text-[#374151] dark:text-white/85",
                     ].join(" ")}
                   >
                     {item.title}
@@ -497,7 +503,7 @@ export function OrderChecklist({
         })}
 
         {items.length === 0 ? (
-          <div className="rounded-[20px] border border-dashed border-[#d8dee8] bg-white dark:bg-white/[0.03] px-5 py-7 text-center">
+          <div className="rounded-[20px] border border-dashed border-[#d8dee8] dark:border-white/15 bg-white dark:bg-white/[0.03] px-5 py-7 text-center">
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F9FAFB] dark:bg-white/[0.04] text-[#6B7280] dark:text-white/55">
               <CirclePlus className="h-5 w-5" />
             </div>
@@ -518,19 +524,56 @@ export function OrderChecklist({
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Add checklist item..."
-            className="h-11 min-w-0 flex-1 rounded-2xl border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] px-4 text-sm text-[#1F2937] dark:text-white/90 outline-none transition placeholder:text-[#9CA3AF] focus:border-[var(--brand-600)] focus:bg-white focus:ring-2 focus:ring-[var(--brand-600)]/15"
+            className="h-11 min-w-0 flex-1 rounded-2xl border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] px-4 text-sm text-[#1F2937] dark:text-white/90 outline-none transition placeholder:text-[#9CA3AF] focus:border-[var(--brand-600)] focus:bg-white dark:focus:bg-white/[0.07] focus:ring-2 focus:ring-[var(--brand-600)]/15"
             onKeyDown={(e) => {
               if (e.key === "Enter") add();
             }}
           />
 
-          <input
-            type="date"
-            value={dueDate}
-            onChange={(e) => setDueDate(e.target.value)}
-            className="h-11 min-w-0 rounded-2xl border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] px-4 text-sm text-[#1F2937] dark:text-white/90 outline-none transition focus:border-[var(--brand-600)] focus:bg-white focus:ring-2 focus:ring-[var(--brand-600)]/15 sm:w-[160px]"
-            aria-label="Checklist due date"
-          />
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                aria-label="Checklist due date"
+                className="inline-flex h-11 min-w-0 items-center gap-2 rounded-2xl border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] px-4 text-sm text-[#1F2937] dark:text-white/90 outline-none transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-white dark:hover:bg-white/[0.07] focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15 sm:w-[160px]"
+              >
+                <CalendarDays className="h-4 w-4 text-[#6B7280] dark:text-white/55" />
+                <span className={dueDate ? "" : "text-[#9CA3AF] dark:text-white/40"}>
+                  {dueDate ? formatDueDate(dueDate) : "Pick date"}
+                </span>
+              </button>
+            </PopoverTrigger>
+            <PopoverContent
+              className="w-auto rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-[#0E0E1B] p-0 shadow-lg dark:shadow-[0_16px_36px_rgba(0,0,0,0.55)]"
+              align="start"
+            >
+              <Calendar
+                mode="single"
+                selected={dueDate ? new Date(`${dueDate}T00:00:00`) : undefined}
+                onSelect={(date) => {
+                  if (!date) {
+                    setDueDate("");
+                    return;
+                  }
+                  const yyyy = date.getFullYear();
+                  const mm = String(date.getMonth() + 1).padStart(2, "0");
+                  const dd = String(date.getDate()).padStart(2, "0");
+                  setDueDate(`${yyyy}-${mm}-${dd}`);
+                }}
+              />
+              {dueDate ? (
+                <div className="border-t border-[#F3F4F6] dark:border-white/10 p-2">
+                  <button
+                    type="button"
+                    onClick={() => setDueDate("")}
+                    className="w-full rounded-lg px-3 py-1.5 text-xs font-semibold text-[#6B7280] dark:text-white/55 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06] hover:text-[#1F2937] dark:hover:text-white"
+                  >
+                    Clear date
+                  </button>
+                </div>
+              ) : null}
+            </PopoverContent>
+          </Popover>
 
           <button
             type="button"
@@ -540,8 +583,8 @@ export function OrderChecklist({
             className={[
               "inline-flex h-11 w-full min-w-0 shrink-0 items-center justify-center gap-2 rounded-[18px] border px-4 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-600)]/15 sm:w-auto sm:min-w-[132px]",
               !title.trim() || loading
-                ? "cursor-not-allowed border-[#E5E7EB] dark:border-white/10 bg-[#F3F4F6] text-[#9CA3AF] dark:text-white/40"
-                : "border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] text-[#1F2937] dark:text-white/90 shadow-[0_1px_2px_rgba(16,24,40,0.04)] hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]",
+                ? "cursor-not-allowed border-[#E5E7EB] dark:border-white/10 bg-[#F3F4F6] dark:bg-white/[0.04] text-[#9CA3AF] dark:text-white/35"
+                : "border-[var(--brand-200)] dark:border-[var(--brand-500)]/40 bg-[var(--brand-600)] dark:bg-[var(--brand-600)] text-white shadow-[0_1px_2px_rgba(16,24,40,0.04)] hover:bg-[var(--brand-700)] dark:hover:bg-[var(--brand-700)]",
             ].join(" ")}
           >
             <CirclePlus className="h-4 w-4" />
@@ -553,7 +596,7 @@ export function OrderChecklist({
           it was written in the text.
         </p>
         {errorMessage ? (
-          <div className="mt-2 rounded-2xl border border-[#fecdca] bg-[#fff6f5] px-3 py-2 text-xs leading-5 text-[#b42318]">
+          <div className="mt-2 rounded-2xl border border-[#fecdca] dark:border-rose-500/30 bg-[#fff6f5] dark:bg-rose-500/10 px-3 py-2 text-xs leading-5 text-[#b42318] dark:text-rose-200">
             {errorMessage}
           </div>
         ) : null}

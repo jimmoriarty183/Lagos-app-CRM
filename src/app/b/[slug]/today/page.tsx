@@ -10,6 +10,7 @@ import type { ManagerMonthlyPlanProgress } from "@/app/b/[slug]/today/TodayFollo
 import type { TodoCalendarItem } from "@/app/b/[slug]/today/todo-calendar/types";
 import { inferFollowUpSubtype } from "@/app/b/[slug]/today/todo-calendar/utils";
 import { getAdminUsersPath, isAdminEmail } from "@/lib/admin-access";
+import { isCleaningSegment } from "@/lib/business-segments";
 import {
   getStatusLabel,
   isTerminalStatus,
@@ -45,6 +46,7 @@ type BusinessRow = {
   slug: string;
   name: string | null;
   plan: string | null;
+  business_segment: string | null;
 };
 
 type ProfileRow = {
@@ -211,7 +213,7 @@ export default async function TodayFollowUpsPage({
   const businessIds = membershipRows.map((entry) => entry.business_id);
   const { data: businesses, error: businessesError } = await supabase
     .from("businesses")
-    .select("id, slug, name, plan")
+    .select("id, slug, name, plan, business_segment")
     .in("id", businessIds);
 
   if (businessesError) {
@@ -773,6 +775,7 @@ export default async function TodayFollowUpsPage({
               orderOptions={calendarOrderOptions}
               initialMode={initialMode}
               managerPlanProgress={managerPlanProgress}
+              isCleaning={isCleaningSegment(currentBusiness.business_segment)}
             />
           </div>
         </div>

@@ -12,6 +12,7 @@ import {
   TrendingDown,
   TrendingUp,
 } from "lucide-react";
+import { StyledDateInput } from "@/components/ui/styled-date-input";
 
 type Props = {
   cards: {
@@ -103,24 +104,24 @@ function SummaryCard({
   const toneClasses =
     tone === "blue"
       ? {
-          iconWrap: "bg-[#eef4ff] text-[#2459d3]",
+          iconWrap: "bg-[#eef4ff] text-[#2459d3] dark:bg-[#2459d3]/20 dark:text-[#93b4ff]",
           value: "text-[#1F2937] dark:text-white/90",
           meta: "text-[#6B7280] dark:text-white/55",
         }
       : tone === "green"
         ? {
-            iconWrap: "bg-[#ecfdf3] text-[#067647]",
+            iconWrap: "bg-[#ecfdf3] text-[#067647] dark:bg-emerald-500/20 dark:text-emerald-300",
             value: "text-[#1F2937] dark:text-white/90",
             meta: "text-[#6B7280] dark:text-white/55",
           }
         : tone === "red"
           ? {
-              iconWrap: "bg-[#fef3f2] text-[#d92d20]",
-              value: "text-[#d92d20]",
-              meta: "text-[#b42318]",
+              iconWrap: "bg-[#fef3f2] text-[#d92d20] dark:bg-rose-500/20 dark:text-rose-300",
+              value: "text-[#d92d20] dark:text-rose-300",
+              meta: "text-[#b42318] dark:text-rose-300/80",
             }
           : {
-              iconWrap: "bg-[#f2f4f7] text-[#6B7280] dark:text-white/55",
+              iconWrap: "bg-[#f2f4f7] text-[#6B7280] dark:bg-white/10 dark:text-white/70",
               value: "text-[#1F2937] dark:text-white/90",
               meta: "text-[#6B7280] dark:text-white/55",
             };
@@ -278,7 +279,7 @@ export default function DesktopAnalyticsCard({
                   More
                   <ChevronDown className="h-3.5 w-3.5 text-[#9CA3AF] dark:text-white/40" />
                 </summary>
-                <div className="absolute right-0 top-11 z-20 min-w-[140px] rounded-2xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-1 shadow-[0_12px_24px_rgba(16,24,40,0.12)]">
+                <div className="absolute right-0 top-11 z-20 min-w-[140px] rounded-2xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-[#0E0E1B] p-1 shadow-[0_12px_24px_rgba(16,24,40,0.12)] dark:shadow-[0_16px_36px_rgba(0,0,0,0.55)]">
                   {extendedOptions.map((option) => (
                     <a
                       key={option.label}
@@ -379,22 +380,24 @@ export default function DesktopAnalyticsCard({
                   <span className="text-[11px] font-medium text-[#6B7280] dark:text-white/55">
                     Start
                   </span>
-                  <input
-                    type="date"
+                  <StyledDateInput
                     name="sstart"
                     defaultValue={customRange.startDate ?? ""}
-                    className="h-11 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 text-sm font-medium text-[#374151] outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
+                    placeholder="Pick start date"
+                    ariaLabel="Range start date"
+                    className="w-full"
                   />
                 </label>
                 <label className="flex min-w-0 flex-1 flex-col gap-1">
                   <span className="text-[11px] font-medium text-[#6B7280] dark:text-white/55">
                     End
                   </span>
-                  <input
-                    type="date"
+                  <StyledDateInput
                     name="send"
                     defaultValue={customRange.endDate ?? ""}
-                    className="h-11 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 text-sm font-medium text-[#374151] outline-none transition focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
+                    placeholder="Pick end date"
+                    ariaLabel="Range end date"
+                    className="w-full"
                   />
                 </label>
                 <a

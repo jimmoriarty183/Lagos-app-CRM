@@ -285,12 +285,12 @@ export default function LoginUI({
       {loginPending && <OverlayLoader text="Signing in..." />}
       {resetPending && <OverlayLoader text="Sending reset link..." />}
 
-      <div className="border-b border-slate-100/80 px-6 pb-5 pt-6 dark:border-white/10 sm:px-7">
-        <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500 dark:text-[var(--brand-300)]">
+      <div className="border-b border-slate-100/80 px-5 pb-4 pt-5 dark:border-white/10 sm:px-6">
+        <div className="text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-500 dark:text-[var(--brand-300)]">
           ORDO
         </div>
 
-        <h1 className="mt-2 text-[1.45rem] font-semibold tracking-tight text-slate-900 dark:text-white sm:text-[1.55rem]">
+        <h1 className="mt-1.5 text-[1.25rem] font-semibold tracking-tight text-slate-900 dark:text-white sm:text-[1.35rem]">
           {mode === "login"
             ? "Sign in"
             : mode === "register"
@@ -298,7 +298,7 @@ export default function LoginUI({
               : "Reset password"}
         </h1>
 
-        <p className="mt-1.5 text-sm leading-relaxed text-slate-600 dark:text-white/65">
+        <p className="mt-1 text-[13px] leading-snug text-slate-600 dark:text-white/65">
           {mode === "login"
             ? "Sign in to continue working in Ordo."
             : mode === "register"
@@ -309,7 +309,7 @@ export default function LoginUI({
         </p>
 
         {mode !== "reset" ? (
-          <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-1 dark:border-white/10 dark:bg-white/[0.04]">
+          <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-1 dark:border-white/10 dark:bg-white/[0.04]">
             <div className="grid grid-cols-2 gap-1">
               <button
                 type="button"
@@ -359,7 +359,7 @@ export default function LoginUI({
         )}
       </div>
 
-      <div className="space-y-4 px-6 pb-6 pt-5 sm:px-7 sm:pb-7">
+      <div className="space-y-3 px-5 pb-5 pt-4 sm:px-6 sm:pb-6">
         <ErrorBox text={localError} />
         <ErrorBox text={activeState?.error} />
         {mode === "login" && demoUnavailable ? (
@@ -377,7 +377,7 @@ export default function LoginUI({
         ) : null}
 
         {mode === "login" ? (
-          <form action={loginSubmit} className="space-y-4">
+          <form action={loginSubmit} className="space-y-3">
             <input type="hidden" name="invite_id" value={inviteId} />
             <input type="hidden" name="next" value={nextPath} />
 
@@ -440,7 +440,7 @@ export default function LoginUI({
           <form
             action={regSubmit}
             onSubmit={onRegisterSubmit}
-            className="space-y-4"
+            className="space-y-3"
           >
             <input type="hidden" name="invite_id" value={inviteId} />
             <input type="hidden" name="next" value={nextPath} />
@@ -538,7 +538,7 @@ export default function LoginUI({
           <form
             action={resetSubmit}
             onSubmit={onResetSubmit}
-            className="space-y-4"
+            className="space-y-3"
           >
             <Input
               label="Email"

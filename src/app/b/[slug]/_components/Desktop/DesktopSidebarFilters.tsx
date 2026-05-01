@@ -16,6 +16,7 @@ import {
 } from "@/lib/order-dashboard-summary";
 import { resolveUserDisplay } from "@/lib/user-display";
 import { useBusinessStatuses } from "@/lib/use-business-statuses";
+import { StyledDateInput } from "@/components/ui/styled-date-input";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -342,7 +343,7 @@ export default function DesktopSidebarFilters({
   }, [businessId]);
 
   return (
-    <section className="max-h-[calc(100vh-100px)] overflow-y-auto rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)] overscroll-contain">
+    <section className="max-h-[calc(100vh-100px)] overflow-y-auto rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-[#0E0E1B] p-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)] dark:shadow-[0_8px_24px_rgba(0,0,0,0.45)] overscroll-contain">
       <div className="mb-3 flex items-center justify-between gap-3">
         <div className="text-[12px] font-semibold uppercase tracking-[0.18em] text-[#9CA3AF] dark:text-white/40">
           Filters
@@ -438,7 +439,7 @@ export default function DesktopSidebarFilters({
                 align="start"
                 side="top"
                 sideOffset={8}
-                className="z-[140] w-56 rounded-xl border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
+                className="z-[140] w-56 rounded-xl border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-[#0E0E1B] p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)] dark:shadow-[0_16px_40px_rgba(0,0,0,0.55)]"
                 onCloseAutoFocus={(event) => event.preventDefault()}
               >
                 <div className="flex items-center justify-between gap-2 px-2 pb-1 pt-1">
@@ -586,7 +587,7 @@ export default function DesktopSidebarFilters({
               <DropdownMenuContent
                 align="start"
                 sideOffset={8}
-                className="z-[140] w-56 rounded-xl border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
+                className="z-[140] w-56 rounded-xl border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-[#0E0E1B] p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)] dark:shadow-[0_16px_40px_rgba(0,0,0,0.55)]"
                 onCloseAutoFocus={(event) => event.preventDefault()}
               >
                 <DropdownMenuRadioGroup value={rangeValue}>
@@ -620,22 +621,24 @@ export default function DesktopSidebarFilters({
               <span className="mb-1 block text-[11px] font-medium text-[#6B7280] dark:text-white/55">
                 Start date
               </span>
-              <input
-                type="date"
+              <StyledDateInput
                 value={customStart}
-                onChange={(event) => setCustomStart(event.currentTarget.value)}
-                className={inputCls}
+                onChange={setCustomStart}
+                placeholder="Pick start"
+                ariaLabel="Custom range start"
+                className="w-full"
               />
             </label>
             <label className="block">
               <span className="mb-1 block text-[11px] font-medium text-[#6B7280] dark:text-white/55">
                 End date
               </span>
-              <input
-                type="date"
+              <StyledDateInput
                 value={customEnd}
-                onChange={(event) => setCustomEnd(event.currentTarget.value)}
-                className={inputCls}
+                onChange={setCustomEnd}
+                placeholder="Pick end"
+                ariaLabel="Custom range end"
+                className="w-full"
               />
             </label>
           </div>
@@ -665,7 +668,7 @@ export default function DesktopSidebarFilters({
               <DropdownMenuContent
                 align="start"
                 sideOffset={8}
-                className="z-[140] w-64 rounded-xl border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
+                className="z-[140] w-64 rounded-xl border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-[#0E0E1B] p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)] dark:shadow-[0_16px_40px_rgba(0,0,0,0.55)]"
                 onCloseAutoFocus={(event) => event.preventDefault()}
               >
                 <DropdownMenuRadioGroup
@@ -745,7 +748,7 @@ export default function DesktopSidebarFilters({
               <DropdownMenuContent
                 align="start"
                 sideOffset={8}
-                className="z-[140] w-56 rounded-xl border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)]"
+                className="z-[140] w-56 rounded-xl border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-[#0E0E1B] p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.14)] dark:shadow-[0_16px_40px_rgba(0,0,0,0.55)]"
                 onCloseAutoFocus={(event) => event.preventDefault()}
               >
                 <DropdownMenuRadioGroup value={sortValue}>

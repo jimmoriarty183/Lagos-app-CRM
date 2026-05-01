@@ -116,7 +116,7 @@ export default function BusinessSwitcher({
 
   const triggerClass =
     variant === "toolbar-compact"
-      ? "inline-flex h-8 w-full items-center justify-between gap-2 rounded-lg border border-transparent bg-transparent px-2.5 transition hover:border-[#E5E7EB] dark:hover:border-white/15 hover:bg-[#F8FAFC]"
+      ? "inline-flex h-8 w-full items-center justify-between gap-2 rounded-lg border border-transparent bg-transparent px-2.5 transition hover:border-[#E5E7EB] dark:hover:border-white/15 hover:bg-[#F8FAFC] dark:hover:bg-white/[0.06]"
       : variant === "toolbar"
         ? "inline-flex h-10 w-full items-center justify-between gap-2 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#D1D5DB] dark:hover:border-white/20 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]"
         : "inline-flex h-11 w-full items-center justify-between gap-3 rounded-2xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]";
@@ -160,7 +160,7 @@ export default function BusinessSwitcher({
       {open ? (
         <div
           role="menu"
-          className="absolute right-0 z-50 mt-2 w-[280px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] shadow-[0_12px_28px_rgba(16,24,40,0.12)]"
+          className="absolute right-0 z-50 mt-2 w-[280px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0E0E1B] shadow-[0_12px_28px_rgba(16,24,40,0.12)] dark:shadow-[0_16px_36px_rgba(0,0,0,0.55)]"
         >
           {!compact ? (
             <div className="border-b border-gray-100 dark:border-white/[0.06] p-3">

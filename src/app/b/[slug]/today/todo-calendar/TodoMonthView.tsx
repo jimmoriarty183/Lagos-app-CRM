@@ -1,9 +1,10 @@
 "use client";
 
+import * as React from "react";
 import { format, isSameDay, isToday } from "date-fns";
 
 import type { TodoCalendarItem } from "@/app/b/[slug]/today/todo-calendar/types";
-import { getItemsForDate, getMonthDays } from "@/app/b/[slug]/today/todo-calendar/utils";
+import { getItemsForDate, getMonthDays, toDateKey } from "@/app/b/[slug]/today/todo-calendar/utils";
 import { TodoCalendarItem as TodoCalendarItemCard } from "@/app/b/[slug]/today/todo-calendar/TodoCalendarItem";
 import { cn } from "@/components/ui/utils";
 
@@ -25,10 +26,22 @@ export function TodoMonthView({
   onSelectItem: (item: TodoCalendarItem) => void;
 }) {
   const days = getMonthDays(anchorDate);
+  const selectedCellRef = React.useRef<HTMLDivElement | null>(null);
+  const selectedKey = toDateKey(selectedDate);
+
+  // When the selected day changes (e.g. user clicks an item from the side
+  // list whose date is in a different week of the visible month), bring that
+  // cell into the viewport so they aren't left staring at an empty top row.
+  React.useEffect(() => {
+    selectedCellRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest",
+    });
+  }, [selectedKey]);
 
   return (
-    <div className="overflow-hidden rounded-[24px] border border-[#DDE3EA] bg-white dark:bg-white/[0.03] shadow-[0_16px_34px_rgba(15,23,42,0.08)]">
-      <div className="grid grid-cols-7 border-b border-[#EDEFF4] bg-[linear-gradient(180deg,#FCFDFE_0%,#F8FAFC_100%)]">
+    <div className="overflow-hidden rounded-[24px] border border-[#DDE3EA] dark:border-white/10 bg-white dark:bg-white/[0.04] shadow-[0_16px_34px_rgba(15,23,42,0.08)] dark:shadow-[0_16px_34px_rgba(0,0,0,0.45)]">
+      <div className="grid grid-cols-7 border-b border-[#EDEFF4] dark:border-white/10 bg-[#F8FAFC] dark:bg-white/[0.04]">
         {WEEKDAY_LABELS.map((label) => (
           <div key={label} className="px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.06em] text-[#667085]">
             {label}
@@ -48,6 +61,7 @@ export function TodoMonthView({
           return (
             <div
               key={day.toISOString()}
+              ref={selected ? selectedCellRef : undefined}
               role="button"
               tabIndex={0}
               onClick={() => onSelectDate(day)}
@@ -58,11 +72,11 @@ export function TodoMonthView({
                 }
               }}
               className={cn(
-                "min-h-[166px] border-b border-r border-[#EDF0F5] px-3 py-3 text-left align-top transition",
-                outside && "bg-[#FAFBFE]",
+                "min-h-[166px] border-b border-r border-[#EDF0F5] dark:border-white/10 px-3 py-3 text-left align-top transition",
+                outside && "bg-[#FAFBFE] dark:bg-white/[0.02]",
                 selected
-                  ? "bg-[#EEF3FF] shadow-[inset_0_0_0_1px_#C7D2FE]"
-                  : "hover:bg-[#F8FAFD]",
+                  ? "bg-[#EEF3FF] dark:bg-[var(--brand-600)]/15 shadow-[inset_0_0_0_1px_#C7D2FE] dark:shadow-[inset_0_0_0_1px_var(--brand-500)]/40"
+                  : "hover:bg-[#F8FAFD] dark:hover:bg-white/[0.04]",
               )}
             >
               <div className="mb-3 flex items-center justify-between">
@@ -70,12 +84,12 @@ export function TodoMonthView({
                   className={cn(
                     "inline-flex h-8 w-8 items-center justify-center rounded-full text-[13px] font-semibold",
                     today
-                      ? "border border-[#C7D2FE] dark:border-[var(--brand-500)]/40 bg-[#E9EDFF] text-[#3645A0] dark:text-[var(--brand-300)]"
+                      ? "border border-[#C7D2FE] dark:border-[var(--brand-500)]/40 bg-[#E9EDFF] dark:bg-[var(--brand-600)]/20 text-[#3645A0] dark:text-[var(--brand-300)]"
                       : selected
-                        ? "border border-[#BFC9D6] bg-white dark:bg-white/[0.03] text-[#0F172A] dark:text-white"
+                        ? "border border-[#BFC9D6] dark:border-white/15 bg-white dark:bg-white/[0.06] text-[#0F172A] dark:text-white"
                         : outside
                           ? "text-[#98A2B3] dark:text-white/45"
-                          : "text-[#344054]",
+                          : "text-[#344054] dark:text-white/85",
                   )}
                 >
                   {format(day, "d")}

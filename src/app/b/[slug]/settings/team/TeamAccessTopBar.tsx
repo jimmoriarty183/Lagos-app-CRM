@@ -69,7 +69,7 @@ export default function TeamAccessTopBar({
 
   return (
     <header
-      className="fixed inset-x-0 top-0 z-50 overflow-x-clip border-b border-[var(--neutral-200)] bg-white dark:bg-white/[0.03]"
+      className="fixed inset-x-0 top-0 z-50 overflow-x-clip border-b border-[var(--neutral-200)] bg-white dark:bg-[#0E0E1B]/95 dark:backdrop-blur"
     >
       <div className="pt-[env(safe-area-inset-top)]">
         <div className="mx-auto grid h-[48px] max-w-[1200px] grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 overflow-x-clip px-3 sm:flex sm:justify-between sm:gap-3 sm:px-4 sm:py-0">

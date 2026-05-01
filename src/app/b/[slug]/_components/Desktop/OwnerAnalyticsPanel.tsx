@@ -1,5 +1,6 @@
 import type { OwnerDashboardData } from "@/lib/owner-dashboard";
 import { saveSalesPlanRowAction } from "@/app/b/[slug]/analytics/actions";
+import { StyledDateInput } from "@/components/ui/styled-date-input";
 import {
   Activity,
   AlertTriangle,
@@ -380,7 +381,7 @@ export default function OwnerAnalyticsPanel({
               >
                 ?
               </summary>
-              <div className="absolute left-0 top-7 z-20 w-[340px] rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3 text-xs text-[#344054] shadow-[0_12px_24px_rgba(16,24,40,0.12)]">
+              <div className="absolute left-0 top-7 z-20 w-[340px] rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-[#0E0E1B] p-3 text-xs text-[#344054] dark:text-white/85 shadow-[0_12px_24px_rgba(16,24,40,0.12)] dark:shadow-[0_16px_36px_rgba(0,0,0,0.55)]">
                 <div className="text-sm font-semibold text-[#111827]">
                   {currentViewMeta.helpTitle}
                 </div>
@@ -914,20 +915,22 @@ export default function OwnerAnalyticsPanel({
             ) : null}
             <label className="flex flex-col gap-1 text-[11px] text-[#4B5563] dark:text-white/70">
               <span>From</span>
-              <input
-                type="date"
+              <StyledDateInput
                 name="rfrom"
                 defaultValue={String(reportFilter?.fromDate ?? "")}
-                className="h-10 rounded-md border border-[#D0D5DD] px-3 text-[14px] leading-5 text-[#111827]"
+                placeholder="Pick start"
+                ariaLabel="Report from date"
+                className="w-full"
               />
             </label>
             <label className="flex flex-col gap-1 text-[11px] text-[#4B5563] dark:text-white/70">
               <span>To</span>
-              <input
-                type="date"
+              <StyledDateInput
                 name="rto"
                 defaultValue={String(reportFilter?.toDate ?? "")}
-                className="h-10 rounded-md border border-[#D0D5DD] px-3 text-[14px] leading-5 text-[#111827]"
+                placeholder="Pick end"
+                ariaLabel="Report to date"
+                className="w-full"
               />
             </label>
             <label className="flex flex-col gap-1 text-[11px] text-[#4B5563] dark:text-white/70 sm:col-span-2">

@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import Link from "next/link";
 import { CalendarDays, ChevronLeft, Mail, Phone, UserCircle2 } from "lucide-react";
+import { StyledDateInput } from "@/components/ui/styled-date-input";
 
 type Props = {
   initial: {
@@ -230,11 +231,12 @@ export default function ProfileEditor({ initial, workspace, identities }: Props)
               <div className="mt-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF] dark:text-white/40">
                 Date of birth
               </div>
-              <input
-                type="date"
+              <StyledDateInput
                 value={birthDate}
-                onChange={(event) => setBirthDate(event.target.value)}
-                className="mt-2 w-full rounded-lg border border-[#D0D5DD] px-3 py-2 text-sm text-[#111827] outline-none focus:border-[#A4BCFD] focus:ring-2 focus:ring-[#EEF4FF]"
+                onChange={setBirthDate}
+                placeholder="Pick date"
+                ariaLabel="Date of birth"
+                className="mt-2 w-full"
               />
             </label>
           </div>

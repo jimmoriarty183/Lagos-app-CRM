@@ -94,8 +94,8 @@ export default function DataMenu({
         </button>
 
         {open ? (
-          <div className="absolute right-0 z-30 mt-1 w-[260px] overflow-hidden rounded-2xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] shadow-[0_12px_32px_rgba(15,23,42,0.10)]">
-            <div className="border-b border-[#F3F4F6] px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF] dark:text-white/40">
+          <div className="absolute right-0 z-30 mt-1 w-[260px] overflow-hidden rounded-2xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-[#0E0E1B] shadow-[0_12px_32px_rgba(15,23,42,0.10)] dark:shadow-[0_16px_36px_rgba(0,0,0,0.55)]">
+            <div className="border-b border-[#F3F4F6] dark:border-white/10 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF] dark:text-white/40">
               Export {type}
             </div>
             <button
@@ -121,7 +121,7 @@ export default function DataMenu({
               {!canExport ? <span className="text-[10px] uppercase tracking-wide text-[#9CA3AF] dark:text-white/40">Pro</span> : null}
             </button>
 
-            <div className="border-t border-[#F3F4F6] px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF] dark:text-white/40">
+            <div className="border-t border-[#F3F4F6] dark:border-white/10 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF] dark:text-white/40">
               Template (free)
             </div>
             <button
@@ -143,7 +143,7 @@ export default function DataMenu({
 
             {type !== "orders" ? (
               <>
-                <div className="border-t border-[#F3F4F6] px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF] dark:text-white/40">
+                <div className="border-t border-[#F3F4F6] dark:border-white/10 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF] dark:text-white/40">
                   Import {type}
                 </div>
                 <button

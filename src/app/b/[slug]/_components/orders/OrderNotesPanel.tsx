@@ -100,7 +100,7 @@ export function OrderNoteComposer({
   const trimmedBody = body.trim();
 
   return (
-    <div className="rounded-[24px] border border-[#dfe6ef] bg-white/95 p-4">
+    <div className="rounded-[24px] border border-[#dfe6ef] dark:border-white/10 bg-white/95 dark:bg-white/[0.05] p-4">
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
@@ -141,7 +141,7 @@ export function OrderNoteComposer({
           <button
             type="button"
             onClick={onCancel}
-            className="inline-flex h-11 items-center justify-center rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-5 text-base font-semibold text-[#374151] transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]"
+            className="inline-flex h-11 items-center justify-center rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.04] px-5 text-base font-semibold text-[#374151] dark:text-white/85 transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.08] hover:text-[#1F2937] dark:hover:text-white"
           >
             Cancel
           </button>
@@ -198,10 +198,10 @@ export function OrderNoteItem({
   return (
     <article
       className={cn(
-        "rounded-[24px] border bg-white/95 p-4 transition",
+        "rounded-[24px] border bg-white/95 dark:bg-white/[0.05] p-4 transition",
         note.isPinned
-          ? "border-[#d7dff2] bg-[linear-gradient(180deg,#ffffff_0%,#f8faff_100%)]"
-          : "border-[#e6ebf2] hover:border-[#d9e2ec] hover:bg-white dark:hover:bg-white/[0.07]",
+          ? "border-[#d7dff2] dark:border-[var(--brand-500)]/30 bg-[linear-gradient(180deg,#ffffff_0%,#f8faff_100%)] dark:bg-none dark:bg-[var(--brand-600)]/12"
+          : "border-[#e6ebf2] dark:border-white/10 hover:border-[#d9e2ec] dark:hover:border-white/20 hover:bg-white dark:hover:bg-white/[0.07]",
       )}
     >
       <div className="flex items-start gap-3">
@@ -373,7 +373,7 @@ export function OrderNotesPanel({
   return (
     <section
       className={cn(
-        "rounded-[28px] border border-[#E5E7EB] dark:border-white/10 bg-[linear-gradient(180deg,#ffffff_0%,#F9FAFB_100%)] p-4 shadow-[0_10px_30px_rgba(15,23,42,0.06)] sm:p-5",
+        "rounded-[28px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.04] p-4 shadow-[0_10px_30px_rgba(15,23,42,0.06)] dark:shadow-[0_10px_30px_rgba(0,0,0,0.45)] sm:p-5",
         className,
       )}
     >
@@ -407,7 +407,7 @@ export function OrderNotesPanel({
             <button
               type="button"
               onClick={openCreateComposer}
-              className="inline-flex h-11 items-center justify-center rounded-[18px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-5 text-base font-semibold text-[#374151] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]"
+              className="inline-flex h-11 items-center justify-center rounded-[18px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.04] px-5 text-base font-semibold text-[#374151] dark:text-white/85 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.08] hover:text-[#1F2937] dark:hover:text-white"
             >
               Add note
             </button>
@@ -424,7 +424,7 @@ export function OrderNotesPanel({
         ) : null}
 
         {!canManage ? (
-          <div className="rounded-[24px] border border-[#E5E7EB] dark:border-white/10 bg-white/85 px-5 py-6 text-sm leading-6 text-[#6B7280] dark:text-white/55">
+          <div className="rounded-[24px] border border-[#E5E7EB] dark:border-white/10 bg-white/85 dark:bg-white/[0.04] px-5 py-6 text-sm leading-6 text-[#6B7280] dark:text-white/55">
             Only managers can view and add internal notes for this order.
           </div>
         ) : notes.length === 0 ? (

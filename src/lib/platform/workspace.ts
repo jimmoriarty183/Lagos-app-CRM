@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { cookies } from "next/headers";
 import { supabaseServerReadOnly } from "@/lib/supabase/server";
+import { isCleaningSegment } from "@/lib/business-segments";
 
 type MembershipRow = {
   business_id: string;
@@ -13,6 +14,7 @@ type BusinessRow = {
   slug: string | null;
   name: string | null;
   plan: string | null;
+  business_segment: string | null;
 };
 
 export type CurrentWorkspace = {
@@ -21,7 +23,14 @@ export type CurrentWorkspace = {
   name: string | null;
   role: string | null;
   plan: string | null;
+  segment: string | null;
 };
+
+export function isCleaningWorkspace(
+  workspace: Pick<CurrentWorkspace, "segment"> | null | undefined,
+): boolean {
+  return isCleaningSegment(workspace?.segment ?? null);
+}
 
 export const resolveCurrentWorkspace = cache(async () => {
   const supabase = await supabaseServerReadOnly();
@@ -57,7 +66,7 @@ export const resolveCurrentWorkspace = cache(async () => {
   const businessIds = memberships.map((membership) => membership.business_id);
   const { data: businessRows, error: businessError } = await supabase
     .from("businesses")
-    .select("id, slug, name, plan")
+    .select("id, slug, name, plan, business_segment")
     .in("id", businessIds);
 
   if (businessError) throw businessError;
@@ -99,6 +108,7 @@ export const resolveCurrentWorkspace = cache(async () => {
         name: business.name,
         role: membership.role,
         plan: business.plan,
+        segment: business.business_segment,
       } satisfies CurrentWorkspace;
     })
     .filter((workspace): workspace is CurrentWorkspace => Boolean(workspace));
@@ -111,6 +121,7 @@ export const resolveCurrentWorkspace = cache(async () => {
       name: selectedBusiness.name,
       role: selectedMembership.role,
       plan: selectedBusiness.plan,
+      segment: selectedBusiness.business_segment,
     } satisfies CurrentWorkspace,
     workspaces,
   };

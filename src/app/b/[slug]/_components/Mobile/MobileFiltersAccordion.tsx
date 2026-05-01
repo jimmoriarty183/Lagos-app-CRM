@@ -291,7 +291,7 @@ export default function MobileFiltersAccordion({
         className="absolute inset-0 bg-[#0f172a]/32 backdrop-blur-[2px]"
       />
 
-      <section className="absolute inset-x-0 bottom-0 max-h-[88vh] overflow-hidden rounded-t-[28px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] shadow-[0_-20px_60px_rgba(15,23,42,0.12)]">
+      <section className="absolute inset-x-0 bottom-0 max-h-[88vh] overflow-hidden rounded-t-[28px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-[#0E0E1B] shadow-[0_-20px_60px_rgba(15,23,42,0.12)] dark:shadow-[0_-20px_60px_rgba(0,0,0,0.55)]">
         <div className="mx-auto mt-3 h-1.5 w-14 rounded-full bg-[#E5E7EB]" />
 
         <div className="flex items-center justify-between gap-3 border-b border-[#F3F4F6] px-4 py-4">

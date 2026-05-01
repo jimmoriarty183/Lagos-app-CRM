@@ -99,6 +99,7 @@ function Badge({
 function Menu({
   open,
   menuRef,
+  triggerRef,
   children,
   width,
   mobile,
@@ -106,11 +107,67 @@ function Menu({
 }: {
   open: boolean;
   menuRef: React.RefObject<HTMLDivElement | null>;
+  triggerRef?: React.RefObject<HTMLDivElement | null>;
   children: React.ReactNode;
   width?: number;
   mobile?: boolean;
   onClose?: () => void;
 }) {
+  const [position, setPosition] = useState<{
+    top: number | null;
+    bottom: number | null;
+    left: number;
+    placement: "bottom" | "top";
+  } | null>(null);
+
+  useEffect(() => {
+    if (!open || mobile || !triggerRef?.current) return;
+
+    const computePosition = () => {
+      const rect = triggerRef.current?.getBoundingClientRect();
+      if (!rect) return;
+
+      const menuWidth = width ?? 210;
+      const estimatedMenuHeight = 200;
+      const margin = 12;
+
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      const placement: "bottom" | "top" =
+        spaceBelow < estimatedMenuHeight + margin &&
+        spaceAbove > estimatedMenuHeight + margin
+          ? "top"
+          : "bottom";
+
+      // Anchor to the closest edge of the trigger so the gap stays at 6px
+      // regardless of how tall the menu actually renders. For "top" we pin the
+      // menu's bottom to (viewport top distance from trigger top - 6),
+      // letting the menu grow upward from there.
+      const top =
+        placement === "bottom" ? Math.round(rect.bottom + 6) : null;
+      const bottom =
+        placement === "top"
+          ? Math.round(window.innerHeight - rect.top + 6)
+          : null;
+
+      const rawLeft = rect.left;
+      const left = Math.max(
+        margin,
+        Math.min(rawLeft, window.innerWidth - menuWidth - margin),
+      );
+
+      setPosition({ top, bottom, left, placement });
+    };
+
+    computePosition();
+    window.addEventListener("resize", computePosition);
+    window.addEventListener("scroll", computePosition, true);
+    return () => {
+      window.removeEventListener("resize", computePosition);
+      window.removeEventListener("scroll", computePosition, true);
+    };
+  }, [open, mobile, triggerRef, width]);
+
   if (!open) return null;
 
   if (mobile) {
@@ -165,11 +222,12 @@ function Menu({
             width: "min(calc(100vw - 24px), 320px)",
             maxHeight: "min(52vh, 340px)",
             overflowY: "auto",
-            background: "white",
-            border: "1px solid #E2E8F0",
+            background: "var(--bg-overlay)",
+            border: "1px solid var(--border-default)",
             borderRadius: 14,
-            boxShadow: "0 12px 32px rgba(15,23,42,0.12)",
+            boxShadow: "var(--shadow-md)",
             padding: 6,
+            color: "var(--text-primary)",
           }}
         >
           {children}
@@ -181,25 +239,35 @@ function Menu({
     return createPortal(overlay, document.body);
   }
 
-  return (
+  if (typeof document === "undefined" || !position) return null;
+
+  const desktopMenu = (
     <div
       ref={menuRef}
       style={{
-        position: "absolute",
-        top: 34,
-        right: 0,
+        position: "fixed",
+        top: position.top ?? undefined,
+        bottom: position.bottom ?? undefined,
+        left: position.left,
         minWidth: width ?? 196,
-        background: "white",
-        border: "1px solid #E2E8F0",
+        maxHeight: "min(60vh, 360px)",
+        overflowY: "auto",
+        background: "color-mix(in srgb, var(--bg-overlay) 92%, transparent)",
+        backdropFilter: "blur(10px)",
+        WebkitBackdropFilter: "blur(10px)",
+        border: "1px solid var(--border-default)",
         borderRadius: 14,
-        boxShadow: "0 12px 32px rgba(15,23,42,0.12)",
+        boxShadow: "var(--shadow-md)",
         padding: 6,
-        zIndex: 80,
+        zIndex: 9999,
+        color: "var(--text-primary)",
       }}
     >
       {children}
     </div>
   );
+
+  return createPortal(desktopMenu, document.body);
 }
 
 function MenuItem({
@@ -234,12 +302,12 @@ function MenuItem({
         background: active
           ? tone.selectedBackground
           : hovered
-            ? "#F8FAFC"
+            ? "var(--bg-elevated-strong)"
             : "transparent",
         cursor: disabled ? "default" : "pointer",
         fontSize: 14,
         fontWeight: 500,
-        color: active ? tone.color : "#182230",
+        color: active ? tone.color : "var(--text-primary)",
         opacity: disabled ? 0.5 : 1,
         display: "flex",
         alignItems: "center",
@@ -274,6 +342,11 @@ function useOutsideAndEscClose(
       if (root && root.contains(t)) return;
       if (menu && menu.contains(t)) return;
 
+      // Set the overlay-closing flag BEFORE closing so the bubbling click
+      // (which fires after this mousedown) is suppressed by the row's
+      // shouldIgnoreOverlayCloseClick guard. Otherwise clicking outside the
+      // status menu to dismiss it would also open the order detail drawer.
+      markOverlayClosing();
       onClose();
     };
 
@@ -408,6 +481,7 @@ export function StatusCell({
   return (
     <div
       ref={rootRef}
+      data-status-open={open ? "true" : undefined}
       style={{
         position: "relative",
         display: "inline-block",
@@ -427,6 +501,7 @@ export function StatusCell({
       <Menu
         open={open}
         menuRef={menuRef}
+        triggerRef={rootRef}
         width={reasonTarget ? 280 : 210}
         mobile={isMobile}
         onClose={() => {
@@ -451,7 +526,7 @@ export function StatusCell({
                   style={{
                     fontSize: 14,
                     fontWeight: 600,
-                    color: "#182230",
+                    color: "var(--text-primary)",
                   }}
                 >
                   Why is this canceled?
@@ -460,7 +535,7 @@ export function StatusCell({
                   style={{
                     marginTop: 4,
                     fontSize: 12,
-                    color: "#667085",
+                    color: "var(--text-tertiary)",
                   }}
                 >
                   Pick a quick reason or write your own.
@@ -475,7 +550,7 @@ export function StatusCell({
                 style={{
                   border: 0,
                   background: "transparent",
-                  color: "#667085",
+                  color: "var(--text-tertiary)",
                   fontSize: 12,
                   fontWeight: 600,
                   cursor: "pointer",
@@ -496,13 +571,13 @@ export function StatusCell({
                     width: "100%",
                     minHeight: 36,
                     borderRadius: 10,
-                    border: "1px solid #E4EAF2",
-                    background: "white",
+                    border: "1px solid var(--border-default)",
+                    background: "var(--bg-elevated)",
                     padding: "8px 12px",
                     textAlign: "left",
                     fontSize: 13,
                     fontWeight: 500,
-                    color: "#182230",
+                    color: "var(--text-primary)",
                     cursor: isPending ? "default" : "pointer",
                   }}
                 >
@@ -521,10 +596,12 @@ export function StatusCell({
                   width: "100%",
                   resize: "none",
                   borderRadius: 10,
-                  border: "1px solid #DDE3EE",
+                  border: "1px solid var(--border-default)",
                   padding: "10px 12px",
                   fontSize: 13,
                   outline: "none",
+                  background: "var(--bg-elevated)",
+                  color: "var(--text-primary)",
                 }}
               />
               <button

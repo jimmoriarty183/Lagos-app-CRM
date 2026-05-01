@@ -32,6 +32,7 @@ import {
   type StatusValue,
 } from "@/lib/business-statuses";
 import { loadBusinessStatuses } from "@/lib/business-statuses.server";
+import { isCleaningSegment } from "@/lib/business-segments";
 import { resolveUserDisplay } from "@/lib/user-display";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { normalizeOrderClient } from "@/lib/order-client";
@@ -396,7 +397,7 @@ export default async function Page({ params, searchParams }: PageProps) {
     if (businessIds.length > 0) {
       const { data: businessesData, error: bErr } = await supabase
         .from("businesses")
-        .select("id, slug, name, plan, owner_phone, manager_phone")
+        .select("id, slug, name, plan, owner_phone, manager_phone, business_segment")
         .in("id", businessIds);
 
       if (bErr) {
@@ -1524,6 +1525,7 @@ export default async function Page({ params, searchParams }: PageProps) {
               currentUserName={currentUserName}
               initialOpenOrderId={initialOpenOrderId || null}
               initialCreateOrderOpen={initialCreateOrderOpen}
+              isCleaning={isCleaningSegment((currentBusiness as { business_segment?: string | null }).business_segment ?? null)}
               dataMenuSlot={
                 <DataMenu
                   businessSlug={slug}
@@ -1605,6 +1607,7 @@ export default async function Page({ params, searchParams }: PageProps) {
             rangeEndDate={filters.endDate}
             actorFilter={filters.actor}
             hiddenKanbanCounts={kanbanHiddenCounts}
+            isCleaning={isCleaningSegment((currentBusiness as { business_segment?: string | null }).business_segment ?? null)}
           />
         </div>
       </main>
