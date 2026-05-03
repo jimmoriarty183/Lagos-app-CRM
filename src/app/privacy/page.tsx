@@ -40,6 +40,15 @@ export default function PrivacyPage() {
           ],
         },
         {
+          id: "data-deletion",
+          title: "Data deletion",
+          paragraphs: [
+            "You have the right to request deletion of your personal data at any time, in line with the GDPR (Article 17, \"Right to erasure\") and equivalent privacy regulations.",
+            "Detailed instructions — including how to submit a request, what we delete, what we may retain by law, and how to revoke access from Facebook or Instagram — are available on our dedicated Data Deletion page: https://ordo.uno/data-deletion",
+            "For any other privacy questions, contact support@ordo.uno.",
+          ],
+        },
+        {
           title: "Contact",
           paragraphs: [
             "Privacy questions can be sent to support@ordo.uno.",

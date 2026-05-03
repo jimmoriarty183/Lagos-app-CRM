@@ -4,7 +4,18 @@ import { PublicFooter } from "./PublicFooter";
 type Section = {
   title: string;
   paragraphs: string[];
+  /** Override the auto-generated slug used for the section anchor. */
+  id?: string;
 };
+
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
 
 type Props = {
   eyebrow: string;
@@ -51,12 +62,20 @@ export default function LegalDocumentPage({
             </div>
 
             <div className="space-y-10 px-6 py-8 sm:px-10 sm:py-10">
-              {sections.map((section, index) => (
+              {sections.map((section, index) => {
+                const sectionId = section.id ?? slugify(section.title);
+                return (
                 <section
                   key={section.title}
-                  className={
-                    index === 0 ? "" : "border-t border-slate-100 dark:border-white/[0.06] pt-8"
-                  }
+                  id={sectionId}
+                  className={[
+                    "scroll-mt-24",
+                    index === 0
+                      ? ""
+                      : "border-t border-slate-100 dark:border-white/[0.06] pt-8",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
                 >
                   <h3 className="!text-[1.375rem] font-semibold tracking-tight text-slate-950 dark:text-white sm:!text-2xl">
                     {section.title}
@@ -67,7 +86,8 @@ export default function LegalDocumentPage({
                     ))}
                   </div>
                 </section>
-              ))}
+                );
+              })}
             </div>
           </article>
         </div>
