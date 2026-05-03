@@ -2,42 +2,25 @@ import { NextResponse, type NextRequest } from "next/server";
 import crypto from "node:crypto";
 
 /**
- * Instagram Graph API webhook receiver.
+ * Instagram Direct Messaging — full pipeline:
  *
- * Meta hits this endpoint twice in normal life:
+ *   GET  → Meta verification handshake (hub.challenge echo)
+ *   POST → for each real text DM: Gemini reply → IG Graph API send
+ *          (echoes, reads, deliveries, reactions are filtered out)
  *
- * 1. GET — verification handshake (one-off, when you save a Callback URL
- *    in the Meta App dashboard). Meta sends ?hub.mode=subscribe
- *    &hub.verify_token=<our token>&hub.challenge=<random string>. If
- *    the token matches what we stored in env, we echo back the challenge
- *    as plain text with 200. Anything else → 403.
- *
- * 2. POST — incoming events (DMs, mentions, comments). Meta signs the
- *    body with HMAC-SHA256 using FACEBOOK_APP_SECRET; signature is in
- *    `x-hub-signature-256`. We verify it over the RAW bytes Meta sent,
- *    log the payload, and ACK 200 within Meta's 20-second window.
+ * We always ACK 200 once signature is valid, even if Gemini or the IG
+ * send call fail — re-trying a failed Gemini call by way of Meta retry
+ * spam is the wrong recovery path.
  */
 
-// Force Node runtime — we use the `crypto` module + Buffer for signature
-// checks, neither of which is available on the Edge runtime.
 export const runtime = "nodejs";
-// Webhooks are dynamic by definition; never cache.
 export const dynamic = "force-dynamic";
 
-// Trim env vars defensively — pasting via Vercel UI sometimes adds a
-// trailing newline or surrounding quotes that break HMAC silently.
+// ─── Env (trimmed defensively) ───────────────────────────────────────
 const VERIFY_TOKEN = (process.env.VERIFY_TOKEN ?? "").trim();
 
-// Instagram Graph API (Instagram Login flow, 2024+) signs webhooks with
-// the *Instagram* App Secret, which is a SEPARATE value from the main
-// Facebook App Secret. It lives at:
-//   Meta App Dashboard → Instagram → API Setup with Instagram Login
-//                       → "Instagram App Secret"
-// FACEBOOK_APP_SECRET (App Settings → Basic) is for Messenger / FB Login
-// flows and will produce the wrong HMAC for IG events.
-//
-// Prefer the Instagram-specific secret; fall back to Facebook's only so
-// older deployments keep working without a forced env rename.
+// IG Login flow signs with the Instagram-specific App Secret, which is
+// a different value from FACEBOOK_APP_SECRET (App Settings → Basic).
 const APP_SECRET = (
   process.env.INSTAGRAM_APP_SECRET ??
   process.env.FACEBOOK_APP_SECRET ??
@@ -48,6 +31,23 @@ const APP_SECRET_SOURCE = process.env.INSTAGRAM_APP_SECRET
   : process.env.FACEBOOK_APP_SECRET
     ? "FACEBOOK_APP_SECRET"
     : "none";
+
+const IG_ACCESS_TOKEN = (process.env.IG_ACCESS_TOKEN ?? "").trim();
+const GEMINI_API_KEY = (process.env.GEMINI_API_KEY ?? "").trim();
+
+// Gemini model + IG Graph API base. Both pinned so behaviour doesn't
+// drift when Google or Meta ship breaking changes to "latest".
+const GEMINI_MODEL = "gemini-2.5-flash";
+const IG_GRAPH_BASE = "https://graph.instagram.com/v21.0";
+
+// Max reply length we send to IG. IG message body cap is ~1000 chars.
+const IG_REPLY_MAX_CHARS = 950;
+
+const SYSTEM_PROMPT =
+  "Ты — AI-менеджер по продажам для SaaS CRM-платформы Ordo. " +
+  "Отвечай клиентам кратко (2–3 предложения), вежливо и по делу. " +
+  "Помогай с вопросами по продукту, тарифам и интеграциям. " +
+  "Если не знаешь ответ — честно скажи об этом и предложи связаться с поддержкой support@ordo.uno.";
 
 // ─── GET: Meta verification handshake ────────────────────────────────
 export function GET(req: NextRequest) {
@@ -63,7 +63,6 @@ export function GET(req: NextRequest) {
 
   if (mode === "subscribe" && token === VERIFY_TOKEN && challenge) {
     console.log("[ig-webhook] verification ok");
-    // Meta wants the raw challenge as text/plain.
     return new NextResponse(challenge, {
       status: 200,
       headers: { "Content-Type": "text/plain" },
@@ -80,14 +79,10 @@ export function GET(req: NextRequest) {
 
 // ─── POST: incoming events ───────────────────────────────────────────
 export async function POST(req: NextRequest) {
-  // Read RAW BYTES, not text. req.text() decodes via UTF-8 and would
-  // re-encode on .update(), which can mutate any non-canonical bytes
-  // (rare but real cause of HMAC mismatches). arrayBuffer keeps the
-  // exact bytes Meta signed.
+  // Read RAW BYTES — req.text() round-trips through UTF-8 decode/encode
+  // and can mutate non-canonical bytes, breaking HMAC silently.
   const rawBuffer = Buffer.from(await req.arrayBuffer());
 
-  // Verify Meta's HMAC signature. Skipped only if APP_SECRET isn't
-  // configured (e.g. local dev) — production must enforce.
   const signature = req.headers.get("x-hub-signature-256");
   if (APP_SECRET) {
     if (!signature) {
@@ -108,10 +103,6 @@ export async function POST(req: NextRequest) {
     const valid = lengthsMatch && crypto.timingSafeEqual(a, b);
 
     if (!valid) {
-      // Diagnostic — neither value is a secret (both are HMAC outputs),
-      // so safe to log. Lets us tell from Vercel Runtime Logs whether
-      // the issue is APP_SECRET (lengths match, values differ) vs body
-      // mutation (lengths differ).
       console.warn("[ig-webhook] invalid signature", {
         receivedSignature: signature,
         expectedSignature: expected,
@@ -124,7 +115,6 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Parse AFTER signature check, never before.
   let body: unknown;
   try {
     body = JSON.parse(rawBuffer.toString("utf8"));
@@ -133,10 +123,203 @@ export async function POST(req: NextRequest) {
     return new NextResponse("Invalid JSON", { status: 400 });
   }
 
-  console.log("--- ВХОДЯЩИЙ ВЕБХУК ---", JSON.stringify(body, null, 2));
+  const events = extractTextMessages(body);
+  if (events.length === 0) {
+    // Echoes, reads, deliveries, reactions, postbacks — anything that
+    // isn't a fresh user-typed text. Acknowledged silently.
+    console.log("[ig-webhook] no text events to handle");
+    return new NextResponse("EVENT_RECEIVED", { status: 200 });
+  }
 
-  // ACK quickly — Meta retries with exponential backoff if we don't
-  // 200 within ~20 seconds. Once Gemini is wired in the next commit,
-  // it goes here as fire-and-forget AFTER this return.
+  // Process replies in parallel. Each one is independently caught so a
+  // single Gemini/IG failure can't poison the others. Awaited so the
+  // serverless container stays alive until all replies are sent;
+  // typical end-to-end is 1.5–3s, well inside Meta's 20s window.
+  await Promise.all(
+    events.map((event) =>
+      replyTo(event).catch((err) => {
+        console.error(
+          "[ig-webhook] reply pipeline failed",
+          { senderId: event.senderId },
+          err,
+        );
+      }),
+    ),
+  );
+
   return new NextResponse("EVENT_RECEIVED", { status: 200 });
+}
+
+// ─── Webhook payload parsing ─────────────────────────────────────────
+
+type TextMessageEvent = {
+  senderId: string;
+  text: string;
+};
+
+/**
+ * Walk the IG webhook envelope and pull out only fresh, user-typed text
+ * messages we should reply to. Filters out:
+ *   - non-instagram envelopes (`object !== "instagram"`)
+ *   - echoes (our own bot's outgoing messages, IG webhooks them back)
+ *   - read receipts (`messaging[].read`)
+ *   - delivery receipts (`messaging[].delivery`)
+ *   - reactions (`messaging[].reaction`)
+ *   - postbacks (`messaging[].postback`)
+ *   - attachments without a text field (images, audio, stickers)
+ */
+function extractTextMessages(payload: unknown): TextMessageEvent[] {
+  const out: TextMessageEvent[] = [];
+  if (!isRecord(payload)) return out;
+  if (payload.object !== "instagram") return out;
+  const entries = payload.entry;
+  if (!Array.isArray(entries)) return out;
+
+  for (const entry of entries) {
+    if (!isRecord(entry)) continue;
+    const messaging = entry.messaging;
+    if (!Array.isArray(messaging)) continue;
+
+    for (const m of messaging) {
+      if (!isRecord(m)) continue;
+
+      // Hard skip: anything that isn't a `message` payload.
+      if ("read" in m) continue;
+      if ("delivery" in m) continue;
+      if ("reaction" in m) continue;
+      if ("postback" in m) continue;
+
+      const sender = isRecord(m.sender) ? m.sender : null;
+      const senderId = typeof sender?.id === "string" ? sender.id : null;
+      const message = isRecord(m.message) ? m.message : null;
+      if (!senderId || !message) continue;
+
+      // Skip echoes — our own bot's messages come back through the
+      // webhook with is_echo=true. Replying to them = infinite loop.
+      if (message.is_echo === true) continue;
+
+      const text = typeof message.text === "string" ? message.text.trim() : "";
+      if (!text) continue;
+
+      out.push({ senderId, text });
+    }
+  }
+
+  return out;
+}
+
+function isRecord(v: unknown): v is Record<string, unknown> {
+  return typeof v === "object" && v !== null && !Array.isArray(v);
+}
+
+// ─── Reply pipeline ──────────────────────────────────────────────────
+
+async function replyTo(event: TextMessageEvent): Promise<void> {
+  console.log("[ig-webhook] message in", {
+    from: event.senderId,
+    text: event.text,
+  });
+
+  const reply = await askGemini(event.text);
+  console.log("[ig-webhook] gemini reply", { reply });
+
+  await sendInstagramMessage(event.senderId, reply);
+  console.log("[ig-webhook] reply sent", { to: event.senderId });
+}
+
+// ─── Gemini ──────────────────────────────────────────────────────────
+
+async function askGemini(userMessage: string): Promise<string> {
+  if (!GEMINI_API_KEY) {
+    throw new Error("GEMINI_API_KEY not configured");
+  }
+
+  const url =
+    `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}` +
+    `:generateContent?key=${encodeURIComponent(GEMINI_API_KEY)}`;
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      systemInstruction: {
+        parts: [{ text: SYSTEM_PROMPT }],
+      },
+      contents: [
+        {
+          role: "user",
+          parts: [{ text: userMessage }],
+        },
+      ],
+      generationConfig: {
+        temperature: 0.7,
+        // ~250 tokens leaves comfortable room under IG's char limit.
+        maxOutputTokens: 250,
+      },
+    }),
+  });
+
+  if (!res.ok) {
+    const errText = await res.text().catch(() => "");
+    throw new Error(
+      `Gemini ${res.status} ${res.statusText}: ${errText.slice(0, 400)}`,
+    );
+  }
+
+  const data = (await res.json()) as {
+    candidates?: Array<{
+      content?: { parts?: Array<{ text?: string }> };
+      finishReason?: string;
+    }>;
+    promptFeedback?: { blockReason?: string };
+  };
+
+  const blockReason = data.promptFeedback?.blockReason;
+  if (blockReason) {
+    throw new Error(`Gemini blocked: ${blockReason}`);
+  }
+
+  const text = data.candidates?.[0]?.content?.parts
+    ?.map((p) => (typeof p.text === "string" ? p.text : ""))
+    .join("")
+    .trim();
+
+  if (!text) {
+    throw new Error("Gemini returned empty response");
+  }
+
+  return text;
+}
+
+// ─── Instagram send ──────────────────────────────────────────────────
+
+async function sendInstagramMessage(
+  recipientPsid: string,
+  text: string,
+): Promise<void> {
+  if (!IG_ACCESS_TOKEN) {
+    throw new Error("IG_ACCESS_TOKEN not configured");
+  }
+
+  const trimmed = text.length > IG_REPLY_MAX_CHARS
+    ? text.slice(0, IG_REPLY_MAX_CHARS - 1) + "…"
+    : text;
+
+  const url = `${IG_GRAPH_BASE}/me/messages?access_token=${encodeURIComponent(IG_ACCESS_TOKEN)}`;
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      recipient: { id: recipientPsid },
+      message: { text: trimmed },
+    }),
+  });
+
+  if (!res.ok) {
+    const errText = await res.text().catch(() => "");
+    throw new Error(
+      `IG send ${res.status} ${res.statusText}: ${errText.slice(0, 400)}`,
+    );
+  }
 }
