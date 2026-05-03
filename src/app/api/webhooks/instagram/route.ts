@@ -27,7 +27,27 @@ export const dynamic = "force-dynamic";
 // Trim env vars defensively — pasting via Vercel UI sometimes adds a
 // trailing newline or surrounding quotes that break HMAC silently.
 const VERIFY_TOKEN = (process.env.VERIFY_TOKEN ?? "").trim();
-const APP_SECRET = (process.env.FACEBOOK_APP_SECRET ?? "").trim();
+
+// Instagram Graph API (Instagram Login flow, 2024+) signs webhooks with
+// the *Instagram* App Secret, which is a SEPARATE value from the main
+// Facebook App Secret. It lives at:
+//   Meta App Dashboard → Instagram → API Setup with Instagram Login
+//                       → "Instagram App Secret"
+// FACEBOOK_APP_SECRET (App Settings → Basic) is for Messenger / FB Login
+// flows and will produce the wrong HMAC for IG events.
+//
+// Prefer the Instagram-specific secret; fall back to Facebook's only so
+// older deployments keep working without a forced env rename.
+const APP_SECRET = (
+  process.env.INSTAGRAM_APP_SECRET ??
+  process.env.FACEBOOK_APP_SECRET ??
+  ""
+).trim();
+const APP_SECRET_SOURCE = process.env.INSTAGRAM_APP_SECRET
+  ? "INSTAGRAM_APP_SECRET"
+  : process.env.FACEBOOK_APP_SECRET
+    ? "FACEBOOK_APP_SECRET"
+    : "none";
 
 // ─── GET: Meta verification handshake ────────────────────────────────
 export function GET(req: NextRequest) {
@@ -96,7 +116,7 @@ export async function POST(req: NextRequest) {
         receivedSignature: signature,
         expectedSignature: expected,
         bodyByteLength: rawBuffer.length,
-        appSecretConfigured: APP_SECRET.length > 0,
+        appSecretSource: APP_SECRET_SOURCE,
         appSecretLength: APP_SECRET.length,
         lengthsMatch,
       });
