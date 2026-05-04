@@ -146,9 +146,14 @@ export async function GET(req: NextRequest) {
   const expiresInSec = Number(longJson.expires_in) || 60 * 24 * 60 * 60;
   const expiresAt = new Date(Date.now() + expiresInSec * 1000).toISOString();
 
-  // ─── 3. /me — id, username, account_type ─────────────────────────
+  // ─── 3. /me — id, username, account_type, user_id ───────────────
+  // We need BOTH ids returned by /me:
+  //   - `id`       : Instagram-scoped login-flow ID (e.g. 274207...)
+  //   - `user_id`  : legacy Page-linked Business Account ID (e.g. 178414...)
+  // The IG webhook payload puts the LEGACY id in entry[].id, so that's
+  // what we store as ig_user_id (the column the webhook lookup hits).
   const meUrl = new URL(`${IG_GRAPH}/me`);
-  meUrl.searchParams.set("fields", "id,username,account_type");
+  meUrl.searchParams.set("fields", "id,username,account_type,user_id");
   meUrl.searchParams.set("access_token", longToken);
   const meRes = await fetch(meUrl.toString());
   const meJson = await meRes.json().catch(() => null);
@@ -159,7 +164,7 @@ export async function GET(req: NextRequest) {
     });
     return returnTo("error", { reason: "me_lookup_failed" });
   }
-  const igUserId = String(meJson.id || shortIgUserId);
+  const igUserId = String(meJson.user_id || meJson.id || shortIgUserId);
   const igUsername = String(meJson.username ?? "");
   const igAccountType = meJson.account_type
     ? String(meJson.account_type)
