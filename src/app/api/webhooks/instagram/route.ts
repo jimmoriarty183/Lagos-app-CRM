@@ -35,6 +35,12 @@ const APP_SECRET_SOURCE = process.env.INSTAGRAM_APP_SECRET
 const IG_ACCESS_TOKEN = (process.env.IG_ACCESS_TOKEN ?? "").trim();
 const GEMINI_API_KEY = (process.env.GEMINI_API_KEY ?? "").trim();
 
+// Public Google Sheet with the product catalog. Sheet must be shared
+// as "Anyone with the link → Viewer". The bot pulls it via gviz/tq
+// (which works for view-shared sheets without OAuth).
+const CATALOG_SHEET_ID = (process.env.IG_CATALOG_SHEET_ID ?? "").trim();
+const CATALOG_SHEET_GID = (process.env.IG_CATALOG_SHEET_GID ?? "0").trim();
+
 // Gemini model + IG Graph API base. Both pinned so behaviour doesn't
 // drift when Google or Meta ship breaking changes to "latest".
 const GEMINI_MODEL = "gemini-2.5-flash";
@@ -43,11 +49,23 @@ const IG_GRAPH_BASE = "https://graph.instagram.com/v21.0";
 // Max reply length we send to IG. IG message body cap is ~1000 chars.
 const IG_REPLY_MAX_CHARS = 950;
 
-const SYSTEM_PROMPT =
-  "Ты — AI-менеджер по продажам для SaaS CRM-платформы Ordo. " +
-  "Отвечай клиентам кратко (2–3 предложения), вежливо и по делу. " +
-  "Помогай с вопросами по продукту, тарифам и интеграциям. " +
-  "Если не знаешь ответ — честно скажи об этом и предложи связаться с поддержкой support@ordo.uno.";
+const BASE_SYSTEM_PROMPT =
+  "Ты — AI-менеджер продаж интернет-магазина. Твоя задача — помочь клиенту " +
+  "выбрать товар из нашего каталога и довести до покупки. " +
+  "Правила: " +
+  "(1) Отвечай ТОЛЬКО про товары из каталога ниже — никогда не выдумывай товары, " +
+  "которых там нет. " +
+  "(2) Тон: дружелюбный, экспертный, без напора. " +
+  "(3) Кратко: 2–4 предложения, без длинных простыней. " +
+  "(4) Если клиент задаёт расплывчатый вопрос — задай встречный (бюджет, сценарий, " +
+  "для кого). " +
+  "(5) Когда рекомендуешь товар — назови его конкретно (название + цена) и одной " +
+  "фразой объясни почему именно он. " +
+  "(6) Когда клиент готов купить — отправь ссылку оплаты из колонки «Ссылка оплаты» " +
+  "того товара. " +
+  "(7) Если в каталоге нет подходящего товара — честно скажи и предложи написать " +
+  "на support@ordo.uno. " +
+  "(8) Если вопрос совсем не про товары — мягко верни в тему.";
 
 // ─── GET: Meta verification handshake ────────────────────────────────
 export function GET(req: NextRequest) {
@@ -220,19 +238,73 @@ async function replyTo(event: TextMessageEvent): Promise<void> {
     text: event.text,
   });
 
-  const reply = await askGemini(event.text);
+  const catalog = await loadCatalog();
+  const reply = await askGemini(event.text, catalog);
   console.log("[ig-webhook] gemini reply", { reply });
 
   await sendInstagramMessage(event.senderId, reply);
   console.log("[ig-webhook] reply sent", { to: event.senderId });
 }
 
+// ─── Catalog from Google Sheets (cached) ─────────────────────────────
+
+const CATALOG_TTL_MS = 60_000; // refresh at most every 60s
+type CatalogCache = { fetchedAt: number; csv: string };
+// Module-level cache survives between warm invocations of the same
+// serverless lambda — typical Vercel container reuse window is several
+// minutes, so most webhooks hit the cache instead of re-fetching.
+let catalogCache: CatalogCache | null = null;
+
+async function loadCatalog(): Promise<string | null> {
+  if (!CATALOG_SHEET_ID) return null;
+
+  const now = Date.now();
+  if (catalogCache && now - catalogCache.fetchedAt < CATALOG_TTL_MS) {
+    return catalogCache.csv;
+  }
+
+  // gviz/tq endpoint works for "Anyone with the link" view-shared sheets
+  // without any OAuth — perfect for an MVP where the customer just
+  // pastes their Sheet ID into env and goes.
+  const url =
+    `https://docs.google.com/spreadsheets/d/${CATALOG_SHEET_ID}` +
+    `/gviz/tq?tqx=out:csv&gid=${CATALOG_SHEET_GID}`;
+
+  try {
+    const res = await fetch(url, {
+      // Default fetch UA gets blocked by Google for export endpoints.
+      headers: { "User-Agent": "Mozilla/5.0 OrdoSalesBot/1.0" },
+      cache: "no-store",
+    });
+    if (!res.ok) {
+      console.warn("[ig-webhook] catalog fetch failed", res.status);
+      // Fall back to last-known catalog so a transient Google blip
+      // doesn't take the bot offline mid-conversation.
+      return catalogCache?.csv ?? null;
+    }
+    const csv = await res.text();
+    catalogCache = { fetchedAt: now, csv };
+    console.log("[ig-webhook] catalog refreshed", { bytes: csv.length });
+    return csv;
+  } catch (err) {
+    console.warn("[ig-webhook] catalog fetch error", err);
+    return catalogCache?.csv ?? null;
+  }
+}
+
 // ─── Gemini ──────────────────────────────────────────────────────────
 
-async function askGemini(userMessage: string): Promise<string> {
+async function askGemini(
+  userMessage: string,
+  catalog: string | null,
+): Promise<string> {
   if (!GEMINI_API_KEY) {
     throw new Error("GEMINI_API_KEY not configured");
   }
+
+  const systemPrompt = catalog
+    ? `${BASE_SYSTEM_PROMPT}\n\n══════ КАТАЛОГ ТОВАРОВ (CSV) ══════\n${catalog}\n══════ КОНЕЦ КАТАЛОГА ══════`
+    : `${BASE_SYSTEM_PROMPT}\n\n(Каталог сейчас недоступен — не выдумывай товары, попроси клиента подождать или написать на support@ordo.uno.)`;
 
   const url =
     `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}` +
@@ -243,7 +315,7 @@ async function askGemini(userMessage: string): Promise<string> {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       systemInstruction: {
-        parts: [{ text: SYSTEM_PROMPT }],
+        parts: [{ text: systemPrompt }],
       },
       contents: [
         {
