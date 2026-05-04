@@ -1,17 +1,21 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { askGemini, loadCatalog, sendInstagramMessage } from "@/lib/instagram/sales-bot";
 
 /**
- * Server-side IG API diagnostic. Lets us hit the Graph API from the
- * Vercel deployment (where IG_ACCESS_TOKEN already lives) without
- * having to copy the token to a local PowerShell or paste it into a
- * proxy-based testing tool that mangles long URLs.
+ * Server-side IG API + sales-bot diagnostic.
  *
- *   GET /api/instagram/diag?secret=VERIFY_TOKEN&action=me
- *   GET /api/instagram/diag?secret=VERIFY_TOKEN&action=status
- *   GET /api/instagram/diag?secret=VERIFY_TOKEN&action=subscribe
+ *   ?action=me           — which IG account does our token belong to
+ *   ?action=status       — is webhook subscription active
+ *   ?action=subscribe    — activate messages+postbacks subscription
+ *   ?action=unsubscribe  — full reset
+ *   ?action=simulate&text=...&to=PSID
+ *                        — run the full sales-bot pipeline (catalog →
+ *                          Gemini → optional IG send) without waiting
+ *                          for Meta to deliver a real webhook.
+ *                          Use this in Dev mode where Meta won't
+ *                          deliver real DMs to the webhook.
  *
- * Gated by VERIFY_TOKEN so it's not publicly callable. Token never
- * leaves the server — only the IG API response shape comes back.
+ * Gated by VERIFY_TOKEN so it's not publicly callable.
  */
 
 export const runtime = "nodejs";
@@ -94,10 +98,72 @@ export async function GET(req: NextRequest) {
       });
     }
 
+    if (action === "simulate") {
+      // Run the same pipeline a real webhook would: load catalog from
+      // the Sheet, ask Gemini, optionally send the reply to IG.
+      // The bot in Dev mode never gets real webhooks delivered, so this
+      // is the canonical way to verify "does the bot actually answer
+      // smartly using my catalog".
+      const text = sp.get("text") ?? "";
+      const to = sp.get("to") ?? "";
+      if (!text.trim()) {
+        return NextResponse.json(
+          {
+            error: "Missing ?text=... query param",
+            example:
+              "/api/instagram/diag?secret=...&action=simulate&text=Хочу%20наушники%20до%20100%24",
+          },
+          { status: 400 },
+        );
+      }
+
+      const catalogStart = Date.now();
+      const catalog = await loadCatalog();
+      const catalogMs = Date.now() - catalogStart;
+
+      const geminiStart = Date.now();
+      const reply = await askGemini(text.trim(), catalog);
+      const geminiMs = Date.now() - geminiStart;
+
+      let igSendResult: { ok: true } | { ok: false; error: string } | null = null;
+      if (to.trim()) {
+        try {
+          await sendInstagramMessage(to.trim(), reply);
+          igSendResult = { ok: true };
+        } catch (err) {
+          igSendResult = {
+            ok: false,
+            error: err instanceof Error ? err.message : String(err),
+          };
+        }
+      }
+
+      return NextResponse.json({
+        action,
+        userMessage: text.trim(),
+        reply,
+        catalog: {
+          loaded: catalog !== null,
+          bytes: catalog?.length ?? 0,
+          fetchMs: catalogMs,
+        },
+        gemini: { responseMs: geminiMs },
+        igSend: to
+          ? igSendResult
+          : { skipped: true, hint: "Pass &to=<recipient_psid> to actually send the reply to Instagram" },
+      });
+    }
+
     return NextResponse.json(
       {
         error: `Unknown action "${action}"`,
-        availableActions: ["me", "status", "subscribe", "unsubscribe"],
+        availableActions: [
+          "me",
+          "status",
+          "subscribe",
+          "unsubscribe",
+          "simulate",
+        ],
       },
       { status: 400 },
     );
