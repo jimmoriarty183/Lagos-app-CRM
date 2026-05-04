@@ -1,4 +1,4 @@
-﻿export type PlatformModuleKey = "crm" | "tasks" | "academy";
+﻿export type PlatformModuleKey = "crm" | "tasks" | "ai_sales" | "academy";
 
 export type PlatformModule = {
   key: PlatformModuleKey;
@@ -23,6 +23,14 @@ export const PLATFORM_MODULES: Record<PlatformModuleKey, PlatformModule> = {
     name: "Tasks",
     description: "Coordinate team tasks and execution workflows.",
     href: "/app/tasks",
+    enabled: true,
+    visible: true,
+  },
+  ai_sales: {
+    key: "ai_sales",
+    name: "AI Manager",
+    description: "Automated Instagram DM sales bot.",
+    href: "/app/ai-sales",
     enabled: true,
     visible: true,
   },
