@@ -3,16 +3,14 @@
  *   - /api/webhooks/instagram (real webhook events from Meta)
  *   - /api/instagram/diag?action=simulate (manual end-to-end test)
  *
- * Keeping this in one file means the webhook and the test path can't
- * drift apart — whatever real DMs would get is exactly what the
- * simulator returns.
+ * Multi-tenant: every entry point accepts an InstagramConnection so the
+ * same code path serves every connected merchant with their own token,
+ * Sheet-based catalog, and (optionally) custom system prompt.
  */
 
-const IG_ACCESS_TOKEN = (process.env.IG_ACCESS_TOKEN ?? "").trim();
-const GEMINI_API_KEY = (process.env.GEMINI_API_KEY ?? "").trim();
+import type { InstagramConnection } from "@/lib/instagram/connections";
 
-const CATALOG_SHEET_ID = (process.env.IG_CATALOG_SHEET_ID ?? "").trim();
-const CATALOG_SHEET_GID = (process.env.IG_CATALOG_SHEET_GID ?? "0").trim();
+const GEMINI_API_KEY = (process.env.GEMINI_API_KEY ?? "").trim();
 
 // Try the newer / smarter model first. If Google's 2.5-flash pool is
 // overloaded (frequent 503s on free tier during peak hours), fall
@@ -47,23 +45,27 @@ export const BASE_SYSTEM_PROMPT =
   "на support@ordo.uno. " +
   "(8) Если вопрос совсем не про товары — мягко верни в тему.";
 
-// ─── Catalog from Google Sheets (cached) ─────────────────────────────
+// ─── Catalog from Google Sheets (per-sheet cached) ───────────────────
 
 const CATALOG_TTL_MS = 60_000;
-type CatalogCache = { fetchedAt: number; csv: string };
-let catalogCache: CatalogCache | null = null;
+const catalogCache = new Map<string, { fetchedAt: number; csv: string }>();
 
-export async function loadCatalog(): Promise<string | null> {
-  if (!CATALOG_SHEET_ID) return null;
+export async function loadCatalog(
+  sheetId: string | null | undefined,
+  sheetGid: string = "0",
+): Promise<string | null> {
+  if (!sheetId) return null;
+  const key = `${sheetId}:${sheetGid}`;
 
   const now = Date.now();
-  if (catalogCache && now - catalogCache.fetchedAt < CATALOG_TTL_MS) {
-    return catalogCache.csv;
+  const cached = catalogCache.get(key);
+  if (cached && now - cached.fetchedAt < CATALOG_TTL_MS) {
+    return cached.csv;
   }
 
   const url =
-    `https://docs.google.com/spreadsheets/d/${CATALOG_SHEET_ID}` +
-    `/gviz/tq?tqx=out:csv&gid=${CATALOG_SHEET_GID}`;
+    `https://docs.google.com/spreadsheets/d/${sheetId}` +
+    `/gviz/tq?tqx=out:csv&gid=${sheetGid}`;
 
   try {
     const res = await fetch(url, {
@@ -71,16 +73,22 @@ export async function loadCatalog(): Promise<string | null> {
       cache: "no-store",
     });
     if (!res.ok) {
-      console.warn("[sales-bot] catalog fetch failed", res.status);
-      return catalogCache?.csv ?? null;
+      console.warn("[sales-bot] catalog fetch failed", {
+        status: res.status,
+        sheetId,
+      });
+      return cached?.csv ?? null;
     }
     const csv = await res.text();
-    catalogCache = { fetchedAt: now, csv };
-    console.log("[sales-bot] catalog refreshed", { bytes: csv.length });
+    catalogCache.set(key, { fetchedAt: now, csv });
+    console.log("[sales-bot] catalog refreshed", {
+      sheetId,
+      bytes: csv.length,
+    });
     return csv;
   } catch (err) {
-    console.warn("[sales-bot] catalog fetch error", err);
-    return catalogCache?.csv ?? null;
+    console.warn("[sales-bot] catalog fetch error", { sheetId, err });
+    return cached?.csv ?? null;
   }
 }
 
@@ -89,14 +97,16 @@ export async function loadCatalog(): Promise<string | null> {
 export async function askGemini(
   userMessage: string,
   catalog: string | null,
+  systemPromptOverride?: string | null,
 ): Promise<string> {
   if (!GEMINI_API_KEY) {
     throw new Error("GEMINI_API_KEY not configured");
   }
 
+  const basePrompt = systemPromptOverride?.trim() || BASE_SYSTEM_PROMPT;
   const systemPrompt = catalog
-    ? `${BASE_SYSTEM_PROMPT}\n\n══════ КАТАЛОГ ТОВАРОВ (CSV) ══════\n${catalog}\n══════ КОНЕЦ КАТАЛОГА ══════`
-    : `${BASE_SYSTEM_PROMPT}\n\n(Каталог сейчас недоступен — не выдумывай товары, попроси клиента подождать или написать на support@ordo.uno.)`;
+    ? `${basePrompt}\n\n══════ КАТАЛОГ ТОВАРОВ (CSV) ══════\n${catalog}\n══════ КОНЕЦ КАТАЛОГА ══════`
+    : `${basePrompt}\n\n(Каталог сейчас недоступен — не выдумывай товары, попроси клиента подождать или написать на support@ordo.uno.)`;
 
   let lastError: Error | null = null;
   for (const model of GEMINI_MODELS) {
@@ -106,9 +116,6 @@ export async function askGemini(
       } catch (err) {
         lastError = err instanceof Error ? err : new Error(String(err));
         const msg = lastError.message;
-        // 503/429/UNAVAILABLE = transient. Worth retrying / falling back.
-        // Anything else (401, 400, blocked) is permanent — bail out so we
-        // don't waste time on identical failures.
         const transient =
           msg.includes("503") ||
           msg.includes("429") ||
@@ -130,8 +137,6 @@ export async function askGemini(
       }
     }
   }
-  // Unreachable in practice — the loop above either returns or throws —
-  // but TS needs a terminating statement.
   throw lastError ?? new Error("Gemini: exhausted models");
 }
 
@@ -156,14 +161,7 @@ async function callGeminiOnce(
       contents: [{ role: "user", parts: [{ text: userMessage }] }],
       generationConfig: {
         temperature: 0.7,
-        // Bumped from 250 → 1024. For thinking-capable models the
-        // budget is shared between reasoning and the visible reply,
-        // and 250 was so tight the reply got cut off mid-word.
         maxOutputTokens: 1024,
-        // For sales chat we don't need chain-of-thought — a direct
-        // answer with the catalog in context is enough. Disabling
-        // saves tokens, latency, and prevents truncation.
-        // (Models without thinking support silently ignore this.)
         thinkingConfig: { thinkingBudget: 0 },
       },
     }),
@@ -195,8 +193,6 @@ async function callGeminiOnce(
     .join("")
     .trim();
 
-  // Surface MAX_TOKENS truncation in logs so it's not invisible — if it
-  // fires, bump maxOutputTokens or shorten the catalog/system prompt.
   if (candidate?.finishReason === "MAX_TOKENS") {
     console.warn("[gemini] response hit MAX_TOKENS — reply truncated", {
       model,
@@ -216,11 +212,12 @@ async function callGeminiOnce(
 // ─── Instagram send ──────────────────────────────────────────────────
 
 export async function sendInstagramMessage(
+  accessToken: string,
   recipientPsid: string,
   text: string,
 ): Promise<void> {
-  if (!IG_ACCESS_TOKEN) {
-    throw new Error("IG_ACCESS_TOKEN not configured");
+  if (!accessToken) {
+    throw new Error("Instagram access token missing for send");
   }
 
   const trimmed =
@@ -228,7 +225,7 @@ export async function sendInstagramMessage(
       ? text.slice(0, IG_REPLY_MAX_CHARS - 1) + "…"
       : text;
 
-  const url = `${IG_GRAPH_BASE}/me/messages?access_token=${encodeURIComponent(IG_ACCESS_TOKEN)}`;
+  const url = `${IG_GRAPH_BASE}/me/messages?access_token=${encodeURIComponent(accessToken)}`;
 
   const res = await fetch(url, {
     method: "POST",
@@ -250,17 +247,36 @@ export async function sendInstagramMessage(
 // ─── End-to-end pipeline used by both webhook and simulate ───────────
 
 export async function processSalesMessage(
+  connection: InstagramConnection,
   senderPsid: string,
   text: string,
   options: { sendReply?: boolean } = { sendReply: true },
-): Promise<{ userMessage: string; reply: string; sent: boolean }> {
-  const catalog = await loadCatalog();
-  const reply = await askGemini(text, catalog);
+): Promise<{
+  userMessage: string;
+  reply: string;
+  sent: boolean;
+  catalogBytes: number;
+}> {
+  const catalog = await loadCatalog(
+    connection.catalog_sheet_id,
+    connection.catalog_sheet_gid ?? "0",
+  );
+  const reply = await askGemini(text, catalog, connection.system_prompt);
 
-  if (options.sendReply) {
-    await sendInstagramMessage(senderPsid, reply);
-    return { userMessage: text, reply, sent: true };
+  if (options.sendReply ?? true) {
+    await sendInstagramMessage(connection.ig_access_token, senderPsid, reply);
+    return {
+      userMessage: text,
+      reply,
+      sent: true,
+      catalogBytes: catalog?.length ?? 0,
+    };
   }
 
-  return { userMessage: text, reply, sent: false };
+  return {
+    userMessage: text,
+    reply,
+    sent: false,
+    catalogBytes: catalog?.length ?? 0,
+  };
 }

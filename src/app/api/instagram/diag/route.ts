@@ -1,19 +1,27 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { askGemini, loadCatalog, sendInstagramMessage } from "@/lib/instagram/sales-bot";
+import { loadCatalog, askGemini, sendInstagramMessage } from "@/lib/instagram/sales-bot";
+import {
+  getFirstEnabledInstagramConnection,
+  getInstagramConnectionByIgUserId,
+  type InstagramConnection,
+} from "@/lib/instagram/connections";
 
 /**
  * Server-side IG API + sales-bot diagnostic.
  *
- *   ?action=me           — which IG account does our token belong to
- *   ?action=status       — is webhook subscription active
- *   ?action=subscribe    — activate messages+postbacks subscription
- *   ?action=unsubscribe  — full reset
+ *   ?action=me            — which IG account does the resolved connection's token belong to
+ *   ?action=status        — is webhook subscription active for the resolved connection
+ *   ?action=subscribe     — activate messages+postbacks subscription
+ *   ?action=unsubscribe   — full reset
+ *   ?action=conversations — list DM conversations + extract participant PSIDs
  *   ?action=simulate&text=...&to=PSID
- *                        — run the full sales-bot pipeline (catalog →
- *                          Gemini → optional IG send) without waiting
- *                          for Meta to deliver a real webhook.
- *                          Use this in Dev mode where Meta won't
- *                          deliver real DMs to the webhook.
+ *                         — run the full sales-bot pipeline (catalog →
+ *                           Gemini → optional IG send) without waiting
+ *                           for Meta to deliver a real webhook.
+ *
+ * Connection selection (any action):
+ *   ?ig_user_id=XXX       — pick the connection for this IG account id
+ *   (otherwise)           — pick the most recent enabled connection
  *
  * Gated by VERIFY_TOKEN so it's not publicly callable.
  */
@@ -22,8 +30,17 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const VERIFY_TOKEN = (process.env.VERIFY_TOKEN ?? "").trim();
-const IG_ACCESS_TOKEN = (process.env.IG_ACCESS_TOKEN ?? "").trim();
 const IG_BASE = "https://graph.instagram.com/v21.0";
+
+async function resolveConnection(
+  req: NextRequest,
+): Promise<InstagramConnection | null> {
+  const igUserId = req.nextUrl.searchParams.get("ig_user_id")?.trim();
+  if (igUserId) {
+    return getInstagramConnectionByIgUserId(igUserId);
+  }
+  return getFirstEnabledInstagramConnection();
+}
 
 export async function GET(req: NextRequest) {
   const sp = req.nextUrl.searchParams;
@@ -33,35 +50,40 @@ export async function GET(req: NextRequest) {
     return new NextResponse("Forbidden", { status: 403 });
   }
 
-  if (!IG_ACCESS_TOKEN) {
+  const connection = await resolveConnection(req);
+  if (!connection) {
     return NextResponse.json(
-      { error: "IG_ACCESS_TOKEN not configured in Vercel env" },
-      { status: 500 },
+      {
+        error:
+          "No Instagram connection found. Connect a merchant via /app/ai-sales first, or pass ?ig_user_id=<id>.",
+      },
+      { status: 404 },
     );
   }
 
   const action = sp.get("action") ?? "status";
-  const tokenParam = `access_token=${encodeURIComponent(IG_ACCESS_TOKEN)}`;
+  const tokenParam = `access_token=${encodeURIComponent(connection.ig_access_token)}`;
 
   try {
     if (action === "me") {
-      // Confirm which IG account the token belongs to.
       const res = await fetch(
         `${IG_BASE}/me?fields=id,username,account_type,user_id&${tokenParam}`,
       );
       return NextResponse.json({
         action,
+        connectionId: connection.id,
+        igUsername: connection.ig_username,
         httpStatus: res.status,
-        igTokenLength: IG_ACCESS_TOKEN.length,
         response: await res.json(),
       });
     }
 
     if (action === "status") {
-      // Is our app subscribed to webhook events for this IG account?
       const res = await fetch(`${IG_BASE}/me/subscribed_apps?${tokenParam}`);
       return NextResponse.json({
         action,
+        connectionId: connection.id,
+        igUsername: connection.ig_username,
         httpStatus: res.status,
         response: await res.json(),
         hint:
@@ -70,28 +92,30 @@ export async function GET(req: NextRequest) {
     }
 
     if (action === "subscribe") {
-      // Activate webhook delivery for messages + postbacks on this IG account.
       const res = await fetch(
         `${IG_BASE}/me/subscribed_apps?subscribed_fields=messages,messaging_postbacks&${tokenParam}`,
         { method: "POST" },
       );
       return NextResponse.json({
         action,
+        connectionId: connection.id,
+        igUsername: connection.ig_username,
         httpStatus: res.status,
         response: await res.json(),
         hint:
-          "Expect {success: true}. Now send a real DM to the bot account; webhook should fire.",
+          "Expect {success: true}. Now send a real DM to this account; webhook should fire.",
       });
     }
 
     if (action === "unsubscribe") {
-      // Remove app from this IG account's subscribers (full reset).
       const res = await fetch(
         `${IG_BASE}/me/subscribed_apps?${tokenParam}`,
         { method: "DELETE" },
       );
       return NextResponse.json({
         action,
+        connectionId: connection.id,
+        igUsername: connection.ig_username,
         httpStatus: res.status,
         response: await res.json(),
         hint: "After this, hit ?action=subscribe to start clean.",
@@ -99,10 +123,6 @@ export async function GET(req: NextRequest) {
     }
 
     if (action === "conversations") {
-      // List conversations + participants. Useful when webhooks don't
-      // surface sender PSIDs (read/reaction events lack sender.id) but we
-      // still need a valid PSID for App Review test calls.
-      // Auto-follows pagination up to 5 pages to find non-empty data.
       let url: string | null =
         `${IG_BASE}/me/conversations?platform=instagram&fields=participants,updated_time&limit=100&${tokenParam}`;
       const allConversations: unknown[] = [];
@@ -135,13 +155,14 @@ export async function GET(req: NextRequest) {
         pagesFetched += 1;
       }
 
-      const botId = "17841401307528587";
       const customerPsids = allParticipants
-        .filter((p) => p.id !== botId)
+        .filter((p) => p.id !== connection.ig_user_id)
         .map((p) => p.id);
 
       return NextResponse.json({
         action,
+        connectionId: connection.id,
+        igUsername: connection.ig_username,
         httpStatus: lastStatus,
         pagesFetched,
         conversationCount: allConversations.length,
@@ -152,16 +173,11 @@ export async function GET(req: NextRequest) {
         hint:
           customerPsids.length > 0
             ? `Use any value from customerPsids in ?action=simulate&to=...`
-            : "No customer PSIDs found. The bot account may have no DM history yet.",
+            : "No customer PSIDs found.",
       });
     }
 
     if (action === "simulate") {
-      // Run the same pipeline a real webhook would: load catalog from
-      // the Sheet, ask Gemini, optionally send the reply to IG.
-      // The bot in Dev mode never gets real webhooks delivered, so this
-      // is the canonical way to verify "does the bot actually answer
-      // smartly using my catalog".
       const text = sp.get("text") ?? "";
       const to = sp.get("to") ?? "";
       if (!text.trim()) {
@@ -169,24 +185,27 @@ export async function GET(req: NextRequest) {
           {
             error: "Missing ?text=... query param",
             example:
-              "/api/instagram/diag?secret=...&action=simulate&text=Хочу%20наушники%20до%20100%24",
+              "/api/instagram/diag?secret=...&action=simulate&text=Хочу%20наушники%20до%20100%24&to=PSID",
           },
           { status: 400 },
         );
       }
 
       const catalogStart = Date.now();
-      const catalog = await loadCatalog();
+      const catalog = await loadCatalog(
+        connection.catalog_sheet_id,
+        connection.catalog_sheet_gid ?? "0",
+      );
       const catalogMs = Date.now() - catalogStart;
 
       const geminiStart = Date.now();
-      const reply = await askGemini(text.trim(), catalog);
+      const reply = await askGemini(text.trim(), catalog, connection.system_prompt);
       const geminiMs = Date.now() - geminiStart;
 
       let igSendResult: { ok: true } | { ok: false; error: string } | null = null;
       if (to.trim()) {
         try {
-          await sendInstagramMessage(to.trim(), reply);
+          await sendInstagramMessage(connection.ig_access_token, to.trim(), reply);
           igSendResult = { ok: true };
         } catch (err) {
           igSendResult = {
@@ -198,12 +217,15 @@ export async function GET(req: NextRequest) {
 
       return NextResponse.json({
         action,
+        connectionId: connection.id,
+        igUsername: connection.ig_username,
         userMessage: text.trim(),
         reply,
         catalog: {
           loaded: catalog !== null,
           bytes: catalog?.length ?? 0,
           fetchMs: catalogMs,
+          sheetId: connection.catalog_sheet_id,
         },
         gemini: { responseMs: geminiMs },
         igSend: to

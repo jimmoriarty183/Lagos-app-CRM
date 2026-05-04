@@ -1,11 +1,14 @@
 import { NextResponse, type NextRequest } from "next/server";
 import crypto from "node:crypto";
 import { processSalesMessage } from "@/lib/instagram/sales-bot";
+import { getInstagramConnectionByIgUserId } from "@/lib/instagram/connections";
 
 /**
  * Instagram Direct Messaging webhook.
  *   GET  → Meta verification handshake
- *   POST → for each real text DM: Gemini reply (with catalog) → IG send
+ *   POST → for each text DM: look up the connection for the recipient
+ *          IG account, then run Gemini reply + IG send under that
+ *          merchant's token + catalog.
  */
 
 export const runtime = "nodejs";
@@ -53,8 +56,6 @@ export function GET(req: NextRequest) {
 
 // ─── POST: incoming events ───────────────────────────────────────────
 export async function POST(req: NextRequest) {
-  // Read raw bytes — req.text() round-trips UTF-8 and can mutate
-  // non-canonical bytes, breaking HMAC silently.
   const rawBuffer = Buffer.from(await req.arrayBuffer());
 
   const signature = req.headers.get("x-hub-signature-256");
@@ -101,7 +102,7 @@ export async function POST(req: NextRequest) {
   if (events.length === 0) {
     console.log("[ig-webhook] no text events to handle", {
       senderIds: peekSenderIds(body),
-      rawPayload: JSON.stringify(body).slice(0, 2000),
+      recipientIds: peekRecipientIds(body),
     });
     return new NextResponse("EVENT_RECEIVED", { status: 200 });
   }
@@ -110,18 +111,37 @@ export async function POST(req: NextRequest) {
     events.map(async (event) => {
       try {
         console.log("[ig-webhook] message in", {
+          to: event.recipientId,
           from: event.senderId,
           text: event.text,
         });
-        const result = await processSalesMessage(event.senderId, event.text);
+
+        const connection = await getInstagramConnectionByIgUserId(
+          event.recipientId,
+        );
+        if (!connection) {
+          console.warn("[ig-webhook] no connection for recipient", {
+            recipientId: event.recipientId,
+            senderId: event.senderId,
+          });
+          return;
+        }
+
+        const result = await processSalesMessage(
+          connection,
+          event.senderId,
+          event.text,
+        );
         console.log("[ig-webhook] reply sent", {
           to: event.senderId,
-          reply: result.reply,
+          via: connection.ig_username,
+          reply: result.reply.slice(0, 200),
+          catalogBytes: result.catalogBytes,
         });
       } catch (err) {
         console.error(
           "[ig-webhook] reply pipeline failed",
-          { senderId: event.senderId },
+          { senderId: event.senderId, recipientId: event.recipientId },
           err,
         );
       }
@@ -133,7 +153,11 @@ export async function POST(req: NextRequest) {
 
 // ─── Webhook payload parsing ─────────────────────────────────────────
 
-type TextMessageEvent = { senderId: string; text: string };
+type TextMessageEvent = {
+  senderId: string;
+  recipientId: string;
+  text: string;
+};
 
 function extractTextMessages(payload: unknown): TextMessageEvent[] {
   const out: TextMessageEvent[] = [];
@@ -144,8 +168,10 @@ function extractTextMessages(payload: unknown): TextMessageEvent[] {
 
   for (const entry of entries) {
     if (!isRecord(entry)) continue;
+    const recipientId =
+      typeof entry.id === "string" && entry.id ? entry.id : null;
     const messaging = entry.messaging;
-    if (!Array.isArray(messaging)) continue;
+    if (!Array.isArray(messaging) || !recipientId) continue;
 
     for (const m of messaging) {
       if (!isRecord(m)) continue;
@@ -163,7 +189,7 @@ function extractTextMessages(payload: unknown): TextMessageEvent[] {
       const text = typeof message.text === "string" ? message.text.trim() : "";
       if (!text) continue;
 
-      out.push({ senderId, text });
+      out.push({ senderId, recipientId, text });
     }
   }
 
@@ -185,6 +211,18 @@ function peekSenderIds(payload: unknown): string[] {
       const id = typeof sender?.id === "string" ? sender.id : null;
       if (id) out.push(id);
     }
+  }
+  return out;
+}
+
+function peekRecipientIds(payload: unknown): string[] {
+  const out: string[] = [];
+  if (!isRecord(payload) || payload.object !== "instagram") return out;
+  const entries = payload.entry;
+  if (!Array.isArray(entries)) return out;
+  for (const entry of entries) {
+    if (!isRecord(entry)) continue;
+    if (typeof entry.id === "string" && entry.id) out.push(entry.id);
   }
   return out;
 }
