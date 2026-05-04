@@ -154,7 +154,18 @@ async function callGeminiOnce(
     body: JSON.stringify({
       systemInstruction: { parts: [{ text: systemPrompt }] },
       contents: [{ role: "user", parts: [{ text: userMessage }] }],
-      generationConfig: { temperature: 0.7, maxOutputTokens: 250 },
+      generationConfig: {
+        temperature: 0.7,
+        // Bumped from 250 → 1024. For thinking-capable models the
+        // budget is shared between reasoning and the visible reply,
+        // and 250 was so tight the reply got cut off mid-word.
+        maxOutputTokens: 1024,
+        // For sales chat we don't need chain-of-thought — a direct
+        // answer with the catalog in context is enough. Disabling
+        // saves tokens, latency, and prevents truncation.
+        // (Models without thinking support silently ignore this.)
+        thinkingConfig: { thinkingBudget: 0 },
+      },
     }),
   });
 
@@ -178,13 +189,25 @@ async function callGeminiOnce(
     throw new Error(`Gemini blocked: ${blockReason}`);
   }
 
-  const text = data.candidates?.[0]?.content?.parts
+  const candidate = data.candidates?.[0];
+  const text = candidate?.content?.parts
     ?.map((p) => (typeof p.text === "string" ? p.text : ""))
     .join("")
     .trim();
 
+  // Surface MAX_TOKENS truncation in logs so it's not invisible — if it
+  // fires, bump maxOutputTokens or shorten the catalog/system prompt.
+  if (candidate?.finishReason === "MAX_TOKENS") {
+    console.warn("[gemini] response hit MAX_TOKENS — reply truncated", {
+      model,
+      replyLength: text?.length ?? 0,
+    });
+  }
+
   if (!text) {
-    throw new Error("Gemini returned empty response");
+    throw new Error(
+      `Gemini returned empty response (finishReason: ${candidate?.finishReason ?? "unknown"})`,
+    );
   }
 
   return text;
