@@ -102,15 +102,57 @@ export async function GET(req: NextRequest) {
       // List conversations + participants. Useful when webhooks don't
       // surface sender PSIDs (read/reaction events lack sender.id) but we
       // still need a valid PSID for App Review test calls.
-      const res = await fetch(
-        `${IG_BASE}/me/conversations?platform=instagram&fields=participants,updated_time&${tokenParam}`,
-      );
+      // Auto-follows pagination up to 5 pages to find non-empty data.
+      let url: string | null =
+        `${IG_BASE}/me/conversations?platform=instagram&fields=participants,updated_time&limit=100&${tokenParam}`;
+      const allConversations: unknown[] = [];
+      const allParticipants: { id: string; username?: string }[] = [];
+      let pagesFetched = 0;
+      let lastStatus = 0;
+      let lastError: unknown = null;
+
+      while (url && pagesFetched < 5) {
+        const res = await fetch(url);
+        lastStatus = res.status;
+        const json: any = await res.json();
+        if (json.error) {
+          lastError = json.error;
+          break;
+        }
+        const data: any[] = Array.isArray(json.data) ? json.data : [];
+        allConversations.push(...data);
+        for (const conv of data) {
+          const participants = conv?.participants?.data;
+          if (Array.isArray(participants)) {
+            for (const p of participants) {
+              if (typeof p?.id === "string") {
+                allParticipants.push({ id: p.id, username: p.username });
+              }
+            }
+          }
+        }
+        url = json?.paging?.next ?? null;
+        pagesFetched += 1;
+      }
+
+      const botId = "17841401307528587";
+      const customerPsids = allParticipants
+        .filter((p) => p.id !== botId)
+        .map((p) => p.id);
+
       return NextResponse.json({
         action,
-        httpStatus: res.status,
-        response: await res.json(),
+        httpStatus: lastStatus,
+        pagesFetched,
+        conversationCount: allConversations.length,
+        participantCount: allParticipants.length,
+        customerPsids: [...new Set(customerPsids)],
+        sampleConversations: allConversations.slice(0, 3),
+        error: lastError,
         hint:
-          "Pick any participant.id that is NOT the bot's own IG id (17841401307528587). That's the customer's PSID.",
+          customerPsids.length > 0
+            ? `Use any value from customerPsids in ?action=simulate&to=...`
+            : "No customer PSIDs found. The bot account may have no DM history yet.",
       });
     }
 
