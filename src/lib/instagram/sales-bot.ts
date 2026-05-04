@@ -14,7 +14,18 @@ const GEMINI_API_KEY = (process.env.GEMINI_API_KEY ?? "").trim();
 const CATALOG_SHEET_ID = (process.env.IG_CATALOG_SHEET_ID ?? "").trim();
 const CATALOG_SHEET_GID = (process.env.IG_CATALOG_SHEET_GID ?? "0").trim();
 
-const GEMINI_MODEL = "gemini-2.5-flash";
+// Try the newer / smarter model first. If Google's 2.5-flash pool is
+// overloaded (frequent 503s on free tier during peak hours), fall
+// through to 2.0-flash which has more spare capacity. Same prompting,
+// same shape of response — drop-in fallback.
+const GEMINI_MODELS = [
+  "gemini-2.5-flash",
+  "gemini-2.0-flash",
+  "gemini-2.5-flash-lite",
+] as const;
+const GEMINI_MAX_ATTEMPTS_PER_MODEL = 2;
+const GEMINI_RETRY_DELAY_MS = 800;
+
 const IG_GRAPH_BASE = "https://graph.instagram.com/v21.0";
 const IG_REPLY_MAX_CHARS = 950;
 
@@ -87,8 +98,54 @@ export async function askGemini(
     ? `${BASE_SYSTEM_PROMPT}\n\n══════ КАТАЛОГ ТОВАРОВ (CSV) ══════\n${catalog}\n══════ КОНЕЦ КАТАЛОГА ══════`
     : `${BASE_SYSTEM_PROMPT}\n\n(Каталог сейчас недоступен — не выдумывай товары, попроси клиента подождать или написать на support@ordo.uno.)`;
 
+  let lastError: Error | null = null;
+  for (const model of GEMINI_MODELS) {
+    for (let attempt = 1; attempt <= GEMINI_MAX_ATTEMPTS_PER_MODEL; attempt++) {
+      try {
+        return await callGeminiOnce(model, systemPrompt, userMessage);
+      } catch (err) {
+        lastError = err instanceof Error ? err : new Error(String(err));
+        const msg = lastError.message;
+        // 503/429/UNAVAILABLE = transient. Worth retrying / falling back.
+        // Anything else (401, 400, blocked) is permanent — bail out so we
+        // don't waste time on identical failures.
+        const transient =
+          msg.includes("503") ||
+          msg.includes("429") ||
+          msg.includes("UNAVAILABLE") ||
+          msg.includes("RESOURCE_EXHAUSTED");
+        if (!transient) throw lastError;
+
+        const isLastAttemptOnModel =
+          attempt === GEMINI_MAX_ATTEMPTS_PER_MODEL;
+        const isLastModel = model === GEMINI_MODELS[GEMINI_MODELS.length - 1];
+        console.warn("[gemini] transient error", {
+          model,
+          attempt,
+          willRetry: !(isLastAttemptOnModel && isLastModel),
+          error: msg.slice(0, 200),
+        });
+        if (isLastAttemptOnModel && isLastModel) throw lastError;
+        await sleep(GEMINI_RETRY_DELAY_MS * attempt);
+      }
+    }
+  }
+  // Unreachable in practice — the loop above either returns or throws —
+  // but TS needs a terminating statement.
+  throw lastError ?? new Error("Gemini: exhausted models");
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function callGeminiOnce(
+  model: string,
+  systemPrompt: string,
+  userMessage: string,
+): Promise<string> {
   const url =
-    `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}` +
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}` +
     `:generateContent?key=${encodeURIComponent(GEMINI_API_KEY)}`;
 
   const res = await fetch(url, {
