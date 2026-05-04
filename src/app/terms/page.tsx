@@ -12,7 +12,7 @@ export default function TermsPage() {
       eyebrow="Legal"
       title="Terms of Service"
       intro="These Terms of Service govern your use of Ordo."
-      updatedAt="April 2, 2026"
+      updatedAt="May 4, 2026"
       sections={[
         {
           title: "Company and service provider",
@@ -41,6 +41,17 @@ export default function TermsPage() {
           paragraphs: [
             "Payments are processed through Paddle.",
             "Paddle is the authorized reseller and merchant of record for checkout transactions.",
+          ],
+        },
+        {
+          id: "third-party-services",
+          title: "Third-party services",
+          paragraphs: [
+            "Ordo integrates with third-party services to provide its functionality. Use of these integrations is also governed by their respective terms:",
+            "Meta Platforms (Instagram, Facebook): https://www.facebook.com/legal/terms",
+            "Google (Gemini, Sheets): https://policies.google.com/terms",
+            "Paddle (payments): https://www.paddle.com/legal/terms",
+            "By using Ordo's Instagram or Facebook integrations, you also agree to Meta's Platform Terms and Developer Policies. By using Ordo's AI sales assistant, you agree to Google's Generative AI Terms.",
           ],
         },
         {
