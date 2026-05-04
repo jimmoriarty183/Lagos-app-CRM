@@ -98,6 +98,22 @@ export async function GET(req: NextRequest) {
       });
     }
 
+    if (action === "conversations") {
+      // List conversations + participants. Useful when webhooks don't
+      // surface sender PSIDs (read/reaction events lack sender.id) but we
+      // still need a valid PSID for App Review test calls.
+      const res = await fetch(
+        `${IG_BASE}/me/conversations?platform=instagram&fields=participants,updated_time&${tokenParam}`,
+      );
+      return NextResponse.json({
+        action,
+        httpStatus: res.status,
+        response: await res.json(),
+        hint:
+          "Pick any participant.id that is NOT the bot's own IG id (17841401307528587). That's the customer's PSID.",
+      });
+    }
+
     if (action === "simulate") {
       // Run the same pipeline a real webhook would: load catalog from
       // the Sheet, ask Gemini, optionally send the reply to IG.
@@ -162,6 +178,7 @@ export async function GET(req: NextRequest) {
           "status",
           "subscribe",
           "unsubscribe",
+          "conversations",
           "simulate",
         ],
       },
