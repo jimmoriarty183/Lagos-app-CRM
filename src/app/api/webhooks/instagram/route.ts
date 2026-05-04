@@ -99,7 +99,9 @@ export async function POST(req: NextRequest) {
 
   const events = extractTextMessages(body);
   if (events.length === 0) {
-    console.log("[ig-webhook] no text events to handle");
+    console.log("[ig-webhook] no text events to handle", {
+      senderIds: peekSenderIds(body),
+    });
     return new NextResponse("EVENT_RECEIVED", { status: 200 });
   }
 
@@ -164,6 +166,25 @@ function extractTextMessages(payload: unknown): TextMessageEvent[] {
     }
   }
 
+  return out;
+}
+
+function peekSenderIds(payload: unknown): string[] {
+  const out: string[] = [];
+  if (!isRecord(payload) || payload.object !== "instagram") return out;
+  const entries = payload.entry;
+  if (!Array.isArray(entries)) return out;
+  for (const entry of entries) {
+    if (!isRecord(entry)) continue;
+    const messaging = entry.messaging;
+    if (!Array.isArray(messaging)) continue;
+    for (const m of messaging) {
+      if (!isRecord(m)) continue;
+      const sender = isRecord(m.sender) ? m.sender : null;
+      const id = typeof sender?.id === "string" ? sender.id : null;
+      if (id) out.push(id);
+    }
+  }
   return out;
 }
 
