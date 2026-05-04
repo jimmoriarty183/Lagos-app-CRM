@@ -97,7 +97,7 @@ export default async function AiSalesManagerPage({
   const { data: connectionRow } = await admin
     .from("instagram_connections")
     .select(
-      "id, ig_user_id, ig_username, ig_account_type, expires_at, webhook_subscribed, catalog_sheet_id, catalog_sheet_gid, system_prompt, enabled, created_at",
+      "id, ig_user_id, ig_username, ig_account_type, expires_at, webhook_subscribed, catalog_sheet_id, catalog_sheet_gid, system_prompt, shop_name, shop_about, shop_address, shop_contact, enabled, created_at",
     )
     .eq("business_id", workspace.id)
     .order("created_at", { ascending: false })
@@ -206,6 +206,10 @@ export default async function AiSalesManagerPage({
                   initialSheetId={connection.catalog_sheet_id ?? ""}
                   initialSheetGid={connection.catalog_sheet_gid ?? "0"}
                   initialSystemPrompt={connection.system_prompt ?? ""}
+                  initialShopName={connection.shop_name ?? ""}
+                  initialShopAbout={connection.shop_about ?? ""}
+                  initialShopAddress={connection.shop_address ?? ""}
+                  initialShopContact={connection.shop_contact ?? ""}
                   initialEnabled={connection.enabled}
                   basePromptPlaceholder={BASE_SYSTEM_PROMPT}
                 />

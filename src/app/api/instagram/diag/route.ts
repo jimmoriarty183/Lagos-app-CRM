@@ -199,7 +199,12 @@ export async function GET(req: NextRequest) {
       const catalogMs = Date.now() - catalogStart;
 
       const geminiStart = Date.now();
-      const reply = await askGemini(text.trim(), catalog, connection.system_prompt);
+      const reply = await askGemini(text.trim(), catalog, connection.system_prompt, {
+        name: connection.shop_name,
+        about: connection.shop_about,
+        address: connection.shop_address,
+        contact: connection.shop_contact,
+      });
       const geminiMs = Date.now() - geminiStart;
 
       let igSendResult: { ok: true } | { ok: false; error: string } | null = null;

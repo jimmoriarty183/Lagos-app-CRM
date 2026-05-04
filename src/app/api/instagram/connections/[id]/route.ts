@@ -80,6 +80,10 @@ export async function PATCH(req: NextRequest, ctx: RouteContext) {
     catalog_sheet_id?: string | null;
     catalog_sheet_gid?: string | null;
     system_prompt?: string | null;
+    shop_name?: string | null;
+    shop_about?: string | null;
+    shop_address?: string | null;
+    shop_contact?: string | null;
     enabled?: boolean;
   } | null;
 
@@ -136,6 +140,30 @@ export async function PATCH(req: NextRequest, ctx: RouteContext) {
     }
   }
 
+  for (const key of [
+    "shop_name",
+    "shop_about",
+    "shop_address",
+    "shop_contact",
+  ] as const) {
+    if (key in body) {
+      const v = body[key];
+      if (v === null || (typeof v === "string" && v.trim() === "")) {
+        update[key] = null;
+      } else if (typeof v === "string") {
+        const trimmed = v.trim();
+        const limit = key === "shop_about" ? 2000 : 500;
+        if (trimmed.length > limit) {
+          return NextResponse.json(
+            { error: `${key} must be ≤${limit} chars` },
+            { status: 400 },
+          );
+        }
+        update[key] = trimmed;
+      }
+    }
+  }
+
   if ("enabled" in body && typeof body.enabled === "boolean") {
     update.enabled = body.enabled;
   }
@@ -153,7 +181,7 @@ export async function PATCH(req: NextRequest, ctx: RouteContext) {
     .update(update)
     .eq("id", id)
     .select(
-      "id, ig_username, catalog_sheet_id, catalog_sheet_gid, system_prompt, enabled",
+      "id, ig_username, catalog_sheet_id, catalog_sheet_gid, system_prompt, shop_name, shop_about, shop_address, shop_contact, enabled",
     )
     .single();
 

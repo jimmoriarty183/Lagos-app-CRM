@@ -18,11 +18,15 @@ export type InstagramConnection = {
   catalog_sheet_id: string | null;
   catalog_sheet_gid: string;
   system_prompt: string | null;
+  shop_name: string | null;
+  shop_about: string | null;
+  shop_address: string | null;
+  shop_contact: string | null;
   enabled: boolean;
 };
 
 const SELECT_COLUMNS =
-  "id, business_id, ig_user_id, ig_username, ig_account_type, ig_access_token, expires_at, webhook_subscribed, catalog_sheet_id, catalog_sheet_gid, system_prompt, enabled";
+  "id, business_id, ig_user_id, ig_username, ig_account_type, ig_access_token, expires_at, webhook_subscribed, catalog_sheet_id, catalog_sheet_gid, system_prompt, shop_name, shop_about, shop_address, shop_contact, enabled";
 
 /**
  * Look up the connection for a given Instagram Business account id

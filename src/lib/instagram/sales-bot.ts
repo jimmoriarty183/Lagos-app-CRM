@@ -94,19 +94,40 @@ export async function loadCatalog(
 
 // ─── Gemini ──────────────────────────────────────────────────────────
 
+export type ShopContext = {
+  name?: string | null;
+  about?: string | null;
+  address?: string | null;
+  contact?: string | null;
+};
+
+function buildShopContextBlock(shop: ShopContext | null | undefined): string {
+  if (!shop) return "";
+  const lines: string[] = [];
+  if (shop.name?.trim()) lines.push(`- Название: ${shop.name.trim()}`);
+  if (shop.about?.trim()) lines.push(`- О магазине: ${shop.about.trim()}`);
+  if (shop.address?.trim()) lines.push(`- Адрес: ${shop.address.trim()}`);
+  if (shop.contact?.trim()) lines.push(`- Контакты: ${shop.contact.trim()}`);
+  if (lines.length === 0) return "";
+  return `\n\n══════ ИНФО О МАГАЗИНЕ ══════\n${lines.join("\n")}\n══════ КОНЕЦ ИНФО ══════`;
+}
+
 export async function askGemini(
   userMessage: string,
   catalog: string | null,
   systemPromptOverride?: string | null,
+  shop?: ShopContext | null,
 ): Promise<string> {
   if (!GEMINI_API_KEY) {
     throw new Error("GEMINI_API_KEY not configured");
   }
 
   const basePrompt = systemPromptOverride?.trim() || BASE_SYSTEM_PROMPT;
-  const systemPrompt = catalog
-    ? `${basePrompt}\n\n══════ КАТАЛОГ ТОВАРОВ (CSV) ══════\n${catalog}\n══════ КОНЕЦ КАТАЛОГА ══════`
-    : `${basePrompt}\n\n(Каталог сейчас недоступен — не выдумывай товары, попроси клиента подождать или написать на support@ordo.uno.)`;
+  const shopBlock = buildShopContextBlock(shop);
+  const catalogBlock = catalog
+    ? `\n\n══════ КАТАЛОГ ТОВАРОВ (CSV) ══════\n${catalog}\n══════ КОНЕЦ КАТАЛОГА ══════`
+    : `\n\n(Каталог сейчас недоступен — не выдумывай товары, попроси клиента подождать или написать на support@ordo.uno.)`;
+  const systemPrompt = `${basePrompt}${shopBlock}${catalogBlock}`;
 
   let lastError: Error | null = null;
   for (const model of GEMINI_MODELS) {
@@ -261,7 +282,12 @@ export async function processSalesMessage(
     connection.catalog_sheet_id,
     connection.catalog_sheet_gid ?? "0",
   );
-  const reply = await askGemini(text, catalog, connection.system_prompt);
+  const reply = await askGemini(text, catalog, connection.system_prompt, {
+    name: connection.shop_name,
+    about: connection.shop_about,
+    address: connection.shop_address,
+    contact: connection.shop_contact,
+  });
 
   if (options.sendReply ?? true) {
     await sendInstagramMessage(connection.ig_access_token, senderPsid, reply);
