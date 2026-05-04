@@ -10,6 +10,8 @@ import type { BusinessOption } from "@/app/b/[slug]/_components/topbar/BusinessS
 import { loadUserProfileSafe } from "@/lib/profile";
 import { getAdminUsersPath, isAdminEmail } from "@/lib/admin-access";
 import { resolveUserDisplay } from "@/lib/user-display";
+import { BASE_SYSTEM_PROMPT } from "@/lib/instagram/sales-bot";
+import ConnectionConfigForm from "./ConnectionConfigForm";
 
 function upperRole(
   value: string | null | undefined,
@@ -95,7 +97,7 @@ export default async function AiSalesManagerPage({
   const { data: connectionRow } = await admin
     .from("instagram_connections")
     .select(
-      "id, ig_user_id, ig_username, ig_account_type, expires_at, webhook_subscribed, catalog_sheet_id, enabled, created_at",
+      "id, ig_user_id, ig_username, ig_account_type, expires_at, webhook_subscribed, catalog_sheet_id, catalog_sheet_gid, system_prompt, enabled, created_at",
     )
     .eq("business_id", workspace.id)
     .order("created_at", { ascending: false })
@@ -196,6 +198,17 @@ export default async function AiSalesManagerPage({
                     Reconnect / refresh token
                   </a>
                 </div>
+              )}
+
+              {canManageConnection && (
+                <ConnectionConfigForm
+                  connectionId={connection.id}
+                  initialSheetId={connection.catalog_sheet_id ?? ""}
+                  initialSheetGid={connection.catalog_sheet_gid ?? "0"}
+                  initialSystemPrompt={connection.system_prompt ?? ""}
+                  initialEnabled={connection.enabled}
+                  basePromptPlaceholder={BASE_SYSTEM_PROMPT}
+                />
               )}
             </>
           ) : (
