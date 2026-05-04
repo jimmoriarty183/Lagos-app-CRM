@@ -101,6 +101,7 @@ export async function POST(req: NextRequest) {
   if (events.length === 0) {
     console.log("[ig-webhook] no text events to handle", {
       senderIds: peekSenderIds(body),
+      rawPayload: JSON.stringify(body).slice(0, 2000),
     });
     return new NextResponse("EVENT_RECEIVED", { status: 200 });
   }
