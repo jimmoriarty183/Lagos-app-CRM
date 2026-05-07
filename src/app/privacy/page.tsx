@@ -13,13 +13,21 @@ export default function PrivacyPage() {
     <LegalDocumentPage
       eyebrow="Legal"
       title="Privacy Policy"
-      intro="This policy explains how Ordo handles personal information."
-      updatedAt="May 4, 2026"
+      intro="This policy explains how Ordo handles personal information. It is written to comply with the EU General Data Protection Regulation (GDPR), the UK GDPR (and the UK Data Protection Act 2018), and the California Consumer Privacy Act (CCPA)."
+      updatedAt="May 7, 2026"
       sections={[
         {
-          title: "Company",
+          id: "data-controller",
+          title: "Data controller",
           paragraphs: [
-            "This service is provided by Ordo.",
+            "The data controller responsible for the personal information described in this policy is the operator of Ordo (https://ordo.uno):",
+            "Oleksandr Krupych, Sole Proprietor (in Ukrainian: ФОП Крупич Олександр Степанович).",
+            "Registration number (EDR/ЄДР): 2011600000000022449. Registered with the Unified State Register of Legal Entities, Sole Proprietors and Civic Formations of Ukraine on 06.05.2026.",
+            "Registered address: 32 Kozatska St., Apt. 131, Kyiv 03118, Ukraine.",
+            "Primary activity (NACE / KVED): 62.01 Computer programming activities.",
+            "General contact: aleksandr1krupych@gmail.com. Privacy and data-subject requests: support@ordo.uno. Phone: +38 063 063 86 85.",
+            "We process personal data on the basis of contractual necessity (to deliver the service you signed up for), legitimate interests (to operate, secure, and improve the service), legal obligation (tax, accounting, and law-enforcement requests), and your explicit consent where required.",
+            "EU/EEA, UK, Swiss, or California residents have the right to lodge a complaint with their local data-protection authority. UK users may contact the Information Commissioner's Office (ICO) at https://ico.org.uk/concerns. EU/EEA users may contact their national supervisory authority. We will cooperate with any such authority in good faith.",
           ],
         },
         {
@@ -64,7 +72,7 @@ export default function PrivacyPage() {
         {
           title: "Contact",
           paragraphs: [
-            "Privacy questions can be sent to support@ordo.uno.",
+            "Privacy questions can be sent to support@ordo.uno. The data controller is Oleksandr Krupych, Sole Proprietor (registration 2011600000000022449), 32 Kozatska St., Apt. 131, Kyiv 03118, Ukraine.",
           ],
         },
       ]}

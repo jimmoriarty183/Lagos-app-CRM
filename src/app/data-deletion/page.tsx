@@ -15,7 +15,7 @@ export default function DataDeletionPage() {
       eyebrow="Legal"
       title="Data Deletion Instructions"
       intro="How to request deletion of your personal data from Ordo, including any information we received from connected Facebook or Instagram accounts."
-      updatedAt="May 4, 2026"
+      updatedAt="May 7, 2026"
       sections={[
         {
           id: "your-rights",
@@ -72,7 +72,9 @@ export default function DataDeletionPage() {
           id: "contact",
           title: "Questions",
           paragraphs: [
-            "For any questions about this process, contact us at support@ordo.uno. If you are not satisfied with our response, you have the right to lodge a complaint with your local data protection authority.",
+            "For any questions about this process, contact us at support@ordo.uno.",
+            "Data controller: Oleksandr Krupych, Sole Proprietor (in Ukrainian: ФОП Крупич Олександр Степанович). Registration number 2011600000000022449. Registered address: 32 Kozatska St., Apt. 131, Kyiv 03118, Ukraine.",
+            "If you are not satisfied with our response, you have the right to lodge a complaint with your local data protection authority — for example, the UK Information Commissioner's Office (https://ico.org.uk/concerns), or your national supervisory authority in the EU/EEA.",
           ],
         },
       ]}
