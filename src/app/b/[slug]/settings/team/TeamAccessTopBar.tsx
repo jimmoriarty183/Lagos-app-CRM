@@ -2,12 +2,14 @@
 
 import React from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { BrandIcon, BrandLockup } from "@/components/Brand";
 import { UserMenu } from "@/app/b/[slug]/_components/topbar/UserMenu";
 import BusinessSwitcher, {
   type BusinessOption,
 } from "@/app/b/[slug]/_components/topbar/BusinessSwitcher";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { getVisiblePlatformModules } from "@/config/modules";
 
 type Props = {
   ordersHref: string;
@@ -37,9 +39,27 @@ export default function TeamAccessTopBar({
   currentBusinessSlug,
 }: Props) {
   const router = useRouter();
+  const pathname = usePathname();
+  const isAdminUser = Boolean(adminHref);
   const showSwitcher = Boolean(
     businesses && businesses.length > 0 && currentBusinessSlug,
   );
+
+  const moduleTabs = React.useMemo(() => {
+    const modules = getVisiblePlatformModules().filter(
+      (module) => module.key !== "tasks" || isAdminUser,
+    );
+    return modules.map((module) => {
+      const href = module.key === "crm" ? ordersHref : module.href;
+      const active =
+        module.key === "crm"
+          ? Boolean(
+              pathname?.startsWith("/app/crm") || pathname?.startsWith("/b/"),
+            )
+          : Boolean(pathname?.startsWith(module.href));
+      return { key: module.key, label: module.name, href, active };
+    });
+  }, [ordersHref, isAdminUser, pathname]);
 
   const handleSelectBusiness = React.useCallback(
     (slug: string) => {
@@ -102,18 +122,26 @@ export default function TeamAccessTopBar({
             ) : null}
 
             <nav className="hidden items-center rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] p-1 lg:inline-flex">
-              <Link
-                href={ordersHref}
-                className="inline-flex h-7 items-center rounded-md bg-white dark:bg-white/[0.03] px-3 text-[12px] font-semibold text-[#3645A0] dark:text-[var(--brand-300)] shadow-[0_1px_2px_rgba(16,24,40,0.08)]"
-              >
-                CRM
-              </Link>
+              {moduleTabs.map((tab) => (
+                <Link
+                  key={tab.key}
+                  href={tab.href}
+                  className={
+                    tab.active
+                      ? "inline-flex h-7 items-center rounded-md bg-white dark:bg-white/[0.03] px-3 text-[12px] font-semibold text-[#3645A0] dark:text-[var(--brand-300)] shadow-[0_1px_2px_rgba(16,24,40,0.08)]"
+                      : "inline-flex h-7 items-center rounded-md px-3 text-[12px] font-medium text-[#6B7280] dark:text-white/60 hover:text-[#1F2937] dark:hover:text-white"
+                  }
+                >
+                  {tab.label}
+                </Link>
+              ))}
             </nav>
           </div>
 
           <div className="min-w-0 px-1 text-center" />
 
-          <div className="flex min-w-0 justify-end">
+          <div className="flex min-w-0 items-center justify-end gap-1.5">
+            <ThemeToggle variant="ghost" size="sm" />
             <UserMenu
               userLabel={userLabel}
               roleLabel={roleLabel}
