@@ -13,7 +13,7 @@ export default function PrivacyPage() {
     <LegalDocumentPage
       eyebrow="Legal"
       title="Privacy Policy"
-      intro="This policy explains how Ordo handles personal information. It is written to comply with the EU General Data Protection Regulation (GDPR), the UK GDPR (and the UK Data Protection Act 2018), and the California Consumer Privacy Act (CCPA)."
+      intro="This policy explains how Ordo handles personal information. It is written to comply with the EU General Data Protection Regulation (GDPR) and the UK GDPR (together with the UK Data Protection Act 2018)."
       updatedAt="May 7, 2026"
       sections={[
         {
@@ -27,7 +27,7 @@ export default function PrivacyPage() {
             "Primary activity (NACE / KVED): 62.01 Computer programming activities.",
             "General contact: aleksandr1krupych@gmail.com. Privacy and data-subject requests: support@ordo.uno. Phone: +38 063 063 86 85.",
             "We process personal data on the basis of contractual necessity (to deliver the service you signed up for), legitimate interests (to operate, secure, and improve the service), legal obligation (tax, accounting, and law-enforcement requests), and your explicit consent where required.",
-            "EU/EEA, UK, Swiss, or California residents have the right to lodge a complaint with their local data-protection authority. UK users may contact the Information Commissioner's Office (ICO) at https://ico.org.uk/concerns. EU/EEA users may contact their national supervisory authority. We will cooperate with any such authority in good faith.",
+            "EU/EEA, UK, and Swiss residents have the right to lodge a complaint with their local data-protection authority. UK users may contact the Information Commissioner's Office (ICO) at https://ico.org.uk/concerns. EU/EEA users may contact their national supervisory authority. We will cooperate with any such authority in good faith.",
           ],
         },
         {

@@ -21,7 +21,7 @@ export default function DataDeletionPage() {
           id: "your-rights",
           title: "Your right to erasure",
           paragraphs: [
-            "You can request the deletion of your personal data from Ordo at any time. We honor this right under the GDPR (Article 17, \"Right to erasure\"), the UK GDPR, the California Consumer Privacy Act (CCPA), and equivalent privacy regulations worldwide.",
+            "You can request the deletion of your personal data from Ordo at any time. We honor this right under the GDPR (Article 17, \"Right to erasure\"), the UK GDPR (and the UK Data Protection Act 2018), and equivalent privacy regulations across the EU/EEA.",
             "This applies to all personal data Ordo holds about you, including any information we received from third-party platforms you connected — such as Facebook Pages, Instagram Business accounts, or Google Workspace.",
           ],
         },
