@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
 import TeamAccessTopBar from "@/app/b/[slug]/settings/team/TeamAccessTopBar";
+import SettingsTabs from "@/app/b/[slug]/settings/SettingsTabs";
 import { getAdminUsersPath, isAdminEmail } from "@/lib/admin-access";
 import { resolveOwnerAccountId } from "@/lib/businesses/business-limits-service";
 import { resolveCurrentWorkspace } from "@/lib/platform/workspace";
@@ -22,7 +23,43 @@ function upperRole(value: string | null | undefined): Role {
   return "GUEST";
 }
 
-export default async function TeamSettingsPage() {
+export default async function TeamSettingsPage({
+  searchParams,
+}: {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = (await (searchParams ?? Promise.resolve({}))) as Record<
+    string,
+    string | string[] | undefined
+  >;
+  const fromSlugRaw = Array.isArray(params.from) ? params.from[0] : params.from;
+  const fromSlug = typeof fromSlugRaw === "string" ? fromSlugRaw.trim() : "";
+  const backHref = fromSlug ? `/b/${encodeURIComponent(fromSlug)}/settings` : "/app/settings";
+  const businessTabs = fromSlug
+    ? [
+        {
+          href: `/b/${encodeURIComponent(fromSlug)}/settings`,
+          label: "General",
+          active: false,
+        },
+        {
+          href: `/b/${encodeURIComponent(fromSlug)}/settings/team`,
+          label: "Team",
+          active: true,
+        },
+        {
+          href: `/b/${encodeURIComponent(fromSlug)}/settings/invites`,
+          label: "Business invitations",
+          active: false,
+        },
+        {
+          href: `/b/${encodeURIComponent(fromSlug)}/settings/statuses`,
+          label: "Statuses",
+          active: false,
+        },
+      ]
+    : null;
+
   const [{ user, workspace: cookieWorkspace, workspaces }, supabase] = await Promise.all([
     resolveCurrentWorkspace(),
     supabaseServerReadOnly(),
@@ -271,24 +308,30 @@ export default async function TeamSettingsPage() {
   }
 
   const content = (
-    <div className="rounded-3xl border border-[#E5E7EB] dark:border-white/10 bg-white/92 p-4 shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur">
+    <div className="rounded-3xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-4 shadow-[var(--shadow-md)] backdrop-blur">
       <Link
-        href="/app/settings"
-        className="inline-flex items-center gap-2 rounded-full border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-1.5 text-xs font-semibold text-[#374151] transition hover:border-[#D6DAE1] hover:bg-[#FCFCFD]"
+        href={backHref}
+        className="inline-flex items-center gap-2 rounded-full border border-[var(--border-default)] bg-[var(--bg-elevated)] px-3 py-1.5 text-xs font-semibold text-[var(--text-secondary)] transition hover:border-[var(--border-strong)] hover:bg-[var(--bg-elevated-strong)]"
       >
         <ArrowLeft className="h-3.5 w-3.5" />
         Back
       </Link>
-      <div className="mt-2 inline-flex items-center rounded-full border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] px-3 py-0.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#6B7280] dark:text-white/55">
-        Account settings
+      <div className="mt-2 inline-flex items-center rounded-full border border-[var(--border-default)] bg-[var(--bg-elevated-strong)] px-3 py-0.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
+        {businessTabs ? "Settings" : "Account settings"}
       </div>
-      <h1 className="mt-2 text-[28px] font-semibold tracking-[-0.03em] text-[#111827]">Team &amp; Invites</h1>
-      <p className="mt-1 max-w-[640px] text-[13px] leading-4 text-[#6B7280] dark:text-white/55">
+      <h1 className="mt-2 text-[28px] font-semibold tracking-[-0.03em] text-[var(--text-primary)]">Team &amp; Invites</h1>
+      <p className="mt-1 max-w-[640px] text-[13px] leading-4 text-[var(--text-tertiary)]">
         Manage team members and outgoing invites across all your businesses. Invite people once — grant access to one or more businesses with checkboxes.
       </p>
 
+      {businessTabs ? (
+        <div className="mt-4">
+          <SettingsTabs tabs={businessTabs} />
+        </div>
+      ) : null}
+
       {accessDeniedReason ? (
-        <div className="mt-4 rounded-xl border border-[#FECACA] bg-[#FEF2F2] dark:bg-rose-500/10 p-3 text-[13px] leading-5 text-[#991B1B]">
+        <div className="mt-4 rounded-xl border border-[color:var(--error-500)]/40 bg-[color:var(--error-500)]/10 p-3 text-[13px] leading-5 text-[var(--error-500)]">
           {accessDeniedReason}
         </div>
       ) : null}
@@ -308,7 +351,7 @@ export default async function TeamSettingsPage() {
   );
 
   return (
-    <main className="min-h-screen bg-[linear-gradient(180deg,#F8FAFC_0%,#EEF2FF_100%)] text-[#111827]">
+    <main className="min-h-screen text-[var(--text-primary)]">
       <TeamAccessTopBar
         ordersHref={`/b/${workspace.slug}`}
         userLabel={currentUserName}
