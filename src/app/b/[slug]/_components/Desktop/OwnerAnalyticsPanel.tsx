@@ -403,23 +403,23 @@ export default function OwnerAnalyticsPanel({
 
       {showOverview ? (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          <article className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3 shadow-[0_8px_18px_rgba(15,23,42,0.05)]">
+          <article className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.04] p-3 shadow-[0_8px_18px_rgba(15,23,42,0.05)] dark:shadow-none">
             <div className="flex items-center justify-between">
               <div className="text-xs font-medium text-[#6B7280] dark:text-white/55">
                 Active Tasks
               </div>
               <Activity className="icon-button text-[var(--brand-600)]" strokeWidth={2} />
             </div>
-            <div className="mt-1 text-2xl font-semibold text-[#111827]">
+            <div className="mt-1 text-2xl font-semibold text-[#111827] dark:text-white">
               {data.summary.active_tasks}
             </div>
           </article>
-          <article className="rounded-xl border border-[#F8D3D7] bg-[#FFF8F8] p-3 shadow-[0_8px_18px_rgba(220,38,38,0.08)]">
+          <article className="rounded-xl border border-[#F8D3D7] dark:border-rose-500/30 bg-[#FFF8F8] dark:bg-rose-500/10 p-3 shadow-[0_8px_18px_rgba(220,38,38,0.08)] dark:shadow-none">
             <div className="flex items-center justify-between">
-              <div className="text-xs font-medium text-[#B42318]">
+              <div className="text-xs font-medium text-[#B42318] dark:text-rose-300">
                 Overdue Tasks
               </div>
-              <AlertTriangle className="icon-button text-[#B42318]" strokeWidth={2} />
+              <AlertTriangle className="icon-button text-[#B42318] dark:text-rose-300" strokeWidth={2} />
             </div>
             <div
               className={`mt-1 text-2xl font-semibold ${toneClass(data.summary.overdue_tasks, 6, 1)}`}
@@ -427,29 +427,29 @@ export default function OwnerAnalyticsPanel({
               {data.summary.overdue_tasks}
             </div>
           </article>
-          <article className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3 shadow-[0_8px_18px_rgba(15,23,42,0.05)]">
+          <article className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.04] p-3 shadow-[0_8px_18px_rgba(15,23,42,0.05)] dark:shadow-none">
             <div className="flex items-center justify-between">
               <div className="text-xs font-medium text-[#6B7280] dark:text-white/55">
                 Due in 7 Days
               </div>
               <CalendarClock className="icon-button text-[var(--brand-600)]" strokeWidth={2} />
             </div>
-            <div className="mt-1 text-2xl font-semibold text-[#111827]">
+            <div className="mt-1 text-2xl font-semibold text-[#111827] dark:text-white">
               {data.summary.due_7d}
             </div>
           </article>
-          <article className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3 shadow-[0_8px_18px_rgba(15,23,42,0.05)]">
+          <article className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.04] p-3 shadow-[0_8px_18px_rgba(15,23,42,0.05)] dark:shadow-none">
             <div className="flex items-center justify-between">
               <div className="text-xs font-medium text-[#6B7280] dark:text-white/55">
                 On-Time Completion
               </div>
               <TrendingUp className="icon-button text-[#067647]" strokeWidth={2} />
             </div>
-            <div className="mt-1 text-2xl font-semibold text-[#111827]">
+            <div className="mt-1 text-2xl font-semibold text-[#111827] dark:text-white">
               {formatPercent(data.summary.on_time_completion_pct)}
             </div>
           </article>
-          <article className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3 shadow-[0_8px_18px_rgba(15,23,42,0.05)]">
+          <article className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.04] p-3 shadow-[0_8px_18px_rgba(15,23,42,0.05)] dark:shadow-none">
             <div className="flex items-center justify-between">
               <div className="text-xs font-medium text-[#6B7280] dark:text-white/55">
                 Team Workload
@@ -462,7 +462,7 @@ export default function OwnerAnalyticsPanel({
               {formatPercent(data.summary.team_workload_pct)}
             </div>
           </article>
-          <article className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3 shadow-[0_8px_18px_rgba(15,23,42,0.05)]">
+          <article className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.04] p-3 shadow-[0_8px_18px_rgba(15,23,42,0.05)] dark:shadow-none">
             <div className="flex items-center justify-between">
               <div className="text-xs font-medium text-[#6B7280] dark:text-white/55">
                 Managers At Risk
@@ -480,10 +480,10 @@ export default function OwnerAnalyticsPanel({
 
       {showOverview ? (
         <article className="rounded-xl border border-[#E5E7EB] dark:border-white/10 p-3">
-          <div className="mb-2 text-sm font-semibold text-[#111827]">
+          <div className="mb-2 text-sm font-semibold text-[#111827] dark:text-white">
             Deadline Control (7 days)
           </div>
-          <div className="h-4 w-full overflow-hidden rounded-full bg-[#F3F4F6]">
+          <div className="h-4 w-full overflow-hidden rounded-full bg-[#F3F4F6] dark:bg-white/10">
             <div className="flex h-full">
               <div
                 className="bg-[#16a34a]"
@@ -513,7 +513,7 @@ export default function OwnerAnalyticsPanel({
       {showOverview ? (
         <div className="grid grid-cols-1 gap-3 xl:grid-cols-3">
           <article className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3 xl:col-span-2">
-            <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-[#111827]">
+            <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-[#111827] dark:text-white">
               <LineChart className="icon-button text-[var(--brand-600)]" strokeWidth={2} />
               Execution Health
             </div>
@@ -525,7 +525,7 @@ export default function OwnerAnalyticsPanel({
                     {overdueRate.toFixed(1)}%
                   </span>
                 </div>
-                <div className="h-2 overflow-hidden rounded-full bg-[#F3F4F6]">
+                <div className="h-2 overflow-hidden rounded-full bg-[#F3F4F6] dark:bg-white/10">
                   <div
                     className="h-full bg-[#DC2626]"
                     style={{ width: `${clampPercent(overdueRate)}%` }}
@@ -539,7 +539,7 @@ export default function OwnerAnalyticsPanel({
                     {duePressureRate.toFixed(1)}%
                   </span>
                 </div>
-                <div className="h-2 overflow-hidden rounded-full bg-[#F3F4F6]">
+                <div className="h-2 overflow-hidden rounded-full bg-[#F3F4F6] dark:bg-white/10">
                   <div
                     className="h-full bg-[#F59E0B]"
                     style={{ width: `${clampPercent(duePressureRate)}%` }}
@@ -553,7 +553,7 @@ export default function OwnerAnalyticsPanel({
                     {formatPercent(data.summary.on_time_completion_pct)}
                   </span>
                 </div>
-                <div className="h-2 overflow-hidden rounded-full bg-[#F3F4F6]">
+                <div className="h-2 overflow-hidden rounded-full bg-[#F3F4F6] dark:bg-white/10">
                   <div
                     className="h-full bg-[#16A34A]"
                     style={{
@@ -566,7 +566,7 @@ export default function OwnerAnalyticsPanel({
           </article>
 
           <article className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3">
-            <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-[#111827]">
+            <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-[#111827] dark:text-white">
               <Users className="icon-button text-[var(--brand-600)]" strokeWidth={2} />
               Risk Distribution
             </div>
@@ -577,7 +577,7 @@ export default function OwnerAnalyticsPanel({
                   {riskDistribution.high}
                 </span>
               </div>
-              <div className="flex items-center justify-between rounded-lg border border-[#FEDF89] bg-[#FFFAEB] px-2.5 py-2">
+              <div className="flex items-center justify-between rounded-lg border border-[#FEDF89] dark:border-amber-500/30 bg-[#FFFAEB] dark:bg-amber-500/10 px-2.5 py-2">
                 <span className="font-medium text-[#B54708]">Medium Risk</span>
                 <span className="text-sm font-semibold text-[#B54708]">
                   {riskDistribution.medium}
@@ -597,7 +597,7 @@ export default function OwnerAnalyticsPanel({
       {showOverview ? (
         <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
           <article className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3">
-            <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-[#111827]">
+            <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-[#111827] dark:text-white">
               <ListChecks className="icon-button text-[var(--brand-600)]" strokeWidth={2} />
               Top Productive Managers
             </div>
@@ -624,8 +624,8 @@ export default function OwnerAnalyticsPanel({
             </ul>
           </article>
 
-          <article className="rounded-xl border border-[#F8D3D7] bg-[#FFF8F8] p-3">
-            <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-[#111827]">
+          <article className="rounded-xl border border-[#F8D3D7] dark:border-rose-500/30 bg-[#FFF8F8] dark:bg-rose-500/10 p-3">
+            <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-[#111827] dark:text-white">
               <CircleAlert className="icon-button text-[#B42318]" strokeWidth={2} />
               High-Risk Watchlist
             </div>
@@ -712,7 +712,7 @@ export default function OwnerAnalyticsPanel({
                           <summary className="cursor-pointer text-[var(--brand-600)]">
                             details
                           </summary>
-                          <div className="mt-2 w-[320px] rounded-lg bg-[#F9FAFB] dark:bg-white/[0.04] p-2 text-[11px] text-[#374151]">
+                          <div className="mt-2 w-[320px] rounded-lg bg-[#F9FAFB] dark:bg-white/[0.04] p-2 text-[11px] text-[#374151] dark:text-white/85">
                             <div className="font-semibold text-[#111827]">
                               Score breakdown
                             </div>
@@ -794,7 +794,7 @@ export default function OwnerAnalyticsPanel({
                         </details>
                       </div>
                     </td>
-                    <td className="px-2 py-2 text-[#374151]">
+                    <td className="px-2 py-2 text-[#374151] dark:text-white/80">
                       {manager.recommended_action}
                     </td>
                   </tr>
@@ -808,7 +808,7 @@ export default function OwnerAnalyticsPanel({
       {showOverview ? (
         <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
           <article className="rounded-xl border border-[#E5E7EB] dark:border-white/10 p-3">
-            <div className="mb-2 text-sm font-semibold text-[#111827]">
+            <div className="mb-2 text-sm font-semibold text-[#111827] dark:text-white">
               Top Overdue Tasks
             </div>
             <ul className="space-y-2 text-xs">
@@ -852,7 +852,7 @@ export default function OwnerAnalyticsPanel({
                       )}{" "}
                       • {task.days_overdue}d overdue
                     </div>
-                    <div className="mt-1 text-[#374151]">
+                    <div className="mt-1 text-[#374151] dark:text-white/80">
                       {task.recommended_action}
                     </div>
                   </li>
@@ -880,7 +880,7 @@ export default function OwnerAnalyticsPanel({
                     {alert.problem}
                   </div>
                   <div className="mt-1 text-[#6B7280] dark:text-white/55">{alert.reason}</div>
-                  <div className="mt-1 text-[#374151]">{action.note}</div>
+                  <div className="mt-1 text-[#374151] dark:text-white/80">{action.note}</div>
                   {action.href ? (
                     <a
                       href={action.href}
@@ -1039,7 +1039,7 @@ export default function OwnerAnalyticsPanel({
                             <summary className="cursor-pointer text-[var(--brand-600)]">
                               {report.completed_today_count}
                             </summary>
-                            <ul className="mt-1 max-w-[260px] space-y-1 rounded bg-[#F9FAFB] dark:bg-white/[0.04] p-2 text-[11px] text-[#374151]">
+                            <ul className="mt-1 max-w-[260px] space-y-1 rounded bg-[#F9FAFB] dark:bg-white/[0.04] p-2 text-[11px] text-[#374151] dark:text-white/85">
                               {report.completed_today_items.length === 0 ? (
                                 <li>No completed tasks</li>
                               ) : (
@@ -1074,7 +1074,7 @@ export default function OwnerAnalyticsPanel({
                             <summary className="cursor-pointer text-[var(--brand-600)]">
                               {report.tomorrow_plan_count}
                             </summary>
-                            <ul className="mt-1 max-w-[260px] space-y-1 rounded bg-[#F9FAFB] dark:bg-white/[0.04] p-2 text-[11px] text-[#374151]">
+                            <ul className="mt-1 max-w-[260px] space-y-1 rounded bg-[#F9FAFB] dark:bg-white/[0.04] p-2 text-[11px] text-[#374151] dark:text-white/85">
                               {report.tomorrow_plan_items.length === 0 ? (
                                 <li>No planned items</li>
                               ) : (
@@ -1104,7 +1104,7 @@ export default function OwnerAnalyticsPanel({
                             </ul>
                           </details>
                         </td>
-                        <td className="px-2 py-2 text-[#374151]">
+                        <td className="px-2 py-2 text-[#374151] dark:text-white/80">
                           {String(report.daily_summary ?? "").trim() ||
                             "No summary provided"}
                         </td>
@@ -1307,43 +1307,43 @@ export default function OwnerAnalyticsPanel({
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <article className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3">
               <div className="text-xs font-medium text-[#6B7280] dark:text-white/55">Plan Amount</div>
-              <div className="mt-1 text-2xl font-semibold text-[#111827]">
+              <div className="mt-1 text-2xl font-semibold text-[#111827] dark:text-white">
                 {formatCurrency(data.sales.team_plan_amount)}
               </div>
             </article>
             <article className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3">
               <div className="text-xs font-medium text-[#6B7280] dark:text-white/55">Actual Closed</div>
-              <div className="mt-1 text-2xl font-semibold text-[#111827]">
+              <div className="mt-1 text-2xl font-semibold text-[#111827] dark:text-white">
                 {formatCurrency(data.sales.team_actual_amount)}
               </div>
             </article>
             <article className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3">
               <div className="text-xs font-medium text-[#6B7280] dark:text-white/55">Forecast (Month)</div>
-              <div className="mt-1 text-2xl font-semibold text-[#111827]">
+              <div className="mt-1 text-2xl font-semibold text-[#111827] dark:text-white">
                 {formatCurrency(data.sales.team_forecast_amount)}
               </div>
             </article>
             <article className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3">
               <div className="text-xs font-medium text-[#6B7280] dark:text-white/55">Orders (Plan / Fact / Forecast)</div>
-              <div className="mt-1 text-2xl font-semibold text-[#111827]">
+              <div className="mt-1 text-2xl font-semibold text-[#111827] dark:text-white">
                 {data.sales.team_plan_closed_orders} / {data.sales.team_closed_orders} / {Math.round(data.sales.team_forecast_closed_orders)}
               </div>
             </article>
             <article className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3">
               <div className="text-xs font-medium text-[#6B7280] dark:text-white/55">Avg Deal Size</div>
-              <div className="mt-1 text-2xl font-semibold text-[#111827]">
+              <div className="mt-1 text-2xl font-semibold text-[#111827] dark:text-white">
                 {formatCurrency(data.sales.avg_deal_size)}
               </div>
             </article>
             <article className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3">
               <div className="text-xs font-medium text-[#6B7280] dark:text-white/55">Current Completion %</div>
-              <div className="mt-1 text-2xl font-semibold text-[#111827]">
+              <div className="mt-1 text-2xl font-semibold text-[#111827] dark:text-white">
                 {formatPercent(data.sales.achievement_pct)}
               </div>
             </article>
             <article className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3">
               <div className="text-xs font-medium text-[#6B7280] dark:text-white/55">Forecast Completion %</div>
-              <div className="mt-1 text-2xl font-semibold text-[#111827]">
+              <div className="mt-1 text-2xl font-semibold text-[#111827] dark:text-white">
                 {formatPercent(data.sales.forecast_achievement_pct)}
               </div>
               <div
@@ -1359,7 +1359,7 @@ export default function OwnerAnalyticsPanel({
           </div>
 
           <div className="rounded-xl border border-[#E5E7EB] dark:border-white/10 p-3">
-            <div className="mb-2 text-sm font-semibold text-[#111827]">
+            <div className="mb-2 text-sm font-semibold text-[#111827] dark:text-white">
               Sales by Manager
             </div>
             {data.sales.managers.length === 0 ? (
@@ -1564,7 +1564,7 @@ export default function OwnerAnalyticsPanel({
               <div className="text-xs font-medium text-[#6B7280] dark:text-white/55">
                 Team Closed Orders
               </div>
-              <div className="mt-1 text-2xl font-semibold text-[#111827]">
+              <div className="mt-1 text-2xl font-semibold text-[#111827] dark:text-white">
                 {data.productivity.team_closed_orders}
               </div>
             </article>
@@ -1572,7 +1572,7 @@ export default function OwnerAnalyticsPanel({
               <div className="text-xs font-medium text-[#6B7280] dark:text-white/55">
                 Team Closed Follow-ups
               </div>
-              <div className="mt-1 text-2xl font-semibold text-[#111827]">
+              <div className="mt-1 text-2xl font-semibold text-[#111827] dark:text-white">
                 {data.productivity.team_closed_followups}
               </div>
             </article>
@@ -1580,14 +1580,14 @@ export default function OwnerAnalyticsPanel({
               <div className="text-xs font-medium text-[#6B7280] dark:text-white/55">
                 Total Closed
               </div>
-              <div className="mt-1 text-2xl font-semibold text-[#111827]">
+              <div className="mt-1 text-2xl font-semibold text-[#111827] dark:text-white">
                 {data.productivity.team_total_closed}
               </div>
             </article>
           </div>
 
           <div className="rounded-xl border border-[#E5E7EB] dark:border-white/10 p-3">
-            <div className="mb-2 text-sm font-semibold text-[#111827]">
+            <div className="mb-2 text-sm font-semibold text-[#111827] dark:text-white">
               By Manager
             </div>
             <div className="space-y-2">
