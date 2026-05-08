@@ -1817,7 +1817,7 @@ function SystemEventItem({
 
   if (compact) {
     return (
-      <div className="flex items-start gap-1.5 rounded-xl border border-[#EEF2FF] bg-[#FAFBFF] px-2 py-1.5 text-[12px] leading-[18px] text-[#475467] dark:text-white/70">
+      <div className="flex items-start gap-1.5 rounded-xl border border-[#EEF2FF] dark:border-white/10 bg-[#FAFBFF] dark:bg-white/[0.04] px-2 py-1.5 text-[12px] leading-[18px] text-[#475467] dark:text-white/70">
         <EventGlyph eventType={item.eventType} tone={item.tone} compact />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
@@ -1828,7 +1828,7 @@ function SystemEventItem({
               </span>
             ) : null}
             {item.detail ? (
-              <span className="line-clamp-1 text-[#667085]">
+              <span className="line-clamp-1 text-[#667085] dark:text-white/55">
                 — {item.detail}
               </span>
             ) : null}
@@ -1840,7 +1840,7 @@ function SystemEventItem({
             <EventDelta payload={item.payload} compact />
           )}
           <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-[11px] text-[#98a2b3] dark:text-white/45">
-            <span className="font-medium text-[#667085]">
+            <span className="font-medium text-[#667085] dark:text-white/55">
               {item.actorName}
             </span>
             <span
@@ -1910,7 +1910,7 @@ function SystemEventItem({
           <EventDelta payload={item.payload} />
         )}
         <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#98a2b3] dark:text-white/45">
-          <span className="font-medium text-[#667085]">{item.actorName}</span>
+          <span className="font-medium text-[#667085] dark:text-white/55">{item.actorName}</span>
           <span
             className={cn(
               "inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em]",

@@ -70,7 +70,7 @@ export default async function PlatformSettingsPage({
   }
 
   return (
-    <main className="min-h-screen bg-[linear-gradient(180deg,#F8FAFC_0%,#EEF2FF_100%)] text-[#111827]">
+    <main className="min-h-screen text-[var(--text-primary)]">
       <TeamAccessTopBar
         ordersHref={`/b/${workspace.slug}`}
         userLabel={currentUserName}
@@ -122,95 +122,95 @@ export default async function PlatformSettingsPage({
           />
 
           <div className="w-full min-w-0">
-            <div className="rounded-3xl border border-[#E5E7EB] dark:border-white/10 bg-white/92 p-4 shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur">
+            <div className="rounded-3xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-4 shadow-[var(--shadow-md)] backdrop-blur">
               <div className="mb-3 flex items-center gap-3">
                 <Link
                   href="/app/crm"
-                  className="inline-flex items-center gap-1.5 rounded-full border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-1 text-xs font-semibold text-[#374151] transition hover:border-[#D6DAE1] hover:bg-[#FCFCFD]"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-[var(--border-default)] bg-[var(--bg-elevated)] px-3 py-1 text-xs font-semibold text-[var(--text-secondary)] transition hover:border-[var(--border-strong)] hover:bg-[var(--bg-elevated-strong)]"
                 >
                   <ArrowLeft className="h-3.5 w-3.5" />
                   Back to CRM
                 </Link>
-                <div className="inline-flex items-center rounded-full border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] px-3 py-0.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#6B7280] dark:text-white/55">
+                <div className="inline-flex items-center rounded-full border border-[var(--border-default)] bg-[var(--bg-elevated-strong)] px-3 py-0.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
                   Account settings
                 </div>
               </div>
-              <h1 className="text-[28px] font-semibold tracking-[-0.03em] text-[#111827]">
+              <h1 className="text-[28px] font-semibold tracking-[-0.03em] text-[var(--text-primary)]">
                 Settings
               </h1>
-              <p className="mt-1 max-w-[560px] text-[13px] leading-4 text-[#6B7280] dark:text-white/55">
+              <p className="mt-1 max-w-[560px] text-[13px] leading-4 text-[var(--text-tertiary)]">
                 Manage account-level destinations separately from workspace configuration.
               </p>
 
               <div className="mt-3 grid grid-cols-1 gap-2 lg:grid-cols-2">
                 <Link
                   href="/app/profile"
-                  className="group rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3 shadow-[0_10px_30px_rgba(15,23,42,0.04)] transition hover:border-[#D6DAE1] hover:bg-[#FCFCFD]"
+                  className="group rounded-xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-3 shadow-[var(--shadow)] transition hover:border-[var(--border-strong)] hover:bg-[var(--bg-elevated-strong)]"
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex min-w-0 items-center gap-2.5">
-                      <div className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#F3F4F6] text-[#4B5563] dark:text-white/70">
+                      <div className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--bg-elevated-strong)] text-[var(--text-tertiary)]">
                         <UserCircle2 className="h-[18px] w-[18px]" />
                       </div>
                       <div className="min-w-0">
-                        <div className="text-base font-semibold leading-tight text-[#111827]">Profile</div>
-                        <div className="truncate text-xs leading-4 text-[#6B7280] dark:text-white/55">
+                        <div className="text-base font-semibold leading-tight text-[var(--text-primary)]">Profile</div>
+                        <div className="truncate text-xs leading-4 text-[var(--text-tertiary)]">
                           View your account identity and contact details.
                         </div>
                       </div>
                     </div>
-                    <ChevronRight className="h-4 w-4 shrink-0 text-[#9CA3AF] dark:text-white/40 transition group-hover:text-[#4B5563]" />
+                    <ChevronRight className="h-4 w-4 shrink-0 text-[var(--text-muted)] transition group-hover:text-[var(--text-secondary)]" />
                   </div>
                 </Link>
 
                 <Link
                   href={`/b/${workspace.slug}/settings`}
-                  className="group rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3 shadow-[0_10px_30px_rgba(15,23,42,0.04)] transition hover:border-[#D6DAE1] hover:bg-[#FCFCFD]"
+                  className="group rounded-xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-3 shadow-[var(--shadow)] transition hover:border-[var(--border-strong)] hover:bg-[var(--bg-elevated-strong)]"
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex min-w-0 items-center gap-2.5">
-                      <div className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#F3F4F6] text-[#4B5563] dark:text-white/70">
+                      <div className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--bg-elevated-strong)] text-[var(--text-tertiary)]">
                         <Settings className="h-[18px] w-[18px]" />
                       </div>
                       <div className="min-w-0">
-                        <div className="text-base font-semibold leading-tight text-[#111827]">Workspace settings</div>
-                        <div className="truncate text-xs leading-4 text-[#6B7280] dark:text-white/55">
+                        <div className="text-base font-semibold leading-tight text-[var(--text-primary)]">Workspace settings</div>
+                        <div className="truncate text-xs leading-4 text-[var(--text-tertiary)]">
                           Configure business details, team access, invites, and statuses for {workspace.name || workspace.slug}.
                         </div>
                       </div>
                     </div>
-                    <ChevronRight className="h-4 w-4 shrink-0 text-[#9CA3AF] dark:text-white/40 transition group-hover:text-[#4B5563]" />
+                    <ChevronRight className="h-4 w-4 shrink-0 text-[var(--text-muted)] transition group-hover:text-[var(--text-secondary)]" />
                   </div>
                 </Link>
 
                 <Link
                   href={billingHref}
-                  className="group rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3 shadow-[0_10px_30px_rgba(15,23,42,0.04)] transition hover:border-[#D6DAE1] hover:bg-[#FCFCFD]"
+                  className="group rounded-xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-3 shadow-[var(--shadow)] transition hover:border-[var(--border-strong)] hover:bg-[var(--bg-elevated-strong)]"
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex min-w-0 items-center gap-2.5">
-                      <div className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#F3F4F6] text-[#4B5563] dark:text-white/70">
+                      <div className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--bg-elevated-strong)] text-[var(--text-tertiary)]">
                         <CreditCard className="h-[18px] w-[18px]" />
                       </div>
                       <div className="min-w-0">
-                        <div className="text-base font-semibold leading-tight text-[#111827]">Billing</div>
-                        <div className="truncate text-xs leading-4 text-[#6B7280] dark:text-white/55">
+                        <div className="text-base font-semibold leading-tight text-[var(--text-primary)]">Billing</div>
+                        <div className="truncate text-xs leading-4 text-[var(--text-tertiary)]">
                           Manage your subscription, plan and limits.
                         </div>
                       </div>
                     </div>
-                    <ChevronRight className="h-4 w-4 shrink-0 text-[#9CA3AF] dark:text-white/40 transition group-hover:text-[#4B5563]" />
+                    <ChevronRight className="h-4 w-4 shrink-0 text-[var(--text-muted)] transition group-hover:text-[var(--text-secondary)]" />
                   </div>
                 </Link>
               </div>
 
-              <div className="mt-3 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] p-3">
-                <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF] dark:text-white/40">
+              <div className="mt-3 rounded-xl border border-[var(--border-default)] bg-[var(--bg-elevated-strong)] p-3">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-muted)]">
                   Signed in as
                 </div>
                 <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
-                  <div className="text-sm font-semibold text-[#111827]">{accountLabel}</div>
-                  <div className="text-xs text-[#6B7280] dark:text-white/55">
+                  <div className="text-sm font-semibold text-[var(--text-primary)]">{accountLabel}</div>
+                  <div className="text-xs text-[var(--text-tertiary)]">
                     Workspace: {workspace.name || workspace.slug}
                   </div>
                 </div>
@@ -218,7 +218,7 @@ export default async function PlatformSettingsPage({
                 {adminHref ? (
                   <Link
                     href={adminHref}
-                    className="mt-2 inline-flex items-center gap-2 rounded-full border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-2.5 py-1 text-[11px] font-semibold text-[#374151] shadow-sm transition hover:border-[#D6DAE1] hover:bg-[#FCFCFD]"
+                    className="mt-2 inline-flex items-center gap-2 rounded-full border border-[var(--border-default)] bg-[var(--bg-elevated)] px-2.5 py-1 text-[11px] font-semibold text-[var(--text-secondary)] shadow-sm transition hover:border-[var(--border-strong)] hover:bg-[var(--bg-elevated-strong)]"
                   >
                     <Shield className="h-4 w-4" />
                     Admin
@@ -230,95 +230,95 @@ export default async function PlatformSettingsPage({
         </div>
 
         <div className="mx-auto max-w-[920px] lg:hidden">
-          <div className="rounded-3xl border border-[#E5E7EB] dark:border-white/10 bg-white/92 p-4 shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur">
+          <div className="rounded-3xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-4 shadow-[var(--shadow-md)] backdrop-blur">
           <div className="mb-3 flex items-center gap-3">
             <Link
               href="/app/crm"
-              className="inline-flex items-center gap-1.5 rounded-full border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-1 text-xs font-semibold text-[#374151] transition hover:border-[#D6DAE1] hover:bg-[#FCFCFD]"
+              className="inline-flex items-center gap-1.5 rounded-full border border-[var(--border-default)] bg-[var(--bg-elevated)] px-3 py-1 text-xs font-semibold text-[var(--text-secondary)] transition hover:border-[var(--border-strong)] hover:bg-[var(--bg-elevated-strong)]"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
               Back to CRM
             </Link>
-            <div className="inline-flex items-center rounded-full border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] px-3 py-0.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#6B7280] dark:text-white/55">
+            <div className="inline-flex items-center rounded-full border border-[var(--border-default)] bg-[var(--bg-elevated-strong)] px-3 py-0.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
               Account settings
             </div>
           </div>
-          <h1 className="text-[28px] font-semibold tracking-[-0.03em] text-[#111827]">
+          <h1 className="text-[28px] font-semibold tracking-[-0.03em] text-[var(--text-primary)]">
             Settings
           </h1>
-          <p className="mt-1 max-w-[560px] text-[13px] leading-4 text-[#6B7280] dark:text-white/55">
+          <p className="mt-1 max-w-[560px] text-[13px] leading-4 text-[var(--text-tertiary)]">
             Manage account-level destinations separately from workspace configuration.
           </p>
 
           <div className="mt-3 grid grid-cols-1 gap-2">
             <Link
               href="/app/profile"
-              className="group rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3 shadow-[0_10px_30px_rgba(15,23,42,0.04)] transition hover:border-[#D6DAE1] hover:bg-[#FCFCFD]"
+              className="group rounded-xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-3 shadow-[var(--shadow)] transition hover:border-[var(--border-strong)] hover:bg-[var(--bg-elevated-strong)]"
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="flex min-w-0 items-center gap-2.5">
-                  <div className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#F3F4F6] text-[#4B5563] dark:text-white/70">
+                  <div className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--bg-elevated-strong)] text-[var(--text-tertiary)]">
                     <UserCircle2 className="h-[18px] w-[18px]" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-base font-semibold leading-tight text-[#111827]">Profile</div>
-                    <div className="truncate text-xs leading-4 text-[#6B7280] dark:text-white/55">
+                    <div className="text-base font-semibold leading-tight text-[var(--text-primary)]">Profile</div>
+                    <div className="truncate text-xs leading-4 text-[var(--text-tertiary)]">
                       View your account identity and contact details.
                     </div>
                   </div>
                 </div>
-                <ChevronRight className="h-4 w-4 shrink-0 text-[#9CA3AF] dark:text-white/40 transition group-hover:text-[#4B5563]" />
+                <ChevronRight className="h-4 w-4 shrink-0 text-[var(--text-muted)] transition group-hover:text-[var(--text-secondary)]" />
               </div>
             </Link>
 
             <Link
               href={`/b/${workspace.slug}/settings`}
-              className="group rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3 shadow-[0_10px_30px_rgba(15,23,42,0.04)] transition hover:border-[#D6DAE1] hover:bg-[#FCFCFD]"
+              className="group rounded-xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-3 shadow-[var(--shadow)] transition hover:border-[var(--border-strong)] hover:bg-[var(--bg-elevated-strong)]"
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="flex min-w-0 items-center gap-2.5">
-                  <div className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#F3F4F6] text-[#4B5563] dark:text-white/70">
+                  <div className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--bg-elevated-strong)] text-[var(--text-tertiary)]">
                     <Settings className="h-[18px] w-[18px]" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-base font-semibold leading-tight text-[#111827]">Workspace settings</div>
-                    <div className="truncate text-xs leading-4 text-[#6B7280] dark:text-white/55">
+                    <div className="text-base font-semibold leading-tight text-[var(--text-primary)]">Workspace settings</div>
+                    <div className="truncate text-xs leading-4 text-[var(--text-tertiary)]">
                       Configure business details, team access, invites, and statuses for {workspace.name || workspace.slug}.
                     </div>
                   </div>
                 </div>
-                <ChevronRight className="h-4 w-4 shrink-0 text-[#9CA3AF] dark:text-white/40 transition group-hover:text-[#4B5563]" />
+                <ChevronRight className="h-4 w-4 shrink-0 text-[var(--text-muted)] transition group-hover:text-[var(--text-secondary)]" />
               </div>
             </Link>
 
             <Link
               href="/app/settings/billing"
-              className="group rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3 shadow-[0_10px_30px_rgba(15,23,42,0.04)] transition hover:border-[#D6DAE1] hover:bg-[#FCFCFD]"
+              className="group rounded-xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-3 shadow-[var(--shadow)] transition hover:border-[var(--border-strong)] hover:bg-[var(--bg-elevated-strong)]"
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="flex min-w-0 items-center gap-2.5">
-                  <div className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#F3F4F6] text-[#4B5563] dark:text-white/70">
+                  <div className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--bg-elevated-strong)] text-[var(--text-tertiary)]">
                     <CreditCard className="h-[18px] w-[18px]" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-base font-semibold leading-tight text-[#111827]">Billing</div>
-                    <div className="truncate text-xs leading-4 text-[#6B7280] dark:text-white/55">
+                    <div className="text-base font-semibold leading-tight text-[var(--text-primary)]">Billing</div>
+                    <div className="truncate text-xs leading-4 text-[var(--text-tertiary)]">
                       Manage your subscription, plan and limits.
                     </div>
                   </div>
                 </div>
-                <ChevronRight className="h-4 w-4 shrink-0 text-[#9CA3AF] dark:text-white/40 transition group-hover:text-[#4B5563]" />
+                <ChevronRight className="h-4 w-4 shrink-0 text-[var(--text-muted)] transition group-hover:text-[var(--text-secondary)]" />
               </div>
             </Link>
           </div>
 
-          <div className="mt-3 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] p-3">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF] dark:text-white/40">
+          <div className="mt-3 rounded-xl border border-[var(--border-default)] bg-[var(--bg-elevated-strong)] p-3">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-muted)]">
               Signed in as
             </div>
             <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
-              <div className="text-sm font-semibold text-[#111827]">{accountLabel}</div>
-              <div className="text-xs text-[#6B7280] dark:text-white/55">
+              <div className="text-sm font-semibold text-[var(--text-primary)]">{accountLabel}</div>
+              <div className="text-xs text-[var(--text-tertiary)]">
                 Workspace: {workspace.name || workspace.slug}
               </div>
             </div>
@@ -326,7 +326,7 @@ export default async function PlatformSettingsPage({
             {adminHref ? (
               <Link
                 href={adminHref}
-                className="mt-2 inline-flex items-center gap-2 rounded-full border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-2.5 py-1 text-[11px] font-semibold text-[#374151] shadow-sm transition hover:border-[#D6DAE1] hover:bg-[#FCFCFD]"
+                className="mt-2 inline-flex items-center gap-2 rounded-full border border-[var(--border-default)] bg-[var(--bg-elevated)] px-2.5 py-1 text-[11px] font-semibold text-[var(--text-secondary)] shadow-sm transition hover:border-[var(--border-strong)] hover:bg-[var(--bg-elevated-strong)]"
               >
                 <Shield className="h-4 w-4" />
                 Admin

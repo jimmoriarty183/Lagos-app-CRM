@@ -102,12 +102,12 @@ export default function ProfileEditor({ initial, workspace, identities }: Props)
   }
 
   return (
-    <main className="min-h-screen bg-[linear-gradient(180deg,#F8FAFC_0%,#EEF2FF_100%)] text-[#111827]">
+    <main className="min-h-screen text-[var(--text-primary)]">
       <div className="mx-auto max-w-[980px] px-4 pb-10 pt-10 sm:px-6">
-        <div className="rounded-[20px] border border-[#E5E7EB] dark:border-white/10 bg-white/92 p-4 shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur">
+        <div className="rounded-[20px] border border-[var(--border-default)] bg-[var(--bg-elevated)] p-4 shadow-[var(--shadow-md)] backdrop-blur">
           <Link
             href="/app/settings"
-            className="inline-flex items-center gap-2 rounded-full border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-2 text-[12px] font-semibold text-[#374151] shadow-sm transition hover:border-[#D6DAE1] hover:bg-[#FCFCFD]"
+            className="inline-flex items-center gap-2 rounded-full border border-[var(--border-default)] bg-[var(--bg-elevated)] px-3 py-2 text-[12px] font-semibold text-[var(--text-secondary)] shadow-sm transition hover:border-[var(--border-strong)] hover:bg-[var(--bg-elevated-strong)]"
           >
             <ChevronLeft className="h-4 w-4" />
             Back to settings
@@ -115,20 +115,20 @@ export default function ProfileEditor({ initial, workspace, identities }: Props)
 
           <div className="mt-4 flex flex-wrap items-center gap-3">
             <div className="min-w-0 flex-1">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF] dark:text-white/40">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-muted)]">
                 Account profile
               </div>
-              <h1 className="mt-1 text-[22px] font-semibold tracking-[-0.03em] text-[#111827]">
+              <h1 className="mt-1 text-[22px] font-semibold tracking-[-0.03em] text-[var(--text-primary)]">
                 {displayName}
               </h1>
-              <p className="mt-2 text-sm leading-6 text-[#6B7280] dark:text-white/55">
+              <p className="mt-2 text-sm leading-6 text-[var(--text-tertiary)]">
                 Manage personal identity data for owner/manager analytics and team operations.
               </p>
               <button
                 type="button"
                 onClick={() => fileRef.current?.click()}
                 disabled={isUploading}
-                className="mt-3 inline-flex items-center rounded-full border border-[#D0D5DD] bg-white dark:bg-white/[0.03] px-3 py-1.5 text-[12px] font-semibold text-[#344054] transition hover:border-[#98A2B3] hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06] disabled:opacity-60"
+                className="mt-3 inline-flex items-center rounded-full border border-[var(--border-default)] bg-[var(--bg-elevated)] px-3 py-1.5 text-[12px] font-semibold text-[var(--text-secondary)] transition hover:border-[var(--border-strong)] hover:bg-[var(--bg-elevated-strong)] disabled:opacity-60"
               >
                 {isUploading ? "Uploading..." : "Upload photo"}
               </button>
@@ -147,7 +147,7 @@ export default function ProfileEditor({ initial, workspace, identities }: Props)
 
             {/* Large avatar preview — top-right of header */}
             {avatarUrl && (
-              <div className="hidden self-center overflow-hidden rounded-3xl border border-[#E5E7EB] dark:border-white/10 shadow-md sm:block">
+              <div className="hidden self-center overflow-hidden rounded-3xl border border-[var(--border-default)] shadow-md sm:block">
                 <img
                   src={avatarUrl}
                   alt="Profile photo large"
@@ -162,8 +162,8 @@ export default function ProfileEditor({ initial, workspace, identities }: Props)
               className={[
                 "mt-4 rounded-xl border px-3 py-2 text-sm",
                 message.type === "ok"
-                  ? "border-[#ABEFC6] bg-[#ECFDF3] text-[#067647]"
-                  : "border-[#FECDCA] bg-[#FEF3F2] text-[#B42318]",
+                  ? "border-[color:var(--success-500)]/40 bg-[color:var(--success-500)]/10 text-[var(--success-500)]"
+                  : "border-[color:var(--error-500)]/40 bg-[color:var(--error-500)]/10 text-[var(--error-500)]",
               ].join(" ")}
             >
               {message.text}
@@ -171,64 +171,64 @@ export default function ProfileEditor({ initial, workspace, identities }: Props)
           ) : null}
 
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            <label className="rounded-[16px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF] dark:text-white/40">
+            <label className="rounded-[16px] border border-[var(--border-default)] bg-[var(--bg-elevated)] p-3">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-muted)]">
                 First name
               </div>
               <input
                 value={firstName}
                 onChange={(event) => setFirstName(event.target.value)}
-                className="mt-2 w-full rounded-lg border border-[#D0D5DD] px-3 py-2 text-sm text-[#111827] outline-none focus:border-[#A4BCFD] focus:ring-2 focus:ring-[#EEF4FF]"
+                className="mt-2 w-full rounded-lg px-3 py-2 text-sm outline-none"
                 placeholder="First name"
               />
             </label>
 
-            <label className="rounded-[16px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF] dark:text-white/40">
+            <label className="rounded-[16px] border border-[var(--border-default)] bg-[var(--bg-elevated)] p-3">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-muted)]">
                 Last name
               </div>
               <input
                 value={lastName}
                 onChange={(event) => setLastName(event.target.value)}
-                className="mt-2 w-full rounded-lg border border-[#D0D5DD] px-3 py-2 text-sm text-[#111827] outline-none focus:border-[#A4BCFD] focus:ring-2 focus:ring-[#EEF4FF]"
+                className="mt-2 w-full rounded-lg px-3 py-2 text-sm outline-none"
                 placeholder="Last name"
               />
             </label>
           </div>
 
           <div className="mt-4 grid gap-3 sm:grid-cols-3">
-            <div className="rounded-[16px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3 shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
-              <div className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-[#F3F4F6] text-[#4B5563] dark:text-white/70">
+            <div className="rounded-[16px] border border-[var(--border-default)] bg-[var(--bg-elevated)] p-3 shadow-[var(--shadow)]">
+              <div className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-[var(--bg-elevated-strong)] text-[var(--text-tertiary)]">
                 <Mail className="h-5 w-5" />
               </div>
-              <div className="mt-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF] dark:text-white/40">
+              <div className="mt-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-muted)]">
                 Email
               </div>
-              <div className="mt-2 text-sm font-semibold text-[#111827]">
+              <div className="mt-2 text-sm font-semibold text-[var(--text-primary)]">
                 {initial.email || "Not provided"}
               </div>
             </div>
 
-            <label className="rounded-[16px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3 shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
-              <div className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-[#F3F4F6] text-[#4B5563] dark:text-white/70">
+            <label className="rounded-[16px] border border-[var(--border-default)] bg-[var(--bg-elevated)] p-3 shadow-[var(--shadow)]">
+              <div className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-[var(--bg-elevated-strong)] text-[var(--text-tertiary)]">
                 <Phone className="h-5 w-5" />
               </div>
-              <div className="mt-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF] dark:text-white/40">
+              <div className="mt-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-muted)]">
                 Phone
               </div>
               <input
                 value={phone}
                 onChange={(event) => setPhone(event.target.value)}
-                className="mt-2 w-full rounded-lg border border-[#D0D5DD] px-3 py-2 text-sm text-[#111827] outline-none focus:border-[#A4BCFD] focus:ring-2 focus:ring-[#EEF4FF]"
+                className="mt-2 w-full rounded-lg px-3 py-2 text-sm outline-none"
                 placeholder="Phone number"
               />
             </label>
 
-            <label className="rounded-[16px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3 shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
-              <div className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-[#F3F4F6] text-[#4B5563] dark:text-white/70">
+            <label className="rounded-[16px] border border-[var(--border-default)] bg-[var(--bg-elevated)] p-3 shadow-[var(--shadow)]">
+              <div className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-[var(--bg-elevated-strong)] text-[var(--text-tertiary)]">
                 <CalendarDays className="h-5 w-5" />
               </div>
-              <div className="mt-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF] dark:text-white/40">
+              <div className="mt-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-muted)]">
                 Date of birth
               </div>
               <StyledDateInput
@@ -241,64 +241,64 @@ export default function ProfileEditor({ initial, workspace, identities }: Props)
             </label>
           </div>
 
-          <label className="mt-4 block rounded-[16px] border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3">
-            <div className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-[#F3F4F6] text-[#4B5563] dark:text-white/70">
+          <label className="mt-4 block rounded-[16px] border border-[var(--border-default)] bg-[var(--bg-elevated)] p-3">
+            <div className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-[var(--bg-elevated-strong)] text-[var(--text-tertiary)]">
               <UserCircle2 className="h-5 w-5" />
             </div>
-            <div className="mt-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF] dark:text-white/40">
+            <div className="mt-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-muted)]">
               About
             </div>
             <textarea
               value={bio}
               onChange={(event) => setBio(event.target.value)}
               rows={4}
-              className="mt-2 w-full resize-y rounded-lg border border-[#D0D5DD] px-3 py-2 text-sm text-[#111827] outline-none focus:border-[#A4BCFD] focus:ring-2 focus:ring-[#EEF4FF]"
+              className="mt-2 w-full resize-y rounded-lg px-3 py-2 text-sm outline-none"
               placeholder="Short note about manager/owner"
             />
           </label>
 
           <div className="mt-4 flex items-center justify-between gap-3">
-            <div className="text-xs text-[#6B7280] dark:text-white/55">
+            <div className="text-xs text-[var(--text-tertiary)]">
               Your profile is used in manager analytics, assignments, and owner dashboards.
             </div>
             <button
               type="button"
               disabled={isSaving}
               onClick={() => void handleSave()}
-              className="inline-flex h-10 items-center justify-center rounded-xl border border-[#111827] bg-[#111827] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#1F2937] disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex h-10 items-center justify-center rounded-xl bg-[var(--brand-600)] px-4 text-sm font-semibold text-[var(--text-on-brand)] shadow-[0_4px_12px_rgba(91,91,179,0.25)] transition hover:bg-[var(--brand-700)] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isSaving ? "Saving..." : "Save profile"}
             </button>
           </div>
 
-          <div className="mt-4 rounded-[16px] border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] p-3">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF] dark:text-white/40">
+          <div className="mt-4 rounded-[16px] border border-[var(--border-default)] bg-[var(--bg-elevated-strong)] p-3">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-muted)]">
               Current workspace
             </div>
-            <div className="mt-2 text-sm font-semibold text-[#111827]">
+            <div className="mt-2 text-sm font-semibold text-[var(--text-primary)]">
               {workspace.name}
             </div>
-            <div className="mt-1 text-sm text-[#6B7280] dark:text-white/55">
+            <div className="mt-1 text-sm text-[var(--text-tertiary)]">
               Workspace-level controls stay in workspace settings.
             </div>
             <Link
               href={`/b/${workspace.slug}/settings`}
-              className="mt-3 inline-flex items-center rounded-full border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-2 text-[12px] font-semibold text-[#374151] shadow-sm transition hover:border-[#D6DAE1] hover:bg-[#FCFCFD]"
+              className="mt-3 inline-flex items-center rounded-full border border-[var(--border-default)] bg-[var(--bg-elevated)] px-3 py-2 text-[12px] font-semibold text-[var(--text-secondary)] shadow-sm transition hover:border-[var(--border-strong)] hover:bg-[var(--bg-elevated-strong)]"
             >
               Open workspace settings
             </Link>
           </div>
 
-          <div className="mt-3 rounded-[16px] border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] p-3">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF] dark:text-white/40">
+          <div className="mt-3 rounded-[16px] border border-[var(--border-default)] bg-[var(--bg-elevated-strong)] p-3">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-muted)]">
               Account identifiers
             </div>
-            <div className="mt-2 text-sm text-[#6B7280] dark:text-white/55">business_id</div>
-            <div className="mt-1 break-all rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-2 font-mono text-xs text-[#111827]">
+            <div className="mt-2 text-sm text-[var(--text-tertiary)]">business_id</div>
+            <div className="mt-1 break-all rounded-lg border border-[var(--border-default)] bg-[var(--bg-elevated)] px-3 py-2 font-mono text-xs text-[var(--text-primary)]">
               {identities.businessId}
             </div>
-            <div className="mt-3 text-sm text-[#6B7280] dark:text-white/55">user_id</div>
-            <div className="mt-1 break-all rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-2 font-mono text-xs text-[#111827]">
+            <div className="mt-3 text-sm text-[var(--text-tertiary)]">user_id</div>
+            <div className="mt-1 break-all rounded-lg border border-[var(--border-default)] bg-[var(--bg-elevated)] px-3 py-2 font-mono text-xs text-[var(--text-primary)]">
               {identities.userId}
             </div>
           </div>

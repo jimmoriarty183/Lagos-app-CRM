@@ -60,9 +60,9 @@ function resolveMaxBusinesses(entitlements: Awaited<ReturnType<typeof listEntitl
 
 function SummaryItem({ label, value, valueClassName }: { label: string; value: string; valueClassName?: string }) {
   return (
-    <div className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-2.5">
-      <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF] dark:text-white/40">{label}</div>
-      <div className={`mt-1 text-sm font-semibold leading-tight ${valueClassName ?? "text-[#111827]"}`}>{value}</div>
+    <div className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-elevated)] px-3 py-2.5">
+      <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-muted)]">{label}</div>
+      <div className={`mt-1 text-sm font-semibold leading-tight ${valueClassName ?? "text-[var(--text-primary)]"}`}>{value}</div>
     </div>
   );
 }
@@ -255,26 +255,26 @@ export default async function BillingSettingsPage({
         : `${ownerBusinessesUsed} / ${maxBusinesses}`;
 
   const content = (
-    <div className="rounded-3xl border border-[#E5E7EB] dark:border-white/10 bg-white/92 p-4 shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur">
+    <div className="rounded-3xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4 shadow-[var(--shadow-md)] dark:shadow-none backdrop-blur">
       <Link
         href="/app/settings"
-        className="inline-flex items-center gap-2 rounded-full border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-1.5 text-xs font-semibold text-[#374151] transition hover:border-[#D6DAE1] hover:bg-[#FCFCFD]"
+        className="inline-flex items-center gap-2 rounded-full border border-[var(--border-default)] bg-[var(--bg-elevated)] px-3 py-1.5 text-xs font-semibold text-[var(--text-secondary)] transition hover:border-[var(--border-strong)] hover:bg-[var(--bg-elevated-strong)]"
       >
         <ArrowLeft className="h-3.5 w-3.5" />
         Back
       </Link>
-      <div className="mt-2 inline-flex items-center rounded-full border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] px-3 py-0.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#6B7280] dark:text-white/55">
+      <div className="mt-2 inline-flex items-center rounded-full border border-[var(--border-default)] bg-[var(--bg-elevated-strong)] px-3 py-0.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
         Account settings
       </div>
-      <h1 className="mt-2 text-[28px] font-semibold tracking-[-0.03em] text-[#111827]">Billing</h1>
-      <p className="mt-1 max-w-[640px] text-[13px] leading-4 text-[#6B7280] dark:text-white/55">
+      <h1 className="mt-2 text-[28px] font-semibold tracking-[-0.03em] text-[var(--text-primary)]">Billing</h1>
+      <p className="mt-1 max-w-[640px] text-[13px] leading-4 text-[var(--text-tertiary)]">
         Review current plan, renewal details, and workspace business capacity.
       </p>
 
       {role !== "OWNER" ? (
-        <div className="mt-3 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] p-3">
-          <div className="text-sm font-semibold text-[#111827]">Invited workspace member</div>
-          <p className="mt-1 text-[13px] leading-5 text-[#6B7280] dark:text-white/55">
+        <div className="mt-3 rounded-xl border border-[var(--border-default)] bg-[var(--bg-elevated-strong)] p-3">
+          <div className="text-sm font-semibold text-[var(--text-primary)]">Invited workspace member</div>
+          <p className="mt-1 text-[13px] leading-5 text-[var(--text-tertiary)]">
             Billing and subscription details are visible only to the workspace owner.
           </p>
         </div>
@@ -283,7 +283,7 @@ export default async function BillingSettingsPage({
       {role === "OWNER" ? (
         <>
           {loadError ? (
-            <div className="mt-3 rounded-xl border border-[#FECACA] bg-[#FEF2F2] dark:bg-rose-500/10 p-3 text-[13px] leading-5 text-[#991B1B]">
+            <div className="mt-3 rounded-xl border border-[color:var(--error-500)]/40 bg-[color:var(--error-500)]/10 p-3 text-[13px] leading-5 text-[var(--error-500)]">
               {loadError}
             </div>
           ) : null}
@@ -300,9 +300,9 @@ export default async function BillingSettingsPage({
           ) : null}
 
           {!accountId && !accountLookupFailed ? (
-            <div className="mt-3 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] p-3">
-              <div className="text-base font-semibold text-[#111827]">Billing account not configured</div>
-              <div className="mt-1 text-sm leading-5 text-[#6B7280] dark:text-white/55">
+            <div className="mt-3 rounded-xl border border-[var(--border-default)] bg-[var(--bg-elevated-strong)] p-3">
+              <div className="text-base font-semibold text-[var(--text-primary)]">Billing account not configured</div>
+              <div className="mt-1 text-sm leading-5 text-[var(--text-tertiary)]">
                 No billing account was found for this workspace owner yet.
               </div>
             </div>
@@ -310,19 +310,19 @@ export default async function BillingSettingsPage({
 
           <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
             <SummaryItem label="Current plan" value={planName} />
-            <SummaryItem label="Subscription status" value={statusLabel} valueClassName={isNegativeStatus ? "text-red-500" : undefined} />
+            <SummaryItem label="Subscription status" value={statusLabel} valueClassName={isNegativeStatus ? "text-[var(--error-500)]" : undefined} />
             <SummaryItem label="Billing interval" value={intervalLabel} />
             <SummaryItem label={renewalLabel} value={renewalDate} />
             <SummaryItem label="Auto-renew" value={autoRenewLabel} />
             <SummaryItem label="Business capacity" value={usageLabel} />
           </div>
 
-          <div className="mt-3 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] p-3">
-            <div className="flex items-center gap-2 text-sm font-semibold text-[#111827]">
-              <Sparkles className="h-4 w-4 text-[#4B5563] dark:text-white/70" />
+          <div className="mt-3 rounded-xl border border-[var(--border-default)] bg-[var(--bg-elevated-strong)] p-3">
+            <div className="flex items-center gap-2 text-sm font-semibold text-[var(--text-primary)]">
+              <Sparkles className="h-4 w-4 text-[var(--text-tertiary)]" />
               Payment model
             </div>
-            <p className="mt-1 text-sm leading-5 text-[#6B7280] dark:text-white/55">
+            <p className="mt-1 text-sm leading-5 text-[var(--text-tertiary)]">
               Subscription is recurring and renews automatically every billing cycle unless canceled.
             </p>
           </div>
@@ -351,7 +351,7 @@ export default async function BillingSettingsPage({
             />
             <Link
               href="/app/settings"
-              className="inline-flex items-center gap-2 rounded-full border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-1.5 text-sm font-semibold text-[#374151] transition hover:border-[#D6DAE1] hover:bg-[#FCFCFD]"
+              className="inline-flex items-center gap-2 rounded-full border border-[var(--border-default)] bg-[var(--bg-elevated)] px-3 py-1.5 text-sm font-semibold text-[var(--text-secondary)] transition hover:border-[var(--border-strong)] hover:bg-[var(--bg-elevated-strong)]"
             >
               <ArrowLeft className="h-4 w-4" />
               Back to settings
@@ -363,7 +363,7 @@ export default async function BillingSettingsPage({
   );
 
   return (
-    <main className="min-h-screen bg-[linear-gradient(180deg,#F8FAFC_0%,#EEF2FF_100%)] text-[#111827]">
+    <main className="min-h-screen text-[var(--text-primary)]">
       <TeamAccessTopBar
         ordersHref={`/b/${workspace.slug}`}
         userLabel={currentUserName}

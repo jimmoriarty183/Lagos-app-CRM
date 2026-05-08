@@ -156,6 +156,44 @@ export function OnboardingPlanPicker({
   const [busyPlan, setBusyPlan] = useState<PlanCode | null>(null);
   const [error, setError] = useState("");
   const [autoFired, setAutoFired] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
+
+  async function handleSignOut() {
+    if (signingOut) return;
+    setSigningOut(true);
+    try {
+      document.cookie = "u=; path=/; max-age=0";
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        cache: "no-store",
+        credentials: "include",
+      });
+    } catch {
+      // Ignore network errors — proceed to wipe client state and redirect.
+    }
+    try {
+      if (typeof window !== "undefined") {
+        const wipeStorage = (storage: Storage) => {
+          const removable: string[] = [];
+          for (let i = 0; i < storage.length; i += 1) {
+            const key = storage.key(i);
+            if (!key) continue;
+            if (key.startsWith("sb-") || key.startsWith("supabase.")) {
+              removable.push(key);
+            }
+          }
+          removable.forEach((key) => storage.removeItem(key));
+        };
+        wipeStorage(window.localStorage);
+        wipeStorage(window.sessionStorage);
+      }
+    } catch {
+      // localStorage may be unavailable in private mode; fall through.
+    }
+    if (typeof window !== "undefined") {
+      window.location.replace("/login");
+    }
+  }
 
   async function handleSelectPlan(plan: PlanCode) {
     if (busyPlan) return;
@@ -213,15 +251,15 @@ export function OnboardingPlanPicker({
           <span className="rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-1.5 font-medium text-slate-600 dark:text-white/70">
             Signed in as <span className="font-semibold text-slate-900 dark:text-white">{userEmail || "—"}</span>
           </span>
-          <form action="/api/auth/logout" method="post">
-            <button
-              type="submit"
-              className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-1.5 font-medium text-slate-600 dark:text-white/70 transition hover:border-slate-300 dark:hover:border-white/20 hover:bg-slate-50 dark:hover:bg-white/[0.06]"
-            >
-              <LogOut className="h-3.5 w-3.5" />
-              Sign out
-            </button>
-          </form>
+          <button
+            type="button"
+            onClick={() => void handleSignOut()}
+            disabled={signingOut}
+            className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-1.5 font-medium text-slate-600 dark:text-white/70 transition hover:border-slate-300 dark:hover:border-white/20 hover:bg-slate-50 dark:hover:bg-white/[0.06] disabled:cursor-wait disabled:opacity-70"
+          >
+            <LogOut className="h-3.5 w-3.5" />
+            {signingOut ? "Signing out..." : "Sign out"}
+          </button>
         </div>
       </header>
 

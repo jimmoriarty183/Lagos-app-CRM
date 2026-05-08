@@ -264,7 +264,7 @@ export default function DesktopSidebarFilters({
       : "ALL";
 
   const inputCls =
-    "h-9 w-full rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm font-medium text-[#374151] outline-none transition placeholder:text-[#9CA3AF] focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15";
+    "h-9 w-full rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] pr-3 text-sm font-medium text-[#374151] dark:text-white/85 outline-none transition placeholder:text-[#9CA3AF] dark:placeholder:text-white/40 focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15";
 
   const toggleStatus = (status: SidebarStatus) => {
     if (!statusTouched) setStatusValues(baseStatusValues);
@@ -402,7 +402,7 @@ export default function DesktopSidebarFilters({
             </label>
             <button
               type="submit"
-              className="inline-flex h-9 shrink-0 items-center justify-center rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm font-semibold text-[#374151] transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06] hover:text-[#1F2937] dark:hover:text-white disabled:cursor-not-allowed disabled:opacity-45"
+              className="inline-flex h-9 shrink-0 items-center justify-center rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm font-semibold text-[#374151] dark:text-white/85 transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06] hover:text-[#1F2937] dark:hover:text-white disabled:cursor-not-allowed disabled:opacity-45"
               disabled={!customRangeReady}
             >
               <span className="leading-none">Search</span>
@@ -422,7 +422,7 @@ export default function DesktopSidebarFilters({
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="inline-flex h-9 w-full items-center justify-between rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm font-medium text-[#374151] outline-none transition hover:border-[var(--brand-200)] focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
+                className="inline-flex h-9 w-full items-center justify-between rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm font-medium text-[#374151] dark:text-white/85 outline-none transition hover:border-[var(--brand-200)] dark:hover:border-[var(--brand-500)]/40 focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
               >
                 <span className="truncate">
                   {getStatusTriggerLabel(
@@ -451,7 +451,7 @@ export default function DesktopSidebarFilters({
                         statusOptions.map((option) => option.value),
                       );
                     }}
-                    className="text-[11px] font-semibold text-[#374151] transition hover:text-[#1F2937] dark:hover:text-white"
+                    className="text-[11px] font-semibold text-[#374151] dark:text-white/85 transition hover:text-[#1F2937] dark:hover:text-white"
                   >
                     Select all
                   </button>
@@ -488,7 +488,7 @@ export default function DesktopSidebarFilters({
                     <DropdownMenuCheckboxItem
                       key={option.value}
                       checked={selectedStatusValues.includes(option.value)}
-                      className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#374151]"
+                      className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#374151] dark:text-white/85"
                       onSelect={(event) => event.preventDefault()}
                       onCheckedChange={() => toggleStatus(option.value)}
                       style={
@@ -533,7 +533,7 @@ export default function DesktopSidebarFilters({
                     <DropdownMenuCheckboxItem
                       key={option.value}
                       checked={selectedStatusValues.includes(option.value)}
-                      className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#374151]"
+                      className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#374151] dark:text-white/85"
                       onSelect={(event) => event.preventDefault()}
                       onCheckedChange={() => toggleStatus(option.value)}
                       style={
@@ -573,7 +573,7 @@ export default function DesktopSidebarFilters({
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="inline-flex h-9 w-full items-center justify-between rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm font-medium text-[#374151] outline-none transition hover:border-[var(--brand-200)] focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
+                className="inline-flex h-9 w-full items-center justify-between rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm font-medium text-[#374151] dark:text-white/85 outline-none transition hover:border-[var(--brand-200)] dark:hover:border-[var(--brand-500)]/40 focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
               >
                 <span className="truncate">
                   {DASHBOARD_RANGE_OPTIONS.find(
@@ -595,7 +595,7 @@ export default function DesktopSidebarFilters({
                     <DropdownMenuRadioItem
                       key={option.value}
                       value={option.value}
-                      className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#374151] data-[state=checked]:bg-[var(--brand-50)] data-[state=checked]:font-semibold data-[state=checked]:text-[var(--brand-600)]"
+                      className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#374151] dark:text-white/85 data-[state=checked]:bg-[var(--brand-50)] dark:data-[state=checked]:bg-[var(--brand-500)]/15 data-[state=checked]:font-semibold data-[state=checked]:text-[var(--brand-600)] dark:data-[state=checked]:text-[var(--brand-300)]"
                       onSelect={() => {
                         setRangeValue(option.value);
                         if (option.value !== "custom") {
@@ -656,7 +656,7 @@ export default function DesktopSidebarFilters({
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="inline-flex h-9 w-full items-center justify-between rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm font-medium text-[#374151] outline-none transition hover:border-[var(--brand-200)] focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
+                className="inline-flex h-9 w-full items-center justify-between rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm font-medium text-[#374151] dark:text-white/85 outline-none transition hover:border-[var(--brand-200)] dark:hover:border-[var(--brand-500)]/40 focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
               >
                 <span className="truncate">
                   {getManagerTriggerLabel(normalizedActorValue, actorOptions)}
@@ -700,7 +700,7 @@ export default function DesktopSidebarFilters({
                     <DropdownMenuRadioItem
                       key={option.value}
                       value={option.value}
-                      className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#374151] data-[state=checked]:bg-[var(--brand-50)] data-[state=checked]:font-semibold data-[state=checked]:text-[var(--brand-600)]"
+                      className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#374151] dark:text-white/85 data-[state=checked]:bg-[var(--brand-50)] dark:data-[state=checked]:bg-[var(--brand-500)]/15 data-[state=checked]:font-semibold data-[state=checked]:text-[var(--brand-600)] dark:data-[state=checked]:text-[var(--brand-300)]"
                       onSelect={() => {
                         setActorValue(option.value);
                         setActorMenuOpen(false);
@@ -735,7 +735,7 @@ export default function DesktopSidebarFilters({
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="inline-flex h-9 w-full items-center justify-between rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm font-medium text-[#374151] outline-none transition hover:border-[var(--brand-200)] focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
+                className="inline-flex h-9 w-full items-center justify-between rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm font-medium text-[#374151] dark:text-white/85 outline-none transition hover:border-[var(--brand-200)] dark:hover:border-[var(--brand-500)]/40 focus:border-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-600)]/15"
               >
                 <span className="truncate">
                   {SORT_OPTIONS.find((option) => option.value === sortValue)
@@ -756,7 +756,7 @@ export default function DesktopSidebarFilters({
                     <DropdownMenuRadioItem
                       key={option.value}
                       value={option.value}
-                      className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#374151] data-[state=checked]:bg-[var(--brand-50)] data-[state=checked]:font-semibold data-[state=checked]:text-[var(--brand-600)]"
+                      className="rounded-lg py-2 pr-3 pl-8 text-sm font-medium text-[#374151] dark:text-white/85 data-[state=checked]:bg-[var(--brand-50)] dark:data-[state=checked]:bg-[var(--brand-500)]/15 data-[state=checked]:font-semibold data-[state=checked]:text-[var(--brand-600)] dark:data-[state=checked]:text-[var(--brand-300)]"
                       onSelect={() => {
                         setSortValue(option.value);
                         setSortMenuOpen(false);
@@ -774,7 +774,7 @@ export default function DesktopSidebarFilters({
 
         <button
           type="submit"
-          className="inline-flex h-9 w-full items-center justify-center rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm font-semibold text-[#374151] shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06] hover:text-[#1F2937] dark:hover:text-white disabled:cursor-not-allowed disabled:opacity-45"
+          className="inline-flex h-9 w-full items-center justify-center rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm font-semibold text-[#374151] dark:text-white/85 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06] hover:text-[#1F2937] dark:hover:text-white disabled:cursor-not-allowed disabled:opacity-45"
           disabled={!customRangeReady}
         >
           <span className="leading-none">
