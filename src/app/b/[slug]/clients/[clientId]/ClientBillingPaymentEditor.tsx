@@ -340,7 +340,7 @@ export function ClientBillingPaymentEditor({
                 onChange={(event) => setPrimaryEmail(event.currentTarget.value)}
                 disabled={primaryEmailSource === "primary_contact"}
                 placeholder="Primary communication email"
-                className="h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none disabled:bg-slate-100"
+                className="h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm text-slate-900 dark:text-white outline-none disabled:bg-slate-100 dark:disabled:bg-white/[0.06]"
               />
             </label>
 
@@ -374,7 +374,7 @@ export function ClientBillingPaymentEditor({
                 onChange={(event) => setInvoiceEmail(event.currentTarget.value)}
                 disabled={invoiceEmailSource === "primary_contact"}
                 placeholder="Invoices and billing email"
-                className="h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm outline-none disabled:bg-slate-100"
+                className="h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-sm text-slate-900 dark:text-white outline-none disabled:bg-slate-100 dark:disabled:bg-white/[0.06]"
               />
             </label>
           </div>
@@ -385,10 +385,10 @@ export function ClientBillingPaymentEditor({
         </div>
 
         {errorText ? (
-          <div className="text-sm font-medium text-rose-700">{errorText}</div>
+          <div className="text-sm font-medium text-rose-700 dark:text-rose-300">{errorText}</div>
         ) : null}
         {message ? (
-          <div className="text-sm font-medium text-emerald-700">{message}</div>
+          <div className="text-sm font-medium text-emerald-700 dark:text-emerald-300">{message}</div>
         ) : null}
 
         <Button

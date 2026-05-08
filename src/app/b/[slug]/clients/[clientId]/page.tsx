@@ -791,7 +791,7 @@ export default async function ClientDetailPage({
 
             <div className="grid gap-3 xl:grid-cols-[minmax(0,1.85fr)_minmax(0,1fr)]">
               <div className="space-y-3">
-                <section className="rounded-[16px] border border-[var(--brand-200)] bg-[var(--brand-50)]/70 p-3.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                <section className="rounded-[16px] border border-[var(--brand-200)] dark:border-[var(--brand-500)]/30 bg-[var(--brand-50)]/70 dark:bg-[var(--brand-500)]/10 p-3.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)] dark:shadow-none">
                   <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
                     Revenue
                   </h2>
@@ -1031,7 +1031,7 @@ export default async function ClientDetailPage({
                 {isCleaning ? (
                   <section
                     id="access-notes"
-                    className="rounded-[16px] border border-[var(--brand-200)] bg-[var(--brand-50)]/60 dark:border-white/10 dark:bg-white/[0.04] p-3.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]"
+                    className="rounded-[16px] border border-[var(--brand-200)] bg-[var(--brand-50)]/60 dark:border-white/10 dark:bg-white/[0.04] p-3.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)] dark:shadow-none"
                   >
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
@@ -1574,7 +1574,7 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 
 function MetricStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg bg-white/90 dark:bg-white/[0.05] p-2.5">
+    <div className="rounded-lg bg-white/90 dark:bg-white/[0.05] p-2.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)] dark:shadow-none">
       <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-white/55">
         {label}
       </div>

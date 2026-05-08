@@ -90,7 +90,7 @@ export function ClientStickyContextBar({
 
   return (
     <div
-      className="sticky top-[78px] z-20 rounded-2xl border border-slate-200/80 bg-white/90 dark:bg-white/[0.05] p-3 shadow-[0_10px_24px_-18px_rgba(15,23,42,0.35)] backdrop-blur supports-[backdrop-filter]:bg-white/75"
+      className="sticky top-[78px] z-20 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white/90 dark:bg-white/[0.05] p-3 shadow-[0_10px_24px_-18px_rgba(15,23,42,0.35)] dark:shadow-none backdrop-blur supports-[backdrop-filter]:bg-white/75 dark:supports-[backdrop-filter]:bg-white/[0.05]"
       aria-hidden={false}
     >
       <div className="flex flex-wrap items-center justify-between gap-3">

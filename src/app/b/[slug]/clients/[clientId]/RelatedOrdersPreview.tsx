@@ -87,10 +87,10 @@ function StatusChip({ status }: { status: string | null }) {
 
   const classes =
     normalized === "PAID"
-      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+      ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300"
       : normalized === "CANCELLED" || normalized === "CANCELED"
-        ? "border-rose-200 bg-rose-50 text-rose-700"
-        : "border-amber-200 bg-amber-50 text-amber-700";
+        ? "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300"
+        : "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300";
 
   return (
     <span
@@ -196,7 +196,7 @@ export function RelatedOrdersPreview({
       {normalizedOrders.length === 0 ? (
         <p className="mt-3 text-sm text-slate-500 dark:text-white/55">No linked orders yet.</p>
       ) : (
-        <div className="mt-3 overflow-hidden rounded-xl bg-slate-50/70">
+        <div className="mt-3 overflow-hidden rounded-xl bg-slate-50/70 dark:bg-white/[0.04]">
           <table className="min-w-full divide-y divide-slate-200 dark:divide-white/10">
             <thead className="bg-slate-50 dark:bg-white/[0.04]">
               <tr>
@@ -222,7 +222,7 @@ export function RelatedOrdersPreview({
                 <tr
                   key={order.id}
                   onClick={() => setOpenOrderId(String(order.id))}
-                  className="cursor-pointer transition hover:bg-[#F8FAFF]"
+                  className="cursor-pointer transition hover:bg-[#F8FAFF] dark:hover:bg-white/[0.06]"
                 >
                   <td className="px-3 py-2 text-sm text-slate-700 dark:text-white/80">
                     <button
@@ -334,7 +334,7 @@ export function RelatedOrdersPreview({
               label="Due date"
               value={formatDate(selectedOrder.due_date)}
             />
-            <div className="rounded-2xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4 text-sm text-[#667085]">
+            <div className="rounded-2xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4 text-sm text-[#667085] dark:text-white/55">
               {isOrderLoading
                 ? "Loading full order details…"
                 : orderError
@@ -345,7 +345,7 @@ export function RelatedOrdersPreview({
                   <button
                     type="button"
                     onClick={() => loadOrderPreview(openOrderId)}
-                    className="inline-flex h-8 items-center rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-xs font-semibold text-[#374151] hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40"
+                    className="inline-flex h-8 items-center rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-xs font-semibold text-[#374151] dark:text-white/85 hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40"
                   >
                     Retry
                   </button>
@@ -354,7 +354,7 @@ export function RelatedOrdersPreview({
             </div>
           </div>
         ) : (
-          <div className="rounded-2xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4 text-sm text-[#667085]">
+          <div className="rounded-2xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4 text-sm text-[#667085] dark:text-white/55">
             {isOrderLoading
               ? "Loading order preview…"
               : orderError
@@ -384,7 +384,7 @@ function CardRow({ label, value }: { label: string; value: string }) {
       <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF] dark:text-white/40">
         {label}
       </div>
-      <div className="mt-1 text-sm font-semibold text-[#111827]">{value}</div>
+      <div className="mt-1 text-sm font-semibold text-[#111827] dark:text-white">{value}</div>
     </div>
   );
 }

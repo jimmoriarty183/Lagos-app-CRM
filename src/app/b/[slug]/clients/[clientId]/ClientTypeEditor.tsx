@@ -202,7 +202,7 @@ export function ClientTypeEditor({
           )}
 
           {errorText ? (
-            <div className="text-sm font-medium text-rose-700">{errorText}</div>
+            <div className="text-sm font-medium text-rose-700 dark:text-rose-300">{errorText}</div>
           ) : null}
 
           <AlertDialogFooter>

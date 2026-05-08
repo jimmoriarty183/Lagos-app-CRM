@@ -127,8 +127,8 @@ function formatMoney(value: number) {
 function ClientTypeBadge({ type }: { type: "individual" | "company" }) {
   const cls =
     type === "company"
-      ? "border-violet-200 bg-violet-50 text-violet-700"
-      : "border-teal-200 bg-teal-50 text-teal-700";
+      ? "border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-500/30 dark:bg-violet-500/10 dark:text-violet-300"
+      : "border-teal-200 bg-teal-50 text-teal-700 dark:border-teal-500/30 dark:bg-teal-500/10 dark:text-teal-300";
   return (
     <span
       className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold uppercase tracking-[0.08em] ${cls}`}
@@ -383,7 +383,7 @@ export function ClientDirectoryList({
                   </tr>
                 ) : (
                   normalizedRows.map((row) => (
-                    <tr key={row.id} className="hover:bg-[#FAFBFF]">
+                    <tr key={row.id} className="hover:bg-[#FAFBFF] dark:hover:bg-white/[0.05]">
                       <Cell>
                         <div className="font-semibold text-slate-900 dark:text-white">
                           {row.resolved_name}
@@ -618,11 +618,11 @@ export function ClientDirectoryList({
 
             {clientPreview.clientType === "company" ? (
               <section className="rounded-2xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4">
-                <div className="text-sm font-semibold text-[#111827]">
+                <div className="text-sm font-semibold text-[#111827] dark:text-white">
                   Key contacts
                 </div>
                 {clientPreview.contacts.length === 0 ? (
-                  <div className="mt-2 text-sm text-[#667085]">
+                  <div className="mt-2 text-sm text-[#667085] dark:text-white/55">
                     No active contacts
                   </div>
                 ) : (
@@ -632,7 +632,7 @@ export function ClientDirectoryList({
                         key={contact.id}
                         className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] p-3"
                       >
-                        <div className="text-sm font-semibold text-[#111827]">
+                        <div className="text-sm font-semibold text-[#111827] dark:text-white">
                           {contact.fullName}
                           {contact.isPrimary ? (
                             <span className="ml-2 inline-flex items-center rounded-full border border-[var(--brand-200)] bg-[var(--brand-50)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--brand-700)]">
@@ -640,7 +640,7 @@ export function ClientDirectoryList({
                             </span>
                           ) : null}
                         </div>
-                        <div className="mt-1 text-xs text-[#667085]">
+                        <div className="mt-1 text-xs text-[#667085] dark:text-white/55">
                           {[contact.jobTitle, contact.email, contact.phone]
                             .filter(Boolean)
                             .join(" • ")}
@@ -653,11 +653,11 @@ export function ClientDirectoryList({
             ) : null}
 
             <section className="rounded-2xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4">
-              <div className="text-sm font-semibold text-[#111827]">
+              <div className="text-sm font-semibold text-[#111827] dark:text-white">
                 Recent orders
               </div>
               {clientPreview.recentOrders.length === 0 ? (
-                <div className="mt-2 text-sm text-[#667085]">
+                <div className="mt-2 text-sm text-[#667085] dark:text-white/55">
                   No linked orders
                 </div>
               ) : (
@@ -670,17 +670,17 @@ export function ClientDirectoryList({
                       className="flex w-full items-center justify-between gap-3 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] px-3 py-2 text-left transition hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40"
                     >
                       <span className="min-w-0">
-                        <span className="block text-sm font-semibold text-[#111827]">
+                        <span className="block text-sm font-semibold text-[#111827] dark:text-white">
                           {formatDisplayOrderNumber({
                             orderNumber: order.orderNumber,
                             orderId: order.id,
                           })}
                         </span>
-                        <span className="block text-xs text-[#667085]">
+                        <span className="block text-xs text-[#667085] dark:text-white/55">
                           {order.status} • Due {formatDate(order.dueDate)}
                         </span>
                       </span>
-                      <span className="shrink-0 text-sm font-semibold text-[#111827]">
+                      <span className="shrink-0 text-sm font-semibold text-[#111827] dark:text-white">
                         {formatMoney(order.amount)}
                       </span>
                     </button>
@@ -690,7 +690,7 @@ export function ClientDirectoryList({
             </section>
           </>
         ) : (
-          <div className="rounded-2xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4 text-sm text-[#667085]">
+          <div className="rounded-2xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4 text-sm text-[#667085] dark:text-white/55">
             {isClientLoading
               ? "Loading client preview…"
               : clientError || "Client preview unavailable"}
@@ -699,7 +699,7 @@ export function ClientDirectoryList({
                 <button
                   type="button"
                   onClick={() => setClientReloadToken((v) => v + 1)}
-                  className="inline-flex h-8 items-center rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-xs font-semibold text-[#374151] hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40"
+                  className="inline-flex h-8 items-center rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-xs font-semibold text-[#374151] dark:text-white/85 hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40"
                 >
                   Retry
                 </button>
@@ -764,7 +764,7 @@ export function ClientDirectoryList({
             />
           </>
         ) : (
-          <div className="rounded-2xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4 text-sm text-[#667085]">
+          <div className="rounded-2xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4 text-sm text-[#667085] dark:text-white/55">
             {isOrderLoading
               ? "Loading order preview…"
               : orderError || "Order preview unavailable"}
@@ -773,7 +773,7 @@ export function ClientDirectoryList({
                 <button
                   type="button"
                   onClick={() => setOrderReloadToken((v) => v + 1)}
-                  className="inline-flex h-8 items-center rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-xs font-semibold text-[#374151] hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40"
+                  className="inline-flex h-8 items-center rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 text-xs font-semibold text-[#374151] dark:text-white/85 hover:border-[#C7D2FE] dark:hover:border-[var(--brand-500)]/40"
                 >
                   Retry
                 </button>
@@ -813,7 +813,7 @@ function CardRow({ label, value }: { label: string; value: string }) {
       <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF] dark:text-white/40">
         {label}
       </div>
-      <div className="mt-1 text-sm font-semibold text-[#111827]">{value}</div>
+      <div className="mt-1 text-sm font-semibold text-[#111827] dark:text-white">{value}</div>
     </div>
   );
 }
