@@ -37,11 +37,11 @@ function SelectTrigger({
       data-slot="select-trigger"
       data-size={size}
       className={cn(
-        "data-[placeholder]:text-[var(--neutral-500)] [&_svg:not([class*='text-'])]:text-[var(--neutral-500)]",
-        "flex w-full items-center justify-between gap-2 whitespace-nowrap rounded-[var(--radius)] border border-[var(--neutral-200)] bg-white px-4 py-2.5 text-[0.9375rem] text-[var(--neutral-900)]",
+        "data-[placeholder]:text-[var(--neutral-500)] dark:data-[placeholder]:text-white/40 [&_svg:not([class*='text-'])]:text-[var(--neutral-500)] dark:[&_svg:not([class*='text-'])]:text-white/55",
+        "flex w-full items-center justify-between gap-2 whitespace-nowrap rounded-[var(--radius)] border border-[var(--neutral-200)] dark:border-white/15 bg-white dark:bg-white/[0.03] px-4 py-2.5 text-[0.9375rem] text-[var(--neutral-900)] dark:text-white",
         "transition-[border-color,box-shadow,color] outline-none focus-visible:border-[var(--brand-600)] focus-visible:ring-0",
         "aria-invalid:border-[var(--error-500)]",
-        "disabled:cursor-not-allowed disabled:bg-[var(--neutral-100)] disabled:text-[var(--neutral-500)] disabled:opacity-100",
+        "disabled:cursor-not-allowed disabled:bg-[var(--neutral-100)] dark:disabled:bg-white/[0.02] disabled:text-[var(--neutral-500)] dark:disabled:text-white/40 disabled:opacity-100",
         "data-[size=default]:h-10 data-[size=sm]:h-9",
         "*:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2",
         "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
