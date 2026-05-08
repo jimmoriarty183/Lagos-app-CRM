@@ -359,7 +359,7 @@ export default function OwnerAnalyticsPanel({
   return (
     <section
       id="owner-analytics"
-      className="space-y-4 rounded-2xl border border-[#E5E7EB] dark:border-white/10 bg-[linear-gradient(180deg,#FFFFFF_0%,#FBFCFF_100%)] p-4 shadow-[0_14px_34px_rgba(15,23,42,0.08)]"
+      className="space-y-4 rounded-2xl border border-[#E5E7EB] dark:border-white/10 bg-[linear-gradient(180deg,#FFFFFF_0%,#FBFCFF_100%)] dark:bg-none dark:bg-white/[0.02] p-4 shadow-[0_14px_34px_rgba(15,23,42,0.08)] dark:shadow-none"
     >
       <div className="flex items-center justify-between rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white/90 dark:bg-white/[0.05] px-3 py-2.5">
         <div>
@@ -370,7 +370,7 @@ export default function OwnerAnalyticsPanel({
             <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-[var(--brand-200)] bg-[var(--brand-50)] text-[var(--brand-600)]">
               <Sparkles className="icon-inline" strokeWidth={2} />
             </span>
-            <h2 className="text-sm font-semibold text-[#111827]">
+            <h2 className="text-sm font-semibold text-[#111827] dark:text-white">
               {currentViewMeta.label}
             </h2>
             <details className="relative">
@@ -382,7 +382,7 @@ export default function OwnerAnalyticsPanel({
                 ?
               </summary>
               <div className="absolute left-0 top-7 z-20 w-[340px] rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-[#0E0E1B] p-3 text-xs text-[#344054] dark:text-white/85 shadow-[0_12px_24px_rgba(16,24,40,0.12)] dark:shadow-[0_16px_36px_rgba(0,0,0,0.55)]">
-                <div className="text-sm font-semibold text-[#111827]">
+                <div className="text-sm font-semibold text-[#111827] dark:text-white">
                   {currentViewMeta.helpTitle}
                 </div>
                 <ul className="mt-2 space-y-1">
@@ -612,7 +612,7 @@ export default function OwnerAnalyticsPanel({
                     key={`prod-${manager.manager_id}`}
                     className="flex items-center justify-between rounded-lg border border-[#E5E7EB] dark:border-white/10 px-2.5 py-2"
                   >
-                    <span className="text-[#111827]">
+                    <span className="text-[#111827] dark:text-white/90">
                       {idx + 1}. {managerLabel(manager.manager_name)}
                     </span>
                     <span className="font-semibold text-[#3645A0] dark:text-[var(--brand-300)]">
@@ -640,7 +640,7 @@ export default function OwnerAnalyticsPanel({
                     key={`risk-${manager.manager_id}`}
                     className="flex items-center justify-between rounded-lg border border-[#FECACA] bg-[#FEF2F2] dark:bg-rose-500/10 px-2.5 py-2"
                   >
-                    <span className="text-[#111827]">
+                    <span className="text-[#111827] dark:text-white/90">
                       {managerLabel(manager.manager_name)}
                     </span>
                     <span className="font-semibold text-[#B42318]">
@@ -656,7 +656,7 @@ export default function OwnerAnalyticsPanel({
 
       {showManagers ? (
         <article className="rounded-xl border border-[#E5E7EB] dark:border-white/10 p-3">
-          <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-[#111827]">
+          <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-[#111827] dark:text-white">
             <Users className="icon-button text-[var(--brand-600)]" strokeWidth={2} />
             Manager Table
           </div>
@@ -689,7 +689,7 @@ export default function OwnerAnalyticsPanel({
                     key={manager.manager_id}
                     className="border-t border-[#E5E7EB] dark:border-white/10"
                   >
-                    <td className="px-2 py-2 font-medium text-[#111827]">
+                    <td className="px-2 py-2 font-medium text-[#111827] dark:text-white/90">
                       {managerLabel(manager.manager_name)}
                     </td>
                     <td className="px-2 py-2">{manager.active_tasks}</td>
@@ -713,7 +713,7 @@ export default function OwnerAnalyticsPanel({
                             details
                           </summary>
                           <div className="mt-2 w-[320px] rounded-lg bg-[#F9FAFB] dark:bg-white/[0.04] p-2 text-[11px] text-[#374151] dark:text-white/85">
-                            <div className="font-semibold text-[#111827]">
+                            <div className="font-semibold text-[#111827] dark:text-white">
                               Score breakdown
                             </div>
                             <ul className="mt-1 space-y-1">
@@ -742,7 +742,7 @@ export default function OwnerAnalyticsPanel({
                                 {manager.risk_breakdown.no_deadline_points}
                               </li>
                             </ul>
-                            <div className="mt-2 font-semibold text-[#111827]">
+                            <div className="mt-2 font-semibold text-[#111827] dark:text-white">
                               Inputs
                             </div>
                             <ul className="mt-1 space-y-1">
@@ -819,7 +819,7 @@ export default function OwnerAnalyticsPanel({
                     key={task.task_id}
                     className="rounded-lg border border-[#E5E7EB] dark:border-white/10 p-2"
                   >
-                    <div className="font-medium text-[#111827]">
+                    <div className="font-medium text-[#111827] dark:text-white">
                       {buildOrderHref(task.task_id, businessSlug, phoneRaw) ? (
                         <a
                           href={
@@ -829,7 +829,7 @@ export default function OwnerAnalyticsPanel({
                               phoneRaw,
                             ) ?? "#"
                           }
-                          className="text-[#111827] hover:text-[#364FC7] hover:underline"
+                          className="text-[#111827] dark:text-white hover:text-[#364FC7] dark:hover:text-[var(--brand-300)] hover:underline"
                         >
                           {task.task_title}
                         </a>
@@ -864,7 +864,7 @@ export default function OwnerAnalyticsPanel({
 
       {showAlerts ? (
         <article className="rounded-xl border border-[#E5E7EB] dark:border-white/10 p-3">
-          <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-[#111827]">
+          <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-[#111827] dark:text-white">
             <BellRing className="icon-button text-[#B54708]" strokeWidth={2} />
             Alerts / Action Queue
           </div>
@@ -876,7 +876,7 @@ export default function OwnerAnalyticsPanel({
                   key={alert.alert_id}
                   className="rounded-lg border border-[#E5E7EB] dark:border-white/10 p-2"
                 >
-                  <div className="font-medium text-[#111827]">
+                  <div className="font-medium text-[#111827] dark:text-white">
                     {alert.problem}
                   </div>
                   <div className="mt-1 text-[#6B7280] dark:text-white/55">{alert.reason}</div>
@@ -884,7 +884,7 @@ export default function OwnerAnalyticsPanel({
                   {action.href ? (
                     <a
                       href={action.href}
-                      className="mt-2 inline-flex items-center rounded-md border border-[#D0D5DD] px-2 py-1 text-[11px] font-semibold text-[#344054] hover:border-[#98A2B3] hover:text-[#111827]"
+                      className="mt-2 inline-flex items-center rounded-md border border-[#D0D5DD] dark:border-white/15 px-2 py-1 text-[11px] font-semibold text-[#344054] dark:text-white/80 hover:border-[#98A2B3] hover:text-[#111827] dark:hover:text-white"
                     >
                       {action.linkLabel}
                     </a>
@@ -898,7 +898,7 @@ export default function OwnerAnalyticsPanel({
 
       {showReports ? (
         <article className="rounded-xl border border-[#E5E7EB] dark:border-white/10 p-3">
-          <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-[#111827]">
+          <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-[#111827] dark:text-white">
             <Timer className="icon-button text-[var(--brand-600)]" strokeWidth={2} />
             Manager Daily Reports
           </div>
@@ -938,7 +938,7 @@ export default function OwnerAnalyticsPanel({
               <select
                 name="rmanager"
                 defaultValue={String(reportFilter?.managerId ?? "")}
-                className="h-10 rounded-md border border-[#D0D5DD] bg-white dark:bg-white/[0.03] px-3 text-[14px] leading-5 text-[#111827]"
+                className="h-10 rounded-md border border-[#D0D5DD] dark:border-white/15 bg-white dark:bg-white/[0.03] px-3 text-[14px] leading-5 text-[#111827] dark:text-white"
               >
                 <option value="">All managers</option>
                 {reportManagerOptions.map((item) => (
@@ -958,7 +958,7 @@ export default function OwnerAnalyticsPanel({
               {hasReportFilter ? (
                 <a
                   href={resetReportsHref}
-                  className="inline-flex h-10 items-center rounded-md border border-[#D0D5DD] px-3 text-[13px] font-semibold text-[#344054] hover:border-[#98A2B3] hover:text-[#111827]"
+                  className="inline-flex h-10 items-center rounded-md border border-[#D0D5DD] dark:border-white/15 px-3 text-[13px] font-semibold text-[#344054] dark:text-white/80 hover:border-[#98A2B3] hover:text-[#111827] dark:hover:text-white"
                 >
                   Reset
                 </a>
@@ -1001,10 +1001,10 @@ export default function OwnerAnalyticsPanel({
                         key={report.report_id}
                         className="border-t border-[#E5E7EB] dark:border-white/10"
                       >
-                        <td className="px-2 py-2 text-[#111827]">
+                        <td className="px-2 py-2 text-[#111827] dark:text-white/90">
                           {report.work_date}
                         </td>
-                        <td className="px-2 py-2 text-[#111827]">
+                        <td className="px-2 py-2 text-[#111827] dark:text-white/90">
                           {managerLabel(report.manager_name)}
                         </td>
                         <td className="px-2 py-2">
@@ -1123,7 +1123,7 @@ export default function OwnerAnalyticsPanel({
           {salesPlanEditor ? (
             <div className="space-y-2 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-[#FFFFFF] dark:bg-white/[0.04] p-3">
               <div className="flex items-center justify-between">
-                <div className="text-sm font-semibold text-[#111827]">
+                <div className="text-sm font-semibold text-[#111827] dark:text-white">
                   Monthly Plan Setup
                 </div>
                 <div className="text-xs text-[#6B7280] dark:text-white/55">
@@ -1147,7 +1147,7 @@ export default function OwnerAnalyticsPanel({
                       key={`plan-section-${section.key}`}
                       className="rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-[#FCFCFD]"
                     >
-                      <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-3 py-2 text-[13px] font-semibold text-[#111827]">
+                      <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-3 py-2 text-[13px] font-semibold text-[#111827] dark:text-white">
                         <span>
                           {section.label} ({section.monthStart})
                         </span>
@@ -1168,7 +1168,7 @@ export default function OwnerAnalyticsPanel({
                             <input type="hidden" name="monthStart" value={section.monthStart} />
                             <input type="hidden" name="returnHref" value={section.returnHref} />
 
-                            <label className="flex items-center gap-2 text-[13px] font-medium text-[#111827]">
+                            <label className="flex items-center gap-2 text-[13px] font-medium text-[#111827] dark:text-white">
                               <input
                                 type="checkbox"
                                 name="include"
@@ -1193,7 +1193,7 @@ export default function OwnerAnalyticsPanel({
                                 min="0"
                                 name="planAmount"
                                 defaultValue={participant.planAmount}
-                                className="h-9 rounded-md border border-[#D0D5DD] bg-white dark:bg-white/[0.03] px-2 text-[12px] text-[#111827] outline-none focus:border-[var(--brand-500)]"
+                                className="h-9 rounded-md border border-[#D0D5DD] dark:border-white/15 bg-white dark:bg-white/[0.03] px-2 text-[12px] text-[#111827] dark:text-white outline-none focus:border-[var(--brand-500)]"
                               />
                             </label>
 
@@ -1205,7 +1205,7 @@ export default function OwnerAnalyticsPanel({
                                 step="1"
                                 name="planClosedOrders"
                                 defaultValue={participant.planClosedOrders}
-                                className="h-9 rounded-md border border-[#D0D5DD] bg-white dark:bg-white/[0.03] px-2 text-[12px] text-[#111827] outline-none focus:border-[var(--brand-500)]"
+                                className="h-9 rounded-md border border-[#D0D5DD] dark:border-white/15 bg-white dark:bg-white/[0.03] px-2 text-[12px] text-[#111827] dark:text-white outline-none focus:border-[var(--brand-500)]"
                               />
                             </label>
 
@@ -1240,7 +1240,7 @@ export default function OwnerAnalyticsPanel({
                 type="month"
                 name="smonth"
                 defaultValue={String(salesFilter?.month ?? "").slice(0, 7)}
-                className="h-10 min-w-[220px] rounded-lg border border-[#D0D5DD] bg-white dark:bg-white/[0.03] px-3 text-[14px] leading-5 text-[#111827] outline-none focus:border-[var(--brand-500)]"
+                className="h-10 min-w-[220px] rounded-lg border border-[#D0D5DD] dark:border-white/15 bg-white dark:bg-white/[0.03] px-3 text-[14px] leading-5 text-[#111827] dark:text-white outline-none focus:border-[var(--brand-500)]"
               />
             </label>
             <label className="flex flex-col gap-1 text-[11px] font-medium text-[#6B7280] dark:text-white/55">
@@ -1248,7 +1248,7 @@ export default function OwnerAnalyticsPanel({
               <select
                 name="smanager"
                 defaultValue={String(salesFilter?.managerId ?? "")}
-                className="h-10 rounded-lg border border-[#D0D5DD] bg-white dark:bg-white/[0.03] px-3 text-[14px] leading-5 text-[#111827] outline-none focus:border-[var(--brand-500)]"
+                className="h-10 rounded-lg border border-[#D0D5DD] dark:border-white/15 bg-white dark:bg-white/[0.03] px-3 text-[14px] leading-5 text-[#111827] dark:text-white outline-none focus:border-[var(--brand-500)]"
               >
                 <option value="">All managers</option>
                 {reportManagerOptions.map((manager) => (
@@ -1282,7 +1282,7 @@ export default function OwnerAnalyticsPanel({
 
           <div className="flex items-center justify-between">
             <div>
-              <div className="flex items-center gap-2 text-sm font-semibold text-[#111827]">
+              <div className="flex items-center gap-2 text-sm font-semibold text-[#111827] dark:text-white">
                 <LineChart className="icon-button text-[var(--brand-600)]" strokeWidth={2} />
                 Sales Plan vs Fact
               </div>
@@ -1383,7 +1383,7 @@ export default function OwnerAnalyticsPanel({
                   </thead>
                   <tbody>
                     <tr className="border-t-2 border-[#D0D5DD] bg-[#F8FAFF]">
-                      <td className="px-2 py-2 font-semibold text-[#111827]">TOTAL</td>
+                      <td className="px-2 py-2 font-semibold text-[#111827] dark:text-white">TOTAL</td>
                       <td className="px-2 py-2 font-semibold">
                         {formatCurrency(data.sales.team_plan_amount)}
                       </td>
@@ -1418,7 +1418,7 @@ export default function OwnerAnalyticsPanel({
                         key={`sales-${manager.manager_id}`}
                         className="border-t border-[#E5E7EB] dark:border-white/10"
                       >
-                        <td className="px-2 py-2 font-medium text-[#111827]">
+                        <td className="px-2 py-2 font-medium text-[#111827] dark:text-white/90">
                           {managerLabel(manager.manager_name)}
                         </td>
                         <td className="px-2 py-2">{formatCurrency(manager.planned_amount)}</td>
@@ -1472,7 +1472,7 @@ export default function OwnerAnalyticsPanel({
           {data.sales.managers.length > 0 ? (
             <article className="space-y-2 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-3">
               <div className="flex items-center justify-between gap-2">
-                <div className="text-sm font-semibold text-[#111827]">
+                <div className="text-sm font-semibold text-[#111827] dark:text-white">
                   Fact Comparison by Manager
                 </div>
                 <div className="text-[11px] text-[#6B7280] dark:text-white/55">
@@ -1490,7 +1490,7 @@ export default function OwnerAnalyticsPanel({
                       className="rounded-lg border border-[#EEF2F6] px-2 py-1.5"
                     >
                       <div className="mb-1 flex items-center justify-between gap-2">
-                        <span className="text-[12px] font-medium text-[#111827]">
+                        <span className="text-[12px] font-medium text-[#111827] dark:text-white">
                           {managerLabel(manager.manager_name)}
                         </span>
                         <span className="text-[11px] text-[#475467] dark:text-white/70">
@@ -1516,7 +1516,7 @@ export default function OwnerAnalyticsPanel({
         <article className="space-y-3 rounded-xl border border-[#E5E7EB] dark:border-white/10 p-3">
           <div className="flex items-center justify-between">
             <div>
-              <div className="flex items-center gap-2 text-sm font-semibold text-[#111827]">
+              <div className="flex items-center gap-2 text-sm font-semibold text-[#111827] dark:text-white">
                 <BarChart3 className="icon-button text-[var(--brand-600)]" strokeWidth={2} />
                 Productivity Dashboard
               </div>
@@ -1603,7 +1603,7 @@ export default function OwnerAnalyticsPanel({
                     className="rounded-lg border border-[#E5E7EB] dark:border-white/10 p-2"
                   >
                     <div className="flex items-center justify-between text-xs">
-                      <span className="font-medium text-[#111827]">
+                      <span className="font-medium text-[#111827] dark:text-white">
                         {managerLabel(manager.manager_name)}
                       </span>
                       <span className="text-[#4B5563] dark:text-white/70">
