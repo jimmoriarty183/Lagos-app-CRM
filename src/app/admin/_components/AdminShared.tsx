@@ -133,14 +133,14 @@ export function statusTone(status: string) {
     case "CONFIRMED":
     case "ACCEPTED":
     case "ACTIVE":
-      return "bg-emerald-100 text-emerald-700";
+      return "bg-emerald-100 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300";
     case "PENDING":
     case "UNCONFIRMED":
     case "EXPIRED":
-      return "bg-amber-100 text-amber-700";
+      return "bg-amber-100 dark:bg-amber-500/15 text-amber-700 dark:text-amber-300";
     case "REVOKED":
     case "INACTIVE":
-      return "bg-rose-100 text-rose-700";
+      return "bg-rose-100 dark:bg-rose-500/15 text-rose-700 dark:text-rose-300";
     default:
       return "bg-slate-100 dark:bg-white/[0.06] text-slate-700 dark:text-white/80";
   }
@@ -185,7 +185,7 @@ export function AdminTable({
   return (
     <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] shadow-sm">
       <table className="min-w-[700px] w-full table-auto border-collapse md:table-fixed">
-        <thead className="bg-slate-50/80">{head}</thead>
+        <thead className="bg-slate-50/80 dark:bg-white/[0.04]">{head}</thead>
         <tbody>{children}</tbody>
       </table>
     </div>
@@ -204,11 +204,11 @@ export function AdminTableRow({
   href?: string;
 }) {
   if (!href) {
-    return <tr className="border-b border-slate-100 dark:border-white/[0.06] transition-colors hover:bg-slate-50/70">{children}</tr>;
+    return <tr className="border-b border-slate-100 dark:border-white/[0.06] transition-colors hover:bg-slate-50/70 dark:hover:bg-white/[0.04]">{children}</tr>;
   }
 
   return (
-    <tr className="group border-b border-slate-100 dark:border-white/[0.06] transition-colors hover:bg-[#f7faff]">
+    <tr className="group border-b border-slate-100 dark:border-white/[0.06] transition-colors hover:bg-[#f7faff] dark:hover:bg-white/[0.04]">
       {children}
     </tr>
   );

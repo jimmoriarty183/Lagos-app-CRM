@@ -181,7 +181,7 @@ export default async function AdminBusinessesPage({
                 <AdminCell>
                   <div className="flex flex-wrap gap-2">
                     {item.subscriptionStatus ? (
-                      <AdminBadge label={translateLabel(item.subscriptionStatus.toUpperCase())} tone={item.subscriptionStatus === "active" ? undefined : item.subscriptionStatus === "trialing" ? "bg-blue-50 text-blue-700" : "bg-amber-50 text-amber-700"} />
+                      <AdminBadge label={translateLabel(item.subscriptionStatus.toUpperCase())} tone={item.subscriptionStatus === "active" ? undefined : item.subscriptionStatus === "trialing" ? "bg-blue-50 dark:bg-[var(--brand-600)]/15 text-blue-700 dark:text-[var(--brand-200)]" : "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300"} />
                     ) : (
                       <AdminBadge label={item.active ? "ACTIVE" : "INACTIVE"} />
                     )}

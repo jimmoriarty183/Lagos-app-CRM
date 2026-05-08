@@ -53,7 +53,7 @@ export default async function AdminCampaignEditPage({
           ) : null}
           <Link
             href={`/admin/campaigns/new?copyFrom=${campaign.id}`}
-            className="inline-flex h-10 items-center rounded-lg border border-indigo-200 bg-indigo-50 px-4 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-100"
+            className="inline-flex h-10 items-center rounded-lg border border-indigo-200 dark:border-indigo-500/40 bg-indigo-50 dark:bg-indigo-500/15 px-4 text-sm font-semibold text-indigo-700 dark:text-indigo-300 transition hover:bg-indigo-100 dark:hover:bg-indigo-500/25"
           >
             Duplicate
           </Link>

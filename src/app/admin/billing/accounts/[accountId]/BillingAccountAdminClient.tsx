@@ -297,7 +297,7 @@ export default function BillingAccountAdminClient({
         >
           {loading ? "Loading..." : "Refresh"}
         </button>
-        {error ? <p className="text-sm text-rose-700">{error}</p> : null}
+        {error ? <p className="text-sm text-rose-700 dark:text-rose-300">{error}</p> : null}
       </div>
 
       <AdminSectionCard title="Subscription Info">

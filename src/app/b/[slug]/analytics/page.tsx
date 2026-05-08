@@ -1195,32 +1195,32 @@ export default async function OwnerAnalyticsPage({
         {renderClientPeriodControls()}
         <div className="grid gap-3 md:grid-cols-4">
           <div className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4">
-            <div className="text-xs font-medium text-[#667085]">
+            <div className="text-xs font-medium text-[#667085] dark:text-white/55">
               Managers with clients
             </div>
-            <div className="mt-1 text-xl font-semibold text-[#111827]">
+            <div className="mt-1 text-xl font-semibold text-[#111827] dark:text-white">
               {managersWithClients}
             </div>
           </div>
           <div className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4">
-            <div className="text-xs font-medium text-[#667085]">
+            <div className="text-xs font-medium text-[#667085] dark:text-white/55">
               Total assigned clients
             </div>
-            <div className="mt-1 text-xl font-semibold text-[#111827]">
+            <div className="mt-1 text-xl font-semibold text-[#111827] dark:text-white">
               {totalClientsCount}
             </div>
           </div>
           <div className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4">
-            <div className="text-xs font-medium text-[#667085]">Turnover</div>
-            <div className="mt-1 text-xl font-semibold text-[#111827]">
+            <div className="text-xs font-medium text-[#667085] dark:text-white/55">Turnover</div>
+            <div className="mt-1 text-xl font-semibold text-[#111827] dark:text-white">
               {formatMoney(totalClientTurnover)}
             </div>
           </div>
           <div className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4">
-            <div className="text-xs font-medium text-[#667085]">
+            <div className="text-xs font-medium text-[#667085] dark:text-white/55">
               Average order value
             </div>
-            <div className="mt-1 text-xl font-semibold text-[#111827]">
+            <div className="mt-1 text-xl font-semibold text-[#111827] dark:text-white">
               {formatMoney(clientAverageOrderValue)}
             </div>
           </div>
@@ -1228,7 +1228,7 @@ export default async function OwnerAnalyticsPage({
         <div className="overflow-hidden rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03]">
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
-              <thead className="bg-[#F9FAFB] dark:bg-white/[0.04] text-left text-xs font-semibold uppercase tracking-wide text-[#667085]">
+              <thead className="bg-[#F9FAFB] dark:bg-white/[0.04] text-left text-xs font-semibold uppercase tracking-wide text-[#667085] dark:text-white/55">
                 <tr>
                   <th className="px-4 py-3">Manager</th>
                   <th className="px-4 py-3">Clients</th>
@@ -1244,7 +1244,7 @@ export default async function OwnerAnalyticsPage({
                   <tr>
                     <td
                       colSpan={7}
-                      className="px-4 py-8 text-center text-[#667085]"
+                      className="px-4 py-8 text-center text-[#667085] dark:text-white/55"
                     >
                       No manager/client data for selected period.
                     </td>
@@ -1255,25 +1255,25 @@ export default async function OwnerAnalyticsPage({
                       key={entry.managerId}
                       className="border-t border-[#E5E7EB] dark:border-white/10"
                     >
-                      <td className="px-4 py-3 font-medium text-[#111827]">
+                      <td className="px-4 py-3 font-medium text-[#111827] dark:text-white">
                         {entry.managerName}
                       </td>
-                      <td className="px-4 py-3 text-[#111827]">
+                      <td className="px-4 py-3 text-[#111827] dark:text-white">
                         {entry.totalClients}
                       </td>
-                      <td className="px-4 py-3 text-[#111827]">
+                      <td className="px-4 py-3 text-[#111827] dark:text-white">
                         {entry.individualClients}
                       </td>
-                      <td className="px-4 py-3 text-[#111827]">
+                      <td className="px-4 py-3 text-[#111827] dark:text-white">
                         {entry.companyClients}
                       </td>
-                      <td className="px-4 py-3 text-[#111827]">
+                      <td className="px-4 py-3 text-[#111827] dark:text-white">
                         {entry.ordersCount}
                       </td>
-                      <td className="px-4 py-3 text-[#111827]">
+                      <td className="px-4 py-3 text-[#111827] dark:text-white">
                         {formatMoney(entry.turnover)}
                       </td>
-                      <td className="px-4 py-3 text-[#111827]">
+                      <td className="px-4 py-3 text-[#111827] dark:text-white">
                         {formatMoney(entry.averageCheck)}
                       </td>
                     </tr>
@@ -1296,36 +1296,36 @@ export default async function OwnerAnalyticsPage({
         {renderClientPeriodControls()}
         <div className="grid gap-3 md:grid-cols-5">
           <div className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4">
-            <div className="text-xs font-medium text-[#667085]">
+            <div className="text-xs font-medium text-[#667085] dark:text-white/55">
               Total clients
             </div>
-            <div className="mt-1 text-xl font-semibold text-[#111827]">
+            <div className="mt-1 text-xl font-semibold text-[#111827] dark:text-white">
               {totalClientsCount}
             </div>
           </div>
           <div className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4">
-            <div className="text-xs font-medium text-[#667085]">Individual</div>
-            <div className="mt-1 text-xl font-semibold text-[#111827]">
+            <div className="text-xs font-medium text-[#667085] dark:text-white/55">Individual</div>
+            <div className="mt-1 text-xl font-semibold text-[#111827] dark:text-white">
               {totalIndividualCount}
             </div>
           </div>
           <div className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4">
-            <div className="text-xs font-medium text-[#667085]">Company</div>
-            <div className="mt-1 text-xl font-semibold text-[#111827]">
+            <div className="text-xs font-medium text-[#667085] dark:text-white/55">Company</div>
+            <div className="mt-1 text-xl font-semibold text-[#111827] dark:text-white">
               {totalCompanyCount}
             </div>
           </div>
           <div className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4">
-            <div className="text-xs font-medium text-[#667085]">Turnover</div>
-            <div className="mt-1 text-xl font-semibold text-[#111827]">
+            <div className="text-xs font-medium text-[#667085] dark:text-white/55">Turnover</div>
+            <div className="mt-1 text-xl font-semibold text-[#111827] dark:text-white">
               {formatMoney(totalClientTurnover)}
             </div>
           </div>
           <div className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4">
-            <div className="text-xs font-medium text-[#667085]">
+            <div className="text-xs font-medium text-[#667085] dark:text-white/55">
               Average order value
             </div>
-            <div className="mt-1 text-xl font-semibold text-[#111827]">
+            <div className="mt-1 text-xl font-semibold text-[#111827] dark:text-white">
               {formatMoney(clientAverageOrderValue)}
             </div>
           </div>
@@ -1333,7 +1333,7 @@ export default async function OwnerAnalyticsPage({
 
         <div className="grid gap-3 lg:grid-cols-2">
           <div className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4">
-            <h3 className="text-sm font-semibold text-[#111827]">
+            <h3 className="text-sm font-semibold text-[#111827] dark:text-white">
               Client type distribution
             </h3>
             <div className="mt-3 space-y-2 text-sm">
@@ -1368,12 +1368,12 @@ export default async function OwnerAnalyticsPage({
             </div>
           </div>
           <div className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4">
-            <h3 className="text-sm font-semibold text-[#111827]">
+            <h3 className="text-sm font-semibold text-[#111827] dark:text-white">
               Top clients by turnover
             </h3>
             <div className="mt-3 space-y-2">
               {topClients.length === 0 ? (
-                <div className="text-sm text-[#667085]">
+                <div className="text-sm text-[#667085] dark:text-white/55">
                   No data for selected period.
                 </div>
               ) : (
@@ -1383,14 +1383,14 @@ export default async function OwnerAnalyticsPage({
                     className="flex items-center justify-between rounded-lg border border-[#EAECF0] px-3 py-2"
                   >
                     <div className="min-w-0">
-                      <div className="truncate text-sm font-medium text-[#111827]">
+                      <div className="truncate text-sm font-medium text-[#111827] dark:text-white">
                         {index + 1}. {client.displayName}
                       </div>
-                      <div className="text-xs text-[#667085]">
+                      <div className="text-xs text-[#667085] dark:text-white/55">
                         {client.managerName}
                       </div>
                     </div>
-                    <div className="text-sm font-semibold text-[#111827]">
+                    <div className="text-sm font-semibold text-[#111827] dark:text-white">
                       {formatMoney(client.turnover)}
                     </div>
                   </div>
@@ -1403,7 +1403,7 @@ export default async function OwnerAnalyticsPage({
         <div className="overflow-hidden rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03]">
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
-              <thead className="bg-[#F9FAFB] dark:bg-white/[0.04] text-left text-xs font-semibold uppercase tracking-wide text-[#667085]">
+              <thead className="bg-[#F9FAFB] dark:bg-white/[0.04] text-left text-xs font-semibold uppercase tracking-wide text-[#667085] dark:text-white/55">
                 <tr>
                   <th className="px-4 py-3">Client</th>
                   <th className="px-4 py-3">Type</th>
@@ -1419,25 +1419,25 @@ export default async function OwnerAnalyticsPage({
                   .sort((a, b) => b.turnover - a.turnover)
                   .map((entry) => (
                     <tr key={entry.id} className="border-t border-[#E5E7EB] dark:border-white/10">
-                      <td className="px-4 py-3 font-medium text-[#111827]">
+                      <td className="px-4 py-3 font-medium text-[#111827] dark:text-white">
                         {entry.displayName}
                       </td>
-                      <td className="px-4 py-3 text-[#111827]">
+                      <td className="px-4 py-3 text-[#111827] dark:text-white">
                         {entry.type === "company" ? "Company" : "Individual"}
                       </td>
-                      <td className="px-4 py-3 text-[#111827]">
+                      <td className="px-4 py-3 text-[#111827] dark:text-white">
                         {entry.managerName}
                       </td>
-                      <td className="px-4 py-3 text-[#111827]">
+                      <td className="px-4 py-3 text-[#111827] dark:text-white">
                         {entry.ordersCount}
                       </td>
-                      <td className="px-4 py-3 text-[#111827]">
+                      <td className="px-4 py-3 text-[#111827] dark:text-white">
                         {formatMoney(entry.turnover)}
                       </td>
-                      <td className="px-4 py-3 text-[#111827]">
+                      <td className="px-4 py-3 text-[#111827] dark:text-white">
                         {formatMoney(entry.averageCheck)}
                       </td>
-                      <td className="px-4 py-3 text-[#111827]">
+                      <td className="px-4 py-3 text-[#111827] dark:text-white">
                         {entry.lastOrderDate
                           ? formatDate(entry.lastOrderDate)
                           : "-"}
@@ -1448,7 +1448,7 @@ export default async function OwnerAnalyticsPage({
                   <tr>
                     <td
                       colSpan={7}
-                      className="px-4 py-8 text-center text-[#667085]"
+                      className="px-4 py-8 text-center text-[#667085] dark:text-white/55"
                     >
                       No client data for selected period.
                     </td>
@@ -1473,41 +1473,41 @@ export default async function OwnerAnalyticsPage({
     const top = productMetricsWithAbc.slice(0, 10);
     const abcBadgeClass = (abc: "A" | "B" | "C") =>
       abc === "A"
-        ? "bg-[#ECFDF3] text-[#067647]"
+        ? "bg-[#ECFDF3] dark:bg-emerald-500/10 text-[#067647] dark:text-emerald-300"
         : abc === "B"
-          ? "bg-[#FEF7CD] text-[#854A0E]"
-          : "bg-[#FEF2F2] dark:bg-rose-500/10 text-[#B42318]";
+          ? "bg-[#FEF7CD] dark:bg-amber-500/10 text-[#854A0E] dark:text-amber-300"
+          : "bg-[#FEF2F2] dark:bg-rose-500/10 text-[#B42318] dark:text-rose-300";
     const typeLabel = (type: ProductMetric["type"]) =>
       type === "PRODUCT" ? "Product" : type === "SERVICE" ? "Service" : "Custom";
 
     return (
       <div className="space-y-4">
         <details className="group rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] p-4">
-          <summary className="flex cursor-pointer items-center justify-between text-sm font-semibold text-[#111827]">
+          <summary className="flex cursor-pointer items-center justify-between text-sm font-semibold text-[#111827] dark:text-white">
             <span>About this report</span>
-            <span className="text-xs font-normal text-[#667085] group-open:hidden">
+            <span className="text-xs font-normal text-[#667085] dark:text-white/55 group-open:hidden">
               click to expand
             </span>
-            <span className="hidden text-xs font-normal text-[#667085] group-open:inline">
+            <span className="hidden text-xs font-normal text-[#667085] dark:text-white/55 group-open:inline">
               click to collapse
             </span>
           </summary>
           <div className="mt-3 space-y-2 text-sm leading-relaxed text-[#475467] dark:text-white/70">
             <p>
-              <strong className="text-[#111827]">What you see here:</strong>{" "}
+              <strong className="text-[#111827] dark:text-white">What you see here:</strong>{" "}
               every product and service sold in the selected period — how many
               units left the door, how much revenue they brought, and which of
               your clients bought them.
             </p>
             <p>
-              <strong className="text-[#111827]">How it&apos;s calculated:</strong>{" "}
+              <strong className="text-[#111827] dark:text-white">How it&apos;s calculated:</strong>{" "}
               we look at the line items of each order (not the order total),
               so the same order with three products counts as three rows here.
               Cancelled and deleted orders are excluded. Revenue is the net
               amount per line (qty × unit price after discount, before tax).
             </p>
             <p>
-              <strong className="text-[#111827]">ABC tags:</strong> products
+              <strong className="text-[#111827] dark:text-white">ABC tags:</strong> products
               are ranked by revenue. <strong>A</strong> = top items together
               making up to 80% of revenue (your real money-makers). {" "}
               <strong>B</strong> = the next 15% (steady contributors).{" "}
@@ -1516,7 +1516,7 @@ export default async function OwnerAnalyticsPage({
               on A‑items, and decide what to drop from the catalog.
             </p>
             <p>
-              <strong className="text-[#111827]">If you see no data:</strong>{" "}
+              <strong className="text-[#111827] dark:text-white">If you see no data:</strong>{" "}
               older orders that were created without itemized lines won&apos;t
               show up — only orders where you picked specific products or
               services from your catalog will appear. Add line items when
@@ -1544,39 +1544,39 @@ export default async function OwnerAnalyticsPage({
 
         <div className="grid gap-3 md:grid-cols-4">
           <div className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4">
-            <div className="text-xs font-medium text-[#667085]">
+            <div className="text-xs font-medium text-[#667085] dark:text-white/55">
               SKUs / services sold
             </div>
-            <div className="mt-1 text-xl font-semibold text-[#111827]">
+            <div className="mt-1 text-xl font-semibold text-[#111827] dark:text-white">
               {skusSold}
             </div>
-            <div className="mt-1 text-xs text-[#667085]">
+            <div className="mt-1 text-xs text-[#667085] dark:text-white/55">
               {productOnly.length} products · {serviceOnly.length} services
             </div>
           </div>
           <div className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4">
-            <div className="text-xs font-medium text-[#667085]">Units sold</div>
-            <div className="mt-1 text-xl font-semibold text-[#111827]">
+            <div className="text-xs font-medium text-[#667085] dark:text-white/55">Units sold</div>
+            <div className="mt-1 text-xl font-semibold text-[#111827] dark:text-white">
               {productsTotalUnits.toLocaleString("en-GB", {
                 maximumFractionDigits: 2,
               })}
             </div>
-            <div className="mt-1 text-xs text-[#667085]">
+            <div className="mt-1 text-xs text-[#667085] dark:text-white/55">
               {productsTotalOrders} orders
             </div>
           </div>
           <div className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4">
-            <div className="text-xs font-medium text-[#667085]">Revenue</div>
-            <div className="mt-1 text-xl font-semibold text-[#111827]">
+            <div className="text-xs font-medium text-[#667085] dark:text-white/55">Revenue</div>
+            <div className="mt-1 text-xl font-semibold text-[#111827] dark:text-white">
               {formatMoney(productsTotalRevenue)}
             </div>
-            <div className="mt-1 text-xs text-[#667085]">net of tax</div>
+            <div className="mt-1 text-xs text-[#667085] dark:text-white/55">net of tax</div>
           </div>
           <div className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4">
-            <div className="text-xs font-medium text-[#667085]">
+            <div className="text-xs font-medium text-[#667085] dark:text-white/55">
               Avg unit price
             </div>
-            <div className="mt-1 text-xl font-semibold text-[#111827]">
+            <div className="mt-1 text-xl font-semibold text-[#111827] dark:text-white">
               {formatMoney(productsAvgUnitPrice)}
             </div>
           </div>
@@ -1591,7 +1591,7 @@ export default async function OwnerAnalyticsPage({
         ) : (
           <>
             <div className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4">
-              <h3 className="text-sm font-semibold text-[#111827]">
+              <h3 className="text-sm font-semibold text-[#111827] dark:text-white">
                 Top items by revenue
               </h3>
               <div className="mt-3 space-y-2">
@@ -1603,11 +1603,11 @@ export default async function OwnerAnalyticsPage({
                   return (
                     <div
                       key={entry.key}
-                      className="flex items-center justify-between rounded-lg border border-[#EAECF0] px-3 py-2"
+                      className="flex items-center justify-between rounded-lg border border-[#EAECF0] dark:border-white/10 px-3 py-2"
                     >
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
-                          <span className="truncate text-sm font-medium text-[#111827]">
+                          <span className="truncate text-sm font-medium text-[#111827] dark:text-white">
                             {index + 1}. {entry.name}
                           </span>
                           <span
@@ -1616,7 +1616,7 @@ export default async function OwnerAnalyticsPage({
                             {entry.abc}
                           </span>
                         </div>
-                        <div className="text-xs text-[#667085]">
+                        <div className="text-xs text-[#667085] dark:text-white/55">
                           {typeLabel(entry.type)} ·{" "}
                           {entry.units.toLocaleString("en-GB", {
                             maximumFractionDigits: 2,
@@ -1626,10 +1626,10 @@ export default async function OwnerAnalyticsPage({
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-sm font-semibold text-[#111827]">
+                        <div className="text-sm font-semibold text-[#111827] dark:text-white">
                           {formatMoney(entry.revenue)}
                         </div>
-                        <div className="text-xs text-[#667085]">
+                        <div className="text-xs text-[#667085] dark:text-white/55">
                           {sharePct.toFixed(1)}%
                         </div>
                       </div>
@@ -1642,7 +1642,7 @@ export default async function OwnerAnalyticsPage({
             <div className="overflow-hidden rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03]">
               <div className="overflow-x-auto">
                 <table className="min-w-full text-sm">
-                  <thead className="bg-[#F9FAFB] dark:bg-white/[0.04] text-left text-xs font-semibold uppercase tracking-wide text-[#667085]">
+                  <thead className="bg-[#F9FAFB] dark:bg-white/[0.04] text-left text-xs font-semibold uppercase tracking-wide text-[#667085] dark:text-white/55">
                     <tr>
                       <th className="px-4 py-3">Item</th>
                       <th className="px-4 py-3">Type</th>
@@ -1658,10 +1658,10 @@ export default async function OwnerAnalyticsPage({
                   <tbody>
                     {productMetricsWithAbc.map((entry) => (
                       <tr key={entry.key} className="border-t border-[#E5E7EB] dark:border-white/10">
-                        <td className="px-4 py-3 font-medium text-[#111827]">
+                        <td className="px-4 py-3 font-medium text-[#111827] dark:text-white">
                           {entry.name}
                         </td>
-                        <td className="px-4 py-3 text-[#111827]">
+                        <td className="px-4 py-3 text-[#111827] dark:text-white">
                           {typeLabel(entry.type)}
                         </td>
                         <td className="px-4 py-3">
@@ -1671,24 +1671,24 @@ export default async function OwnerAnalyticsPage({
                             {entry.abc}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-[#111827]">
+                        <td className="px-4 py-3 text-[#111827] dark:text-white">
                           {entry.units.toLocaleString("en-GB", {
                             maximumFractionDigits: 2,
                           })}
                         </td>
-                        <td className="px-4 py-3 text-[#111827]">
+                        <td className="px-4 py-3 text-[#111827] dark:text-white">
                           {entry.ordersCount}
                         </td>
-                        <td className="px-4 py-3 text-[#111827]">
+                        <td className="px-4 py-3 text-[#111827] dark:text-white">
                           {entry.clientsCount}
                         </td>
-                        <td className="px-4 py-3 text-[#111827]">
+                        <td className="px-4 py-3 text-[#111827] dark:text-white">
                           {formatMoney(entry.avgUnitPrice)}
                         </td>
-                        <td className="px-4 py-3 text-[#111827]">
+                        <td className="px-4 py-3 text-[#111827] dark:text-white">
                           {formatMoney(entry.revenue)}
                         </td>
-                        <td className="px-4 py-3 text-[#111827]">
+                        <td className="px-4 py-3 text-[#111827] dark:text-white">
                           {entry.lastSold ? formatDate(entry.lastSold) : "-"}
                         </td>
                       </tr>
@@ -1708,10 +1708,10 @@ export default async function OwnerAnalyticsPage({
       return (
         <div className="space-y-4">
           <div className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-6">
-            <div className="text-xs font-semibold uppercase tracking-wide text-[#7C3AED]">
+            <div className="text-xs font-semibold uppercase tracking-wide text-[#7C3AED] dark:text-violet-400">
               Business plan feature
             </div>
-            <h3 className="mt-2 text-lg font-semibold text-[#111827]">
+            <h3 className="mt-2 text-lg font-semibold text-[#111827] dark:text-white">
               Sales forecast is part of the Business plan
             </h3>
             <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[#475467] dark:text-white/70">
@@ -1728,7 +1728,7 @@ export default async function OwnerAnalyticsPage({
               >
                 Upgrade to Business
               </a>
-              <span className="text-xs text-[#667085]">
+              <span className="text-xs text-[#667085] dark:text-white/55">
                 Current plan:{" "}
                 {effectivePlanCode
                   ? effectivePlanCode.toUpperCase()
@@ -1749,12 +1749,12 @@ export default async function OwnerAnalyticsPage({
     };
     const confidenceBadgeClass = (c: ForecastConfidence) =>
       c === "high"
-        ? "bg-[#ECFDF3] text-[#067647]"
+        ? "bg-[#ECFDF3] dark:bg-emerald-500/10 text-[#067647] dark:text-emerald-300"
         : c === "medium"
-          ? "bg-[#FEF7CD] text-[#854A0E]"
+          ? "bg-[#FEF7CD] dark:bg-amber-500/10 text-[#854A0E] dark:text-amber-300"
           : c === "low"
-            ? "bg-[#FEF2F2] dark:bg-rose-500/10 text-[#B42318]"
-            : "bg-[#F2F4F7] text-[#475467] dark:text-white/70";
+            ? "bg-[#FEF2F2] dark:bg-rose-500/10 text-[#B42318] dark:text-rose-300"
+            : "bg-[#F2F4F7] dark:bg-white/[0.06] text-[#475467] dark:text-white/70";
     const methodLabel = (m: ForecastResult["method"]) =>
       m === "moving_average_4w"
         ? "4-week avg"
@@ -1802,24 +1802,24 @@ export default async function OwnerAnalyticsPage({
     return (
       <div className="space-y-4">
         <details className="group rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-[#F9FAFB] dark:bg-white/[0.04] p-4">
-          <summary className="flex cursor-pointer items-center justify-between text-sm font-semibold text-[#111827]">
+          <summary className="flex cursor-pointer items-center justify-between text-sm font-semibold text-[#111827] dark:text-white">
             <span>About this forecast</span>
-            <span className="text-xs font-normal text-[#667085] group-open:hidden">
+            <span className="text-xs font-normal text-[#667085] dark:text-white/55 group-open:hidden">
               click to expand
             </span>
-            <span className="hidden text-xs font-normal text-[#667085] group-open:inline">
+            <span className="hidden text-xs font-normal text-[#667085] dark:text-white/55 group-open:inline">
               click to collapse
             </span>
           </summary>
           <div className="mt-3 space-y-2 text-sm leading-relaxed text-[#475467] dark:text-white/70">
             <p>
-              <strong className="text-[#111827]">What you see here:</strong>{" "}
+              <strong className="text-[#111827] dark:text-white">What you see here:</strong>{" "}
               for each item you sell, an estimate of how many units and how
               much revenue you can expect over the next 30 days, plus a reorder
               point for items where you track stock.
             </p>
             <p>
-              <strong className="text-[#111827]">How it&apos;s calculated:</strong>{" "}
+              <strong className="text-[#111827] dark:text-white">How it&apos;s calculated:</strong>{" "}
               we look at the last 90 days of order history. When an item has at
               least 4 weeks of history with a couple of orders inside, we use a{" "}
               <strong>4-week moving average</strong> (the most reliable signal
@@ -1829,7 +1829,7 @@ export default async function OwnerAnalyticsPage({
               excluded.
             </p>
             <p>
-              <strong className="text-[#111827]">Confidence:</strong> {" "}
+              <strong className="text-[#111827] dark:text-white">Confidence:</strong> {" "}
               <strong>high</strong> = at least 8 weeks of regular sales,{" "}
               <strong>medium</strong> = 2–8 weeks or fewer than 4 sales events,{" "}
               <strong>low</strong> = sparse or single-day data,{" "}
@@ -1837,7 +1837,7 @@ export default async function OwnerAnalyticsPage({
               and none rows as informational only.
             </p>
             <p>
-              <strong className="text-[#111827]">Reorder point:</strong> shown
+              <strong className="text-[#111827] dark:text-white">Reorder point:</strong> shown
               only for products with stock tracking on. It is the level at
               which you should reorder so you don&apos;t run out before new
               stock arrives. Default formula: average daily demand ×
@@ -1846,7 +1846,7 @@ export default async function OwnerAnalyticsPage({
               ordering from local suppliers.
             </p>
             <p>
-              <strong className="text-[#111827]">Bar chart:</strong> the small
+              <strong className="text-[#111827] dark:text-white">Bar chart:</strong> the small
               bars next to each row show units sold per week for the last 8
               weeks (oldest on the left, this week on the right). It helps you
               spot a trend at a glance — flat, growing or fading.
@@ -1856,43 +1856,43 @@ export default async function OwnerAnalyticsPage({
 
         <div className="grid gap-3 md:grid-cols-4">
           <div className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4">
-            <div className="text-xs font-medium text-[#667085]">
+            <div className="text-xs font-medium text-[#667085] dark:text-white/55">
               Forecast revenue (next 30 days)
             </div>
-            <div className="mt-1 text-xl font-semibold text-[#111827]">
+            <div className="mt-1 text-xl font-semibold text-[#111827] dark:text-white">
               {formatMoney(totals.forecastRevenueNext30d)}
             </div>
-            <div className="mt-1 text-xs text-[#667085]">across all items</div>
+            <div className="mt-1 text-xs text-[#667085] dark:text-white/55">across all items</div>
           </div>
           <div className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4">
-            <div className="text-xs font-medium text-[#667085]">
+            <div className="text-xs font-medium text-[#667085] dark:text-white/55">
               Forecast units (next 30 days)
             </div>
-            <div className="mt-1 text-xl font-semibold text-[#111827]">
+            <div className="mt-1 text-xl font-semibold text-[#111827] dark:text-white">
               {totals.forecastUnitsNext30d.toLocaleString("en-GB", {
                 maximumFractionDigits: 0,
               })}
             </div>
           </div>
           <div className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4">
-            <div className="text-xs font-medium text-[#667085]">
+            <div className="text-xs font-medium text-[#667085] dark:text-white/55">
               Items with signal
             </div>
-            <div className="mt-1 text-xl font-semibold text-[#111827]">
+            <div className="mt-1 text-xl font-semibold text-[#111827] dark:text-white">
               {totals.itemsWithSignal} / {forecastResults.length}
             </div>
-            <div className="mt-1 text-xs text-[#667085]">
+            <div className="mt-1 text-xs text-[#667085] dark:text-white/55">
               {totals.itemsByConfidence.high} high · {totals.itemsByConfidence.medium} medium · {totals.itemsByConfidence.low} low
             </div>
           </div>
           <div className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03] p-4">
-            <div className="text-xs font-medium text-[#667085]">
+            <div className="text-xs font-medium text-[#667085] dark:text-white/55">
               Lookback window
             </div>
-            <div className="mt-1 text-xl font-semibold text-[#111827]">
+            <div className="mt-1 text-xl font-semibold text-[#111827] dark:text-white">
               90 days
             </div>
-            <div className="mt-1 text-xs text-[#667085]">
+            <div className="mt-1 text-xs text-[#667085] dark:text-white/55">
               forecast horizon: 30 days
             </div>
           </div>
@@ -1908,7 +1908,7 @@ export default async function OwnerAnalyticsPage({
           <div className="overflow-hidden rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/[0.03]">
             <div className="overflow-x-auto">
               <table className="min-w-full text-sm">
-                <thead className="bg-[#F9FAFB] dark:bg-white/[0.04] text-left text-xs font-semibold uppercase tracking-wide text-[#667085]">
+                <thead className="bg-[#F9FAFB] dark:bg-white/[0.04] text-left text-xs font-semibold uppercase tracking-wide text-[#667085] dark:text-white/55">
                   <tr>
                     <th className="px-4 py-3">Item</th>
                     <th className="px-4 py-3">Type</th>
@@ -1924,26 +1924,26 @@ export default async function OwnerAnalyticsPage({
                 <tbody>
                   {top.map((row) => (
                     <tr key={row.itemKey} className="border-t border-[#E5E7EB] dark:border-white/10">
-                      <td className="px-4 py-3 font-medium text-[#111827]">
+                      <td className="px-4 py-3 font-medium text-[#111827] dark:text-white">
                         {row.itemName}
                       </td>
-                      <td className="px-4 py-3 text-[#111827]">
+                      <td className="px-4 py-3 text-[#111827] dark:text-white">
                         {typeLabel(row.itemType)}
                       </td>
                       <td className="px-4 py-3">
                         {renderSparkline(row.weeklyUnitsLast8w)}
                       </td>
-                      <td className="px-4 py-3 text-[#111827]">
+                      <td className="px-4 py-3 text-[#111827] dark:text-white">
                         {row.unitsLast4Weeks.toLocaleString("en-GB", {
                           maximumFractionDigits: 1,
                         })}
                       </td>
-                      <td className="px-4 py-3 font-semibold text-[#111827]">
+                      <td className="px-4 py-3 font-semibold text-[#111827] dark:text-white">
                         {row.forecastUnitsNext30d.toLocaleString("en-GB", {
                           maximumFractionDigits: 0,
                         })}
                       </td>
-                      <td className="px-4 py-3 font-semibold text-[#111827]">
+                      <td className="px-4 py-3 font-semibold text-[#111827] dark:text-white">
                         {formatMoney(row.forecastRevenueNext30d)}
                       </td>
                       <td className="px-4 py-3 text-[#475467] dark:text-white/70">
@@ -1956,7 +1956,7 @@ export default async function OwnerAnalyticsPage({
                           {row.confidence.toUpperCase()}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-[#111827]">
+                      <td className="px-4 py-3 text-[#111827] dark:text-white">
                         {row.isStockManaged && row.reorderPoint !== null
                           ? row.reorderPoint.toLocaleString("en-GB")
                           : "—"}
@@ -1967,7 +1967,7 @@ export default async function OwnerAnalyticsPage({
               </table>
             </div>
             {forecastResults.length > top.length ? (
-              <div className="border-t border-[#E5E7EB] dark:border-white/10 px-4 py-3 text-xs text-[#667085]">
+              <div className="border-t border-[#E5E7EB] dark:border-white/10 px-4 py-3 text-xs text-[#667085] dark:text-white/55">
                 Showing top {top.length} of {forecastResults.length} items by
                 forecast revenue.
               </div>

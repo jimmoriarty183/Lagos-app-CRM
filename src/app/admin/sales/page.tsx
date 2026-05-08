@@ -143,8 +143,8 @@ export default async function AdminSalesRequestsPage() {
                         className={[
                           "inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold",
                           item.status === "new"
-                            ? "border-blue-200 bg-blue-50 text-blue-700"
-                            : "border-emerald-200 bg-emerald-50 text-emerald-700",
+                            ? "border-blue-200 dark:border-[var(--brand-500)]/40 bg-blue-50 dark:bg-[var(--brand-600)]/15 text-blue-700 dark:text-[var(--brand-200)]"
+                            : "border-emerald-200 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
                         ].join(" ")}
                       >
                         {item.status || "new"}

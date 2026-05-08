@@ -140,7 +140,7 @@ export function AdminShell({
           className={`grid gap-3 ${navCollapsed ? "xl:grid-cols-[92px_minmax(0,1fr)]" : "xl:grid-cols-[250px_minmax(0,1fr)]"}`}
         >
           <aside className="xl:sticky xl:top-4 xl:self-start">
-            <div className="rounded-[16px] border border-white/70 bg-white/80 dark:bg-white/[0.05] p-2 shadow-[0_20px_60px_-35px_rgba(15,23,42,0.35)] backdrop-blur-md xl:p-1.5">
+            <div className="rounded-[16px] border border-white/70 dark:border-white/10 bg-white/80 dark:bg-white/[0.05] p-2 shadow-[0_20px_60px_-35px_rgba(15,23,42,0.35)] backdrop-blur-md xl:p-1.5">
               <div className="mb-2 hidden xl:flex xl:justify-end">
                 <button
                   type="button"
@@ -198,7 +198,7 @@ export function AdminShell({
                         className={[
                           "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg xl:mt-0.5",
                           active
-                            ? "bg-white dark:bg-white/[0.03] text-[#1d4ed8]"
+                            ? "bg-white dark:bg-white/[0.03] text-[#1d4ed8] dark:text-[var(--brand-300)]"
                             : "bg-slate-100 dark:bg-white/[0.06] text-slate-500 dark:text-white/55",
                         ].join(" ")}
                       >
@@ -246,7 +246,7 @@ export function AdminShell({
           </aside>
 
           <main className="min-w-0">
-            <section className="rounded-[16px] border border-white/70 bg-white/80 dark:bg-white/[0.05] p-3 shadow-[0_20px_60px_-35px_rgba(15,23,42,0.35)] backdrop-blur-md sm:p-4 xl:p-5">
+            <section className="rounded-[16px] border border-white/70 dark:border-white/10 bg-white/80 dark:bg-white/[0.05] p-3 shadow-[0_20px_60px_-35px_rgba(15,23,42,0.35)] backdrop-blur-md sm:p-4 xl:p-5">
               <div className="flex flex-col gap-2 border-b border-slate-200 dark:border-white/10 pb-3 lg:flex-row lg:items-end lg:justify-between">
                 <div className="min-w-0">
                   <div className="product-page-kicker">Администрирование</div>
