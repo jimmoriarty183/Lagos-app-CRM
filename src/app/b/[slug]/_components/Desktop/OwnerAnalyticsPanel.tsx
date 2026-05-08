@@ -1145,7 +1145,7 @@ export default function OwnerAnalyticsPanel({
                   return (
                     <details
                       key={`plan-section-${section.key}`}
-                      className="rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-[#FCFCFD]"
+                      className="rounded-lg border border-[#E5E7EB] dark:border-white/10 bg-[#FCFCFD] dark:bg-white/[0.03]"
                     >
                       <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-3 py-2 text-[13px] font-semibold text-[#111827] dark:text-white">
                         <span>
@@ -1230,7 +1230,7 @@ export default function OwnerAnalyticsPanel({
           <form
             method="get"
             action={businessSlug ? `/b/${businessSlug}/analytics` : "#"}
-            className="grid grid-cols-1 gap-2 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-[#FCFCFD] p-3 sm:grid-cols-2 xl:grid-cols-[minmax(0,240px)_minmax(0,240px)_auto]"
+            className="grid grid-cols-1 gap-2 rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-[#FCFCFD] dark:bg-white/[0.03] p-3 sm:grid-cols-2 xl:grid-cols-[minmax(0,240px)_minmax(0,240px)_auto]"
           >
             {phoneRaw ? <input type="hidden" name="u" value={phoneRaw} /> : null}
             <input type="hidden" name="tab" value="sales" />
@@ -1270,8 +1270,8 @@ export default function OwnerAnalyticsPanel({
                 className={[
                   "inline-flex h-10 items-center justify-center rounded-lg border px-3 text-[13px] font-semibold transition",
                   hasSalesFilter
-                    ? "border-[#D0D5DD] text-[#374151] hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]"
-                    : "pointer-events-none border-[#EAECF0] text-[#98A2B3] dark:text-white/45",
+                    ? "border-[#D0D5DD] dark:border-white/15 text-[#374151] dark:text-white/85 hover:bg-[#F9FAFB] dark:hover:bg-white/[0.06]"
+                    : "pointer-events-none border-[#EAECF0] dark:border-white/10 text-[#98A2B3] dark:text-white/45",
                 ].join(" ")}
                 aria-disabled={!hasSalesFilter}
               >
