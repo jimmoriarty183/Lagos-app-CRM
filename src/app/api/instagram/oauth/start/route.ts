@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { isPlatformModuleEnabled } from "@/config/modules";
 import { supabaseServerAction } from "@/lib/supabase/server";
 import {
   IG_OAUTH_STATE_COOKIE,
@@ -31,6 +32,10 @@ const SCOPES = [
 ].join(",");
 
 export async function GET(req: NextRequest) {
+  if (!isPlatformModuleEnabled("ai_sales")) {
+    return NextResponse.redirect(new URL("/app", req.url));
+  }
+
   if (!IG_APP_ID) {
     return NextResponse.json(
       { error: "INSTAGRAM_APP_ID not configured" },

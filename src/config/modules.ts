@@ -31,8 +31,8 @@ export const PLATFORM_MODULES: Record<PlatformModuleKey, PlatformModule> = {
     name: "AI Manager",
     description: "Automated Instagram DM sales bot.",
     href: "/app/ai-sales",
-    enabled: true,
-    visible: true,
+    enabled: false,
+    visible: false,
   },
   academy: {
     key: "academy",

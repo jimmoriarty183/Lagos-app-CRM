@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { OrdoAiSalesPage } from "../OrdoAiSalesPage";
+import { redirect } from "next/navigation";
 import { SUPPORTED_LOCALES, type Locale } from "../i18n";
 
 const META: Record<
@@ -84,9 +83,6 @@ export default async function Page({
 }: {
   params: Promise<RouteParams>;
 }) {
-  const { locale } = await params;
-  if (!SUPPORTED_LOCALES.includes(locale as Locale)) {
-    notFound();
-  }
-  return <OrdoAiSalesPage locale={locale as Locale} />;
+  await params;
+  redirect("/");
 }
